@@ -32,7 +32,10 @@ class get_list_of_runs():
         # for each folder if it is not samplesheets pass the runfolder to the next class ready2start_demultiplexing()
         for folder in all_runfolders:
             if folder != "samplesheets":
-                ready2start_demultiplexing().already_demultiplexed(folder)
+                if folder.endswith('.gz'):
+                    pass
+                else:
+                    ready2start_demultiplexing().already_demultiplexed(folder)
 
 
 class ready2start_demultiplexing():
