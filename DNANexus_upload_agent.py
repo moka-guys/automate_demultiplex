@@ -63,13 +63,13 @@ class upload2Nexus():
         self.upload_agent="/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
         
         # fastq folder
-        self.fastq_folder="/Data/Intensities/BaseCalls"
+        self.fastq_folder="Data/Intensities/BaseCalls"
         self.fastq_folder_path=""
         
         #upload_agent_logfile
         self.upload_agent_logfile=self.runfolders+"/upload_logfile.txt"
         
-        self.upload_agent_script_logfile=open(self.script_logfile_path,'a')
+        self.upload_agent_script_logfile=open(self.upload_agent_logfile,'a')
         
         
         
@@ -149,7 +149,7 @@ class upload2Nexus():
         #create path to data in nexus eg /runfolder/Data
         nexus_path= self.runfolder+"Data"
                 
-        nexus_command = "sh " + self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder "+ nexus_path +" --do-not-compress --progress --upload-threads 10 "+ fastq_string
+        nexus_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ nexus_path +" --do-not-compress --progress --upload-threads 10 "+ fastq_string
         
         self.upload_agent_script_logfile.write("Nexus command = \n"+nexus_command+"\n")
         
