@@ -22,7 +22,8 @@ class get_list_of_runs():
     '''Loop through the directories in the directory containing the runfolders'''
     def __init__(self):
         # directory of run folders - must be same as in ready2start_demultiplexing()
-        self.runfolders = "/home/aled/demultiplex_testing"
+        #self.runfolders = "/home/aled/demultiplex_testing" # aledpc
+        self.runfolders ="/media/data1/share" # workstation
 
     def loop_through_runs(self):
         # create a list of all the folders in the runfolders directory
@@ -37,7 +38,9 @@ class ready2start_demultiplexing():
     '''This class checks if a run is ready to be demultiplexed (samplesheet present, run finished and not previously demultiplexed) and if so runs demultiplexes''' 
     def __init__(self):
         # directory of run folders - must be same as in get_list_of_runs()
-        self.runfolders = "/home/aled/demultiplex_testing"
+        #self.runfolders = "/home/aled/demultiplex_testing" # aledpc
+        self.runfolders ="/media/data1/share" # workstation
+        
         #set the samplesheet folders
         self.samplesheets = self.runfolders + "/samplesheets"
         # file which denotes end of a run
