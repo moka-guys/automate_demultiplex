@@ -58,27 +58,30 @@ class ready2start_demultiplexing():
         ''' check for presence of RTAComplete.txt to denote a finished sequencing run'''
         # capture the runfolder 
         self.runfolder = str(runfolder)
-        print "Assessing......... " + self.runfolder
-        
+               
         # create full path to runfolder
         self.runfolderpath = self.runfolders + "/" + self.runfolder
+        
+        print "Assessing......... " + self.runfolderpath
+        
         # check if the RTAcomplete.txt file is present
         if os.path.isfile(self.runfolderpath + "/" + self.complete_run):
-            print "run is complete ..... checking if already demultiplexed"
+            print "Run has finished  -  RTAcomplete.txt found @ "+ self.runfolderpath + "/" + self.complete_run
+            
             #if so proceed
             self.already_demultiplexed()
         else:
             # else stop 
-            print "run is not yet complete --- STOP"
+            print "run is not yet complete \n--- STOP ---\n"
 
     def already_demultiplexed(self):
         '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
         # if the log file is present
         if os.path.isfile(self.runfolderpath + "/" + self.demultiplexed):
             # stop
-            print "Demultiplexing has already been completed --- STOP"
+            print "Checking if already demultiplexed .........\nDemultiplexing has already been completed  -  demultiplex log found @ "+self.runfolderpath + "/" + self.demultiplexed+" \n--- STOP ---\n"
         else:
-            print "run has not yet been demultiplexed ....looking for a runsheet"
+            print "Checking if already demultiplexed .........\nRun has not yet been demultiplexed"
             # else proceed
             self.look_for_sample_sheet()
 
@@ -88,17 +91,17 @@ class ready2start_demultiplexing():
         self.samplesheet=self.samplesheets + "/" + self.runfolder + "_SampleSheet.csv"
         # if the samplesheet is present 
         if os.path.isfile(self.samplesheet):
-            print "samplesheet found ..... run bcl2fastq"
+            print "Looking for a samplesheet .........\nsamplesheet found @ " +self.samplesheet
             # proceed
             self.run_demuliplexing()
         else:
             # stop
-            print "no samplesheet present --- STOP"
+            print "Looking for a samplesheet ......... \nno samplesheet present \n--- STOP ---\n"
 
     def run_demuliplexing(self):
         '''Run the demultiplexing'''
         
-        print "demultiplexing ..... "+self.runfolder
+        #print "demultiplexing ..... "+self.runfolder
         # example command sudo /usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R /media/data1/share/160914_NB551068_0007_AHGT7FBGXY --sample-sheet /media/data1/share/samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting
         
         # practice command: 
@@ -108,7 +111,7 @@ class ready2start_demultiplexing():
         command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
         # command="/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R 160822_NB551068_0006_AHGYM7BGXY/ --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting"
         
-        print "command = " + command
+        print "running bcl2fastq ......... \ncommand = " + command
         
         # open a log file
         demultiplex_log = open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'w')
@@ -140,9 +143,9 @@ class ready2start_demultiplexing():
         #print "line count = "+str(count)
         
         if lastline != "Processing completed with 0 errors and 0 warnings.":
-            print "ERROR - DEMULTIPLEXING UNSUCCESFULL"
+            print "ERROR - DEMULTIPLEXING UNSUCCESFULL - please see"+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n"
         else:
-            print "demultiplexing complete"
+            print "demultiplexing complete\n"
             
         
 if __name__ == '__main__':
