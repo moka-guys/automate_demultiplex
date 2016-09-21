@@ -154,10 +154,10 @@ class ready2start_demultiplexing():
             lastline=i
         #print "line count = "+str(count)
         
-        if lastline != "Processing completed with 0 errors and 0 warnings.":
-            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see"+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
-        else:
+        if  "Processing completed with 0 errors and 0 warnings." in lastline:
             self.script_logfile.write("demultiplexing complete\n")
+        else:
+            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see"+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
             
         
 if __name__ == '__main__':
