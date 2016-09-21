@@ -75,15 +75,16 @@ class upload2Nexus():
         
     def already_uploaded(self, runfolder):
         '''check folder hasn't already been uploaded'''
-        self.upload_agent_script_logfile.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
-                
-        print "looking at runfolder "+runfolder
+
         # capture the runfolder 
         self.runfolder = str(runfolder)
                
         # create full path to runfolder
         self.runfolderpath = self.runfolders + "/" + self.runfolder
-        
+       
+        self.upload_agent_script_logfile.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath +"\n")
+        print "looking at runfolder "+runfolder
+         
         #look for the file denoting the upload has started
         if os.path.isfile(self.runfolderpath + "/" + self.upload_started_file):
             self.upload_agent_script_logfile.write("self.upload_started_file present \n---STOP---\n")
