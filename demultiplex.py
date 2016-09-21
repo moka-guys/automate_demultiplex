@@ -58,27 +58,27 @@ class ready2start_demultiplexing():
         ''' check for presence of RTAComplete.txt to denote a finished sequencing run'''
         # capture the runfolder 
         self.runfolder = str(runfolder)
-        print "reading " + self.runfolder
+        print "Assessing......... " + self.runfolder
         
         # create full path to runfolder
         self.runfolderpath = self.runfolders + "/" + self.runfolder
         # check if the RTAcomplete.txt file is present
         if os.path.isfile(self.runfolderpath + "/" + self.complete_run):
-            print "runcomplete"
+            print "run is complete ..... checking if already demultiplexed"
             #if so proceed
             self.already_demultiplexed()
         else:
             # else stop 
-            print "run not complete"
+            print "run is not yet complete --- STOP"
 
     def already_demultiplexed(self):
         '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
         # if the log file is present
         if os.path.isfile(self.runfolderpath + "/" + self.demultiplexed):
             # stop
-            print "has been demultiplexed"
+            print "Demultiplexing has already been completed --- STOP"
         else:
-            print "not demultiplexed yet"
+            print "run has not yet been demultiplexed ....looking for a runsheet"
             # else proceed
             self.look_for_sample_sheet()
 
@@ -88,17 +88,17 @@ class ready2start_demultiplexing():
         self.samplesheet=self.samplesheets + "/" + self.runfolder + "_SampleSheet.csv"
         # if the samplesheet is present 
         if os.path.isfile(self.samplesheet):
-            print "samplesheet present"
+            print "samplesheet found ..... run bcl2fastq"
             # proceed
             self.run_demuliplexing()
         else:
             # stop
-            print "no samplesheet"
+            print "no samplesheet present --- STOP"
 
     def run_demuliplexing(self):
         '''Run the demultiplexing'''
         
-        print "demultiplexing...."+self.runfolder
+        print "demultiplexing ..... "+self.runfolder
         # example command sudo /usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R /media/data1/share/160914_NB551068_0007_AHGT7FBGXY --sample-sheet /media/data1/share/samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting
         
         # practice command: 
@@ -108,7 +108,7 @@ class ready2start_demultiplexing():
         command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
         # command="/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R 160822_NB551068_0006_AHGYM7BGXY/ --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting"
         
-        # print command
+        print "command = " + command
         
         # open a log file
         demultiplex_log = open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'w')
@@ -121,6 +121,7 @@ class ready2start_demultiplexing():
         
         # write this to the log file
         demultiplex_log.write(out)
+        
         # close log file
         demultiplex_log.close()
         
@@ -136,12 +137,12 @@ class ready2start_demultiplexing():
         for i in logfile:
             count=count+1
             lastline=i
-        print "line count = "+str(count)
+        #print "line count = "+str(count)
         
         if lastline != "Processing completed with 0 errors and 0 warnings.":
-            print "error"
+            print "ERROR - DEMULTIPLEXING UNSUCCESFULL"
         else:
-            print "run ok"
+            print "demultiplexing complete"
             
         
 if __name__ == '__main__':
