@@ -130,16 +130,18 @@ class ready2start_demultiplexing():
     def check_demultiplexlog_file(self):
         #open log file
         logfile=open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'r')
-        #print len(logfile)
-        num_lines = sum(1 for line in logfile)
         
-        last5rows=num_lines - 10
-        print last5rows
-        for linenumber, line in enumerate(logfile):
-            if linenumber > last5rows:
-                print linenumber
-                print line
-            
+        count=0
+        lastline=""
+        for i in logfile:
+            count=count+1
+            lastline=i
+        print "line count = "+str(count)
+        
+        if lastline != "Processing completed with 0 errors and 0 warnings.":
+            print "error"
+        else:
+            print "run ok"
             
         
 if __name__ == '__main__':
