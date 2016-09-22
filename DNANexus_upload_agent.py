@@ -23,8 +23,8 @@ class get_list_of_runs():
     def __init__(self):
         # directory of run folders - must be same as in upload2Nexus()
         self.runfolders ="/media/data1/share" # workstation
-        self.runfolders = "/home/aled/demultiplex_testing" # aledpc
-        self.runfolders = "/home/mokaguys/Documents/upload_agent_test" # workstation dummy
+        #self.runfolders = "/home/aled/demultiplex_testing" # aledpc
+        #self.runfolders = "/home/mokaguys/Documents/upload_agent_test" # workstation dummy
 
     def loop_through_runs(self):
         # create a list of all the folders in the runfolders directory
@@ -44,8 +44,8 @@ class upload2Nexus():
     
     def __init__(self):
         # directory of run folders - must be same as in get_list_of_runs()
-        #self.runfolders ="/media/data1/share" # workstation
-        self.runfolders = "/home/mokaguys/Documents/upload_agent_test" # workstation dummy
+        self.runfolders ="/media/data1/share" # workstation
+        #self.runfolders = "/home/mokaguys/Documents/upload_agent_test" # workstation dummy
         #self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         
         # file which denotes demultiplexing is underway/complete 
