@@ -68,9 +68,16 @@ class upload2Nexus():
         
         #upload_agent_logfile
         self.upload_agent_logfile=self.runfolders+"/upload_logfile.txt"
-        
         self.upload_agent_script_logfile=open(self.upload_agent_logfile,'a')
+
+        # string of fastqs
+        self.fastq_string=""
+
+        # last_fastq to test upload.
+        self.last_fastq=""
         
+        #create path to data in nexus eg /runfolder/Data
+        self.nexus_path= self.runfolder+"/Data"
         
         
     def already_uploaded(self, runfolder):
@@ -127,9 +134,7 @@ class upload2Nexus():
         # create a list of all files within the fastq folder
         all_fastqs = os.listdir(self.fastq_folder_path)
         
-        # string of fastqs
-        fastq_string=""
-        
+            
         # find all fastqs
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
@@ -138,27 +143,26 @@ class upload2Nexus():
                     pass
                 else:
                     #build the list of fastqs with full file paths
-                    fastq_string=fastq_string+" "+self.fastq_folder_path+"/"+fastq
+                    self.fastq_string=self.fastq_string+" "+self.fastq_folder_path+"/"+fastq
+                    self.last_fastq=fastq
         
         self.upload_agent_script_logfile.write("list of fastqs found\n")
+        
         # send list to module to trigger upload
-        self.upload(fastq_string)       
+        self.upload()       
         
-    def upload(self, fastq_string):
+    def upload(self):
         '''takes a list of all the fastqs (with full paths) and calls the upload agent.'''
+                        
+        nexus_upload_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ nexus_path +" --do-not-compress --progress --upload-threads 10 "+ self.fastq_string
         
-        #create path to data in nexus eg /runfolder/Data
-        nexus_path= self.runfolder+"/Data"
-                
-        nexus_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ nexus_path +" --do-not-compress --progress --upload-threads 10 "+ fastq_string
-        
-        self.upload_agent_script_logfile.write("Nexus command = \n"+nexus_command+"\n")
+        self.upload_agent_script_logfile.write("Nexus command = \n"+nexus_upload_command+"\n")
         
         #create file to show demultiplexing has started
         upload_started=open(self.runfolderpath+"/"+self.upload_started_file,'w')
         
         # run the command, redirecting stderror to stdout
-        proc = subprocess.Popen([nexus_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen([nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
          
         # capture the streams (err is redirected to out above)
         (out, err) = proc.communicate()
@@ -167,6 +171,30 @@ class upload2Nexus():
         upload_started.close()
         
         self.upload_agent_script_logfile.close()
+
+    def download(self):
+    	'''This test downloads one of the fastq files and performs a MD5sum to compare the file before and after download'''
+    	nexus_download_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ nexus_path +" --do-not-compress --progress --upload-threads 10 "+ self.fastq_string
+        
+        self.upload_agent_script_logfile.write("Nexus command = \n"+nexus_upload_command+"\n")
+        
+        #create file to show demultiplexing has started
+        upload_started=open(self.runfolderpath+"/"+self.upload_started_file,'w')
+        
+        # run the command, redirecting stderror to stdout
+        proc = subprocess.Popen([nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
+         
+        # capture the streams (err is redirected to out above)
+        (out, err) = proc.communicate()
+        
+        upload_started.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n" + out)
+        upload_started.close()
+    	# download one of the files
+
+    	# perform an MD5 checksum on the uploaded and downloaded files.
+
+    	#write report to log file.
+
 if __name__ == '__main__':
     # Create instance of get_list_of_runs
     runs = get_list_of_runs()
