@@ -17,6 +17,7 @@ Could possibly add a check/message if it fails.
 import os
 import subprocess
 import datetime
+import smtplib
 
 
 class get_list_of_runs():
@@ -63,6 +64,20 @@ class ready2start_demultiplexing():
         self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
         #self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/logrecord.txt" # workstation
         self.script_logfile=open(self.script_logfile_path,'a')
+        
+        #email server settings
+        self.user = 'AKIAIO3XY2MMSBEQNNXQ'
+        self.pw   = 'AmkKC7nXvLrxsvBHZf3zagNq953nun9c0iYN+zjifIbN'
+        self.host = 'email-smtp.eu-west-1.amazonaws.com'
+        self.port = 587
+        self.me   = 'aledjones@nhs.net'
+        self.you  = ('aledjones@nhs.net',)
+        self.smtp_do_tls = True
+        
+        # email message
+        self.email_subject=""
+        self.email_message=""
+
 
     def already_demultiplexed(self, runfolder):
         '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
@@ -104,6 +119,10 @@ class ready2start_demultiplexing():
         # if the samplesheet is present 
         if os.path.isfile(self.samplesheet):
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
+            #send an email:
+            self.email_subject="DEMULTIPLEXING INITIATED"
+            self.email_message=self.runfolder
+            self.send_an_email()
             # proceed
             self.run_demuliplexing()
         else:
@@ -156,10 +175,29 @@ class ready2start_demultiplexing():
         
         if  "Processing completed with 0 errors and 0 warnings." in lastline:
             self.script_logfile.write("demultiplexing complete\n")
+            self.email_subject="demultiplexing complete"
+            self.email_message=self.runfolder
+            self.send_an_email()
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see"+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
-            
+            self.email_subject="DEMULTIPLEXING FAILED"
+            self.email_message=self.runfolder
+            self.send_an_email()
+    
+    def send_an_email(self):
+        #body = self.runfolder
         
+        msg  = 'Subject: %s\n\n%s' % (self.email_subject, self.email_message)
+        
+        
+        server = smtplib.SMTP(host = self.host,port = self.port,timeout = 10)
+        server.set_debuglevel(1)
+        server.starttls()
+        server.ehlo()
+        server.login(self.user, self.pw)
+        server.sendmail(self.me, self.you, msg)
+
+
 if __name__ == '__main__':
     # Create instance of get_list_of_runs
     runs = get_list_of_runs()
