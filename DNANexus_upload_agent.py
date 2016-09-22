@@ -76,6 +76,19 @@ class upload2Nexus():
         #create path to data in nexus eg /runfolder/Data
         self.nexus_path= self.runfolder+"/Data"
         
+        #email server settings
+        self.user = 'AKIAIO3XY2MMSBEQNNXQ'
+        self.pw   = 'AmkKC7nXvLrxsvBHZf3zagNq953nun9c0iYN+zjifIbN'
+        self.host = 'email-smtp.eu-west-1.amazonaws.com'
+        self.port = 587
+        self.me   = 'aledjones@nhs.net'
+        self.you  = ('aledjones@nhs.net',)
+        self.smtp_do_tls = True
+        
+        # email message
+        self.email_subject=""
+        self.email_message=""
+        self.email_priority=3
         
     def already_uploaded(self, runfolder):
         '''check folder hasn't already been uploaded'''
@@ -173,6 +186,32 @@ class upload2Nexus():
         upload_started.close()
         
         self.upload_agent_script_logfile.close()
+
+        self.email_subject="Upload of "+self.runfolder+" to DNA Nexus initiated"
+        self.email_priority=3
+        self.email_message="run:\t"+self.runfolder+"uploading to DNA Nexus\nPlease see log file at: "self.runfolderpath+"/"+self.upload_started_file
+
+        self.send_an_email()
+
+
+    def send_an_email(self):
+        #body = self.runfolder
+        
+        #msg  = 'Subject: %s\n\n%s' % (self.email_subject, self.email_message)
+        m = Message()
+        #m['From'] = self.me
+        #m['To'] = self.you
+        m['X-Priority'] = str(self.email_priority)
+        m['Subject'] = self.email_subject
+        m.set_payload(self.email_message)
+        
+        
+        server = smtplib.SMTP(host = self.host,port = self.port,timeout = 10)
+        server.set_debuglevel(1)
+        server.starttls()
+        server.ehlo()
+        server.login(self.user, self.pw)
+        server.sendmail(self.me, [self.you], m.as_string())
 
 
 
