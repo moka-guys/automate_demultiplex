@@ -18,14 +18,15 @@ import os
 import subprocess
 import datetime
 import smtplib
+from email.Message import Message
 
 
 class get_list_of_runs():
     '''Loop through the directories in the directory containing the runfolders'''
     def __init__(self):
         # directory of run folders - must be same as in ready2start_demultiplexing()
-        self.runfolders = "/home/aled/demultiplex_testing" # aledpc
-        # self.runfolders ="/media/data1/share" # workstation
+        # self.runfolders = "/home/aled/demultiplex_testing" # aledpc
+        self.runfolders ="/media/data1/share" # workstation
 
     def loop_through_runs(self):
         # create a list of all the folders in the runfolders directory
@@ -43,8 +44,8 @@ class ready2start_demultiplexing():
     '''This class checks if a run is ready to be demultiplexed (samplesheet present, run finished and not previously demultiplexed) and if so runs demultiplexes''' 
     def __init__(self):
         # directory of run folders - must be same as in get_list_of_runs()
-        self.runfolders = "/home/aled/demultiplex_testing" # aledpc
-        # self.runfolders ="/media/data1/share" # workstation
+        # self.runfolders = "/home/aled/demultiplex_testing" # aledpc
+        self.runfolders ="/media/data1/share" # workstation
         
         #set the samplesheet folders
         self.samplesheets = self.runfolders + "/samplesheets"
@@ -52,17 +53,20 @@ class ready2start_demultiplexing():
         self.complete_run = "RTAComplete.txt"
         # file which denotes demultiplexing is underway/complete 
         self.demultiplexed = "demultiplexlog.txt"
+
         # set empty variables to be defined based on the run  
         self.runfolder = ""
         self.runfolderpath = ""
         self.samplesheet = ""
+
         # path to bcl2fastq
         self.bcl2fastq = "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq"
         #succesful run
         self.logfile_success="Processing completed with 0 errors and 0 warnings."
+        
         #logfile
-        self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
-        #self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/logrecord.txt" # workstation
+        #self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
+        self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/logrecord.txt" # workstation
         self.script_logfile=open(self.script_logfile_path,'a')
         
         #email server settings
@@ -77,6 +81,7 @@ class ready2start_demultiplexing():
         # email message
         self.email_subject=""
         self.email_message=""
+        self.email_priority=3
 
 
     def already_demultiplexed(self, runfolder):
@@ -121,7 +126,7 @@ class ready2start_demultiplexing():
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
             #send an email:
             self.email_subject="DEMULTIPLEXING INITIATED"
-            self.email_message=self.runfolder
+            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
             self.send_an_email()
             # proceed
             self.run_demuliplexing()
@@ -176,18 +181,25 @@ class ready2start_demultiplexing():
         if  "Processing completed with 0 errors and 0 warnings." in lastline:
             self.script_logfile.write("demultiplexing complete\n")
             self.email_subject="demultiplexing complete"
-            self.email_message=self.runfolder
+            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
             self.send_an_email()
         else:
-            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see"+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
+            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
             self.email_subject="DEMULTIPLEXING FAILED"
-            self.email_message=self.runfolder
+            self.email_priority=1
+            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
             self.send_an_email()
     
     def send_an_email(self):
         #body = self.runfolder
         
-        msg  = 'Subject: %s\n\n%s' % (self.email_subject, self.email_message)
+        #msg  = 'Subject: %s\n\n%s' % (self.email_subject, self.email_message)
+        m = Message()
+        #m['From'] = self.me
+        #m['To'] = self.you
+        m['X-Priority'] = str(self.email_priority)
+        m['Subject'] = self.email_subject
+        m.set_payload(self.email_message)
         
         
         server = smtplib.SMTP(host = self.host,port = self.port,timeout = 10)
@@ -195,7 +207,7 @@ class ready2start_demultiplexing():
         server.starttls()
         server.ehlo()
         server.login(self.user, self.pw)
-        server.sendmail(self.me, self.you, msg)
+        server.sendmail(self.me, [self.you], m.as_string())
 
 
 if __name__ == '__main__':
