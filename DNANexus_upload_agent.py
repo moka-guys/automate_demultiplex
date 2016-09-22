@@ -148,7 +148,7 @@ class upload2Nexus():
         '''takes a list of all the fastqs (with full paths) and calls the upload agent.'''
         
         #create path to data in nexus eg /runfolder/Data
-        nexus_path= self.runfolder+"Data"
+        nexus_path= self.runfolder+"/Data"
                 
         nexus_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ nexus_path +" --do-not-compress --progress --upload-threads 10 "+ fastq_string
         
