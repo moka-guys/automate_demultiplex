@@ -13,6 +13,8 @@ It will trigger the upload agent to upload into the required project
 import os
 import subprocess
 import datetime
+import smtplib
+from email.Message import Message
 
 
 class get_list_of_runs():
@@ -167,7 +169,7 @@ class upload2Nexus():
         '''takes a list of all the fastqs (with full paths) and calls the upload agent.'''
 		
 		# build the nexus upload command                        
-        nexus_upload_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ nexus_path +" --do-not-compress --progress --upload-threads 10 "+ self.fastq_string
+        nexus_upload_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ self.nexus_path +" --do-not-compress --progress --upload-threads 10 "+ self.fastq_string
         
         #write to logfile
         self.upload_agent_script_logfile.write("Nexus command = \n"+nexus_upload_command+"\n")
@@ -185,11 +187,11 @@ class upload2Nexus():
         upload_started.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n" + out)
         upload_started.close()
         
-        self.upload_agent_script_logfile.close()
+        
 
         self.email_subject="Upload of "+self.runfolder+" to DNA Nexus initiated"
         self.email_priority=3
-        self.email_message="run:\t"+self.runfolder+"uploading to DNA Nexus\nPlease see log file at: "self.runfolderpath+"/"+self.upload_started_file
+        self.email_message=self.runfolder+" \tuploading to DNA Nexus\nPlease see log file at: "+self.runfolderpath+"/"+self.upload_started_file
 
         self.send_an_email()
 
@@ -207,12 +209,15 @@ class upload2Nexus():
         
         
         server = smtplib.SMTP(host = self.host,port = self.port,timeout = 10)
-        server.set_debuglevel(1)
+        server.set_debuglevel(10)
         server.starttls()
         server.ehlo()
         server.login(self.user, self.pw)
         server.sendmail(self.me, [self.you], m.as_string())
 
+        #write to logfile
+        self.upload_agent_script_logfile.write("Email sent to "+str(self.you))
+        self.upload_agent_script_logfile.close()
 
 
 if __name__ == '__main__':
