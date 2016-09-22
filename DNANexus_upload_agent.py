@@ -93,7 +93,7 @@ class upload2Nexus():
         if os.path.isfile(self.runfolderpath + "/" + self.upload_started_file):
             self.upload_agent_script_logfile.write("self.upload_started_file present \n---STOP---\n")
         else:
-            #if not check demultiplex has finished succesfully
+            #if not check demultiplex has finished succesfully and write to file
             print "not already uploaded"
             self.upload_agent_script_logfile.write("self.upload_started_file_not_present so continue\n")
             self.demultiplex_completed_successfully() 
@@ -118,8 +118,10 @@ class upload2Nexus():
                 # if successfull call the module which creates a list of fastqs  
                 self.find_fastqs()
             else:
+            	#write to logfile that demultplex was not successful
                 self.upload_agent_script_logfile.write("demultiplex was NOT successfully completed. \n ---STOP---\n")
         else:
+        	# write to logfile that not yet demultiplexed
             self.upload_agent_script_logfile.write("demultiplex has not been performed.\n---STOP---\n")
             
     def find_fastqs(self):
@@ -142,7 +144,7 @@ class upload2Nexus():
                     #build the list of fastqs with full file paths
                     self.fastq_string=self.fastq_string+" "+self.fastq_folder_path+"/"+fastq
                     
-        
+        #write to logfile
         self.upload_agent_script_logfile.write("list of fastqs found\n")
         
         # send list to module to trigger upload
@@ -150,9 +152,11 @@ class upload2Nexus():
         
     def upload(self):
         '''takes a list of all the fastqs (with full paths) and calls the upload agent.'''
-                        
+		
+		# build the nexus upload command                        
         nexus_upload_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ nexus_path +" --do-not-compress --progress --upload-threads 10 "+ self.fastq_string
         
+        #write to logfile
         self.upload_agent_script_logfile.write("Nexus command = \n"+nexus_upload_command+"\n")
         
         #create file to show demultiplexing has started
@@ -164,6 +168,7 @@ class upload2Nexus():
         # capture the streams (err is redirected to out above)
         (out, err) = proc.communicate()
         
+        #write to log
         upload_started.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n" + out)
         upload_started.close()
         
