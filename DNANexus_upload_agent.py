@@ -83,8 +83,8 @@ class upload2Nexus():
         self.pw   = '***REMOVED***'
         self.host = 'email-smtp.eu-west-1.amazonaws.com'
         self.port = 587
-        self.me   = 'aledjones@nhs.net'
-        self.you  = ('aledjones@nhs.net',)
+        self.me   = 'gst-tr.mokaguys@nhs.net'
+        self.you  = ('gst-tr.mokaguys@nhs.net',)
         self.smtp_do_tls = True
         
         # email message
@@ -198,7 +198,7 @@ class upload2Nexus():
 
     def send_an_email(self):
         #body = self.runfolder
-        
+        self.upload_agent_script_logfile.write("Sending email to...... "+str(self.you))
         #msg  = 'Subject: %s\n\n%s' % (self.email_subject, self.email_message)
         m = Message()
         #m['From'] = self.me
@@ -216,7 +216,7 @@ class upload2Nexus():
         server.sendmail(self.me, [self.you], m.as_string())
 
         #write to logfile
-        self.upload_agent_script_logfile.write("Email sent to "+str(self.you))
+        self.upload_agent_script_logfile.write("Email sent")
         self.upload_agent_script_logfile.close()
 
 
