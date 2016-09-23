@@ -74,8 +74,8 @@ class ready2start_demultiplexing():
         self.pw   = '***REMOVED***'
         self.host = 'email-smtp.eu-west-1.amazonaws.com'
         self.port = 587
-        self.me   = 'aledjones@nhs.net'
-        self.you  = ('aledjones@nhs.net',)
+        self.me   = 'gst-tr.mokaguys@nhs.net'
+        self.you  = ('gst-tr.mokaguys@nhs.net',)
         self.smtp_do_tls = True
         
         # email message
