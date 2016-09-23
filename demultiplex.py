@@ -192,7 +192,7 @@ class ready2start_demultiplexing():
     
     def send_an_email(self):
         #body = self.runfolder
-        
+        self.script_logfile.write("Sending an email to..... " +self.me)
         #msg  = 'Subject: %s\n\n%s' % (self.email_subject, self.email_message)
         m = Message()
         #m['From'] = self.me
@@ -208,6 +208,7 @@ class ready2start_demultiplexing():
         server.ehlo()
         server.login(self.user, self.pw)
         server.sendmail(self.me, [self.you], m.as_string())
+        self.script_logfile.write("................email sent\n")
 
 
 if __name__ == '__main__':
