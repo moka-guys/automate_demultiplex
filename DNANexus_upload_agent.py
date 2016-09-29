@@ -76,7 +76,7 @@ class upload2Nexus():
         self.fastq_string=""
         
         #create path to data in nexus eg /runfolder/Data
-        self.nexus_path= self.runfolder+"/Data"
+        self.nexus_path= ""
         
         #email server settings
         self.user = 'AKIAIO3XY2MMSBEQNNXQ'
@@ -167,7 +167,9 @@ class upload2Nexus():
         
     def upload(self):
         '''takes a list of all the fastqs (with full paths) and calls the upload agent.'''
-		
+		#self.nexus path
+        self.nexus_path=self.runfolder+"/Data"
+
 		# build the nexus upload command                        
         nexus_upload_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ self.nexus_path +" --do-not-compress --progress --upload-threads 10 "+ self.fastq_string
         
