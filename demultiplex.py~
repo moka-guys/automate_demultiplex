@@ -66,7 +66,7 @@ class ready2start_demultiplexing():
         
         #logfile
         #self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
-        self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/demultiplexing_cronjob_log.txt" # workstation
+        self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/logrecord.txt" # workstation
         self.script_logfile=open(self.script_logfile_path,'a')
         
         #email server settings
