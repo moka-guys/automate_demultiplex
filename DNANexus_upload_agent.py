@@ -191,9 +191,9 @@ class upload2Nexus():
         
         
 
-        self.email_subject="Upload of "+self.runfolder+" to DNA Nexus initiated"
+        self.email_subject="Upload of "+self.runfolder+" completed"
         self.email_priority=3
-        self.email_message=self.runfolder+" \tuploading to DNA Nexus\nPlease see log file at: "+self.runfolderpath+"/"+self.upload_started_file
+        self.email_message=self.runfolder+" \t has been uploaded to DNA Nexus :-)\nPlease see log file at: "+self.runfolderpath+"/"+self.upload_started_file
 
         self.send_an_email()
 
