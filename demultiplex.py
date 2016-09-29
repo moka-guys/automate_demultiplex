@@ -16,13 +16,17 @@ Could possibly add a check/message if it fails.
 
 import os
 import subprocess
+import datetime
+import smtplib
+from email.Message import Message
 
 
 class get_list_of_runs():
     '''Loop through the directories in the directory containing the runfolders'''
     def __init__(self):
         # directory of run folders - must be same as in ready2start_demultiplexing()
-        self.runfolders = "/home/aled/demultiplex_testing"
+        # self.runfolders = "/home/aled/demultiplex_testing" # aledpc
+        self.runfolders ="/media/data1/share" # workstation
 
     def loop_through_runs(self):
         # create a list of all the folders in the runfolders directory
@@ -30,57 +34,88 @@ class get_list_of_runs():
         # for each folder if it is not samplesheets pass the runfolder to the next class ready2start_demultiplexing()
         for folder in all_runfolders:
             if folder != "samplesheets":
-                ready2start_demultiplexing().has_run_finished(folder)
+                if folder.endswith('.gz'):
+                    pass
+                else:
+                    ready2start_demultiplexing().already_demultiplexed(folder)
 
 
 class ready2start_demultiplexing():
     '''This class checks if a run is ready to be demultiplexed (samplesheet present, run finished and not previously demultiplexed) and if so runs demultiplexes''' 
     def __init__(self):
         # directory of run folders - must be same as in get_list_of_runs()
-        self.runfolders = "/home/aled/demultiplex_testing"
+        # self.runfolders = "/home/aled/demultiplex_testing" # aledpc
+        self.runfolders ="/media/data1/share" # workstation
+        
         #set the samplesheet folders
         self.samplesheets = self.runfolders + "/samplesheets"
         # file which denotes end of a run
         self.complete_run = "RTAComplete.txt"
         # file which denotes demultiplexing is underway/complete 
         self.demultiplexed = "demultiplexlog.txt"
+
         # set empty variables to be defined based on the run  
         self.runfolder = ""
         self.runfolderpath = ""
         self.samplesheet = ""
+
         # path to bcl2fastq
         self.bcl2fastq = "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq"
         #succesful run
         self.logfile_success="Processing completed with 0 errors and 0 warnings."
         
+        #logfile
+        #self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
+        self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/demultiplexing_cronjob_log.txt" # workstation
+        self.script_logfile=open(self.script_logfile_path,'a')
+        
+        #email server settings
+        self.user = 'AKIAIO3XY2MMSBEQNNXQ'
+        self.pw   = '***REMOVED***'
+        self.host = 'email-smtp.eu-west-1.amazonaws.com'
+        self.port = 587
+        self.me   = 'gst-tr.mokaguys@nhs.net'
+        self.you  = ('gst-tr.mokaguys@nhs.net',)
+        self.smtp_do_tls = True
+        
+        # email message
+        self.email_subject=""
+        self.email_message=""
+        self.email_priority=3
 
-    def has_run_finished(self, runfolder):
-        ''' check for presence of RTAComplete.txt to denote a finished sequencing run'''
+
+    def already_demultiplexed(self, runfolder):
+        '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
+        
         # capture the runfolder 
         self.runfolder = str(runfolder)
-        print "reading " + self.runfolder
-        
+               
         # create full path to runfolder
         self.runfolderpath = self.runfolders + "/" + self.runfolder
-        # check if the RTAcomplete.txt file is present
-        if os.path.isfile(self.runfolderpath + "/" + self.complete_run):
-            print "runcomplete"
-            #if so proceed
-            self.already_demultiplexed()
-        else:
-            # else stop 
-            print "run not complete"
-
-    def already_demultiplexed(self):
-        '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
-        # if the log file is present
+        
+        self.script_logfile.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
+        
+        # if the demultiplex log file is present
         if os.path.isfile(self.runfolderpath + "/" + self.demultiplexed):
             # stop
-            print "has been demultiplexed"
+            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed  -  demultiplex log found @ "+self.runfolderpath + "/" + self.demultiplexed+" \n--- STOP ---\n")
         else:
-            print "not demultiplexed yet"
+            self.script_logfile.write("Checking if already demultiplexed .........Run has not yet been demultiplexed\n")
             # else proceed
+            self.has_run_finished()
+
+    def has_run_finished(self):
+        ''' check for presence of RTAComplete.txt to denote a finished sequencing run'''
+        # check if the RTAcomplete.txt file is present
+        if os.path.isfile(self.runfolderpath + "/" + self.complete_run):
+            self.script_logfile.write("Run has finished  -  RTAcomplete.txt found @ "+ self.runfolderpath + "/" + self.complete_run+"\n")
+            
+            #if so proceed
             self.look_for_sample_sheet()
+        else:
+            # else stop 
+            self.script_logfile.write("run is not yet complete \n--- STOP ---\n")
+                  
 
     def look_for_sample_sheet(self):
         '''check sample sheet is present'''
@@ -88,17 +123,21 @@ class ready2start_demultiplexing():
         self.samplesheet=self.samplesheets + "/" + self.runfolder + "_SampleSheet.csv"
         # if the samplesheet is present 
         if os.path.isfile(self.samplesheet):
-            print "samplesheet present"
+            self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
+            #send an email:
+            self.email_subject="DEMULTIPLEXING INITIATED"
+            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
+            self.send_an_email()
             # proceed
             self.run_demuliplexing()
         else:
             # stop
-            print "no samplesheet"
+            self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
 
     def run_demuliplexing(self):
         '''Run the demultiplexing'''
         
-        print "demultiplexing...."+self.runfolder
+        #print "demultiplexing ..... "+self.runfolder
         # example command sudo /usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R /media/data1/share/160914_NB551068_0007_AHGT7FBGXY --sample-sheet /media/data1/share/samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting
         
         # practice command: 
@@ -108,7 +147,7 @@ class ready2start_demultiplexing():
         command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
         # command="/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R 160822_NB551068_0006_AHGYM7BGXY/ --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting"
         
-        # print command
+        self.script_logfile.write("running bcl2fastq ......... \ncommand = " + command+"\n")
         
         # open a log file
         demultiplex_log = open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'w')
@@ -121,6 +160,7 @@ class ready2start_demultiplexing():
         
         # write this to the log file
         demultiplex_log.write(out)
+        
         # close log file
         demultiplex_log.close()
         
@@ -130,18 +170,47 @@ class ready2start_demultiplexing():
     def check_demultiplexlog_file(self):
         #open log file
         logfile=open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'r')
-        #print len(logfile)
-        num_lines = sum(1 for line in logfile)
         
-        last5rows=num_lines - 10
-        print last5rows
-        for linenumber, line in enumerate(logfile):
-            if linenumber > last5rows:
-                print linenumber
-                print line
-            
-            
+        count=0
+        lastline=""
+        for i in logfile:
+            count=count+1
+            lastline=i
+        #print "line count = "+str(count)
         
+        if  "Processing completed with 0 errors and 0 warnings." in lastline:
+            self.script_logfile.write("demultiplexing complete\n")
+            self.email_subject="demultiplexing complete"
+            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
+            self.send_an_email()
+        else:
+            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
+            self.email_subject="DEMULTIPLEXING FAILED"
+            self.email_priority=1
+            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
+            self.send_an_email()
+    
+    def send_an_email(self):
+        #body = self.runfolder
+        self.script_logfile.write("Sending an email to..... " +self.me)
+        #msg  = 'Subject: %s\n\n%s' % (self.email_subject, self.email_message)
+        m = Message()
+        #m['From'] = self.me
+        #m['To'] = self.you
+        m['X-Priority'] = str(self.email_priority)
+        m['Subject'] = self.email_subject
+        m.set_payload(self.email_message)
+        
+        
+        server = smtplib.SMTP(host = self.host,port = self.port,timeout = 10)
+        server.set_debuglevel(1)
+        server.starttls()
+        server.ehlo()
+        server.login(self.user, self.pw)
+        server.sendmail(self.me, [self.you], m.as_string())
+        self.script_logfile.write("................email sent\n")
+
+
 if __name__ == '__main__':
     # Create instance of get_list_of_runs
     runs = get_list_of_runs()
