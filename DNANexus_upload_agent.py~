@@ -69,7 +69,7 @@ class upload2Nexus():
         self.fastq_folder_path=""
         
         #upload_agent_logfile
-        self.upload_agent_logfile="/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_cronjob_log.txt"
+        self.upload_agent_logfile=self.runfolders+"/upload_logfile.txt"
         self.upload_agent_script_logfile=open(self.upload_agent_logfile,'a')
 
         # string of fastqs
