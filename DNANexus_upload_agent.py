@@ -171,7 +171,7 @@ class upload2Nexus():
         self.nexus_path=self.runfolder+"/Data"
 
 		# build the nexus upload command                        
-        nexus_upload_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ self.nexus_path +" --do-not-compress --progress --upload-threads 10 "+ self.fastq_string
+        nexus_upload_command = self.upload_agent + " --auth-token A3TJlJ3Pb19ZYPlgDCdRE2ZsM2UN3ydH --project NGS_runs --folder /"+ self.nexus_path +" --do-not-compress --upload-threads 10"+ self.fastq_string
         
         #write to logfile
         self.upload_agent_script_logfile.write("Nexus command = \n"+nexus_upload_command+"\n")
