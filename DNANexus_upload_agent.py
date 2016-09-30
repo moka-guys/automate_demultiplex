@@ -167,7 +167,11 @@ class upload2Nexus():
         
     def upload(self):
         '''takes a list of all the fastqs (with full paths) and calls the upload agent.'''
-		#self.nexus path
+		
+        # perform upload agent test
+        self.test_upload_agent()
+
+        #self.nexus path
         self.nexus_path=self.runfolder+"/Data"
 
 		# build the nexus upload command                        
@@ -220,6 +224,25 @@ class upload2Nexus():
         #write to logfile
         self.upload_agent_script_logfile.write("Email sent")
         self.upload_agent_script_logfile.close()
+
+    def test_upload_agent(self):
+        '''test the upload agent is installed'''
+        
+        #command
+        command = self.upload_agent+" --version"
+
+        # run the command
+        proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        
+        # capture the streams
+        (out, err) = proc.communicate()
+        
+        if "Upload Agent Version:" not in out:
+            raise Exception, "Upload agent not installed"
+
+        # write this to the log file
+        self.upload_agent_script_logfile.write("upload agent check passed\n")
+
 
 
 if __name__ == '__main__':
