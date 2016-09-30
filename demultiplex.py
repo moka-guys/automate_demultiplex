@@ -129,7 +129,7 @@ class ready2start_demultiplexing():
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
             #send an email:
             self.email_subject="DEMULTIPLEXING INITIATED"
-            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
+            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated\nPlease update smartsheet"
             self.send_an_email()
             # proceed
             self.run_demuliplexing()
@@ -187,7 +187,7 @@ class ready2start_demultiplexing():
         if  "Processing completed with 0 errors and 0 warnings." in lastline:
             self.script_logfile.write("demultiplexing complete\n")
             self.email_subject="demultiplexing complete"
-            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
+            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n Please update smartsheet"
             self.send_an_email()
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
