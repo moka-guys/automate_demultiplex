@@ -227,6 +227,10 @@ class ready2start_demultiplexing():
         (out, err) = proc.communicate()
         
         if "BCL to FASTQ file converter" not in err:
+            self.email_subject="ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
+            self.email_priority=1
+            self.email_message="The test to check if bcl2fastq is working ("+command+") failed"
+            self.send_an_email()
             raise Exception, "bcl2fastq not installed"
 
         # write this to the log file
