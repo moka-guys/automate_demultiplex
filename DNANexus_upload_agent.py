@@ -284,6 +284,10 @@ class upload2Nexus():
         (out, err) = proc.communicate()
         
         if "Upload Agent Version:" not in out:
+            self.email_subject="ERROR - PRESENCE OF DNA NEXUS UPLOAD AGENT TEST FAILED"
+            self.email_priority=1
+            self.email_message="The test to check the upload agent has been installed ("+command+") failed"
+            self.send_an_email()
             raise Exception, "Upload agent not installed"
 
         # write this to the log file
