@@ -8,9 +8,14 @@ This script loops through all the runs in the runfolder share and identifies any
  3. sample_sheet is present in the sample_sheets folder matching the name of the run.
  
 If all 3 points are satisfied bcl2fastq is run.
- 
+
 The output is written to a log file and the last line of the log file checked to see if the run was successful or not.
- 
-#future plans
-1. A report will be emailed depending on the success
-2. A second script to upload the finished project to DNA nexus.
+
+Two log files are written to. One is the 'cron job' log, recording the outcome for each run folder each time the script is run.
+If the demultiplexing is initiated a log file is created to record the stdout or stderr of bcl2fastq.
+
+Email notifications are sent to say demultiplexing has started and one upon completion reporting success or failure (after readingt the log file).
+
+# DNA_Nexus_upload_agent.py
+This script looks for newly demultiplexed runs and initiates the upload of the run folder to DNA Nexus using the upload agent
+An email is sent upon completion.
