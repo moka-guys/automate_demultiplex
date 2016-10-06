@@ -72,11 +72,17 @@ class upload2Nexus():
         self.upload_agent_logfile="/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_cronjob_log.txt"
         self.upload_agent_script_logfile=open(self.upload_agent_logfile,'a')
 
-        # string of fastqs
+        # string of fastqs for upload agent
         self.fastq_string=""
+        # list of fastqs to get ngs run number and WES batch
+        self.list_of_samples=[]
+
+        #strings for NGSrun and wes numbers
+        self.NGS_run=''
+        self.wes_number=''
         
         #create path to data in nexus eg /runfolder/Data
-        self.nexus_path= self.runfolder+"/Data"
+        self.nexus_path= ""
         
         #email server settings
         self.user = 'AKIAIO3XY2MMSBEQNNXQ'
@@ -158,18 +164,64 @@ class upload2Nexus():
                 else:
                     #build the list of fastqs with full file paths
                     self.fastq_string=self.fastq_string+" "+self.fastq_folder_path+"/"+fastq
+                    #add the fastq name to a list to be used in create_nexus_file_path
+                    self.list_of_samples.append(fastq)
                     
         #write to logfile
         self.upload_agent_script_logfile.write("list of fastqs found\n")
         
+        #build the file path with WES batch and NGS run numbers
+        self.create_nexus_file_path()
+        
         # send list to module to trigger upload
         self.upload()       
+    
+    def create_nexus_file_path(self):
+        ''' get info from the fastq names to have a more informative folder structure within DNA nexus 
+        want the ngs run number eg NGS95a and any wes batches eg WES_5
+        example fastq name = NGS95a_13_94947_SW_WES_5_S8_R2_001.fastq.gz'''
         
+        # a list to hold all the wes numbers
+        WES_numbers=[]
+        # for each fastq in the list of fastqs
+        for fastq in self.list_of_samples:
+            # split on underscores to capture the first element which is the ngs number
+            splitfastq=fastq.split("_")
+            # assign self.ngs_run
+            self.ngs_run=splitfastq[0]
+            
+            # if the run has any WES samples
+            if "WES" in fastq:
+                # split on _WES to split the fastq name into two
+                splitfastq = fastq.split("_WES")
+                # take the second half of it and split on "_S"
+                splitfastq2 = splitfastq[1].split("_S")
+                #This should split the string in half again, with the first element either _5 or 5 depending if tit's WES_5 or WES5
+                #append this to WES (which was replaced as part of the split) and add to a list
+                wesrun="WES"+splitfastq2[0]
+                WES_numbers.append(wesrun)
+        
+        # create a list of unique WES batches
+        for wesnumber in set(WES_numbers):
+            # if multiple WES batches append each one with an underscore
+            if len(self.wes_number)>1:
+                self.wes_number=self.wes_number+"_"+wesnumber
+            else:
+                self.wes_number=wesnumber
+
+        # self.nexus path
+        self.nexus_path=self.runfolder+"_"+self.ngs_run+"_"+self.wes_number+"/Data"
+        print self.nexus_path
+
+
     def upload(self):
         '''takes a list of all the fastqs (with full paths) and calls the upload agent.'''
 		
+        # perform upload agent test
+        self.test_upload_agent()
+
 		# build the nexus upload command                        
-        nexus_upload_command = self.upload_agent + " --auth-token kMEShRwrLbRjiqwpol4um1Wi7BpXIHUO --project NGS_runs --folder /"+ self.nexus_path +" --do-not-compress --progress --upload-threads 10 "+ self.fastq_string
+        nexus_upload_command = self.upload_agent + " --auth-token A3TJlJ3Pb19ZYPlgDCdRE2ZsM2UN3ydH --project NGS_runs --folder /"+ self.nexus_path +" --do-not-compress --upload-threads 10"+ self.fastq_string
         
         #write to logfile
         self.upload_agent_script_logfile.write("Nexus command = \n"+nexus_upload_command+"\n")
@@ -189,9 +241,9 @@ class upload2Nexus():
         
         
 
-        self.email_subject="Upload of "+self.runfolder+" to DNA Nexus initiated"
+        self.email_subject="Upload of "+self.runfolder+" completed"
         self.email_priority=3
-        self.email_message=self.runfolder+" \tuploading to DNA Nexus\nPlease see log file at: "+self.runfolderpath+"/"+self.upload_started_file
+        self.email_message=self.runfolder+" \t has been uploaded to DNA Nexus :-)\nPlease see log file at: "+self.runfolderpath+"/"+self.upload_started_file
 
         self.send_an_email()
 
@@ -218,6 +270,29 @@ class upload2Nexus():
         #write to logfile
         self.upload_agent_script_logfile.write("Email sent")
         self.upload_agent_script_logfile.close()
+
+    def test_upload_agent(self):
+        '''test the upload agent is installed'''
+        
+        #command
+        command = self.upload_agent+" --version"
+
+        # run the command
+        proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        
+        # capture the streams
+        (out, err) = proc.communicate()
+        
+        if "Upload Agent Version:" not in out:
+            self.email_subject="ERROR - PRESENCE OF DNA NEXUS UPLOAD AGENT TEST FAILED"
+            self.email_priority=1
+            self.email_message="The test to check the upload agent has been installed ("+command+") failed"
+            self.send_an_email()
+            raise Exception, "Upload agent not installed"
+
+        # write this to the log file
+        self.upload_agent_script_logfile.write("upload agent check passed\n")
+
 
 
 if __name__ == '__main__':

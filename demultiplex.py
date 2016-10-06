@@ -63,6 +63,9 @@ class ready2start_demultiplexing():
         self.bcl2fastq = "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq"
         #succesful run
         self.logfile_success="Processing completed with 0 errors and 0 warnings."
+
+        #bcl2fastq test file
+        self.bcltest= "/home/mokaguys/Documents/automate_demultiplexing_logfiles/bcl2fastq.txt"
         
         #logfile
         #self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
@@ -126,7 +129,7 @@ class ready2start_demultiplexing():
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
             #send an email:
             self.email_subject="DEMULTIPLEXING INITIATED"
-            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
+            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated\nPlease update smartsheet"
             self.send_an_email()
             # proceed
             self.run_demuliplexing()
@@ -143,6 +146,9 @@ class ready2start_demultiplexing():
         # practice command: 
         # command = "fv samtools faidx /home/aled/Documents/Reference_Genomes/hg19.fa xfvg chr1:10000000-10000002"
         
+        # test bcl2fastq install
+        self.test_bcl2fastq()
+
         # create the command
         command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
         # command="/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R 160822_NB551068_0006_AHGYM7BGXY/ --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting"
@@ -181,7 +187,7 @@ class ready2start_demultiplexing():
         if  "Processing completed with 0 errors and 0 warnings." in lastline:
             self.script_logfile.write("demultiplexing complete\n")
             self.email_subject="demultiplexing complete"
-            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
+            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n Please update smartsheet"
             self.send_an_email()
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
@@ -209,6 +215,28 @@ class ready2start_demultiplexing():
         server.login(self.user, self.pw)
         server.sendmail(self.me, [self.you], m.as_string())
         self.script_logfile.write("................email sent\n")
+
+    def test_bcl2fastq(self):
+        command = self.bcl2fastq
+        
+
+        # run the command, redirecting stderror to stdout
+        proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        
+        # capture the streams (err is redirected to out above)
+        (out, err) = proc.communicate()
+        
+        if "BCL to FASTQ file converter" not in err:
+            self.email_subject="ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
+            self.email_priority=1
+            self.email_message="The test to check if bcl2fastq is working ("+command+") failed"
+            self.send_an_email()
+            raise Exception, "bcl2fastq not installed"
+
+        # write this to the log file
+        self.script_logfile.write("bcl2fastq check passed\n")
+
+
 
 
 if __name__ == '__main__':
