@@ -58,6 +58,7 @@ class ready2start_demultiplexing():
         self.runfolder = ""
         self.runfolderpath = ""
         self.samplesheet = ""
+        self.list_of_samplesheets=[]
 
         # path to bcl2fastq
         self.bcl2fastq = "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq"
@@ -124,8 +125,18 @@ class ready2start_demultiplexing():
         '''check sample sheet is present'''
         # set name and path of sample sheet to find
         self.samplesheet=self.samplesheets + "/" + self.runfolder + "_SampleSheet.csv"
-        # if the samplesheet is present 
-        if os.path.isfile(self.samplesheet):
+        
+        # get a list samplesheets in folder
+        all_runfolders = os.listdir(self.samplesheets)
+        for samplesheet in all_runfolders:
+            # convert all to capitals
+            self.list_of_samplesheets.append(samplesheet.upper())
+
+        # set the expected samplesheet name (convert to uppercase)
+        expected_samplesheet = self.runfolder.upper() + "_SAMPLESHEET.CSV"
+        
+        #if the samplesheet exists
+        if expected_samplesheet in self.list_of_samplesheets:
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
             #send an email:
             self.email_subject="DEMULTIPLEXING INITIATED"
