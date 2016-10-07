@@ -204,9 +204,10 @@ class upload2Nexus():
                 splitfastq = fastq.split("_WES")
                 # take the second half of it and split on "_S"
                 splitfastq2 = splitfastq[1].split("_S")
+
                 #This should split the string in half again, with the first element either _5 or 5 depending if tit's WES_5 or WES5
                 #append this to WES (which was replaced as part of the split) and add to a list
-                wesrun="WES"+splitfastq2[0]
+                wesrun="WES"+splitfastq2[0].replace('_','')
                 WES_numbers.append(wesrun)
         
         # create a list of unique WES batches
