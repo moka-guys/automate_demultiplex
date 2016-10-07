@@ -81,6 +81,14 @@ class upload2Nexus():
         self.NGS_run=''
         self.wes_number=''
         
+        # variables for running pipeline
+        self.base_command="dx run GATK3.5_nobatch -y "
+        self.arg1=-"istage-By6P4Zj075zj1VQg3GV1j8qQ.reads_fastqgz "
+        self.arg2=" -istage-By6P4Zj075zj1VQg3GV1j8qQ.reads2_fastqgz "
+        self.arg3=" -istage-By6P4Zj075zj1VQg3GV1jpop.reads "
+        self.arg4=" -istage-By6P4Zj075zj1VQg3GV1jhow.reads "
+        self.dx_run=[]
+
         #create path to data in nexus eg /runfolder/Data
         self.nexus_path= ""
         
@@ -246,7 +254,7 @@ class upload2Nexus():
         self.email_message=self.runfolder+" \t has been uploaded to DNA Nexus :-)\nPlease see log file at: "+self.runfolderpath+"/"+self.upload_started_file
 
         self.send_an_email()
-
+        self.create_run_pipeline_command()
 
     def send_an_email(self):
         #body = self.runfolder
@@ -292,6 +300,62 @@ class upload2Nexus():
 
         # write this to the log file
         self.upload_agent_script_logfile.write("upload agent check passed\n")
+
+    def  create_run_pipeline_command(self):
+        '''loop through the list of fastqs to create a set of commands to initiate the pipeline'''
+        
+        #loop through list of fastq files
+        for fastq in self.list_of_samples:
+            #take read one
+            if "_R1_" in fastq:
+                #assign read1
+                read1=fastq
+                # assign read2 bu replacing R1 with R2
+                read2=fastq.replace("_R1_","_R2_")
+                # create the dx command
+                command=self.base_command+self.arg1+read1+self.arg2+read2+self.arg3+read2+self.arg4+read2
+                #add command for each pair of fastqs to a list 
+                self.dx_run.append(command)
+        # call module to issue the dx run commands
+        self.run_pipeline()
+
+    def run_pipeline(self):
+        '''issue dna nexus run commands'''
+        source_command = "source /etc/profile.d/dnanexus.environment.sh"
+                
+        # run the command
+        proc = subprocess.Popen([source_command], stderr=subprocess.pipe, stdout=subprocess.PIPE, shell=True)
+         
+        # capture the streams (err is redirected to out above)
+        (out, err) = proc.communicate()
+        
+        # loop through all dx_run commands:       
+        for command in  self.dx_run:
+            # run the command
+            proc = subprocess.Popen([command], stderr=subprocess.pipe, stdout=subprocess.PIPE, shell=True)
+            
+            # capture the sample name
+            #step 1 split the command to get the last argument (read2)
+            split_command=command.split(self.arg4)
+            read_2 = split_command[1]
+            # split this fastq name on _S1_ and take first half to get sample name
+            read=read_2.split("_S1_")
+            sample=read[0]
+            
+            #capture the workflow used
+            # split command on -y 
+            split_command=command.split('-y')
+            # take first bit and remove dx run 
+            app=split_command[0].replace('"dx run ','')
+            
+            #create email message
+            self.email_subject="started pipeline for :"+sample
+            self.email_priority=3
+            self.email_message=sample + " being processed using workflow " + app
+            
+            # send email
+            self.send_an_email()
+
 
 
 
