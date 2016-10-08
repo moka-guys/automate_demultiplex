@@ -82,6 +82,7 @@ class upload2Nexus():
         self.wes_number=''
         
         # variables for running pipeline
+        self.source_command = "source /etc/profile.d/dnanexus.environment.sh; "
         self.base_command="dx run GATK3.5_nobatch -y "
         self.arg1=-"istage-By6P4Zj075zj1VQg3GV1j8qQ.reads_fastqgz "
         self.arg2=" -istage-By6P4Zj075zj1VQg3GV1j8qQ.reads2_fastqgz "
@@ -314,22 +315,14 @@ class upload2Nexus():
                 # assign read2 bu replacing R1 with R2
                 read2=fastq.replace("_R1_","_R2_")
                 # create the dx command
-                command=self.base_command+self.arg1+read1+self.arg2+read2+self.arg3+read2+self.arg4+read2
+                command=self.source_command+self.base_command+self.arg1+read1+self.arg2+read2+self.arg3+read2+self.arg4+read2
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
         # call module to issue the dx run commands
         self.run_pipeline()
 
     def run_pipeline(self):
-        '''issue dna nexus run commands'''
-        source_command = "source /etc/profile.d/dnanexus.environment.sh"
-                
-        # run the command
-        proc = subprocess.Popen([source_command], stderr=subprocess.pipe, stdout=subprocess.PIPE, shell=True)
-         
-        # capture the streams (err is redirected to out above)
-        (out, err) = proc.communicate()
-        
+        '''issue dna nexus run commands''' 
         # loop through all dx_run commands:       
         for command in  self.dx_run:
             # run the command
