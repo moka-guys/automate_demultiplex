@@ -72,6 +72,9 @@ class upload2Nexus():
         self.upload_agent_logfile="/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_cronjob_log.txt"
         self.upload_agent_script_logfile=open(self.upload_agent_logfile,'a')
 
+        # DNA Nexus run command log file
+        self.DNA_Nexus_workflow_logfolder="/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs/"
+
         # string of fastqs for upload agent
         self.fastq_string=""
         # list of fastqs to get ngs run number and WES batch
@@ -323,11 +326,22 @@ class upload2Nexus():
 
     def run_pipeline(self):
         '''issue dna nexus run commands''' 
+        #open log file
+
+        self.DNA_Nexus_workflow_log=open(self.DNA_Nexus_workflow_logfolder+self.runfolder+".txt",'w')
+
+        self.DNA_Nexus_workflow_log.write("----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------")
+
         # loop through all dx_run commands:       
         for command in  self.dx_run:
             # run the command
-            proc = subprocess.Popen([command], stderr=subprocess.pipe, stdout=subprocess.PIPE, shell=True)
+            proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             
+            # capture the streams
+        	(out, err) = proc.communicate()
+
+            self.DNA_Nexus_workflow_log.write(command)
+
             # capture the sample name
             #step 1 split the command to get the last argument (read2)
             split_command=command.split(self.arg4)
