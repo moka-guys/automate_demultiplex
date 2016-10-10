@@ -314,11 +314,11 @@ class upload2Nexus():
             #take read one
             if "_R1_" in fastq:
                 #assign read1
-                read1=fastq
+                read1 = fastq
                 # assign read2 bu replacing R1 with R2
-                read2=fastq.replace("_R1_","_R2_")
+                read2 = fastq.replace("_R1_", "_R2_")
                 # create the dx command
-                command=self.source_command+self.base_command+self.arg1+read1+self.arg2+read2+self.arg3+read2+self.arg4+read2
+                command = self.source_command + self.base_command + self.arg1 + read1 + self.arg2 + read2 + self.arg3 + read2 + self.arg4 + read2
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
         # call module to issue the dx run commands
@@ -326,29 +326,30 @@ class upload2Nexus():
 
     def run_pipeline(self):
         '''issue dna nexus run commands''' 
+        
         #open log file
-
-        self.DNA_Nexus_workflow_log=open(self.DNA_Nexus_workflow_logfolder+self.runfolder+".txt",'w')
-
-        self.DNA_Nexus_workflow_log.write("----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------")
+        self.DNA_Nexus_workflow_log = open(self.DNA_Nexus_workflow_logfolder + self.runfolder + ".txt", 'w')
+        #record timestamp
+        self.DNA_Nexus_workflow_log.write("----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------")
 
         # loop through all dx_run commands:       
-        for command in  self.dx_run:
+        for command in self.dx_run:
             # run the command
-            proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            #proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             
             # capture the streams
-        	(out, err) = proc.communicate()
+        	#(out, err) = proc.communicate()
 
+        	#write command to log file
             self.DNA_Nexus_workflow_log.write(command)
 
             # capture the sample name
             #step 1 split the command to get the last argument (read2)
-            split_command=command.split(self.arg4)
+            split_command = command.split(self.arg4)
             read_2 = split_command[1]
             # split this fastq name on _S1_ and take first half to get sample name
-            read=read_2.split("_S1_")
-            sample=read[0]
+            read = read_2.split("_S1_")
+            sample = read[0]
             
             #capture the workflow used
             # split command on -y 
@@ -357,9 +358,9 @@ class upload2Nexus():
             app=split_command[0].replace('"dx run ','')
             
             #create email message
-            self.email_subject="started pipeline for :"+sample
-            self.email_priority=3
-            self.email_message=sample + " being processed using workflow " + app
+            self.email_subject = "started pipeline for :" + sample
+            self.email_priority = 3
+            self.email_message = sample + " being processed using workflow " + app
             
             # send email
             self.send_an_email()
