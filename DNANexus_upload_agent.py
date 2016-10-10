@@ -85,12 +85,12 @@ class upload2Nexus():
         self.wes_number = ''
         
         # variables for running pipeline
-        self.source_command = "source /etc/profile.d/dnanexus.environment.sh; "
-        self.base_command = "dx run GATK3.5_nobatch -y "
-        self.arg1 = " -istage-By6P4Zj075zj1VQg3GV1j8qQ.reads_fastqgz "
-        self.arg2 = " -istage-By6P4Zj075zj1VQg3GV1j8qQ.reads2_fastqgz "
-        self.arg3 = " -istage-By6P4Zj075zj1VQg3GV1jpop.reads "
-        self.arg4 = " -istage-By6P4Zj075zj1VQg3GV1jhow.reads "
+        self.source_command = "source /etc/profile.d/dnanexus.environment.sh; dx select NGS_runs; "
+        self.base_command = "dx run apps/GATK3.5_160918 -y"
+        self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="
+        self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="
+        self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz="
+        self.arg4 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz="
         self.dx_run = []
 
         #create path to data in nexus eg /runfolder/Data
@@ -282,7 +282,7 @@ class upload2Nexus():
 
         #write to logfile
         self.upload_agent_script_logfile.write("Email sent")
-        self.upload_agent_script_logfile.close()
+        #self.upload_agent_script_logfile.close()
 
     def test_upload_agent(self):
         '''test the upload agent is installed'''
@@ -314,11 +314,11 @@ class upload2Nexus():
             #take read one
             if "_R1_" in fastq:
                 #assign read1
-                read1 = fastq
+                read1 = self.nexus_path+"/"+fastq
                 # assign read2 bu replacing R1 with R2
-                read2 = fastq.replace("_R1_", "_R2_")
+                read2 = self.nexus_path+"/"+fastq.replace("_R1_", "_R2_")
                 # create the dx command
-                command = self.source_command + self.base_command + self.arg1 + read1 + self.arg2 + read2 + self.arg3 + read2 + self.arg4 + read2
+                command = self.source_command + self.base_command + self.arg1 + read1 + self.arg2 + read2 + self.arg3 + read1 + self.arg4 + read2
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
         # call module to issue the dx run commands
@@ -330,35 +330,37 @@ class upload2Nexus():
         #open log file
         self.DNA_Nexus_workflow_log = open(self.DNA_Nexus_workflow_logfolder + self.runfolder + ".txt", 'w')
         #record timestamp
-        self.DNA_Nexus_workflow_log.write("----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------")
+        self.DNA_Nexus_workflow_log.write("----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
 
         # loop through all dx_run commands:       
         for command in self.dx_run:
             # run the command
-            #proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             
             # capture the streams
         	#(out, err) = proc.communicate()
 
         	#write command to log file
-            self.DNA_Nexus_workflow_log.write(command)
+            self.DNA_Nexus_workflow_log.write(command+"\n")
 
             # capture the sample name
             #step 1 split the command to get the last argument (read2)
             split_command = command.split(self.arg4)
-            read_2 = split_command[1]
+            read_2 = split_command[1].replace(self.nexus_path,'')
+
             # split this fastq name on _S1_ and take first half to get sample name
-            read = read_2.split("_S1_")
-            sample = read[0]
+            read = read_2.split("_")
+
+            sample = read[0]+"_"+read[1]+"_"+read[2]+"_"+read[3]+"_"+read[4]
             
             #capture the workflow used
             # split command on -y 
             split_command=command.split('-y')
             # take first bit and remove dx run 
-            app=split_command[0].replace('"dx run ','')
+            app=split_command[0].replace("dx run apps/",'').replace(self.source_command,"")
             
             #create email message
-            self.email_subject = "started pipeline for :" + sample
+            self.email_subject = "started pipeline for " + sample
             self.email_priority = 3
             self.email_message = sample + " being processed using workflow " + app
             
