@@ -113,12 +113,17 @@ class upload2Nexus():
         self.email_subject = ""
         self.email_message = ""
         self.email_priority = 3
-        
+
+        #variable to rename log file.
+        self.rename=""
+        self.now=""
     def already_uploaded(self, runfolder, now):
         '''check folder hasn't already been uploaded'''
-		
+        if self.now=="":
+            self.now=now
+        
 		#open the logfile for this hour's cron job.
-        self.upload_agent_script_logfile = open(self.upload_agent_logfile+now+".txt",'a')
+        self.upload_agent_script_logfile = open(self.upload_agent_logfile+self.now+".txt",'a')
 
         # capture the runfolder 
         self.runfolder = str(runfolder)
@@ -268,6 +273,13 @@ class upload2Nexus():
         # start pipeline
         self.create_run_pipeline_command()
 
+        # close the log file
+        self.upload_agent_script_logfile.close()
+
+        #rename file to show what runs were affected.
+        self.rename=self.rename+self.runfolder+"_"
+        os.rename(self.upload_agent_script_logfile,self.upload_agent_logfile+self.rename+self.now+".txt")
+
     def send_an_email(self):
         #body = self.runfolder
         self.upload_agent_script_logfile.write("Sending email to...... " + str(self.you))
@@ -367,7 +379,11 @@ class upload2Nexus():
             app=split_command[0].replace("dx run apps/",'').replace(self.source_command,"")
 
        	
-       	# run a command to execute the bash script made above
+        #write to cron job script
+       	self.upload_agent_script_logfile.write("dx run commands issued\nSee "+self.bash_script)
+
+
+        # run a command to execute the bash script made above
         cmd="bash "+self.bash_script
         proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         
