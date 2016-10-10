@@ -29,6 +29,9 @@ class get_list_of_runs():
         self.runfolders ="/media/data1/share" # workstation
 
     def loop_through_runs(self):
+        #set a time stamp to name the log file
+        now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
+
         # create a list of all the folders in the runfolders directory
         all_runfolders = os.listdir(self.runfolders)
         # for each folder if it is not samplesheets pass the runfolder to the next class ready2start_demultiplexing()
@@ -37,7 +40,7 @@ class get_list_of_runs():
                 if folder.endswith('.gz'):
                     pass
                 else:
-                    ready2start_demultiplexing().already_demultiplexed(folder)
+                    ready2start_demultiplexing().already_demultiplexed(folder, now)
 
 
 class ready2start_demultiplexing():
@@ -70,8 +73,8 @@ class ready2start_demultiplexing():
         
         #logfile
         #self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
-        self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/demultiplexing_cronjob_log.txt" # workstation
-        self.script_logfile=open(self.script_logfile_path,'a')
+        self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files/" # workstation
+        
         
         #email server settings
         self.user = 'AKIAIO3XY2MMSBEQNNXQ'
@@ -88,9 +91,12 @@ class ready2start_demultiplexing():
         self.email_priority=3
 
 
-    def already_demultiplexed(self, runfolder):
+    def already_demultiplexed(self, runfolder, now):
         '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
         
+        #open the logfile for this hour's cron job.
+        self.script_logfile=open(self.script_logfile_path+now+".txt",'a')
+
         # capture the runfolder 
         self.runfolder = str(runfolder)
                
