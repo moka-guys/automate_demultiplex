@@ -74,7 +74,7 @@ class ready2start_demultiplexing():
         #logfile
         #self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
         self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files/" # workstation
-        
+        self.logfile_name=""
         
         #email server settings
         self.user = 'AKIAIO3XY2MMSBEQNNXQ'
@@ -90,12 +90,17 @@ class ready2start_demultiplexing():
         self.email_message=""
         self.email_priority=3
 
+        #rename log file
+        self.rename=""
+        self.name=""
+
 
     def already_demultiplexed(self, runfolder, now):
         '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
-        
+        self.now=now
         #open the logfile for this hour's cron job.
-        self.script_logfile=open(self.script_logfile_path+now+".txt",'a')
+        self.logfile_name=self.script_logfile_path+self.now+".txt"
+        self.script_logfile=open(self.logfile_name,'a')
 
         # capture the runfolder 
         self.runfolder = str(runfolder)
@@ -206,6 +211,10 @@ class ready2start_demultiplexing():
             self.email_subject="demultiplexing complete"
             self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n Please update smartsheet"
             self.send_an_email()
+            self.script_logfile.close()
+            self.rename=self.rename+self.runfolder+"_"
+            os.rename(self.script_logfile_name,self.script_logfile_path+self.rename+self.now+".txt")
+
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
             self.email_subject="DEMULTIPLEXING FAILED"
@@ -235,7 +244,6 @@ class ready2start_demultiplexing():
 
     def test_bcl2fastq(self):
         command = self.bcl2fastq
-        
 
         # run the command, redirecting stderror to stdout
         proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
