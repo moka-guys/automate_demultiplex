@@ -85,7 +85,8 @@ class upload2Nexus():
         self.wes_number = ''
         
         # variables for running pipeline
-        self.source_command = "source /etc/profile.d/dnanexus.environment.sh; dx select NGS_runs; "
+        self.bash_script=""
+        self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndx select NGS_runs\n"
         self.base_command = "dx run apps/GATK3.5_160918 -y"
         self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="
         self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="
@@ -308,7 +309,13 @@ class upload2Nexus():
 
     def  create_run_pipeline_command(self):
         '''loop through the list of fastqs to create a set of commands to initiate the pipeline'''
+        self.bash_script=self.DNA_Nexus_workflow_logfolder + self.runfolder + ".sh"
         
+        #open bash script
+        self.DNA_Nexus_bash_script = open(self.bash_script, 'w')
+        #write command to log file
+        self.DNA_Nexus_bash_script.write(self.source_command)
+
         #loop through list of fastq files
         for fastq in self.list_of_samples:
             #take read one
@@ -318,30 +325,23 @@ class upload2Nexus():
                 # assign read2 bu replacing R1 with R2
                 read2 = self.nexus_path+"/"+fastq.replace("_R1_", "_R2_")
                 # create the dx command
-                command = self.source_command + self.base_command + self.arg1 + read1 + self.arg2 + read2 + self.arg3 + read1 + self.arg4 + read2
+                command = self.base_command + self.arg1 + read1 + self.arg2 + read2 + self.arg3 + read1 + self.arg4 + read2
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
         # call module to issue the dx run commands
         self.run_pipeline()
 
+        #record timestamp
+        self.DNA_Nexus_bash_script.write("----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
+        self.DNA_Nexus_bash_script.close()
+
     def run_pipeline(self):
         '''issue dna nexus run commands''' 
-        
-        #open log file
-        self.DNA_Nexus_workflow_log = open(self.DNA_Nexus_workflow_logfolder + self.runfolder + ".txt", 'w')
-        #record timestamp
-        self.DNA_Nexus_workflow_log.write("----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
-
+               
         # loop through all dx_run commands:       
         for command in self.dx_run:
-            # run the command
-            proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-            
-            # capture the streams
-        	#(out, err) = proc.communicate()
-
-        	#write command to log file
-            self.DNA_Nexus_workflow_log.write(command+"\n")
+            # write command to log file
+            self.DNA_Nexus_bash_script.write(command+"\n")
 
             # capture the sample name
             #step 1 split the command to get the last argument (read2)
@@ -358,14 +358,22 @@ class upload2Nexus():
             split_command=command.split('-y')
             # take first bit and remove dx run 
             app=split_command[0].replace("dx run apps/",'').replace(self.source_command,"")
-            
-            #create email message
-            self.email_subject = "started pipeline for " + sample
-            self.email_priority = 3
-            self.email_message = sample + " being processed using workflow " + app
-            
-            # send email
-            self.send_an_email()
+
+       	
+       	# run a command to execute the bash script made above
+        cmd="bash "+self.bash_script
+        proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        
+        # capture the streams
+        (out, err) = proc.communicate()
+
+        #create email message
+        #self.email_subject = "started pipeline for " + sample
+        #self.email_priority = 3
+        #self.email_message = sample + " being processed using workflow " + app
+        
+        # send email
+        #self.send_an_email()
 
 
 
