@@ -27,6 +27,9 @@ class get_list_of_runs():
         #self.runfolders = "/home/mokaguys/Documents/upload_agent_test" # workstation dummy
 
     def loop_through_runs(self):
+        #set a time stamp to name the log file
+        now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
+
         # create a list of all the folders in the runfolders directory
         all_runfolders = os.listdir(self.runfolders)
         
@@ -36,7 +39,7 @@ class get_list_of_runs():
                 if folder.endswith('.gz'):
                     pass
                 else:
-                    upload2Nexus().already_uploaded(folder)
+                    upload2Nexus().already_uploaded(folder,now)
 
 
 class upload2Nexus():
@@ -69,8 +72,8 @@ class upload2Nexus():
         self.fastq_folder_path = ""
         
         #upload_agent_logfile
-        self.upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_cronjob_log.txt"
-        self.upload_agent_script_logfile = open(self.upload_agent_logfile,'a')
+        self.upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Upload_agent_log/"
+        
 
         # DNA Nexus run command log file
         self.DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs/"
@@ -111,8 +114,11 @@ class upload2Nexus():
         self.email_message = ""
         self.email_priority = 3
         
-    def already_uploaded(self, runfolder):
+    def already_uploaded(self, runfolder, now):
         '''check folder hasn't already been uploaded'''
+		
+		#open the logfile for this hour's cron job.
+        self.upload_agent_script_logfile = open(self.upload_agent_logfile+now+".txt",'a')
 
         # capture the runfolder 
         self.runfolder = str(runfolder)
@@ -328,6 +334,7 @@ class upload2Nexus():
                 command = self.base_command + self.arg1 + read1 + self.arg2 + read2 + self.arg3 + read1 + self.arg4 + read2
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
+        
         # call module to issue the dx run commands
         self.run_pipeline()
 
