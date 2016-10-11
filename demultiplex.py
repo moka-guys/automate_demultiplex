@@ -213,7 +213,7 @@ class ready2start_demultiplexing():
             self.send_an_email()
             self.script_logfile.close()
             self.rename=self.rename+self.runfolder+"_"
-            os.rename(self.script_logfile_name,self.script_logfile_path+self.rename+self.now+".txt")
+            os.rename(self.logfile_name,self.script_logfile_path+self.rename+self.now+".txt")
 
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
