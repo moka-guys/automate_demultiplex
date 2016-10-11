@@ -182,14 +182,16 @@ class upload2Nexus():
         # find all fastqs
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
-                #exclude undertermined samples 
-                if fastq.startswith('Undetermined'):
-                    pass
-                else:
-                    #build the list of fastqs with full file paths
-                    self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
-                    #add the fastq name to a list to be used in create_nexus_file_path
-                    self.list_of_samples.append(fastq)
+                # select WES samples only
+                if "WES" in fastq:
+                    #exclude undertermined samples 
+                    if fastq.startswith('Undetermined'):
+                        pass
+                    else:
+                        #build the list of fastqs with full file paths
+                        self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
+                        #add the fastq name to a list to be used in create_nexus_file_path
+                        self.list_of_samples.append(fastq)
                     
         #write to logfile
         self.upload_agent_script_logfile.write("list of fastqs found\n")
