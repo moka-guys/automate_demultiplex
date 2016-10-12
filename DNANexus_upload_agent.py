@@ -294,11 +294,11 @@ class upload2Nexus():
         upload_started.close()
         
         # set email content
-        self.email_subject = "Upload of " + self.runfolder + " completed"
+        self.email_subject = "MOKAPIPE ALERT: Upload of " + self.runfolder + " completed"
         self.email_priority = 3
         self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + self.upload_started_file
         # send email
-        #self.send_an_email()
+        self.send_an_email()
         # start pipeline
         self.create_run_pipeline_command()
 
@@ -346,7 +346,7 @@ class upload2Nexus():
         (out, err) = proc.communicate()
         
         if "Upload Agent Version:" not in out:
-            self.email_subject = "ERROR - PRESENCE OF DNA NEXUS UPLOAD AGENT TEST FAILED"
+            self.email_subject = "MOKAPIPE ALERT: ERROR - PRESENCE OF DNA NEXUS UPLOAD AGENT TEST FAILED"
             self.email_priority = 1
             self.email_message = "The test to check the upload agent has been installed (" + command + ") failed"
             self.send_an_email()

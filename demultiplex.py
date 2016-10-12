@@ -150,7 +150,7 @@ class ready2start_demultiplexing():
         if expected_samplesheet in self.list_of_samplesheets:
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
             #send an email:
-            self.email_subject="DEMULTIPLEXING INITIATED"
+            self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
             self.email_message="demultiplexing for run " + self.runfolder + " has been initiated\nPlease update smartsheet"
             self.send_an_email()
             # proceed
@@ -208,16 +208,16 @@ class ready2start_demultiplexing():
         
         if  "Processing completed with 0 errors and 0 warnings." in lastline:
             self.script_logfile.write("demultiplexing complete\n")
-            self.email_subject="demultiplexing complete"
+            self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
             self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n Please update smartsheet"
             self.send_an_email()
             self.script_logfile.close()
-            self.rename=self.rename+self.runfolder+"_"
-            os.rename(self.logfile_name,self.script_logfile_path+self.now+self.rename+".txt")
+            self.rename=self.rename+self.runfolder
+            os.rename(self.logfile_name,self.script_logfile_path+self.now+"_"+self.rename+".txt")
 
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
-            self.email_subject="DEMULTIPLEXING FAILED"
+            self.email_subject="MOKAPIPE ALERT: DEMULTIPLEXING FAILED"
             self.email_priority=1
             self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
             self.send_an_email()
@@ -252,7 +252,7 @@ class ready2start_demultiplexing():
         (out, err) = proc.communicate()
         
         if "BCL to FASTQ file converter" not in err:
-            self.email_subject="ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
+            self.email_subject="MOKAPIPE ALERT: ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
             self.email_priority=1
             self.email_message="The test to check if bcl2fastq is working ("+command+") failed"
             self.send_an_email()
