@@ -15,6 +15,7 @@ import subprocess
 import datetime
 import smtplib
 from email.Message import Message
+import fnmatch
 
 
 class get_list_of_runs():
@@ -25,21 +26,46 @@ class get_list_of_runs():
         self.runfolders = "/media/data1/share" # workstation
         #self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         #self.runfolders = "/home/mokaguys/Documents/upload_agent_test" # workstation dummy
-
+        self.now=""
+    
     def loop_through_runs(self):
         #set a time stamp to name the log file
-        now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
-
+        self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
         # create a list of all the folders in the runfolders directory
         all_runfolders = os.listdir(self.runfolders)
         
+        upload=upload2Nexus()
         # for each folder if it is not samplesheets pass the runfolder to the next class
         for folder in all_runfolders:
             if folder != "samplesheets":
                 if folder.endswith('.gz'):
                     pass
                 else:
-                    upload2Nexus().already_uploaded(folder,now)
+                    upload.already_uploaded(folder, self.now)
+
+        self.combine_log_files()
+
+    def combine_log_files(self):
+        # count number of log files that match the time stamp
+        count=0
+        list_of_logfiles=[]
+        for file in os.listdir(upload2Nexus().DNA_Nexus_workflow_logfolder):
+            if fnmatch.fnmatch(file,self.now+'*'):
+                count=count+1
+                list_of_logfiles.append(file)
+        
+        if count > 1:
+            longest_name=max(list_of_logfiles, key=len)
+            list_of_logfiles.remove(longest_name)
+            remaining_files=list_of_logfiles.join(" ")
+
+            # combine all into one file with the longest filename
+            cmd = "cat " + remaining_files + " >> " + longest_name
+            rmcmd= "rm " + remaining_files
+
+            # run the command, redirecting stderror to stdout
+            proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=False)
+            proc = subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=False)
 
 
 class upload2Nexus():
@@ -73,6 +99,7 @@ class upload2Nexus():
         
         #upload_agent_logfile
         self.upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Upload_agent_log/"
+        self.upload_agent_logfile_name=""
         
 
         # DNA Nexus run command log file
@@ -117,13 +144,13 @@ class upload2Nexus():
         #variable to rename log file.
         self.rename=""
         self.now=""
+
     def already_uploaded(self, runfolder, now):
         '''check folder hasn't already been uploaded'''
-        if self.now=="":
-            self.now=now
-        
+        self.now=now
 		#open the logfile for this hour's cron job.
-        self.upload_agent_script_logfile = open(self.upload_agent_logfile+self.now+".txt",'a')
+        self.upload_agent_logfile_name=self.upload_agent_logfile+self.now+"_"+self.rename+".txt"
+        self.upload_agent_script_logfile = open(self.upload_agent_logfile_name,'a')
 
         # capture the runfolder 
         self.runfolder = str(runfolder)
@@ -271,7 +298,7 @@ class upload2Nexus():
         self.email_priority = 3
         self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + self.upload_started_file
         # send email
-        self.send_an_email()
+        #self.send_an_email()
         # start pipeline
         self.create_run_pipeline_command()
 
@@ -280,7 +307,8 @@ class upload2Nexus():
 
         #rename file to show what runs were affected.
         self.rename=self.rename+self.runfolder
-        os.rename(self.upload_agent_logfile+self.now+".txt",self.upload_agent_logfile+self.now+"_"+self.rename+".txt")
+        os.rename(self.upload_agent_logfile_name,self.upload_agent_logfile_name.replace('.txt','')+self.rename+".txt")
+        
 
     def send_an_email(self):
         #body = self.runfolder
@@ -302,7 +330,7 @@ class upload2Nexus():
         server.sendmail(self.me, [self.you], m.as_string())
 
         #write to logfile
-        self.upload_agent_script_logfile.write("Email sent")
+        self.upload_agent_script_logfile.write("Email sent\n")
         #self.upload_agent_script_logfile.close()
 
     def test_upload_agent(self):
