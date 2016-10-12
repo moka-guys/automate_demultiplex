@@ -279,8 +279,8 @@ class upload2Nexus():
         self.upload_agent_script_logfile.close()
 
         #rename file to show what runs were affected.
-        self.rename=self.rename+self.runfolder+"_"
-        os.rename(self.upload_agent_script_logfile,self.upload_agent_logfile+self.rename+self.now+".txt")
+        self.rename=self.rename+self.runfolder
+        os.rename(self.upload_agent_logfile+self.now+".txt",self.upload_agent_logfile+self.now+"_"+self.rename+".txt")
 
     def send_an_email(self):
         #body = self.runfolder
@@ -353,6 +353,7 @@ class upload2Nexus():
         self.run_pipeline()
 
         #record timestamp
+        self.DNA_Nexus_bash_script = open(self.bash_script, 'a')
         self.DNA_Nexus_bash_script.write("----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
         self.DNA_Nexus_bash_script.close()
 
@@ -384,13 +385,15 @@ class upload2Nexus():
         #write to cron job script
        	self.upload_agent_script_logfile.write("dx run commands issued\nSee "+self.bash_script)
 
-
+        self.DNA_Nexus_bash_script.close()
         # run a command to execute the bash script made above
         cmd="bash "+self.bash_script
         proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         
         # capture the streams
         (out, err) = proc.communicate()
+        print err 
+        print out
 
         #create email message
         #self.email_subject = "started pipeline for " + sample
