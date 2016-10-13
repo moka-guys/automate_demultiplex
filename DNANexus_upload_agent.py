@@ -264,7 +264,7 @@ class upload2Nexus():
                 self.wes_number = wesnumber
 
         # self.nexus path
-        self.nexus_path = self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + "/Data"
+        self.nexus_path = self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + "/Data/Intensities/BaseCalls"
         print self.nexus_path
 
 
