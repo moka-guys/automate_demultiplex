@@ -440,7 +440,7 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.close()
 
         #write to cron job script
-       	self.upload_agent_script_logfile.write("dx run commands issued\nSee "+self.bash_script)
+       	self.upload_agent_script_logfile.write("dx run commands issued\nSee "+self.bash_script+"\n")
         
         # # run a command to execute the bash script made above
         cmd="bash "+self.bash_script
@@ -452,7 +452,7 @@ class upload2Nexus():
         print out
 
         #create email message
-        self.email_subject = "started pipeline for " + sample
+        self.email_subject = "MokaPipe ALERT: started pipeline for " + sample
         self.email_priority = 3
         self.email_message = sample + " being processed using workflow " + app
         
