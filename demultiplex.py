@@ -19,6 +19,7 @@ import subprocess
 import datetime
 import smtplib
 from email.Message import Message
+import fnmatch
 
 
 class get_list_of_runs():
@@ -27,17 +28,47 @@ class get_list_of_runs():
         # directory of run folders - must be same as in ready2start_demultiplexing()
         # self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         self.runfolders ="/media/data1/share" # workstation
+        self.now=""
 
     def loop_through_runs(self):
+        #set a time stamp to name the log file
+        self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
+
         # create a list of all the folders in the runfolders directory
         all_runfolders = os.listdir(self.runfolders)
+
+        demultiplex=ready2start_demultiplexing()
         # for each folder if it is not samplesheets pass the runfolder to the next class ready2start_demultiplexing()
         for folder in all_runfolders:
             if folder != "samplesheets":
                 if folder.endswith('.gz'):
                     pass
                 else:
-                    ready2start_demultiplexing().already_demultiplexed(folder)
+                    demultiplex.already_demultiplexed(folder, self.now)
+        #call function to combine log files
+        self.combine_log_files()
+
+    def combine_log_files(self):
+        # count number of log files that match the time stamp
+        count=0
+        list_of_logfiles=[]
+        for file in os.listdir(ready2start_demultiplexing().script_logfile_path):
+            if fnmatch.fnmatch(file,self.now+'*'):
+                count=count+1
+                list_of_logfiles.append(ready2start_demultiplexing().script_logfile_path+file)
+        
+        if count > 1:
+            longest_name=max(list_of_logfiles, key=len)
+            list_of_logfiles.remove(longest_name)
+            remaining_files=" ".join(list_of_logfiles)
+
+            # combine all into one file with the longest filename
+            cmd = "cat " + remaining_files + " >> " + longest_name
+            rmcmd= "rm " + remaining_files
+
+            # run the command, redirecting stderror to stdout
+            proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            proc = subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
 
 
 class ready2start_demultiplexing():
@@ -58,6 +89,7 @@ class ready2start_demultiplexing():
         self.runfolder = ""
         self.runfolderpath = ""
         self.samplesheet = ""
+        self.list_of_samplesheets=[]
 
         # path to bcl2fastq
         self.bcl2fastq = "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq"
@@ -69,8 +101,8 @@ class ready2start_demultiplexing():
         
         #logfile
         #self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
-        self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/demultiplexing_cronjob_log.txt" # workstation
-        self.script_logfile=open(self.script_logfile_path,'a')
+        self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files/" # workstation
+        self.logfile_name=""
         
         #email server settings
         self.user = 'AKIAIO3XY2MMSBEQNNXQ'
@@ -86,10 +118,19 @@ class ready2start_demultiplexing():
         self.email_message=""
         self.email_priority=3
 
+        #rename log file
+        self.rename=""
+        self.name=""
+        self.now=""
 
-    def already_demultiplexed(self, runfolder):
+
+    def already_demultiplexed(self, runfolder, now):
         '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
-        
+        self.now=now
+        #open the logfile for this hour's cron job.
+        self.logfile_name=self.script_logfile_path+self.now+".txt"
+        self.script_logfile=open(self.logfile_name,'a')
+
         # capture the runfolder 
         self.runfolder = str(runfolder)
                
@@ -124,11 +165,21 @@ class ready2start_demultiplexing():
         '''check sample sheet is present'''
         # set name and path of sample sheet to find
         self.samplesheet=self.samplesheets + "/" + self.runfolder + "_SampleSheet.csv"
-        # if the samplesheet is present 
-        if os.path.isfile(self.samplesheet):
+        
+        # get a list samplesheets in folder
+        all_runfolders = os.listdir(self.samplesheets)
+        for samplesheet in all_runfolders:
+            # convert all to capitals
+            self.list_of_samplesheets.append(samplesheet.upper())
+
+        # set the expected samplesheet name (convert to uppercase)
+        expected_samplesheet = self.runfolder.upper() + "_SAMPLESHEET.CSV"
+        
+        #if the samplesheet exists
+        if expected_samplesheet in self.list_of_samplesheets:
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
             #send an email:
-            self.email_subject="DEMULTIPLEXING INITIATED"
+            self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
             self.email_message="demultiplexing for run " + self.runfolder + " has been initiated\nPlease update smartsheet"
             self.send_an_email()
             # proceed
@@ -186,12 +237,16 @@ class ready2start_demultiplexing():
         
         if  "Processing completed with 0 errors and 0 warnings." in lastline:
             self.script_logfile.write("demultiplexing complete\n")
-            self.email_subject="demultiplexing complete"
+            self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
             self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n Please update smartsheet"
             self.send_an_email()
+            self.script_logfile.close()
+            self.rename=self.rename+self.runfolder
+            os.rename(self.logfile_name,self.script_logfile_path+self.now+"_"+self.rename+".txt")
+
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
-            self.email_subject="DEMULTIPLEXING FAILED"
+            self.email_subject="MOKAPIPE ALERT: DEMULTIPLEXING FAILED"
             self.email_priority=1
             self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
             self.send_an_email()
@@ -218,7 +273,6 @@ class ready2start_demultiplexing():
 
     def test_bcl2fastq(self):
         command = self.bcl2fastq
-        
 
         # run the command, redirecting stderror to stdout
         proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
@@ -227,7 +281,7 @@ class ready2start_demultiplexing():
         (out, err) = proc.communicate()
         
         if "BCL to FASTQ file converter" not in err:
-            self.email_subject="ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
+            self.email_subject="MOKAPIPE ALERT: ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
             self.email_priority=1
             self.email_message="The test to check if bcl2fastq is working ("+command+") failed"
             self.send_an_email()
