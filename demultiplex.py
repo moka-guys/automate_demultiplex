@@ -93,6 +93,7 @@ class ready2start_demultiplexing():
         #rename log file
         self.rename=""
         self.name=""
+        self.now=""
 
 
     def already_demultiplexed(self, runfolder, now):
