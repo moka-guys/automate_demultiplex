@@ -25,7 +25,7 @@ class get_list_of_runs():
         # directory of run folders - must be same as in upload2Nexus()
         self.runfolders = "/media/data1/share" # workstation
         #self.runfolders = "/home/aled/demultiplex_testing" # aledpc
-        #self.runfolders = "/home/mokaguys/Documents/upload_agent_test" # workstation dummy
+        #self.runfolders = "/media/data2/data" # workstation dummy
         self.now=""
     
     def loop_through_runs(self):
@@ -33,7 +33,7 @@ class get_list_of_runs():
         self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
         # create a list of all the folders in the runfolders directory
         all_runfolders = os.listdir(self.runfolders)
-        
+        #print all_runfolders
         upload=upload2Nexus()
         # for each folder if it is not samplesheets pass the runfolder to the next class
         for folder in all_runfolders:
@@ -48,24 +48,33 @@ class get_list_of_runs():
     def combine_log_files(self):
         # count number of log files that match the time stamp
         count=0
+        # empty list
         list_of_logfiles=[]
+        #loop through the folder containing log files
         for file in os.listdir(upload2Nexus().DNA_Nexus_workflow_logfolder):
+            #if is one with this time stamp, ie if was made by this running of this script
             if fnmatch.fnmatch(file,self.now+'*'):
+                #add count and append to list
                 count=count+1
-                list_of_logfiles.append(file)
+                list_of_logfiles.append(upload2Nexus().DNA_Nexus_workflow_logfolder+file)
         
+        #if more than one log file we want to concatenate them
         if count > 1:
+            # get the filename with the longest name
             longest_name=max(list_of_logfiles, key=len)
+            #remove from the list
             list_of_logfiles.remove(longest_name)
-            remaining_files=list_of_logfiles.join(" ")
+            #concatenate all the remaining filenames into a string, seperated by spaces
+            remaining_files=" ".join(list_of_logfiles)
 
-            # combine all into one file with the longest filename
+            # combine all into one file with the longest filename (that will have the run folder name)
             cmd = "cat " + remaining_files + " >> " + longest_name
+            # remove the files that have been written to the longer file
             rmcmd= "rm " + remaining_files
-
+            
             # run the command, redirecting stderror to stdout
-            proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=False)
-            proc = subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=False)
+            proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            proc = subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
 
 
 class upload2Nexus():
@@ -74,7 +83,7 @@ class upload2Nexus():
     def __init__(self):
         # directory of run folders - must be same as in get_list_of_runs()
         self.runfolders = "/media/data1/share" # workstation
-        #self.runfolders = "/home/mokaguys/Documents/upload_agent_test" # workstation dummy
+        #self.runfolders = "/media/data2/data" # workstation dummy
         #self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         
         # file which denotes demultiplexing is underway/complete 
@@ -116,12 +125,21 @@ class upload2Nexus():
         
         # variables for running pipeline
         self.bash_script=""
-        self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndx select NGS_runs\n"
-        self.base_command = "dx run apps/GATK3.5_160918 -y"
-        self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="
-        self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="
-        self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz="
-        self.arg4 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz="
+        self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndx select NGS_runs\ndepends_list=\n"
+        self.base_command = "jobid=$(dx run apps/GATK3.5_160918 -y" # GATK3.5_160918
+        self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # GATK3.5_160918
+        self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # GATK3.5_160918
+        self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # GATK3.5_160918
+        self.arg4 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # GATK3.5_160918
+        #self.base_command = "jobid=$(dx run apps/GATK3.5_Aled -y" # GATK3.5_Aled
+        #self.arg1 = " -istage-F04G1Gj0F1V1Jvg78Q33z62q.reads=" # GATK3.5_Aled
+        #self.arg2 = " -istage-F04G1K00F1V3jfk2F435ZVP2.reads=" # GATK3.5_Aled
+        #self.arg3 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads_fastqgz=" # GATK3.5_Aled
+        #self.arg4 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads2_fastqgz=" # GATK3.5_Aled
+        self.arg5 = " --dest="
+        self.arg6 = " --yes --brief)"
+        #argument to capture jobids
+        self.depends_list="depends_list += \" --depends-on \"$jobid"
         self.dx_run = []
 
         #create path to data in nexus eg /runfolder/Data
@@ -370,12 +388,14 @@ class upload2Nexus():
             if "_R1_" in fastq:
                 #assign read1
                 read1 = self.nexus_path+"/"+fastq
-                # assign read2 bu replacing R1 with R2
+                # assign read2 by replacing R1 with R2
                 read2 = self.nexus_path+"/"+fastq.replace("_R1_", "_R2_")
                 # create the dx command
-                command = self.base_command + self.arg1 + read1 + self.arg2 + read2 + self.arg3 + read1 + self.arg4 + read2
+                command = self.base_command + self.arg1 + read1 + self.arg2 + read2 + self.arg3 + read1 + self.arg4 + read2 + self.arg5 + self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + self.arg6
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
+        
+                
         
         # call module to issue the dx run commands
         self.run_pipeline()
@@ -392,6 +412,8 @@ class upload2Nexus():
         for command in self.dx_run:
             # write command to log file
             self.DNA_Nexus_bash_script.write(command+"\n")
+            # write line to append job id to depends_list
+            self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
 
             # capture the sample name
             #step 1 split the command to get the last argument (read2)
@@ -409,12 +431,18 @@ class upload2Nexus():
             # take first bit and remove dx run 
             app=split_command[0].replace("dx run apps/",'').replace(self.source_command,"")
 
-       	
+
+        # issue multiqc command
+        #self.DNA_Nexus_bash_script.write(command+"\n")
+       	#self.DNA_Nexus_bash_script.write("\#multiqc command $depends_list")
+        
+        #close bash script file handle
+        self.DNA_Nexus_bash_script.close()
+
         #write to cron job script
        	self.upload_agent_script_logfile.write("dx run commands issued\nSee "+self.bash_script)
-
-        self.DNA_Nexus_bash_script.close()
-        # run a command to execute the bash script made above
+        
+        # # run a command to execute the bash script made above
         cmd="bash "+self.bash_script
         proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         
@@ -424,12 +452,12 @@ class upload2Nexus():
         print out
 
         #create email message
-        #self.email_subject = "started pipeline for " + sample
-        #self.email_priority = 3
-        #self.email_message = sample + " being processed using workflow " + app
+        self.email_subject = "started pipeline for " + sample
+        self.email_priority = 3
+        self.email_message = sample + " being processed using workflow " + app
         
         # send email
-        #self.send_an_email()
+        self.send_an_email()
 
 
 
