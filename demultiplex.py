@@ -19,6 +19,7 @@ import subprocess
 import datetime
 import smtplib
 from email.Message import Message
+import fnmatch
 
 
 class get_list_of_runs():
@@ -27,20 +28,47 @@ class get_list_of_runs():
         # directory of run folders - must be same as in ready2start_demultiplexing()
         # self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         self.runfolders ="/media/data1/share" # workstation
+        self.now=""
 
     def loop_through_runs(self):
         #set a time stamp to name the log file
-        now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
+        self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
 
         # create a list of all the folders in the runfolders directory
         all_runfolders = os.listdir(self.runfolders)
+
+        demultiplex=ready2start_demultiplexing()
         # for each folder if it is not samplesheets pass the runfolder to the next class ready2start_demultiplexing()
         for folder in all_runfolders:
             if folder != "samplesheets":
                 if folder.endswith('.gz'):
                     pass
                 else:
-                    ready2start_demultiplexing().already_demultiplexed(folder, now)
+                    demultiplex.already_demultiplexed(folder, self.now)
+        #call function to combine log files
+        self.combine_log_files()
+
+    def combine_log_files(self):
+        # count number of log files that match the time stamp
+        count=0
+        list_of_logfiles=[]
+        for file in os.listdir(ready2start_demultiplexing().script_logfile_path):
+            if fnmatch.fnmatch(file,self.now+'*'):
+                count=count+1
+                list_of_logfiles.append(ready2start_demultiplexing().script_logfile_path+file)
+        
+        if count > 1:
+            longest_name=max(list_of_logfiles, key=len)
+            list_of_logfiles.remove(longest_name)
+            remaining_files=" ".join(list_of_logfiles)
+
+            # combine all into one file with the longest filename
+            cmd = "cat " + remaining_files + " >> " + longest_name
+            rmcmd= "rm " + remaining_files
+
+            # run the command, redirecting stderror to stdout
+            proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            proc = subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
 
 
 class ready2start_demultiplexing():
