@@ -125,7 +125,7 @@ class upload2Nexus():
         
         # variables for running pipeline
         self.bash_script=""
-        self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndx select NGS_runs\ndepends_list=\n"
+        self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndx select NGS_runs\n"
         self.base_command = "jobid=$(dx run apps/GATK3.5_160918 -y" # GATK3.5_160918
         self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # GATK3.5_160918
         self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # GATK3.5_160918
