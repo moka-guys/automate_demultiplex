@@ -429,7 +429,7 @@ class upload2Nexus():
             # split command on -y 
             split_command=command.split('-y')
             # take first bit and remove dx run 
-            app=split_command[0].replace("dx run apps/",'').replace(self.source_command,"")
+            app=split_command[0].replace("dx run apps/",'').replace(self.source_command,"").replace("jobid=$(","")
 
 
         # issue multiqc command
