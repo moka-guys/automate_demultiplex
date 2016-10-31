@@ -122,11 +122,14 @@ class upload2Nexus():
         #strings for NGSrun and wes numbers
         self.NGS_run = ''
         self.wes_number = ''
-        
+
+        self.project="NGS_runs:"
+        self.app_project="001_ToolsReferenceData:"
+
         # variables for running pipeline
         self.bash_script=""
-        self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndx select NGS_runs\n"
-        self.base_command = "jobid=$(dx run apps/GATK3.5_160918 -y" # GATK3.5_160918
+        self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''\n"
+        self.base_command = "jobid=$(dx run "+self.app_project+"Workflows/GATK3.5 -y" # GATK3.5_160918
         self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # GATK3.5_160918
         self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # GATK3.5_160918
         self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # GATK3.5_160918
@@ -137,7 +140,7 @@ class upload2Nexus():
         #self.arg3 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads_fastqgz=" # GATK3.5_Aled
         #self.arg4 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads2_fastqgz=" # GATK3.5_Aled
         self.arg5 = " --dest="
-        self.arg6 = " --yes --brief --auth-token ***REMOVED***)"
+        self.arg6 = " --yes --brief --auth-token MPpbCydPBukXnnpwzRwewDFc8fzJRWTW)"
         #argument to capture jobids
         self.depends_list="depends_list += \" --depends-on \"$jobid"
         self.dx_run = []
@@ -391,7 +394,7 @@ class upload2Nexus():
                 # assign read2 by replacing R1 with R2
                 read2 = self.nexus_path+"/"+fastq.replace("_R1_", "_R2_")
                 # create the dx command
-                command = self.base_command + self.arg1 + read1 + self.arg2 + read2 + self.arg3 + read1 + self.arg4 + read2 + self.arg5 + self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + self.arg6
+                command = self.base_command + self.arg1 + self.project + read1 + self.arg2 + self.project + read2 + self.arg3 + self.project + read1 + self.arg4 + self.project + read2 + self.arg5 +self.project + self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + self.arg6
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
         
@@ -429,7 +432,7 @@ class upload2Nexus():
             # split command on -y 
             split_command=command.split('-y')
             # take first bit and remove dx run 
-            app=split_command[0].replace("dx run apps/",'').replace(self.source_command,"").replace("jobid=$(","")
+            app=split_command[0].replace("dx run ",'').replace(self.source_command,"").replace("jobid=$(","").replace("apps/",'').replace(self.project,'')
 
 
         # issue multiqc command
@@ -448,8 +451,14 @@ class upload2Nexus():
         
         # capture the streams
         (out, err) = proc.communicate()
-        print err 
-        print out
+        #create file to show demultiplexing has started
+        upload_started = open(self.runfolderpath + "/" + self.upload_started_file, 'a')
+        
+        #write to log
+        upload_started.write(out)
+        upload_started.write(err)
+        upload_started.close()
+        
 
         #create email message
         self.email_subject = "MokaPipe ALERT: started pipeline for " + sample
