@@ -137,7 +137,7 @@ class upload2Nexus():
         #self.arg3 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads_fastqgz=" # GATK3.5_Aled
         #self.arg4 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads2_fastqgz=" # GATK3.5_Aled
         self.arg5 = " --dest="
-        self.arg6 = " --yes --brief)"
+        self.arg6 = " --yes --brief --auth-token A3tjlj3pb19zyplgdcdre2zsm2un3ydh)"
         #argument to capture jobids
         self.depends_list="depends_list += \" --depends-on \"$jobid"
         self.dx_run = []
