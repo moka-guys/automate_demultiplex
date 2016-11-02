@@ -435,6 +435,8 @@ class upload2Nexus():
             app=split_command[0].replace("dx run ",'').replace(self.source_command,"").replace("jobid=$(","").replace("apps/",'').replace(self.project,'')
 
 
+        self.DNA_Nexus_bash_script.write("echo depends_list")
+        
         # issue multiqc command
         #self.DNA_Nexus_bash_script.write(command+"\n")
        	#self.DNA_Nexus_bash_script.write("\#multiqc command $depends_list")
@@ -461,9 +463,9 @@ class upload2Nexus():
         
 
         #create email message
-        self.email_subject = "MokaPipe ALERT: started pipeline for " + sample
+        self.email_subject = "MokaPipe ALERT: started pipeline for " + self.runfolder
         self.email_priority = 3
-        self.email_message = sample + " being processed using workflow " + app
+        self.email_message = self.runfolder + " being processed using workflow " + app
         
         # send email
         self.send_an_email()
