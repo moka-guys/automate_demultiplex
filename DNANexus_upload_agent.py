@@ -456,7 +456,7 @@ class upload2Nexus():
             # split command on -y 
             split_command=command.split('-y')
             # take first bit and remove dx run 
-            app=split_command[0].replace("dx run ",'').replace(self.source_command,"").replace("jobid=$(","").replace("apps/",'').replace(self.project,'')
+            app=split_command[0].replace("dx run ",'').replace(self.source_command,"").replace("jobid=$(","").replace("Workflow/",'').replace(self.project,'')
 
 
         self.DNA_Nexus_bash_script.write("echo depends_list")
