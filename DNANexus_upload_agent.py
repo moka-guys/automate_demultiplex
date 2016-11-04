@@ -456,7 +456,7 @@ class upload2Nexus():
             # split command on -y 
             split_command=command.split('-y')
             # take first bit and remove dx run 
-            app=split_command[0].replace("dx run ",'').replace(self.source_command,"").replace("jobid=$(","").replace("Workflow/",'').replace(self.project,'')
+            app=split_command[0].replace("jobid=$(dx run ",'').replace(self.source_command,"")
 
 
         #self.DNA_Nexus_bash_script.write("echo $depends_list\n")
@@ -481,26 +481,23 @@ class upload2Nexus():
         #reopen log file containing output from upload agent
         upload_started = open(self.runfolderpath + "/" + self.upload_started_file, 'a')
         
-        #write to log
+        #write to log + close
         upload_started.write(out)
+        upload_started.close()
+
         if err:
             upload_started.write("Uh Oh! standard error: "+err)
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Error message when started pipeline"
             self.email_priority = 1
-            self.email_message = "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file+"\nerror message = "+ err
+            self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
         
-        # send email
-        self.send_an_email()
-
-        upload_started.close()
-        
-
-        #create email message
-        self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
-        self.email_priority = 3
-        self.email_message = self.runfolder + " being processed using workflow " + app
-        
+        else:
+            #create email message
+            self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
+            self.email_priority = 3
+            self.email_message = self.runfolder + " being processed using workflow " + app
+            
         # send email
         self.send_an_email()
 
