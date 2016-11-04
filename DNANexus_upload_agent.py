@@ -140,9 +140,9 @@ class upload2Nexus():
         #self.arg3 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads_fastqgz=" # GATK3.5_Aled
         #self.arg4 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads2_fastqgz=" # GATK3.5_Aled
         self.arg5 = " --dest="
-        self.arg6 = " --yes --brief --auth-token MPpbCydPBukXnnpwzRwewDFc8fzJRWTW)"
+        self.arg6 = " --brief --auth-token rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL)"
         #argument to capture jobids
-        self.depends_list="depends_list += \" --depends-on \"$jobid"
+        self.depends_list="depends_list=\"${depends_list} --depends-on ${jobid} \""
         self.dx_run = []
 
         #create path to data in nexus eg /runfolder/Data
@@ -295,8 +295,10 @@ class upload2Nexus():
         # perform upload agent test
         self.test_upload_agent()
 
+        self.test_dx_toolkit()
+
 		# build the nexus upload command                        
-        nexus_upload_command = self.upload_agent + " --auth-token A3TJlJ3Pb19ZYPlgDCdRE2ZsM2UN3ydH --project NGS_runs --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string
+        nexus_upload_command = self.upload_agent + " --auth-token rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL --project NGS_runs --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string
         
         #write to logfile
         self.upload_agent_script_logfile.write("Nexus command = \n" + nexus_upload_command + "\n")
@@ -376,6 +378,28 @@ class upload2Nexus():
         # write this to the log file
         self.upload_agent_script_logfile.write("upload agent check passed\n")
 
+    def test_dx_toolkit(self):
+        '''test the dx toolkit is installed'''
+        
+        #command
+        command = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
+
+        # run the command
+        proc = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, executable="/bin/bash")
+        
+        # capture the streams
+        (out, err) = proc.communicate()
+        
+        if "dx v0.2" not in out:
+            self.email_subject = "MOKAPIPE ALERT: ERROR - DX TOOLKIT TEST FAILED"
+            self.email_priority = 1
+            self.email_message = "The test to check that the dx toolkit is working (" + command + ") failed. Hopefully this just means it's been upgraded past v0.2!\n"+err
+            self.send_an_email()
+            raise Exception, "dx toolkit not installed"
+
+        # write this to the log file
+        self.upload_agent_script_logfile.write("dx toolkit check passed\n")
+
     def  create_run_pipeline_command(self):
         '''loop through the list of fastqs to create a set of commands to initiate the pipeline'''
         self.bash_script=self.DNA_Nexus_workflow_logfolder + self.runfolder + ".sh"
@@ -405,7 +429,7 @@ class upload2Nexus():
 
         #record timestamp
         self.DNA_Nexus_bash_script = open(self.bash_script, 'a')
-        self.DNA_Nexus_bash_script.write("----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
+        self.DNA_Nexus_bash_script.write("#----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
         self.DNA_Nexus_bash_script.close()
 
     def run_pipeline(self):
@@ -432,9 +456,11 @@ class upload2Nexus():
             # split command on -y 
             split_command=command.split('-y')
             # take first bit and remove dx run 
-            app=split_command[0].replace("dx run ",'').replace(self.source_command,"").replace("jobid=$(","").replace("apps/",'').replace(self.project,'')
+            app=split_command[0].replace("jobid=$(dx run ",'').replace(self.source_command,"")
 
 
+        #self.DNA_Nexus_bash_script.write("echo $depends_list\n")
+        
         # issue multiqc command
         #self.DNA_Nexus_bash_script.write(command+"\n")
        	#self.DNA_Nexus_bash_script.write("\#multiqc command $depends_list")
@@ -451,20 +477,27 @@ class upload2Nexus():
         
         # capture the streams
         (out, err) = proc.communicate()
-        #create file to show demultiplexing has started
+        
+        #reopen log file containing output from upload agent
         upload_started = open(self.runfolderpath + "/" + self.upload_started_file, 'a')
         
-        #write to log
+        #write to log + close
         upload_started.write(out)
-        upload_started.write(err)
         upload_started.close()
-        
 
-        #create email message
-        self.email_subject = "MokaPipe ALERT: started pipeline for " + sample
-        self.email_priority = 3
-        self.email_message = sample + " being processed using workflow " + app
+        if err:
+            upload_started.write("Uh Oh! standard error: "+err)
+            #create email message
+            self.email_subject = "MOKAPIPE ALERT: Error message when started pipeline"
+            self.email_priority = 1
+            self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
         
+        else:
+            #create email message
+            self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
+            self.email_priority = 3
+            self.email_message = self.runfolder + " being processed using workflow " + app
+            
         # send email
         self.send_an_email()
 
