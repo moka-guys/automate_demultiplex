@@ -140,9 +140,9 @@ class upload2Nexus():
         #self.arg3 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads_fastqgz=" # GATK3.5_Aled
         #self.arg4 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads2_fastqgz=" # GATK3.5_Aled
         self.arg5 = " --dest="
-        self.arg6 = " --yes --brief --auth-token rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL)"
+        self.arg6 = " --brief --auth-token rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL)"
         #argument to capture jobids
-        self.depends_list="depends_list += \" --depends-on \"$jobid"
+        self.depends_list="depends_list=\"${depends_list} --depends-on ${jobid} \""
         self.dx_run = []
 
         #create path to data in nexus eg /runfolder/Data
@@ -382,10 +382,10 @@ class upload2Nexus():
         '''test the dx toolkit is installed'''
         
         #command
-        command = "/etc/profile.d/dnanexus.environment.sh;dx --version"
+        command = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
 
         # run the command
-        proc = subprocess.Popen([command], stderr = subprocess.PIPE, stdout = subprocess.PIPE, shell = True)
+        proc = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, executable="/bin/bash")
         
         # capture the streams
         (out, err) = proc.communicate()
@@ -393,7 +393,7 @@ class upload2Nexus():
         if "dx v0.2" not in out:
             self.email_subject = "MOKAPIPE ALERT: ERROR - DX TOOLKIT TEST FAILED"
             self.email_priority = 1
-            self.email_message = "The test to check that the dx toolkit is working (" + command + ") failed. Hopefully this just means it's been upgraded past v0.2!"
+            self.email_message = "The test to check that the dx toolkit is working (" + command + ") failed. Hopefully this just means it's been upgraded past v0.2!\n"+err
             self.send_an_email()
             raise Exception, "dx toolkit not installed"
 
@@ -429,7 +429,7 @@ class upload2Nexus():
 
         #record timestamp
         self.DNA_Nexus_bash_script = open(self.bash_script, 'a')
-        self.DNA_Nexus_bash_script.write("----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
+        self.DNA_Nexus_bash_script.write("#----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
         self.DNA_Nexus_bash_script.close()
 
     def run_pipeline(self):
@@ -459,7 +459,7 @@ class upload2Nexus():
             app=split_command[0].replace("dx run ",'').replace(self.source_command,"").replace("jobid=$(","").replace("Workflow/",'').replace(self.project,'')
 
 
-        self.DNA_Nexus_bash_script.write("echo depends_list")
+        self.DNA_Nexus_bash_script.write("echo $depends_list\n")
         
         # issue multiqc command
         #self.DNA_Nexus_bash_script.write(command+"\n")
@@ -477,12 +477,22 @@ class upload2Nexus():
         
         # capture the streams
         (out, err) = proc.communicate()
-        #create file to show demultiplexing has started
+        
+        #reopen log file containing output from upload agent
         upload_started = open(self.runfolderpath + "/" + self.upload_started_file, 'a')
         
         #write to log
         upload_started.write(out)
-        upload_started.write(err)
+        if err:
+            upload_started.write("Uh Oh! standard error: "+err)
+            #create email message
+            self.email_subject = "MokaPipe ALERT: Error message when started pipeline"
+            self.email_priority = 1
+            self.email_message = "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file+"\nerror message = "+ err
+        
+        # send email
+        self.send_an_email()
+
         upload_started.close()
         
 
