@@ -226,12 +226,15 @@ class upload2Nexus():
         # create a list of all files within the fastq folder
         all_fastqs = os.listdir(self.fastq_folder_path)
         
-            
+        #set a count to catch when not a WES run
+        WES_count=0
         # find all fastqs
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
                 # select WES samples only
                 if "WES" in fastq:
+                    # count
+                    WES_count=WES_count+1
                     #exclude undertermined samples 
                     if fastq.startswith('Undetermined'):
                         pass
@@ -240,9 +243,14 @@ class upload2Nexus():
                         self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
                         #add the fastq name to a list to be used in create_nexus_file_path
                         self.list_of_samples.append(fastq)
-                    
+           
         #write to logfile
-        self.upload_agent_script_logfile.write("list of fastqs found\n")
+        # if there were no WES samples state this in log message 
+        if WES_count == 0:
+            self.upload_agent_script_logfile.write("List of fastqs did not contain any WES samples. Stopping\n")
+        # else continue
+        else:
+            self.upload_agent_script_logfile.write("list of fastqs found...starting upload\n")
         
         #build the file path with WES batch and NGS run numbers
         self.create_nexus_file_path()
@@ -286,7 +294,7 @@ class upload2Nexus():
 
         # self.nexus path
         self.nexus_path = self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + "/Data/Intensities/BaseCalls"
-        print self.nexus_path
+        self.upload_agent_script_logfile.write(self.nexus_path+"\n") 
 
 
     def upload(self):
