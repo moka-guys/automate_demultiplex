@@ -250,7 +250,7 @@ class upload2Nexus():
             self.upload_agent_script_logfile.write("List of fastqs did not contain any WES samples. Stopping\n")
         # else continue
         else:
-            self.upload_agent_script_logfile.write("list of fastqs found...starting upload\n")
+            self.upload_agent_script_logfile.write(str(WES_count)+" fastqs found...starting upload\n")
         
             #build the file path with WES batch and NGS run numbers
             self.create_nexus_file_path()
