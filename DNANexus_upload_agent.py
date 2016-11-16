@@ -166,6 +166,9 @@ class upload2Nexus():
         self.rename=""
         self.now=""
 
+        #set a count to catch when not a WES run
+        self.WES_count=0
+
     def already_uploaded(self, runfolder, now):
         '''check folder hasn't already been uploaded'''
         self.now=now
@@ -226,15 +229,13 @@ class upload2Nexus():
         # create a list of all files within the fastq folder
         all_fastqs = os.listdir(self.fastq_folder_path)
         
-        #set a count to catch when not a WES run
-        WES_count=0
         # find all fastqs
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
                 # select WES samples only
                 if "WES" in fastq:
                     # count
-                    WES_count=WES_count+1
+                    self.WES_count=self.WES_count+1
                     #exclude undertermined samples 
                     if fastq.startswith('Undetermined'):
                         pass
@@ -246,11 +247,11 @@ class upload2Nexus():
            
         #write to logfile
         # if there were no WES samples state this in log message 
-        if WES_count == 0:
+        if self.WES_count == 0:
             self.upload_agent_script_logfile.write("List of fastqs did not contain any WES samples. Stopping\n")
         # else continue
         else:
-            self.upload_agent_script_logfile.write(str(WES_count)+" fastqs found...starting upload\n")
+            self.upload_agent_script_logfile.write(str(self.WES_count)+" fastqs found...starting upload\n")
         
             #build the file path with WES batch and NGS run numbers
             self.create_nexus_file_path()
@@ -498,7 +499,7 @@ class upload2Nexus():
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Error message when started pipeline"
             self.email_priority = 1
-            self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
+            self.email_message = self.runfolder + " (" +self.WES_count +" samples) being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
         
         else:
             #create email message
