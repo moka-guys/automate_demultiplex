@@ -252,11 +252,11 @@ class upload2Nexus():
         else:
             self.upload_agent_script_logfile.write("list of fastqs found...starting upload\n")
         
-        #build the file path with WES batch and NGS run numbers
-        self.create_nexus_file_path()
-        
-        # send list to module to trigger upload
-        self.upload()       
+            #build the file path with WES batch and NGS run numbers
+            self.create_nexus_file_path()
+            
+            # send list to module to trigger upload
+            self.upload()       
     
     def create_nexus_file_path(self):
         ''' get info from the fastq names to have a more informative folder structure within DNA nexus 
