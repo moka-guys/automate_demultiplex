@@ -328,7 +328,7 @@ class upload2Nexus():
         # set email content
         self.email_subject = "MOKAPIPE ALERT: Upload of " + self.runfolder + " completed"
         self.email_priority = 3
-        self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + self.upload_started_file
+        self.email_message = self.runfolder + " (" +str(self.WES_count) +" samples) has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + self.upload_started_file
         # send email
         self.send_an_email()
         # start pipeline
@@ -499,7 +499,7 @@ class upload2Nexus():
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Error message when started pipeline"
             self.email_priority = 1
-            self.email_message = self.runfolder + " (" +self.WES_count +" samples) being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
+            self.email_message = self.runfolder + " (" + str(self.WES_count) + " samples) being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
         
         else:
             #create email message
