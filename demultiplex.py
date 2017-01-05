@@ -20,6 +20,8 @@ import datetime
 import smtplib
 from email.Message import Message
 import fnmatch
+import requests
+import json
 
 
 class get_list_of_runs():
@@ -123,6 +125,33 @@ class ready2start_demultiplexing():
         self.name=""
         self.now=""
 
+        #smartsheet API
+        self.api_key="3asfndq3oi2zbww3td8gb67liv"
+        #smartsheet id
+        self.sheetid=2786670379591556
+        #newly inserted row
+        self.rowid=""
+
+        #time stamp
+        self.smartsheet_now=""
+
+        #columnIds
+        self.ss_title=str(6975896805500804)
+        self.ss_description=str(1346397271287684)
+        self.ss_samples=str(5849996898658180)
+        self.ss_status=str(3598197084972932)
+        self.ss_priority=str(8101796712343428)
+        self.ss_assigned=str(783447317866372)
+        self.ss_received=str(5287046945236868)
+        self.ss_completed=str(3035247131551620)
+        self.ss_timetaken=str(6991272788420484)
+        self.ss_duration=str(7538846758922116)
+        self.ss_metTAT=str(1909347224708996)
+
+        #requests info
+        self.headers={"Authorization": "Bearer "+self.api_key,"Content-Type": "application/json"}
+        self.url='https://api.smartsheet.com/2.0/sheets/'+str(self.sheetid)
+
 
     def already_demultiplexed(self, runfolder, now):
         '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
@@ -199,7 +228,7 @@ class ready2start_demultiplexing():
         
         # test bcl2fastq install
         self.test_bcl2fastq()
-
+        self.smartsheet_demultiplex_in_progress()
         # create the command
         command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
         # command="/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R 160822_NB551068_0006_AHGYM7BGXY/ --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting"
@@ -243,6 +272,9 @@ class ready2start_demultiplexing():
             self.script_logfile.close()
             self.rename=self.rename+self.runfolder
             os.rename(self.logfile_name,self.script_logfile_path+self.now+"_"+self.rename+".txt")
+
+            #update smartsheet
+            self.smartsheet_demultiplex_complete()
 
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
@@ -290,6 +322,111 @@ class ready2start_demultiplexing():
         # write this to the log file
         self.script_logfile.write("bcl2fastq check passed\n")
 
+    def smartsheet_demultiplex_in_progress(self):
+        '''This function updates smartsheet to say that demultiplexing is in progress'''
+        
+        # take current timestamp for recieved
+        self.smartsheet_now = str('{:%Y-%m-%d}'.format(datetime.datetime.utcnow()))
+        
+        # #uncomment this block if want to get the column ids for a new sheet
+        ########################################################################
+        # # Get all columns.
+        # url=self.url+"/columns"
+        # r = requests.get(url, headers=self.headers)
+        # response= r.json()
+        # 
+        # # get the column ids
+        # for i in response['data']:
+        #     print i['title'], i['id']
+        ########################################################################
+        
+        #capture the NGS run number and count
+        count = 0
+        for file in os.listdir(self.runfolderpath+"/Data/Intensities/BaseCalls"):
+            if file.endswith("fastq.gz"):
+                if file.startswith("Undetermined"):
+                    pass
+                else:
+                    count = count + 0.5
+                    runnumber=file.split("_")[0]
+        
+        # set all values to be inserted
+        payload='{"toBottom":true, "cells": [\
+        {"columnId": '+self.ss_title+', "value": '+runnumber+'}, \
+        {"columnId": '+self.ss_description+', "value": "Demultiplexing"},\
+        {"columnId": '+self.ss_samples+', "value": '+str(count)+'},\
+        {"columnId": '+self.ss_status+', "value": "In Progress"},\
+        {"columnId": '+self.ss_priority+', "value": "Medium"},\
+        {"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},\
+        {"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}\
+        ]}'
+        
+        # create url for uploading a new row
+        url=self.url+"/rows"
+        
+        # add the row using POST 
+        r = requests.post(url,headers=self.headers,data=payload)
+        
+        # capture the row id
+        response= r.json()
+        for i in response["result"]:
+            if i == "id":
+                self.rowid=response["result"][i]
+
+        #check the result of the update attempt
+        for i in response:  
+            if i == "message":
+                if response[i] =="SUCCESS":
+                    pass
+                else:
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
+                    self.email_message="Smartsheet was not updated to say demultiplexing is inprogress"
+                    self.send_an_email()
+
+    def smartsheet_demultiplex_complete(self):
+        '''update smartsheet to say demultiplexing is complete (add the completed date and calculate the duration (in days) and if met TAT)'''
+        #build url tp read a row
+        url='https://api.smartsheet.com/2.0/sheets/'+str(self.sheetid)+'/rows/'+str(self.rowid)
+        #get row
+        r = requests.get(url, headers=self.headers)
+        #read response in json
+        response= r.json()
+        #loop through each column and extract the recieved date
+        for col in response["cells"]:
+            if str(col["columnId"]) == self.ss_received:
+                recieved=datetime.datetime.strptime(col['value'], '%Y-%m-%d')
+        
+        # take current timestamp
+        self.smartsheet_now = str('{:%Y-%m-%d}'.format(datetime.datetime.utcnow()))
+        now=datetime.datetime.strptime(self.smartsheet_now, '%Y-%m-%d')
+        
+        #calculate the number of days taken (add one so if same day this counts as 1 day not 0)
+        duration = (now-recieved).days+1
+        
+        # set flag to show if TAT was met.
+        TAT=1
+        if duration > 4:
+            TAT=0
+        
+        #build payload used to update the row
+        payload = '{"id":"'+str(self.rowid)+'", "cells": [{"columnId":"'+ str(self.ss_duration)+'","value":"'+str(duration)+'"},{"columnId":"'+ str(self.ss_metTAT)+'","value":"'+str(TAT)+'"},{"columnId":"'+ str(self.ss_status)+'","value":"Complete"},{"columnId": '+self.ss_completed+', "value": "'+str(self.smartsheet_now)+'"}]}' 
+        
+        #build url to update row
+        url=self.url+"/rows"
+        update_OPMS = requests.request("PUT", url, data=payload, headers=self.headers)
+        
+        #check the result of the update attempt
+        response= update_OPMS.json()
+        for i in response:
+            if i == "message":
+                if response[i] =="SUCCESS":
+                    pass
+                else:
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
+                    self.email_message="Smartsheet was not updated to say demultiplexing was completed"
+                    self.send_an_email()
 
 
 
