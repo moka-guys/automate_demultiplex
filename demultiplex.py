@@ -342,24 +342,14 @@ class ready2start_demultiplexing():
         
         #capture the NGS run number and count
         count = 0
-        for file in os.listdir(self.runfolderpath+"/Data/Intensities/BaseCalls"):
-            if file.endswith("fastq.gz"):
-                if file.startswith("Undetermined"):
-                    pass
-                else:
-                    count = count + 0.5
-                    runnumber=file.split("_")[0]
+        with open(self.samplesheet,'r') as samplesheet:
+            for line in samplesheet:
+                if line.startswith("NGS"):
+                    count=count+1
+                    runnumber=line.split("_")[0]
         
         # set all values to be inserted
-        payload='{"toBottom":true, "cells": [\
-        {"columnId": '+self.ss_title+', "value": '+runnumber+'}, \
-        {"columnId": '+self.ss_description+', "value": "Demultiplexing"},\
-        {"columnId": '+self.ss_samples+', "value": '+str(count)+'},\
-        {"columnId": '+self.ss_status+', "value": "In Progress"},\
-        {"columnId": '+self.ss_priority+', "value": "Medium"},\
-        {"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},\
-        {"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}\
-        ]}'
+        payload='{"cells": [{"columnId": '+self.ss_title+', "value": "'+runnumber+'"}, {"columnId": '+self.ss_description+', "value": "Demultiplex"}, {"columnId": '+self.ss_samples+', "value": '+str(count)+'},{"columnId": '+self.ss_status+', "value": "In Progress"},{"columnId": '+self.ss_priority+', "value": "Medium"},{"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},{"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}],"toBottom":true}'
         
         # create url for uploading a new row
         url=self.url+"/rows"
@@ -369,6 +359,7 @@ class ready2start_demultiplexing():
         
         # capture the row id
         response= r.json()
+        print response
         for i in response["result"]:
             if i == "id":
                 self.rowid=response["result"][i]
