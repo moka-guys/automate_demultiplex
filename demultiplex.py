@@ -127,8 +127,9 @@ class ready2start_demultiplexing():
 
         #smartsheet API
         self.api_key="3asfndq3oi2zbww3td8gb67liv"
-        #smartsheet id
-        self.sheetid=2786670379591556
+        
+        #sheet id
+        self.sheetid=2798264106936196
         #newly inserted row
         self.rowid=""
 
@@ -136,17 +137,16 @@ class ready2start_demultiplexing():
         self.smartsheet_now=""
 
         #columnIds
-        self.ss_title=str(6975896805500804)
-        self.ss_description=str(1346397271287684)
-        self.ss_samples=str(5849996898658180)
-        self.ss_status=str(3598197084972932)
-        self.ss_priority=str(8101796712343428)
-        self.ss_assigned=str(783447317866372)
-        self.ss_received=str(5287046945236868)
-        self.ss_completed=str(3035247131551620)
-        self.ss_timetaken=str(6991272788420484)
-        self.ss_duration=str(7538846758922116)
-        self.ss_metTAT=str(1909347224708996)
+        self.ss_title=str(6197963270711172)
+        self.ss_description=str(3946163457025924)
+        self.ss_samples=str(957524288530308)
+        self.ss_status=str(8449763084396420)
+        self.ss_priority=str(4790588387157892)
+        self.ss_assigned=str(2538788573472644)
+        self.ss_received=str(6723667267741572)
+        self.ss_completed=str(4471867454056324)
+        self.ss_duration=str(8975467081426820)
+        self.ss_metTAT=str(21044384819076)
 
         #requests info
         self.headers={"Authorization": "Bearer "+self.api_key,"Content-Type": "application/json"}
