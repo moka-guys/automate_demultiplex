@@ -16,6 +16,8 @@ import datetime
 import smtplib
 from email.Message import Message
 import fnmatch
+import requests
+import json
 
 
 class get_list_of_runs():
@@ -166,13 +168,37 @@ class upload2Nexus():
         self.rename=""
         self.now=""
 
-        #set a count to catch when not a WES run
-        self.WES_count=0
+        #smartsheet API
+        self.api_key="3asfndq3oi2zbww3td8gb67liv"
+        #smartsheet id
+        self.sheetid=2786670379591556
+        #newly inserted row
+        self.rowid=""
+
+        #time stamp
+        self.smartsheet_now=""
+
+        #columnIds
+        self.ss_title=str(6975896805500804)
+        self.ss_description=str(1346397271287684)
+        self.ss_samples=str(5849996898658180)
+        self.ss_status=str(3598197084972932)
+        self.ss_priority=str(8101796712343428)
+        self.ss_assigned=str(783447317866372)
+        self.ss_received=str(5287046945236868)
+        self.ss_completed=str(3035247131551620)
+        self.ss_timetaken=str(6991272788420484)
+        self.ss_duration=str(7538846758922116)
+        self.ss_metTAT=str(1909347224708996)
+
+        #requests info
+        self.headers={"Authorization": "Bearer "+self.api_key,"Content-Type": "application/json"}
+        self.url='https://api.smartsheet.com/2.0/sheets/'+str(self.sheetid)
 
     def already_uploaded(self, runfolder, now):
         '''check folder hasn't already been uploaded'''
         self.now=now
-		#open the logfile for this hour's cron job.
+        #open the logfile for this hour's cron job.
         self.upload_agent_logfile_name=self.upload_agent_logfile+self.now+"_"+self.rename+".txt"
         self.upload_agent_script_logfile = open(self.upload_agent_logfile_name,'a')
 
@@ -214,10 +240,10 @@ class upload2Nexus():
                 # if successfull call the module which creates a list of fastqs  
                 self.find_fastqs()
             else:
-            	#write to logfile that demultplex was not successful
+                #write to logfile that demultplex was not successful
                 self.upload_agent_script_logfile.write("demultiplex was NOT successfully completed. \n ---STOP---\n")
         else:
-        	# write to logfile that not yet demultiplexed
+            # write to logfile that not yet demultiplexed
             self.upload_agent_script_logfile.write("demultiplex has not been performed.\n---STOP---\n")
             
     def find_fastqs(self):
@@ -229,13 +255,15 @@ class upload2Nexus():
         # create a list of all files within the fastq folder
         all_fastqs = os.listdir(self.fastq_folder_path)
         
+        #set a count to catch when not a WES run
+        WES_count=0
         # find all fastqs
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
                 # select WES samples only
                 if "WES" in fastq:
                     # count
-                    self.WES_count=self.WES_count+1
+                    WES_count=WES_count+1
                     #exclude undertermined samples 
                     if fastq.startswith('Undetermined'):
                         pass
@@ -247,11 +275,11 @@ class upload2Nexus():
            
         #write to logfile
         # if there were no WES samples state this in log message 
-        if self.WES_count == 0:
+        if WES_count == 0:
             self.upload_agent_script_logfile.write("List of fastqs did not contain any WES samples. Stopping\n")
         # else continue
         else:
-            self.upload_agent_script_logfile.write(str(self.WES_count)+" fastqs found...starting upload\n")
+            self.upload_agent_script_logfile.write(str(WES_count)+" fastqs found...starting upload\n")
         
             #build the file path with WES batch and NGS run numbers
             self.create_nexus_file_path()
@@ -300,13 +328,13 @@ class upload2Nexus():
 
     def upload(self):
         '''takes a list of all the fastqs (with full paths) and calls the upload agent.'''
-		
+        
         # perform upload agent test
         self.test_upload_agent()
 
         self.test_dx_toolkit()
 
-		# build the nexus upload command                        
+        # build the nexus upload command                        
         nexus_upload_command = self.upload_agent + " --auth-token rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL --project NGS_runs --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string
         
         #write to logfile
@@ -328,7 +356,7 @@ class upload2Nexus():
         # set email content
         self.email_subject = "MOKAPIPE ALERT: Upload of " + self.runfolder + " completed"
         self.email_priority = 3
-        self.email_message = self.runfolder + " (" +str(self.WES_count) +" samples) has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + self.upload_started_file
+        self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + self.upload_started_file
         # send email
         self.send_an_email()
         # start pipeline
@@ -472,13 +500,13 @@ class upload2Nexus():
         
         # issue multiqc command
         #self.DNA_Nexus_bash_script.write(command+"\n")
-       	#self.DNA_Nexus_bash_script.write("\#multiqc command $depends_list")
+        #self.DNA_Nexus_bash_script.write("\#multiqc command $depends_list")
         
         #close bash script file handle
         self.DNA_Nexus_bash_script.close()
 
         #write to cron job script
-       	self.upload_agent_script_logfile.write("dx run commands issued\nSee "+self.bash_script+"\n")
+        self.upload_agent_script_logfile.write("dx run commands issued\nSee "+self.bash_script+"\n")
         
         # # run a command to execute the bash script made above
         cmd="bash "+self.bash_script
@@ -499,16 +527,79 @@ class upload2Nexus():
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Error message when started pipeline"
             self.email_priority = 1
-            self.email_message = self.runfolder + " (" + str(self.WES_count) + " samples) being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
+            self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
         
         else:
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
             self.email_priority = 3
             self.email_message = self.runfolder + " being processed using workflow " + app
+            self.smartsheet_demultiplex_in_progress()
             
         # send email
         self.send_an_email()
+
+    def smartsheet_demultiplex_in_progress(self):
+        '''This function updates smartsheet to say that demultiplexing is in progress'''
+        
+        # take current timestamp for recieved
+        self.smartsheet_now = str('{:%Y-%m-%d}'.format(datetime.datetime.utcnow()))
+        
+        # #uncomment this block if want to get the column ids for a new sheet
+        ########################################################################
+        # # Get all columns.
+        # url=self.url+"/columns"
+        # r = requests.get(url, headers=self.headers)
+        # response= r.json()
+        # 
+        # # get the column ids
+        # for i in response['data']:
+        #     print i['title'], i['id']
+        ########################################################################
+        
+        #capture the NGS run number and count
+        count = 0
+        for file in os.listdir(self.runfolderpath+"/Data/Intensities/BaseCalls"):
+            if file.endswith("fastq.gz"):
+                if file.startswith("Undetermined"):
+                    pass
+                else:
+                    count = count + 0.5
+                    runnumber=file.split("_")[0]
+        
+        # set all values to be inserted
+        payload='{"toBottom":true, "cells": [\
+        {"columnId": '+self.ss_title+', "value": '+runnumber+'}, \
+        {"columnId": '+self.ss_description+', "value": "MokaPipe"},\
+        {"columnId": '+self.ss_samples+', "value": '+str(count)+'},\
+        {"columnId": '+self.ss_status+', "value": "In Progress"},\
+        {"columnId": '+self.ss_priority+', "value": "Medium"},\
+        {"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},\
+        {"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}\
+        ]}'
+        
+        # create url for uploading a new row
+        url=self.url+"/rows"
+        
+        # add the row using POST 
+        r = requests.post(url,headers=self.headers,data=payload)
+        
+        # capture the row id
+        response= r.json()
+        for i in response["result"]:
+            if i == "id":
+                self.rowid=response["result"][i]
+
+        #check the result of the update attempt
+        for i in response:  
+            if i == "message":
+                if response[i] =="SUCCESS":
+                    pass
+                else:
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
+                    self.email_message="Smartsheet was not updated to say MokaPipe is inprogress"
+                    self.send_an_email()
 
 
 
