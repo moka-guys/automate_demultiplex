@@ -209,7 +209,7 @@ class ready2start_demultiplexing():
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
             #send an email:
             self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
-            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated\nPlease update smartsheet"
+            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
             self.send_an_email()
             # proceed
             self.run_demuliplexing()
@@ -267,7 +267,7 @@ class ready2start_demultiplexing():
         if  "Processing completed with 0 errors and 0 warnings." in lastline:
             self.script_logfile.write("demultiplexing complete\n")
             self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
-            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n Please update smartsheet"
+            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
             self.send_an_email()
             self.script_logfile.close()
             self.rename=self.rename+self.runfolder
@@ -349,7 +349,7 @@ class ready2start_demultiplexing():
                     runnumber=line.split("_")[0]
         
         # set all values to be inserted
-        payload='{"cells": [{"columnId": '+self.ss_title+', "value": "'+runnumber+'"}, {"columnId": '+self.ss_description+', "value": "Demultiplex"}, {"columnId": '+self.ss_samples+', "value": '+str(count)+'},{"columnId": '+self.ss_status+', "value": "In Progress"},{"columnId": '+self.ss_priority+', "value": "Medium"},{"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},{"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}],"toBottom":true}'
+        payload='{"cells": [{"columnId": '+self.ss_title+', "value": "Demultiplex '+runnumber+'"}, {"columnId": '+self.ss_description+', "value": "Demultiplex"}, {"columnId": '+self.ss_samples+', "value": '+str(count)+'},{"columnId": '+self.ss_status+', "value": "In Progress"},{"columnId": '+self.ss_priority+', "value": "Medium"},{"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},{"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}],"toBottom":true}'
         
         # create url for uploading a new row
         url=self.url+"/rows"
