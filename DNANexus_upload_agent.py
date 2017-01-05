@@ -460,7 +460,6 @@ class upload2Nexus():
                 self.dx_run.append(command)
         
                 
-        
         # call module to issue the dx run commands
         self.run_pipeline()
 

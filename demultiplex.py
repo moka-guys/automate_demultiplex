@@ -409,6 +409,7 @@ class ready2start_demultiplexing():
         
         #check the result of the update attempt
         response= update_OPMS.json()
+        print response
         for i in response:
             if i == "message":
                 if response[i] =="SUCCESS":
