@@ -534,12 +534,12 @@ class upload2Nexus():
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
             self.email_priority = 3
             self.email_message = self.runfolder + " being processed using workflow " + app
-            self.smartsheet_demultiplex_in_progress()
+            self.smartsheet_mokapipe_in_progress()
             
         # send email
         self.send_an_email()
 
-    def smartsheet_demultiplex_in_progress(self):
+    def smartsheet_mokapipe_in_progress(self):
         '''This function updates smartsheet to say that demultiplexing is in progress'''
         
         # take current timestamp for recieved
@@ -568,16 +568,8 @@ class upload2Nexus():
                     runnumber=file.split("_")[0]
         
         # set all values to be inserted
-        payload='{"toBottom":true, "cells": [\
-        {"columnId": '+self.ss_title+', "value": '+runnumber+'}, \
-        {"columnId": '+self.ss_description+', "value": "MokaPipe"},\
-        {"columnId": '+self.ss_samples+', "value": '+str(count)+'},\
-        {"columnId": '+self.ss_status+', "value": "In Progress"},\
-        {"columnId": '+self.ss_priority+', "value": "Medium"},\
-        {"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},\
-        {"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}\
-        ]}'
-        
+        payload='{"cells": [{"columnId": '+self.ss_title+', "value": "MokaPipe '+runnumber+'"}, {"columnId": '+self.ss_description+', "value": "MokaPipe"},{"columnId": '+self.ss_samples+', "value": '+str(count)+'},{"columnId": '+self.ss_status+', "value": "In Progress"},{"columnId": '+self.ss_priority+', "value": "Medium"},{"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},{"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}], "toBottom":true}'
+        #print payload
         # create url for uploading a new row
         url=self.url+"/rows"
         
@@ -586,12 +578,16 @@ class upload2Nexus():
         
         # capture the row id
         response= r.json()
+        #print response
+
         for i in response["result"]:
             if i == "id":
                 self.rowid=response["result"][i]
 
+        
         #check the result of the update attempt
         for i in response:  
+            #print i
             if i == "message":
                 if response[i] =="SUCCESS":
                     pass
