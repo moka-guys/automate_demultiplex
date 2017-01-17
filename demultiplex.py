@@ -20,6 +20,8 @@ import datetime
 import smtplib
 from email.Message import Message
 import fnmatch
+import requests
+import json
 
 
 class get_list_of_runs():
@@ -123,6 +125,33 @@ class ready2start_demultiplexing():
         self.name=""
         self.now=""
 
+        #smartsheet API
+        self.api_key="3asfndq3oi2zbww3td8gb67liv"
+        
+        #sheet id
+        self.sheetid=2798264106936196
+        #newly inserted row
+        self.rowid=""
+
+        #time stamp
+        self.smartsheet_now=""
+
+        #columnIds
+        self.ss_title=str(6197963270711172)
+        self.ss_description=str(3946163457025924)
+        self.ss_samples=str(957524288530308)
+        self.ss_status=str(8449763084396420)
+        self.ss_priority=str(4790588387157892)
+        self.ss_assigned=str(2538788573472644)
+        self.ss_received=str(6723667267741572)
+        self.ss_completed=str(4471867454056324)
+        self.ss_duration=str(8975467081426820)
+        self.ss_metTAT=str(21044384819076)
+
+        #requests info
+        self.headers={"Authorization": "Bearer "+self.api_key,"Content-Type": "application/json"}
+        self.url='https://api.smartsheet.com/2.0/sheets/'+str(self.sheetid)
+
 
     def already_demultiplexed(self, runfolder, now):
         '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
@@ -180,7 +209,7 @@ class ready2start_demultiplexing():
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
             #send an email:
             self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
-            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated\nPlease update smartsheet"
+            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
             self.send_an_email()
             # proceed
             self.run_demuliplexing()
@@ -199,7 +228,7 @@ class ready2start_demultiplexing():
         
         # test bcl2fastq install
         self.test_bcl2fastq()
-
+        self.smartsheet_demultiplex_in_progress()
         # create the command
         command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
         # command="/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R 160822_NB551068_0006_AHGYM7BGXY/ --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting"
@@ -238,11 +267,14 @@ class ready2start_demultiplexing():
         if  "Processing completed with 0 errors and 0 warnings." in lastline:
             self.script_logfile.write("demultiplexing complete\n")
             self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
-            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n Please update smartsheet"
+            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
             self.send_an_email()
             self.script_logfile.close()
             self.rename=self.rename+self.runfolder
             os.rename(self.logfile_name,self.script_logfile_path+self.now+"_"+self.rename+".txt")
+
+            #update smartsheet
+            self.smartsheet_demultiplex_complete()
 
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
@@ -290,6 +322,103 @@ class ready2start_demultiplexing():
         # write this to the log file
         self.script_logfile.write("bcl2fastq check passed\n")
 
+    def smartsheet_demultiplex_in_progress(self):
+        '''This function updates smartsheet to say that demultiplexing is in progress'''
+        
+        # take current timestamp for recieved
+        self.smartsheet_now = str('{:%Y-%m-%d}'.format(datetime.datetime.utcnow()))
+        
+        # #uncomment this block if want to get the column ids for a new sheet
+        ########################################################################
+        # # Get all columns.
+        # url=self.url+"/columns"
+        # r = requests.get(url, headers=self.headers)
+        # response= r.json()
+        # 
+        # # get the column ids
+        # for i in response['data']:
+        #     print i['title'], i['id']
+        ########################################################################
+        
+        #capture the NGS run number and count
+        count = 0
+        with open(self.samplesheet,'r') as samplesheet:
+            for line in samplesheet:
+                if line.startswith("NGS"):
+                    count=count+1
+                    runnumber=line.split("_")[0]
+        
+        # set all values to be inserted
+        payload='{"cells": [{"columnId": '+self.ss_title+', "value": "Demultiplex '+runnumber+'"}, {"columnId": '+self.ss_description+', "value": "Demultiplex"}, {"columnId": '+self.ss_samples+', "value": '+str(count)+'},{"columnId": '+self.ss_status+', "value": "In Progress"},{"columnId": '+self.ss_priority+', "value": "Medium"},{"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},{"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}],"toBottom":true}'
+        
+        # create url for uploading a new row
+        url=self.url+"/rows"
+        
+        # add the row using POST 
+        r = requests.post(url,headers=self.headers,data=payload)
+        
+        # capture the row id
+        response= r.json()
+        print response
+        for i in response["result"]:
+            if i == "id":
+                self.rowid=response["result"][i]
+
+        #check the result of the update attempt
+        for i in response:  
+            if i == "message":
+                if response[i] =="SUCCESS":
+                    pass
+                else:
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
+                    self.email_message="Smartsheet was not updated to say demultiplexing is inprogress"
+                    self.send_an_email()
+
+    def smartsheet_demultiplex_complete(self):
+        '''update smartsheet to say demultiplexing is complete (add the completed date and calculate the duration (in days) and if met TAT)'''
+        #build url tp read a row
+        url='https://api.smartsheet.com/2.0/sheets/'+str(self.sheetid)+'/rows/'+str(self.rowid)
+        #get row
+        r = requests.get(url, headers=self.headers)
+        #read response in json
+        response= r.json()
+        #loop through each column and extract the recieved date
+        for col in response["cells"]:
+            if str(col["columnId"]) == self.ss_received:
+                recieved=datetime.datetime.strptime(col['value'], '%Y-%m-%d')
+        
+        # take current timestamp
+        self.smartsheet_now = str('{:%Y-%m-%d}'.format(datetime.datetime.utcnow()))
+        now=datetime.datetime.strptime(self.smartsheet_now, '%Y-%m-%d')
+        
+        #calculate the number of days taken (add one so if same day this counts as 1 day not 0)
+        duration = (now-recieved).days+1
+        
+        # set flag to show if TAT was met.
+        TAT=1
+        if duration > 4:
+            TAT=0
+        
+        #build payload used to update the row
+        payload = '{"id":"'+str(self.rowid)+'", "cells": [{"columnId":"'+ str(self.ss_duration)+'","value":"'+str(duration)+'"},{"columnId":"'+ str(self.ss_metTAT)+'","value":"'+str(TAT)+'"},{"columnId":"'+ str(self.ss_status)+'","value":"Complete"},{"columnId": '+self.ss_completed+', "value": "'+str(self.smartsheet_now)+'"}]}' 
+        
+        #build url to update row
+        url=self.url+"/rows"
+        update_OPMS = requests.request("PUT", url, data=payload, headers=self.headers)
+        
+        #check the result of the update attempt
+        response= update_OPMS.json()
+        print response
+        for i in response:
+            if i == "message":
+                if response[i] =="SUCCESS":
+                    pass
+                else:
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
+                    self.email_message="Smartsheet was not updated to say demultiplexing was completed"
+                    self.send_an_email()
 
 
 
