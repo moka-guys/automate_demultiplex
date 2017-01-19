@@ -188,8 +188,8 @@ class upload2Nexus():
         self.ss_assigned=str(2538788573472644)
         self.ss_received=str(6723667267741572)
         self.ss_completed=str(4471867454056324)
-        self.ss_duration=str(8975467081426820)
-        self.ss_metTAT=str(21044384819076)
+        self.ss_duration=str(6519775204534148)
+        self.ss_metTAT=str(4267975390848900)
 
         #requests info
         self.headers={"Authorization": "Bearer "+self.api_key,"Content-Type": "application/json"}
@@ -589,12 +589,13 @@ class upload2Nexus():
             #print i
             if i == "message":
                 if response[i] =="SUCCESS":
-                    pass
+                    self.upload_agent_script_logfile.write("smartsheet updated to say in progress\n")
                 else:
                     #send an email if the update failed
                     self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
                     self.email_message="Smartsheet was not updated to say MokaPipe is inprogress"
                     self.send_an_email()
+                    self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
 
 
 
