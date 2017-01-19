@@ -589,12 +589,13 @@ class upload2Nexus():
             #print i
             if i == "message":
                 if response[i] =="SUCCESS":
-                    pass
+                    self.upload_agent_script_logfile.write("smartsheet updated to say in progress\n")
                 else:
                     #send an email if the update failed
                     self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
                     self.email_message="Smartsheet was not updated to say MokaPipe is inprogress"
                     self.send_an_email()
+                    self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
 
 
 
