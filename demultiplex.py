@@ -145,8 +145,8 @@ class ready2start_demultiplexing():
         self.ss_assigned=str(2538788573472644)
         self.ss_received=str(6723667267741572)
         self.ss_completed=str(4471867454056324)
-        self.ss_duration=str(8975467081426820)
-        self.ss_metTAT=str(21044384819076)
+        self.ss_duration=str(6519775204534148)
+        self.ss_metTAT=str(4267975390848900)
 
         #requests info
         self.headers={"Authorization": "Bearer "+self.api_key,"Content-Type": "application/json"}
@@ -269,12 +269,15 @@ class ready2start_demultiplexing():
             self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
             self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
             self.send_an_email()
+            
+            #update smartsheet
+            self.smartsheet_demultiplex_complete()
+
             self.script_logfile.close()
             self.rename=self.rename+self.runfolder
             os.rename(self.logfile_name,self.script_logfile_path+self.now+"_"+self.rename+".txt")
 
-            #update smartsheet
-            self.smartsheet_demultiplex_complete()
+            
 
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
@@ -368,12 +371,13 @@ class ready2start_demultiplexing():
         for i in response:  
             if i == "message":
                 if response[i] =="SUCCESS":
-                    pass
+                    self.script_logfile.write("smartsheet updated to say in progress\n")
                 else:
                     #send an email if the update failed
                     self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
                     self.email_message="Smartsheet was not updated to say demultiplexing is inprogress"
                     self.send_an_email()
+                    self.script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
 
     def smartsheet_demultiplex_complete(self):
         '''update smartsheet to say demultiplexing is complete (add the completed date and calculate the duration (in days) and if met TAT)'''
@@ -413,12 +417,13 @@ class ready2start_demultiplexing():
         for i in response:
             if i == "message":
                 if response[i] =="SUCCESS":
-                    pass
+                    self.script_logfile.write("smartsheet updated to say complete\n")
                 else:
                     #send an email if the update failed
                     self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
                     self.email_message="Smartsheet was not updated to say demultiplexing was completed"
                     self.send_an_email()
+                    self.script_logfile.write("smartsheet NOT updated at complete step\n"+str(response))
 
 
 
