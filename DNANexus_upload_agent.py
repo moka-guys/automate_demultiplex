@@ -121,6 +121,8 @@ class upload2Nexus():
         # list of fastqs to get ngs run number and WES batch
         self.list_of_samples = []
 
+        self.list_of_DNA_numbers=[]
+
         #strings for NGSrun and wes numbers
         self.NGS_run = ''
         self.wes_number = ''
@@ -131,11 +133,11 @@ class upload2Nexus():
         # variables for running pipeline
         self.bash_script=""
         self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''\n"
-        self.base_command = "jobid=$(dx run "+self.app_project+"Workflows/GATK3.5 -y" # GATK3.5_160918
-        self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # GATK3.5_160918
-        self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # GATK3.5_160918
-        self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # GATK3.5_160918
-        self.arg4 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # GATK3.5_160918
+        self.base_command = "jobid=$(dx run "+self.app_project+"Workflows/GATK3.5_v2.2 -y" #GATK3.5_v2.2
+        self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # GATK3.5_v2.2
+        self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # GATK3.5_v2.2
+        self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # GATK3.5_v2.2
+        self.arg4 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # GATK3.5_v2.2
         #self.base_command = "jobid=$(dx run apps/GATK3.5_Aled -y" # GATK3.5_Aled
         #self.arg1 = " -istage-F04G1Gj0F1V1Jvg78Q33z62q.reads=" # GATK3.5_Aled
         #self.arg2 = " -istage-F04G1K00F1V3jfk2F435ZVP2.reads=" # GATK3.5_Aled
@@ -272,6 +274,9 @@ class upload2Nexus():
                         self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
                         #add the fastq name to a list to be used in create_nexus_file_path
                         self.list_of_samples.append(fastq)
+                        #split line to get DNA number
+                        self.list_of_DNA_numbers.append(fastq.split("_")[2])
+
            
         #write to logfile
         # if there were no WES samples state this in log message 
@@ -529,10 +534,19 @@ class upload2Nexus():
             self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
         
         else:
+            DNA_list="('"
+            for DNA in self.list_of_DNA_numbers:
+                if DNA in DNA_list:
+                    pass
+                else:
+                    DNA_list=DNA_list+DNA+"',"
+            DNA_list=DNA_list+")"
+            DNA_list=DNA_list.replace(",)",")")
+            sql="update NGSTest set PipelineVersion = (select itemID from item where item = 'mokapipe v2.2') where dna in " + DNA_list
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
             self.email_priority = 3
-            self.email_message = self.runfolder + " being processed using workflow " + app
+            self.email_message = self.runfolder + " being processed using workflow " + app +"\n\nPlease update Moka using the query below:\n\n"+sql
             self.smartsheet_mokapipe_in_progress()
             
         # send email
