@@ -112,6 +112,9 @@ class upload2Nexus():
         self.upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Upload_agent_log/"
         self.upload_agent_logfile_name=""
         
+        #bedfile dictionary
+        self.bedfile_dict={"CMD":"Pan.bed","EPI":"pan.bed","WES":"Pan493dataSambamba.bed"}
+        self.bedfile_folder="/home/mokaguys/Documents/apps/mokabed/LiveBedfiles/"
 
         # DNA Nexus run command log file
         self.DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs/"
@@ -138,11 +141,8 @@ class upload2Nexus():
         self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # GATK3.5_v2.2
         self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # GATK3.5_v2.2
         self.arg4 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # GATK3.5_v2.2
-        #self.base_command = "jobid=$(dx run apps/GATK3.5_Aled -y" # GATK3.5_Aled
-        #self.arg1 = " -istage-F04G1Gj0F1V1Jvg78Q33z62q.reads=" # GATK3.5_Aled
-        #self.arg2 = " -istage-F04G1K00F1V3jfk2F435ZVP2.reads=" # GATK3.5_Aled
-        #self.arg3 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads_fastqgz=" # GATK3.5_Aled
-        #self.arg4 = " -istage-F04G1Pj0F1V5zxZFvxkJfx0b.reads2_fastqgz=" # GATK3.5_Aled
+        self.arg7 = " -istage-XXX=" # the bed file using the code
+        
         self.arg5 = " --dest="
         self.arg6 = " --brief --auth-token rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL)"
         #argument to capture jobids
@@ -259,6 +259,7 @@ class upload2Nexus():
         
         #set a count to catch when not a WES run
         WES_count=0
+        panel_count=0
         # find all fastqs
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
@@ -276,15 +277,29 @@ class upload2Nexus():
                         self.list_of_samples.append(fastq)
                         #split line to get DNA number
                         self.list_of_DNA_numbers.append(fastq.split("_")[2])
+                elif for i in self.bedfile_dict:
+                    if i in fastq:
+                        # count
+                        panel_count=panel_count+1
+                        #exclude undertermined samples 
+                        if fastq.startswith('Undetermined'):
+                            pass
+                        else:
+                            #build the list of fastqs with full file paths
+                            self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
+                            #add the fastq name to a list to be used in create_nexus_file_path
+                            self.list_of_samples.append(fastq)
+                            #split line to get DNA number
+                            self.list_of_DNA_numbers.append(fastq.split("_")[2])
 
            
         #write to logfile
         # if there were no WES samples state this in log message 
-        if WES_count == 0:
-            self.upload_agent_script_logfile.write("List of fastqs did not contain any WES samples. Stopping\n")
+        if WES_count == 0 and panel_count ==0 :
+            self.upload_agent_script_logfile.write("List of fastqs did not contain any WES or custom panel samples. Stopping\n")
         # else continue
         else:
-            self.upload_agent_script_logfile.write(str(WES_count)+" fastqs found...starting upload\n")
+            self.upload_agent_script_logfile.write(str(WES_count)+" WES fastqs found...starting upload\n"+str(panel_count)+" custom panel fastqs found...starting upload\n")
         
             #build the file path with WES batch and NGS run numbers
             self.create_nexus_file_path()
@@ -318,16 +333,22 @@ class upload2Nexus():
                 wesrun = "WES" + splitfastq2[0].replace('_','')
                 WES_numbers.append(wesrun)
         
-        # create a list of unique WES batches
-        for wesnumber in set(WES_numbers):
-            # if multiple WES batches append each one with an underscore
-            if len(self.wes_number) > 1:
-                self.wes_number = self.wes_number + "_" + wesnumber
-            else:
-                self.wes_number = wesnumber
+        if len(WES_numbers)>0:
+            # create a list of unique WES batches
+            for wesnumber in set(WES_numbers):
+                # if multiple WES batches append each one with an underscore
+                if len(self.wes_number) > 1:
+                    self.wes_number = self.wes_number + "_" + wesnumber
+                else:
+                    self.wes_number = wesnumber
 
-        # self.nexus path
-        self.nexus_path = self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + "/Data/Intensities/BaseCalls"
+        if len(self.wesnumber) > 0:
+            # self.nexus path
+            self.nexus_path = self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + "/Data/Intensities/BaseCalls"
+        else:
+            # self.nexus path
+            self.nexus_path = self.runfolder + "_" + self.ngs_run + "/Data/Intensities/BaseCalls"
+        
         self.upload_agent_script_logfile.write(self.nexus_path+"\n") 
 
 
@@ -459,8 +480,13 @@ class upload2Nexus():
                 read1 = self.nexus_path+"/"+fastq
                 # assign read2 by replacing R1 with R2
                 read2 = self.nexus_path+"/"+fastq.replace("_R1_", "_R2_")
+                #get panel name and bed file
+                for i in self.bedfile_dict:
+                    if i in fastq:
+                        bedfile=self.bedfile_folder+self.bedfile_dict[i]
+
                 # create the dx command
-                command = self.base_command + self.arg1 + self.project + read1 + self.arg2 + self.project + read2 + self.arg3 + self.project + read1 + self.arg4 + self.project + read2 + self.arg5 +self.project + self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + self.arg6
+                command = self.base_command + self.arg1 + self.project + read1 + self.arg2 + self.project + read2 + self.arg3 + self.project + read1 + self.arg4 + self.project + read2 + self.arg7 + bedfile + self.arg5 +self.project + self.runfolder + "_" + self.ngs_run + "_" + self.wes_number + self.arg6
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
         
