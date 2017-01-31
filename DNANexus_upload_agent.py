@@ -133,11 +133,11 @@ class upload2Nexus():
         # variables for running pipeline
         self.bash_script=""
         self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''\n"
-        self.base_command = "jobid=$(dx run "+self.app_project+"Workflows/GATK3.5_v2.2 -y" #GATK3.5_v2.2
-        self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # GATK3.5_v2.2
-        self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # GATK3.5_v2.2
-        self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # GATK3.5_v2.2
-        self.arg4 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # GATK3.5_v2.2
+        self.base_command = "jobid=$(dx run "+self.app_project+"Workflows/GATK3.5_v2.3 -y" #GATK3.5_v2.3
+        self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # GATK3.5_v2.3
+        self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # GATK3.5_v2.3
+        self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # GATK3.5_v2.3
+        self.arg4 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # GATK3.5_v2.3
         #self.base_command = "jobid=$(dx run apps/GATK3.5_Aled -y" # GATK3.5_Aled
         #self.arg1 = " -istage-F04G1Gj0F1V1Jvg78Q33z62q.reads=" # GATK3.5_Aled
         #self.arg2 = " -istage-F04G1K00F1V3jfk2F435ZVP2.reads=" # GATK3.5_Aled
@@ -546,10 +546,12 @@ class upload2Nexus():
                     DNA_list=DNA_list+DNA+"','"
             # close string
             DNA_list=DNA_list+")"
+
             # replace the last comma in the string
             DNA_list=DNA_list.replace(",')",")")
             #build sql query
-            sql="update NGSTest set PipelineVersion = (select itemID from item where item = 'mokapipe v2.2') where dna in " + DNA_list
+            sql="update NGSTest set PipelineVersion = (select itemID from item where item = 'mokapipe v2.3') where dna in " + DNA_list
+
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
             self.email_priority = 3
