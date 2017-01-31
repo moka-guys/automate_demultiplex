@@ -548,7 +548,7 @@ class upload2Nexus():
             DNA_list=DNA_list+")"
 
             # replace the last comma in the string
-            DNA_list=DNA_list.replace(",'')",")")
+            DNA_list=DNA_list.replace(",')",")")
             #build sql query
             sql="update NGSTest set PipelineVersion = (select itemID from item where item = 'mokapipe v2.3') where dna in " + DNA_list
 
