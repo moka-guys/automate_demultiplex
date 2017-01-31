@@ -534,14 +534,21 @@ class upload2Nexus():
             self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + self.upload_started_file
         
         else:
+         #create sql string
             DNA_list="('"
+           # loop through list of dna numbers obtained from fastq filenames
             for DNA in self.list_of_DNA_numbers:
                 if DNA in DNA_list:
+                    # will be duplicate DNA numbers because of F and R reads 
                     pass
                 else:
+                 # add the DNA number to end of string
                     DNA_list=DNA_list+DNA+"','"
+            # close string
             DNA_list=DNA_list+")"
+            # replace the last comma in the string
             DNA_list=DNA_list.replace(",')",")")
+            #build sql query
             sql="update NGSTest set PipelineVersion = (select itemID from item where item = 'mokapipe v2.2') where dna in " + DNA_list
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
