@@ -539,9 +539,9 @@ class upload2Nexus():
                 if DNA in DNA_list:
                     pass
                 else:
-                    DNA_list=DNA_list+DNA+"',"
+                    DNA_list=DNA_list+DNA+"','"
             DNA_list=DNA_list+")"
-            DNA_list=DNA_list.replace(",)",")")
+            DNA_list=DNA_list.replace(",')",")")
             sql="update NGSTest set PipelineVersion = (select itemID from item where item = 'mokapipe v2.2') where dna in " + DNA_list
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
