@@ -1,6 +1,7 @@
 '''
 
 '''
+debug=True
 ### location of in/output files
 # path to run folders
 runfolders = "/media/data1/share"
