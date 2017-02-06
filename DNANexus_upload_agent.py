@@ -84,27 +84,11 @@ class upload2Nexus():
     ''' This class is fed a runfolder which may be ready to be uploaded to DNA Nexus''' 
     
     def __init__(self):
-        # directory of run folders - must be same as in get_list_of_runs()
-        #self.runfolders = "/media/data1/share" # workstation
-        #self.runfolders = "/media/data2/data" # workstation dummy
-        #self.runfolders = "/home/aled/demultiplex_testing" # aledpc
-        
-        # file which denotes demultiplexing is underway/complete 
-        #self.demultiplexed = "demultiplexlog.txt"
-        
+
         # set empty variables to be defined based on the run  
         self.runfolder = ""
         self.runfolderpath = ""
 
-        #succesful run statement
-        #self.logfile_success = "Processing completed with 0 errors and 0 warnings."
-        
-        # upload started log file
-        #self.upload_started_file = "DNANexus_upload_started.txt"
-        
-        # upload agent
-        #self.upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
-        
         # fastq folder
         #self.fastq_folder = "Data/Intensities/BaseCalls"
         self.fastq_folder_path = ""
@@ -112,13 +96,6 @@ class upload2Nexus():
         #upload_agent_logfile
         #self.upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Upload_agent_log/"
         self.upload_agent_logfile_name=""
-        
-        #bedfile dictionary
-        #self.bedfile_dict={"CMD":"Pan.bed","EPI":"pan.bed","WES":"Pan493dataSambamba.bed"}
-        #self.bedfile_folder="/home/mokaguys/Documents/apps/mokabed/LiveBedfiles/"
-
-        # DNA Nexus run command log file
-        #self.DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs/"
 
         # string of fastqs for upload agent
         self.fastq_string = ""
@@ -131,18 +108,11 @@ class upload2Nexus():
         self.NGS_run = ''
         self.wes_number = ''
 
-        #self.project="NGS_runs:"
-        #self.app_project="001_ToolsReferenceData:"
-
         # variables for running pipeline
         self.bash_script=""
         self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''\n"
         self.base_command = "jobid=$(dx run "+app_project+workflow_path+" -y"
-        # self.arg1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # GATK3.5_v2.3
-        # self.arg2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # GATK3.5_v2.3
-        # self.arg3 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # GATK3.5_v2.3
-        # self.arg4 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # GATK3.5_v2.3
-        # self.arg7 = " -istage-XXX=" # the bed file using the code
+
         
         self.dest = " --dest="
         self.token = " --brief --auth-token "+Nexus_API_Key+")"
@@ -152,15 +122,6 @@ class upload2Nexus():
 
         #create path to data in nexus eg /runfolder/Data
         self.nexus_path = ""
-        
-        # #email server settings
-        # self.user = 'AKIAIO3XY2MMSBEQNNXQ'
-        # self.pw   = '***REMOVED***'
-        # self.host = 'email-smtp.eu-west-1.amazonaws.com'
-        # self.port = 587
-        # self.me   = 'gst-tr.mokaguys@nhs.net'
-        # self.you  = ('gst-tr.mokaguys@nhs.net',)
-        # self.smtp_do_tls = True
         
         # email message
         self.email_subject = ""
@@ -235,7 +196,7 @@ class upload2Nexus():
             lastline = ""
             for i in logfile:
                 lastline = i
-            print lastline
+            
             # check if the success statement is in the last line
             if  logfile_success in lastline:
                 self.upload_agent_script_logfile.write("demultiplex was successfully completed. compile a list of fastqs \n")
@@ -285,6 +246,7 @@ class upload2Nexus():
             self.upload_agent_script_logfile.write("List of fastqs did not contain any WES or custom panel samples. Stopping\n")
         # else continue
         else:
+            #write to logfile
             self.upload_agent_script_logfile.write(str(panel_count)+" fastqs found...starting upload\n")
         
             #build the file path with WES batch and NGS run numbers
@@ -358,15 +320,15 @@ class upload2Nexus():
         #create file to show demultiplexing has started
         upload_started = open(self.runfolderpath + "/" + upload_started_file, 'w')
         
-        # run the command, redirecting stderror to stdout
-        #proc = subprocess.Popen([nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
-        
-        print nexus_upload_command
-
-        # capture the streams (err is redirected to out above)
-        #(out, err) = proc.communicate()
-        out="x"
-        err="y"
+        if not debug:
+            # run the command, redirecting stderror to stdout
+            proc = subprocess.Popen([nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
+            
+            # capture the streams (err is redirected to out above)
+            (out, err) = proc.communicate()
+        else:
+            out="x"
+            err="y"
 
         #write to log
         upload_started.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n" + out)
@@ -376,8 +338,9 @@ class upload2Nexus():
         self.email_subject = "MOKAPIPE ALERT: Upload of " + self.runfolder + " completed"
         self.email_priority = 3
         self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + upload_started_file
-        # send email
-        ######self.send_an_email()
+        if not debug:
+            # send email
+            self.send_an_email()
         # start pipeline
         self.create_run_pipeline_command()
 
@@ -538,12 +501,14 @@ class upload2Nexus():
         
         # # run a command to execute the bash script made above
         cmd="bash "+self.bash_script
-        ########proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        if not debug:
+            proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         
-        # capture the streams
-        #######(out, err) = proc.communicate()
-        out="x"
-        err=""
+            # capture the streams
+            (out, err) = proc.communicate()
+        else:
+            out="x"
+            err=""
 
         #reopen log file containing output from upload agent
         upload_started = open(self.runfolderpath + "/" + upload_started_file, 'a')
@@ -573,12 +538,13 @@ class upload2Nexus():
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
             self.email_priority = 3
             self.email_message = self.runfolder + " being processed using workflow " + app +"\n\nPlease update Moka using the query below:\n\n"+sql
-            ######self.smartsheet_mokapipe_in_progress()
             
-        if smartsheet_sheetid:
-            print "can see the smartsheet sheetid"
-        # send email
-        #######self.send_an_email()
+            if not debug:
+                self.smartsheet_mokapipe_in_progress()
+            
+        if not debug:
+            # send email
+            self.send_an_email()
 
     def smartsheet_mokapipe_in_progress(self):
         '''This function updates smartsheet to say that demultiplexing is in progress'''
