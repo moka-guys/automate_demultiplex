@@ -550,7 +550,7 @@ class upload2Nexus():
             # replace the last comma in the string
             DNA_list=DNA_list.replace(",')",")")
             #build sql query
-            sql="update NGSTest set PipelineVersion = (select itemID from item where item = 'mokapipe v2.3') where dna in " + DNA_list
+            sql="update NGSTest set PipelineVersion = 1284 where dna in " + DNA_list
 
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
