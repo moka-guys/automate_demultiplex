@@ -1,16 +1,17 @@
 '''
-
+DNA Nexus Upload agent configuration
 '''
-debug=True
-### location of in/output files
+#set debug mode
+#debug=True
+debug=False
+
+
+########################### location of input/output files####################
 # path to run folders
 runfolders = "/media/data1/share"
 
 # path to fastq files
-fastq_folder = "Data/Intensities/BaseCalls"
-
-# name of file which denotes demultiplexing is underway/complete
-demultiplexed = "demultiplexlog.txt"
+fastq_folder = "/Data/Intensities/BaseCalls"
 
 # path to log file which records the output of the upload agent
 upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Upload_agent_log/"
@@ -18,68 +19,17 @@ upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfile
 # name of log file which records the output of the upload agent
 upload_started_file = "DNANexus_upload_started.txt"
 
+#runfolder backup file
+runfolder_upload_file="add_runfolder_to_nexus_logfile.txt"
+
 # Path to DNA Nexus run command log file
 DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs/"
 
+#log folder containing project creation logs
+DNA_Nexus_project_creation_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Nexus_project_creation_logs/create_nexus_project_"
 
-### DNA Nexus settings
-# project to upload run folder into
-NexusProject="NGS_runs"
-# The project containing the app and data
-app_project="001_ToolsReferenceData:"
-#path to the workflow in the app project
-workflow_path="Workflows/GATK3.5_v2.3"
-# bedfile folder
-bedfile_folder="Data/Bed/"
-
-###istages
-fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # FastQC Read 1
-fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # FastQC Read 2
-bwa_fastq1 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # BWAFastQ Read1
-bwa_fastq2 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # BWA FastQ Read2
-samb_bed = " -istage-XXX=" # Sambamba Bed file
-HSMetrics_bed = " -istage-YYY=" # HSMetrics Bed file
-HC_bed = " -istage-ZZZ=" # GATK HC Bed file
-        
-# DNA Nexus authentication token
-Nexus_API_Key = "rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL"
-        
-
-
-
-### CNV Gene Panel
-CNV_bedfile_dict={"PanCM":"Pan.bed",\
-                "PanCMD":"pan.bed",\
-                "PanNERD":"pan.bed",\
-                "PanGSDA":"pan.bed",\
-                "PanGSDM":"pan.bed",\
-                "PanGSDL":"pan.bed",\
-                "PanMMA":"pan.bed",\
-                "PanUCD":"pan.bed"\
-                }
-### Bedfile for sambamba 
-coverage_bedfile_dict={"PanCM":"Pan.bed",\
-                "PanCMD":"pan.bed",\
-                "PanNERD":"pan.bed",\
-                "PanGSDA":"pan.bed",\
-                "PanGSDM":"pan.bed",\
-                "PanGSDL":"pan.bed",\
-                "PanMMA":"pan.bed",\
-                "PanUCD":"pan.bed",\
-                "WES" : "Pan493dataSambamba.bed"\
-                }
-
-### Bedfile for HSmetrics/GATK Haplotype Caller
-capture_bedfile_dict={"PanCM":"Pan.bed",\
-                "PanCMD":"pan.bed",\
-                "PanNERD":"pan.bed",\
-                "PanGSDA":"pan.bed",\
-                "PanGSDM":"pan.bed",\
-                "PanGSDL":"pan.bed",\
-                "PanMMA":"pan.bed",\
-                "PanUCD":"pan.bed",\
-                "WES" : "agilent_sureselect_human_all_exon_v5_b37_targets.bed"\
-                }
+# folder containing demultiplex logs
+demultiplex_logfiles="/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files/"
 
 # message which marks sucessful demultiplexing from bcl2fastq
 logfile_success = "Processing completed with 0 errors and 0 warnings."
@@ -87,9 +37,71 @@ logfile_success = "Processing completed with 0 errors and 0 warnings."
 #path to upload agent
 upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 
-### smartsheet API
+########################## DNA Nexus setting#############################
+# project to upload run folder into
+NexusProjectPrefix="002_"
+
+#success statement when creating project 
+project_success="Created new project called \"%s\""
+
+# The project containing the app and data
+app_project="001_ToolsReferenceData:"
+#path to the workflow in the app project
+workflow_path="Workflows/GATK3.5_v2.4"
+#path to multiqc app
+multiqc_path="Apps/multiqc"
+#smartsheet app
+smartsheet_path="Apps/smartsheet_mokapipe_complete"
+# bedfile folder
+bedfile_folder="Data/BED/"
+# DNA Nexus organisation to create the project within
+organisation="org-viapath_prod"
+
+############################istages######################################
+fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # FastQC Read 1
+fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # FastQC Read 2
+#bwa_fastq1 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # BWAFastQ Read1
+#bwa_fastq2 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # BWA FastQ Read2
+sambamba_input = " -istage-F23jXgj0jy1bF81x8Qz8jy3B.sambamba_bed=" # Sambamba Bed file
+mokavendor_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.vendor_exome_bedfile=" # HSMetrics Bed file
+ingenuity_input=" -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
+multiqc_project_input=" -iproject_for_multiqc="
+smartsheet_mokapipe_complete=" -iNGS_run="
+        
+# DNA Nexus authentication token
+#Nexus_API_Key = "rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL" 
+Nexus_API_Key = "K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ" 
+        
+users=["aledjones","wook","mokaguys"]
+
+################## Dict linking panel numbers for +/-10 and CNVs ####################
+panelnumbers={"Pan1001":"Pan992",\
+                    "Pan1000":"Pan991",\
+                    "Pan994":"Pan943",\
+                    "Pan996":"Pan945",\
+                    "Pan995":"Pan944",\
+                    "Pan998":"Pan947",\
+                    "Pan1009":"Pan1010",\
+                    "Pan999":"Pan989",\
+                    "Pan493":""}
+
+
+email_panel_dict={"Pan1001":"joowook.ahn@nhs.net",\
+                    "Pan1000":"joowook.ahn@nhs.net",\
+                    "Pan994":"joowook.ahn@nhs.net",\
+                    "Pan996":"joowook.ahn@nhs.net",\
+                    "Pan995":"joowook.ahn@nhs.net",\
+                    "Pan998":"joowook.ahn@nhs.net",\
+                    "Pan1009":"joowook.ahn@nhs.net",\
+                    "Pan999":"joowook.ahn@nhs.net",\
+                    "Pan493":"joowook.ahn@nhs.net"}
+
+################################# smartsheet API ################################
 # smartsheet sheet ID
 smartsheet_sheetid=2798264106936196
+
+# API key
+smartsheet_api_key="3asfndq3oi2zbww3td8gb67liv"
 
 #columnIds
 ss_title=6197963270711172
@@ -103,10 +115,8 @@ ss_completed=4471867454056324
 ss_duration=6519775204534148
 ss_metTAT=4267975390848900
 
-# API key
-smartsheet_api_key="3asfndq3oi2zbww3td8gb67liv"
 
-###email server settings
+########################email server settings
 user = 'AKIAIO3XY2MMSBEQNNXQ'
 pw   = 'AmkKC7nXvLrxsvBHZf3zagNq953nun9c0iYN+zjifIbN'
 host = 'email-smtp.eu-west-1.amazonaws.com'
