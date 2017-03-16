@@ -645,7 +645,7 @@ class upload2Nexus():
                     DNA_list=DNA_list+DNA+"',"
             DNA_list=DNA_list+")"
             DNA_list=DNA_list.replace(",)",")")
-            sql="update NGSTest set PipelineVersion = (select itemID from item where item = 'mokapipe v2.4') where dna in " + DNA_list
+            sql="update NGSTest set PipelineVersion = "+moka_pipeline_ID+" where dna in " + DNA_list
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
             self.email_priority = 3
