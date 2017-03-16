@@ -65,7 +65,7 @@ class get_list_of_runs():
             remaining_files=" ".join(list_of_logfiles)
 
             # combine all into one file with the longest filename
-            cmd = "cat " + remaining_files + " >> " + longest_name
+            cmd = "cat " + remaining_files + " >> " + longest_name.replace(".txt","_demultiplexing_log.txt")
             rmcmd= "rm " + remaining_files
 
             # run the command, redirecting stderror to stdout
