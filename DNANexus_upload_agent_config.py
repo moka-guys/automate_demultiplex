@@ -28,6 +28,7 @@ DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing
 #log folder containing project creation logs
 DNA_Nexus_project_creation_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Nexus_project_creation_logs/create_nexus_project_"
 
+
 # folder containing demultiplex logs
 demultiplex_logfiles="/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files/"
 
@@ -63,7 +64,8 @@ fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # FastQC Read 2
 #bwa_fastq1 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # BWAFastQ Read1
 #bwa_fastq2 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # BWA FastQ Read2
 sambamba_input = " -istage-F23jXgj0jy1bF81x8Qz8jy3B.sambamba_bed=" # Sambamba Bed file
-mokavendor_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.vendor_exome_bedfile=" # HSMetrics Bed file
+mokavendor_input = " -istage-BzP67pQ0jy1ZpjKBBJyGBQZb.vendor_exome_bedfile=" # HSMetrics Bed file
+#GATK_Human_Exome_Pipeline_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.vendor_exome_bedfile=" # uses same bedfile as moka vendor so can specify this in bedfile
 ingenuity_input=" -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
 multiqc_project_input=" -iproject_for_multiqc="
 smartsheet_mokapipe_complete=" -iNGS_run="

@@ -627,7 +627,7 @@ class upload2Nexus():
         
         #write to log + close
         upload_started.write(out)
-        upload_started.close()
+        
 
         if err:
             upload_started.write("Uh Oh! standard error: "+err)
@@ -657,6 +657,7 @@ class upload2Nexus():
         if not debug:
             # send email
             self.send_an_email()
+        upload_started.close()
 
     def upload_rest_of_runfolder(self):
         #create file to show upload has started
@@ -727,6 +728,7 @@ class upload2Nexus():
         2. demultiplexing log file (/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files)
         3. nexus project creation logs (/home/mokaguys/Documents/automate_demultiplexing_logfiles/Nexus_project_creation_logs)
         4. runfolder_upload_file (in the run folder)
+        5. logfile used to set off the workflow (/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
         '''
 
         logfile_list=[]
@@ -749,6 +751,9 @@ class upload2Nexus():
         # runfolder upload log (file 4)
         runfolder_upload_logfile_to_upload=self.runfolderpath + "/" + runfolder_upload_file
         logfile_list.append(runfolder_upload_logfile_to_upload)
+
+        # bash script which sets off workflow (file 5)
+        logfile_list.append(self.bash_script)
 
         #create command line
         nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexusproject.replace(NexusProjectPrefix,"")+"/Logfiles/" + " --do-not-compress --upload-threads 10 " + " ".join(logfile_list)
