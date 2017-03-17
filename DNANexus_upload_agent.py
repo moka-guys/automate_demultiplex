@@ -332,7 +332,7 @@ class upload2Nexus():
 
         # create a list of unique NGS numebrs
         for ngsnumber in set(NGS_numbers):
-            # if multiple WNGS numbers append each one with an underscore
+            # if multiple NGS numbers append each one with an underscore
             if self.NGS_run != '':
                 self.NGS_run = self.NGS_run + "_" + ngsnumber
             else:
@@ -352,7 +352,7 @@ class upload2Nexus():
             self.nexusproject=self.nexusproject+self.runfolder + "_" + self.NGS_run
         
         #write to log
-        self.upload_agent_script_logfile.write("fastqs will be uploaded to "+self.nexus_path+"\n\n----------------------TEST upload agent----------------------\n") 
+        self.upload_agent_script_logfile.write("fastqs will be uploaded to "+self.nexus_path+"\n\n----------------------TEST UPLOAD AGENT----------------------\n") 
 
 
     def upload(self):
