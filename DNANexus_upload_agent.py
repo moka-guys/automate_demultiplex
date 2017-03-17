@@ -276,7 +276,7 @@ class upload2Nexus():
         #write to logfile
         # if there were no WES samples state this in log message 
         if to_be_nexified ==0 :
-            self.upload_agent_script_logfile.write("List of fastqs did not contain any WES or custom panel samples. Stopping\n")
+            self.upload_agent_script_logfile.write("List of fastqs did not contain any known Pan numbers. Stopping\n")
         # else continue
         else:
             #write to logfile
@@ -330,9 +330,9 @@ class upload2Nexus():
                 else:
                     self.wes_number = wesnumber
 
-        # create a list of unique WES batches
+        # create a list of unique NGS numebrs
         for ngsnumber in set(NGS_numbers):
-            # if multiple WES batches append each one with an underscore
+            # if multiple WNGS numbers append each one with an underscore
             if self.NGS_run != '':
                 self.NGS_run = self.NGS_run + "_" + ngsnumber
             else:
