@@ -66,7 +66,7 @@ fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # FastQC Read 1
 fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads=" # FastQC Read 2
 #bwa_fastq1 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # BWAFastQ Read1
 #bwa_fastq2 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # BWA FastQ Read2
-sambamba_input = " -istage-F23jXgj0jy1bF81x8Qz8jy3B.sambamba_bed=" # Sambamba Bed file
+sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed=" # Sambamba Bed file
 mokavendor_input = " -istage-F35FvQ00jy1pb8f11vB4Xjf1.vendor_exome_bedfile=" # HSMetrics Bed file
 #GATK_Human_Exome_Pipeline_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.vendor_exome_bedfile=" # uses same bedfile as moka vendor so can specify this in bedfile
 ingenuity_input=" -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
