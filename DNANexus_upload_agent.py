@@ -652,7 +652,9 @@ class upload2Nexus():
             DNA_list=DNA_list+")"
 
             DNA_list=DNA_list.replace(",')",")")
+
             sql="update NGSTest set PipelineVersion = "+moka_pipeline_ID+" where dna in " + DNA_list
+
 
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
