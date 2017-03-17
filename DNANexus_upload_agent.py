@@ -188,7 +188,7 @@ class upload2Nexus():
 
     def already_uploaded(self, runfolder, now):
         '''check folder hasn't already been uploaded'''
-        'capture timestamp'
+        #capture timestamp
         self.now=now
         
         #open the logfile for this hour's cron job.
