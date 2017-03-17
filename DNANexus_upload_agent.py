@@ -128,6 +128,7 @@ class upload2Nexus():
 
         # DNA Nexus commands 
         self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''\n"
+
         self.createprojectcommand="project_id=\"$(dx new project --bill-to "+organisation+"  \"%s\" --brief --auth-token "+Nexus_API_Key+")\"\n"
         self.base_command = "jobid=$(dx run "+app_project+workflow_path+" -y"
         self.multiqc_command= "dx run "+app_project+multiqc_path
@@ -144,7 +145,7 @@ class upload2Nexus():
         self.project = " --project="
         self.token = " --brief --auth-token "+Nexus_API_Key+")"
         self.depends= " -y $depends_list"
-        
+
         #argument to capture jobids
         self.depends_list="depends_list=\"${depends_list} -d ${jobid} \""
         self.dx_run = []
@@ -637,15 +638,22 @@ class upload2Nexus():
             self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + upload_started_file
         
         else:
+         #create sql string
             DNA_list="('"
+           # loop through list of dna numbers obtained from fastq filenames
             for DNA in self.list_of_DNA_numbers:
                 if DNA in DNA_list:
+                    # will be duplicate DNA numbers because of F and R reads 
                     pass
                 else:
-                    DNA_list=DNA_list+DNA+"',"
+                 # add the DNA number to end of string
+                    DNA_list=DNA_list+DNA+"','"
+            # close string
             DNA_list=DNA_list+")"
-            DNA_list=DNA_list.replace(",)",")")
+
+            DNA_list=DNA_list.replace(",')",")")
             sql="update NGSTest set PipelineVersion = "+moka_pipeline_ID+" where dna in " + DNA_list
+
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
             self.email_priority = 3
