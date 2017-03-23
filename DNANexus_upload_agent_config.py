@@ -59,7 +59,8 @@ smartsheet_path="Apps/smartsheet_mokapipe_complete"
 # bedfile folder
 bedfile_folder="Data/BED/"
 # DNA Nexus organisation to create the project within
-organisation="org-viapath_prod"
+prod_organisation="org-viapath_prod"
+dev_organisation="org-viapath_dev"
 
 ############################istages######################################
 fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # FastQC Read 1
