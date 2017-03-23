@@ -129,7 +129,7 @@ class upload2Nexus():
         # DNA Nexus commands 
         self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''\n"
 
-        self.createprojectcommand="project_id=\"$(dx new project --bill-to "+organisation+"  \"%s\" --brief --auth-token "+Nexus_API_Key+")\"\n"
+        self.createprojectcommand="project_id=\"$(dx new project --bill-to %s \"%s\" --brief --auth-token "+Nexus_API_Key+")\"\n"
         self.base_command = "jobid=$(dx run "+app_project+workflow_path+" -y"
         self.multiqc_command= "dx run "+app_project+multiqc_path
         self.smartsheet_update_command="dx run "+app_project+smartsheet_path
@@ -479,7 +479,10 @@ class upload2Nexus():
         #open bash script
         DNA_Nexus_bash_script = open(project_bash_script, 'w')
         DNA_Nexus_bash_script.write(self.source_command)
-        DNA_Nexus_bash_script.write(self.createprojectcommand % (self.nexusproject))
+        if self.wes_number == '':
+            DNA_Nexus_bash_script.write(self.createprojectcommand % (dev_organisation,self.nexusproject))
+        else:
+            DNA_Nexus_bash_script.write(self.createprojectcommand % (prod_organisation,self.nexusproject))
 
         #then need to share the project with the nexus usernames in the list in config file
         for i in users:
