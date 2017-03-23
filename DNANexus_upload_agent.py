@@ -711,13 +711,8 @@ class upload2Nexus():
                     #write to log
                     runfolder_upload_started.write(out)
 
-                    
-
-
-
         runfolder_upload_started.close()
-
-
+        self.look_for_upload_errors_runfolder()
         
         # close the log file
         self.upload_agent_script_logfile.close()
@@ -846,7 +841,18 @@ class upload2Nexus():
                     self.send_an_email()
                     self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
 
-
+    
+    def look_for_upload_errors_runfolder(self):
+        self.upload_agent_script_logfile.write("\n----------------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------------\n")
+        if "ERROR" in open(self.runfolderpath + "/" + runfolder_upload_file).read():
+            #send an email if the update failed
+            self.email_subject="MOKAPIPE ALERT: RUNFOLDER UPLOAD MAY NOT BE COMPLETE"
+            self.email_message="The string \"ERROR\" was present in the upload agent standard out. See the log file @ "+self.runfolderpath + "/" + runfolder_upload_file
+            self.email_priority = 1
+            self.send_an_email()
+            self.upload_agent_script_logfile.write(self.email_message)
+        else:
+            self.upload_agent_script_logfile.write("The strong \"ERROR\" was not present in standard out\n\n")
 
 
 if __name__ == '__main__':
