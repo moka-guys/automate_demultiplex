@@ -367,7 +367,7 @@ class upload2Nexus():
         nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string
         
         #write to logfile
-        self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus.......command = \n" + nexus_upload_command + "\n\n----------------------RUN WORKFLOW----------------------\n")
+        self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus.......command = \n" + nexus_upload_command + "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
         
         #create file to show upload has started
         upload_started = open(self.runfolderpath + "/" + upload_started_file, 'a')
@@ -386,6 +386,9 @@ class upload2Nexus():
         upload_started.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n" + out)
         upload_started.close()
         
+        #check fastqs uploaded successfully
+        self.look_for_upload_errors_fastq()
+
         # set email content
         self.email_subject = "MOKAPIPE ALERT: Upload of " + self.runfolder + " completed"
         self.email_priority = 3
@@ -672,7 +675,7 @@ class upload2Nexus():
         runfolder_upload_started.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n")
 
         # write this to the log file
-        self.upload_agent_script_logfile.write("uploading rest of run folder to Nexus using commands below. see log file @"+self.runfolderpath + "/" + runfolder_upload_file+" for the stdout and stderr \n")
+        self.upload_agent_script_logfile.write("uploading rest of run folder to Nexus using commands below. see log file @"+self.runfolderpath + "/" + runfolder_upload_file+" for the stdout and stderr \n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------")
 
         # self.runfolder + "_" + self.NGS_run + "_" + self.wes_number + "/" + fastq_folder
         for root, subFolder, files in os.walk(self.runfolderpath):
@@ -841,18 +844,30 @@ class upload2Nexus():
                     self.send_an_email()
                     self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
 
-    
-    def look_for_upload_errors_runfolder(self):
-        self.upload_agent_script_logfile.write("\n----------------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------------\n")
-        if "ERROR" in open(self.runfolderpath + "/" + runfolder_upload_file).read():
+    def look_for_upload_errors_fastq(self):
+        # Open the log file and read to look for the string "ERROR"               
+        if "ERROR" in open(self.runfolderpath + "/" + upload_started_file).read():
             #send an email if the update failed
-            self.email_subject="MOKAPIPE ALERT: RUNFOLDER UPLOAD MAY NOT BE COMPLETE"
-            self.email_message="The string \"ERROR\" was present in the upload agent standard out. See the log file @ "+self.runfolderpath + "/" + runfolder_upload_file
+            self.email_subject="MOKAPIPE ALERT: FASTQ UPLOAD MAY NOT BE COMPLETE"
+            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading FastQ files. See the log file @ "+self.runfolderpath + "/" + runfolder_upload_file
             self.email_priority = 1
             self.send_an_email()
             self.upload_agent_script_logfile.write(self.email_message)
         else:
-            self.upload_agent_script_logfile.write("The strong \"ERROR\" was not present in standard out\n\n")
+            self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n\n----------------------RUN WORKFLOW----------------------")
+
+
+    def look_for_upload_errors_runfolder(self):
+        # Open the log file and read to look for the string "ERROR"
+        if "ERROR" in open(self.runfolderpath + "/" + runfolder_upload_file).read():
+            #send an email if the update failed
+            self.email_subject="MOKAPIPE ALERT: RUNFOLDER UPLOAD MAY NOT BE COMPLETE"
+            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading the rest of the run folder. See the log file @ "+self.runfolderpath + "/" + runfolder_upload_file
+            self.email_priority = 1
+            self.send_an_email()
+            self.upload_agent_script_logfile.write(self.email_message)
+        else:
+            self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n\n")
 
 
 if __name__ == '__main__':
