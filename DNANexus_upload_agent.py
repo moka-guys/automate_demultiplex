@@ -352,7 +352,7 @@ class upload2Nexus():
             self.nexusproject=self.nexusproject+self.runfolder + "_" + self.NGS_run
         
         #write to log
-        self.upload_agent_script_logfile.write("fastqs will be uploaded to "+self.nexus_path+"\n\n----------------------TEST UPLOAD AGENT----------------------\n") 
+        self.upload_agent_script_logfile.write("fastqs will be uploaded to "+self.nexus_path+"\n\n----------------------CREATE AND SHARED DNA NEXUS PROJECT----------------------\n") 
 
 
     def upload(self):
@@ -505,13 +505,10 @@ class upload2Nexus():
                 self.email_message = "Unable to create the project %s.\nError message = %s%s" % (self.nexusproject, out,err)
                 self.send_an_email()
                 raise Exception, "Unable to create DNA Nexus project"
-            else:
-                #open log file containing output from upload agent
-                upload_started = open(self.runfolderpath + "/" + upload_started_file, 'w')
+            else:               
+                # write to log 
+                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared\n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.nexusproject))
                 
-                #write to log + close
-                upload_started.write("DNA Nexus project %s created and shared\n" % (self.nexusproject))
-                upload_started.close()
         else:
             self.projectid="project-F2gzY2j0xyXJ4x3z5Pq8BjQ4"
 
