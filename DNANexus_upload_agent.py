@@ -585,14 +585,14 @@ class upload2Nexus():
 
         #write multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
         multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid+self.depends
-        smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.NGS_run + self.depends
+        smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder + self.depends
         
 
         #print smartsheet_update_command
         
         ###### Once --dependson flag works with analysis ID uncomment these lines
-        #self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
-        #self.DNA_Nexus_bash_script.write(smartsheet_update_command+"\n")
+        self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
+        self.DNA_Nexus_bash_script.write(smartsheet_update_command+"\n")
 
         # capture the sample name
         #step 1 split the command to get the last argument (read2)
