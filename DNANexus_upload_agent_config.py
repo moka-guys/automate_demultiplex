@@ -89,6 +89,8 @@ panelnumbers={"Pan1001":"Pan992",\
                     "Pan998":"Pan947",\
                     "Pan1009":"Pan1010",\
                     "Pan999":"Pan989",\
+                    "Pan656":"",\
+                    "Pan1063":"",\
                     "Pan493":""}
 
 
@@ -100,6 +102,8 @@ email_panel_dict={"Pan1001":"joowook.ahn@nhs.net",\
                     "Pan998":"joowook.ahn@nhs.net",\
                     "Pan1009":"joowook.ahn@nhs.net",\
                     "Pan999":"joowook.ahn@nhs.net",\
+                    "Pan656":"joowook.ahn@nhs.net",\
+                    "Pan1063":"joowook.ahn@nhs.net",\
                     "Pan493":"joowook.ahn@nhs.net"}
 
 ################################# smartsheet API ################################
