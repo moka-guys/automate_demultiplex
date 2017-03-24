@@ -258,7 +258,7 @@ class upload2Nexus():
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
                 for i in panelnumbers:
-                    if i in fastq:
+                    if i+"_" in fastq:
                         # count
                         to_be_nexified += 1
                         #exclude undertermined samples 
@@ -542,7 +542,7 @@ class upload2Nexus():
                 
                 #get panel name and bed file
                 for i in panelnumbers:
-                    if i in fastq:
+                    if i+"_" in fastq:
                         sambamba_bedfile=app_project+bedfile_folder+i+"dataSambamba.bed"
                         if i == "Pan493":
                             moka_vendor_bedfile=app_project+bedfile_folder+"agilent_sureselect_human_all_exon_v5_b37_targets.bed"
