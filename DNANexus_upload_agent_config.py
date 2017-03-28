@@ -10,6 +10,8 @@ debug=False
 # path to run folders
 runfolders = "/media/data1/share"
 
+#samplesheet folder
+samplesheets=runfolders+"/samplesheets/"
 # path to fastq files
 fastq_folder = "/Data/Intensities/BaseCalls"
 
