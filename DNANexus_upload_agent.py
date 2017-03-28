@@ -19,7 +19,7 @@ import fnmatch
 import requests
 import json
 from DNANexus_upload_agent_config import *
-
+from shutil import copyfile
 
 class get_list_of_runs():
     '''Loop through the directories in the directory containing the runfolders'''
@@ -677,8 +677,13 @@ class upload2Nexus():
         runfolder_upload_started = open(self.runfolderpath + "/" + runfolder_upload_file, 'a')
         runfolder_upload_started.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n")
 
+        #create the samplesheet name to copy
+        samplesheet_name=self.runfolder+"_SampleSheet.csv"
+        #copy worksheet into project
+        copyfile(samplesheets+samplesheet_name, self.runfolderpath+"/"+samplesheet_name)
+
         # write this to the log file
-        self.upload_agent_script_logfile.write("uploading rest of run folder to Nexus using commands below. see log file @"+self.runfolderpath + "/" + runfolder_upload_file+" for the stdout and stderr \n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------")
+        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands below. see log file @"+self.runfolderpath + "/" + runfolder_upload_file+" for the stdout and stderr \n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------")
 
         # self.runfolder + "_" + self.NGS_run + "_" + self.wes_number + "/" + fastq_folder
         for root, subFolder, files in os.walk(self.runfolderpath):
