@@ -232,13 +232,13 @@ class upload2Nexus():
             
             # check if the success statement is in the last line
             if  logfile_success in lastline:
-                self.upload_agent_script_logfile.write("demultiplex was successfully completed.\n compiling a list of fastqs....... ")
+                self.upload_agent_script_logfile.write("Demultiplex was successfully completed.\ncompiling a list of fastqs....... ")
                 #print "successfully demultiplexed"
                 # if successfull call the module which creates a list of fastqs  
                 self.find_fastqs()
             else:
                 #write to logfile that demultplex was not successful
-                self.upload_agent_script_logfile.write("!!!!!!!DEMULTIPLEXING DID NOT COMPLETE SUCCESSFULLY.!!!!!!!!! \n ----------------------STOP----------------------\n")
+                self.upload_agent_script_logfile.write("!!!!!!!DEMULTIPLEXING DID NOT COMPLETE SUCCESSFULLY.!!!!!!!!!\n----------------------STOP----------------------\n")
         else:
             # write to logfile that not yet demultiplexed
             self.upload_agent_script_logfile.write("demultiplexing has not been performed.\n----------------------STOP----------------------\n")
@@ -513,7 +513,7 @@ class upload2Nexus():
                 raise Exception, "Unable to create DNA Nexus project"
             else:               
                 # write to log 
-                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared\n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.nexusproject))
+                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared\nProjectid=%s\n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.nexusproject,self.projectid))
                 
         else:
             self.projectid="project-F2gzY2j0xyXJ4x3z5Pq8BjQ4"
@@ -683,7 +683,7 @@ class upload2Nexus():
         copyfile(samplesheets+samplesheet_name, self.runfolderpath+"/"+samplesheet_name)
 
         # write this to the log file
-        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands below. see log file @"+self.runfolderpath + "/" + runfolder_upload_file+" for the stdout and stderr \n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------")
+        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands below. see log file @ "+self.runfolderpath + "/" + runfolder_upload_file+" for the stdout and stderr \n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
 
         # self.runfolder + "_" + self.NGS_run + "_" + self.wes_number + "/" + fastq_folder
         for root, subFolder, files in os.walk(self.runfolderpath):
@@ -862,7 +862,7 @@ class upload2Nexus():
             self.send_an_email()
             self.upload_agent_script_logfile.write(self.email_message)
         else:
-            self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n\n----------------------RUN WORKFLOW----------------------")
+            self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n\n----------------------RUN WORKFLOW----------------------\n")
 
 
     def look_for_upload_errors_runfolder(self):
