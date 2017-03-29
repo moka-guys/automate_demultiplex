@@ -22,7 +22,8 @@ upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfile
 upload_started_file = "DNANexus_upload_started.txt"
 
 #runfolder backup file
-runfolder_upload_file="add_runfolder_to_nexus_logfile.txt"
+runfolder_upload_stdout="add_runfolder_to_nexus_stdout.txt"
+runfolder_upload_cmds="add_runfolder_to_nexus_cmds.txt"
 
 # Path to DNA Nexus run command log file
 DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs/"
