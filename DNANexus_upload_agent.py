@@ -365,9 +365,10 @@ class upload2Nexus():
 
         # build the nexus upload command                        
         nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string
-        
+        runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'w')
+        runfolder_upload_cmd_file.write("----------------------Upload of fastqs----------------------\n"+nexus_upload_command+"\n\n----------------------Upload rest of runfolder----------------------\n")
         #write to logfile
-        self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus.......command = \n" + nexus_upload_command + "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
+        self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus. See commands at "+self.runfolderpath + "/" + runfolder_upload_cmds + "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
         
         #create file to show upload has started
         upload_started = open(self.runfolderpath + "/" + upload_started_file, 'a')
@@ -383,7 +384,9 @@ class upload2Nexus():
             err="y"
 
         #write to log
-        upload_started.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n" + out)
+        runfolder_upload_stdout_file = open(self.runfolderpath + "/" + upload_started_file, 'a')
+
+        upload_started.write("\n----------------------Uploading fastqs "+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n" + out)
         upload_started.close()
         
         #check fastqs uploaded successfully
@@ -418,14 +421,14 @@ class upload2Nexus():
         
         # server details
         server = smtplib.SMTP(host = host,port = port,timeout = 10)
-        server.set_debuglevel(10) # verbosity
+        server.set_debuglevel(1) # verbosity
         server.starttls()
         server.ehlo()
         server.login(user, pw)
         server.sendmail(me, [you], m.as_string())
 
         #write to logfile
-        self.upload_agent_script_logfile.write("Email sent to...... " + str(you) + "\nsubject:" + self.email_subject + "\nbody:" + self.email_message+"\n")
+        self.upload_agent_script_logfile.write("\nEmail sent to...... " + str(you) + "\nsubject:" + self.email_subject + "\nbody:" + self.email_message+"\n\n")
 
     def test_upload_agent(self):
         '''test the upload agent is installed'''
@@ -497,14 +500,15 @@ class upload2Nexus():
             
             # capture the streams
             (out, err) = proc.communicate()
-            #print "out:"+out
-            #print "err:"+err
-            
-            for i in out:
-                if i.startswith("project"):
-                    self.projectid=i
 
-            if self.project=="":
+            std_out=out
+            self.projectid="project"+std_out.split("project")[-1]
+            print self.projectid
+            #for i in out:
+            #    if i.startswith("project"):
+            #        self.projectid=i
+
+            if self.projectid=="":
                 self.email_subject = "MOKAPIPE ALERT: FAILED TO CREATE PROJECT IN DNA NEXUS"
                 self.email_priority = 1
                 self.email_message = "Unable to create the project %s.\nError message = %s%s" % (self.nexusproject, out,err)
@@ -512,7 +516,7 @@ class upload2Nexus():
                 raise Exception, "Unable to create DNA Nexus project"
             else:               
                 # write to log 
-                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared\nProjectid=%s\n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.nexusproject,self.projectid))
+                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared to "+", ".join(users)+"\nProjectid=%s\n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.nexusproject,self.projectid))
                 
         else:
             self.projectid="project-F2gzY2j0xyXJ4x3z5Pq8BjQ4"
@@ -583,8 +587,8 @@ class upload2Nexus():
             self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
 
         #write multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
-        multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid+self.depends+self.token.replace(")","")
-        smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder + self.depends+self.token.replace(")","")
+        multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.token.replace(")","")+self.depends
+        smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder +self.project+self.projectid.rstrip()+ self.depends+self.token.replace(")","")
         
 
         #print smartsheet_update_command
@@ -611,7 +615,7 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.close()
 
         #write to cron job script
-        self.upload_agent_script_logfile.write("dx run commands issued - see "+self.bash_script+"\nstd_out:\n")
+        self.upload_agent_script_logfile.write("\ndx run commands issued - see "+self.bash_script+"\nMultiQC and Smartsheet complete apps set with the project id:"+self.projectid.rstrip()+"\n\njob ids captured from standard out:\n")
         
         # # run a command to execute the bash script made above
         cmd="bash "+self.bash_script
@@ -629,12 +633,11 @@ class upload2Nexus():
         
 
         if err:
-            self.upload_agent_logfile.write("Uh Oh! standard error: "+err)
             #create email message
             self.email_subject = "MOKAPIPE ALERT: Error message when started pipeline"
             self.email_priority = 1
             self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + upload_started_file
-        
+            self.upload_agent_script_logfile.write("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: "+err+"\n\nemailing error message:\n"+self.email_message+"\n\n")
         else:
          #create sql string
             DNA_list="('"
@@ -659,19 +662,19 @@ class upload2Nexus():
             self.email_priority = 3
             self.email_message = self.runfolder + " being processed using workflow " + app +"\n\nPlease update Moka using the query below:\n\n"+sql
                     
-            self.upload_agent_script_logfile.write("Email sent with following SQL update command:\n"+sql+"\n\n")
             if not debug:
                 self.smartsheet_mokapipe_in_progress()
-        self.upload_agent_script_logfile.write("\n\n----------------------UPLOAD REST OF RUNFOLDER----------------------\n")
+        
         if not debug:
             # send email
             self.send_an_email()
+        self.upload_agent_script_logfile.write("\n\n----------------------UPLOAD REST OF RUNFOLDER----------------------\n")
         
 
     def upload_rest_of_runfolder(self):
         #create file to show upload has started
-        runfolder_upload_stdout_file = open(self.runfolderpath + "/" + runfolder_upload_stdout, 'a')
-        runfolder_upload_stdout_file.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n")
+        runfolder_upload_stdout_file = open(self.runfolderpath + "/" + upload_started_file, 'a')
+        runfolder_upload_stdout_file.write("\n----------------------Uploading rest of runfolder "+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n")
 
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'a')
 
@@ -681,7 +684,7 @@ class upload2Nexus():
         copyfile(samplesheets+samplesheet_name, self.runfolderpath+"/"+samplesheet_name)
 
         # write this to the log file
-        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands in "+self.runfolderpath + "/" + runfolder_upload_cmds +"\nsee standard out from these commands in log file @ "+self.runfolderpath + "/" + runfolder_upload_file+"\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
+        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands in "+self.runfolderpath + "/" + runfolder_upload_cmds +"\nsee standard out from these commands in log file @ "+self.runfolderpath + "/" + upload_started_file+"\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
 
         # self.runfolder + "_" + self.NGS_run + "_" + self.wes_number + "/" + fastq_folder
         for root, subFolder, files in os.walk(self.runfolderpath):
@@ -694,10 +697,12 @@ class upload2Nexus():
                 elif path.endswith(".fastq.gz"):
                     pass
                     #skip log files still being written to
-                elif path.endswith(runfolder_upload_file) :
+                elif path.endswith(upload_started_file) or path.endswith(runfolder_upload_cmds) :
+                    pass
+                elif path.endswith("SampleSheet.csv"):
                     pass
                 else:
-                    path_to_upload=path
+                    path_to_upload=path                       
                     path_for_nexus=path.replace(self.runfolder,self.nexusproject.replace(NexusProjectPrefix,"")).replace(runfolders,"").replace(item,"")
 
                     # build the nexus upload command                        
@@ -743,6 +748,7 @@ class upload2Nexus():
         4. runfolder_upload_commands (in the run folder)
         5. runfolder_upload_stdout (in the run folder)
         6. logfile used to set off the workflow (/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
+        7. samplesheet
         '''
 
         logfile_list=[]
@@ -767,11 +773,16 @@ class upload2Nexus():
         logfile_list.append(runfolder_upload_logfile_to_upload)
         
         # runfolder upload stdout (file 5)
-        runfolder_upload_logfile_to_upload=self.runfolderpath + "/" + runfolder_upload_stdout
+        runfolder_upload_logfile_to_upload=self.runfolderpath + "/" + upload_started_file
         logfile_list.append(runfolder_upload_logfile_to_upload)
 
         # bash script which sets off workflow (file 6)
         logfile_list.append(self.bash_script)
+
+        #samplesheet (file7)
+        
+        #copy worksheet into project
+        nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexusproject.replace(NexusProjectPrefix,"")+"/" + " --do-not-compress --upload-threads 10 " + self.runfolderpath + "/" + self.runfolderpath+"/"+self.runfolder+"_SampleSheet.csv"
 
         #create command line
         nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexusproject.replace(NexusProjectPrefix,"")+"/Logfiles/" + " --do-not-compress --upload-threads 10 " + " ".join(logfile_list)
@@ -791,7 +802,7 @@ class upload2Nexus():
         # set email content
         self.email_subject = "MOKAPIPE ALERT: backup of " + self.runfolder + " completed"
         self.email_priority = 3
-        self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + runfolder_upload_file
+        self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + upload_started_file
         if not debug:
             # send email. #open logfile quickly first
             self.upload_agent_script_logfile = open(self.upload_agent_logfile_name,'a')
@@ -863,7 +874,7 @@ class upload2Nexus():
         if "ERROR" in open(self.runfolderpath + "/" + upload_started_file).read():
             #send an email if the update failed
             self.email_subject="MOKAPIPE ALERT: FASTQ UPLOAD MAY NOT BE COMPLETE"
-            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading FastQ files. See the log file @ "+self.runfolderpath + "/" + runfolder_upload_file
+            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading FastQ files. See the log file @ "+self.runfolderpath + "/" + upload_started_file
             self.email_priority = 1
             self.send_an_email()
             self.upload_agent_script_logfile.write(self.email_message)
@@ -873,10 +884,10 @@ class upload2Nexus():
 
     def look_for_upload_errors_runfolder(self):
         # Open the log file and read to look for the string "ERROR"
-        if "ERROR" in open(self.runfolderpath + "/" + runfolder_upload_file).read():
+        if "ERROR" in open(self.runfolderpath + "/" + upload_started_file).read():
             #send an email if the update failed
             self.email_subject="MOKAPIPE ALERT: RUNFOLDER UPLOAD MAY NOT BE COMPLETE"
-            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading the rest of the run folder. See the log file @ "+self.runfolderpath + "/" + runfolder_upload_file
+            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading the rest of the run folder. See the log file @ "+self.runfolderpath + "/" + upload_started_file
             self.email_priority = 1
             self.send_an_email()
             self.upload_agent_script_logfile.write(self.email_message)
