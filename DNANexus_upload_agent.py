@@ -516,7 +516,10 @@ class upload2Nexus():
                 raise Exception, "Unable to create DNA Nexus project"
             else:               
                 # write to log 
-                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared to "+", ".join(users)+"\nProjectid=%s\n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.nexusproject,self.projectid))
+                user_str=""
+                for i in users:
+                    user_str=user_str+i+" "
+                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared to " % (self.nexusproject) + user_str +"\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
                 
         else:
             self.projectid="project-F2gzY2j0xyXJ4x3z5Pq8BjQ4"
@@ -615,7 +618,7 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.close()
 
         #write to cron job script
-        self.upload_agent_script_logfile.write("\ndx run commands issued - see "+self.bash_script+"\nMultiQC and Smartsheet complete apps set with the project id:"+self.projectid.rstrip()+"\n\njob ids captured from standard out:\n")
+        self.upload_agent_script_logfile.write("dx run commands issued - see "+self.bash_script+"\nMultiQC and Smartsheet complete apps set with the project id:"+self.projectid.rstrip()+"\n\njob ids captured from standard out:\n")
         
         # # run a command to execute the bash script made above
         cmd="bash "+self.bash_script
@@ -668,7 +671,7 @@ class upload2Nexus():
         if not debug:
             # send email
             self.send_an_email()
-        self.upload_agent_script_logfile.write("\n\n----------------------UPLOAD REST OF RUNFOLDER----------------------\n")
+        self.upload_agent_script_logfile.write("\n----------------------UPLOAD REST OF RUNFOLDER----------------------\n")
         
 
     def upload_rest_of_runfolder(self):
@@ -684,7 +687,7 @@ class upload2Nexus():
         copyfile(samplesheets+samplesheet_name, self.runfolderpath+"/"+samplesheet_name)
 
         # write this to the log file
-        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands in "+self.runfolderpath + "/" + runfolder_upload_cmds +"\nsee standard out from these commands in log file @ "+self.runfolderpath + "/" + upload_started_file+"\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
+        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands in "+self.runfolderpath + "/" + runfolder_upload_cmds +"\nsee standard out from these commands in log file @ "+self.runfolderpath + "/" + upload_started_file+"\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
 
         # self.runfolder + "_" + self.NGS_run + "_" + self.wes_number + "/" + fastq_folder
         for root, subFolder, files in os.walk(self.runfolderpath):
@@ -854,7 +857,7 @@ class upload2Nexus():
             if i == "id":
                 self.rowid=response["result"][i]
 
-        self.upload_agent_script_logfile.write("----------------------UPDATE SMARTSHEET----------------------\n")
+        self.upload_agent_script_logfile.write("\n----------------------UPDATE SMARTSHEET----------------------\n")
         #check the result of the update attempt
         for i in response:  
             #print i
