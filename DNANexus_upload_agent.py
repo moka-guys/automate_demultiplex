@@ -481,10 +481,7 @@ class upload2Nexus():
         #open bash script
         DNA_Nexus_bash_script = open(project_bash_script, 'w')
         DNA_Nexus_bash_script.write(self.source_command)
-        if self.wes_number == '':
-            DNA_Nexus_bash_script.write(self.createprojectcommand % (dev_organisation,self.nexusproject))
-        else:
-            DNA_Nexus_bash_script.write(self.createprojectcommand % (prod_organisation,self.nexusproject))
+        DNA_Nexus_bash_script.write(self.createprojectcommand % (prod_organisation,self.nexusproject))
 
         #then need to share the project with the nexus usernames in the list in config file
         for i in users:
