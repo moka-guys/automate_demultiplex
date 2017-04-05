@@ -589,41 +589,29 @@ class upload2Nexus():
             # write line to append job id to depends_list
             self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
 
-        #write multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
+        # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
         multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.token.replace(")","")+self.depends
+        # build smartsheet update command
         smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder +self.project+self.projectid.rstrip()+ self.depends+self.token.replace(")","")
         
-
-        #print smartsheet_update_command
-        
-        ###### Once --dependson flag works with analysis ID uncomment these lines
+        # write commands to bash script
         self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
         self.DNA_Nexus_bash_script.write(smartsheet_update_command+"\n")
-
-        # capture the sample name
-        #step 1 split the command to get the last argument (read2)
-        split_command = command.split(fastq_folder)
-        read_2 = split_command[1].replace("/","")
-
-        # split this fastq name on _
-        read = read_2.split("_")
-        # eg name NGS150B_14_152061_BS_WES11_S2_R2_001
-        sample = read[0]+"_"+read[1]+"_"+read[2]+"_"+read[3]+"_"+read[4]
-        
-        #capture the workflow used
+      
+        # capture the workflow used
         app=workflow_path.replace("Workflows/","")
 
-        
-        #close bash script file handle
+        # close bash script file handle
         self.DNA_Nexus_bash_script.close()
 
-        #write to cron job script
+        # write to cron job script
         self.upload_agent_script_logfile.write("dx run commands issued - see "+self.bash_script+"\nMultiQC and Smartsheet complete apps set with the project id:"+self.projectid.rstrip()+"\n\njob ids captured from standard out:\n")
         
-        # # run a command to execute the bash script made above
+        # run a command to execute the bash script made above
         cmd="bash "+self.bash_script
 
         if not debug:
+            # execute command
             proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         
             # capture the streams
@@ -632,49 +620,53 @@ class upload2Nexus():
             out="x"
             err=""
 
+        #capture standard out (the job ids) to the log file
         self.upload_agent_script_logfile.write(out)
         
-
+        # if any standard error
         if err:
-            #create email message
+            # send email
             self.email_subject = "MOKAPIPE ALERT: Error message when starting pipeline"
-            self.email_priority = 1
+            self.email_priority = 1 # high priority
             self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + upload_started_file
+            
+            # write error message to log file
             self.upload_agent_script_logfile.write("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: "+err+"\n\nemailing error message:\n"+self.email_message+"\n\n")
         else:
-         #create sql string
+         # create sql string to update moka with
             DNA_list="('"
-           # loop through list of dna numbers obtained from fastq filenames
-            for DNA in self.list_of_DNA_numbers:
-                if DNA in DNA_list:
-                    # will be duplicate DNA numbers because of F and R reads 
-                    pass
-                else:
-                 # add the DNA number to end of string
-                    DNA_list=DNA_list+DNA+"','"
+           # loop through unique list of dna numbers obtained from fastq filenames
+            for DNA in set(self.list_of_DNA_numbers):
+                # build the sq query
+                DNA_list=DNA_list+DNA+"','"
             # close string
             DNA_list=DNA_list+")"
 
+            # remove the excess ,' from the end of the string
             DNA_list=DNA_list.replace(",')",")")
 
+            # build the rest of the sql update query
             sql="update NGSTest set PipelineVersion = "+moka_pipeline_ID+" where dna in " + DNA_list
 
 
-            #create email message
-            self.email_subject = "MOKAPIPE ALERT: Started pipeline for " + self.runfolder
-            self.email_priority = 3
+            # email this query
+            self.email_subject = "MOKAPIPE ALERT - ACTION NEEDED: Started pipeline for " + self.runfolder
+            self.email_priority = 1 # high priority
             self.email_message = self.runfolder + " being processed using workflow " + app +"\n\nPlease update Moka using the query below:\n\n"+sql
                     
             if not debug:
+                #call function to update smartsheet to say run in progress
                 self.smartsheet_mokapipe_in_progress()
         
         if not debug:
             # send email
             self.send_an_email()
-        self.upload_agent_script_logfile.write("\n----------------------UPLOAD REST OF RUNFOLDER----------------------\n")
         
 
     def upload_rest_of_runfolder(self):
+        # write status update to log file
+        self.upload_agent_script_logfile.write("\n----------------------UPLOAD REST OF RUNFOLDER----------------------\n")
+
         # open file for upload agent standard out (in append mode)
         runfolder_upload_stdout_file = open(self.runfolderpath + "/" + upload_started_file, 'a')
         
