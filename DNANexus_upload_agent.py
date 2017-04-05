@@ -361,16 +361,21 @@ class upload2Nexus():
         # perform upload agent test
         self.test_upload_agent()
 
+        #test dx toolkit installation
         self.test_dx_toolkit()
 
         # build the nexus upload command                        
         nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string
+        
+        # open a file to hold all the upload agent commands
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'w')
+        # write fastq upload commands and a way of distinguishing between upload of fastq and rest of runfolder
         runfolder_upload_cmd_file.write("----------------------Upload of fastqs----------------------\n"+nexus_upload_command+"\n\n----------------------Upload rest of runfolder----------------------\n")
+        
         #write to logfile
         self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus. See commands at "+self.runfolderpath + "/" + runfolder_upload_cmds + "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
         
-        #create file to show upload has started
+        # open file to show upload has started and to hold upload agent standard out
         upload_started = open(self.runfolderpath + "/" + upload_started_file, 'a')
         
         if not debug:
@@ -383,9 +388,7 @@ class upload2Nexus():
             out="x"
             err="y"
 
-        #write to log
-        runfolder_upload_stdout_file = open(self.runfolderpath + "/" + upload_started_file, 'a')
-
+        # write to log
         upload_started.write("\n----------------------Uploading fastqs "+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n" + out)
         upload_started.close()
         
@@ -399,6 +402,7 @@ class upload2Nexus():
         if not debug:
             # send email
             self.send_an_email()
+        
         # start pipeline
         self.create_run_pipeline_command()
 
