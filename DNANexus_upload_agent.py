@@ -739,6 +739,7 @@ class upload2Nexus():
         #rename file to show what runs were affected.
         self.rename=self.rename+self.runfolder
         os.rename(self.upload_agent_logfile_name,self.upload_agent_logfile_name.replace('.txt','')+self.rename+".txt")
+        self.upload_agent_logfile_name=self.upload_agent_logfile_name.replace('.txt','')+self.rename+".txt"
 
         #upload log files too
         self.upload_log_files()
@@ -754,43 +755,62 @@ class upload2Nexus():
         7. samplesheet
         '''
 
+        #empty list to hold files (and paths) to be uploaded
         logfile_list=[]
         
-        # path for upload agent log file (file1) 
-        upload_agent_log_file_to_upload=self.upload_agent_logfile_name.replace('.txt','')+self.rename+".txt"
+        ######### path for upload agent log file (file1) #########
+        # get full filepath for the log file containing the decisions made by this script
+        upload_agent_log_file_to_upload=self.upload_agent_logfile_name
+        # add to list
         logfile_list.append(upload_agent_log_file_to_upload)
 
+
+        ######### demultiplexing log file (file2) #########
+        # empty variable to build a list of files
         demultiplex_log=""
-        #demultiplexing log file (file2)
+        #loop through files in demultiplex log folder (contains decisions made when demultiplexing script is run - have been renamed to contain run folder if a run was demultiplexed)
         for file in os.listdir(demultiplex_logfiles):
+            # if runfolder in filename
             if self.runfolder in file:
+                # add file path and file name to list
                 demultiplex_log=demultiplex_logfiles+file
                 logfile_list.append(demultiplex_log)
 
-        # nexus project_creation_logfile (file 3)
+
+        ######### nexus project_creation_logfile (file 3) #########
+        # get the full file path for file containing comands used to create and share nexus project
         nexus_project_creation_logfile=DNA_Nexus_project_creation_logfolder+ self.runfolder + ".sh"
+        # add to list
         logfile_list.append(nexus_project_creation_logfile)        
 
-        # runfolder upload commands (file 4)
+
+        ######### runfolder upload commands (file 4) #########
+        # get the full file path for the cmds used to upload fastq, runfolder and log files
         runfolder_upload_logfile_to_upload=self.runfolderpath + "/" + runfolder_upload_cmds
+        # add to list
         logfile_list.append(runfolder_upload_logfile_to_upload)
         
-        # runfolder upload stdout (file 5)
+
+        ######### runfolder upload stdout (file 5) #########
+        # get the full file path for the file containing stdout/ stderr from upload agent
         runfolder_upload_logfile_to_upload=self.runfolderpath + "/" + upload_started_file
+        # add to list
         logfile_list.append(runfolder_upload_logfile_to_upload)
 
-        # bash script which sets off workflow (file 6)
+        
+        ######### bash script which sets off workflow (file 6) #########
+        # add the file which sets off the dx run commands
         logfile_list.append(self.bash_script)
 
-        #samplesheet (file7)        
-        #copy worksheet into project
+
+        ########## samplesheet (file7) #########
+        # create a upload agent command for samplesheet (copied into the runfolder above) which is being uploaded into the runfolder
         samplesheet_nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexusproject.replace(NexusProjectPrefix,"")+"/" + " --do-not-compress --upload-threads 10 " + self.runfolderpath+"/"+self.runfolder+"_SampleSheet.csv "
 
-        #create command line
+        #create command line for files in the logfile_list (to be put into a logfiles subfolder)
         nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexusproject.replace(NexusProjectPrefix,"")+"/Logfiles/" + " --do-not-compress --upload-threads 10 " + " ".join(logfile_list)
         
-        #write these commands to the file before upload.
-
+        #write these commands to the runfolder_upload_cmds_logfile before upload.
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'a')
         runfolder_upload_cmd_file.write(samplesheet_nexus_upload_command+"\n"+nexus_upload_command)
         runfolder_upload_cmd_file.close()
@@ -807,21 +827,31 @@ class upload2Nexus():
             out="x"
             err="y"
 
-        # capture stdout to log
+        # capture stdout to log file containing stdour and stderr
         runfolder_upload_stdout_file = open(self.runfolderpath + "/" + upload_started_file, 'a')
         runfolder_upload_stdout_file.write("\n----------------------Uploading logfiles (this will not be included in the file within DNA Nexus) "+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n")
         runfolder_upload_stdout_file.write(out)
         runfolder_upload_stdout_file.close()
 
-        # set email content
+        # check standard out from upload of log files
+        # open logfile first to write info from check
+        self.upload_agent_script_logfile = open(self.upload_agent_logfile_name,'a')
+        self.look_for_upload_errors_logfiles.write("\n----------------CHECKING SUCCESSFUL UPLOAD OF LOGFILES (this will not be in DNA Nexus)----------------\n")
+        
+        # call function to check stdout
+        self.look_for_upload_errors_logfiles()
+
+        # send email to report backup of runfolder complete
         self.email_subject = "MOKAPIPE ALERT: backup of " + self.runfolder + " completed"
         self.email_priority = 3
         self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + upload_started_file
+        
         if not debug:
-            # send email. #open logfile quickly first
-            self.upload_agent_script_logfile = open(self.upload_agent_logfile_name,'a')
+            # send email.            
             self.send_an_email()
-            self.upload_agent_script_logfile.close()
+
+        # close log file
+        self.upload_agent_script_logfile.close()
 
     def smartsheet_mokapipe_in_progress(self):
         '''This function updates smartsheet to say that demultiplexing is in progress'''
@@ -910,6 +940,24 @@ class upload2Nexus():
             #send an email if the update failed
             self.email_subject="MOKAPIPE ALERT: RUNFOLDER UPLOAD MAY NOT BE COMPLETE"
             self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading the rest of the run folder. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\nNB this error may be a repeat of an error when uploading the fastq files"
+            self.email_priority = 1 # high priority
+            self.send_an_email()
+            #write the email message to log file
+            self.upload_agent_script_logfile.write(self.email_message)
+        else:
+            #write to log file check was ok
+            self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n")
+
+    def look_for_upload_errors_logfiles(self):
+        '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
+        If present email link to the log file
+        NB any errors from the fastq upload and run folderwould also be detected here.'''
+
+        # Open the log file and read to look for the string "ERROR"
+        if "ERROR" in open(self.runfolderpath + "/" + upload_started_file).read():
+            #send an email if the update failed
+            self.email_subject="MOKAPIPE ALERT: UPLOAD OF LOGFILES MAY NOT BE COMPLETE"
+            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading the log files. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\nNB this error may be a repeat of an error from previous upload steps"
             self.email_priority = 1 # high priority
             self.send_an_email()
             #write the email message to log file
