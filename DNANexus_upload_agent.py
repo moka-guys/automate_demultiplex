@@ -884,28 +884,38 @@ class upload2Nexus():
                     self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
 
     def look_for_upload_errors_fastq(self):
+        '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
+        If present email link to the log file'''
         # Open the log file and read to look for the string "ERROR"               
         if "ERROR" in open(self.runfolderpath + "/" + upload_started_file).read():
             #send an email if the update failed
             self.email_subject="MOKAPIPE ALERT: FASTQ UPLOAD MAY NOT BE COMPLETE"
             self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading FastQ files. See the log file @ "+self.runfolderpath + "/" + upload_started_file
-            self.email_priority = 1
+            self.email_priority = 1 # high priority
             self.send_an_email()
+            #write the email message to log file
             self.upload_agent_script_logfile.write(self.email_message)
         else:
+            #write to log file check was ok
             self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n")
 
 
     def look_for_upload_errors_runfolder(self):
+        '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
+        If present email link to the log file
+        NB any errors from the fastq upload would also be detected here.'''
+
         # Open the log file and read to look for the string "ERROR"
         if "ERROR" in open(self.runfolderpath + "/" + upload_started_file).read():
             #send an email if the update failed
             self.email_subject="MOKAPIPE ALERT: RUNFOLDER UPLOAD MAY NOT BE COMPLETE"
-            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading the rest of the run folder. See the log file @ "+self.runfolderpath + "/" + upload_started_file
-            self.email_priority = 1
+            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading the rest of the run folder. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\nNB this error may be a repeat of an error when uploading the fastq files"
+            self.email_priority = 1 # high priority
             self.send_an_email()
+            #write the email message to log file
             self.upload_agent_script_logfile.write(self.email_message)
         else:
+            #write to log file check was ok
             self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n")
 
 
