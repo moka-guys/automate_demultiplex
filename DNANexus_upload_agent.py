@@ -484,9 +484,12 @@ class upload2Nexus():
         DNA_Nexus_bash_script.write(self.createprojectcommand % (prod_organisation,self.nexusproject))
 
         #then need to share the project with the nexus usernames in the list in config file
-        for i in users:
-            DNA_Nexus_bash_script.write("dx invite %s $project_id ADMINISTER --auth-token %s\n" % (i,Nexus_API_Key))
+        for user in users:
+            DNA_Nexus_bash_script.write("dx invite %s $project_id ADMINISTER --auth-token %s\n" % (user,Nexus_API_Key))
+        
+        # echo the project id so it can be captured below
         DNA_Nexus_bash_script.write("echo $project_id")
+        
         #close before running
         DNA_Nexus_bash_script.close()     
         
@@ -497,28 +500,33 @@ class upload2Nexus():
             
             # capture the streams
             (out, err) = proc.communicate()
-
+            
+            # capture out into std_out variable
             std_out=out
+            
+            # split std_out on "project" and get the last item to capture the project ID
             self.projectid="project"+std_out.split("project")[-1]
             print self.projectid
-            #for i in out:
-            #    if i.startswith("project"):
-            #        self.projectid=i
-
+            
+            # if haven't captured a project id send an email
             if self.projectid=="":
                 self.email_subject = "MOKAPIPE ALERT: FAILED TO CREATE PROJECT IN DNA NEXUS"
-                self.email_priority = 1
-                self.email_message = "Unable to create the project %s.\nError message = %s%s" % (self.nexusproject, out,err)
+                self.email_priority = 1 # high priority
+                self.email_message = "Unable to create the project %s.\nError message = %s, %s" % (self.nexusproject, out,err)
                 self.send_an_email()
+                # raise exception to stop script
                 raise Exception, "Unable to create DNA Nexus project"
             else:               
-                # write to log 
+                # build a string of the users list to make log look nice
                 user_str=""
                 for i in users:
                     user_str=user_str+i+" "
+                
+                # write to log 
                 self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared to " % (self.nexusproject) + user_str +"\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
                 
         else:
+            # for debug mode use example project id
             self.projectid="project-F2gzY2j0xyXJ4x3z5Pq8BjQ4"
 
         
