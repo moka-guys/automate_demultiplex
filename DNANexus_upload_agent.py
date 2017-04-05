@@ -252,19 +252,21 @@ class upload2Nexus():
         # create a list of all files within the fastq folder
         all_fastqs = os.listdir(self.fastq_folder_path)
         
-        #set counts to catch when not a panel to go through Nexus
+        # set counts to catch when not a panel to go through Nexus
         to_be_nexified=0
         # find all fastqs
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
-                for i in panelnumbers:
-                    if i+"_" in fastq:
-                        # count
-                        to_be_nexified += 1
-                        #exclude undertermined samples 
-                        if fastq.startswith('Undetermined'):
-                            pass
-                        else:
+                #exclude undertermined samples 
+                if fastq.startswith('Undetermined'):
+                    pass
+                else:
+                    for panel in panelnumbers:
+                        # add underscore to ensure Pan1000 is not true when looking for Pan100
+                        if panel+"_" in fastq:
+                            # count sample
+                            to_be_nexified += 1
+
                             #build the list of fastqs with full file paths
                             self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
                             #add the fastq name to a list to be used in create_nexus_file_path
@@ -273,10 +275,10 @@ class upload2Nexus():
                             self.list_of_DNA_numbers.append(fastq.split("_")[2])
 
            
-        #write to logfile
-        # if there were no WES samples state this in log message 
+        # if there were no WES samples state this in log message and stop
         if to_be_nexified ==0 :
             self.upload_agent_script_logfile.write("List of fastqs did not contain any known Pan numbers. Stopping\n")
+        
         # else continue
         else:
             #write to logfile
