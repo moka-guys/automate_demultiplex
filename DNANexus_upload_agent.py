@@ -675,44 +675,57 @@ class upload2Nexus():
         
 
     def upload_rest_of_runfolder(self):
-        #create file to show upload has started
+        # open file for upload agent standard out (in append mode)
         runfolder_upload_stdout_file = open(self.runfolderpath + "/" + upload_started_file, 'a')
+        
+        # distinguish between upload of fastq and rest of runfolder
         runfolder_upload_stdout_file.write("\n----------------------Uploading rest of runfolder "+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n")
 
+        # open file containing upload agent commands (in append mode)
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'a')
 
-        #create the samplesheet name to copy
+        # create the samplesheet name to copy
         samplesheet_name=self.runfolder+"_SampleSheet.csv"
-        #copy worksheet into project
+        
+        #copy samplesheet into project
         copyfile(samplesheets+samplesheet_name, self.runfolderpath+"/"+samplesheet_name)
 
-        # write this to the log file
+        # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
         self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands in "+self.runfolderpath + "/" + runfolder_upload_cmds +"\nsee standard out from these commands in log file @ "+self.runfolderpath + "/" + upload_started_file+"\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
 
-        # self.runfolder + "_" + self.NGS_run + "_" + self.wes_number + "/" + fastq_folder
+        # loop through the run folder
         for root, subFolder, files in os.walk(self.runfolderpath):
+            # for every file 
             for item in files:
+                # capture the path
                 path=str(os.path.join(root,item))
+                
                 # skip image files
                 if "/L00" in path:
                     pass
-                    #skip fastq files already uploaded
+                #skip fastq files already uploaded
                 elif path.endswith(".fastq.gz"):
                     pass
-                    #skip log files still being written to
+                # skip log files still being written to
                 elif path.endswith(upload_started_file) or path.endswith(runfolder_upload_cmds) :
                     pass
+                # skip samplesheet
                 elif path.endswith("SampleSheet.csv"):
                     pass
+                # otherwise upload
                 else:
+                    # Use path to build desitnation folder within nexus
                     path_to_upload=path                       
+                    #remove the project prefix (002_), the path to the runfolders ("/media/data1/share") and the file name
                     path_for_nexus=path.replace(self.runfolder,self.nexusproject.replace(NexusProjectPrefix,"")).replace(runfolders,"").replace(item,"")
 
                     # build the nexus upload command                        
                     nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder " + path_for_nexus + " --do-not-compress --upload-threads 10 " + path_to_upload
                 
                     if not debug:
+                        # copy the command to the cmd file
                         runfolder_upload_cmd_file.write(nexus_upload_command+"\n")
+                        
                         # run the command, redirecting stderror to stdout
                         proc = subprocess.Popen([nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
                         
@@ -725,23 +738,27 @@ class upload2Nexus():
                         err="y"
 
                     
-                    #write to log
+                    # capture standard out/standard error
                     runfolder_upload_stdout_file.write(out)
 
+        # close log files
         runfolder_upload_stdout_file.close()
         runfolder_upload_cmd_file.close()
 
+        # call function which looks for errors when uploading
         self.look_for_upload_errors_runfolder()
         
         # close the log file
         self.upload_agent_script_logfile.close()
 
-        #rename file to show what runs were affected.
+        # rename file to show what runs were affected.
         self.rename=self.rename+self.runfolder
         os.rename(self.upload_agent_logfile_name,self.upload_agent_logfile_name.replace('.txt','')+self.rename+".txt")
+
+        # capture the new file name so can continue to write to it.
         self.upload_agent_logfile_name=self.upload_agent_logfile_name.replace('.txt','')+self.rename+".txt"
 
-        #upload log files too
+        # call function to upload log files
         self.upload_log_files()
 
     def upload_log_files(self):
