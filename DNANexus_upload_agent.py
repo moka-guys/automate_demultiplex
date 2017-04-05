@@ -529,14 +529,19 @@ class upload2Nexus():
     def  create_run_pipeline_command(self):
         '''loop through the list of fastqs to create a set of commands to initiate the pipeline'''
         
-        #open the bash script to contain the dx run commands
-        self.bash_script=DNA_Nexus_workflow_logfolder + self.runfolder + ".sh"
+        # Update script log file to say what is being done.
         self.upload_agent_script_logfile.write("\n\n----------------------RUN WORKFLOW----------------------\n")
+        
+        # define the bash script to contain the dx run commands
+        self.bash_script=DNA_Nexus_workflow_logfolder + self.runfolder + ".sh"
+        
         #open bash script
         self.DNA_Nexus_bash_script = open(self.bash_script, 'w')
+        
         #write command to log file
         self.DNA_Nexus_bash_script.write(self.source_command)
-        #print self.list_of_samples
+        
+        
         #loop through list of fastq files
         for fastq in self.list_of_samples:
             #take read one
@@ -548,25 +553,35 @@ class upload2Nexus():
                 
                 #get panel name and bed file
                 for i in panelnumbers:
+                    # add underscore to Pan number so Pan1000 is not true when looking for Pan100
                     if i+"_" in fastq:
+                        # build path in nexus to the relevant sambamba bed
                         sambamba_bedfile=app_project+bedfile_folder+i+"dataSambamba.bed"
+                        
+                        # moka vendor bedfile
                         if i == "Pan493":
+                            #specify this for the WES samples
                             moka_vendor_bedfile=app_project+bedfile_folder+"agilent_sureselect_human_all_exon_v5_b37_targets.bed"
                         else:
+                            # otherwise build path in nexus to the relevant bed file
                             moka_vendor_bedfile=app_project+bedfile_folder+i+"data.bed"
+
+                        # build path in nexus to the relevant RPKM bedfile
                         RPKM_bedfile=app_project+bedfile_folder+panelnumbers[i]+"data.bed"
 
-                        #use same panelname to get the email which will be used to upload to IVA
+                        # use same panelname to get the email which will be used to upload to IVA
                         ingenuity_email=email_panel_dict[i]
 
                 # create the input command for the fastqc and BWA inputs
                 read1_cmd=self.nexusproject +":"+ read1
                 read2_cmd=self.nexusproject +":"+ read2
 
-                dest_cmd=self.nexusproject +":/"#+ self.runfolder + "_" + self.NGS_run + "_" + self.wes_number
+                # set the destination command as the root of the project
+                dest_cmd=self.nexusproject +":/"
 
                 # create the dx command
                 command = self.base_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + sambamba_input + sambamba_bedfile + mokavendor_input + moka_vendor_bedfile + ingenuity_input + ingenuity_email+ self.dest + dest_cmd + self.token
+                
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
         
@@ -574,7 +589,7 @@ class upload2Nexus():
         # call module to issue the dx run commands
         self.run_pipeline()
 
-        #record timestamp
+        # record timestamp at end of bash script
         self.DNA_Nexus_bash_script = open(self.bash_script, 'a')
         self.DNA_Nexus_bash_script.write("#----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
         self.DNA_Nexus_bash_script.close()
