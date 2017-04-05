@@ -526,7 +526,7 @@ class upload2Nexus():
                 # build a string of the users list to make log look nice
                 user_str=""
                 for i in users:
-                    user_str=user_str+i+" "
+                    user_str=user_str+i+","
                 
                 # write to log 
                 self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared to " % (self.nexusproject) + user_str +"\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
@@ -847,6 +847,7 @@ class upload2Nexus():
         
         #write these commands to the runfolder_upload_cmds_logfile before upload.
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'a')
+        runfolder_upload_cmd_file.write("\n----------------------Upload log files----------------------\n")
         runfolder_upload_cmd_file.write(samplesheet_nexus_upload_command+"\n"+nexus_upload_command)
         runfolder_upload_cmd_file.close()
 
@@ -871,7 +872,7 @@ class upload2Nexus():
         # check standard out from upload of log files
         # open logfile first to write info from check
         self.upload_agent_script_logfile = open(self.upload_agent_logfile_name,'a')
-        self.look_for_upload_errors_logfiles.write("\n----------------CHECKING SUCCESSFUL UPLOAD OF LOGFILES (this will not be in DNA Nexus)----------------\n")
+        self.upload_agent_script_logfile.write("\n----------------CHECKING SUCCESSFUL UPLOAD OF LOGFILES (this will not be in DNA Nexus)----------------\n")
         
         # call function to check stdout
         self.look_for_upload_errors_logfiles()
