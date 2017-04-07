@@ -10,6 +10,8 @@ debug=False
 # path to run folders
 runfolders = "/media/data1/share"
 
+#samplesheet folder
+samplesheets=runfolders+"/samplesheets/"
 # path to fastq files
 fastq_folder = "/Data/Intensities/BaseCalls"
 
@@ -19,8 +21,8 @@ upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfile
 # name of log file which records the output of the upload agent
 upload_started_file = "DNANexus_upload_started.txt"
 
-#runfolder backup file
-runfolder_upload_file="add_runfolder_to_nexus_logfile.txt"
+#runfolder backup files
+runfolder_upload_cmds="add_runfolder_to_nexus_cmds.txt"
 
 # Path to DNA Nexus run command log file
 DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs/"
@@ -59,7 +61,8 @@ smartsheet_path="Apps/smartsheet_mokapipe_complete"
 # bedfile folder
 bedfile_folder="Data/BED/"
 # DNA Nexus organisation to create the project within
-organisation="org-viapath_prod"
+prod_organisation="org-viapath_prod"
+dev_organisation="org-viapath_dev"
 
 ############################istages######################################
 fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # FastQC Read 1
@@ -88,6 +91,8 @@ panelnumbers={"Pan1001":"Pan992",\
                     "Pan998":"Pan947",\
                     "Pan1009":"Pan1010",\
                     "Pan999":"Pan989",\
+                    "Pan656":"",\
+                    "Pan1063":"",\
                     "Pan493":""}
 
 
@@ -99,6 +104,8 @@ email_panel_dict={"Pan1001":"joowook.ahn@nhs.net",\
                     "Pan998":"joowook.ahn@nhs.net",\
                     "Pan1009":"joowook.ahn@nhs.net",\
                     "Pan999":"joowook.ahn@nhs.net",\
+                    "Pan656":"joowook.ahn@nhs.net",\
+                    "Pan1063":"joowook.ahn@nhs.net",\
                     "Pan493":"joowook.ahn@nhs.net"}
 
 ################################# smartsheet API ################################
