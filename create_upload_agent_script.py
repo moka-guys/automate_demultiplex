@@ -10,14 +10,14 @@ class upload():
 	def __init__(self):
 		################################CONFIG################################
 		# which run do you want to upload
-		self.flowcell="170116_NB551068_0027_AHFJMLBGX2"
+		self.flowcell="170322_NB551068_0039_AHKK2HAFXX"
 		
 		# which project do you want to upload to?
-		self.nexusproject="003_170220_upload"
+		self.nexusproject="002_170322_NB551068_0039_AHKK2HAFXX_NGS157A"
 		
 		#which string must the fastq file name ?
-		self.fastq_filter="_CM_S" # if want all use "fastq"
-		#self.fastq_filter="fastq" # if want all use "fastq"
+		#self.fastq_filter="IMDv2" # if want all use "fastq"
+		self.fastq_filter="fastq" # if want all use "fastq"
 		
 		# where do you want to put the uploaded files?
 		self.nexusdestination="/Data/Intensities/BaseCalls/"
@@ -62,18 +62,21 @@ class upload():
 			raise ValueError("run number cannot be found")
 
 		# set the string which states where to upload files to
-		self.dest=self.dest+run+self.nexusdestination
+		self.dest=self.dest+self.flowcell+self.nexusdestination
 		# build string setting the project to upload to
 		self.nexusprojectstring=self.nexusprojectstring+self.nexusproject
 		#open a file to write to
 		bashscript=open(self.upload_script_path+self.flowcell+".sh",'w')
 		#write source command
 		bashscript.write(self.source_command)
+		
+		fastq_list=""
 		# loop through fastqs
 		for fastq in self.fastq_list:
+			fastq_list=fastq_list+self.runfolders+self.flowcell+self.fastqfilepath+fastq+" "
 			#write upload command
 			# eg /home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua -a 79KDFRITp9OY7ltyE0YuOJq6IH2i5YRp -p 003_161207_CustomPanelProject --progress --do-not-compress /media/data1/share/161014_NB551068_0010_AHM3CGBGXY/Data/Intensities/BaseCalls/NGS136_25_164793_SS_CM_S25_R1_001.fastq.gz
-			bashscript.write(self.upload_agent_path+self.auth+self.nexusproject+self.dest+self.compress+self.runfolders+self.flowcell+self.fastqfilepath+fastq+"\n")
+		bashscript.write(self.upload_agent_path+self.auth+self.nexusprojectstring+self.dest+self.compress+fastq_list+"\n")
 		bashscript.close()
 
 
