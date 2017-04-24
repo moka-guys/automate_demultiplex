@@ -265,7 +265,7 @@ class upload2Nexus():
                     pass
                 else:
                     #set up a flag to record fastq files which will not be processed
-                    recognised_panel=FALSE
+                    recognised_panel=False
                     for panel in panelnumbers:
                         if recognised_panel:
                             pass
@@ -274,7 +274,7 @@ class upload2Nexus():
                             if panel+"_" in fastq:
                                 # count sample
                                 to_be_nexified += 1
-                                recognised_panel=TRUE
+                                recognised_panel=True
 
                                 #build the list of fastqs with full file paths
                                 self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
@@ -283,7 +283,7 @@ class upload2Nexus():
                                 #split line to get DNA number
                                 self.list_of_DNA_numbers.append(fastq.split("_")[2])
                     # If an unrecognised panel number record this in a list
-                    if recognised_panel=FALSE:
+                    if not recognised_panel:
                         not_processed.append(fastq)
 
         
@@ -296,12 +296,12 @@ class upload2Nexus():
         else:
             if len(not_processed)>0:
                 #write to logfile
-                self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\nSome fastq files contained an unrecognised panel number: " +not_processed + "\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
+                self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\nSome fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
                 #send an email
                 # set email content
                 self.email_subject = "MOKAPIPE ALERT: Unrecognised Panel numbers in fastq files"
                 self.email_priority = 1
-                self.email_message = "Fastqs from " + self.runfolder + " contain panel numbers which are not recognised: " + not_processed
+                self.email_message = "Fastqs from " + self.runfolder + " contain panel numbers which are not recognised: " + ",".join(not_processed)
                 if not debug:
                     # send email
                     self.send_an_email()
