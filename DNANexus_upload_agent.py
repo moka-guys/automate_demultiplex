@@ -251,6 +251,9 @@ class upload2Nexus():
         
         # create a list of all files within the fastq folder
         all_fastqs = os.listdir(self.fastq_folder_path)
+
+        #list of fastqs not to be processed
+        not_processed=[]
         
         # set counts to catch when not a panel to go through Nexus
         to_be_nexified=0
@@ -261,29 +264,49 @@ class upload2Nexus():
                 if fastq.startswith('Undetermined'):
                     pass
                 else:
+                    #set up a flag to record fastq files which will not be processed
+                    recognised_panel=FALSE
                     for panel in panelnumbers:
-                        # add underscore to ensure Pan1000 is not true when looking for Pan100
-                        if panel+"_" in fastq:
-                            # count sample
-                            to_be_nexified += 1
+                        if recognised_panel:
+                            pass
+                        else:
+                            # add underscore to ensure Pan1000 is not true when looking for Pan100
+                            if panel+"_" in fastq:
+                                # count sample
+                                to_be_nexified += 1
+                                recognised_panel=TRUE
 
-                            #build the list of fastqs with full file paths
-                            self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
-                            #add the fastq name to a list to be used in create_nexus_file_path
-                            self.list_of_samples.append(fastq)
-                            #split line to get DNA number
-                            self.list_of_DNA_numbers.append(fastq.split("_")[2])
+                                #build the list of fastqs with full file paths
+                                self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
+                                #add the fastq name to a list to be used in create_nexus_file_path
+                                self.list_of_samples.append(fastq)
+                                #split line to get DNA number
+                                self.list_of_DNA_numbers.append(fastq.split("_")[2])
+                    # If an unrecognised panel number record this in a list
+                    if recognised_panel=FALSE:
+                        not_processed.append(fastq)
 
-           
+        
         # if there were no WES samples state this in log message and stop
         if to_be_nexified ==0 :
             self.upload_agent_script_logfile.write("List of fastqs did not contain any known Pan numbers. Stopping\n")
+
         
         # else continue
         else:
-            #write to logfile
-            self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
-        
+            if len(not_processed)>0:
+                #write to logfile
+                self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\nSome fastq files contained an unrecognised panel number: " +not_processed + "\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
+                #send an email
+                # set email content
+                self.email_subject = "MOKAPIPE ALERT: Unrecognised Panel numbers in fastq files"
+                self.email_priority = 1
+                self.email_message = "Fastqs from " + self.runfolder + " contain panel numbers which are not recognised: " + not_processed
+                if not debug:
+                    # send email
+                    self.send_an_email()
+            else:
+                self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
             #build the file path with WES batch and NGS run numbers
             self.create_nexus_file_path()
 
