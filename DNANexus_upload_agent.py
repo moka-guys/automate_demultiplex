@@ -112,7 +112,8 @@ class upload2Nexus():
         # list of fastqs to get ngs run number and WES batch
         self.list_of_samples = []
 
-        self.list_of_DNA_numbers=[]
+        self.list_of_DNA_numbers_WES=[]
+        self.list_of_DNA_numbers_nonWES=[]
 
         #strings for NGSrun and wes numbers
         self.NGS_run = ''
@@ -280,8 +281,13 @@ class upload2Nexus():
                                 self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
                                 #add the fastq name to a list to be used in create_nexus_file_path
                                 self.list_of_samples.append(fastq)
-                                #split line to get DNA number
-                                self.list_of_DNA_numbers.append(fastq.split("_")[2])
+                                #if WES append to WES list:
+                                if panel=="Pan493":
+                                    #split line to get DNA number
+                                    self.list_of_DNA_numbers_WES.append(fastq.split("_")[2])
+                                #otherwise add to non_WES list
+                                else:
+                                    self.list_of_DNA_numbers_nonWES.append(fastq.split("_")[2])
                     # If an unrecognised panel number record this in a list
                     if not recognised_panel:
                         not_processed.append(fastq)
@@ -671,7 +677,14 @@ class upload2Nexus():
 
         #capture standard out (the job ids) to the log file
         self.upload_agent_script_logfile.write(out)
-        
+              
+
+            
+
+
+
+
+
         # if any standard error
         if err:
             # send email
@@ -682,26 +695,42 @@ class upload2Nexus():
             # write error message to log file
             self.upload_agent_script_logfile.write("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: "+err+"\n\nemailing error message:\n"+self.email_message+"\n\n")
         else:
-         # create sql string to update moka with
-            DNA_list="('"
-           # loop through unique list of dna numbers obtained from fastq filenames
-            for DNA in set(self.list_of_DNA_numbers):
-                # build the sq query
-                DNA_list=DNA_list+DNA+"','"
-            # close string
-            DNA_list=DNA_list+")"
+            # create empty list for the sql queries
+            sql=[]
 
-            # remove the excess ,' from the end of the string
-            DNA_list=DNA_list.replace(",')",")")
+            # loop through the WES DNA numbers to generate sql query to record Pipeline version
+            if len(self.list_of_DNA_numbers_WES)>0:
+                # start string
+                DNA_list="('"
+                # loop through unique list of dna numbers obtained from fastq filenames
+                for DNA in set(self.list_of_DNA_numbers_WES):
+                    # build the sq query
+                    DNA_list=DNA_list+DNA+"','"
+                # close string
+                DNA_list=DNA_list+")"
 
-            # build the rest of the sql update query
-            sql="update NGSTest set PipelineVersion = "+moka_pipeline_ID+" where dna in " + DNA_list
+                # remove the excess ,' from the end of the string
+                DNA_list=DNA_list.replace(",')",")")
+                
+                # build the rest of the sql update query and append to list
+                sql.append("update NGSTest set PipelineVersion = "+moka_pipeline_ID+" where dna in " + DNA_list)
 
+            # custom panels requires insert queries (one per sample)
+            if len(self.list_of_DNA_numbers_nonWES)>0:
+                # loop through unique list of dna numbers obtained from fastq filenames
+                for DNA in set(self.list_of_DNA_numbers_nonWES):
+                    # build the rest of the sql update query
+                    sql.append("insert into NGSCustomRuns('DNAnumber','PipelineVersion') values ('"+DNA+"','"+moka_pipeline_ID+"')")
+
+            # combine all the queries into a string suitable for an email
+            sql_statements=""
+            for i in sql:
+                sql_statements=sql_statements+i+"\n"
 
             # email this query
             self.email_subject = "MOKAPIPE ALERT - ACTION NEEDED: Started pipeline for " + self.runfolder
             self.email_priority = 1 # high priority
-            self.email_message = self.runfolder + " being processed using workflow " + app +"\n\nPlease update Moka using the query below:\n\n"+sql
+            self.email_message = self.runfolder + " being processed using workflow " + app +"\n\nPlease update Moka using the query below:\n\n"+sql_statements
                     
             if not debug:
                 #call function to update smartsheet to say run in progress
