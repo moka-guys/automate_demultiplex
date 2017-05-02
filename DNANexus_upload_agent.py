@@ -678,13 +678,6 @@ class upload2Nexus():
         #capture standard out (the job ids) to the log file
         self.upload_agent_script_logfile.write(out)
               
-
-            
-
-
-
-
-
         # if any standard error
         if err:
             # send email
