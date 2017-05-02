@@ -80,7 +80,7 @@ smartsheet_mokapipe_complete=" -iNGS_run="
 #Nexus_API_Key = "rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL" 
 Nexus_API_Key = "K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ" 
         
-users=["aledjones","wook","mokaguys","andyb","AmyS"]
+users=["aledjones","wook","mokaguys","andyb","AmyS","InterpretationRequest"]
 
 ################## Dict linking panel numbers for +/-10 and CNVs ####################
 panelnumbers={"Pan1001":"Pan992",\
@@ -96,16 +96,16 @@ panelnumbers={"Pan1001":"Pan992",\
                     "Pan493":""}
 
 
-email_panel_dict={"Pan1001":"joowook.ahn@nhs.net",\
-                    "Pan1000":"joowook.ahn@nhs.net",\
-                    "Pan994":"joowook.ahn@nhs.net",\
-                    "Pan996":"joowook.ahn@nhs.net",\
-                    "Pan995":"joowook.ahn@nhs.net",\
-                    "Pan998":"joowook.ahn@nhs.net",\
-                    "Pan1009":"joowook.ahn@nhs.net",\
-                    "Pan999":"joowook.ahn@nhs.net",\
-                    "Pan656":"joowook.ahn@nhs.net",\
-                    "Pan1063":"joowook.ahn@nhs.net",\
+email_panel_dict={"Pan1001":"gst-tr.interpretation.request@nhs.net",\
+                    "Pan1000":"gst-tr.interpretation.request@nhs.net",\
+                    "Pan994":"gst-tr.interpretation.request@nhs.net",\
+                    "Pan996":"gst-tr.interpretation.request@nhs.net",\
+                    "Pan995":"gst-tr.interpretation.request@nhs.net",\
+                    "Pan998":"gst-tr.interpretation.request@nhs.net",\
+                    "Pan1009":"gst-tr.interpretation.request@nhs.net",\
+                    "Pan999":"gst-tr.interpretation.request@nhs.net",\
+                    "Pan656":"gst-tr.interpretation.request@nhs.net",\
+                    "Pan1063":"gst-tr.interpretation.request@nhs.net",\
                     "Pan493":"joowook.ahn@nhs.net"}
 
 ################################# smartsheet API ################################
