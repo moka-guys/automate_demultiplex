@@ -606,6 +606,11 @@ class upload2Nexus():
                         if i == "Pan493":
                             #specify this for the WES samples
                             moka_vendor_bedfile=app_project+bedfile_folder+"agilent_sureselect_human_all_exon_v5_b37_targets.bed"
+                        elif i =="Pan1120":
+                            #specify this for the focused exome
+                            moka_vendor_bedfile=app_project+bedfile_folder+"S06588914_Regions_three_col.bed"
+                            #use the exome bedfile to calculate coverage
+                            sambamba_bedfile=app_project+bedfile_folder+"Pan493dataSambamba.bed"   
                         else:
                             # otherwise build path in nexus to the relevant bed file
                             moka_vendor_bedfile=app_project+bedfile_folder+i+"data.bed"
