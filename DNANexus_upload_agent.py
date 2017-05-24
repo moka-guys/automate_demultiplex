@@ -524,6 +524,7 @@ class upload2Nexus():
         DNA_Nexus_bash_script = open(project_bash_script, 'w')
         DNA_Nexus_bash_script.write(self.source_command)
         DNA_Nexus_bash_script.write(self.createprojectcommand % (prod_organisation,self.nexusproject))
+        #DNA_Nexus_bash_script.write(self.createprojectcommand % (dev_organisation,self.nexusproject))
 
         #then need to share the project with the nexus usernames in the list in config file
         for user in users:
@@ -534,7 +535,7 @@ class upload2Nexus():
                 DNA_Nexus_bash_script.write("dx invite %s $project_id ADMINISTER --auth-token %s\n" % (user,Nexus_API_Key))
         
         #add a tag to denote live project (as opposed to archived)
-        DNA_Nexus_bash_script.write(self.addprojecttag + live_tag + "--auth-token %s\n" % (Nexus_API_Key))
+        DNA_Nexus_bash_script.write(self.addprojecttag + live_tag + " --auth-token %s\n" % (Nexus_API_Key))
         
         # echo the project id so it can be captured below
         DNA_Nexus_bash_script.write("echo $project_id")
@@ -625,9 +626,6 @@ class upload2Nexus():
                             # otherwise build path in nexus to the relevant bed file
                             moka_vendor_bedfile=app_project+bedfile_folder+i+"data.bed"
 
-                        # build path in nexus to the relevant RPKM bedfile
-                        RPKM_bedfile=app_project+bedfile_folder+panelnumbers[i]+"data.bed"
-
                         # use same panelname to get the email which will be used to upload to IVA
                         ingenuity_email=email_panel_dict[i]
 
@@ -653,7 +651,7 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.write("#----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
         self.DNA_Nexus_bash_script.close()
 
-        def run_pipeline(self):
+    def run_pipeline(self):
         '''issue dna nexus run commands''' 
                
         # loop through all dx_run commands:       
@@ -757,6 +755,7 @@ class upload2Nexus():
             self.send_an_email()
         
     def RPKM(self):
+        '''This function loops through all the panel numbers found in the fastq folders and where relevant submits a RPKM job '''
         # self.panel_in_run contains all panels found in the run, except for Pan493
         for panel in set(self.panels_in_run):
             # ignore focussed exome 
@@ -774,9 +773,12 @@ class upload2Nexus():
                         self.send_an_email()
                 else:
                     # build RPKM command
-                    RPKM_command = self.RPKM_command + RPKM_bedfile + panelnumbers[panel] + RPKM_project + self.nexusproject + RPKM_bedfile_to_download + panel + self.project +self.projectid.rstrip()+ self.depends+self.token.replace(")","")
+                    RPKM_command = self.RPKM_command + RPKM_bedfile + app_project+bedfile_folder+panelnumbers[panel]+"_RPKM.bed"  + RPKM_project + self.nexusproject + RPKM_bedfile_to_download + panel + self.project +self.projectid.rstrip()+ self.depends+self.token.replace(")","")
                     # write commands to bash script
                     self.DNA_Nexus_bash_script.write(RPKM_command+"\n")
+
+        # write to cron job script
+        self.upload_agent_script_logfile.write("RPKM commands build for "+str(len(set(self.panels_in_run)))+" panels- see "+self.bash_script+"\n\n")
 
     def upload_rest_of_runfolder(self):
         # write status update to log file

@@ -6,6 +6,7 @@ DNA Nexus Upload agent configuration
 debug=False
 
 
+
 ########################### location of input/output files####################
 # path to run folders
 runfolders = "/media/data1/share"
@@ -106,7 +107,7 @@ panelnumbers={"Pan1001":"Pan992",\
                     "Pan998":"Pan947",\
                     "Pan1009":"Pan1010",\
                     "Pan999":"Pan989",\
-                    "Pan656":"",\
+                    "Pan656":"Pan1104",\
                     "Pan1063":"",\
                     "Pan493":"",\
                     "Pan1120":""}
