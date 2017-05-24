@@ -134,6 +134,7 @@ class upload2Nexus():
         self.base_command = "jobid=$(dx run "+app_project+workflow_path+" -y"
         self.multiqc_command= "dx run "+app_project+multiqc_path
         self.smartsheet_update_command="dx run "+app_project+smartsheet_path
+        self.RPKM_command="dx run "+app_project+RPKM_path
 
         # project to upload run folder into
         self.nexusproject=NexusProjectPrefix
@@ -154,6 +155,8 @@ class upload2Nexus():
         #create path to data in nexus eg /runfolder/Data
         self.nexus_path = ""
 
+        #list of panels
+        self.panels_in_run=[]
         #######################email message###############################
         self.email_subject = ""
         self.email_message = ""
@@ -276,6 +279,7 @@ class upload2Nexus():
                                 # count sample
                                 to_be_nexified += 1
                                 recognised_panel=True
+                                
 
                                 #build the list of fastqs with full file paths
                                 self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
@@ -288,6 +292,8 @@ class upload2Nexus():
                                 #otherwise add to non_WES list
                                 else:
                                     self.list_of_DNA_numbers_nonWES.append(fastq.split("_")[2])
+                                    # record all non-WES panels for RPKM
+                                    self.panels_in_run.append(panel)
                     # If an unrecognised panel number record this in a list
                     if not recognised_panel:
                         not_processed.append(fastq)
@@ -634,7 +640,7 @@ class upload2Nexus():
                 #add command for each pair of fastqs to a list 
                 self.dx_run.append(command)
         
-                       
+        
         # call module to issue the dx run commands
         self.run_pipeline()
 
@@ -643,7 +649,7 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.write("#----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
         self.DNA_Nexus_bash_script.close()
 
-    def run_pipeline(self):
+        def run_pipeline(self):
         '''issue dna nexus run commands''' 
                
         # loop through all dx_run commands:       
@@ -661,7 +667,11 @@ class upload2Nexus():
         # write commands to bash script
         self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
         self.DNA_Nexus_bash_script.write(smartsheet_update_command+"\n")
-      
+        
+        # if there are custom panels run RPKM analysis
+        if len(self.panels_in_run)>0:
+            self.RPKM()
+
         # capture the workflow used
         app=workflow_path.replace("Workflows/","")
 
@@ -742,6 +752,27 @@ class upload2Nexus():
             # send email
             self.send_an_email()
         
+    def RPKM(self):
+        # self.panel_in_run contains all panels found in the run, except for Pan493
+        for panel in set(self.panels_in_run):
+            # ignore focussed exome 
+            if panel == "Pan1120":
+                pass
+            else:
+                # ensure there is a CNV bedfile in the dictionary but if not don't raise an exception, send an email. 
+                if panelnumbers[panel] == "":
+                    # send email
+                    self.email_subject = "MOKAPIPE ALERT: Error with RPKM command"
+                    self.email_priority = 1 # high priority
+                    self.email_message = "RPKM will not be performed for "+ panel + " as the panel number for the CNV bedfile is not known"
+                    if not debug:
+                        # send email
+                        self.send_an_email()
+                else:
+                    # build RPKM command
+                    RPKM_command = self.RPKM_command + RPKM_bedfile + panelnumbers[panel] + RPKM_project + self.nexusproject + RPKM_bedfile_to_download + panel + self.project +self.projectid.rstrip()+ self.depends+self.token.replace(")","")
+                    # write commands to bash script
+                    self.DNA_Nexus_bash_script.write(RPKM_command+"\n")
 
     def upload_rest_of_runfolder(self):
         # write status update to log file
