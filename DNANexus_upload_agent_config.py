@@ -66,6 +66,9 @@ bedfile_folder="Data/BED/"
 prod_organisation="org-viapath_prod"
 dev_organisation="org-viapath_dev"
 
+# project tags to denote live
+live_tag="live"
+
 ############################istages######################################
 #GATK workflow
 fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads=" # FastQC Read 1

@@ -131,6 +131,7 @@ class upload2Nexus():
         self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''\n"
 
         self.createprojectcommand="project_id=\"$(dx new project --bill-to %s \"%s\" --brief --auth-token "+Nexus_API_Key+")\"\n"
+        self.addprojecttag="dx tag $project_id "
         self.base_command = "jobid=$(dx run "+app_project+workflow_path+" -y"
         self.multiqc_command= "dx run "+app_project+multiqc_path
         self.smartsheet_update_command="dx run "+app_project+smartsheet_path
@@ -531,6 +532,9 @@ class upload2Nexus():
                 DNA_Nexus_bash_script.write("dx invite %s $project_id VIEW --auth-token %s\n" % (user,Nexus_API_Key))
             else:   
                 DNA_Nexus_bash_script.write("dx invite %s $project_id ADMINISTER --auth-token %s\n" % (user,Nexus_API_Key))
+        
+        #add a tag to denote live project (as opposed to archived)
+        DNA_Nexus_bash_script.write(self.addprojecttag + live_tag + "--auth-token %s\n" % (Nexus_API_Key))
         
         # echo the project id so it can be captured below
         DNA_Nexus_bash_script.write("echo $project_id")
