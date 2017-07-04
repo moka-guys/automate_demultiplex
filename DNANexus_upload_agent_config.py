@@ -110,7 +110,9 @@ panelnumbers={"Pan1001":"Pan992",\
                     "Pan656":"Pan1104",\
                     "Pan1063":"",\
                     "Pan493":"",\
-                    "Pan1120":""}
+                    "Pan1120":"",\
+                    "Pan1157":"",\
+                    "Pan1158":""}
 
 
 email_panel_dict={"Pan1001":"gst-tr.interpretation.request@nhs.net",\

@@ -158,6 +158,11 @@ class upload2Nexus():
 
         #list of panels
         self.panels_in_run=[]
+
+        # command to restart upload agent part 1
+        self.restart_ua_1="ua_status=1; while [ $ua_status -ne 0 ]; do "
+        self.restart_ua_2="; ua_status=$?; echo $ua_status; done"
+
         #######################email message###############################
         self.email_subject = ""
         self.email_message = ""
@@ -403,7 +408,7 @@ class upload2Nexus():
         self.test_dx_toolkit()
 
         # build the nexus upload command                        
-        nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string
+        nexus_upload_command = self.restart_ua_1 + upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string + self.restart_ua_2
         
         # open a file to hold all the upload agent commands
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'w')
@@ -829,7 +834,7 @@ class upload2Nexus():
                     path_for_nexus=path.replace(self.runfolder,self.nexusproject.replace(NexusProjectPrefix,"")).replace(runfolders,"").replace(item,"")
 
                     # build the nexus upload command                        
-                    nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder " + path_for_nexus + " --do-not-compress --upload-threads 10 " + path_to_upload
+                    nexus_upload_command = self.restart_ua_1 + upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder " + path_for_nexus + " --do-not-compress --upload-threads 10 " + path_to_upload + self.restart_ua_2
                 
                     if not debug:
                         # copy the command to the cmd file
@@ -931,10 +936,10 @@ class upload2Nexus():
 
         ########## samplesheet (file7) #########
         # create a upload agent command for samplesheet (copied into the runfolder above) which is being uploaded into the runfolder
-        samplesheet_nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexusproject.replace(NexusProjectPrefix,"")+"/" + " --do-not-compress --upload-threads 10 " + self.runfolderpath+"/"+self.runfolder+"_SampleSheet.csv "
+        samplesheet_nexus_upload_command =self.restart_ua_1 + upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexusproject.replace(NexusProjectPrefix,"")+"/" + " --do-not-compress --upload-threads 10 " + self.runfolderpath+"/"+self.runfolder+"_SampleSheet.csv " + self.restart_ua_2
 
         #create command line for files in the logfile_list (to be put into a logfiles subfolder)
-        nexus_upload_command = upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexusproject.replace(NexusProjectPrefix,"")+"/Logfiles/" + " --do-not-compress --upload-threads 10 " + " ".join(logfile_list)
+        nexus_upload_command = self.restart_ua_1 + upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexusproject.replace(NexusProjectPrefix,"")+"/Logfiles/" + " --do-not-compress --upload-threads 10 " + " ".join(logfile_list) + self.restart_ua_2
         
         #write these commands to the runfolder_upload_cmds_logfile before upload.
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'a')
