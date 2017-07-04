@@ -742,7 +742,7 @@ class upload2Nexus():
                 # loop through unique list of dna numbers obtained from fastq filenames
                 for DNA in set(self.list_of_DNA_numbers_nonWES):
                     # build the rest of the sql update query
-                    sql.append("insert into NGSCustomRuns('DNAnumber','PipelineVersion') values ('"+DNA+"','"+moka_pipeline_ID+"')")
+                    sql.append("insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"+DNA+"','"+moka_pipeline_ID+"')")
 
             # combine all the queries into a string suitable for an email
             sql_statements=""
