@@ -163,6 +163,9 @@ class upload2Nexus():
         self.restart_ua_1="ua_status=1; while [ $ua_status -ne 0 ]; do "
         self.restart_ua_2="; ua_status=$?; echo $ua_status; done"
 
+        #error message if upload agent fails
+        self.ua_error="Error Message: 'Could not resolve: api.dnanexus.com"
+
         #######################email message###############################
         self.email_subject = ""
         self.email_message = ""
@@ -1049,54 +1052,89 @@ class upload2Nexus():
         '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
         If present email link to the log file'''
         # Open the log file and read to look for the string "ERROR"               
-        if "ERROR" in open(self.runfolderpath + "/" + upload_started_file).read():
-            #send an email if the update failed
-            self.email_subject="MOKAPIPE ALERT: FASTQ UPLOAD MAY NOT BE COMPLETE"
-            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading FastQ files. See the log file @ "+self.runfolderpath + "/" + upload_started_file
-            self.email_priority = 1 # high priority
-            self.send_an_email()
-            #write the email message to log file
-            self.upload_agent_script_logfile.write(self.email_message)
-        else:
-            #write to log file check was ok
-            self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n")
+        for upload in open(self.runfolderpath + "/" + upload_started_file).read().split("Uploading file"):
+            # if there was an error during the upload...
+            if self.ua_error in upload:
+                # if it still completed successfully carry on
+                if "uploaded successfully" in upload:
+                    self.upload_agent_script_logfile.write("There was a disruption to the network when uploading the Fastq files but it completed successfully\n")                    
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: NETWORK DISRUPTION DURING UPLOAD OF FASTQ FILES"
+                    self.email_message="The connection to nexus failed during the upload of FASTQ files however the files were uploaded successfully"
+                    self.email_priority = 3 # high priority
+                    self.send_an_email()
+                # other wise send an email and write to log
+                else:
+                    self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: UPLOAD OF FASTQS FAILED"
+                    self.email_message="There was a disruption to the network which prevented the fastq files from being uploaded. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\n"
+                    self.email_priority = 1 # high priority
+                    self.send_an_email()
+                    #write the email message to log file
+                    self.upload_agent_script_logfile.write(self.email_message)
+            else:
+                #write to log file check was ok
+                self.upload_agent_script_logfile.write("There was no issues when uploading the FastQ files\n")
+
+
 
 
     def look_for_upload_errors_runfolder(self):
         '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
         If present email link to the log file
         NB any errors from the fastq upload would also be detected here.'''
+        for upload in open(self.runfolderpath + "/" + upload_started_file).read().split("Uploading file"):
+            # if there was an error during the upload...
+            if self.ua_error in upload:
+                # if it still completed successfully carry on
+                if "uploaded successfully" in upload:
+                    self.upload_agent_script_logfile.write("There was a disruption to the network when uploading the rest of the runfolder but it completed successfully\n")                    
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: NETWORK DISRUPTION DURING BACKUP OF RUNFOLDER"
+                    self.email_message="The connection to nexus failed during the backup of the run folder however the files have been successfully backed up "
+                    self.email_priority = 3 # high priority
+                    self.send_an_email()
+                # other wise send an email and write to log
+                else:
+                    self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: UPLOAD OF RUNFOLDER MAY NOT BE COMPLETE"
+                    self.email_message="There was a disruption to the network which prevented the rest of the runfolder being uploaded. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\n"
+                    self.email_priority = 1 # high priority
+                    self.send_an_email()
+                    #write the email message to log file
+                    self.upload_agent_script_logfile.write(self.email_message)
+            else:
+                #write to log file check was ok
+                self.upload_agent_script_logfile.write("There was no issues when backing up the run folder\n")
 
-        # Open the log file and read to look for the string "ERROR"
-        if "ERROR" in open(self.runfolderpath + "/" + upload_started_file).read():
-            #send an email if the update failed
-            self.email_subject="MOKAPIPE ALERT: RUNFOLDER UPLOAD MAY NOT BE COMPLETE"
-            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading the rest of the run folder. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\nNB this error may be a repeat of an error when uploading the fastq files"
-            self.email_priority = 1 # high priority
-            self.send_an_email()
-            #write the email message to log file
-            self.upload_agent_script_logfile.write(self.email_message)
-        else:
-            #write to log file check was ok
-            self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n")
-
+        
     def look_for_upload_errors_logfiles(self):
         '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
         If present email link to the log file
         NB any errors from the fastq upload and run folderwould also be detected here.'''
 
-        # Open the log file and read to look for the string "ERROR"
-        if "ERROR" in open(self.runfolderpath + "/" + upload_started_file).read():
-            #send an email if the update failed
-            self.email_subject="MOKAPIPE ALERT: UPLOAD OF LOGFILES MAY NOT BE COMPLETE"
-            self.email_message="The string \"ERROR\" was present in the upload agent standard out when uploading the log files. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\nNB this error may be a repeat of an error from previous upload steps"
-            self.email_priority = 1 # high priority
-            self.send_an_email()
-            #write the email message to log file
-            self.upload_agent_script_logfile.write(self.email_message)
-        else:
-            #write to log file check was ok
-            self.upload_agent_script_logfile.write("The string \"ERROR\" was not present in standard out\n")
+        # Open the log file and split for each individual upload command
+        for upload in open(self.runfolderpath + "/" + upload_started_file).read().split("Uploading file"):
+            # if there was an error during the upload...
+            if self.ua_error in upload:
+                # if it still completed successfully carry on
+                if "uploaded successfully" in upload:
+                    self.upload_agent_script_logfile.write("There was a disruption to the network when uploading logfiles but it completed successfully\n")                    
+                # other wise send an email and write to log
+                else:
+                    self.upload_agent_script_logfile.write("There was a disruption to the netowkr which prevented log files being uploaded\n")
+                    #send an email if the update failed
+                    self.email_subject="MOKAPIPE ALERT: UPLOAD OF LOGFILES MAY NOT BE COMPLETE"
+                    self.email_message="There was a disruption to the netowkr which prevented the log files being uploaded. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\n"
+                    self.email_priority = 1 # high priority
+                    self.send_an_email()
+                    #write the email message to log file
+                    self.upload_agent_script_logfile.write(self.email_message)
+            else:
+                #write to log file check was ok
+                self.upload_agent_script_logfile.write("There was no issues when uploading the logfiles\n")
 
 
 if __name__ == '__main__':
