@@ -1,3 +1,4 @@
 DNANexus_upload_agent_single_folder.py
 *.pyc
-
+create*
+nexus_set_off*
