@@ -347,7 +347,7 @@ class ready2start_demultiplexing():
         count = 0
         with open(self.samplesheet,'r') as samplesheet:
             for line in samplesheet:
-                if line.startswith("NGS"):
+                if line.startswith("NGS") or line.startswith("ONC"):
                     count=count+1
                     runnumber=line.split("_")[0]
         
