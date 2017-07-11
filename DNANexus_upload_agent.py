@@ -66,25 +66,36 @@ class get_list_of_runs():
             if fnmatch.fnmatch(file,self.now+'*'):
                 #add count and append to list
                 count=count+1
-                list_of_logfiles.append(upload2Nexus().DNA_Nexus_workflow_logfolder+file)
+                list_of_logfiles.append(DNA_Nexus_workflow_logfolder+file)
         
         #if more than one log file we want to concatenate them
-        if count > 1:
-            # get the filename with the longest name
-            longest_name=max(list_of_logfiles, key=len)
-            #remove from the list
-            list_of_logfiles.remove(longest_name)
+        if count >1:
+            # create the start of the path to the logfile using the path to the log file and the time stamp (without.txt extension)
+            logfile_name=os.path.join(DNA_Nexus_workflow_logfolder,self.now)
+            # loop through all the log files to capture the run names 
+            for logfile in list_of_logfiles:
+                #skip the empty timestamp
+                if self.now+".txt" in logfile:
+                    pass
+                else:
+                    # remove the time stamp and the logfolder path from each filename in the list and concatenate to the logfile_name created above
+                    logfile_name=logfile_name+logfile.replace(self.now,'').replace(DNA_Nexus_workflow_logfolder,'').replace(".txt","")
+            #add extension
+            logfile_name=logfile_name+".txt"
+
             #concatenate all the remaining filenames into a string, seperated by spaces
             remaining_files=" ".join(list_of_logfiles)
-
-            # combine all into one file with the longest filename (that will have the run folder name)
-            cmd = "cat " + remaining_files + " >> " + longest_name
+            
+            # combine all into one file with the longest filename (that will have the run folder name)            
+            cmd = "cat " + remaining_files + " >> " + logfile_name
             # remove the files that have been written to the longer file
             rmcmd= "rm " + remaining_files
-            
+                    
             # run the command, redirecting stderror to stdout
             proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             proc = subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+
+        
 
 
 class upload2Nexus():
