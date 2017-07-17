@@ -39,8 +39,8 @@ class get_list_of_runs():
         if debug: # use test folder
             all_runfolders = ['999999_NB551068_0024_AHHVCTAFXX_ALED_TEST']
         else:
-            all_runfolders = os.listdir(runfolders)
-            #all_runfolders = ['999999_NB551068_0024_AHHVCTAFXX_ALED_TEST']
+            #all_runfolders = os.listdir(runfolders)
+            all_runfolders = ['99999_M02353_0119_000000000-D2RWA']
         
         #create instance of the class
         upload=upload2Nexus()
@@ -113,11 +113,12 @@ class upload2Nexus():
         self.list_of_samples = []
 
         self.list_of_DNA_numbers_WES=[]
+        self.list_of_DNA_numbers_Onc=[]
         self.list_of_DNA_numbers_nonWES=[]
 
         #strings for NGSrun and wes numbers
-        self.NGS_run = ''
-        self.wes_number = ''
+        self.NGS_run = '' # first element of fastq file name.
+        self.wes_number = '' # WES number near the end of fastq file name.
 
         #variables to rename log file.
         self.rename=""
@@ -136,6 +137,7 @@ class upload2Nexus():
         self.multiqc_command= "dx run "+app_project+multiqc_path
         self.smartsheet_update_command="dx run "+app_project+smartsheet_path
         self.RPKM_command="dx run "+app_project+RPKM_path
+        self.amplivar_command="dx run "+app_project+amplivar_path
 
         # project to upload run folder into
         self.nexusproject=NexusProjectPrefix
@@ -298,6 +300,10 @@ class upload2Nexus():
                                 if panel=="Pan493":
                                     #split line to get DNA number
                                     self.list_of_DNA_numbers_WES.append(fastq.split("_")[2])
+                                #if oncology panel append onc list:
+                                elif panel == "Pan1190":
+                                    # split line to get DNA number
+                                    self.list_of_DNA_numbers_Onc.append(fastq.split("_")[2])
                                 #otherwise add to non_WES list
                                 else:
                                     self.list_of_DNA_numbers_nonWES.append(fastq.split("_")[2])
@@ -604,6 +610,8 @@ class upload2Nexus():
         #write command to log file
         self.DNA_Nexus_bash_script.write(self.source_command)
         
+        # initilise list of oncology fastq
+        list_onco_fastq =[]
         
         #loop through list of fastq files
         for fastq in self.list_of_samples:
@@ -614,43 +622,65 @@ class upload2Nexus():
                 # assign read2 by replacing R1 with R2
                 read2 = self.nexus_path+"/"+fastq.replace("_R1_", "_R2_")
                 
+
                 #get panel name and bed file
-                for i in panelnumbers:
+                for panel in panelnumbers:
                     # add underscore to Pan number so Pan1000 is not true when looking for Pan100
-                    if i+"_" in fastq:
+                    #Find oncology samples and generate a list of fastq to run through amplivar pipeline
+                    if panel+"_" in fastq and panel == "Pan1190":
+                        list_onco_fastq.append(read1)
+                        list_onco_fastq.append(read2)
+                    # Find NGS or WES samples
+                    elif panel+"_" in fastq:
                         # build path in nexus to the relevant sambamba bed
-                        sambamba_bedfile=app_project+bedfile_folder+i+"dataSambamba.bed"
+                        sambamba_bedfile=app_project+bedfile_folder+panel+"dataSambamba.bed"
                         
                         # moka vendor bedfile
-                        if i == "Pan493":
+                        if panel == "Pan493":
                             #specify this for the WES samples
                             moka_vendor_bedfile=app_project+bedfile_folder+"agilent_sureselect_human_all_exon_v5_b37_targets.bed"
-                        elif i =="Pan1120":
+                        elif panel =="Pan1120":
                             #specify this for the focused exome
                             moka_vendor_bedfile=app_project+bedfile_folder+"S06588914_Regions_three_col.bed"
                             #use the exome bedfile to calculate coverage
                             sambamba_bedfile=app_project+bedfile_folder+"Pan493dataSambamba.bed"   
                         else:
                             # otherwise build path in nexus to the relevant bed file
-                            moka_vendor_bedfile=app_project+bedfile_folder+i+"data.bed"
+                            moka_vendor_bedfile=app_project+bedfile_folder+panel+"data.bed"
 
                         # use same panelname to get the email which will be used to upload to IVA
-                        ingenuity_email=email_panel_dict[i]
+                        ingenuity_email=email_panel_dict[panel]
 
-                # create the input command for the fastqc and BWA inputs
-                read1_cmd=self.nexusproject +":"+ read1
-                read2_cmd=self.nexusproject +":"+ read2
+                # Skip over Mokapipe command construstion for cancer samples.
+                if "Pan1190_" in fastq:
+                    pass       
+                 # Set Mokapipe command for all other samples
+                else:        
+                    # create the input command for the fastqc and BWA inputs
+                    read1_cmd=self.nexusproject +":"+ read1
+                    read2_cmd=self.nexusproject +":"+ read2
 
-                # set the destination command as the root of the project
-                dest_cmd=self.nexusproject +":/"
+                    # set the destination command as the root of the project
+                    dest_cmd=self.nexusproject +":/"
 
-                # create the dx command
-                command = self.base_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + sambamba_input + sambamba_bedfile + mokavendor_input + moka_vendor_bedfile + ingenuity_input + ingenuity_email+ self.dest + dest_cmd + self.token
-                
-                #add command for each pair of fastqs to a list 
-                self.dx_run.append(command)
-        
-        
+                    # create the dx command
+                    command = self.base_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + sambamba_input + sambamba_bedfile + mokavendor_input + moka_vendor_bedfile + ingenuity_input + ingenuity_email+ self.dest + dest_cmd + self.token
+                    
+                    #add command for each pair of fastqs to a list 
+                    self.dx_run.append(command)
+
+        # if oncology samples present, construct Amplivar dx command inputs
+        if len(list_onco_fastq) > 1: 
+            command = self.amplivar_command 
+            for fastq in list_onco_fastq:
+                read_cmd = self.nexusproject +":"+ fastq
+                command = command + " " + read_cmd
+            # set the destination command as the root of the project
+            dest_cmd=self.nexusproject +":/AmplivarOutput"
+            # create the dx command
+            command = command + self.dest + dest_cmd + self.token
+            print command
+
         # call module to issue the dx run commands
         self.run_pipeline()
 
@@ -662,28 +692,53 @@ class upload2Nexus():
     def run_pipeline(self):
         '''issue dna nexus run commands''' 
                
-        # loop through all dx_run commands:       
+        # loop through all dx_run commands:     
+        # identify cancer samples
+        cancer = True  
+        # capture the workflow used
+        app=""
         for command in self.dx_run:
             # write command to log file
             self.DNA_Nexus_bash_script.write(command+"\n")
             # write line to append job id to depends_list
             self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
+            # Idenify if non cancer samples are included in the run
+            if "Pan1190_" not in command:
+                cancer = False
+                # Capture WES workflow
+                workflow = workflow_path.replace("Workflows/","")
+                if workflow in app:
+                    pass
+                else:
+                    if len(app) > 1:
+                        app = app + " and " + workflow
+                    else:
+                        app = workflow
+            # Identify workflow for cancer samples
+            elif "Pan1190_" in command:
+                ampworkflow = amplivar_path.replace("Workflows/","")
+                if ampworkflow in app:
+                    pass
+                else:
+                    if len(app) > 1:
+                        app = app + " and " + ampworkflow
+                    else:
+                        app = ampworkflow
 
-        # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
-        multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.token.replace(")","")+self.depends
+        if not cancer: #  multiqc command for non-cancer samples. 
+            # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
+            multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.token.replace(")","")+self.depends
+            # write commands to bash script
+            self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
+
         # build smartsheet update command
         smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder +self.project+self.projectid.rstrip()+ self.depends+self.token.replace(")","")
-        
         # write commands to bash script
-        self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
         self.DNA_Nexus_bash_script.write(smartsheet_update_command+"\n")
         
         # if there are custom panels run RPKM analysis
         if len(self.panels_in_run)>0:
             self.RPKM()
-
-        # capture the workflow used
-        app=workflow_path.replace("Workflows/","")
 
         # close bash script file handle
         self.DNA_Nexus_bash_script.close()
@@ -743,6 +798,9 @@ class upload2Nexus():
                 for DNA in set(self.list_of_DNA_numbers_nonWES):
                     # build the rest of the sql update query
                     sql.append("insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"+DNA+"','"+moka_pipeline_ID+"')")
+
+            # ~~~~~~~~~~~~~~~~~~~~~~~~ TODO ~~~~~~~~~~~~~~~~~~~~~~~~
+            # Generate SQL for cancer samples.
 
             # combine all the queries into a string suitable for an email
             sql_statements=""

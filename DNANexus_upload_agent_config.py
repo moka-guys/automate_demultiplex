@@ -55,6 +55,8 @@ project_success="Created new project called \"%s\""
 app_project="001_ToolsReferenceData:"
 #path to the workflow in the app project
 workflow_path="Workflows/GATK3.5_v2.6"
+#path to the amplivar workflow in the app project
+amplivar_path="Workflows/Amplivar_SWIFT5"
 #path to multiqc app
 multiqc_path="Apps/multiqc"
 #smartsheet app
@@ -112,7 +114,8 @@ panelnumbers={"Pan1001":"Pan992",\
                     "Pan493":"",\
                     "Pan1120":"",\
                     "Pan1157":"",\
-                    "Pan1158":""}
+                    "Pan1158":"",\
+                    "Pan1190":""}
 
 
 email_panel_dict={"Pan1001":"gst-tr.interpretation.request@nhs.net",\
@@ -126,7 +129,8 @@ email_panel_dict={"Pan1001":"gst-tr.interpretation.request@nhs.net",\
                     "Pan656":"gst-tr.interpretation.request@nhs.net",\
                     "Pan1063":"gst-tr.interpretation.request@nhs.net",\
                     "Pan1120":"joowook.ahn@nhs.net",\
-                    "Pan493":"joowook.ahn@nhs.net"}
+                    "Pan493":"joowook.ahn@nhs.net",\
+                    "Pan1190":"gst-tr.interpretation.request@nhs.net"}
 
 ################################# smartsheet API ################################
 # smartsheet sheet ID
