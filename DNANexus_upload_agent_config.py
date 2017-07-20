@@ -55,6 +55,8 @@ project_success="Created new project called \"%s\""
 app_project="001_ToolsReferenceData:"
 #path to the workflow in the app project
 workflow_path="Workflows/GATK3.5_v2.6"
+#path to the amplivar workflow in the app project
+amplivar_path="Workflows/Amplivar_SWIFT5"
 #path to multiqc app
 multiqc_path="Apps/multiqc"
 #smartsheet app
@@ -80,6 +82,9 @@ sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed=" # Sambamba Be
 mokavendor_input = " -istage-F35FvQ00jy1pb8f11vB4Xjf1.vendor_exome_bedfile=" # HSMetrics Bed file
 #GATK_Human_Exome_Pipeline_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.vendor_exome_bedfile=" # uses same bedfile as moka vendor so can specify this in bedfile
 ingenuity_input=" -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
+
+# amplpivar fastq input
+amplivar_input=" -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs="
 
 #MultiQC
 multiqc_project_input=" -iproject_for_multiqc="
@@ -112,7 +117,8 @@ panelnumbers={"Pan1001":"Pan992",\
                     "Pan493":"",\
                     "Pan1120":"",\
                     "Pan1157":"",\
-                    "Pan1158":""}
+                    "Pan1158":"",\
+                    "Pan1190":""}
 
 
 email_panel_dict={"Pan1001":"gst-tr.interpretation.request@nhs.net",\
@@ -126,7 +132,8 @@ email_panel_dict={"Pan1001":"gst-tr.interpretation.request@nhs.net",\
                     "Pan656":"gst-tr.interpretation.request@nhs.net",\
                     "Pan1063":"gst-tr.interpretation.request@nhs.net",\
                     "Pan1120":"joowook.ahn@nhs.net",\
-                    "Pan493":"joowook.ahn@nhs.net"}
+                    "Pan493":"joowook.ahn@nhs.net",\
+                    "Pan1190":"gst-tr.interpretation.request@nhs.net"}
 
 ################################# smartsheet API ################################
 # smartsheet sheet ID
