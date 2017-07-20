@@ -83,6 +83,9 @@ mokavendor_input = " -istage-F35FvQ00jy1pb8f11vB4Xjf1.vendor_exome_bedfile=" # H
 #GATK_Human_Exome_Pipeline_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.vendor_exome_bedfile=" # uses same bedfile as moka vendor so can specify this in bedfile
 ingenuity_input=" -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
 
+# amplpivar fastq input
+amplivar_input=" -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs="
+
 #MultiQC
 multiqc_project_input=" -iproject_for_multiqc="
 

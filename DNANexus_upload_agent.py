@@ -137,7 +137,7 @@ class upload2Nexus():
         self.multiqc_command= "dx run "+app_project+multiqc_path
         self.smartsheet_update_command="dx run "+app_project+smartsheet_path
         self.RPKM_command="dx run "+app_project+RPKM_path
-        self.amplivar_command="dx run "+app_project+amplivar_path
+        self.amplivar_command="jobid=$(dx run "+app_project+amplivar_path+" -y"
 
         # project to upload run folder into
         self.nexusproject=NexusProjectPrefix
@@ -163,7 +163,7 @@ class upload2Nexus():
 
         # command to restart upload agent part 1
         self.restart_ua_1="ua_status=1; while [ $ua_status -ne 0 ]; do "
-        self.restart_ua_2="; ua_status=$?; echo $ua_status; done"
+        self.restart_ua_2="; ua_status=$?; if [[ $ua_status -ne 0 ]]; then echo \"temporary issue when uploading file %s\"; fi ; done"
 
         #error message if upload agent fails
         self.ua_error="Error Message: 'Could not resolve: api.dnanexus.com"
@@ -417,7 +417,7 @@ class upload2Nexus():
         self.test_dx_toolkit()
 
         # build the nexus upload command                        
-        nexus_upload_command = self.restart_ua_1 + upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string + self.restart_ua_2
+        nexus_upload_command = self.restart_ua_1 + upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string + self.restart_ua_2 % ("fastq files") 
         
         # open a file to hold all the upload agent commands
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'w')
@@ -673,13 +673,15 @@ class upload2Nexus():
         if len(list_onco_fastq) > 1: 
             command = self.amplivar_command 
             for fastq in list_onco_fastq:
-                read_cmd = self.nexusproject +":"+ fastq
-                command = command + " " + read_cmd
+                read_cmd = amplivar_input + self.nexusproject +":"+ fastq
+                command = command + read_cmd
             # set the destination command as the root of the project
             dest_cmd=self.nexusproject +":/AmplivarOutput"
             # create the dx command
             command = command + self.dest + dest_cmd + self.token
-            print command
+            # print command
+            #add command to  list 
+            self.dx_run.append(command)
 
         # call module to issue the dx run commands
         self.run_pipeline()
@@ -807,6 +809,9 @@ class upload2Nexus():
             for i in sql:
                 sql_statements=sql_statements+i+"\n"
 
+            if len(sql)==0:
+                sql_statements="No SQL for oncology samples"                
+
             # email this query
             self.email_subject = "MOKAPIPE ALERT - ACTION NEEDED: Started pipeline for " + self.runfolder
             self.email_priority = 1 # high priority
@@ -856,8 +861,13 @@ class upload2Nexus():
         # distinguish between upload of fastq and rest of runfolder
         runfolder_upload_stdout_file.write("\n----------------------Uploading rest of runfolder "+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n")
 
-        # open file containing upload agent commands (in append mode)
-        runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'a')
+        # close log file
+        runfolder_upload_stdout_file.close()
+
+        #create temp bash_script
+        temp_bash=self.runfolderpath + "/temp_" + runfolder_upload_cmds.replace('.txt','.sh')
+        # open temp file containing upload agent commands
+        temp_runfolder_upload_cmd_file = open(temp_bash, 'w')
 
         # create the samplesheet name to copy
         samplesheet_name=self.runfolder+"_SampleSheet.csv"
@@ -882,43 +892,60 @@ class upload2Nexus():
                 elif path.endswith(".fastq.gz"):
                     pass
                 # skip log files still being written to
-                elif path.endswith(upload_started_file) or path.endswith(runfolder_upload_cmds) :
+                elif path.endswith(upload_started_file) or path.endswith(temp_bash) or path.endswith(runfolder_upload_cmds) :
                     pass
                 # skip samplesheet
                 elif path.endswith("SampleSheet.csv"):
                     pass
                 # otherwise upload
                 else:
-                    # Use path to build desitnation folder within nexus
-                    path_to_upload=path                       
+                    # Use path to build desitnation folder within nexus. put in quotations to avoid weird characters and spaces
+                    path_to_upload="'"+path+"'"
                     #remove the project prefix (002_), the path to the runfolders ("/media/data1/share") and the file name
                     path_for_nexus=path.replace(self.runfolder,self.nexusproject.replace(NexusProjectPrefix,"")).replace(runfolders,"").replace(item,"")
 
                     # build the nexus upload command                        
-                    nexus_upload_command = self.restart_ua_1 + upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder " + path_for_nexus + " --do-not-compress --upload-threads 10 " + path_to_upload + self.restart_ua_2
-                
-                    if not debug:
-                        # copy the command to the cmd file
-                        runfolder_upload_cmd_file.write(nexus_upload_command+"\n")
-                        
-                        # run the command, redirecting stderror to stdout
-                        proc = subprocess.Popen([nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
-                        
-                        # capture the streams (err is redirected to out above)
-                        (out, err) = proc.communicate()
+                    nexus_upload_command = self.restart_ua_1 + upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder " + path_for_nexus + " --do-not-compress --upload-threads 10 " + path_to_upload + self.restart_ua_2 % (path_to_upload)
                     
-                    else:
-                        runfolder_upload_cmd_file.write(nexus_upload_command+"\n")
-                        out="x"
-                        err="y"
+                    # copy the command to the temporary cmd file
+                    temp_runfolder_upload_cmd_file.write(nexus_upload_command+"\n")
+        temp_runfolder_upload_cmd_file.close()
+        
 
-                    
-                    # capture standard out/standard error
-                    runfolder_upload_stdout_file.write(out)
 
-        # close log files
-        runfolder_upload_stdout_file.close()
-        runfolder_upload_cmd_file.close()
+        if not debug:
+            run_upload_agent_script="bash " + temp_bash + " >> "+ self.runfolderpath + "/" + upload_started_file
+            # run the command
+            proc = subprocess.Popen([run_upload_agent_script], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            
+            # capture the streams
+            (out, err) = proc.communicate()
+            if err:
+                self.upload_agent_script_logfile.write("Error when executing script:\n"+err+"\n\n")
+            else:
+                self.upload_agent_script_logfile.write("No errors reported\n")
+        
+        # copy commands from temporary upload agent file to the one containing the fastq upload command
+        command = "cat " + temp_bash + " >> " + self.runfolderpath + "/" + runfolder_upload_cmds
+        
+        proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        
+        # capture the streams
+        (out, err) = proc.communicate()
+        
+        if err:
+            self.upload_agent_script_logfile.write("Error when copying temp upload commands to the archived script. See temp file @ "+self.runfolderpath + "/temp_" + runfolder_upload_cmds+"\n")
+        else:
+            self.upload_agent_script_logfile.write("upload agent commands copied to the file in " + self.runfolderpath + "/" + runfolder_upload_cmds+"\n")
+            
+            # if copy went ok, delete temp file
+            delete_temp_file_cmd="rm "+ temp_bash
+            proc = subprocess.Popen([delete_temp_file_cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)    
+            
+            # capture the streams
+            (out, err) = proc.communicate()
+            if err:
+                self.upload_agent_script_logfile.write("Error deleting the temp file\n")
 
         # call function which looks for errors when uploading
         self.look_for_upload_errors_runfolder()
