@@ -56,7 +56,7 @@ app_project="001_ToolsReferenceData:"
 #path to the workflow in the app project
 workflow_path="Workflows/GATK3.5_v2.6"
 #path to the amplivar workflow in the app project
-amplivar_path="Workflows/Amplivar_SWIFT5"
+amplivar_path="Workflows/Amplivar_SWIFT_v1"
 #path to multiqc app
 multiqc_path="Apps/multiqc"
 #smartsheet app
