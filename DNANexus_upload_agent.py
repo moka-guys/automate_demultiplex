@@ -148,7 +148,7 @@ class upload2Nexus():
         self.multiqc_command= "dx run "+app_project+multiqc_path
         self.smartsheet_update_command="dx run "+app_project+smartsheet_path
         self.RPKM_command="dx run "+app_project+RPKM_path
-        self.amplivar_command="jobid=$(dx run "+app_project+amplivar_path+" -y"
+        self.onco_command="jobid=$(dx run "+app_project+onco_path+" -y"
 
         # project to upload run folder into
         self.nexusproject=NexusProjectPrefix
@@ -434,7 +434,7 @@ class upload2Nexus():
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'w')
         # write fastq upload commands and a way of distinguishing between upload of fastq and rest of runfolder
         runfolder_upload_cmd_file.write("----------------------Upload of fastqs----------------------\n"+nexus_upload_command+"\n\n----------------------Upload rest of runfolder----------------------\n")
-        
+        # print nexus_upload_command
         #write to logfile
         self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus. See commands at "+self.runfolderpath + "/" + runfolder_upload_cmds + "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
         
@@ -641,6 +641,9 @@ class upload2Nexus():
                     if panel+"_" in fastq and panel == "Pan1190":
                         list_onco_fastq.append(read1)
                         list_onco_fastq.append(read2)
+                        # use same panelname to get the email which will be used to upload to IVA
+                        ingenuity_email=email_panel_dict[panel]
+
                     # Find NGS or WES samples
                     elif panel+"_" in fastq:
                         # build path in nexus to the relevant sambamba bed
@@ -680,16 +683,17 @@ class upload2Nexus():
                     #add command for each pair of fastqs to a list 
                     self.dx_run.append(command)
 
-        # if oncology samples present, construct Amplivar dx command inputs
+        # if oncology samples present, construct Amplivar dx run command inputs
         if len(list_onco_fastq) > 1: 
-            command = self.amplivar_command 
+            command = self.onco_command 
             for fastq in list_onco_fastq:
-                read_cmd = amplivar_input + self.nexusproject +":"+ fastq
+                read_cmd = onco_input + self.nexusproject +":"+ fastq
                 command = command + read_cmd
-            # set the destination command as the root of the project
-            dest_cmd=self.nexusproject +":/AmplivarOutput"
-            # create the dx command
-            command = command + self.dest + dest_cmd + self.token
+
+            # set the destination command as the root of the project in dir AmplivarOutput
+            dest_cmd=self.nexusproject +":/Onco_Output"
+            # create the dx command include email address for ingenuity and to alert if no variants found
+            command = command + vcf_novariants + onco_email + onco_ingenuity + ingenuity_email + self.dest + dest_cmd + self.token
             # print command
             #add command to  list 
             self.dx_run.append(command)
@@ -729,7 +733,7 @@ class upload2Nexus():
                         app = workflow
             # Identify workflow for cancer samples
             elif "Pan1190_" in command:
-                ampworkflow = amplivar_path.replace("Workflows/","")
+                ampworkflow = onco_path.replace("Workflows/","")
                 if ampworkflow in app:
                     pass
                 else:
@@ -838,7 +842,8 @@ class upload2Nexus():
         
     def RPKM(self):
         '''This function loops through all the panel numbers found in the fastq folders and where relevant submits a RPKM job '''
-        # self.panel_in_run contains all panels found in the run, except for Pan493
+        
+        # self.panel_in_run contains all panels found in the run, except for Pan493 and Pan1190 (swift5)
         for panel in set(self.panels_in_run):
             # ignore focussed exome 
             if panel == "Pan1120":
@@ -860,7 +865,7 @@ class upload2Nexus():
                     self.DNA_Nexus_bash_script.write(RPKM_command+"\n")
 
         # write to cron job script
-        self.upload_agent_script_logfile.write("RPKM commands build for "+str(len(set(self.panels_in_run)))+" panels- see "+self.bash_script+"\n\n")
+        self.upload_agent_script_logfile.write("RPKM commands build for "+str(len(set(self.panels_in_run)))+" panels ("+" ".join(set(self.panels_in_run))+") - see "+self.bash_script+"\n\n")
 
     def upload_rest_of_runfolder(self):
         # write status update to log file

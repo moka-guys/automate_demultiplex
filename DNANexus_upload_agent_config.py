@@ -54,8 +54,8 @@ project_success="Created new project called \"%s\""
 app_project="001_ToolsReferenceData:"
 #path to the workflow in the app project
 workflow_path="Workflows/GATK3.5_v2.6"
-#path to the amplivar workflow in the app project
-amplivar_path="Workflows/Amplivar_SWIFT_v1"
+#path to the oncology workflow in the app project
+onco_path="Workflows/Mokaonc_v1.0"
 #path to multiqc app
 multiqc_path="Apps/multiqc"
 #smartsheet app
@@ -82,9 +82,14 @@ mokavendor_input = " -istage-F35FvQ00jy1pb8f11vB4Xjf1.vendor_exome_bedfile=" # H
 #GATK_Human_Exome_Pipeline_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.vendor_exome_bedfile=" # uses same bedfile as moka vendor so can specify this in bedfile
 ingenuity_input=" -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
 
-# amplpivar fastq input
-amplivar_input=" -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs="
-
+# amplivar fastq input
+onco_input=" -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs="
+# general oncology email
+onco_email="gst-tr.oncology.interpret@nhs.net"
+# email if no variants app input for amplivar workflow
+vcf_novariants=" -istage-F5k1PB00jy1zxKZ28JX5b41q.email="
+# ingenuity app input for amplivar workflow
+onco_ingenuity=" -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="
 #MultiQC
 multiqc_project_input=" -iproject_for_multiqc="
 
@@ -132,7 +137,7 @@ email_panel_dict={"Pan1001":"gst-tr.interpretation.request@nhs.net",\
                     "Pan1063":"gst-tr.interpretation.request@nhs.net",\
                     "Pan1120":"joowook.ahn@nhs.net",\
                     "Pan493":"joowook.ahn@nhs.net",\
-                    "Pan1190":"gst-tr.interpretation.request@nhs.net"}
+                    "Pan1190":onco_email}
 
 ################################# smartsheet API ################################
 # smartsheet sheet ID
