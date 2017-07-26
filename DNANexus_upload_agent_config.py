@@ -41,7 +41,7 @@ logfile_success = "Processing completed with 0 errors and 0 warnings."
 upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 
 ####################### Moka settings ######################
-moka_pipeline_ID="1410"
+moka_pipeline_ID="1826"
 
 ########################## DNA Nexus setting#############################
 # project to upload run folder into
