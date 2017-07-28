@@ -17,7 +17,7 @@ samplesheets=runfolders+"/samplesheets/"
 fastq_folder = "/Data/Intensities/BaseCalls"
 
 # path to log file which records the output of the upload agent
-upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Upload_agent_log/"
+upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
 
 # name of log file which records the output of the upload agent
 upload_started_file = "DNANexus_upload_started.txt"
