@@ -264,7 +264,7 @@ class ready2start_demultiplexing():
             lastline=i
         #print "line count = "+str(count)
         
-        if  "Processing completed with 0 errors and 0 warnings." in lastline:
+        if  self.logfile_success in lastline:
             self.script_logfile.write("demultiplexing complete\n")
             self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
             self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
@@ -347,7 +347,7 @@ class ready2start_demultiplexing():
         count = 0
         with open(self.samplesheet,'r') as samplesheet:
             for line in samplesheet:
-                if line.startswith("NGS"):
+                if line.startswith("NGS") or line.startswith("ONC"):
                     count=count+1
                     runnumber=line.split("_")[0]
         
