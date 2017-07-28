@@ -26,7 +26,7 @@ upload_started_file = "DNANexus_upload_started.txt"
 runfolder_upload_cmds="add_runfolder_to_nexus_cmds.txt"
 
 # Path to DNA Nexus run command log file
-DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/dx_run_commands"
+DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/dx_run_commands/"
 
 #log folder containing project creation logs
 DNA_Nexus_project_creation_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/nexus_project_creation_scripts/create_nexus_project_"

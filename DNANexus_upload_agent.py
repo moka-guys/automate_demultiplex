@@ -39,8 +39,8 @@ class get_list_of_runs():
         if debug: # use test folder
             all_runfolders = ['999999_NB551068_0024_AHHVCTAFXX_ALED_TEST']
         else:
-            #all_runfolders = os.listdir(runfolders)
-            all_runfolders = ['99999_M02353_0119_000000000-D2RWA']
+            all_runfolders = os.listdir(runfolders)
+            #all_runfolders = ['99999_M02353_0119_000000000-D2RWA']
         
         #create instance of the class
         upload=upload2Nexus()
@@ -228,7 +228,7 @@ class upload2Nexus():
         self.runfolderpath = runfolders + "/" + self.runfolder
        
         self.upload_agent_script_logfile.write("\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "----------------------\nAssessing " + self.runfolderpath + "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
-        #print "looking at runfolder "+runfolder
+        print "looking at runfolder "+runfolder
          
         #look for the file denoting the upload has started
         if os.path.isfile(self.runfolderpath + "/" + upload_started_file):
