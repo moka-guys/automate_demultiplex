@@ -228,7 +228,7 @@ class upload2Nexus():
         self.runfolderpath = runfolders + "/" + self.runfolder
        
         self.upload_agent_script_logfile.write("\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "----------------------\nAssessing " + self.runfolderpath + "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
-        print "looking at runfolder "+runfolder
+        #print "looking at runfolder "+runfolder
          
         #look for the file denoting the upload has started
         if os.path.isfile(self.runfolderpath + "/" + upload_started_file):
@@ -239,7 +239,7 @@ class upload2Nexus():
                 self.demultiplex_completed_successfully()     
         else:
             #if not check demultiplex has finished succesfully and write to file
-            print "not already uploaded"
+            #print "not already uploaded"
             self.upload_agent_script_logfile.write("NO - self.upload_started_file not present so continue\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
             self.demultiplex_completed_successfully() 
         
@@ -581,7 +581,7 @@ class upload2Nexus():
             
             # split std_out on "project" and get the last item to capture the project ID
             self.projectid="project"+std_out.split("project")[-1]
-            print self.projectid
+            #print self.projectid
             
             # if haven't captured a project id send an email
             if self.projectid=="":
