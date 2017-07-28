@@ -86,6 +86,11 @@ ingenuity_input=" -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
 onco_input=" -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs="
 # general oncology email
 onco_email="gst-tr.oncology.interpret@nhs.net"
+#email for Interpretation_requests
+interpretation_request_email="gst-tr.interpretation.request@nhs.net"
+#wook email
+wook_email="joowook.ahn@nhs.net"
+
 # email if no variants app input for amplivar workflow
 vcf_novariants=" -istage-F5k1PB00jy1zxKZ28JX5b41q.email="
 # ingenuity app input for amplivar workflow
@@ -108,36 +113,34 @@ Nexus_API_Key = "K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ"
 users=["aledjones","wook","mokaguys","andyb","AmyS","InterpretationRequest"]
 
 ################## Dict linking panel numbers for +/-10 and CNVs ####################
-panelnumbers={"Pan1001":"Pan992",\
-                    "Pan1000":"Pan991",\
-                    "Pan994":"Pan943",\
-                    "Pan996":"Pan945",\
-                    "Pan995":"Pan944",\
-                    "Pan998":"Pan947",\
-                    "Pan1009":"Pan1010",\
-                    "Pan999":"Pan989",\
-                    "Pan656":"Pan1104",\
-                    "Pan1063":"",\
-                    "Pan493":"",\
+panelnumbers={"Pan493":"",\
+					"Pan1009":"Pan1010",\
+                    "Pan1063":"Pan1064",\
                     "Pan1120":"",\
-                    "Pan1157":"",\
-                    "Pan1158":"",\
-                    "Pan1190":""}
+                    "Pan1157":"Pan1455",\
+                    "Pan1158":"Pan1456",\
+                    "Pan1159":"Pan1457",\
+                    "Pan1190":"",\
+                    "Pan1449":"Pan1450",\
+                    "Pan1451":"Pan1452",\
+                    "Pan1453":"Pan1454",\
+                    "Pan1459":"Pan1458",\
+                    "Pan1464":"Pan1471"}
 
 
-email_panel_dict={"Pan1001":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan1000":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan994":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan996":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan995":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan998":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan1009":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan999":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan656":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan1063":"gst-tr.interpretation.request@nhs.net",\
-                    "Pan1120":"joowook.ahn@nhs.net",\
-                    "Pan493":"joowook.ahn@nhs.net",\
-                    "Pan1190":onco_email}
+email_panel_dict={"Pan493":wook_email,\
+					"Pan1009":interpretation_request_email,\
+					"Pan1063":interpretation_request_email,\
+					"Pan1120":wook_email,\
+					"Pan1157":interpretation_request_email,\
+					"Pan1158":interpretation_request_email,\
+					"Pan1159":interpretation_request_email,\
+                    "Pan1190":onco_email,\
+                    "Pan1449":interpretation_request_email,\
+                    "Pan1451":interpretation_request_email,\
+                    "Pan1453":interpretation_request_email,\
+                    "Pan1459":interpretation_request_email,\
+                    "Pan1464":interpretation_request_email}
 
 ################################# smartsheet API ################################
 # smartsheet sheet ID
