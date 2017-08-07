@@ -10,10 +10,10 @@ class upload():
 	def __init__(self):
 		################################CONFIG################################
 		# which run do you want to upload
-		self.flowcell="170322_NB551068_0039_AHKK2HAFXX"
+		self.flowcell="170726_M02353_0123_000000000-D2T5B"
 		
 		# which project do you want to upload to?
-		self.nexusproject="002_170322_NB551068_0039_AHKK2HAFXX_NGS157A"
+		self.nexusproject="003_170726_M02353_0123_000000000-D2T5B"
 		
 		#which string must the fastq file name ?
 		#self.fastq_filter="IMDv2" # if want all use "fastq"
@@ -29,7 +29,7 @@ class upload():
 		# variables used for upload
 		self.source_command = "#!/bin/bash\nsource /etc/profile.d/dnanexus.environment.sh\n"
 		self.upload_agent_path = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
-		self.auth = " -a XyMlsVImvuBoClLXnZo8QnIKy5sX4tyh"
+		self.auth = " -a K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ"
 		self.nexusprojectstring = "  --project  "
 		self.dest = " --folder /"
 		self.fastqfilepath="/Data/Intensities/BaseCalls/"
