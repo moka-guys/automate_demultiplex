@@ -41,7 +41,7 @@ logfile_success = "Processing completed with 0 errors and 0 warnings."
 upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 
 ####################### Moka settings ######################
-moka_pipeline_ID="1826"
+moka_pipeline_ID="1854"
 
 ########################## DNA Nexus setting#############################
 # project to upload run folder into
@@ -53,7 +53,7 @@ project_success="Created new project called \"%s\""
 # The project containing the app and data
 app_project="001_ToolsReferenceData:"
 #path to the workflow in the app project
-workflow_path="Workflows/GATK3.5_v2.6"
+workflow_path="Workflows/GATK3.5_v2.7"
 #path to the oncology workflow in the app project
 onco_path="Workflows/Mokaonc_v1.1"
 #path to multiqc app
