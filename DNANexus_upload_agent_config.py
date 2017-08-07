@@ -55,7 +55,7 @@ app_project="001_ToolsReferenceData:"
 #path to the workflow in the app project
 workflow_path="Workflows/GATK3.5_v2.6"
 #path to the oncology workflow in the app project
-onco_path="Workflows/Mokaonc_v1.0"
+onco_path="Workflows/Mokaonc_v1.1"
 #path to multiqc app
 multiqc_path="Apps/multiqc"
 #smartsheet app
