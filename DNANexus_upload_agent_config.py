@@ -119,11 +119,11 @@ panelnumbers={"Pan493":"",\
                     "Pan1449":"Pan1450",\
                     "Pan1451":"Pan1452",\
                     "Pan1453":"Pan1454",\
+                    "Pan1063":"Pan1064",\
                     "Pan1464":"Pan1471"}
 
 #Pan numbers to add in to above  dict once bed files are in 001.
 #"Pan1009":"Pan1010",\                 
-#"Pan1063":"Pan1064",\
 #"Pan1157":"Pan1455",\
 #"Pan1158":"Pan1456",\
 #"Pan1159":"Pan1457",\
