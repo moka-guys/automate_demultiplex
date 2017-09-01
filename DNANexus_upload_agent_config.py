@@ -172,3 +172,7 @@ port = 587
 me   = 'gst-tr.mokaguys@nhs.net'
 you  = ('gst-tr.mokaguys@nhs.net',)
 smtp_do_tls = True
+
+#####################Loggly
+# log command
+echo_to_log="echo %s 2>&1 | /usr/bin/logger -t %s"

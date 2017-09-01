@@ -302,7 +302,6 @@ class upload2Nexus():
                                 to_be_nexified += 1
                                 recognised_panel=True
                                 
-
                                 #build the list of fastqs with full file paths
                                 self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
                                 #add the fastq name to a list to be used in create_nexus_file_path
@@ -333,6 +332,8 @@ class upload2Nexus():
         # else continue
         else:
             if len(not_processed)>0:
+                #add to logger
+                self.loggly("unrecognised panels","unrecognised_panel")
                 #write to logfile
                 self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\nSome fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
                 #send an email
@@ -465,6 +466,7 @@ class upload2Nexus():
         if not debug:
             # send email
             self.send_an_email()
+            self.loggly("upload of fastq complete","fastq_upload_complete")
         
         # start pipeline
         self.create_run_pipeline_command()
@@ -514,7 +516,10 @@ class upload2Nexus():
             self.email_priority = 1
             self.email_message = "The test to check the upload agent has been installed (" + command + ") failed"
             self.send_an_email()
+            self.loggly("Upload Agent Test Failed","upload_agent_test_failed")
             raise Exception, "Upload agent not installed"
+
+        self.loggly("Upload Agent test passed","upload_agent_test_passed")
 
         # write this to the log file
         self.upload_agent_script_logfile.write("upload agent check passed\n\n----------------------TEST DX TOOLKIT IS FUNCTIONING----------------------\n")
@@ -536,8 +541,9 @@ class upload2Nexus():
             self.email_priority = 1
             self.email_message = "The test to check that the dx toolkit is working (" + command + ") failed. Hopefully this just means it's been upgraded past v0.2!\n"+err
             self.send_an_email()
+            self.loggly("dx toolkit test failed","dx_toolkit_test_fail")
             raise Exception, "dx toolkit not installed"
-
+        self.loggly("dx toolkit test passed","dx_toolkit_test_passed")
         # write this to the log file
         self.upload_agent_script_logfile.write("dx toolkit check passed\n\n----------------------UPLOAD FASTQS----------------------\n")
 
@@ -589,6 +595,9 @@ class upload2Nexus():
                 self.email_priority = 1 # high priority
                 self.email_message = "Unable to create the project %s.\nError message = %s, %s" % (self.nexusproject, out,err)
                 self.send_an_email()
+
+                self.loggly("failed to create project in dna nexus","nexus_project_error")
+
                 # raise exception to stop script
                 raise Exception, "Unable to create DNA Nexus project"
             else:               
@@ -786,9 +795,12 @@ class upload2Nexus():
             self.email_priority = 1 # high priority
             self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + upload_started_file
             
+            self.loggly("Error when starting pipeline","pipeline_start_error")
+
             # write error message to log file
             self.upload_agent_script_logfile.write("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: "+err+"\n\nemailing error message:\n"+self.email_message+"\n\n")
         else:
+            self.loggly("workflow started","pipeline_started")
             # create empty list for the sql queries
             sql=[]
 
@@ -855,6 +867,7 @@ class upload2Nexus():
                     self.email_subject = "MOKAPIPE ALERT: Error with RPKM command"
                     self.email_priority = 1 # high priority
                     self.email_message = "RPKM will not be performed for "+ panel + " as the panel number for the CNV bedfile is not known"
+                    self.loggly("Error with RPKM command","RPKM_start_error")
                     if not debug:
                         # send email
                         self.send_an_email()
@@ -938,6 +951,7 @@ class upload2Nexus():
             (out, err) = proc.communicate()
             if err:
                 self.upload_agent_script_logfile.write("Error when executing script:\n"+err+"\n\n")
+                self.loggly("Error uploading rest of runfolder","rest_of_runfolder_upload_error")
             else:
                 self.upload_agent_script_logfile.write("No errors reported\n")
         
@@ -1081,7 +1095,7 @@ class upload2Nexus():
         self.email_subject = "MOKAPIPE ALERT: backup of " + self.runfolder + " completed"
         self.email_priority = 3
         self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + upload_started_file
-        
+        self.loggly("backup of runfolder complete","backup_of_runfolder_complete")
         if not debug:
             # send email.            
             self.send_an_email()
@@ -1142,11 +1156,13 @@ class upload2Nexus():
                 if response[i] =="SUCCESS":
 
                     self.upload_agent_script_logfile.write("smartsheet updated to say in progress\n")
+                    self.loggly("run started added to smartsheet","smartsheet_workflow_started_ok")
                 else:
                     #send an email if the update failed
                     self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
                     self.email_message="Smartsheet was not updated to say MokaPipe is inprogress"
                     self.send_an_email()
+                    self.loggly("run started NOT added to smartsheet","smartsheet_workflow_started_fail")
                     self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
 
     def look_for_upload_errors_fastq(self):
@@ -1164,6 +1180,7 @@ class upload2Nexus():
                     self.email_message="The connection to nexus failed during the upload of FASTQ files however the files were uploaded successfully"
                     self.email_priority = 3 # high priority
                     self.send_an_email()
+                    self.loggly("upload of fastq was disrupted but completed","fastq_upload_complete_after_disruption")
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
@@ -1171,6 +1188,7 @@ class upload2Nexus():
                     self.email_subject="MOKAPIPE ALERT: UPLOAD OF FASTQS FAILED"
                     self.email_message="There was a disruption to the network which prevented the fastq files from being uploaded. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\n"
                     self.email_priority = 1 # high priority
+                    self.loggly("upload of fastqs failed","fastq_upload_failed")
                     self.send_an_email()
                     #write the email message to log file
                     self.upload_agent_script_logfile.write(self.email_message)
@@ -1196,6 +1214,7 @@ class upload2Nexus():
                     self.email_message="The connection to nexus failed during the backup of the run folder however the files have been successfully backed up "
                     self.email_priority = 3 # high priority
                     self.send_an_email()
+                    self.loggly("upload of runfolder was disrupted but completed","runfolder_upload_complete_after_disruption")
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
@@ -1204,6 +1223,7 @@ class upload2Nexus():
                     self.email_message="There was a disruption to the network which prevented the rest of the runfolder being uploaded. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\n"
                     self.email_priority = 1 # high priority
                     self.send_an_email()
+                    self.loggly("upload of runfolder failed","runfolder_upload_failed")
                     #write the email message to log file
                     self.upload_agent_script_logfile.write(self.email_message)
             else:
@@ -1223,6 +1243,7 @@ class upload2Nexus():
                 # if it still completed successfully carry on
                 if "uploaded successfully" in upload:
                     self.upload_agent_script_logfile.write("There was a disruption to the network when uploading logfiles but it completed successfully\n")                    
+                    self.loggly("upload of logfiles was disrupted but completed","logiles_upload_complete_after_disruption")
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the netowkr which prevented log files being uploaded\n")
@@ -1231,11 +1252,26 @@ class upload2Nexus():
                     self.email_message="There was a disruption to the netowkr which prevented the log files being uploaded. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\n"
                     self.email_priority = 1 # high priority
                     self.send_an_email()
+                    self.loggly("upload of log files failed","logfiles_upload_failed")
                     #write the email message to log file
                     self.upload_agent_script_logfile.write(self.email_message)
             else:
                 #write to log file check was ok
                 self.upload_agent_script_logfile.write("There was no issues when uploading the logfiles\n")
+
+    def loggly(self, message, tool):
+        # create subprocess command
+        log=echo_to_log % (message,tool)
+        
+        # run the command
+        proc = subprocess.Popen([log], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        
+        # capture the streams 
+        (out, err) = proc.communicate()
+        #if no stderr
+        if not err:
+            # write this to the log file
+            self.upload_agent_script_logfile.write("log written to /usr/bin/logger\n"+log+"\n")
 
 
 if __name__ == '__main__':
