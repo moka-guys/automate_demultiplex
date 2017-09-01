@@ -152,6 +152,8 @@ class ready2start_demultiplexing():
         self.headers={"Authorization": "Bearer "+self.api_key,"Content-Type": "application/json"}
         self.url='https://api.smartsheet.com/2.0/sheets/'+str(self.sheetid)
 
+        # log command
+        self.echo_to_log="echo %s 2>&1 | /usr/bin/logger -t %s"
 
     def already_demultiplexed(self, runfolder, now):
         '''check if the runfolder has been demultiplexed (demultiplex_log is present)'''
@@ -425,6 +427,20 @@ class ready2start_demultiplexing():
                     self.send_an_email()
                     self.script_logfile.write("smartsheet NOT updated at complete step\n"+str(response))
 
+
+    def loggly(self, message, tool):
+        # create subprocess command
+        log=self.echo_to_log % (message,tool)
+        
+        # run the command
+        proc = subprocess.Popen([log], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        
+        # capture the streams 
+        (out, err) = proc.communicate()
+        #if no stderr
+        if not err:
+            # write this to the log file
+            self.script_logfile.write("log written to /usr/bin/logger\n"+log+"\n")
 
 
 if __name__ == '__main__':
