@@ -42,10 +42,8 @@ class get_list_of_runs():
         demultiplex=ready2start_demultiplexing()
         # for each folder if it is not samplesheets pass the runfolder to the next class ready2start_demultiplexing()
         for folder in all_runfolders:
-            if folder != "samplesheets":
-                if folder.endswith('.gz'):
-                    pass
-                else:
+            if folder != "samplesheets" or folder != "GlacierTest":
+                if os.path.isdir(self.runfolders+"/"+folder):
                     demultiplex.already_demultiplexed(folder, self.now)
         #call function to combine log files
         self.combine_log_files()
@@ -218,7 +216,7 @@ class ready2start_demultiplexing():
         else:
             # stop
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
-            self.loggly("no samplesheet found","BCL2FASTQ_fail  ")
+            self.loggly("no samplesheet found","BCL2FASTQ_fail")
 
     def run_demuliplexing(self):
         '''Run the demultiplexing'''
