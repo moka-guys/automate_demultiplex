@@ -561,9 +561,9 @@ class upload2Nexus():
         for user in users:
             # interpretation request account should only have view access.
             if user == "InterpretationRequest":
-                DNA_Nexus_bash_script.write("dx invite %s $project_id VIEW --auth-token %s\n" % (user,Nexus_API_Key))
+                DNA_Nexus_bash_script.write("dx invite %s $project_id VIEW --no-email --auth-token %s\n" % (user,Nexus_API_Key))
             else:   
-                DNA_Nexus_bash_script.write("dx invite %s $project_id ADMINISTER --auth-token %s\n" % (user,Nexus_API_Key))
+                DNA_Nexus_bash_script.write("dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n" % (user,Nexus_API_Key))
         
         #add a tag to denote live project (as opposed to archived)
         DNA_Nexus_bash_script.write(self.addprojecttag + live_tag + " --auth-token %s\n" % (Nexus_API_Key))
