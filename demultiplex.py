@@ -216,7 +216,7 @@ class ready2start_demultiplexing():
         else:
             # stop
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
-            self.logger("no samplesheet found demultiplexing not started","no_sample_sheet_present")
+            self.logger("no samplesheet found demultiplexing not started for run "+self.runfolder,"no_sample_sheet_present")
 
     def run_demuliplexing(self):
         '''Run the demultiplexing'''
@@ -270,7 +270,7 @@ class ready2start_demultiplexing():
             # self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
             # self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
             # self.send_an_email()
-            self.logger("demultiplexing complete without error","demultiplex_success")
+            self.logger("demultiplexing complete without error for run "+self.runfolder,"demultiplex_success")
             #update smartsheet
             self.smartsheet_demultiplex_complete()
 
@@ -286,7 +286,7 @@ class ready2start_demultiplexing():
             # self.email_priority=1
             # self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
             # self.send_an_email()
-            self.logger("demultiplexing completed with error or failed","demultiplex_fail")
+            self.logger("demultiplexing completed with error or failed for run "+self.runfolder,"demultiplex_fail")
     
     def send_an_email(self):
         #body = self.runfolder
@@ -383,7 +383,7 @@ class ready2start_demultiplexing():
                     # self.email_message="Smartsheet was not updated to say demultiplexing is inprogress"
                     # self.send_an_email()
                     self.script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
-                    self.logger("Smartsheet was not updated to say demultiplexing is inprogress","demultiplex_started_updated_smartsheet_fail")
+                    self.logger("Smartsheet was not updated to say demultiplexing is in progress for run "+self.runfolder,"demultiplex_started_updated_smartsheet_fail")
 
     def smartsheet_demultiplex_complete(self):
         '''update smartsheet to say demultiplexing is complete (add the completed date and calculate the duration (in days) and if met TAT)'''
@@ -431,7 +431,7 @@ class ready2start_demultiplexing():
                     # self.email_message="Smartsheet was not updated to say demultiplexing was completed"
                     # self.send_an_email()
                     self.script_logfile.write("smartsheet NOT updated at complete step\n"+str(response))
-                    self.logger("smartsheet NOT updated at end of demultiplexing","demultiplex_complete_update_smartsheet_fail")
+                    self.logger("smartsheet NOT updated at end of demultiplexing for run "+self.runfolder,"demultiplex_complete_update_smartsheet_fail")
 
 
     def logger(self, message, tool):
