@@ -207,16 +207,16 @@ class ready2start_demultiplexing():
         #if the samplesheet exists
         if expected_samplesheet in self.list_of_samplesheets:
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
-            #send an email:
-            self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
-            self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
-            self.send_an_email()
+            # #send an email:
+            # self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
+            # self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
+            # self.send_an_email()
             # proceed
             self.run_demuliplexing()
         else:
             # stop
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
-            self.loggly("no samplesheet found","BCL2FASTQ_fail")
+            self.logger("no samplesheet found demultiplexing not started","no_sample_sheet_present")
 
     def run_demuliplexing(self):
         '''Run the demultiplexing'''
@@ -267,10 +267,10 @@ class ready2start_demultiplexing():
         
         if  self.logfile_success in lastline:
             self.script_logfile.write("demultiplexing complete\n")
-            self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
-            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
-            self.send_an_email()
-            self.loggly("demultiplexing complete","demultiplex_success")
+            # self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
+            # self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
+            # self.send_an_email()
+            self.logger("demultiplexing complete without error","demultiplex_success")
             #update smartsheet
             self.smartsheet_demultiplex_complete()
 
@@ -282,11 +282,11 @@ class ready2start_demultiplexing():
 
         else:
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
-            self.email_subject="MOKAPIPE ALERT: DEMULTIPLEXING FAILED"
-            self.email_priority=1
-            self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
-            self.send_an_email()
-            self.loggly("demultiplexing failed","demultiplex_fail")
+            # self.email_subject="MOKAPIPE ALERT: DEMULTIPLEXING FAILED"
+            # self.email_priority=1
+            # self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
+            # self.send_an_email()
+            self.logger("demultiplexing completed with error or failed","demultiplex_fail")
     
     def send_an_email(self):
         #body = self.runfolder
@@ -318,13 +318,13 @@ class ready2start_demultiplexing():
         (out, err) = proc.communicate()
         
         if "BCL to FASTQ file converter" not in err:
-            self.email_subject="MOKAPIPE ALERT: ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
-            self.email_priority=1
-            self.email_message="The test to check if bcl2fastq is working ("+command+") failed"
-            self.send_an_email()
+            # self.email_subject="MOKAPIPE ALERT: ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
+            # self.email_priority=1
+            # self.email_message="The test to check if bcl2fastq is working ("+command+") failed"
+            # self.send_an_email()
             raise Exception, "bcl2fastq not installed"
-            self.loggly("BCL2FastQ test failed","BCL2FASTQ_fail")
-        self.loggly("BCL2FastQ ok","BCL2FASTQ_ok")
+            self.logger("BCL2FastQ installation test failed","BCL2FASTQ_function_test_fail")
+        self.logger("BCL2FastQ installation test ok","BCL2FASTQ_function_test_pass")
 
         # write this to the log file
         self.script_logfile.write("bcl2fastq check passed\n")
@@ -376,14 +376,14 @@ class ready2start_demultiplexing():
             if i == "message":
                 if response[i] =="SUCCESS":
                     self.script_logfile.write("smartsheet updated to say in progress\n")
-                    self.loggly("demultiplexing added to smartsheet","smartsheet_demultiplex_started")
+                    self.logger("initiation of demultiplexing added to smartsheet","demultiplex_started_updated_smartsheet_ok")
                 else:
-                    #send an email if the update failed
-                    self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
-                    self.email_message="Smartsheet was not updated to say demultiplexing is inprogress"
-                    self.send_an_email()
+                    # #send an email if the update failed
+                    # self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
+                    # self.email_message="Smartsheet was not updated to say demultiplexing is inprogress"
+                    # self.send_an_email()
                     self.script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
-                    self.loggly("demultiplexing not added to smartsheet","smartsheet_demultiplex_started_fail")
+                    self.logger("Smartsheet was not updated to say demultiplexing is inprogress","demultiplex_started_updated_smartsheet_fail")
 
     def smartsheet_demultiplex_complete(self):
         '''update smartsheet to say demultiplexing is complete (add the completed date and calculate the duration (in days) and if met TAT)'''
@@ -424,17 +424,17 @@ class ready2start_demultiplexing():
             if i == "message":
                 if response[i] =="SUCCESS":
                     self.script_logfile.write("smartsheet updated to say complete\n")
-                    self.loggly("smartsheet updated at end of demultiplexing","smartsheet_demultiplex_complete")
+                    self.logger("smartsheet updated at end of demultiplexing","demultiplex_complete_update_smartsheet_ok")
                 else:
-                    #send an email if the update failed
-                    self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
-                    self.email_message="Smartsheet was not updated to say demultiplexing was completed"
-                    self.send_an_email()
+                    # #send an email if the update failed
+                    # self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
+                    # self.email_message="Smartsheet was not updated to say demultiplexing was completed"
+                    # self.send_an_email()
                     self.script_logfile.write("smartsheet NOT updated at complete step\n"+str(response))
-                    self.loggly("smartsheet NOT updated at end of demultiplexing","smartsheet_demultiplex_complete_fail")
+                    self.logger("smartsheet NOT updated at end of demultiplexing","demultiplex_complete_update_smartsheet_fail")
 
 
-    def loggly(self, message, tool):
+    def logger(self, message, tool):
         # create subprocess command
         log=self.echo_to_log % (message,tool)
         
