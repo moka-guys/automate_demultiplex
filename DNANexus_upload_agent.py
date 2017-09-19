@@ -865,14 +865,15 @@ class upload2Nexus():
             else:
                 # ensure there is a CNV bedfile in the dictionary but if not don't raise an exception, send an email. 
                 if panelnumbers[panel] == "":
+                    self.logger("Error when issuing RPKM command for run "+ self.runfolder+". stderror = "+err,"Error_issuing_RPKM_dx_run_command")
                     # send email
-                    self.email_subject = "MOKAPIPE ALERT: Error with RPKM command"
-                    self.email_priority = 1 # high priority
-                    self.email_message = "RPKM will not be performed for "+ panel + " as the panel number for the CNV bedfile is not known"
-                    self.logger("Error when issuing RPKM command for run "+ self.runfolder,"Error_issuing_RPKM_dx_run_command")
+                    # self.email_subject = "MOKAPIPE ALERT: Error with RPKM command"
+                    # self.email_priority = 1 # high priority
+                    # self.email_message = "RPKM will not be performed for "+ panel + " as the panel number for the CNV bedfile is not known"
                     if not debug:
                         # send email
-                        self.send_an_email()
+                        # self.send_an_email()
+                    
                 else:
                     # build RPKM command
                     RPKM_command = self.RPKM_command + RPKM_bedfile + app_project+bedfile_folder+panelnumbers[panel]+"_RPKM.bed"  + RPKM_project + self.nexusproject + RPKM_bedfile_to_download + panel + self.project +self.projectid.rstrip()+ self.depends+self.token.replace(")","")
