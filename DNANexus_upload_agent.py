@@ -803,6 +803,7 @@ class upload2Nexus():
             # write error message to log file
             self.upload_agent_script_logfile.write("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: "+err+"\n\nemailing error message:\n"+self.email_message+"\n\n")
         else:
+            # write error message to log file
             self.logger("dx run commands issued without error for run "+ self.runfolder,"UA_pipeline_started_ok")
         
         # create empty list for the sql queries
@@ -837,12 +838,17 @@ class upload2Nexus():
 
         # combine all the queries into a string suitable for an email
         sql_statements=""
-        for i in sql:
-            sql_statements=sql_statements+i+"\n"
-
+        # if there are no sql commands it must be an oncology run
         if len(sql)==0:
-            sql_statements="No SQL for oncology samples"                
+            sql_statements="No SQL for oncology samples"
+        else:
+            # otherwise loop through each statement and create a string.
+            for i in sql:
+                sql_statements=sql_statements+i+"\n"
 
+        # write error message to log file
+        self.logger("SQL statement email sent for run "+ self.runfolder,"UA_SQL_email_sent")
+        
         # email this query
         self.email_subject = "MOKAPIPE ALERT - ACTION NEEDED: Started pipeline for " + self.runfolder
         self.email_priority = 1 # high priority
