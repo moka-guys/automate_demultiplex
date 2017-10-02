@@ -207,7 +207,7 @@ class ready2start_demultiplexing():
         #if the samplesheet exists
         if expected_samplesheet in self.list_of_samplesheets:
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
-            # #send an email:
+            # #send an email:2
             # self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
             # self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
             # self.send_an_email()
@@ -216,7 +216,7 @@ class ready2start_demultiplexing():
         else:
             # stop
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
-            self.logger("no samplesheet found demultiplexing not started for run "+self.runfolder,"no_sample_sheet_present")
+            self.logger("no samplesheet found demultiplexing not started for run "+self.runfolder,"demultiplex_no_sample_sheet_present")
 
     def run_demuliplexing(self):
         '''Run the demultiplexing'''
@@ -230,6 +230,7 @@ class ready2start_demultiplexing():
         # test bcl2fastq install
         self.test_bcl2fastq()
         self.smartsheet_demultiplex_in_progress()
+        
         # create the command
         command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
         # command="/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R 160822_NB551068_0006_AHGYM7BGXY/ --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting"
@@ -238,6 +239,9 @@ class ready2start_demultiplexing():
         
         # open a log file
         demultiplex_log = open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'w')
+        
+        #add entry to logger
+        self.logger("demultiplexing started for run "+self.runfolder,"demultiplex_started")
         
         # run the command, redirecting stderror to stdout
         proc = subprocess.Popen([command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
@@ -322,9 +326,10 @@ class ready2start_demultiplexing():
             # self.email_priority=1
             # self.email_message="The test to check if bcl2fastq is working ("+command+") failed"
             # self.send_an_email()
+            self.logger("BCL2FastQ installation test failed","demultiplex_BCL2FASTQ_function_test_fail")
             raise Exception, "bcl2fastq not installed"
-            self.logger("BCL2FastQ installation test failed","BCL2FASTQ_function_test_fail")
-        self.logger("BCL2FastQ installation test ok","BCL2FASTQ_function_test_pass")
+        else:
+            self.logger("BCL2FastQ installation test ok","demultiplex_BCL2FASTQ_function_test_pass")
 
         # write this to the log file
         self.script_logfile.write("bcl2fastq check passed\n")
@@ -376,14 +381,14 @@ class ready2start_demultiplexing():
             if i == "message":
                 if response[i] =="SUCCESS":
                     self.script_logfile.write("smartsheet updated to say in progress\n")
-                    self.logger("initiation of demultiplexing added to smartsheet","demultiplex_started_updated_smartsheet_ok")
+                    self.logger("initiation of demultiplexing added to smartsheet","smartsheet_demultiplex_started_update_ok")
                 else:
                     # #send an email if the update failed
                     # self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
                     # self.email_message="Smartsheet was not updated to say demultiplexing is inprogress"
                     # self.send_an_email()
                     self.script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
-                    self.logger("Smartsheet was not updated to say demultiplexing is in progress for run "+self.runfolder,"demultiplex_started_updated_smartsheet_fail")
+                    self.logger("Smartsheet was not updated to say demultiplexing is in progress for run "+self.runfolder,"smartsheet_demultiplex_started_update_fail")
 
     def smartsheet_demultiplex_complete(self):
         '''update smartsheet to say demultiplexing is complete (add the completed date and calculate the duration (in days) and if met TAT)'''
@@ -424,14 +429,14 @@ class ready2start_demultiplexing():
             if i == "message":
                 if response[i] =="SUCCESS":
                     self.script_logfile.write("smartsheet updated to say complete\n")
-                    self.logger("smartsheet updated at end of demultiplexing","demultiplex_complete_update_smartsheet_ok")
+                    self.logger("smartsheet updated at end of demultiplexing","smartsheet_demultiplex_complete_update_ok")
                 else:
                     # #send an email if the update failed
                     # self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
                     # self.email_message="Smartsheet was not updated to say demultiplexing was completed"
                     # self.send_an_email()
                     self.script_logfile.write("smartsheet NOT updated at complete step\n"+str(response))
-                    self.logger("smartsheet NOT updated at end of demultiplexing for run "+self.runfolder,"demultiplex_complete_update_smartsheet_fail")
+                    self.logger("smartsheet NOT updated at end of demultiplexing for run "+self.runfolder,"smartsheet_demultiplex_complete_update_fail")
 
 
     def logger(self, message, tool):
