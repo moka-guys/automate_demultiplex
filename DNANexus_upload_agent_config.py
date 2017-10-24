@@ -53,7 +53,7 @@ project_success="Created new project called \"%s\""
 # The project containing the app and data
 app_project="001_ToolsReferenceData:"
 #path to the workflow in the app project
-workflow_path="Workflows/GATK3.5_v2.7"
+workflow_path="Workflows/GATK3.5_v2.8"
 #path to the oncology workflow in the app project
 onco_path="Workflows/Mokaonc_v1.1"
 #path to multiqc app
