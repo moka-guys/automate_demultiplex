@@ -651,8 +651,8 @@ class upload2Nexus():
                     if panel+"_" in fastq and panel == "Pan1190":
                         list_onco_fastq.append(read1)
                         list_onco_fastq.append(read2)
-                        # use same panelname to get the email which will be used to upload to IVA
-                        ingenuity_email=email_panel_dict[panel]
+                        # NOT REQUIRED as samples are grouped - use same panelname to get the email which will be used to upload to IVA
+                        # ingenuity_email=email_panel_dict[panel]
 
                     # Find NGS or WES samples
                     elif panel+"_" in fastq:
@@ -703,7 +703,7 @@ class upload2Nexus():
             # set the destination command as the root of the project in dir AmplivarOutput
             dest_cmd=self.nexusproject +":/Onco_Output"
             # create the dx command include email address for ingenuity and to alert if no variants found
-            command = command + vcf_novariants + onco_email + onco_ingenuity + ingenuity_email + self.dest + dest_cmd + self.token
+            command = command + vcf_novariants + onco_email + onco_ingenuity + onco_email + self.dest + dest_cmd + self.token
             # print command
             #add command to  list 
             self.dx_run.append(command)
