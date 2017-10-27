@@ -55,7 +55,7 @@ app_project="001_ToolsReferenceData:"
 #path to the workflow in the app project
 workflow_path="Workflows/GATK3.5_v2.7"
 #path to the oncology workflow in the app project
-onco_path="Workflows/Mokaonc_v1.1"
+onco_path="Workflows/Mokaonc_v1.2"
 #path to multiqc app
 multiqc_path="Apps/multiqc"
 #smartsheet app
@@ -83,7 +83,7 @@ mokavendor_input = " -istage-F35FvQ00jy1pb8f11vB4Xjf1.vendor_exome_bedfile=" # H
 ingenuity_input=" -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
 
 # amplivar fastq input
-onco_input=" -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs="
+onco_input=" -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
 # general oncology email
 onco_email="gst-tr.oncology.interpret@nhs.net"
 #email for Interpretation_requests
