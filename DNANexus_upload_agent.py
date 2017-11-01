@@ -228,7 +228,7 @@ class upload2Nexus():
         self.runfolderpath = runfolders + "/" + self.runfolder
        
         self.upload_agent_script_logfile.write("\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "----------------------\nAssessing " + self.runfolderpath + "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
-        print "looking at runfolder "+runfolder
+        #print "looking at runfolder "+runfolder
          
         #look for the file denoting the upload has started
         if os.path.isfile(self.runfolderpath + "/" + upload_started_file):
@@ -843,8 +843,8 @@ class upload2Nexus():
             sql_statements="No SQL for oncology samples"
         else:
             # otherwise loop through each statement and create a string.
-            for i in sql:
-                sql_statements=sql_statements+i+"\n"
+            for statement in sql:
+                sql_statements=sql_statements+statement+"\n"
 
         # write error message to log file
         self.logger("SQL statement email sent for run "+ self.runfolder,"UA_SQL_email_sent")
