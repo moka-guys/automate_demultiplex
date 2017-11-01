@@ -14,8 +14,12 @@ runfolders = "/media/data1/share"
 
 #samplesheet folder
 samplesheets=runfolders+"/samplesheets/"
+
 # path to fastq files
 fastq_folder = "/Data/Intensities/BaseCalls"
+
+# path to bcl2fastq
+bcl2fastq = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
 
 # path to log file which records the output of the upload agent
 upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
