@@ -18,7 +18,7 @@ from email.Message import Message
 import fnmatch
 import requests
 import json
-from DNANexus_upload_agent_config import *
+from automate_demultiplex_config import *
 from shutil import copyfile
 
 class get_list_of_runs():
