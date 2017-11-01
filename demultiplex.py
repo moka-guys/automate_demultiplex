@@ -92,7 +92,7 @@ class ready2start_demultiplexing():
         self.list_of_samplesheets=[]
 
         # path to bcl2fastq
-        self.bcl2fastq = "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq"
+        self.bcl2fastq = bcl2fastq
         #succesful run
         self.logfile_success="Processing completed with 0 errors and 0 warnings."
 
