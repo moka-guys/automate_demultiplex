@@ -22,7 +22,7 @@ from email.Message import Message
 import fnmatch
 import requests
 import json
-from DNANexus_upload_agent_config import *
+from automate_demultiplex_config import *
 
 class get_list_of_runs():
     '''Loop through the directories in the directory containing the runfolders'''
