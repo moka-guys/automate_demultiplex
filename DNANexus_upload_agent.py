@@ -852,7 +852,7 @@ class upload2Nexus():
         # email this query
         self.email_subject = "MOKAPIPE ALERT - ACTION NEEDED: Started pipeline for " + self.runfolder
         self.email_priority = 1 # high priority
-        self.email_message = self.runfolder + " being processed using workflow " + app +"\n\nPlease update Moka using the query below:\n\n"+sql_statements
+        self.email_message = self.runfolder + " being processed using workflow " + app +"\n\nPlease update Moka using the below query and ensure that "+str(len(sql))+" rows are updated:\n\n"+sql_statements
                 
         if not debug:
             #call function to update smartsheet to say run in progress
