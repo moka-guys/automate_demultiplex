@@ -227,7 +227,7 @@ class upload2Nexus():
         # create full path to runfolder
         self.runfolderpath = runfolders + "/" + self.runfolder
        
-        self.upload_agent_script_logfile.write("\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "----------------------\nAssessing " + self.runfolderpath + "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
+        self.upload_agent_script_logfile.write("automate_demultiplexing release:"+script_release+"\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "----------------------\nAssessing " + self.runfolderpath + "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
         #print "looking at runfolder "+runfolder
          
         #look for the file denoting the upload has started

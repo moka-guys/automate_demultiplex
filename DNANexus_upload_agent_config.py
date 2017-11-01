@@ -5,7 +5,8 @@ DNA Nexus Upload agent configuration
 #debug=True
 debug=False
 
-
+########################### git release for the automate_demultiplexing repo ####
+script_release="v1.0"
 
 ########################### location of input/output files####################
 # path to run folders
