@@ -166,7 +166,7 @@ class ready2start_demultiplexing():
         # create full path to runfolder
         self.runfolderpath = self.runfolders + "/" + self.runfolder
         
-        self.script_logfile.write("\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
+        self.script_logfile.write("automate_demultiplexing release:"+script_release+"\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
         
         # if the demultiplex log file is present
         if os.path.isfile(self.runfolderpath + "/" + self.demultiplexed):
