@@ -212,11 +212,60 @@ class ready2start_demultiplexing():
             # self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
             # self.send_an_email()
             # proceed
-            self.run_demuliplexing()
+            # If the samplesheet contains valid characters, run demultiplexing
+            if self.check_valid_samplesheet():
+                self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns " + \
+                                        "......... All characters valid \n")
+                self.run_demuliplexing()
+            # Else stop and write error message to logger.
+            else:
+                self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns" + \
+                                        "......... Invalid characters found \n--- STOP ---\n")
+                self.logger("Invalid characters persent in samplesheet. Demultiplexing not started for run " + \
+                    self.runfolder,"demultiplex_invalid_samplesheet_character")
         else:
             # stop
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
             self.logger("no samplesheet found demultiplexing not started for run "+self.runfolder,"demultiplex_no_sample_sheet_present")
+    
+    def check_valid_samplesheet(self):
+        '''
+        Validates the 'Sample_ID' and 'Sample_Name' columns of the samplesheet csv file.
+        The presence of invalid characters in these strings raises an error in bcl2fastq2.
+        Returns True if no invalid characters found.
+        '''
+        # Initialise empty list to store sample ids and sample names from the samplesheet
+        sampleStrings = []
+
+        # Store string containing valid characters, defined by bcl2fastq as an alphanumeric, '-', or '_' character.
+        validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+        # Separate characters into a set for quick lookup
+        validCharSet = set(validChars.split())
+
+        # Open samplesheet and loop through in reverse order. 
+        with open(self.samplesheet,'r') as samplesheetIOstream:
+            for line in reversed(samplesheetIOstream.readlines()):
+                # If the line contains table headers for the sample names, stop looping through the file
+                 if line.startswith("Sample_ID"):
+                    break
+                 else:
+                    # Split the current line of the csv, with commas as the delimiter
+                    columns = line.split(",")
+                    # Remove leading and trailing whitespace from sampleID and sampleName with str.strip(),
+                    # as bcl2fastq tolerates leading and trailing whitespace in sample naming strings.
+                    sampleId, sampleName = columns[0].strip(" "), columns[1].strip(" ")
+                    # Append sample id and sample name to sampleStrings for testing
+                    sampleStrings.append(sampleId)
+                    sampleStrings.append(sampleName)
+
+        # Loop through the characters of each sample name and sample id
+        for sampleString in sampleStrings:
+            for char in sampleString:
+                # Check that each character in the string is valid, returning True if valid and False if not
+                if char not in validChars:
+                    return False
+        else:
+            return True
 
     def run_demuliplexing(self):
         '''Run the demultiplexing'''
