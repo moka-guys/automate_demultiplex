@@ -303,16 +303,16 @@ class ready2start_demultiplexing():
         Return True if no invalid characters found.
         '''
         # Create empty list to store sample ids and sample names from the samplesheet
-        sampleStrings = []
+        sample_strings = []
 
         # Set a string containing valid characters, defined by bcl2fastq as an alphanumeric, '-', or '_' character.
-        validChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+        valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
         # Separate characters into a set for quick lookup
-        validCharSet = set(validChars.split())
+        valid_char_set = set(validChars.split())
 
         # Open samplesheet and loop through in reverse order.
-        with open(self.samplesheet,'r') as samplesheetIOstream:
-            for line in reversed(samplesheetIOstream.readlines()):
+        with open(self.samplesheet,'r') as samplesheet_stream:
+            for line in reversed(samplesheet_stream.readlines()):
                 # If the line contains table headers, stop looping through the file
                  if line.startswith("Sample_ID"):
                     break
@@ -321,16 +321,16 @@ class ready2start_demultiplexing():
                     columns = line.split(",")
                     # Remove leading and trailing whitespace from sampleID and sampleName.
                     # bcl2fastq tolerates leading and trailing whitespace.
-                    sampleId, sampleName = columns[0].strip(" "), columns[1].strip(" ")
+                    sample_id, sample_name = columns[0].strip(" "), columns[1].strip(" ")
                     # Append sample id and sample name to sampleStrings for testing
-                    sampleStrings.append(sampleId)
-                    sampleStrings.append(sampleName)
+                    sample_strings.append(sample_id)
+                    sample_strings.append(sample_name)
 
-        # Loop through the characters of each sample name and id
-        for sampleString in sampleStrings:
-            for char in sampleString:
+        # Loop through the characters of each sample string
+        for sample_string in sample_strings:
+            for char in sample_string:
                 # Check that each character in the string is valid, returning True if valid and False if not
-                if char not in validChars:
+                if char not in valid_chars:
                     return False
         else:
             return True
