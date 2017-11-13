@@ -27,7 +27,7 @@ import fnmatch
 import requests
 import json
 
-from automate_demultiplex_config import *
+from automate_demultiplex_config import config
 
 
 class get_list_of_runs():
@@ -49,7 +49,7 @@ class get_list_of_runs():
         #!!! self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         # self.runfolders points to the location of runfolders on the workstation,
         # its value here must be the same as in ready2start_demultiplexing().
-        self.runfolders ="/media/data1/share"
+        self.runfolders = config.runfolders
         self.now="" # Stores time stamp for log file
 
     def loop_through_runs(self):
@@ -65,10 +65,10 @@ class get_list_of_runs():
         # Create a class instance for checking and running demultiplexing on each runfolder
         demultiplex = ready2start_demultiplexing()
 
-        # Loop through directory listing, ignoring items named "samplesheets" or "GlacierTest".
-        # Pass directories to demultiplex.already_demultiplexed()
+        # Loop through directory listing and pass runfolders to demultiplex.already_demultiplexed()
         for folder in all_runfolders:
-            if folder != "samplesheets" or folder != "GlacierTest":
+            # Ignore folders in the list config.ignore_directories
+            if folder not in config.ignore_directories:
                 if os.path.isdir(self.runfolders+"/"+folder): # Select directories only
                     demultiplex.already_demultiplexed(folder, self.now)
 
@@ -139,14 +139,14 @@ class ready2start_demultiplexing():
         #!!! self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         # self.runfolders points to the location of runfolders on the workstation,
         # its value here must be the same as in get_list_of_runs().
-        self.runfolders ="/media/data1/share"
+        self.runfolders = config.runfolders
 
         # Samplesheet folder
-        self.samplesheets = self.runfolders + "/samplesheets"
+        self.samplesheets = config.samplesheets
         # File which denotes the end of a sequencing run
-        self.complete_run = "RTAComplete.txt"
+        self.complete_run = config.file_complete_run
         # File which denotes demultiplexing is under way or complete
-        self.demultiplexed = "demultiplexlog.txt"
+        self.demultiplexed = config.file_demultiplexing
 
         # Empty variables to be defined based on the run
         self.runfolder = ""
@@ -155,27 +155,27 @@ class ready2start_demultiplexing():
         self.list_of_samplesheets=[]
 
         # Path to bcl2fastq
-        self.bcl2fastq = bcl2fastq
+        self.bcl2fastq = config.bcl2fastq
 
         # Succesful run message
         self.logfile_success="Processing completed with 0 errors and 0 warnings."
 
-        # Bcl2fastq test file
-        self.bcltest= "/home/mokaguys/Documents/automate_demultiplexing_logfiles/bcl2fastq.txt"
+        # bcl2fastq test file
+        self.bcltest= config.bcltest
 
         #!!! self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
         # Log file path and name
-        self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files/"
+        self.script_logfile_path= config.demultiplex_logfiles
         self.logfile_name=""
 
         # Email server settings
-        self.user = 'AKIAIO3XY2MMSBEQNNXQ'
-        self.pw   = 'AmkKC7nXvLrxsvBHZf3zagNq953nun9c0iYN+zjifIbN'
-        self.host = 'email-smtp.eu-west-1.amazonaws.com'
-        self.port = 587
-        self.me   = 'gst-tr.mokaguys@nhs.net'
-        self.you  = ('gst-tr.mokaguys@nhs.net',)
-        self.smtp_do_tls = True
+        self.user = config.user
+        self.pw   = config.pw
+        self.host = config.host
+        self.port = config.port
+        self.me   = config.me
+        self.you  = config.you
+        self.smtp_do_tls = config.smtp_do_tls
 
         # Email message variables
         self.email_subject=""
@@ -190,27 +190,27 @@ class ready2start_demultiplexing():
         # Smartsheet config
         # =================
         # API key
-        self.api_key="3asfndq3oi2zbww3td8gb67liv"
+        self.api_key= config.smartsheet_api_key
         # Smartsheet id
-        self.sheetid=2798264106936196
+        self.sheetid= config.smartsheet_sheetid
         # New row variable
         self.rowid=""
         # Time stamp
         self.smartsheet_now=""
         # Column ids
-        self.ss_title=str(6197963270711172)
-        self.ss_description=str(3946163457025924)
-        self.ss_samples=str(957524288530308)
-        self.ss_status=str(8449763084396420)
-        self.ss_priority=str(4790588387157892)
-        self.ss_assigned=str(2538788573472644)
-        self.ss_received=str(6723667267741572)
-        self.ss_completed=str(4471867454056324)
-        self.ss_duration=str(6519775204534148)
-        self.ss_metTAT=str(4267975390848900)
+        self.ss_title=str(config.ss_title)
+        self.ss_description=str(config.ss_description)
+        self.ss_samples=str(config.ss_samples)
+        self.ss_status=str(config.ss_status)
+        self.ss_priority=str(config.ss_priority)
+        self.ss_assigned=str(config.ss_assigned)
+        self.ss_received=str(config.ss_received)
+        self.ss_completed=str(config.ss_completed)
+        self.ss_duration=str(config.ss_duration)
+        self.ss_metTAT=str(config.ss_metTAT)
         # Requests info
-        self.headers={"Authorization": "Bearer "+self.api_key,"Content-Type": "application/json"}
-        self.url='https://api.smartsheet.com/2.0/sheets/'+str(self.sheetid)
+        self.headers= config.smartsheet_request_headers
+        self.url= config.smartsheet_request_url
 
         # Log command
         self.echo_to_log="echo %s 2>&1 | /usr/bin/logger -t %s"

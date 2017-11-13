@@ -1,8 +1,11 @@
-'''
-DNA Nexus Upload agent configuration
-'''
-#set debug mode
-#debug=True
+"""
+Automate demultiplex configuration.
+
+The variables defined in this module are required by the "demultiplex.py" and
+"DNANexus_upload_agent.py" scripts.
+"""
+# Set debug mode
+# Debug = True
 debug=False
 
 ########################### git release for the automate_demultiplexing repo ####
@@ -20,6 +23,15 @@ fastq_folder = "/Data/Intensities/BaseCalls"
 
 # path to bcl2fastq
 bcl2fastq = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
+# path to bcl2fastq test file
+bcltest = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/bcl2fastq.txt"
+
+# files for checking NGS runfolders before demultiplexing
+file_complete_run = "RTAComplete.txt"
+file_demultiplexing = "demultiplexlog.txt"
+
+# directories to be ignored when looping through runfolders
+ignore_directories = ["samplesheets","GlacierTest"]
 
 # path to log file which records the output of the upload agent
 upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
@@ -52,7 +64,7 @@ moka_pipeline_ID="1941"
 # project to upload run folder into
 NexusProjectPrefix="002_"
 
-#success statement when creating project 
+#success statement when creating project
 project_success="Created new project called \"%s\""
 
 # The project containing the app and data
@@ -110,11 +122,11 @@ smartsheet_mokapipe_complete=" -iNGS_run="
 RPKM_bedfile=" -ibedfile="
 RPKM_project=" -iproject_name="
 RPKM_bedfile_to_download=" -ibamfile_name="
-        
+
 # DNA Nexus authentication token
-#Nexus_API_Key = "rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL" 
-Nexus_API_Key = "K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ" 
-        
+#Nexus_API_Key = "rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL"
+Nexus_API_Key = "K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ"
+
 users=["aledjones","wook","mokaguys","andyb","AmyS","InterpretationRequest"]
 
 ################## Dict linking panel numbers for +/-10 and CNVs ####################
@@ -129,7 +141,7 @@ panelnumbers={"Pan493":"",\
                     "Pan1459":"Pan1458",\
                     "Pan1464":"Pan1471"}
 
-#Pan numbers to add in to above  dict once bed files are in 001.                 
+#Pan numbers to add in to above  dict once bed files are in 001.
 #"Pan1157":"Pan1455",\
 #"Pan1158":"Pan1456",\
 #"Pan1159":"Pan1457",\
@@ -167,6 +179,10 @@ ss_received=6723667267741572
 ss_completed=4471867454056324
 ss_duration=6519775204534148
 ss_metTAT=4267975390848900
+
+# Requests info
+smartsheet_request_headers={"Authorization": "Bearer "+smartsheet_api_key,"Content-Type": "application/json"}
+smartsheet_request_url='https://api.smartsheet.com/2.0/sheets/'+str(smartsheet_sheetid)
 
 
 ########################email server settings
