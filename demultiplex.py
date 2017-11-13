@@ -46,11 +46,11 @@ class get_list_of_runs():
     """
 
     def __init__(self):
-        #!!! self.runfolders = "/home/aled/demultiplex_testing" # aledpc
+        # !!! self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         # self.runfolders points to the location of runfolders on the workstation,
         # its value here must be the same as in ready2start_demultiplexing().
         self.runfolders = config.runfolders
-        self.now="" # Stores time stamp for log file
+        self.now = ""  # Stores time stamp for log file
 
     def loop_through_runs(self):
         """Pass NGS run folders to an instance of ready2start_demultiplexing() for processing.
@@ -69,7 +69,7 @@ class get_list_of_runs():
         for folder in all_runfolders:
             # Ignore folders in the list config.ignore_directories
             if folder not in config.ignore_directories:
-                if os.path.isdir(self.runfolders+"/"+folder): # Select directories only
+                if os.path.isdir(self.runfolders + "/" + folder):  # Select directories only
                     demultiplex.already_demultiplexed(folder, self.now)
 
         # Call function to combine log files
@@ -77,29 +77,29 @@ class get_list_of_runs():
 
     def combine_log_files(self):
         """Merge log files for runfolders processed by an instance of get_list_of_runs()."""
-        count=0
-        list_of_logfiles=[]
+        count = 0
+        list_of_logfiles = []
 
         # Loop through files in the log file directory
         for file in os.listdir(ready2start_demultiplexing().script_logfile_path):
             # Look for time-stamp (self.now) in filename
-            if fnmatch.fnmatch(file,self.now+'*'):
+            if fnmatch.fnmatch(file, self.now + '*'):
                 # Increment count of logfiles
-                count=count+1
+                count = count + 1
                 # Append log file path to list_of_logfiles
-                list_of_logfiles.append(ready2start_demultiplexing().script_logfile_path+file)
+                list_of_logfiles.append(ready2start_demultiplexing().script_logfile_path + file)
 
-        if count > 1: # Continue if more than 1 log file found
+        if count > 1:  # Continue if more than 1 log file found
             # Create a string of all log file names in list_of_log files, excluding the file with
             # the longest name
-            longest_name=max(list_of_logfiles, key=len)
+            longest_name = max(list_of_logfiles, key=len)
             list_of_logfiles.remove(longest_name)
-            remaining_files=" ".join(list_of_logfiles)
+            remaining_files = " ".join(list_of_logfiles)
 
             # Set shell command strings. Append all log files to the log file with the longest name
             # and delete appended files
-            cmd = "cat " + remaining_files + " >> " + longest_name.replace(".txt","_demultiplexing_log.txt")
-            rmcmd= "rm " + remaining_files
+            cmd = "cat " + remaining_files + " >> " + longest_name.replace(".txt", "_demultiplexing_log.txt")
+            rmcmd = "rm " + remaining_files
             # Run commands
             proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             proc = subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
@@ -136,7 +136,7 @@ class ready2start_demultiplexing():
     """
 
     def __init__(self):
-        #!!! self.runfolders = "/home/aled/demultiplex_testing" # aledpc
+        # !!! self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         # self.runfolders points to the location of runfolders on the workstation,
         # its value here must be the same as in get_list_of_runs().
         self.runfolders = config.runfolders
@@ -152,68 +152,68 @@ class ready2start_demultiplexing():
         self.runfolder = ""
         self.runfolderpath = ""
         self.samplesheet = ""
-        self.list_of_samplesheets=[]
+        self.list_of_samplesheets = []
 
         # Path to bcl2fastq
         self.bcl2fastq = config.bcl2fastq
 
         # Succesful run message
-        self.logfile_success="Processing completed with 0 errors and 0 warnings."
+        self.logfile_success = "Processing completed with 0 errors and 0 warnings."
 
         # bcl2fastq test file
-        self.bcltest= config.bcltest
+        self.bcltest = config.bcltest
 
-        #!!! self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
+        # !!! self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
         # Log file path and name
-        self.script_logfile_path= config.demultiplex_logfiles
-        self.logfile_name=""
+        self.script_logfile_path = config.demultiplex_logfiles
+        self.logfile_name = ""
 
         # Email server settings
         self.user = config.user
-        self.pw   = config.pw
+        self.pw = config.pw
         self.host = config.host
         self.port = config.port
-        self.me   = config.me
-        self.you  = config.you
+        self.me = config.me
+        self.you = config.you
         self.smtp_do_tls = config.smtp_do_tls
 
         # Email message variables
-        self.email_subject=""
-        self.email_message=""
-        self.email_priority=3
+        self.email_subject = ""
+        self.email_message = ""
+        self.email_priority = 3
 
         # Variables for renaming the log file
-        self.rename=""
-        self.name=""
-        self.now=""
+        self.rename = ""
+        self.name = ""
+        self.now = ""
 
         # Smartsheet config
         # =================
         # API key
-        self.api_key= config.smartsheet_api_key
+        self.api_key = config.smartsheet_api_key
         # Smartsheet id
-        self.sheetid= config.smartsheet_sheetid
+        self.sheetid = config.smartsheet_sheetid
         # New row variable
-        self.rowid=""
+        self.rowid = ""
         # Time stamp
-        self.smartsheet_now=""
+        self.smartsheet_now = ""
         # Column ids
-        self.ss_title=str(config.ss_title)
-        self.ss_description=str(config.ss_description)
-        self.ss_samples=str(config.ss_samples)
-        self.ss_status=str(config.ss_status)
-        self.ss_priority=str(config.ss_priority)
-        self.ss_assigned=str(config.ss_assigned)
-        self.ss_received=str(config.ss_received)
-        self.ss_completed=str(config.ss_completed)
-        self.ss_duration=str(config.ss_duration)
-        self.ss_metTAT=str(config.ss_metTAT)
+        self.ss_title = str(config.ss_title)
+        self.ss_description = str(config.ss_description)
+        self.ss_samples = str(config.ss_samples)
+        self.ss_status = str(config.ss_status)
+        self.ss_priority = str(config.ss_priority)
+        self.ss_assigned = str(config.ss_assigned)
+        self.ss_received = str(config.ss_received)
+        self.ss_completed = str(config.ss_completed)
+        self.ss_duration = str(config.ss_duration)
+        self.ss_metTAT = str(config.ss_metTAT)
         # Requests info
-        self.headers= config.smartsheet_request_headers
-        self.url= config.smartsheet_request_url
+        self.headers = config.smartsheet_request_headers
+        self.url = config.smartsheet_request_url
 
         # Log command
-        self.echo_to_log="echo %s 2>&1 | /usr/bin/logger -t %s"
+        self.echo_to_log = "echo %s 2>&1 | /usr/bin/logger -t %s"
 
     def already_demultiplexed(self, runfolder, now):
         """Check if the runfolder has been demultiplexed. This is denoted by the presence of the
@@ -225,23 +225,23 @@ class ready2start_demultiplexing():
         now - A string containing the time stamp for this cycle's script log file
         """
         # Timestamp (string)
-        self.now=now
+        self.now = now
 
         # Open the logfile for this hour's cron job (script log file).
-        self.logfile_name=self.script_logfile_path+self.now+".txt"
-        self.script_logfile=open(self.logfile_name,'a')
+        self.logfile_name = self.script_logfile_path + self.now + ".txt"
+        self.script_logfile = open(self.logfile_name, 'a')
 
         # Capture the runfolder and its path
         self.runfolder = str(runfolder)
         self.runfolderpath = self.runfolders + "/" + self.runfolder
 
         # Write to log file
-        self.script_logfile.write("automate_demultiplexing release:"+script_release+"\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
+        self.script_logfile.write("automate_demultiplexing release:" + script_release + "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\nAssessing......... " + self.runfolderpath + "\n")
 
         # If the demultiplex log file is present
         if os.path.isfile(self.runfolderpath + "/" + self.demultiplexed):
             # Stop script and write to log file
-            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed  -  demultiplex log found @ "+self.runfolderpath + "/" + self.demultiplexed+" \n--- STOP ---\n")
+            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed  -  demultiplex log found @ " + self.runfolderpath + "/" + self.demultiplexed + " \n--- STOP ---\n")
         else:
             # Else proceed
             self.script_logfile.write("Checking if already demultiplexed .........Run has not yet been demultiplexed\n")
@@ -254,7 +254,7 @@ class ready2start_demultiplexing():
         """
         # Check if the RTAcomplete.txt file is present
         if os.path.isfile(self.runfolderpath + "/" + self.complete_run):
-            self.script_logfile.write("Run has finished  -  RTAcomplete.txt found @ "+ self.runfolderpath + "/" + self.complete_run+"\n")
+            self.script_logfile.write("Run has finished  -  RTAcomplete.txt found @ " + self.runfolderpath + "/" + self.complete_run + "\n")
             # If so proceed
             self.look_for_sample_sheet()
         else:
@@ -264,7 +264,7 @@ class ready2start_demultiplexing():
     def look_for_sample_sheet(self):
         """Check that the sample sheet for the current runfolder is present."""
         # Set the name and path of the sample sheet to find
-        self.samplesheet=self.samplesheets + "/" + self.runfolder + "_SampleSheet.csv"
+        self.samplesheet = self.samplesheets + "/" + self.runfolder + "_SampleSheet.csv"
 
         # Get an uppercase list of samplesheets in the samplesheets folder
         all_runfolders = os.listdir(self.samplesheets)
@@ -275,27 +275,27 @@ class ready2start_demultiplexing():
         expected_samplesheet = self.runfolder.upper() + "_SAMPLESHEET.CSV"
         # Check that the expected samplesheet exists
         if expected_samplesheet in self.list_of_samplesheets:
-            self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
-            #!!!# Send an email:2
-            #!!! self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
-            #!!! self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
-            #!!! self.send_an_email()
-            #!!! proceed
+            self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " + self.samplesheet + "\n")
+            # !!!# Send an email:2
+            # !!! self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
+            # !!! self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
+            # !!! self.send_an_email()
+            # !!! proceed
             # If the samplesheet contains valid characters, run demultiplexing
             if self.check_valid_samplesheet():
-                self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns " + \
-                                        "......... All characters valid \n")
+                self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns " +
+                                          "......... All characters valid \n")
                 self.run_demuliplexing()
             # Else stop and write error message to logger.
             else:
-                self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns" + \
-                                        "......... Invalid characters found \n--- STOP ---\n")
-                self.logger("Invalid characters persent in samplesheet. Demultiplexing not started for run " + \
-                    self.runfolder,"demultiplex_invalid_samplesheet_character")
+                self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns" +
+                                          "......... Invalid characters found \n--- STOP ---\n")
+                self.logger("Invalid characters persent in samplesheet. Demultiplexing not started for run " +
+                            self.runfolder, "demultiplex_invalid_samplesheet_character")
         else:
             # stop
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
-            self.logger("no samplesheet found demultiplexing not started for run "+self.runfolder,"demultiplex_no_sample_sheet_present")
+            self.logger("no samplesheet found demultiplexing not started for run " + self.runfolder, "demultiplex_no_sample_sheet_present")
 
     def check_valid_samplesheet(self):
         '''Validate the 'Sample_ID' and 'Sample_Name' table columns within the sample sheet csv
@@ -311,12 +311,12 @@ class ready2start_demultiplexing():
         valid_char_set = set(validChars.split())
 
         # Open samplesheet and loop through in reverse order.
-        with open(self.samplesheet,'r') as samplesheet_stream:
+        with open(self.samplesheet, 'r') as samplesheet_stream:
             for line in reversed(samplesheet_stream.readlines()):
                 # If the line contains table headers, stop looping through the file
-                 if line.startswith("Sample_ID"):
+                if line.startswith("Sample_ID"):
                     break
-                 else:
+                else:
                     # Split the current line of the csv, with commas as the delimiter
                     columns = line.split(",")
                     # Remove leading and trailing whitespace from sampleID and sampleName.
@@ -348,22 +348,22 @@ class ready2start_demultiplexing():
         # -R 160822_NB551068_0006_AHGYM7BGXY/
         # --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv
         # --no-lane-splitting"
-        command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
+        command = self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
 
         # Write to script log file
-        self.script_logfile.write("running bcl2fastq ......... \ncommand = " + command+"\n")
+        self.script_logfile.write("running bcl2fastq ......... \ncommand = " + command + "\n")
 
         # Open a demultiplex log file in the current runfolder
-        demultiplex_log = open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'w')
+        demultiplex_log = open(self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed, 'w')
 
         # Add entry to system log
-        self.logger("demultiplexing started for run "+self.runfolder,"demultiplex_started")
+        self.logger("demultiplexing started for run " + self.runfolder, "demultiplex_started")
 
         # Run the command, redirecting the stderror stream to stdout
         proc = subprocess.Popen([command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
 
         # Capture and write the streams to the runfolder's demultiplex log file
-        # Note: stderr is redirected to stdout
+        # Note: stderr is redirected to stdout
         (out, err) = proc.communicate()
         demultiplex_log.write(out)
         demultiplex_log.close()
@@ -374,55 +374,55 @@ class ready2start_demultiplexing():
     def check_demultiplexlog_file(self):
         """Check demultiplexing completed successfully."""
         # Open the runfolder's demultiplex log file
-        logfile=open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'r')
+        logfile = open(self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed, 'r')
 
         # Store the contents and line number of the last line in the log file.
         # This line details the success or failure of the bcl2fastq command.
-        count=0
-        lastline=""
+        count = 0
+        lastline = ""
         for i in logfile:
-            count=count+1
-            lastline=i
+            count = count + 1
+            lastline = i
 
         # If demultiplexing completed successfully
-        if  self.logfile_success in lastline:
-            #!!! self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
-            #!!! self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
-            #!!! self.send_an_email()
-            #!!! Write to script log file
+        if self.logfile_success in lastline:
+            # !!! self.email_subject="MOKAPIPE ALERT: Demultiplexing complete"
+            # !!! self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
+            # !!! self.send_an_email()
+            # !!! Write to script log file
             self.script_logfile.write("demultiplexing complete\n")
             # Write to system log
-            self.logger("demultiplexing complete without error for run "+self.runfolder,"demultiplex_success")
+            self.logger("demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
             # Update smartsheet
             self.smartsheet_demultiplex_complete()
             # Close script log file
             self.script_logfile.close()
             # Set a variable with the name of the current runfolder
-            self.rename=self.rename+self.runfolder
+            self.rename = self.rename + self.runfolder
             # Append the name of the processed runfolder to the name of the script log file.
             # Each runfolder passed to ready2start_demultiplexing.already_demultiplexed() opens a
             # script log file with the same time stamp, which is renamed here after processing.
-            os.rename(self.logfile_name,self.script_logfile_path+self.now+"_"+self.rename+".txt")
+            os.rename(self.logfile_name, self.script_logfile_path + self.now + "_" + self.rename + ".txt")
 
         else:
-            #!!! self.email_subject="MOKAPIPE ALERT: DEMULTIPLEXING FAILED"
-            #!!! self.email_priority=1
-            #!!! self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
-            #!!! self.send_an_email()
+            # !!! self.email_subject="MOKAPIPE ALERT: DEMULTIPLEXING FAILED"
+            # !!! self.email_priority=1
+            # !!! self.email_message="run:\t"+self.runfolder+"\nPlease see log file at: "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed
+            # !!! self.send_an_email()
             # Write to log file
-            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see "+self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed+"\n")
+            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see " + self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed + "\n")
             # Write to system log
-            self.logger("demultiplexing completed with error or failed for run "+self.runfolder,"demultiplex_fail")
+            self.logger("demultiplexing completed with error or failed for run " + self.runfolder, "demultiplex_fail")
 
     def send_an_email(self):
         """Send progress log messages via email to recipient (self.you) via SMTP."""
-        #!!! body = self.runfolder
-        #!!! msg  = 'Subject: %s\n\n%s' % (self.email_subject, self.email_message)
-        #!!! m['From'] = self.me
-        #!!! m['To'] = self.you
+        # !!! body = self.runfolder
+        # !!! msg  = 'Subject: %s\n\n%s' % (self.email_subject, self.email_message)
+        # !!! m['From'] = self.me
+        # !!! m['To'] = self.you
 
         # Write to script log file
-        self.script_logfile.write("Sending an email to..... " +self.me)
+        self.script_logfile.write("Sending an email to..... " + self.me)
 
         # Create email.Message() object. Set e-mail headers for X-Priority and Subject
         m = Message()
@@ -432,10 +432,10 @@ class ready2start_demultiplexing():
         m.set_payload(self.email_message)
 
         # Configure SMTP server connection for sending log messages via e-mail
-        server = smtplib.SMTP(host = self.host,port = self.port,timeout = 10)
+        server = smtplib.SMTP(host=self.host, port=self.port, timeout=10)
         # Output connection debug messages
         server.set_debuglevel(1)
-        # Encrypt SMTP commands using Transport Layer Security mode
+        # Encrypt SMTP commands using Transport Layer Security mode
         server.starttls()
         # Identify client to ESMTP server using EHLO commands
         server.ehlo()
@@ -458,16 +458,16 @@ class ready2start_demultiplexing():
         # If bcl2fastq is installed and called with no inputs, the first line of stderr should
         # contain the string "BCL to FASTQ file converter".
         if "BCL to FASTQ file converter" not in err:
-            #!!! self.email_subject="MOKAPIPE ALERT: ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
-            #!!! self.email_priority=1
-            #!!! self.email_message="The test to check if bcl2fastq is working ("+command+") failed"
-            #!!! self.send_an_email()
+            # !!! self.email_subject="MOKAPIPE ALERT: ERROR - PRESENCE OF BCL2FASTQ TEST FAILED"
+            # !!! self.email_priority=1
+            # !!! self.email_message="The test to check if bcl2fastq is working ("+command+") failed"
+            # !!! self.send_an_email()
             # Write to system log and raise exception
-            self.logger("BCL2FastQ installation test failed","demultiplex_BCL2FASTQ_function_test_fail")
-            raise Exception, "bcl2fastq not installed"
+            self.logger("BCL2FastQ installation test failed", "demultiplex_BCL2FASTQ_function_test_fail")
+            raise Exception("bcl2fastq not installed")
         else:
             # Write to system log
-            self.logger("BCL2FastQ installation test ok","demultiplex_BCL2FASTQ_function_test_pass")
+            self.logger("BCL2FastQ installation test ok", "demultiplex_BCL2FASTQ_function_test_pass")
 
         # Write to script log file
         self.script_logfile.write("bcl2fastq check passed\n")
@@ -492,103 +492,103 @@ class ready2start_demultiplexing():
 
         # Capture the NGS run number and increment count
         count = 0
-        with open(self.samplesheet,'r') as samplesheet:
+        with open(self.samplesheet, 'r') as samplesheet:
             for line in samplesheet:
                 if line.startswith("NGS") or line.startswith("ONC"):
-                    count=count+1
-                    runnumber=line.split("_")[0]
+                    count = count + 1
+                    runnumber = line.split("_")[0]
 
         # Set all values to be inserted into smartsheet
-        payload='{"cells": [{"columnId": '+self.ss_title+', "value": "'+self.runfolder+'"}, {"columnId": '+self.ss_description+', "value": "Demultiplex"}, {"columnId": '+self.ss_samples+', "value": '+str(count)+'},{"columnId": '+self.ss_status+', "value": "In Progress"},{"columnId": '+self.ss_priority+', "value": "Medium"},{"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},{"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}],"toBottom":true}'
+        payload = '{"cells": [{"columnId": ' + self.ss_title + ', "value": "' + self.runfolder + '"}, {"columnId": ' + self.ss_description + ', "value": "Demultiplex"}, {"columnId": ' + self.ss_samples + ', "value": ' + str(count) + '},{"columnId": ' + self.ss_status + ', "value": "In Progress"},{"columnId": ' + self.ss_priority + ', "value": "Medium"},{"columnId": ' + self.ss_assigned + ', "value": "aledjones@nhs.net"},{"columnId": ' + self.ss_received + ', "value": "' + str(self.smartsheet_now) + '"}],"toBottom":true}'
 
         # Create url for uploading a new row
-        url=self.url+"/rows"
+        url = self.url + "/rows"
 
         # Add the row using POST
-        r = requests.post(url,headers=self.headers,data=payload)
+        r = requests.post(url, headers=self.headers, data=payload)
 
         # Capture the row id
-        response= r.json()
+        response = r.json()
         print response
         for i in response["result"]:
             if i == "id":
-                self.rowid=response["result"][i]
+                self.rowid = response["result"][i]
 
         # Check the result of the update attempt
         for i in response:
             if i == "message":
-                if response[i] =="SUCCESS":
+                if response[i] == "SUCCESS":
                     self.script_logfile.write("smartsheet updated to say in progress\n")
-                    self.logger("initiation of demultiplexing added to smartsheet","smartsheet_demultiplex_started_update_ok")
+                    self.logger("initiation of demultiplexing added to smartsheet", "smartsheet_demultiplex_started_update_ok")
                 else:
-                    #!!! #send an email if the update failed
-                    #!!! self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
-                    #!!! self.email_message="Smartsheet was not updated to say demultiplexing is inprogress"
-                    #!!! self.send_an_email()
-                    self.script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
-                    self.logger("Smartsheet was not updated to say demultiplexing is in progress for run "+self.runfolder,"smartsheet_demultiplex_started_update_fail")
+                    # !!! #send an email if the update failed
+                    # !!! self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
+                    # !!! self.email_message="Smartsheet was not updated to say demultiplexing is inprogress"
+                    # !!! self.send_an_email()
+                    self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
+                    self.logger("Smartsheet was not updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_demultiplex_started_update_fail")
 
     def smartsheet_demultiplex_complete(self):
         """Update smartsheet to say demultiplexing is complete. Add the completed date and calculate
         the duration (in days) and if met TAT.
         """
         # Build URL to read a row
-        url='https://api.smartsheet.com/2.0/sheets/'+str(self.sheetid)+'/rows/'+str(self.rowid)
+        url = 'https://api.smartsheet.com/2.0/sheets/' + str(self.sheetid) + '/rows/' + str(self.rowid)
         # Get row
         r = requests.get(url, headers=self.headers)
         # Read response in json
-        response= r.json()
+        response = r.json()
         # Loop through each column and extract the recieved date
         for col in response["cells"]:
             if str(col["columnId"]) == self.ss_received:
-                recieved=datetime.datetime.strptime(col['value'], '%Y-%m-%d')
+                recieved = datetime.datetime.strptime(col['value'], '%Y-%m-%d')
 
         # Take current timestamp
         self.smartsheet_now = str('{:%Y-%m-%d}'.format(datetime.datetime.utcnow()))
-        now=datetime.datetime.strptime(self.smartsheet_now, '%Y-%m-%d')
+        now = datetime.datetime.strptime(self.smartsheet_now, '%Y-%m-%d')
 
         # Calculate the number of days taken (add one so if same day this counts as 1 day not 0)
-        duration = (now-recieved).days+1
+        duration = (now - recieved).days + 1
 
         # Set flag to show if TAT was met.
-        TAT=1
+        TAT = 1
         if duration > 4:
-            TAT=0
+            TAT = 0
 
         # Build payload used to update the row
-        payload = '{"id":"'+str(self.rowid)+'", "cells": [{"columnId":"'+ str(self.ss_duration)+'","value":"'+str(duration)+'"},{"columnId":"'+ str(self.ss_metTAT)+'","value":"'+str(TAT)+'"},{"columnId":"'+ str(self.ss_status)+'","value":"Complete"},{"columnId": '+self.ss_completed+', "value": "'+str(self.smartsheet_now)+'"}]}'
+        payload = '{"id":"' + str(self.rowid) + '", "cells": [{"columnId":"' + str(self.ss_duration) + '","value":"' + str(duration) + '"},{"columnId":"' + str(self.ss_metTAT) + '","value":"' + str(TAT) + '"},{"columnId":"' + str(self.ss_status) + '","value":"Complete"},{"columnId": ' + self.ss_completed + ', "value": "' + str(self.smartsheet_now) + '"}]}'
 
         # Build url to update row
-        url=self.url+"/rows"
+        url = self.url + "/rows"
         update_OPMS = requests.request("PUT", url, data=payload, headers=self.headers)
 
         # Check the result of the update attempt
-        response= update_OPMS.json()
+        response = update_OPMS.json()
         print response
         for i in response:
             if i == "message":
-                if response[i] =="SUCCESS":
+                if response[i] == "SUCCESS":
                     self.script_logfile.write("smartsheet updated to say complete\n")
-                    self.logger("smartsheet updated at end of demultiplexing","smartsheet_demultiplex_complete_update_ok")
+                    self.logger("smartsheet updated at end of demultiplexing", "smartsheet_demultiplex_complete_update_ok")
                 else:
-                    #!!! #send an email if the update failed
-                    #!!! self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
-                    #!!! self.email_message="Smartsheet was not updated to say demultiplexing was completed"
-                    #!!! self.send_an_email()
-                    self.script_logfile.write("smartsheet NOT updated at complete step\n"+str(response))
-                    self.logger("smartsheet NOT updated at end of demultiplexing for run "+self.runfolder,"smartsheet_demultiplex_complete_update_fail")
+                    # !!! #send an email if the update failed
+                    # !!! self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
+                    # !!! self.email_message="Smartsheet was not updated to say demultiplexing was completed"
+                    # !!! self.send_an_email()
+                    self.script_logfile.write("smartsheet NOT updated at complete step\n" + str(response))
+                    self.logger("smartsheet NOT updated at end of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_complete_update_fail")
 
     def logger(self, message, tool):
         """Write log messages to the system log."""
         # Create subprocess command
-        log=self.echo_to_log % (message,tool)
+        log = self.echo_to_log % (message, tool)
         # Run the command
         proc = subprocess.Popen([log], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         # Capture the streams
         (out, err) = proc.communicate()
         # Write output to log file if no stderr
         if not err:
-            self.script_logfile.write("log written to /usr/bin/logger\n"+log+"\n")
+            self.script_logfile.write("log written to /usr/bin/logger\n" + log + "\n")
 
 
 if __name__ == '__main__':
