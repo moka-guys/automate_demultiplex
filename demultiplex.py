@@ -6,7 +6,7 @@ deemed complete by the presence of a file ("RTAComplete.txt"), which is created 
 when the run is ready for demultiplexing. A sample sheet must be present in the samplesheets folder
 with the name "RUN_samplesheet.csv", where "RUN" is the name of the run folder.
 
-Before demultiplexing, the script checks for the absence of the log file "demultiplex_log.txt" in
+Before demultiplexing, the script checks for the absence of the log file "demultiplexlog.txt" in
 the run folder. bcl2fastq stdout and stderr streams are written to this file, which when present
 indicates that demultiplexing is in process or has already been performed.
 """
@@ -27,7 +27,7 @@ import fnmatch
 import requests
 import json
 
-from automate_demultiplex_config import config
+import automate_demultiplex_config as config
 
 
 class get_list_of_runs():
@@ -217,7 +217,7 @@ class ready2start_demultiplexing():
 
     def already_demultiplexed(self, runfolder, now):
         """Check if the runfolder has been demultiplexed. This is denoted by the presence of the
-        file "demultiplex_log.txt". If the runfolder has not been demultiplexed, call
+        file "demultiplexlog.txt". If the runfolder has not been demultiplexed, call
         ready2start_demultiplexing.has_run_finished() to proceed.
 
         Arguments
@@ -236,7 +236,7 @@ class ready2start_demultiplexing():
         self.runfolderpath = self.runfolders + "/" + self.runfolder
 
         # Write to log file
-        self.script_logfile.write("automate_demultiplexing release:" + script_release + "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\nAssessing......... " + self.runfolderpath + "\n")
+        self.script_logfile.write("automate_demultiplexing release:"+ config.script_release + "\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
 
         # If the demultiplex log file is present
         if os.path.isfile(self.runfolderpath + "/" + self.demultiplexed):
@@ -308,7 +308,7 @@ class ready2start_demultiplexing():
         # Set a string containing valid characters, defined by bcl2fastq as an alphanumeric, '-', or '_' character.
         valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
         # Separate characters into a set for quick lookup
-        valid_char_set = set(validChars.split())
+        valid_char_set = set(valid_chars.split())
 
         # Open samplesheet and loop through in reverse order.
         with open(self.samplesheet, 'r') as samplesheet_stream:
