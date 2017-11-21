@@ -8,10 +8,12 @@ The variables defined in this module are required by the "demultiplex.py" and
 # Debug = True
 debug = False
 
-# git release for the automate_demultiplexing repo ####
+# git release for the automate_demultiplexing repo
+# ================================================
 script_release = "v1.0"
 
-# location of input/output files####################
+# location of input/output files
+# ==============================
 # path to run folders
 runfolders = "/media/data1/share"
 
@@ -23,8 +25,6 @@ fastq_folder = "/Data/Intensities/BaseCalls"
 
 # path to bcl2fastq
 bcl2fastq = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
-# path to bcl2fastq test file
-bcltest = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/bcl2fastq.txt"
 
 # files for checking NGS runfolders before demultiplexing
 file_complete_run = "RTAComplete.txt"
