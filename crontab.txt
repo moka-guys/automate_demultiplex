@@ -20,5 +20,13 @@
 # For more information see the manual pages of crontab(5) and cron(8)
 # 
 # m h  dom mon dow   command
+# Demultiplexing
 0 * * * * python /home/mokaguys/Documents/apps/automate_demultiplex/demultiplex.py > /home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_stdout/$(date "+\%Y\%m\%d_\%H\%M\%S").txt 2>&1
+# Upload Agent
 5 * * * * python /home/mokaguys/Documents/apps/automate_demultiplex/DNANexus_upload_agent.py > /home/mokaguys/Documents/automate_demultiplexing_logfiles/Upload_agent_stdout/$(date "+\%Y\%m\%d_\%H\%M\%S").txt 2>&1
+# Workstation heartbeat
+*/20 * * * * echo 'padam padam' 2>&1 | /usr/bin/logger -t Heartbeat
+# Low space on workstation warning
+0 * * * * FREE=$(df /media/data1 --output=avail | tail -n 1 );FREEHR=$(df /media/data1 --output=avail -h | tail -n 1); if [ $FREE -lt 838860371 ]; then echo "Less than 800GB on data1 ("$FREEHR"B)"; fi | /usr/bin/logger -t data1_freespace
+# DNANexus platform integrity test
+0 4 * * 3 bash /home/mokaguys/Documents/apps/DNANexus_Integrity_Test/DNANexus_Integrity_Check.sh > /home/mokaguys/Documents/apps/DNANexus_Integrity_Test/logs/$(date "+\%y\%m\%d_\%H\%M\%S").txt 2>&1
