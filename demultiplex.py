@@ -302,34 +302,29 @@ class ready2start_demultiplexing():
         # Call function to add the run to smartsheet, with status set to 'in progress'
         self.smartsheet_demultiplex_in_progress()
 
-        # Set a string with the shell command to run demultiplexing
+        # Set demultiplex log file name for this runfolder.
+        demultiplex_log = (self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed)
+
+        # Set a string with the shell command to run demultiplexing.
+        # The command writes bcl2fastq stdout and stderr to the demultiplex_log file.
+        # The presence of this file stops future re-processing of the runfolder.
         # Example: "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq
         #           -R 160822_NB551068_0006_AHGYM7BGXY/
         #           --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv
-        #           --no-lane-splitting"
+        #           --no-lane-splitting >> 
+        #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/demultiplexlog.txt 2&>1"
         command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder + 
-                  " --sample-sheet " + self.samplesheet + " --no-lane-splitting")
+                  " --sample-sheet " + self.samplesheet + " --no-lane-splitting >> " +
+                  demultiplex_log + " 2>&1")
 
-        # Write progress/status to log file
+        # Write progress/status to script log file
         self.script_logfile.write("running bcl2fastq ......... \ncommand = " + command + "\n")
-
-        # Open a demultiplex log file in the current runfolder
-        # This will stop the runfolder being processed again in the future
-        demultiplex_log = open(self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed, 'w')
-
         # Add entry to system log
         self.logger("demultiplexing started for run " + self.runfolder, "demultiplex_started")
 
-        # Run the bcl2fastq command to start demultiplexing. Redirect stderr to stdout so that any 
-        # standard error can be captured in the log file (see below). As subprocess separates stderr
-        # and stdout, writing the streams to the log file separately would lose the order of events.
-        proc = subprocess.Popen([command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
-
-        # Capture and write the streams to the runfolder's demultiplex log file
-        # Note: stderr is redirected to stdout
-        (out, err) = proc.communicate()
-        demultiplex_log.write(out)
-        demultiplex_log.close()  # close the log file
+        # Run the bcl2fastq command to start demultiplexing. Redirects stderr to stdout so that any 
+        # standard error can be captured in the log file.
+        subprocess.call([command], shell=True)
 
         # Call method to check the success of demultiplexing
         self.check_demultiplexlog_file()
