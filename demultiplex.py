@@ -60,55 +60,29 @@ class get_list_of_runs():
         all_runfolders = os.listdir(self.runfolders)
 
         # Create a class instance for checking and running demultiplexing on each runfolder
-        demultiplex = ready2start_demultiplexing()
+        demultiplex = ready2start_demultiplexing(self.now)
 
         # Loop through directory listing and pass runfolders to demultiplex.already_demultiplexed()
         for folder in all_runfolders:
             # Ignore folders in the list config.ignore_directories
             if folder not in config.ignore_directories:
                 if os.path.isdir(self.runfolders + "/" + folder):  # Select directories only
-                    demultiplex.already_demultiplexed(folder, self.now)
+                    demultiplex.already_demultiplexed(folder)
 
-        # Call function to combine log files
-        self.combine_log_files()
-
-    def combine_log_files(self):
-        """Merge log files for runfolders processed by an instance of get_list_of_runs()."""
-        count = 0
-        list_of_logfiles = []
-
-        # Loop through files in the log file directory
-        for file in os.listdir(ready2start_demultiplexing().script_logfile_path):
-            # Look for time-stamp (self.now) in filename
-            if fnmatch.fnmatch(file, self.now + '*'):
-                # Increment count of logfiles
-                count = count + 1
-                # Append log file path to list_of_logfiles
-                list_of_logfiles.append(ready2start_demultiplexing().script_logfile_path + file)
-
-        if count > 1:  # Continue if more than 1 log file found
-            # Create a string of all log file names in list_of_log files, excluding the file with
-            # the longest name
-            longest_name = max(list_of_logfiles, key=len)
-            list_of_logfiles.remove(longest_name)
-            remaining_files = " ".join(list_of_logfiles)
-
-            # Set shell command strings. Append all log files to the log file with the longest name
-            # and delete appended files
-            cmd = "cat " + remaining_files + " >> " + longest_name.replace(".txt", "_demultiplexing_log.txt")
-            rmcmd = "rm " + remaining_files
-            # Run commands
-            proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-            proc = subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        # Close the script log file when all processing is complete
+        demultiplex.script_logfile.close()
 
 
 class ready2start_demultiplexing():
     """Call bcl2fastq on runfolders after asserting that runfolder has not been demultiplexed and a
-    valid samplesheet is present.
+    valid samplesheet is present. 
+
+    Arguments:
+    now
+        Timestamp for log file name, assigned to self.now (str).
 
     Methods defined here:
-
-    already_demultiplexed(runfolder, now)
+    already_demultiplexed(runfolder)
         Check if the runfolder has been demultiplexed.
     has_run_finished()
         Check if sequencing run has completed.
@@ -132,10 +106,12 @@ class ready2start_demultiplexing():
         Write log messages to the system log.
     """
 
-    def __init__(self):
+    def __init__(self, now):
         # self.runfolders points to the location of runfolders on the workstation,
         # its value here must be the same as in get_list_of_runs().
         self.runfolders = config.runfolders
+        # Assign timestamp from get_list_of_runs() to self.variable
+        self.now = now
 
         # Samplesheet folder
         self.samplesheets = config.samplesheets
@@ -153,9 +129,12 @@ class ready2start_demultiplexing():
         # Path to bcl2fastq
         self.bcl2fastq = config.bcl2fastq
 
-        # Log file path and name
+        # Set script log file path and name for this hour's cron job (script log file).
         self.script_logfile_path = config.demultiplex_logfiles
-        self.logfile_name = ""
+        self.logfile_name = self.script_logfile_path + self.now + ".txt"
+        # Open the script logfile for logging throughout script.
+        self.script_logfile = open(self.logfile_name, 'a')
+
 
         # Email server settings
         self.user = config.user
@@ -170,11 +149,6 @@ class ready2start_demultiplexing():
         self.email_subject = ""
         self.email_message = ""
         self.email_priority = 3
-
-        # Variables for renaming the log file
-        self.rename = ""
-        self.name = ""
-        self.now = ""
 
         # Smartsheet config
         # =================
@@ -201,7 +175,7 @@ class ready2start_demultiplexing():
         self.headers = config.smartsheet_request_headers
         self.url = config.smartsheet_request_url
 
-    def already_demultiplexed(self, runfolder, now):
+    def already_demultiplexed(self, runfolder):
         """Check if the runfolder has been demultiplexed. This is denoted by the presence of the
         file "demultiplexlog.txt". If the runfolder has not been demultiplexed, call
         ready2start_demultiplexing.has_run_finished() to proceed.
@@ -209,22 +183,14 @@ class ready2start_demultiplexing():
         Arguments:
         runfolder (str)
             The runfolder name 
-        now (str)
-            The time stamp for this cycle's script log file 
         """
-        # Assign timestamp to self.variable
-        self.now = now
-
-        # Open the logfile for this hour's cron job (script log file).
-        self.logfile_name = self.script_logfile_path + self.now + ".txt"
-        self.script_logfile = open(self.logfile_name, 'a')
 
         # Capture the runfolder and its path
         self.runfolder = str(runfolder)
         self.runfolderpath = self.runfolders + "/" + self.runfolder
 
         # Write to log file, recording the version of the automate_demultiplex repository
-        self.script_logfile.write("automate_demultiplexing release:"+ config.script_release + "\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
+        self.script_logfile.write("\nautomate_demultiplexing release: "+ config.script_release + "\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
 
         # Check if the demultiplex log file is present 
         # using the os.path.isfile() function to determine if demultiplexlog.txt is present
@@ -375,24 +341,17 @@ class ready2start_demultiplexing():
         # failure of the bcl2fastq command.
         run_logfile_path = self.runfolderpath + "/" + self.demultiplexed
         lastline = subprocess.check_output(["tail","-n", "1", run_logfile_path])
-        # Record last 10 lines of logfile to append to log in case of error
+        # Record last 10 lines of logfile to append to script log in case of error
         bcl2fastq_error_tail = subprocess.check_output(["tail","-n","10", run_logfile_path])
 
         # If demultiplexing completed successfully
         if logfile_success in lastline:
+            # Write to script_logfile
             self.script_logfile.write("demultiplexing complete\n")
             # Write to system log
             self.logger("demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
             # Call function which updates smartsheet, changing status for this run from in progress to complete, where task = demultiplex.
             self.smartsheet_demultiplex_complete()
-            # Close script log file
-            self.script_logfile.close()
-            # Set a variable with the name of the current runfolder
-            self.rename = self.rename + self.runfolder
-            # Append the name of the processed runfolder to the name of the script log file.
-            # Each runfolder passed to ready2start_demultiplexing.already_demultiplexed() opens a
-            # script log file with the same time stamp, which is renamed here after processing.
-            os.rename(self.logfile_name, self.script_logfile_path + self.now + "_" + self.rename + ".txt")
         # If demultiplexing did not complete without errors
         else:
             # Write to log file and report last few lines of the failed runfolder's demultiplex log.
