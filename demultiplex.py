@@ -35,8 +35,6 @@ class get_list_of_runs():
 
     loop_through_runs()
         Pass each runfolder to an instance of ready2start_demultiplexing().
-    combine_log_files()
-        Merge log files for runfolders demultiplexed in the same cycle.
 
     A single class instance is required to demultiplex all NGS runfolders. Example:
     >>> runs = get_list_of_runs()
@@ -51,7 +49,7 @@ class get_list_of_runs():
 
     def loop_through_runs(self):
         """Pass NGS run folders to an instance of ready2start_demultiplexing() for processing.
-        After demultiplexing is performed (or skipped) for all runfolders, combine log files.
+        After demultiplexing is performed (or skipped) for all runfolders, close script log file.
         """
         # Set a time stamp to append to the logfile name
         self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
@@ -94,7 +92,7 @@ class ready2start_demultiplexing():
         Run bcl2fastq with runfolder as input.
     check_demultiplexlog_file()
         Check demultiplexing completed succesfully.
-    send_an_email()
+    send_an_email(m_message, m_subject)
         Send progress messages via email.
     test_bcl2fastq()
         Raise exception if bcl2fastq is not installed.
@@ -102,7 +100,7 @@ class ready2start_demultiplexing():
         Update smartsheet to say that demultiplexing is in progress.
     smartsheet_demultiplex_complete()
         Update smartsheet to say that demultiplexing is complete.
-    logger()
+    logger(message, tool)
         Write log messages to the system log.
     """
 
@@ -362,7 +360,14 @@ class ready2start_demultiplexing():
             self.logger("demultiplexing completed with error or failed for run " + self.runfolder, "demultiplex_fail")
 
     def send_an_email(self, m_message, m_subject):
-        """Send progress log messages via email to recipient (self.you) via SMTP."""
+        """Send progress log messages via email to recipient (self.you) via SMTP.
+        
+        Arguments:
+        m_message
+            Message to be sent in e-mail body (str)
+        m_subject
+            Subject line of email to be sent (str)
+        """
         # Write to script log file
         self.script_logfile.write("Sending an email to..... " + self.me)
 
