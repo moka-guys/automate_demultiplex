@@ -145,11 +145,6 @@ class ready2start_demultiplexing():
         self.you = config.you
         self.smtp_do_tls = config.smtp_do_tls
 
-        # Email message variables
-        self.email_subject = ""
-        self.email_message = ""
-        self.email_priority = 3
-
         # Smartsheet config
         # =================
         # API key
@@ -239,12 +234,23 @@ class ready2start_demultiplexing():
                 self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns " +
                                           "......... All characters valid \n")
                 self.run_demuliplexing()
-            # Else stop and write error message to logger.
+            # Else stop and write error messages to loggers and send error e-mail.
             else:
+                # Set error message details for invalid characters found
+                invalid_char_message = ("Invalid characters persent in samplesheet.\n" +
+                                        "Demultiplexing not started for run " + self.runfolder + ".\n"
+                                        "Valid characters are defined by bcl2fastq as an alphanumeric," +
+                                        " '-', or '_' character. \n")
+                invalid_char_subject = "demultiplex_invalid_samplesheet_character"
+                # Write error event to script log file
                 self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns" +
                                           "......... Invalid characters found \n--- STOP ---\n")
-                self.logger("Invalid characters persent in samplesheet. Demultiplexing not started for run " +
-                            self.runfolder, "demultiplex_invalid_samplesheet_character")
+                # Record error messages in system log
+                self.logger(invalid_char_message, invalid_char_subject)
+                # Send an e-mail. This necessary as the samplesheet must now be checked and fixed.
+                # The samplesheet generator should also be checked as subsequent runs may be affected
+                self.send_an_email(invalid_char_message, invalid_char_subject)
+
         else:
             # No samplesheet found. Stop and log message.
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
@@ -360,17 +366,17 @@ class ready2start_demultiplexing():
             # Write to system log
             self.logger("demultiplexing completed with error or failed for run " + self.runfolder, "demultiplex_fail")
 
-    def send_an_email(self):
+    def send_an_email(self, m_message, m_subject):
         """Send progress log messages via email to recipient (self.you) via SMTP."""
         # Write to script log file
         self.script_logfile.write("Sending an email to..... " + self.me)
 
         # Create email.Message() object. Set e-mail headers for X-Priority and Subject
         m = Message()
-        m['X-Priority'] = str(self.email_priority)
-        m['Subject'] = self.email_subject
+        m['X-Priority'] = str(3)
+        m['Subject'] = m_subject
         # Add error messages to e-mail body using email.Message.set_payload()
-        m.set_payload(self.email_message)
+        m.set_payload(m_message)
 
         # Configure SMTP server connection for sending log messages via e-mail
         server = smtplib.SMTP(host=self.host, port=self.port, timeout=10)
