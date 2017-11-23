@@ -3,4 +3,3 @@ DNANexus_upload_agent_single_folder.py
 create*
 nexus_set_off_workflow.py
 create_upload_agent_script.py
-test_funcs.py

@@ -69,6 +69,19 @@ class get_list_of_runs():
 
         # Close the script log file when all processing is complete
         demultiplex.script_logfile.close()
+        
+        # Check if runfolders were processed by bcl2fastq during this cycle.
+        # This statement returns true if the list 'demultiplex.processed_runfolders' is not empty:
+        if demultiplex.processed_runfolders:
+        # Create an underscore-delimited string of all runfolders demultiplexed in this cycle, 
+        # ending with '_demultiplex_script_log.txt'.
+            processed_run_string = "_" + "_".join(demultiplex.processed_runfolders) + "_demultiplex_script_log.txt"
+        # Use os.path.splitext() to remove the ".txt" extension from the current script log file name 
+        # and append processed_run_string. Store this in new_scriptlog_name.
+            new_scriptlog_name = os.path.splitext(demultiplex.logfile_name)[0] + processed_run_string
+        # Rename the script log file to new_scriptlog_name. Allows processed runs to be easily 
+        # identified from the script log name and differentiates this log from others uploaded to DNA nexus.
+            os.rename(demultiplex.logfile_name, new_scriptlog_name)
 
 
 class ready2start_demultiplexing():
@@ -123,6 +136,7 @@ class ready2start_demultiplexing():
         self.runfolderpath = ""
         self.samplesheet = ""
         self.list_of_samplesheets = []
+        self.processed_runfolders = []
 
         # Path to bcl2fastq
         self.bcl2fastq = config.bcl2fastq
@@ -226,12 +240,14 @@ class ready2start_demultiplexing():
         # Check that the expected samplesheet exists
         if expected_samplesheet in self.list_of_samplesheets:
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " + self.samplesheet + "\n")
-            # Call function which returns true if the sample sheet does not contain illegal characters
+            # Test if the samplesheet contains valid characters using self.check_valid_samplsheet(). 
+            # Returns true if the sample sheet does not contain illegal characters
             if self.check_valid_samplesheet():
-                # If the samplesheet contains valid characters, run demultiplexing
+                # Record result in log file
                 self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns " +
                                           "......... All characters valid \n")
-                self.run_demuliplexing()
+                # Call the function to run demultiplexing
+                self.run_demultiplexing()
             # Else stop and write error messages to loggers and send error e-mail.
             else:
                 # Set error message details for invalid characters found
@@ -292,7 +308,7 @@ class ready2start_demultiplexing():
         else:
             return True
 
-    def run_demuliplexing(self):
+    def run_demultiplexing(self):
         """Run bcl2fastq using runfolder as input. Create demultiplex log file in runfolder."""
 
         # Call function to test if bcl2fastq is installed and working as expected
@@ -320,9 +336,13 @@ class ready2start_demultiplexing():
         # Add entry to system log
         self.logger("demultiplexing started for run " + self.runfolder, "demultiplex_started")
 
-        # Run the bcl2fastq command to start demultiplexing. Redirects stderr to stdout so that any 
-        # standard error can be captured in the log file.
+        # Run the bcl2fastq command to start demultiplexing. the script won't continue until this 
+        # process finishes. Stderr and stdout streams are redirected to the log file by the command
         subprocess.call([command], shell=True)
+
+        # Add runfolder name to self.processed_runfolders. Runfolder names in this list are appended
+        # to the script log file at the end of the script cycle.
+        self.processed_runfolders.append(self.runfolder)
 
         # Call method to check the success of demultiplexing
         self.check_demultiplexlog_file()
@@ -335,16 +355,15 @@ class ready2start_demultiplexing():
         # Succesful run message. A string to look for in the output of bcl2fastq which denotes 
         # succesful demultiplexing.
         logfile_success = "Processing completed with 0 errors and 0 warnings."
-
-        # Read the last line of the runfolder's demultiplex log file, which details the success or 
-        # failure of the bcl2fastq command.
+        
+        # Set the path to the 'demultiplexlog.txt' file for this runfolder
         run_logfile_path = self.runfolderpath + "/" + self.demultiplexed
-        lastline = subprocess.check_output(["tail","-n", "1", run_logfile_path])
-        # Record last 10 lines of logfile to append to script log in case of error
-        bcl2fastq_error_tail = subprocess.check_output(["tail","-n","10", run_logfile_path])
+        # Read the last 10 lines of the runfolder's demultiplex log file, which details the success 
+        # or failure of the bcl2fastq command. In the event of errors, this is written to the script log file.
+        bcl2fastq_log_tail = subprocess.check_output(["tail","-n","10", run_logfile_path])
 
         # If demultiplexing completed successfully
-        if logfile_success in lastline:
+        if logfile_success in bcl2fastq_log_tail:
             # Write to script_logfile
             self.script_logfile.write("demultiplexing complete\n")
             # Write to system log
@@ -355,7 +374,7 @@ class ready2start_demultiplexing():
         else:
             # Write to log file and report last few lines of the failed runfolder's demultiplex log.
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see " + 
-                                      run_logfile_path + "\n" + bcl2fastq_error_tail )
+                                      run_logfile_path + "\n" + bcl2fastq_log_tail )
             # Write to system log
             self.logger("demultiplexing completed with error or failed for run " + self.runfolder, "demultiplex_fail")
 
@@ -373,7 +392,7 @@ class ready2start_demultiplexing():
 
         # Create email.Message() object. Set e-mail headers for X-Priority and Subject
         m = Message()
-        m['X-Priority'] = str(3)
+        m['X-Priority'] = str(1)  # X-Priority = 1. Sets a high-priority e-mail.
         m['Subject'] = m_subject
         # Add error messages to e-mail body using email.Message.set_payload()
         m.set_payload(m_message)
@@ -529,7 +548,7 @@ class ready2start_demultiplexing():
         message (str)
             Details about the logged event. 
         tool (str)
-            Tool name. Used to search within the OPMS website.
+            Tool name. Used to search within the insight ops website.
         """
         # Create subprocess command string, passing message and tool name to the command
         log = "echo %s 2>&1 | /usr/bin/logger -t %s" % (message, tool)
