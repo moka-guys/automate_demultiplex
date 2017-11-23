@@ -8,12 +8,10 @@ The variables defined in this module are required by the "demultiplex.py" and
 # Debug = True
 debug = False
 
-# git release for the automate_demultiplexing repo
-# ================================================
+# =====git release for the automate_demultiplexing repo=====
 script_release = "v1.0"
 
-# location of input/output files
-# ==============================
+# =====location of input/output files=====
 # path to run folders
 runfolders = "/media/data1/share"
 
@@ -57,12 +55,10 @@ logfile_success = "Processing completed with 0 errors and 0 warnings."
 # path to upload agent
 upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 
-# Moka settings
-# =============
+# =====Moka settings=====
 moka_pipeline_ID = "1941"
 
-# DNA Nexus settings
-# ==================
+# =====DNA Nexus settings=====
 # project to upload run folder into
 NexusProjectPrefix = "002_"
 
@@ -90,8 +86,7 @@ dev_organisation = "org-viapath_dev"
 # project tags to denote live
 live_tag = "live"
 
-# istages
-# =======
+# =====istages=====
 # GATK workflow
 fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
@@ -132,8 +127,7 @@ Nexus_API_Key = "K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ"
 
 users = ["aledjones", "wook", "mokaguys", "andyb", "AmyS", "InterpretationRequest"]
 
-# Dict linking panel numbers for +/-10 and CNVs
-# =============================================
+# =====Dict linking panel numbers for +/-10 and CNVs=====
 panelnumbers = {"Pan493": "",
                 "Pan1120": "",
                 "Pan1190": "",
@@ -165,8 +159,7 @@ email_panel_dict = {"Pan493": wook_email,
                     "Pan1459": interpretation_request_email,
                     "Pan1464": interpretation_request_email}
 
-# smartsheet API
-# ==============
+# =====smartsheet API=====
 # smartsheet sheet ID
 smartsheet_sheetid = 2798264106936196
 
