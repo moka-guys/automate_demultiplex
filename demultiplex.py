@@ -269,8 +269,8 @@ class ready2start_demultiplexing():
                 # Send an e-mail. This necessary as the samplesheet must now be checked and fixed.
                 # The samplesheet generator should also be checked as subsequent runs may be affected
                 self.send_an_email(("Invalid characters present in samplesheet.\n" +
-                                    "Demultiplexing not started for run " + self.runfolder + ".\n"
-                                    "Valid characters are defined by bcl2fastq as an alphanumeric," +
+                                    "Demultiplexing not started for run " + self.runfolder +
+                                    ".\nValid characters are defined by bcl2fastq as an alphanumeric," +
                                     " '-', or '_' character. \n"), "demultiplex_fail - invalid samplesheet character")
         else:
             # No samplesheet found. Stop and log message.
