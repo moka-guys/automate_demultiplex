@@ -21,7 +21,6 @@ import subprocess
 import datetime
 import smtplib
 from email.Message import Message
-import fnmatch
 import requests
 import json
 
@@ -59,6 +58,9 @@ class get_list_of_runs():
 
         # Create a class instance for checking and running demultiplexing on each runfolder
         demultiplex = ready2start_demultiplexing(self.now)
+        # Write to system log to signal the start of the automate demultiplex script
+        demultiplex.logger("automate demultiplex release %s started on workstation." % config.script_release,
+                           "demultiplex_started")
 
         # Loop through directory listing and pass runfolders to demultiplex.already_demultiplexed()
         for folder in all_runfolders:
@@ -69,10 +71,12 @@ class get_list_of_runs():
 
         # Close the script log file when all processing is complete
         demultiplex.script_logfile.close()
-        
-        # Check if runfolders were processed by bcl2fastq during this cycle.
-        # This statement returns true if the list 'demultiplex.processed_runfolders' is not empty:
-        if demultiplex.processed_runfolders:
+
+        # Get number of runfolders processed by bcl2fastq during this cycle
+        num_processed_runfolders = len(demultiplex.processed_runfolders)
+
+        # If runfolders were processed by bcl2fastq during this cycle.
+        if num_processed_runfolders > 0:
         # Create an underscore-delimited string of all runfolders demultiplexed in this cycle, 
         # ending with '_demultiplex_script_log.txt'.
             processed_run_string = "_" + "_".join(demultiplex.processed_runfolders) + "_demultiplex_script_log.txt"
@@ -82,6 +86,13 @@ class get_list_of_runs():
         # Rename the script log file to new_scriptlog_name. Allows processed runs to be easily 
         # identified from the script log name and differentiates this log from others uploaded to DNA nexus.
             os.rename(demultiplex.logfile_name, new_scriptlog_name)
+        # Write message to system log to indicate demultiplex complete
+            demultiplex.logger("automate demultiplex release %s complete. %s runfolder\(s\) processed." % \
+                              (config.script_release, str(num_processed_runfolders)), "demultiplex_complete")
+        # Else, write to system log, indicating that demultiplex completed and no runfolders were processed.
+        else:
+            demultiplex.logger("automate demultiplex release %s complete. %s runfolder\(s\) processed." % \
+                              (config.script_release, str(num_processed_runfolders)), "demultiplex_complete")
 
 
 class ready2start_demultiplexing():
@@ -250,25 +261,21 @@ class ready2start_demultiplexing():
                 self.run_demultiplexing()
             # Else stop and write error messages to loggers and send error e-mail.
             else:
-                # Set error message details for invalid characters found
-                invalid_char_message = ("Invalid characters persent in samplesheet.\n" +
-                                        "Demultiplexing not started for run " + self.runfolder + ".\n"
-                                        "Valid characters are defined by bcl2fastq as an alphanumeric," +
-                                        " '-', or '_' character. \n")
-                invalid_char_subject = "demultiplex_invalid_samplesheet_character"
                 # Write error event to script log file
                 self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns" +
                                           "......... Invalid characters found \n--- STOP ---\n")
                 # Record error messages in system log
-                self.logger(invalid_char_message, invalid_char_subject)
+                self.logger("Invalid characters in samplesheet for run " + self.runfolder, "demultiplex_fail")
                 # Send an e-mail. This necessary as the samplesheet must now be checked and fixed.
                 # The samplesheet generator should also be checked as subsequent runs may be affected
-                self.send_an_email(invalid_char_message, invalid_char_subject)
-
+                self.send_an_email(("Invalid characters present in samplesheet.\n" +
+                                    "Demultiplexing not started for run " + self.runfolder + ".\n"
+                                    "Valid characters are defined by bcl2fastq as an alphanumeric," +
+                                    " '-', or '_' character. \n"), "demultiplex_fail - invalid samplesheet character")
         else:
             # No samplesheet found. Stop and log message.
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
-            self.logger("no samplesheet found demultiplexing not started for run " + self.runfolder, "demultiplex_no_sample_sheet_present")
+            self.logger("No samplesheet found for run " + self.runfolder, "demultiplex_fail")
 
     def check_valid_samplesheet(self):
         '''Validate the 'Sample_ID' and 'Sample_Name' table columns within the sample sheet csv
@@ -334,7 +341,7 @@ class ready2start_demultiplexing():
         # Write progress/status to script log file
         self.script_logfile.write("running bcl2fastq ......... \ncommand = " + command + "\n")
         # Add entry to system log
-        self.logger("demultiplexing started for run " + self.runfolder, "demultiplex_started")
+        self.logger("Demultiplexing started for run " + self.runfolder, "demultiplex_started")
 
         # Run the bcl2fastq command to start demultiplexing. the script won't continue until this 
         # process finishes. Stderr and stdout streams are redirected to the log file by the command
@@ -356,7 +363,7 @@ class ready2start_demultiplexing():
         # succesful demultiplexing.
         logfile_success = "Processing completed with 0 errors and 0 warnings."
         
-        # Set the path to the 'demultiplexlog.txt' file for this runfolder
+        # Set the path to the demultiplex log file for this runfolder
         run_logfile_path = self.runfolderpath + "/" + self.demultiplexed
         # Read the last 10 lines of the runfolder's demultiplex log file, which details the success 
         # or failure of the bcl2fastq command. In the event of errors, this is written to the script log file.
@@ -367,7 +374,7 @@ class ready2start_demultiplexing():
             # Write to script_logfile
             self.script_logfile.write("demultiplexing complete\n")
             # Write to system log
-            self.logger("demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
+            self.logger("Demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
             # Call function which updates smartsheet, changing status for this run from in progress to complete, where task = demultiplex.
             self.smartsheet_demultiplex_complete()
         # If demultiplexing did not complete without errors
@@ -376,7 +383,7 @@ class ready2start_demultiplexing():
             self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see " + 
                                       run_logfile_path + "\n" + bcl2fastq_log_tail )
             # Write to system log
-            self.logger("demultiplexing completed with error or failed for run " + self.runfolder, "demultiplex_fail")
+            self.logger("BCL2FastQ ERROR. Demultiplexing failed for run " + self.runfolder, "demultiplex_fail")
 
     def send_an_email(self, m_message, m_subject):
         """Send progress log messages via email to recipient (self.you) via SMTP.
@@ -401,7 +408,7 @@ class ready2start_demultiplexing():
         server = smtplib.SMTP(host=self.host, port=self.port, timeout=10)
         # Output connection debug messages
         server.set_debuglevel(1)
-        # Encrypt SMTP commands using Transport Layer Security mode
+        # Encrypt SMTP commands using Transport Layer Security mode$
         server.starttls()
         # Identify client to ESMTP server using EHLO commands
         server.ehlo()
@@ -425,15 +432,14 @@ class ready2start_demultiplexing():
         # If bcl2fastq is installed and called with no inputs, the first line of stderr should
         # contain the string "BCL to FASTQ file converter".
         if "BCL to FASTQ file converter" not in err:
+            # Write to script log file
+            self.script_logfile.write('ERROR - BCL2FastQ installation test failed.')
             # Write to system log and raise exception
-            self.logger("BCL2FastQ installation test failed", "demultiplex_BCL2FASTQ_function_test_fail")
+            self.logger("BCL2FastQ installation test failed.", "demultiplex_fail")
             raise Exception("bcl2fastq not installed")
         else:
-            # Write to system log
-            self.logger("BCL2FastQ installation test ok", "demultiplex_BCL2FASTQ_function_test_pass")
-
-        # Write to script log file
-        self.script_logfile.write("bcl2fastq check passed\n")
+            # Write to script log file
+            self.script_logfile.write("bcl2fastq installation check passed\n")
 
     def smartsheet_demultiplex_in_progress(self):
         """Update smartsheet to say that demultiplexing is in progress."""
@@ -482,13 +488,13 @@ class ready2start_demultiplexing():
             # Write to script log file  
             self.script_logfile.write("smartsheet updated to say in progress\n")
             # Report to system log file
-            self.logger("initiation of demultiplexing added to smartsheet", "smartsheet_demultiplex_started_update_ok")
+            self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_updated")
         else:
             # Record error message to script log file
             self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
             # Record failure in system logs so that an error can be reported via slack. 
             # Failure to update smartsheet is not critical as it does not stop the run being processed.
-            self.logger("Smartsheet was not updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_demultiplex_started_update_fail")
+            self.logger("Smartsheet was NOT updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_demultiplex_error")
 
     def smartsheet_demultiplex_complete(self):
         """Update smartsheet to say demultiplexing is complete. Add the completed date and calculate
@@ -533,13 +539,13 @@ class ready2start_demultiplexing():
             # Write to script log file
             self.script_logfile.write("smartsheet updated to say complete\n")
             # Write to system log
-            self.logger("smartsheet updated at end of demultiplexing", "smartsheet_demultiplex_complete_update_ok")
+            self.logger("Smartsheet updated at end of demultiplexing", "smartsheet_demultiplex_updated")
         else:
             # Record error message in script log file
             self.script_logfile.write("smartsheet NOT updated at complete step\n" + str(response))
             # Write to system log to enable alert via slack.
             # Failure to update smartsheet is not critical as it does not stop the run being processed.
-            self.logger("smartsheet NOT updated at end of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_complete_update_fail")
+            self.logger("Smartsheet NOT updated at end of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_error")
 
     def logger(self, message, tool):
         """Write log messages to the system log.
@@ -556,10 +562,15 @@ class ready2start_demultiplexing():
         proc = subprocess.Popen([log], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         # Capture the streams
         (out, err) = proc.communicate()
-        # If no standard error, record in script logfile that information was written to system log.
-        if not err:
-            self.script_logfile.write("log written to /usr/bin/logger\n" + log + "\n")
 
+        # If the script log file is open
+        if not self.script_logfile.closed:
+            # If no standard error, record in script logfile that information was written to system log.
+            if not err:
+                self.script_logfile.write("Log written to /usr/bin/logger\n" + log + "\n")
+            # Else record failure to write to log in script logfile
+            else:
+                self.script_logfile.write("Failed to write log to /usr/bin/logger\n" + log + "\n")
 
 if __name__ == '__main__':
     # Create instance of get_list_of_runs
