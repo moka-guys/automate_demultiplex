@@ -52,6 +52,7 @@ demultiplex_logfiles = "/home/mokaguys/Documents/automate_demultiplexing_logfile
 # path to upload agent
 upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 
+
 # =====Moka settings=====
 moka_pipeline_ID = "1941"
 
@@ -192,3 +193,10 @@ smtp_do_tls = True
 # Loggly
 # log command
 echo_to_log = "echo %s 2>&1 | /usr/bin/logger -t %s"
+
+##################### Integrity check
+# the filename which holds the checksum results
+md5checksum_name = "checksum_result.txt"
+# path to mapped miseq sequencer folders
+sequencer_share = {"M02353": "/media/M02353_MiSeqTemp/", "M02631": "/media/M02631_MiSeqTemp/"}
+
