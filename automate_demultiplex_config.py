@@ -49,9 +49,6 @@ DNA_Nexus_project_creation_logfolder = "/home/mokaguys/Documents/automate_demult
 # folder containing demultiplex logs
 demultiplex_logfiles = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files/"
 
-# message which marks sucessful demultiplexing from bcl2fastq
-logfile_success = "Processing completed with 0 errors and 0 warnings."
-
 # path to upload agent
 upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 
