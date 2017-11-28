@@ -87,11 +87,11 @@ class get_list_of_runs():
         # identified from the script log name and differentiates this log from others uploaded to DNA nexus.
             os.rename(demultiplex.logfile_name, new_scriptlog_name)
         # Write message to system log to indicate demultiplex complete
-            demultiplex.logger("automate demultiplex release %s complete. %s runfolder\(s\) processed." % \
+            demultiplex.logger("automate demultiplex release %s complete. %s runfolder(s) processed." % \
                               (config.script_release, str(num_processed_runfolders)), "demultiplex_complete")
         # Else, write to system log, indicating that demultiplex completed and no runfolders were processed.
         else:
-            demultiplex.logger("automate demultiplex release %s complete. %s runfolder\(s\) processed." % \
+            demultiplex.logger("automate demultiplex release %s complete. %s runfolder(s) processed." % \
                               (config.script_release, str(num_processed_runfolders)), "demultiplex_complete")
 
 
@@ -266,12 +266,6 @@ class ready2start_demultiplexing():
                                           "......... Invalid characters found \n--- STOP ---\n")
                 # Record error messages in system log
                 self.logger("Invalid characters in samplesheet for run " + self.runfolder, "demultiplex_fail")
-                # Send an e-mail. This necessary as the samplesheet must now be checked and fixed.
-                # The samplesheet generator should also be checked as subsequent runs may be affected
-                self.send_an_email(("Invalid characters present in samplesheet.\n" +
-                                    "Demultiplexing not started for run " + self.runfolder +
-                                    ".\nValid characters are defined by bcl2fastq as an alphanumeric," +
-                                    " '-', or '_' character. \n"), "demultiplex_fail - invalid samplesheet character")
         else:
             # No samplesheet found. Stop and log message.
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
@@ -438,7 +432,9 @@ class ready2start_demultiplexing():
             self.logger("BCL2FastQ installation test failed.", "demultiplex_fail")
             raise Exception("bcl2fastq not installed")
         else:
-            # Write to script log file
+            # Write test success message to system log
+            self.logger("BCL2FastQ installation test passed.", "demultiplex_success")
+            # Write test success message to script log file
             self.script_logfile.write("bcl2fastq installation check passed\n")
 
     def smartsheet_demultiplex_in_progress(self):
@@ -557,7 +553,7 @@ class ready2start_demultiplexing():
             Tool name. Used to search within the insight ops website.
         """
         # Create subprocess command string, passing message and tool name to the command
-        log = "echo %s 2>&1 | /usr/bin/logger -t %s" % (message, tool)
+        log = "echo '%s' 2>&1 | /usr/bin/logger -t %s" % (message, tool)
         # Run the command using subprocess
         proc = subprocess.Popen([log], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         # Capture the streams

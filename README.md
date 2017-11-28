@@ -16,11 +16,10 @@ The output is written to a log file and the last line of the log file checked to
 Two log files are written to. One is the 'cron job' log, recording the outcome for each run folder each time the script is run.
 If demultiplexing is initiated, a log file is created to record the stdout and stderr of bcl2fastq.
 
-Email notifications are sent to the Moka Guys mailing list in the event of a bcl2fastq failure.
+Alerts are sent to the Moka-Alerts slack channel in the event of a bcl2fastq failure.
 
 # DNA_Nexus_upload_agent.py
-This script looks for newly demultiplexed runs and initiates the upload of the run folder to DNA Nexus using the upload agent
-An email is sent upon completion.
+This script looks for newly demultiplexed runs and initiates the upload of the run folder to DNA Nexus using the upload agent.An email is sent upon completion.
 
 # automate_demultiplex_config.py
 This module contains configuration settings which are imported and used by the demultiplex.py and DNA_Nexus_upload_agent.py scripts. 
