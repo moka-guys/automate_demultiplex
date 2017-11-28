@@ -69,11 +69,15 @@ class get_list_of_runs():
                 if os.path.isdir(self.runfolders + "/" + folder):  # Select directories only
                     demultiplex.already_demultiplexed(folder)
 
-        # Close the script log file when all processing is complete
-        demultiplex.script_logfile.close()
-
         # Get number of runfolders processed by bcl2fastq during this cycle
         num_processed_runfolders = len(demultiplex.processed_runfolders)
+
+        # Write message to system log to indicate demultiplex complete
+        demultiplex.logger("automate demultiplex release %s complete. %s runfolder(s) processed." % \
+                          (config.script_release, str(num_processed_runfolders)), "demultiplex_complete")
+
+        # Close the script log file when all processing is complete
+        demultiplex.script_logfile.close()
 
         # If runfolders were processed by bcl2fastq during this cycle.
         if num_processed_runfolders > 0:
@@ -86,13 +90,6 @@ class get_list_of_runs():
         # Rename the script log file to new_scriptlog_name. Allows processed runs to be easily 
         # identified from the script log name and differentiates this log from others uploaded to DNA nexus.
             os.rename(demultiplex.logfile_name, new_scriptlog_name)
-        # Write message to system log to indicate demultiplex complete
-            demultiplex.logger("automate demultiplex release %s complete. %s runfolder(s) processed." % \
-                              (config.script_release, str(num_processed_runfolders)), "demultiplex_complete")
-        # Else, write to system log, indicating that demultiplex completed and no runfolders were processed.
-        else:
-            demultiplex.logger("automate demultiplex release %s complete. %s runfolder(s) processed." % \
-                              (config.script_release, str(num_processed_runfolders)), "demultiplex_complete")
 
 
 class ready2start_demultiplexing():
@@ -559,14 +556,12 @@ class ready2start_demultiplexing():
         # Capture the streams
         (out, err) = proc.communicate()
 
-        # If the script log file is open
-        if not self.script_logfile.closed:
-            # If no standard error, record in script logfile that information was written to system log.
-            if not err:
-                self.script_logfile.write("Log written to /usr/bin/logger\n" + log + "\n")
-            # Else record failure to write to log in script logfile
-            else:
-                self.script_logfile.write("Failed to write log to /usr/bin/logger\n" + log + "\n")
+        # If the log command produced no errors, record the log command string to the script logfile.
+        if not err:
+            self.script_logfile.write("Log written to /usr/bin/logger\n" + log + "\n")
+        # Else record failure to write to system log to the script log file
+        else:
+            self.script_logfile.write("Failed to write log to /usr/bin/logger\n" + log + "\n")
 
 if __name__ == '__main__':
     # Create instance of get_list_of_runs
