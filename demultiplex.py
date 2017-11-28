@@ -22,13 +22,13 @@ from email.Message import Message
 import fnmatch
 import requests
 import json
+from checksumdir import dirhash
 from automate_demultiplex_config import *
 
 class get_list_of_runs():
     '''Loop through the directories in the directory containing the runfolders'''
     def __init__(self):
         # directory of run folders - must be same as in ready2start_demultiplexing()
-        # self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         self.runfolders ="/media/data1/share" # workstation
         self.now=""
 
@@ -75,7 +75,6 @@ class ready2start_demultiplexing():
     '''This class checks if a run is ready to be demultiplexed (samplesheet present, run finished and not previously demultiplexed) and if so runs demultiplexes''' 
     def __init__(self):
         # directory of run folders - must be same as in get_list_of_runs()
-        # self.runfolders = "/home/aled/demultiplex_testing" # aledpc
         self.runfolders ="/media/data1/share" # workstation
         
         #set the samplesheet folders
@@ -100,7 +99,6 @@ class ready2start_demultiplexing():
         self.bcltest= "/home/mokaguys/Documents/automate_demultiplexing_logfiles/bcl2fastq.txt"
         
         #logfile
-        #self.script_logfile_path="/home/aled/Documents/automate_demultiplexing_logfiles/logrecord.txt" # aled pc
         self.script_logfile_path="/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files/" # workstation
         self.logfile_name=""
         
@@ -183,12 +181,12 @@ class ready2start_demultiplexing():
         if os.path.isfile(self.runfolderpath + "/" + self.complete_run):
             self.script_logfile.write("Run has finished  -  RTAcomplete.txt found @ "+ self.runfolderpath + "/" + self.complete_run+"\n")
             
-            #if so proceed
             self.look_for_sample_sheet()
         else:
             # else stop 
             self.script_logfile.write("run is not yet complete \n--- STOP ---\n")
-                  
+        
+
 
     def look_for_sample_sheet(self):
         '''check sample sheet is present'''
@@ -207,11 +205,6 @@ class ready2start_demultiplexing():
         #if the samplesheet exists
         if expected_samplesheet in self.list_of_samplesheets:
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " +self.samplesheet+"\n")
-            # #send an email:2
-            # self.email_subject="MOKAPIPE ALERT: Demultiplexing initiated"
-            # self.email_message="demultiplexing for run " + self.runfolder + " has been initiated"
-            # self.send_an_email()
-            # proceed
             # If the samplesheet contains valid characters, run demultiplexing
             if self.check_valid_samplesheet():
                 self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns " + \
@@ -279,33 +272,37 @@ class ready2start_demultiplexing():
         # test bcl2fastq install
         self.test_bcl2fastq()
         self.smartsheet_demultiplex_in_progress()
+
+        # before demultiplexing starts check the integrity of the runfolder against that on the sequencer. Only proceed if passes check
+        if self.prepare_integrity_check():
+       
+            # create the command
+            command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
+            # command="/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R 160822_NB551068_0006_AHGYM7BGXY/ --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting"
+            
+            self.script_logfile.write("running bcl2fastq ......... \ncommand = " + command+"\n")
+            
+            # open a log file
+            demultiplex_log = open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'w')
+            
+            #add entry to logger
+            self.logger("demultiplexing started for run "+self.runfolder,"demultiplex_started")
+            
+            # run the command, redirecting stderror to stdout
+            proc = subprocess.Popen([command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
+            
+            # capture the streams (err is redirected to out above)
+            (out, err) = proc.communicate()
+            
+            # write this to the log file
+            demultiplex_log.write(out)
+            
+            # close log file
+            demultiplex_log.close()
+            
+            # call_log_file_check
+            self.check_demultiplexlog_file()
         
-        # create the command
-        command = self.bcl2fastq + " -R " + self.runfolders+"/"+self.runfolder + " --sample-sheet " + self.samplesheet + " --no-lane-splitting"
-        # command="/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq -R 160822_NB551068_0006_AHGYM7BGXY/ --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv --no-lane-splitting"
-        
-        self.script_logfile.write("running bcl2fastq ......... \ncommand = " + command+"\n")
-        
-        # open a log file
-        demultiplex_log = open(self.runfolders+"/"+self.runfolder+"/"+self.demultiplexed,'w')
-        
-        #add entry to logger
-        self.logger("demultiplexing started for run "+self.runfolder,"demultiplex_started")
-        
-        # run the command, redirecting stderror to stdout
-        proc = subprocess.Popen([command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
-        
-        # capture the streams (err is redirected to out above)
-        (out, err) = proc.communicate()
-        
-        # write this to the log file
-        demultiplex_log.write(out)
-        
-        # close log file
-        demultiplex_log.close()
-        
-        # call_log_file_check
-        self.check_demultiplexlog_file()
         
     def check_demultiplexlog_file(self):
         #open log file
@@ -501,6 +498,158 @@ class ready2start_demultiplexing():
         if not err:
             # write this to the log file
             self.script_logfile.write("log written to /usr/bin/logger\n"+log+"\n")
+
+    
+    def prepare_integrity_check(self):
+        """
+        We want to ensure the runfolder which was copied to the workstation hasn't been corrupted by the transfer.
+        The MiSeq run folders are accesible from the workstation, so the integrity checks are performed by this script.
+        The NextSeq checksums are generated by the sequencer but assessed by this script.
+        
+        For nextseq runs the presence of the file containing the checksums is assessed.
+        If the checksums are not present the script is stopped and it will be re-assessed the next time the script is run.
+        This is recorded in the system log so an alert can be made if the checksums are not present after a number of hours        
+        If the checksums are present these are read into a list and compared. If they match the function returns True and the script will proceed, else the script will return False and stop
+
+        The integrity checks of miseq runs are performed in this script.
+        Firstly the path to the sequencer copy of the runfolder (which has been mapped onto the workstation) is defined and tested 
+        Then directory paths are passed to the function run_integrity_check which calculates and checks the checksums
+        The checksums are written to a text file and this text file is read and checksums compared (in line with nextseq)
+        If the checksums match this function returns true
+        Records are written to the logfile and to the sys.log
+        
+        test runs (starting with 999999) will not exist on the sequencer so this step is skipped.
+        """
+        
+        # write to log file to say integrity checking is being performed
+        self.script_logfile.write("Data integrity checks starting...\n")
+
+         # test runfolders (starting with 999999) won't exist on the sequencer. Therefore if it is a test folder return true, skipping any integrity checks (the function of the integrity check has already been tested)
+        if self.runfolder.startswith('999999'):
+            # write to the logfile that this runfolder is a test one so integrity check not being performed
+            self.script_logfile.write("test run identified. This run folder is not on any sequencer so skipping integrity check\n")
+            # return True to report integrity checking has passed
+            return True
+        
+
+        # if it's a nextseq run look for the pre-calculated MD5 checksum values
+        if "NB551068" in self.runfolder:
+            # the checksums have ben written to a file in the run folder
+            # build file path
+            checksum_file_path = os.join(self.runfolderpath, "md5checksums.txt")
+
+        # if it's not a nextseq run need to calculate checksums
+        else:
+            # Need to identify the sequencer copy of the run folder on the mapped sequencer shares. The sequencer name is in the run folder name
+            # loop through the dictionary of sequencer names
+            for sequencer in sequencer_share:
+                # search for the sequencer name in the runfolder
+                if sequencer in self.runfolder:
+                    # if it matches use dictionary key to build the path to run folder (appending runfolder name to file path)
+                    sequencer_copy_path = sequencer_share[sequencer] + self.runfolder
+                    # define path to file containing checksums within this fodler (written to below)
+                    checksum_file_path = os.join(sequencer_copy_path, "md5checksums.txt")
+
+
+            # check the run folder paths have been identified correctly
+            # if the sequencer_copy_path exists
+            if os.path.isdir(sequencer_copy_path):
+                # write to sys.log to say mapped temp folder found
+                self.logger("mapped sequencer runfolder identified - " + sequencer_copy_path, "integrity_sequencer_runfolder_ok")
+                # write to the logfile
+                self.script_logfile.write("mapped sequencer run folder identified ok: " + sequencer_copy_path + "\n")
+            # if the sequencer_copy_path does not exist
+            else:
+                # write to sys.log
+                self.logger("integrity check fail. mapped sequencer runfolder does not exist: " + sequencer_copy_path, "demultiplex_fail")
+                # write to the logfile
+                self.script_logfile.write("mapped sequencer run folder does NOT exist: " + sequencer_copy_path + "\n")
+                # return false to stop the script, saying integrity checking has not been completed
+                return False
+
+            # create checksum for workstation copy
+            workstation_checksum = self.run_integrity_check(self.runfolderpath)
+            # create checksum for seqeuncer copy
+            sequencer_checksum = self.run_integrity_check(sequencer_copy_path)
+
+            # open the checksum file
+            with open(checksum_file_path,'w') as checksum_file:
+                # write the folder name and path and checksums, seperated by '='
+                checksum_file.write("workstation checksum (" + self.runfolderpath + ") =" + workstation_checksum + "\n")
+                checksum_file.write("sequencer checksum (" + sequencer_copy_path + ") =" + sequencer_checksum + "\n")
+            
+        # Unless it's a nextseq run and the checksums have not yet been created the checksum file path should point to a file
+        if os.isfile(checksum_file_path):
+            # pass checksum file path to function which compares checksums. function returns true if the checksums match
+            if self.check_checksums(checksum_file_path):
+                # write to sys log
+                self.logger("integrity check of runfolder " + self.runfolder + " passed", "integrity_check_ok")
+                # write to the logfile
+                self.script_logfile.write("integrity check of runfolder passed\n")
+                # return True to report integrity checking has passed
+                return True
+            # if md5checksums do not match - this is major - probably worth an email?
+            else:
+                # send an email as it's very urgent
+                self.email_subject="MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
+                self.email_priority=1
+                self.email_message="run:\t"+self.runfolder+"sequencer checksum (" + sequencer_copy_path + ") =" + sequencer_checksum + "\n" \
+                                    + "workstation checksum (" + self.runfolderpath + ") =" + workstation_checksum + "\n" \
+                                    + "Please follow the protocol for when integrity checks fail"
+                self.send_an_email()
+        
+                # record test failed in sys log
+                self.logger("Integrity check fail. checksums do not match for " + self.runfolder, "demultiplex_fail")
+                # also write to logfile
+                self.script_logfile.write("integrity check of runfolder failed - checksums do not match. see " + checksum_file_path + "\n")
+                # return false to stop the script, saying integrity checking has not been completed      
+                return False
+
+
+        # if there is no checksum file it must be a nextseq run which has finished (we already checked for the RTAcomplete file) but checksums not available 
+        else:   
+            #write to script 
+            self.script_logfile.write("md5checksums not performed by nextseq. waiting...\n")
+            # write to sys.log - if this is found >2 hours in a row should probably be an alert
+            self.logger("md5checksums not yet available on nextseq for " + self.runfolder , "demultiplex_fail")
+            # return false to stop the script, saying integrity checking has not been completed  
+            return False
+
+
+    def run_integrity_check(self,dirpath):
+        """
+        This function is passed the path to a runfolder
+        A checksum is calculated for that directory and returned
+        """
+        # calculate md5 checksum directory
+        return dirhash(dirpath, 'md5')
+
+
+    def check_checksums(self, checksum_file_path):
+        """
+        This function receives the path to a file which should contain the checksums for both copies of a run folder.
+        Each line contains the checksum and some information about the folder which that checksum relates to
+        The checksums are extracted from the lines and compared
+        If they match the function returns true else it returns false.
+        All error reporting is done outside this function
+
+        """
+        # if md5checksums exist open the file
+        with open(checksum_file, 'r') as checksum_file:
+            # read the checksums into a list
+            checksums = checksum_file.readlines()
+        # each line contains the location of each checksum with an equals sign and then the checksum.
+        # split on equals to capture just the checksum (and remove any new line characters incase they result in a differenece)
+        checksum1 = checksums[0].split("=")[1].rstrip()
+        checksum2 = checksums[1].split("=")[1].rstrip()
+        # if the checksums match
+        if checksum1 == checksum2:
+            # if md5checksums match return to say test passed
+            return True
+        else:
+            #otherwise return false
+            return False
+
 
 
 if __name__ == '__main__':
