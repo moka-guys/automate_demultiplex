@@ -362,24 +362,21 @@ class ready2start_demultiplexing():
         the demultiplex log file, searching the last line for the expected success statement.
         """
         
-        # Succesful run message. A string to look for in the output of bcl2fastq which denotes 
-        # succesful demultiplexing.
-        logfile_success = "Processing completed with 0 errors and 0 warnings."
-        
         # Set the path to the demultiplex log file for this runfolder
         run_logfile_path = self.runfolderpath + "/" + self.demultiplexed
         # Read the last 10 lines of the runfolder's demultiplex log file, which details the success 
         # or failure of the bcl2fastq command. In the event of errors, this is written to the script log file.
         bcl2fastq_log_tail = subprocess.check_output(["tail","-n","10", run_logfile_path])
 
-        # If demultiplexing completed successfully
-        if logfile_success in bcl2fastq_log_tail:
+        # If demultiplexing completed successfully - looking for expected success statement as defined in config file
+        if config.logfile_success in bcl2fastq_log_tail:
             # Write to script_logfile
             self.script_logfile.write("demultiplexing complete\n")
             # Write to system log
             self.logger("Demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
             # Call function which updates smartsheet, changing status for this run from in progress to complete, where task = demultiplex.
             self.smartsheet_demultiplex_complete()
+            
         # If demultiplexing did not complete without errors
         else:
             # Write to log file and report last few lines of the failed runfolder's demultiplex log.
