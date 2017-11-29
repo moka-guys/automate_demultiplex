@@ -28,6 +28,7 @@ from checksumdir import dirhash
 import automate_demultiplex_config as config
 
 
+
 class get_list_of_runs():
     """Loop through and process NGS runfolders in a given directory.
 
@@ -56,6 +57,7 @@ class get_list_of_runs():
 
         # List all files and folders in the runfolder directory
         all_runfolders = os.listdir(self.runfolders)
+        all_runfolders = ["171027_M02631_0127_000000000-BFBPY"]
 
         # Create a class instance for checking and running demultiplexing on each runfolder
         demultiplex = ready2start_demultiplexing(self.now)
@@ -166,8 +168,12 @@ class ready2start_demultiplexing():
         self.you = config.you
         self.smtp_do_tls = config.smtp_do_tls
 
+        # some variables used by send_an_email function
+        self.email_subject=""
+        self.email_priority=1
+        self.email_message=""
+
         # Smartsheet config
-        # =================
         # API key
         self.api_key = config.smartsheet_api_key
         # Smartsheet id
@@ -380,7 +386,7 @@ class ready2start_demultiplexing():
             # Write to system log
             self.logger("BCL2FastQ ERROR. Demultiplexing failed for run " + self.runfolder, "demultiplex_fail")
 
-    def send_an_email(self, m_message, m_subject):
+    def send_an_email(self):
         """Send progress log messages via email to recipient (self.you) via SMTP.
         
         Arguments:
@@ -394,10 +400,10 @@ class ready2start_demultiplexing():
 
         # Create email.Message() object. Set e-mail headers for X-Priority and Subject
         m = Message()
-        m['X-Priority'] = str(1)  # X-Priority = 1. Sets a high-priority e-mail.
-        m['Subject'] = m_subject
+        m['X-Priority'] = str(self.email_priority)  # X-Priority = 1. Sets a high-priority e-mail.
+        m['Subject'] = self.email_subject
         # Add error messages to e-mail body using email.Message.set_payload()
-        m.set_payload(m_message)
+        m.set_payload(self.email_message)
 
         # Configure SMTP server connection for sending log messages via e-mail
         server = smtplib.SMTP(host=self.host, port=self.port, timeout=10)
@@ -606,19 +612,19 @@ class ready2start_demultiplexing():
         if "NB551068" in self.runfolder:
             # the checksums have ben written to a file in the run folder
             # build file path
-            checksum_file_path = os.join(self.runfolderpath, "md5checksums.txt")
+            checksum_file_path = os.path.join(self.runfolderpath, config.md5checksum_name)
 
         # if it's not a nextseq run need to calculate checksums
         else:
             # Need to identify the sequencer copy of the run folder on the mapped sequencer shares. The sequencer name is in the run folder name
             # loop through the dictionary of sequencer names
-            for sequencer in sequencer_share:
+            for sequencer in config.sequencer_share:
                 # search for the sequencer name in the runfolder
                 if sequencer in self.runfolder:
                     # if it matches use dictionary key to build the path to run folder (appending runfolder name to file path)
-                    sequencer_copy_path = sequencer_share[sequencer] + self.runfolder
+                    sequencer_copy_path = config.sequencer_share[sequencer] + self.runfolder
                     # define path to file containing checksums within this fodler (written to below)
-                    checksum_file_path = os.join(sequencer_copy_path, "md5checksums.txt")
+                    checksum_file_path = os.path.join(self.runfolderpath, config.md5checksum_name)
 
 
             # check the run folder paths have been identified correctly
@@ -649,7 +655,7 @@ class ready2start_demultiplexing():
                 checksum_file.write("sequencer checksum (" + sequencer_copy_path + ") =" + sequencer_checksum + "\n")
             
         # Unless it's a nextseq run and the checksums have not yet been created the checksum file path should point to a file
-        if os.isfile(checksum_file_path):
+        if os.path.isfile(checksum_file_path):
             # pass checksum file path to function which compares checksums. function returns true if the checksums match
             if self.check_checksums(checksum_file_path):
                 # write to sys log
@@ -705,7 +711,7 @@ class ready2start_demultiplexing():
 
         """
         # if md5checksums exist open the file
-        with open(checksum_file, 'r') as checksum_file:
+        with open(checksum_file_path, 'r') as checksum_file:
             # read the checksums into a list
             checksums = checksum_file.readlines()
         # each line contains the location of each checksum with an equals sign and then the checksum.
