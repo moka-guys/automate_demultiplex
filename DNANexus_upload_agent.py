@@ -336,14 +336,6 @@ class upload2Nexus():
                 self.logger("unrecognised panel number found in run "+self.runfolder,"UA_unrecognised_panel_number_present")
                 #write to logfile
                 self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\nSome fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
-                # #send an email
-                # # set email content
-                # self.email_subject = "MOKAPIPE ALERT: Unrecognised Panel numbers in fastq files"
-                # self.email_priority = 1
-                # self.email_message = "Fastqs from " + self.runfolder + " contain panel numbers which are not recognised: " + ",".join(not_processed)
-                # if not debug:
-                #     # send email
-                #     self.send_an_email()
             else:
                 self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
             #build the file path with WES batch and NGS run numbers
@@ -458,15 +450,6 @@ class upload2Nexus():
         
         #check fastqs uploaded successfully
         self.look_for_upload_errors_fastq()
-
-        # # set email content
-        # self.email_subject = "MOKAPIPE ALERT: Upload of fastqs from " + self.runfolder + " complete"
-        # self.email_priority = 3
-        # self.email_message = "Fastqs from "+self.runfolder + " have been uploaded to DNA Nexus.\nStandard out/error written to log file at: " + self.runfolderpath + "/" + upload_started_file
-        #if not debug:
-            # send email
-            # self.send_an_email()
-            
         
         # start pipeline
         self.create_run_pipeline_command()
@@ -512,10 +495,6 @@ class upload2Nexus():
         (out, err) = proc.communicate()
         
         if "Upload Agent Version:" not in out:
-            # self.email_subject = "MOKAPIPE ALERT: ERROR - PRESENCE OF DNA NEXUS UPLOAD AGENT TEST FAILED"
-            # self.email_priority = 1
-            # self.email_message = "The test to check the upload agent has been installed (" + command + ") failed"
-            # self.send_an_email()
             self.logger("Upload Agent Test Failed","UA_upload_agent_fuction_test_failed")
             raise Exception, "Upload agent not installed"
 
@@ -537,10 +516,6 @@ class upload2Nexus():
         (out, err) = proc.communicate()
         
         if "dx v0.2" not in out:
-            # self.email_subject = "MOKAPIPE ALERT: ERROR - DX TOOLKIT TEST FAILED"
-            # self.email_priority = 1
-            # self.email_message = "The test to check that the dx toolkit is working (" + command + ") failed. Hopefully this just means it's been upgraded past v0.2!\n"+err
-            # self.send_an_email()
             self.logger("dx toolkit function test failed","UA_dx_toolkit_function_test_fail")
             raise Exception, "dx toolkit not installed"
         self.logger("dx toolkit function test passed","UA_dx_toolkit_function_test_passed")
@@ -592,11 +567,6 @@ class upload2Nexus():
             
             # if haven't captured a project id send an email
             if self.projectid=="":
-                # self.email_subject = "MOKAPIPE ALERT: FAILED TO CREATE PROJECT IN DNA NEXUS"
-                # self.email_priority = 1 # high priority
-                # self.email_message = "Unable to create the project %s.\nError message = %s, %s" % (self.nexusproject, out,err)
-                # self.send_an_email()
-
                 self.logger("failed to create project in dna nexus "+self.nexusproject,"UA_error_creating_nexus_project")
 
                 # raise exception to stop script
@@ -790,13 +760,7 @@ class upload2Nexus():
         self.upload_agent_script_logfile.write(out)
               
         # if any standard error
-        if err:
-            # send email
-            # self.email_subject = "MOKAPIPE ALERT: Error message when starting pipeline"
-            # self.email_priority = 1 # high priority
-            # self.email_message = self.runfolder + " being processed using workflow " + app + "\nTHE PIPELINE MAY HAVE STARTED CORRECTLY. However, there was a standard error reported when starting pipeline.\nThe standard error messages are: "+ err + "Please see logfile at "+self.runfolderpath + "/" + upload_started_file
-            # #send email
-            # self.send_an_email()            
+        if err:          
 
             self.logger("Error when starting pipeline for run "+ self.runfolder+" stderror = "+err,"UA_pipeline_start_error")
 
@@ -872,13 +836,7 @@ class upload2Nexus():
                 # ensure there is a CNV bedfile in the dictionary but if not don't raise an exception, send an email. 
                 if panelnumbers[panel] == "":
                     self.logger("Error when issuing RPKM command for run "+ self.runfolder+". stderror = "+err,"UA_Error_issuing_RPKM_dx_run_command")
-                    # send email
-                    # self.email_subject = "MOKAPIPE ALERT: Error with RPKM command"
-                    # self.email_priority = 1 # high priority
-                    # self.email_message = "RPKM will not be performed for "+ panel + " as the panel number for the CNV bedfile is not known"
                     if not debug:
-                        # send email
-                        # self.send_an_email()
                         pass
                     
                 else:
@@ -1099,16 +1057,7 @@ class upload2Nexus():
         self.upload_agent_script_logfile.write("\n----------------CHECKING SUCCESSFUL UPLOAD OF LOGFILES (this will not be in DNA Nexus)----------------\n")
         
         # call function to check stdout
-        self.look_for_upload_errors_logfiles()
-
-        # # send email to report backup of runfolder complete
-        # self.email_subject = "MOKAPIPE ALERT: backup of " + self.runfolder + " completed"
-        # self.email_priority = 3
-        # self.email_message = self.runfolder + " \t has been uploaded to DNA Nexus :-)\nPlease see log file at: " + self.runfolderpath + "/" + upload_started_file
-        # if not debug:
-        #     # send email.            
-        #     self.send_an_email()
-        
+        self.look_for_upload_errors_logfiles()        
         
         # close log file
         self.upload_agent_script_logfile.close()
@@ -1168,10 +1117,6 @@ class upload2Nexus():
                     self.upload_agent_script_logfile.write("smartsheet updated to say in progress\n")
                     self.logger("run started added to smartsheet","smartsheet_workflow_started_ok")
                 else:
-                    # #send an email if the update failed
-                    # self.email_subject="MOKAPIPE ALERT: SMARTSHEET WAS NOT UPDATED"
-                    # self.email_message="Smartsheet was not updated to say MokaPipe is inprogress"
-                    # self.send_an_email()
                     self.logger("run started NOT added to smartsheet for run "+self.runfolder,"smartsheet_workflow_started_fail")
                     self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
 
@@ -1185,20 +1130,10 @@ class upload2Nexus():
                 # if it still completed successfully carry on
                 if "uploaded successfully" in upload:
                     self.upload_agent_script_logfile.write("There was a disruption to the network when uploading the Fastq files but it completed successfully\n")                    
-                    # #send an email if the update failed
-                    # self.email_subject="MOKAPIPE ALERT: NETWORK DISRUPTION DURING UPLOAD OF FASTQ FILES"
-                    # self.email_message="The connection to nexus failed during the upload of FASTQ files however the files were uploaded successfully"
-                    # self.email_priority = 3 # high priority
-                    # self.send_an_email()
                     self.logger("upload of fastq was disrupted but completed for run "+self.runfolder,"UA_fastq_upload_complete_after_disruption")
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
-                    # #send an email if the update failed
-                    # self.email_subject="MOKAPIPE ALERT: UPLOAD OF FASTQS FAILED"
-                    # self.email_message="There was a disruption to the network which prevented the fastq files from being uploaded. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\n"
-                    # self.email_priority = 1 # high priority
-                    # self.send_an_email()
                     self.logger("upload of fastqs failed for run "+self.runfolder,"UA_fastq_upload_failed")
         
                     #write the email message to log file
@@ -1220,20 +1155,10 @@ class upload2Nexus():
                 # if it still completed successfully carry on
                 if "uploaded successfully" in upload:
                     self.upload_agent_script_logfile.write("There was a disruption to the network when uploading the rest of the runfolder but it completed successfully\n")                    
-                    # #send an email if the update failed
-                    # self.email_subject="MOKAPIPE ALERT: NETWORK DISRUPTION DURING BACKUP OF RUNFOLDER"
-                    # self.email_message="The connection to nexus failed during the backup of the run folder however the files have been successfully backed up "
-                    # self.email_priority = 3 # high priority
-                    # self.send_an_email()
                     self.logger("upload of runfolder was disrupted but completed for run "+self.runfolder,"UA_runfolder_upload_complete_after_disruption")
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
-                    # #send an email if the update failed
-                    # self.email_subject="MOKAPIPE ALERT: UPLOAD OF RUNFOLDER MAY NOT BE COMPLETE"
-                    # self.email_message="There was a disruption to the network which prevented the rest of the runfolder being uploaded. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\n"
-                    # self.email_priority = 1 # high priority
-                    # self.send_an_email()
                     self.logger("upload of runfolder failed for run "+self.runfolder,"UA_runfolder_upload_failed")
                     #write the email message to log file
                     self.upload_agent_script_logfile.write(self.email_message)
@@ -1259,11 +1184,6 @@ class upload2Nexus():
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the netowkr which prevented log files being uploaded\n")
-                    # #send an email if the update failed
-                    # self.email_subject="MOKAPIPE ALERT: UPLOAD OF LOGFILES MAY NOT BE COMPLETE"
-                    # self.email_message="There was a disruption to the netowkr which prevented the log files being uploaded. See the log file @ "+self.runfolderpath + "/" + upload_started_file+"\n"
-                    # self.email_priority = 1 # high priority
-                    # self.send_an_email()
                     self.logger("upload of log files failed for run "+self.runfolder,"UA_logfiles_upload_failed")
                     #write the email message to log file
                     self.upload_agent_script_logfile.write(self.email_message)
