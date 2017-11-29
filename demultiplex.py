@@ -57,7 +57,6 @@ class get_list_of_runs():
 
         # List all files and folders in the runfolder directory
         all_runfolders = os.listdir(self.runfolders)
-        all_runfolders = ["171027_M02631_0127_000000000-BFBPY"]
 
         # Create a class instance for checking and running demultiplexing on each runfolder
         demultiplex = ready2start_demultiplexing(self.now)
@@ -197,6 +196,10 @@ class ready2start_demultiplexing():
         self.headers = config.smartsheet_request_headers
         self.url = config.smartsheet_request_url
 
+        # variables to hold checksums:
+        self.sequencer_checksum = ""
+        self.workstation_checksum = ""
+
     def already_demultiplexed(self, runfolder):
         """Check if the runfolder has been demultiplexed. This is denoted by the presence of the
         file "demultiplexlog.txt". If the runfolder has not been demultiplexed, call
@@ -323,7 +326,6 @@ class ready2start_demultiplexing():
 
         # before demultiplexing starts check the integrity of the runfolder against that on the sequencer. Only proceed if passes check
         if self.prepare_integrity_check():
-
             # Set demultiplex log file name for this runfolder.
             demultiplex_log = (self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed)
 
@@ -610,8 +612,8 @@ class ready2start_demultiplexing():
 
         # if it's a nextseq run look for the pre-calculated MD5 checksum values
         if "NB551068" in self.runfolder:
-            # the checksums have ben written to a file in the run folder
-            # build file path
+            # the checksums have been written to a file in the run folder
+            # build path to checksum file
             checksum_file_path = os.path.join(self.runfolderpath, config.md5checksum_name)
 
         # if it's not a nextseq run need to calculate checksums
@@ -621,9 +623,9 @@ class ready2start_demultiplexing():
             for sequencer in config.sequencer_share:
                 # search for the sequencer name in the runfolder
                 if sequencer in self.runfolder:
-                    # if it matches use dictionary key to build the path to run folder (appending runfolder name to file path)
-                    sequencer_copy_path = config.sequencer_share[sequencer] + self.runfolder
-                    # define path to file containing checksums within this fodler (written to below)
+                    # if it matches use dictionary value to build the path to run folder (appending runfolder name to file path)
+                    sequencer_copy_path = os.path.join(config.sequencer_share[sequencer], self.runfolder)
+                    # define path to file containing checksums within this fodler (will be written to below)
                     checksum_file_path = os.path.join(self.runfolderpath, config.md5checksum_name)
 
 
@@ -644,15 +646,15 @@ class ready2start_demultiplexing():
                 return False
 
             # create checksum for workstation copy
-            workstation_checksum = self.run_integrity_check(self.runfolderpath)
+            self.run_integrity_check(self.runfolderpath)
             # create checksum for seqeuncer copy
-            sequencer_checksum = self.run_integrity_check(sequencer_copy_path)
+            self.run_integrity_check(sequencer_copy_path)
 
             # open the file to contain the checksums
-            with open(checksum_file_path,'w') as checksum_file:
+            with open(checksum_file_path, 'w') as checksum_file:
                 # write the folder name and path and checksums, seperated by '='
-                checksum_file.write("workstation checksum (" + self.runfolderpath + ") =" + workstation_checksum + "\n")
-                checksum_file.write("sequencer checksum (" + sequencer_copy_path + ") =" + sequencer_checksum + "\n")
+                checksum_file.write("workstation checksum (" + self.runfolderpath + ") =" + self.workstation_checksum + "\n")
+                checksum_file.write("sequencer checksum (" + sequencer_copy_path + ") =" + self.sequencer_checksum + "\n")
             
         # Unless it's a nextseq run and the checksums have not yet been created the checksum file path should point to a file
         if os.path.isfile(checksum_file_path):
@@ -664,13 +666,13 @@ class ready2start_demultiplexing():
                 self.script_logfile.write("integrity check of runfolder passed\n")
                 # return True to report integrity checking has passed
                 return True
-            # if md5checksums do not match - this is major - probably worth an email?
+            # if md5checksums do not match send an email
             else:
                 # send an email as it's very urgent
-                self.email_subject="MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
-                self.email_priority=1
-                self.email_message="run:\t"+self.runfolder+"sequencer checksum (" + sequencer_copy_path + ") =" + sequencer_checksum + "\n" \
-                                    + "workstation checksum (" + self.runfolderpath + ") =" + workstation_checksum + "\n" \
+                self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
+                self.email_priority = 1
+                self.email_message = "run:\t" + self.runfolder + "\nsequencer checksum =" + self.sequencer_checksum + "\n" \
+                                    + "workstation checksum =" + self.workstation_checksum + "\n" \
                                     + "Please follow the protocol for when integrity checks fail"
                 self.send_an_email()
         
@@ -692,7 +694,7 @@ class ready2start_demultiplexing():
             return False
 
 
-    def run_integrity_check(self,dirpath):
+    def run_integrity_check(self, dirpath):
         """
         This function is passed the path to a runfolder
         A checksum is calculated for that directory and returned
@@ -708,18 +710,17 @@ class ready2start_demultiplexing():
         The checksums are extracted from the lines and compared
         If they match the function returns true else it returns false.
         All error reporting is done outside this function
-
         """
-        # if md5checksums exist open the file
+        # open the file containing the md5 checksums
         with open(checksum_file_path, 'r') as checksum_file:
             # read the checksums into a list
             checksums = checksum_file.readlines()
         # each line contains the location of each checksum with an equals sign and then the checksum.
         # split on equals to capture just the checksum (and remove any new line characters incase they result in a differenece)
-        checksum1 = checksums[0].split("=")[1].rstrip()
-        checksum2 = checksums[1].split("=")[1].rstrip()
+        self.workstation_checksum = checksums[0].split("=")[1].rstrip()
+        self.sequencer_checksum = checksums[1].split("=")[1].rstrip()
         # if the checksums match
-        if checksum1 == checksum2:
+        if self.workstation_checksum == self.sequencer_checksum:
             # if md5checksums match return to say test passed
             return True
         else:
