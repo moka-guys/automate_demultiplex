@@ -123,7 +123,7 @@ RPKM_bedfile_to_download = " -ibamfile_name="
 # Nexus_API_Key = "rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL"
 Nexus_API_Key = "K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ"
 
-users = ["aledjones", "wook", "mokaguys", "andyb", "AmyS", "InterpretationRequest"]
+users = ["aledjones", "wook", "mokaguys", "andyb", "AmyS", "InterpretationRequest", "GraemeSmith3", "NMNS"]
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
 panelnumbers = {"Pan493": "",
@@ -176,12 +176,12 @@ ss_completed = 4471867454056324
 ss_duration = 6519775204534148
 ss_metTAT = 4267975390848900
 
-# Requests info
+# ================ Requests info
 smartsheet_request_headers = {"Authorization": "Bearer " + smartsheet_api_key, "Content-Type": "application/json"}
 smartsheet_request_url = 'https://api.smartsheet.com/2.0/sheets/' + str(smartsheet_sheetid)
 
 
-# Email server settings
+# =================== Email server settings
 user = 'AKIAIO3XY2MMSBEQNNXQ'
 pw = '***REMOVED***'
 host = 'email-smtp.eu-west-1.amazonaws.com'
@@ -190,13 +190,15 @@ me = 'gst-tr.mokaguys@nhs.net'
 you = ('gst-tr.mokaguys@nhs.net',)
 smtp_do_tls = True
 
-# Loggly
+# ================= Loggly
 # log command
 echo_to_log = "echo %s 2>&1 | /usr/bin/logger -t %s"
 
-##################### Integrity check
+# ================ Integrity check
 # the filename which holds the checksum results
 md5checksum_name = "md5checksum.txt"
 # path to mapped miseq sequencer folders
 sequencer_share = {"M02353": "/media/M02353_MiSeqTemp/", "M02631": "/media/M02631_MiSeqTemp/"}
 
+# ================ demultiplexing 
+logfile_success = "Processing completed with 0 errors and 0 warnings."
