@@ -196,7 +196,7 @@ echo_to_log = "echo %s 2>&1 | /usr/bin/logger -t %s"
 
 ##################### Integrity check
 # the filename which holds the checksum results
-md5checksum_name = "checksum_result.txt"
+md5checksum_name = "md5checksum.txt"
 # path to mapped miseq sequencer folders
 sequencer_share = {"M02353": "/media/M02353_MiSeqTemp/", "M02631": "/media/M02631_MiSeqTemp/"}
 
