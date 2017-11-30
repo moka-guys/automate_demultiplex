@@ -376,7 +376,7 @@ class ready2start_demultiplexing():
             self.logger("Demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
             # Call function which updates smartsheet, changing status for this run from in progress to complete, where task = demultiplex.
             self.smartsheet_demultiplex_complete()
-            
+
         # If demultiplexing did not complete without errors
         else:
             # Write to log file and report last few lines of the failed runfolder's demultiplex log.
@@ -643,15 +643,15 @@ class ready2start_demultiplexing():
                 return False
 
             # create checksum for workstation copy
-            self.run_integrity_check(self.runfolderpath)
+            workstation_checksum_for_file = self.run_integrity_check(self.runfolderpath)
             # create checksum for seqeuncer copy
-            self.run_integrity_check(sequencer_copy_path)
+            sequencer_checksum_for_file = self.run_integrity_check(sequencer_copy_path)
 
             # open the file to contain the checksums
             with open(checksum_file_path, 'w') as checksum_file:
                 # write the folder name and path and checksums, seperated by '='
-                checksum_file.write("workstation checksum (" + self.runfolderpath + ") =" + self.workstation_checksum + "\n")
-                checksum_file.write("sequencer checksum (" + sequencer_copy_path + ") =" + self.sequencer_checksum + "\n")
+                checksum_file.write("workstation checksum (" + self.runfolderpath + ") =" + workstation_checksum_for_file + "\n")
+                checksum_file.write("sequencer checksum (" + sequencer_copy_path + ") =" + sequencer_checksum_for_file + "\n")
             
         # Unless it's a nextseq run and the checksums have not yet been created the checksum file path should point to a file
         if os.path.isfile(checksum_file_path):
