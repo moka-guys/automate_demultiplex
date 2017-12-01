@@ -645,6 +645,8 @@ class ready2start_demultiplexing():
             if config.checksum_complete_flag in checksums[-1]:
                 # if integrity check already reported write to sys.log that this has been seen
                 self.logger("already reported failed integrity check " + sequencer_copy_path, "demultiplex_fail")
+                # return false to report integrity check not passed
+                return False
             # if integrity check not yet performed perform it.
             else:    
                 # pass checksum file path to function which compares checksums. function returns true if the checksums match
