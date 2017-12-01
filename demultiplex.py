@@ -57,7 +57,6 @@ class get_list_of_runs():
 
         # List all files and folders in the runfolder directory
         all_runfolders = os.listdir(self.runfolders)
-        all_runfolders = ["1111_M02631_NMNOV17_ONCTEST"]
 
         # Create a class instance for checking and running demultiplexing on each runfolder
         demultiplex = ready2start_demultiplexing(self.now)
@@ -437,15 +436,12 @@ class ready2start_demultiplexing():
     def test_bcl2fastq(self):
         """Raise exception if bcl2fastq is not installed."""
         
-        # call the path to bcl2fastq2 using subprocess.check_output(). 
-        # checkoutput will return the stderr and stdout.
+        # call the path to bcl2fastq2 using subprocess to capture the stderr and stdout. NB the required text is in stderr not stdout
         proc = subprocess.Popen([self.bcl2fastq],stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         # Capture the streams
         (out, err) = proc.communicate()
 
-
-        # If bcl2fastq is installed and called with no inputs, the first line of stderr should
-        # contain the string "BCL to FASTQ file converter".
+        # If bcl2fastq is installed and called with no inputs, the first line of stderr should contain the string "BCL to FASTQ file converter".
         if "BCL to FASTQ file converter" not in err:
             # Write to script log file
             self.script_logfile.write('ERROR - BCL2FastQ installation test failed.')
@@ -701,13 +697,10 @@ class ready2start_demultiplexing():
         self.sequencer_checksum = checksums[1].split("=")[1].rstrip()
         
         # Should the test fail the script will stop here but it will continue to reach this point every hour. 
-        # Therefore can add a flag into the checksum file which will stop it getting this far
-        # append a note into the list containing the file contents
-        checksums.append(config.checksum_complete_flag)
         # open the file containing the md5 checksums as write, which  will overwrite the file
-        with open(checksum_file_path, 'w') as checksum_file:
-            # write the extended checksum list to file
-            checksum_file.writelines(checksums)
+        with open(checksum_file_path, 'a') as checksum_file:
+            # Add a flag into the checksum file which will stop it getting this far
+            checksum_file.write(config.checksum_complete_flag)
 
         # if the checksums match
         if self.workstation_checksum == self.sequencer_checksum:
