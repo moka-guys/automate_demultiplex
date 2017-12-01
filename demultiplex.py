@@ -268,6 +268,7 @@ class ready2start_demultiplexing():
             # Test if the samplesheet contains valid characters using self.check_valid_samplsheet(). 
             # Returns true if the sample sheet does not contain illegal characters
             if self.check_valid_samplesheet():
+                self.logger("Sample sheet is valid - no illegal characters found for run " + self.runfolder, "demultiplex_success")
                 # Record result in log file
                 self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns " +
                                           "......... All characters valid \n")
@@ -275,11 +276,8 @@ class ready2start_demultiplexing():
                 self.run_demultiplexing()
             # Else stop and write error messages to loggers and send error e-mail.
             else:
-                # Write error event to script log file
-                self.script_logfile.write("Checking for invalid characters in 'Sample_ID' and 'Sample_Name' columns" +
-                                          "......... Invalid characters found \n--- STOP ---\n")
                 # Record error messages in system log
-                self.logger("Invalid characters in samplesheet for run " + self.runfolder, "demultiplex_fail")
+                self.logger("Invalid characters found in samplesheet for run " + self.runfolder, "demultiplex_fail")
         else:
             # No samplesheet found. Stop and log message.
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
@@ -360,7 +358,7 @@ class ready2start_demultiplexing():
             # Write progress/status to script log file
             self.script_logfile.write("running bcl2fastq. command = " + command + "\n")
             # Add entry to system log
-            self.logger("Demultiplexing started for run " + self.runfolder, "demultiplex_started")
+            self.logger("Demultiplexing started for run " + self.runfolder, "demultiplex_success")
 
             # Run the bcl2fastq command to start demultiplexing. the script won't continue until this 
             # process finishes. Stderr and stdout streams are redirected to the log file by the command
@@ -493,13 +491,13 @@ class ready2start_demultiplexing():
         # Use response.get("") instead of response[""] to avoid KeyError if "message" missing.
         if response.get("message") == "SUCCESS":
             # Report to system log file
-            self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_updated")
+            self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_success")
         else:
             # Record error message to script log file
             self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
             # Record failure in system logs so that an error can be reported via slack. 
             # Failure to update smartsheet is not critical as it does not stop the run being processed.
-            self.logger("Smartsheet was NOT updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_demultiplex_error")
+            self.logger("Smartsheet was NOT updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_demultiplex_fail")
 
 
     def smartsheet_demultiplex_complete(self):
@@ -534,13 +532,13 @@ class ready2start_demultiplexing():
         response = update_OPMS.json()
         if response.get("message") == "SUCCESS":
             # Write to system log
-            self.logger("Smartsheet updated at end of demultiplexing", "smartsheet_demultiplex_updated")
+            self.logger("Smartsheet updated at end of demultiplexing", "smartsheet_demultiplex_success")
         else:
             # Record error message in script log file
             self.script_logfile.write("smartsheet NOT updated at complete step\n" + str(response))
             # Write to system log to enable alert via slack.
             # Failure to update smartsheet is not critical as it does not stop the run being processed.
-            self.logger("Smartsheet NOT updated at end of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_error")
+            self.logger("Smartsheet NOT updated at end of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_fail")
 
 
     def logger(self, message, tool):
@@ -653,7 +651,7 @@ class ready2start_demultiplexing():
                 if self.check_checksums(checksum_file_path):
                     
                     # write to sys log
-                    self.logger("integrity check of runfolder " + self.runfolder + " passed", "integrity_check_ok")
+                    self.logger("integrity check of runfolder " + self.runfolder + " passed", "demultiplex_success")
                     # return True to report integrity checking has passed
                     return True
                 # if md5checksums do not match send an email
@@ -677,7 +675,7 @@ class ready2start_demultiplexing():
             #write to script 
             self.script_logfile.write("md5checksums not performed by nextseq. waiting...\n")
             # write to sys.log - if this is found >2 hours in a row should probably be an alert
-            self.logger("md5checksums not yet available on nextseq for " + self.runfolder , "demultiplex_fail")
+            self.logger("md5checksums not yet available on nextseq for " + self.runfolder , "demultiplex_success")
             # return false to stop the script, saying integrity checking has not been completed  
             return False
 
