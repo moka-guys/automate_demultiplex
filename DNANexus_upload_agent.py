@@ -325,19 +325,19 @@ class upload2Nexus():
 
         
         # if there were no WES samples state this in log message and stop
-        if to_be_nexified ==0 :
+        if to_be_nexified == 0 :
             self.upload_agent_script_logfile.write("List of fastqs did not contain any known Pan numbers. Stopping\n")
 
         
         # else continue
         else:
-            if len(not_processed)>0:
+            if len(not_processed) > 0:
                 #add to logger
-                self.logger("unrecognised panel number found in run "+self.runfolder,"UA_unrecognised_panel_number_present")
+                self.logger("unrecognised panel number found in run " + self.runfolder,"UA_unrecognised_panel_number_present")
                 #write to logfile
-                self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\nSome fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
+                self.upload_agent_script_logfile.write(str(to_be_nexified) + " fastqs found.\nSome fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
             else:
-                self.upload_agent_script_logfile.write(str(to_be_nexified)+" fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
+                self.upload_agent_script_logfile.write(str(to_be_nexified) + " fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
             #build the file path with WES batch and NGS run numbers
             self.create_nexus_file_path()
 
@@ -355,7 +355,7 @@ class upload2Nexus():
         # a list to hold all the wes numbers
         WES_numbers = []
         # a list to hold all the NGS numbers
-        NGS_numbers=[]
+        NGS_numbers = []
 
         # for each fastq in the list of fastqs
         for fastq in self.list_of_samples:
@@ -377,7 +377,7 @@ class upload2Nexus():
                 WES_numbers.append(wesrun)
         
         # if there are wes batch numbers
-        if len(WES_numbers)>0:
+        if len(WES_numbers) > 0:
             # create a list of unique WES batches
             for wesnumber in set(WES_numbers):
                 # if multiple WES batches append each one with an underscore
@@ -400,12 +400,12 @@ class upload2Nexus():
             # self.nexus path
             self.nexus_path = self.runfolder + "_" + self.NGS_run + "_" + self.wes_number + fastq_folder
             #build project name
-            self.nexusproject=self.nexusproject+self.runfolder + "_" + self.NGS_run + "_" + self.wes_number
+            self.nexusproject = self.nexusproject+self.runfolder + "_" + self.NGS_run + "_" + self.wes_number
         else:
             # self.nexus path
             self.nexus_path = self.runfolder + "_" + self.NGS_run + fastq_folder
             #build project name
-            self.nexusproject=self.nexusproject+self.runfolder + "_" + self.NGS_run
+            self.nexusproject = self.nexusproject + self.runfolder + "_" + self.NGS_run
         
         #write to log
         self.upload_agent_script_logfile.write("fastqs will be uploaded to "+self.nexus_path+"\n\n----------------------CREATE AND SHARED DNA NEXUS PROJECT----------------------\n") 
@@ -421,12 +421,12 @@ class upload2Nexus():
         self.test_dx_toolkit()
 
         # build the nexus upload command                        
-        nexus_upload_command = self.restart_ua_1 + upload_agent + " --auth-token "+Nexus_API_Key+" --project "+ self.nexusproject +"  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string + self.restart_ua_2 % ("fastq files") 
+        nexus_upload_command = self.restart_ua_1 + upload_agent + " --auth-token " + Nexus_API_Key + " --project " + self.nexusproject + "  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string + self.restart_ua_2 % ("fastq files") 
         
         # open a file to hold all the upload agent commands
         runfolder_upload_cmd_file = open(self.runfolderpath + "/" + runfolder_upload_cmds, 'w')
         # write fastq upload commands and a way of distinguishing between upload of fastq and rest of runfolder
-        runfolder_upload_cmd_file.write("----------------------Upload of fastqs----------------------\n"+nexus_upload_command+"\n\n----------------------Upload rest of runfolder----------------------\n")
+        runfolder_upload_cmd_file.write("----------------------Upload of fastqs----------------------\n" + nexus_upload_command + "\n\n----------------------Upload rest of runfolder----------------------\n")
         # print nexus_upload_command
         #write to logfile
         self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus. See commands at "+self.runfolderpath + "/" + runfolder_upload_cmds + "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
@@ -436,16 +436,16 @@ class upload2Nexus():
         
         if not debug:
             # run the command, redirecting stderror to stdout
-            proc = subprocess.Popen([nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
+            proc = subprocess.Popen([nexus_upload_command], stderr = subprocess.STDOUT, stdout = subprocess.PIPE, shell = True)
             
             # capture the streams (err is redirected to out above)
             (out, err) = proc.communicate()
         else:
-            out="x"
-            err="y"
+            out = "x"
+            err = "y"
 
         # write to log
-        upload_started.write("\n----------------------Uploading fastqs "+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\n" + out)
+        upload_started.write("\n----------------------Uploading fastqs " + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n" + out)
         upload_started.close()
         
         #check fastqs uploaded successfully
@@ -551,31 +551,29 @@ class upload2Nexus():
         
         if not debug:
             # # run a command to execute the bash script made above
-            cmd="bash "+project_bash_script
-            proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            cmd = "bash " + project_bash_script
+            proc = subprocess.Popen([cmd], stderr = subprocess.PIPE, stdout = subprocess.PIPE, shell = True)
             
             # capture the streams
             (out, err) = proc.communicate()
             
             # capture out into std_out variable
-            std_out=out
+            std_out = out
             
             # split std_out on "project" and get the last item to capture the project ID
-            self.projectid="project"+std_out.split("project")[-1]
+            self.projectid = "project" + std_out.split("project")[-1]
             
-            print self.projectid
-            
-            # if haven't captured a project id send an email
-            if self.projectid=="":
-                self.logger("failed to create project in dna nexus "+self.nexusproject,"UA_error_creating_nexus_project")
+            # if haven't captured a project id report an error to system log
+            if self.projectid == "":
+                self.logger("failed to create project in dna nexus " + self.nexusproject,"UA_error_creating_nexus_project")
 
                 # raise exception to stop script
                 raise Exception, "Unable to create DNA Nexus project"
             else:               
                 # build a string of the users list to make log look nice
-                user_str=""
+                user_str = ""
                 for i in users:
-                    user_str=user_str+i+","
+                    user_str = user_str + i + ","
                 
                 # write to log 
                 self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared to " % (self.nexusproject) + user_str +"\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
@@ -617,12 +615,11 @@ class upload2Nexus():
                 #get panel name and bed file
                 for panel in panelnumbers:
                     # add underscore to Pan number so Pan1000 is not true when looking for Pan100
-                    #Find oncology samples and generate a list of fastq to run through amplivar pipeline
+                    # Find oncology samples and generate a list of fastq to run through amplivar pipeline
                     if panel+"_" in fastq and panel == "Pan1190":
                         list_onco_fastq.append(read1)
                         list_onco_fastq.append(read2)
-                        # NOT REQUIRED as samples are grouped - use same panelname to get the email which will be used to upload to IVA
-                        # ingenuity_email=email_panel_dict[panel]
+                        
 
                     # Find NGS or WES samples
                     elif panel+"_" in fastq:
@@ -741,67 +738,66 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.close()
 
         # write to cron job script
-        self.upload_agent_script_logfile.write("dx run commands issued - see "+self.bash_script+"\nMultiQC and Smartsheet complete apps set with the project id:"+self.projectid.rstrip()+"\n\njob ids captured from standard out:\n")
+        self.upload_agent_script_logfile.write("dx run commands issued - see " + self.bash_script + "\nMultiQC and Smartsheet complete apps set with the project id:" + self.projectid.rstrip() + "\n\njob ids captured from standard out:\n")
         
         # run a command to execute the bash script made above
-        cmd="bash "+self.bash_script
+        cmd="bash " + self.bash_script
 
         if not debug:
             # execute command
-            proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+            proc = subprocess.Popen([cmd], stderr = subprocess.PIPE, stdout = subprocess.PIPE, shell = True)
         
             # capture the streams
             (out, err) = proc.communicate()
         else:
-            out="x"
-            err=""
+            out = "x"
+            err = ""
 
         #capture standard out (the job ids) to the log file
         self.upload_agent_script_logfile.write(out)
               
         # if any standard error
         if err:          
+            self.logger("Error when starting pipeline for run " + self.runfolder + " stderror = " + err, "UA_pipeline_start_error")
 
-            self.logger("Error when starting pipeline for run "+ self.runfolder+" stderror = "+err,"UA_pipeline_start_error")
-
-            # write error message to log file
-            self.upload_agent_script_logfile.write("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: "+err+"\n\nemailing error message:\n"+self.email_message+"\n\n")
+            # write error message to log file# exact error message is written to log file by logger function
+            self.upload_agent_script_logfile.write("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: " + err + "\n\n")
         else:
             # write error message to log file
-            self.logger("dx run commands issued without error for run "+ self.runfolder,"UA_pipeline_started_ok")
+            self.logger("dx run commands issued without error for run " + self.runfolder, "UA_pipeline_started_ok")
         
         # create empty list for the sql queries
-        sql=[]
+        sql = []
 
         # loop through the WES DNA numbers to generate sql query to record Pipeline version
-        if len(self.list_of_DNA_numbers_WES)>0:
+        if len(self.list_of_DNA_numbers_WES) > 0:
             # start string
-            DNA_list="('"
+            DNA_list = "('"
             # loop through unique list of dna numbers obtained from fastq filenames
             for DNA in set(self.list_of_DNA_numbers_WES):
                 # build the sq query
-                DNA_list=DNA_list+DNA+"','"
+                DNA_list = DNA_list + DNA + "','"
             # close string
-            DNA_list=DNA_list+")"
+            DNA_list = DNA_list + ")"
 
             # remove the excess ,' from the end of the string
-            DNA_list=DNA_list.replace(",')",")")
+            DNA_list = DNA_list.replace(",')",")")
             
             # build the rest of the sql update query and append to list
-            sql.append("update NGSTest set PipelineVersion = "+moka_pipeline_ID+" where dna in " + DNA_list)
+            sql.append("update NGSTest set PipelineVersion = " + moka_pipeline_ID + " where dna in " + DNA_list)
 
         # custom panels requires insert queries (one per sample)
-        if len(self.list_of_DNA_numbers_nonWES)>0:
+        if len(self.list_of_DNA_numbers_nonWES) > 0:
             # loop through unique list of dna numbers obtained from fastq filenames
             for DNA in set(self.list_of_DNA_numbers_nonWES):
                 # build the rest of the sql update query
-                sql.append("insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"+DNA+"','"+moka_pipeline_ID+"')")
+                sql.append("insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('" + DNA + "','" + moka_pipeline_ID + "')")
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~ TODO ~~~~~~~~~~~~~~~~~~~~~~~~
         # Generate SQL for cancer samples.
 
         # combine all the queries into a string suitable for an email
-        sql_statements=""
+        sql_statements = ""
         # if there are no sql commands it must be an oncology run
         if len(sql)==0:
             sql_statements="No SQL for oncology samples"
@@ -810,7 +806,7 @@ class upload2Nexus():
             for statement in sql:
                 sql_statements=sql_statements+statement+"\n"
 
-        # write error message to log file
+        # write action to system log file
         self.logger("SQL statement email sent for run "+ self.runfolder,"UA_SQL_email_sent")
         
         # email this query
@@ -833,20 +829,17 @@ class upload2Nexus():
             if panel == "Pan1120":
                 pass
             else:
-                # ensure there is a CNV bedfile in the dictionary but if not don't raise an exception, send an email. 
+                # ensure there is a CNV bedfile in the dictionary but if not don't raise an exception, trigger a alert via system log. 
                 if panelnumbers[panel] == "":
-                    self.logger("Error when issuing RPKM command for run "+ self.runfolder+". stderror = "+err,"UA_Error_issuing_RPKM_dx_run_command")
-                    if not debug:
-                        pass
-                    
+                    self.logger("Error when issuing RPKM command for run " + self.runfolder + ". stderror = " + err, "UA_Error_issuing_RPKM_dx_run_command")
                 else:
                     # build RPKM command
-                    RPKM_command = self.RPKM_command + RPKM_bedfile + app_project+bedfile_folder+panelnumbers[panel]+"_RPKM.bed"  + RPKM_project + self.nexusproject + RPKM_bedfile_to_download + panel + self.project +self.projectid.rstrip()+ self.depends+self.token.replace(")","")
+                    RPKM_command = self.RPKM_command + RPKM_bedfile + app_project + bedfile_folder + panelnumbers[panel] + "_RPKM.bed"  + RPKM_project + self.nexusproject + RPKM_bedfile_to_download + panel + self.project + self.projectid.rstrip() + self.depends + self.token.replace(")", "")
                     # write commands to bash script
-                    self.DNA_Nexus_bash_script.write(RPKM_command+"\n")
+                    self.DNA_Nexus_bash_script.write(RPKM_command + "\n")
 
         # write to cron job script
-        self.upload_agent_script_logfile.write("RPKM commands build for "+str(len(set(self.panels_in_run)))+" panels ("+" ".join(set(self.panels_in_run))+") - see "+self.bash_script+"\n\n")
+        self.upload_agent_script_logfile.write("RPKM commands build for " + str(len(set(self.panels_in_run))) + " panels (" + " ".join(set(self.panels_in_run)) + ") - see " + self.bash_script + "\n\n")
 
     def upload_rest_of_runfolder(self):
         # write status update to log file
@@ -1131,13 +1124,10 @@ class upload2Nexus():
                 if "uploaded successfully" in upload:
                     self.upload_agent_script_logfile.write("There was a disruption to the network when uploading the Fastq files but it completed successfully\n")                    
                     self.logger("upload of fastq was disrupted but completed for run "+self.runfolder,"UA_fastq_upload_complete_after_disruption")
-                # other wise send an email and write to log
+                # other wise write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
                     self.logger("upload of fastqs failed for run "+self.runfolder,"UA_fastq_upload_failed")
-        
-                    #write the email message to log file
-                    self.upload_agent_script_logfile.write(self.email_message)
             else:
                 #write to log file check was ok
                 self.logger("upload of fastq files complete for run "+self.runfolder,"UA_fastq_upload_complete")
@@ -1160,11 +1150,9 @@ class upload2Nexus():
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
                     self.logger("upload of runfolder failed for run "+self.runfolder,"UA_runfolder_upload_failed")
-                    #write the email message to log file
-                    self.upload_agent_script_logfile.write(self.email_message)
             else:
                 #write to log file check was ok
-                self.upload_agent_script_logfile.write("There was no issues when backing up the run folder\n")
+                self.upload_agent_script_logfile.write("There were no issues when backing up the run folder\n")
                 self.logger("backup of runfolder complete for run "+self.runfolder,"UA_backup_of_rest_of_runfolder_complete")
 
         
@@ -1185,27 +1173,29 @@ class upload2Nexus():
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the netowkr which prevented log files being uploaded\n")
                     self.logger("upload of log files failed for run "+self.runfolder,"UA_logfiles_upload_failed")
-                    #write the email message to log file
-                    self.upload_agent_script_logfile.write(self.email_message)
             else:
                 #write to log file check was ok
-                self.upload_agent_script_logfile.write("There was no issues when uploading the logfiles\n")
+                self.upload_agent_script_logfile.write("There were no issues when uploading the logfiles\n")
                 self.logger("upload of log files complete without issue "+self.runfolder,"UA_logfiles_upload_complete")
 
 
     def logger(self, message, tool):
-        # create subprocess command
-        log=echo_to_log % (message,tool)
+        """Write log messages to the system log.
+        Arguments:
+        message (str)
+            Details about the logged event. 
+        tool (str)
+            Tool name. Used to search within the insight ops website.
+        """
+        # Create subprocess command string, passing message and tool name to the command
+        log = "/usr/bin/logger -t %s '%s'" % (tool, message)
         
-        # run the command
-        proc = subprocess.Popen([log], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-        
-        # capture the streams 
-        (out, err) = proc.communicate()
-        #if no stderr
-        if not err:
-            # write this to the log file
-            self.upload_agent_script_logfile.write("log written to /usr/bin/logger\n"+log+"\n")
+        if subprocess.call([log],shell=True) == 0:
+            # If the log command produced no errors, record the log command string to the script logfile.
+            self.upload_agent_script_logfile.write("Log written to /usr/bin/logger\n" + log + "\n")
+        # Else record failure to write to system log to the script log file
+        else:
+            self.upload_agent_script_logfile.write("Failed to write log to /usr/bin/logger\n" + log + "\n")
 
 
 if __name__ == '__main__':
