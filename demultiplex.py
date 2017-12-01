@@ -57,6 +57,7 @@ class get_list_of_runs():
 
         # List all files and folders in the runfolder directory
         all_runfolders = os.listdir(self.runfolders)
+        all_runfolders = ["1111_M02631_NMNOV17_ONCTEST"]
 
         # Create a class instance for checking and running demultiplexing on each runfolder
         demultiplex = ready2start_demultiplexing(self.now)
@@ -358,7 +359,7 @@ class ready2start_demultiplexing():
                       demultiplex_log + " 2>&1")
 
             # Write progress/status to script log file
-            self.script_logfile.write("running bcl2fastq ......... \ncommand = " + command + "\n")
+            self.script_logfile.write("running bcl2fastq. command = " + command + "\n")
             # Add entry to system log
             self.logger("Demultiplexing started for run " + self.runfolder, "demultiplex_started")
 
@@ -386,8 +387,6 @@ class ready2start_demultiplexing():
 
         # If demultiplexing completed successfully - looking for expected success statement as defined in config file
         if config.logfile_success in bcl2fastq_log_tail:
-            # Write to script_logfile
-            self.script_logfile.write("demultiplexing complete\n")
             # Write to system log
             self.logger("Demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
             # Call function which updates smartsheet, changing status for this run from in progress to complete, where task = demultiplex.
@@ -456,8 +455,6 @@ class ready2start_demultiplexing():
         else:
             # Write test success message to system log
             self.logger("BCL2FastQ installation test passed.", "demultiplex_success")
-            # Write test success message to script log file
-            self.script_logfile.write("bcl2fastq installation check passed\n")
 
     def smartsheet_demultiplex_in_progress(self):
         """Update smartsheet to say that demultiplexing is in progress."""
@@ -499,8 +496,6 @@ class ready2start_demultiplexing():
 
         # Use response.get("") instead of response[""] to avoid KeyError if "message" missing.
         if response.get("message") == "SUCCESS":
-            # Write to script log file  
-            self.script_logfile.write("smartsheet updated to say in progress\n")
             # Report to system log file
             self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_updated")
         else:
@@ -542,8 +537,6 @@ class ready2start_demultiplexing():
         # Check the result of the update attempt
         response = update_OPMS.json()
         if response.get("message") == "SUCCESS":
-            # Write to script log file
-            self.script_logfile.write("smartsheet updated to say complete\n")
             # Write to system log
             self.logger("Smartsheet updated at end of demultiplexing", "smartsheet_demultiplex_updated")
         else:
@@ -567,7 +560,7 @@ class ready2start_demultiplexing():
         
         if subprocess.call([log],shell=True) == 0:
             # If the log command produced no errors, record the log command string to the script logfile.
-            self.script_logfile.write("Log written to /usr/bin/logger\n" + log + "\n")
+            self.script_logfile.write("Log written - " + tool + ": "+ message + "\n")
         # Else record failure to write to system log to the script log file
         else:
             self.script_logfile.write("Failed to write log to /usr/bin/logger\n" + log + "\n")
@@ -625,58 +618,60 @@ class ready2start_demultiplexing():
 
 
             # check the run folder paths have been identified correctly
-            # if the sequencer_copy_path exists
-            if os.path.isdir(sequencer_copy_path):
-                # write to sys.log to say mapped temp folder found
-                self.logger("mapped sequencer runfolder identified - " + sequencer_copy_path, "integrity_sequencer_runfolder_ok")
-                # write to the logfile
-                self.script_logfile.write("mapped sequencer run folder identified ok: " + sequencer_copy_path + "\n")
-            # if the sequencer_copy_path does not exist
-            else:
+            # if the sequencer_copy_path doesn't exist
+            if not os.path.isdir(sequencer_copy_path):
                 # write to sys.log
                 self.logger("integrity check fail. mapped sequencer runfolder does not exist: " + sequencer_copy_path, "demultiplex_fail")
-                # write to the logfile
-                self.script_logfile.write("mapped sequencer run folder does NOT exist: " + sequencer_copy_path + "\n")
                 # return false to stop the script, saying integrity checking has not been completed
                 return False
 
-            # create checksum for workstation copy
-            workstation_checksum_for_file = dirhash(self.runfolderpath, 'md5')
-            # create checksum for seqeuncer copy
-            sequencer_checksum_for_file = dirhash(sequencer_copy_path, 'md5')
+            #check the checksums have not already been calculated
+            if not os.path.isfile(checksum_file_path):
+                # create checksum for workstation copy
+                workstation_checksum_for_file = dirhash(self.runfolderpath, 'md5')
+                # create checksum for seqeuncer copy
+                sequencer_checksum_for_file = dirhash(sequencer_copy_path, 'md5')
 
-            # open the file to contain the checksums
-            with open(checksum_file_path, 'w') as checksum_file:
-                # write the folder name and path and checksums, seperated by '='
-                checksum_file.write("workstation checksum (" + self.runfolderpath + ") =" + workstation_checksum_for_file + "\n")
-                checksum_file.write("sequencer checksum (" + sequencer_copy_path + ") =" + sequencer_checksum_for_file + "\n")
+                # open the file to contain the checksums
+                with open(checksum_file_path, 'w') as checksum_file:
+                    # write the folder name and path and checksums, seperated by '='
+                    checksum_file.write("workstation checksum (" + self.runfolderpath + ") =" + workstation_checksum_for_file + "\n")
+                    checksum_file.write("sequencer checksum (" + sequencer_copy_path + ") =" + sequencer_checksum_for_file + "\n")
+
             
         # Unless it's a nextseq run and the checksums have not yet been created the checksum file path should point to a file
         if os.path.isfile(checksum_file_path):
-            # pass checksum file path to function which compares checksums. function returns true if the checksums match
-            if self.check_checksums(checksum_file_path):
-                # write to sys log
-                self.logger("integrity check of runfolder " + self.runfolder + " passed", "integrity_check_ok")
-                # write to the logfile
-                self.script_logfile.write("integrity check of runfolder passed\n")
-                # return True to report integrity checking has passed
-                return True
-            # if md5checksums do not match send an email
-            else:
-                # send an email as it's very urgent
-                self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
-                self.email_priority = 1
-                self.email_message = "run:\t" + self.runfolder + "\nsequencer checksum =" + self.sequencer_checksum + "\n" \
-                                    + "workstation checksum =" + self.workstation_checksum + "\n" \
-                                    + "Please follow the protocol for when integrity checks fail"
-                self.send_an_email()
-        
-                # record test failed in sys log
-                self.logger("Integrity check fail. checksums do not match for " + self.runfolder, "demultiplex_fail")
-                # also write to logfile
-                self.script_logfile.write("integrity check of runfolder failed - checksums do not match. see " + checksum_file_path + "\n")
-                # return false to stop the script, saying integrity checking has not been completed      
-                return False
+            # To check that the checksum has not already been checked - open the file containing the md5 checksums
+            with open(checksum_file_path, 'r') as checksum_file:
+                # read the checksum file into a list
+                checksums = checksum_file.readlines()
+            #assess last line in file (last element in list) to see if the flag which denotes checksum test has already been performed is present.
+            if config.checksum_complete_flag in checksums[-1]:
+                # if integrity check already reported write to sys.log that this has been seen
+                self.logger("already reported failed integrity check " + sequencer_copy_path, "demultiplex_fail")
+            # if integrity check not yet performed perform it.
+            else:    
+                # pass checksum file path to function which compares checksums. function returns true if the checksums match
+                if self.check_checksums(checksum_file_path):
+                    
+                    # write to sys log
+                    self.logger("integrity check of runfolder " + self.runfolder + " passed", "integrity_check_ok")
+                    # return True to report integrity checking has passed
+                    return True
+                # if md5checksums do not match send an email
+                else:
+                    # send an email as it's very urgent
+                    self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
+                    self.email_priority = 1
+                    self.email_message = "run:\t" + self.runfolder + "\nsequencer checksum =" + self.sequencer_checksum + "\n" \
+                                        + "workstation checksum =" + self.workstation_checksum + "\n" \
+                                        + "Please follow the protocol for when integrity checks fail"
+                    self.send_an_email()
+            
+                    # record test failed in sys log
+                    self.logger("Integrity check fail. checksums do not match for " + self.runfolder + "see " + checksum_file_path, "demultiplex_fail")
+                    # return false to stop the script, saying integrity checking has not been completed      
+                    return False
 
 
         # if there is no checksum file it must be a nextseq run which has finished (we already checked for the RTAcomplete file) but checksums not available 
@@ -704,6 +699,16 @@ class ready2start_demultiplexing():
         # split on equals to capture just the checksum (and remove any new line characters incase they result in a differenece)
         self.workstation_checksum = checksums[0].split("=")[1].rstrip()
         self.sequencer_checksum = checksums[1].split("=")[1].rstrip()
+        
+        # Should the test fail the script will stop here but it will continue to reach this point every hour. 
+        # Therefore can add a flag into the checksum file which will stop it getting this far
+        # append a note into the list containing the file contents
+        checksums.append(config.checksum_complete_flag)
+        # open the file containing the md5 checksums as write, which  will overwrite the file
+        with open(checksum_file_path, 'w') as checksum_file:
+            # write the extended checksum list to file
+            checksum_file.writelines(checksums)
+
         # if the checksums match
         if self.workstation_checksum == self.sequencer_checksum:
             # if md5checksums match return to say test passed
@@ -711,6 +716,7 @@ class ready2start_demultiplexing():
         else:
             #otherwise return false
             return False
+
 
 if __name__ == '__main__':
     # Create instance of get_list_of_runs

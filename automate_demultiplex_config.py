@@ -195,7 +195,8 @@ smtp_do_tls = True
 md5checksum_name = "md5checksum.txt"
 # path to mapped miseq sequencer folders
 sequencer_share = {"M02353": "/media/M02353_MiSeqTemp/", "M02631": "/media/M02631_MiSeqTemp/"}
-
+#checksum complete statement
+checksum_complete_flag="Checksum result reported"
 # ================ demultiplexing 
 logfile_success = "Processing completed with 0 errors and 0 warnings."
 
