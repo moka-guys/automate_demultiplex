@@ -65,11 +65,11 @@ class get_list_of_runs():
                            "demultiplex_started")
 
         # Loop through directory listing and pass runfolders to demultiplex.already_demultiplexed()
+        # This function determines if the runfolder is ready to be demultiplexed and triggers demultiplexing
         for folder in all_runfolders:
-            # Ignore folders in the list config.ignore_directories
-            if folder not in config.ignore_directories:
-                if os.path.isdir(self.runfolders + "/" + folder):  # Select directories only
-                    demultiplex.already_demultiplexed(folder)
+            # Ignore folders in the list config.ignore_directories and test that it is a directory (ignoring files)
+            if folder not in config.ignore_directories and os.path.isdir(self.runfolders + "/" + folder):  
+                demultiplex.already_demultiplexed(folder)
 
         # Get number of runfolders processed by bcl2fastq during this cycle
         num_processed_runfolders = len(demultiplex.processed_runfolders)
@@ -163,10 +163,12 @@ class ready2start_demultiplexing():
         self.pw = config.pw
         self.host = config.host
         self.port = config.port
-        self.me = config.me
-        self.you = config.you
         self.smtp_do_tls = config.smtp_do_tls
-
+        # who the email is coming from
+        self.me = config.me
+        # who the email is going to
+        self.you = config.you
+        
         # some variables used by send_an_email function
         self.email_subject=""
         self.email_priority=1
@@ -179,8 +181,9 @@ class ready2start_demultiplexing():
         self.sheetid = config.smartsheet_sheetid
         # New row variable
         self.rowid = ""
-        # Time stamp
-        self.smartsheet_now = ""
+        # Time stamp for when run started
+        self.smartsheet_started = ""
+        self.smartsheet_complete = ""
         # Column ids
         self.ss_title = str(config.ss_title)
         self.ss_description = str(config.ss_description)
@@ -199,6 +202,10 @@ class ready2start_demultiplexing():
         # variables to hold checksums:
         self.sequencer_checksum = ""
         self.workstation_checksum = ""
+        
+        # variable to count # samples on a run - used to update smartsheet
+        self.sample_count=0
+
 
     def already_demultiplexed(self, runfolder):
         """Check if the runfolder has been demultiplexed. This is denoted by the presence of the
@@ -220,7 +227,7 @@ class ready2start_demultiplexing():
         # Check if the demultiplex log file is present 
         # using the os.path.isfile() function to determine if demultiplexlog.txt is present
         if os.path.isfile(self.runfolderpath + "/" + self.demultiplexed):
-            # Stop script and write to log file
+            # Stop processing this run folder and write to log file
             self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed  -  demultiplex log found @ " + self.runfolderpath + "/" + self.demultiplexed + " \n--- STOP ---\n")
         else:
             # Else proceed by calling the function which checks if sequencing has finished
@@ -291,12 +298,15 @@ class ready2start_demultiplexing():
         # Separate characters into a set for quick lookup
         valid_char_set = set(valid_chars.split())
 
-        # Open samplesheet and loop through in reverse order.
+        # Open samplesheet as read only.
         with open(self.samplesheet, 'r') as samplesheet_stream:
+            # read the file into a list and loop through the list in reverse (bottom to top).
+            # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
             for line in reversed(samplesheet_stream.readlines()):
                 # If the line contains table headers, stop looping through the file
                 if line.startswith("Sample_ID"):
                     break
+                # if it's a line detailing a sample 
                 else:
                     # Split the current line of the csv, with commas as the delimiter
                     columns = line.split(",")
@@ -306,6 +316,9 @@ class ready2start_demultiplexing():
                     # Append sample id and sample name to sampleStrings for testing
                     sample_strings.append(sample_id)
                     sample_strings.append(sample_name)
+
+                    # increase sample count to record in smartsheet how many samples have been processed
+                    self.sample_count += 1
 
         # Loop through the characters of each sample string
         for sample_string in sample_strings:
@@ -320,11 +333,13 @@ class ready2start_demultiplexing():
         """Run bcl2fastq using runfolder as input. Create demultiplex log file in runfolder."""
 
         # Call function to test if bcl2fastq is installed and working as expected
+        # if it fails an exception is raised.
         self.test_bcl2fastq()
         # Call function to add the run to smartsheet, with status set to 'in progress'
         self.smartsheet_demultiplex_in_progress()
 
-        # before demultiplexing starts check the integrity of the runfolder against that on the sequencer. Only proceed if passes check
+        # before demultiplexing starts check the integrity of the runfolder against that on the sequencer. 
+        # If the checks pass the funcion will return true. if it fails errors are reported within the function
         if self.prepare_integrity_check():
             # Set demultiplex log file name for this runfolder.
             demultiplex_log = (self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed)
@@ -337,6 +352,7 @@ class ready2start_demultiplexing():
             #           --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv
             #           --no-lane-splitting >> 
             #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/demultiplexlog.txt 2&>1"
+            # where --no-lane-splitting creates a single fastq for a sample, not into one fastq per lane
             command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder + 
                       " --sample-sheet " + self.samplesheet + " --no-lane-splitting >> " +
                       demultiplex_log + " 2>&1")
@@ -421,13 +437,13 @@ class ready2start_demultiplexing():
 
     def test_bcl2fastq(self):
         """Raise exception if bcl2fastq is not installed."""
-        # Call bcl2fastq executeable with no inputs
-        command = self.bcl2fastq
-        # Execute the bcl2fastq command
-        proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-
+        
+        # call the path to bcl2fastq2 using subprocess.check_output(). 
+        # checkoutput will return the stderr and stdout.
+        proc = subprocess.Popen([self.bcl2fastq],stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         # Capture the streams
         (out, err) = proc.communicate()
+
 
         # If bcl2fastq is installed and called with no inputs, the first line of stderr should
         # contain the string "BCL to FASTQ file converter".
@@ -447,7 +463,7 @@ class ready2start_demultiplexing():
         """Update smartsheet to say that demultiplexing is in progress."""
 
         # Take current time stamp
-        self.smartsheet_now = str('{:%Y-%m-%d}'.format(datetime.datetime.utcnow()))
+        self.smartsheet_started ='{:%Y-%m-%d}'.format(datetime.datetime.now())
 
         # Uncomment this block to get the column ids for a new sheet
         ########################################################################
@@ -461,16 +477,13 @@ class ready2start_demultiplexing():
         #     print i['title'], i['id']
         ########################################################################
 
-        # Read the sample sheet, capture the NGS run number and count the number of samples on the run.
-        count = 0
-        with open(self.samplesheet, 'r') as samplesheet:
-            for line in samplesheet:
-                if line.startswith("NGS") or line.startswith("ONC"):
-                    count = count + 1
-                    runnumber = line.split("_")[0]
+                    
 
-        # Set all values to be inserted into smartsheet
-        payload = '{"cells": [{"columnId": ' + self.ss_title + ', "value": "' + self.runfolder + '"}, {"columnId": ' + self.ss_description + ', "value": "Demultiplex"}, {"columnId": ' + self.ss_samples + ', "value": ' + str(count) + '},{"columnId": ' + self.ss_status + ', "value": "In Progress"},{"columnId": ' + self.ss_priority + ', "value": "Medium"},{"columnId": ' + self.ss_assigned + ', "value": "aledjones@nhs.net"},{"columnId": ' + self.ss_received + ', "value": "' + str(self.smartsheet_now) + '"}],"toBottom":true}'
+        # create a json object that is used to inserted row into  into smartsheet
+        payload = '{"cells": [{"columnId": ' + self.ss_title + ', "value": "' + self.runfolder + '"}, {"columnId": ' + self.ss_description + \
+        ', "value": "Demultiplex"}, {"columnId": ' + self.ss_samples + ', "value": ' + str(self.sample_count) + '},{"columnId": ' + self.ss_status + \
+        ', "value": "In Progress"},{"columnId": ' + self.ss_priority + ', "value": "Medium"},{"columnId": ' + self.ss_assigned + \
+        ', "value": "aledjones@nhs.net"},{"columnId": ' + self.ss_received + ', "value": "' + str(self.smartsheet_started) + '"}],"toBottom":true}'
 
         # Create url for uploading a new row
         url = self.url + "/rows"
@@ -478,12 +491,11 @@ class ready2start_demultiplexing():
         # Add the row using POST
         r = requests.post(url, headers=self.headers, data=payload)
 
-        # Parse the output of the POST statement to capture the id of the row that has been updated. 
+        # capture the output of the POST statement to capture the id of the row that has been updated. 
         # This can be used when updating the status to complete in function smartsheet_demultiplex_complete().
         response = r.json()
-        for i in response["result"]:
-            if i == "id":
-                self.rowid = response["result"][i]
+        # capture the value of the row id from the json response
+        self.rowid = response["result"]["id"]
 
         # Use response.get("") instead of response[""] to avoid KeyError if "message" missing.
         if response.get("message") == "SUCCESS":
@@ -500,37 +512,28 @@ class ready2start_demultiplexing():
 
 
     def smartsheet_demultiplex_complete(self):
-        """Update smartsheet to say demultiplexing is complete. Add the completed date and calculate
-        the duration (in days) and if met TAT.
+        """Update smartsheet to say demultiplexing is complete. 
+        Add the completed date and calculate the duration (in days) and if met TAT.
         """
-        # Build URL to read the row using the row id captured from smartsheet_demultiplex_in_progress()
-        url = 'https://api.smartsheet.com/2.0/sheets/' + str(self.sheetid) + '/rows/' + str(self.rowid)
-        # Get row
-        r = requests.get(url, headers=self.headers)
-        # Read response in json
-        response = r.json()
-        # Loop through each column and extract the received date
-        for col in response["cells"]:
-            if str(col["columnId"]) == self.ss_received:
-                recieved = datetime.datetime.strptime(col['value'], '%Y-%m-%d')
-
-        # Convert the current time stamp into a string in specific format. 
-        self.smartsheet_now = str('{:%Y-%m-%d}'.format(datetime.datetime.utcnow()))
-        # Reformat time stamp to a form that allows for calculating the time taken.
-        now = datetime.datetime.strptime(self.smartsheet_now, '%Y-%m-%d')
+        # assign current timestamp to self.smartsheet_complete
+        self.smartsheet_complete = '{:%Y-%m-%d}'.format(datetime.datetime.now())
+                
         # Calculate the number of days taken (add one so if same day this counts as 1 day not 0).
         # This is the difference between now and the date received (recorded in smartsheet).
-        duration = (now - recieved).days + 1
+        # need to convert self.smartsheet_complete and self.smartsheet_started from string to datetime object
+        duration = (datetime.datetime.strptime(self.smartsheet_complete, "%Y-%m-%d") -datetime.datetime.strptime(self.smartsheet_started, "%Y-%m-%d")).days + 1
 
         # Set flag to show if TAT was met. Give default value of 1, which can be changed to 0
         # if the duration exceeds the expected turnaround time.
-        TAT = 1
+        TAT = "1"
         # If duration is greater than 4, change TAT to 0 as this is outside the target TAT.
-        if duration > 4:
-            TAT = 0
+        if duration > config.allowed_time_for_tasks:
+            TAT = "0"
 
         # Build payload used to update the row
-        payload = '{"id":"' + str(self.rowid) + '", "cells": [{"columnId":"' + str(self.ss_duration) + '","value":"' + str(duration) + '"},{"columnId":"' + str(self.ss_metTAT) + '","value":"' + str(TAT) + '"},{"columnId":"' + str(self.ss_status) + '","value":"Complete"},{"columnId": ' + self.ss_completed + ', "value": "' + str(self.smartsheet_now) + '"}]}'
+        payload = '{"id":"' + str(self.rowid) + '", "cells": [{"columnId":"' + str(self.ss_duration) + '","value":"' + str(duration) + '"},{"columnId":"' \
+        + str(self.ss_metTAT) + '","value":"' + TAT + '"},{"columnId":"' + str(self.ss_status) + '","value":"Complete"},{"columnId": ' + self.ss_completed + \
+        ', "value": "' + str(self.smartsheet_complete) + '"}]}'
 
         # Build url to update row
         url = self.url + "/rows"
@@ -553,7 +556,6 @@ class ready2start_demultiplexing():
 
     def logger(self, message, tool):
         """Write log messages to the system log.
-        
         Arguments:
         message (str)
             Details about the logged event. 
@@ -561,14 +563,10 @@ class ready2start_demultiplexing():
             Tool name. Used to search within the insight ops website.
         """
         # Create subprocess command string, passing message and tool name to the command
-        log = "echo '%s' 2>&1 | /usr/bin/logger -t %s" % (message, tool)
-        # Run the command using subprocess
-        proc = subprocess.Popen([log], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-        # Capture the streams
-        (out, err) = proc.communicate()
-
-        # If the log command produced no errors, record the log command string to the script logfile.
-        if not err:
+        log = "/usr/bin/logger -t %s '%s'" % (tool, message)
+        
+        if subprocess.call([log],shell=True) == 0:
+            # If the log command produced no errors, record the log command string to the script logfile.
             self.script_logfile.write("Log written to /usr/bin/logger\n" + log + "\n")
         # Else record failure to write to system log to the script log file
         else:
@@ -643,9 +641,9 @@ class ready2start_demultiplexing():
                 return False
 
             # create checksum for workstation copy
-            workstation_checksum_for_file = self.run_integrity_check(self.runfolderpath)
+            workstation_checksum_for_file = dirhash(self.runfolderpath, 'md5')
             # create checksum for seqeuncer copy
-            sequencer_checksum_for_file = self.run_integrity_check(sequencer_copy_path)
+            sequencer_checksum_for_file = dirhash(sequencer_copy_path, 'md5')
 
             # open the file to contain the checksums
             with open(checksum_file_path, 'w') as checksum_file:
@@ -689,16 +687,6 @@ class ready2start_demultiplexing():
             self.logger("md5checksums not yet available on nextseq for " + self.runfolder , "demultiplex_fail")
             # return false to stop the script, saying integrity checking has not been completed  
             return False
-
-
-    def run_integrity_check(self, dirpath):
-        """
-        This function is passed the path to a runfolder
-        A checksum is calculated for that directory and returned
-        """
-        # calculate md5 checksum directory
-        return dirhash(dirpath, 'md5')
-
 
     def check_checksums(self, checksum_file_path):
         """

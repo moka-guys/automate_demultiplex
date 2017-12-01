@@ -190,10 +190,6 @@ me = 'gst-tr.mokaguys@nhs.net'
 you = ('gst-tr.mokaguys@nhs.net',)
 smtp_do_tls = True
 
-# ================= Loggly
-# log command
-echo_to_log = "echo %s 2>&1 | /usr/bin/logger -t %s"
-
 # ================ Integrity check
 # the filename which holds the checksum results
 md5checksum_name = "md5checksum.txt"
@@ -202,3 +198,7 @@ sequencer_share = {"M02353": "/media/M02353_MiSeqTemp/", "M02631": "/media/M0263
 
 # ================ demultiplexing 
 logfile_success = "Processing completed with 0 errors and 0 warnings."
+
+#=================turnaround time
+# if a task takes more than this amount of time it is out of TAT
+allowed_time_for_tasks=4
