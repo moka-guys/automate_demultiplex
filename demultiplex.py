@@ -491,7 +491,7 @@ class ready2start_demultiplexing():
         # Use response.get("") instead of response[""] to avoid KeyError if "message" missing.
         if response.get("message") == "SUCCESS":
             # Report to system log file
-            self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_success")
+            self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_pass")
         else:
             # Record error message to script log file
             self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
@@ -532,7 +532,7 @@ class ready2start_demultiplexing():
         response = update_OPMS.json()
         if response.get("message") == "SUCCESS":
             # Write to system log
-            self.logger("Smartsheet updated at end of demultiplexing", "smartsheet_success")
+            self.logger("Smartsheet updated at end of demultiplexing", "smartsheet_pass")
         else:
             # Record error message in script log file
             self.script_logfile.write("smartsheet NOT updated at complete step\n" + str(response))
