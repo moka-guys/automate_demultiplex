@@ -277,11 +277,11 @@ class ready2start_demultiplexing():
             # Else stop and write error messages to loggers and send error e-mail.
             else:
                 # Record error messages in system log
-                self.logger("Invalid characters found in samplesheet for run " + self.runfolder, "demultiplex_fail")
+                self.logger("Invalid characters found in samplesheet for run " + self.runfolder, "demultiplex_fail_samplesheet")
         else:
             # No samplesheet found. Stop and log message.
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
-            self.logger("No samplesheet found for run " + self.runfolder, "demultiplex_fail")
+            self.logger("No samplesheet found for run " + self.runfolder, "demultiplex_fail_samplesheet")
 
     def check_valid_samplesheet(self):
         '''Validate the 'Sample_ID' and 'Sample_Name' table columns within the sample sheet csv
@@ -491,13 +491,13 @@ class ready2start_demultiplexing():
         # Use response.get("") instead of response[""] to avoid KeyError if "message" missing.
         if response.get("message") == "SUCCESS":
             # Report to system log file
-            self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_success")
+            self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_success")
         else:
             # Record error message to script log file
             self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
             # Record failure in system logs so that an error can be reported via slack. 
             # Failure to update smartsheet is not critical as it does not stop the run being processed.
-            self.logger("Smartsheet was NOT updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_demultiplex_fail")
+            self.logger("Smartsheet was NOT updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_fail")
 
 
     def smartsheet_demultiplex_complete(self):
@@ -532,13 +532,13 @@ class ready2start_demultiplexing():
         response = update_OPMS.json()
         if response.get("message") == "SUCCESS":
             # Write to system log
-            self.logger("Smartsheet updated at end of demultiplexing", "smartsheet_demultiplex_success")
+            self.logger("Smartsheet updated at end of demultiplexing", "smartsheet_success")
         else:
             # Record error message in script log file
             self.script_logfile.write("smartsheet NOT updated at complete step\n" + str(response))
             # Write to system log to enable alert via slack.
             # Failure to update smartsheet is not critical as it does not stop the run being processed.
-            self.logger("Smartsheet NOT updated at end of demultiplexing for run " + self.runfolder, "smartsheet_demultiplex_fail")
+            self.logger("Smartsheet NOT updated at end of demultiplexing for run " + self.runfolder, "smartsheet_fail")
 
 
     def logger(self, message, tool):
