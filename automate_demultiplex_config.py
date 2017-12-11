@@ -81,49 +81,43 @@ bedfile_folder = "Data/BED/"
 prod_organisation = "org-viapath_prod"
 dev_organisation = "org-viapath_dev"
 
-# project tags to denote live
+# project tags to denote live cases
 live_tag = "live"
 
 # =====istages=====
 # GATK workflow
 fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-# bwa_fastq1 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz=" # BWAFastQ Read1
-# bwa_fastq2 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz=" # BWA FastQ Read2
 sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
 mokavendor_input = " -istage-F35FvQ00jy1pb8f11vB4Xjf1.vendor_exome_bedfile="  # HSMetrics Bed file
-# GATK_Human_Exome_Pipeline_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.vendor_exome_bedfile=" # uses same bedfile as moka vendor so can specify this in bedfile
 ingenuity_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
-
 # amplivar fastq input
 onco_input = " -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs="
-# general oncology email
-onco_email = "gst-tr.oncology.interpret@nhs.net"
-# email for Interpretation_requests
-interpretation_request_email = "gst-tr.interpretation.request@nhs.net"
-# wook email
-wook_email = "joowook.ahn@nhs.net"
-
 # email if no variants app input for amplivar workflow
 vcf_novariants = " -istage-F5k1PB00jy1zxKZ28JX5b41q.email="
 # ingenuity app input for amplivar workflow
 onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="
 # MultiQC
 multiqc_project_input = " -iproject_for_multiqc="
-
 # Smartsheet
 smartsheet_mokapipe_complete = " -iNGS_run="
-
 # RPKM inputs
 RPKM_bedfile = " -ibedfile="
 RPKM_project = " -iproject_name="
 RPKM_bedfile_to_download = " -ibamfile_name="
 
+# emails addresses for Ingenuity
+onco_email = "gst-tr.oncology.interpret@nhs.net" # general oncology email
+interpretation_request_email = "gst-tr.interpretation.request@nhs.net" # email for Interpretation_requests
+wook_email = "joowook.ahn@nhs.net" # wook email
+#WES_email = "WES@viapath.co.uk" # WES email
+
 # DNA Nexus authentication token
-# Nexus_API_Key = "rsivxAMylcfpHvIIcZy8hDsFUVyVtvUL"
 Nexus_API_Key = "K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ"
 
-users = ["aledjones", "wook", "mokaguys", "andyb", "AmyS", "InterpretationRequest", "GraemeSmith3", "NMNS"]
+# list of DNA Nexus users for project to be shared with
+users = ["org-viapath_prod", "InterpretationRequest"]
+
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
 panelnumbers = {"Pan493": "",
@@ -135,14 +129,12 @@ panelnumbers = {"Pan493": "",
                 "Pan1063": "Pan1064",
                 "Pan1009": "Pan1010",
                 "Pan1459": "Pan1458",
-                "Pan1464": "Pan1471"}
+                "Pan1464": "Pan1471",
+                "Pan1157": "Pan1455",
+                "Pan1158": "Pan1456",
+                "Pan1159": "Pan1457"}
 
-# Pan numbers to add in to above  dict once bed files are in 001.
-# "Pan1157":"Pan1455",\
-# "Pan1158":"Pan1456",\
-# "Pan1159":"Pan1457",\
-
-
+# =====Dict linking panel and Ingenuity account for sample to be shared with =====
 email_panel_dict = {"Pan493": wook_email,
                     "Pan1009": interpretation_request_email,
                     "Pan1063": interpretation_request_email,
@@ -155,7 +147,10 @@ email_panel_dict = {"Pan493": wook_email,
                     "Pan1451": interpretation_request_email,
                     "Pan1453": interpretation_request_email,
                     "Pan1459": interpretation_request_email,
-                    "Pan1464": interpretation_request_email}
+                    "Pan1464": interpretation_request_email,
+                    "Pan1157": interpretation_request_email,
+                    "Pan1158": interpretation_request_email,
+                    "Pan1159": interpretation_request_email}
 
 # =====smartsheet API=====
 # smartsheet sheet ID
