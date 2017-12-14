@@ -110,7 +110,7 @@ RPKM_bedfile_to_download = " -ibamfile_name="
 onco_email = "gst-tr.oncology.interpret@nhs.net" # general oncology email
 interpretation_request_email = "gst-tr.interpretation.request@nhs.net" # email for Interpretation_requests
 wook_email = "joowook.ahn@nhs.net" # wook email
-#WES_email = "WES@viapath.co.uk" # WES email
+WES_email = "gst-tr.wesviapath@nhs.net" # WES email
 
 # DNA Nexus authentication token
 Nexus_API_Key = "K2v2COMKM7NdjeHyWdINUSrCrHaJfnxZ"
@@ -135,7 +135,7 @@ panelnumbers = {"Pan493": "",
                 "Pan1159": "Pan1457"}
 
 # =====Dict linking panel and Ingenuity account for sample to be shared with =====
-email_panel_dict = {"Pan493": wook_email,
+email_panel_dict = {"Pan493": WES_email,
                     "Pan1009": interpretation_request_email,
                     "Pan1063": interpretation_request_email,
                     "Pan1120": wook_email,
