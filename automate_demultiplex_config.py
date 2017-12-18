@@ -90,13 +90,34 @@ fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
 mokavendor_input = " -istage-F35FvQ00jy1pb8f11vB4Xjf1.vendor_exome_bedfile="  # HSMetrics Bed file
-ingenuity_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
+ingenuity_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email address
+human_exome_gatk_jar_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.gatk_jar_file=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-Byy2gGj0V695BXBb6Q33j2Kj\"" # gatk jar file for human exome app in 001_ToolsReferenceData
+vcf_annotator_gatk_jar_file_input = " -istage-F2gPqFQ025p601qgGq0QVvX2.gatk_jar_file=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-Byy2gGj0V695BXBb6Q33j2Kj\"" # gatk jar file used for variant annotator in 001_ToolsReferenceData
+vcf_annotator_prev_class_vcf_input = " -istage-F2gPqFQ025p601qgGq0QVvX2.prev_class=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-F2YPPj80j4gFP8ZB3VGfkq43\"" # vcf with previous classifications used for vcf annotator in 001_ToolsReferenceData
+bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=\"project-B6JG85Z2J35vb6Z7pQ9Q02j8:file-B6ZY4942J35xX095VZyQBk0v\"" # reference genome used for bwa (in a dna nexus maintained project) in 001_ToolsReferenceData
+picard_fasta_index= " -istage-Bz4Vj200jy1xj2vg9Zb71y9G.fasta_index=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv\"" # reference fasta file from 001_ToolsReferenceData
+
+# combine all commands so don't have to edit the main script.
+ingenuity_input = human_exome_gatk_jar_input + vcf_annotator_gatk_jar_file_input + vcf_annotator_prev_class_vcf_input + bwa_ref_genome + picard_fasta_index + ingenuity_input
+
 # amplivar fastq input
-onco_input = " -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs="
-# email if no variants app input for amplivar workflow
-vcf_novariants = " -istage-F5k1PB00jy1zxKZ28JX5b41q.email="
-# ingenuity app input for amplivar workflow
-onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="
+onco_input = " -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs=" # 
+vcf_novariants = " -istage-F5k1PB00jy1zxKZ28JX5b41q.email=" # email if no variants app input for amplivar workflow
+onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email=" # ingenuity app input for amplivar workflow
+
+# amplivar_reference_genome_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-F4g9Y280jy1ZKkq164Vq0FZ9\""
+# amplivar_flanking_seq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.ampliconflank=project-ByfFPz00jy1fk6PjpZ95F27J:file-F5VfXQQ0p3fq52zGG21218zZ\""
+# amplivar_usual_suspects= " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.usual_suspects=project-ByfFPz00jy1fk6PjpZ95F27J:file-F3J35f00jy1Z797p8bj9J0Zx\""
+# varscan2_ref_genome = " -istage-F5XGzF80jy1y9Q8F2VvvbXkb.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-F4g9Y280jy1ZKkq164Vq0FZ9
+# varscan2_bedfile = " -istage-F5XGzF80jy1y9Q8F2VvvbXkb.bed_file=project-ByfFPz00jy1fk6PjpZ95F27J:file-F516ZyQ0jy1vP3P2FZZ3VFpQ"
+# vardict_reference_genome = " -istage-F5XGzG00jy1q5y612VQ9KXxx.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-F4g9Y280jy1ZKkq164Vq0FZ9"
+# vardict_bedfile = " -istage-F5XGzG00jy1q5y612VQ9KXxx.bedfile=project-ByfFPz00jy1fk6PjpZ95F27J:file-F516ZyQ0jy1vP3P2FZZ3VFpQ"
+# amplivar_coverage_report = " -istage-F5XGz980jy1VqPVFBgb75K4g.lookup=project-ByfFPz00jy1fk6PjpZ95F27J:file-F516b2Q0jy1QZ4G99XV16Jy4"
+
+# # concatenate all 
+# onco_ingenuity = amplivar_reference_genome_input + amplivar_flanking_seq_input + amplivar_usual_suspects + varscan2_ref_genome + varscan2_bedfile + vardict_reference_genome + vardict_bedfile + amplivar_coverage_report + onco_ingenuity
+
+
 # MultiQC
 multiqc_project_input = " -iproject_for_multiqc="
 # Smartsheet
