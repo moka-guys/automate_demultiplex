@@ -17,7 +17,7 @@ class Nextseq_Integrity_Check():
 		# temp folder on the miseq
 		self.miseqtemp_folder = "D://Illumina//MiSeqTemp"
 		# flag to be used if it's the nextseq
-		self.nextseq=False
+		self.nextseq=""
 
 		
 		# path to the mapped workstation share
@@ -30,25 +30,25 @@ class Nextseq_Integrity_Check():
 		self.output_file = "md5checksum.txt"
 		
 		# folder containing files which denote checksum is being calculated
-		#self.checksum_in_progress = "C://Users//sbsuser//integrity_check//checksums_inprogress"
+		self.checksum_in_progress = "C://Users//sbsuser//integrity_check//checksums_inprogress"
 
 		# folder containing files which denote checksum is being calculated
-		#self.run_in_progress = "C://Users//sbsuser//integrity_check//run_inprogress"
+		self.run_in_progress = "C://Users//sbsuser//integrity_check//run_inprogress"
 		
-		# variable to old the name of the runfolder
-		self.runfolder=""
+		# variable to hold the name of the runfolder
+		self.runfolder = ""
 
 		# variables for the runfolder paths
 		self.workstation_runfolder = ""
 		self.sequencer_runfolder = ""
 
 		# flag to set testing		
-		self.testing=True
+		self.testing=False
 
 		# if testing overwrite the paths to that of the testing 
 		if self.testing:
 			# drive letter given to usb stick
-			self.mapped_drive="E://"
+			self.mapped_drive = "E://"
 			# path to the fake nextseqtemp folder
 			self.nextseqtemp_folder = self.mapped_drive + "integrity_testing//sequencer_temp"
 			# path to the fake miseqtemp folder
@@ -64,17 +64,17 @@ class Nextseq_Integrity_Check():
 		"""
 		This script runs every hour.
 		The script needs to detect when a run has started, and display a window which remains until the integrity test has been performed.
-		This function identifies which sequencer the script is running on and then looks to see if a run has finished which is not already being monitored
+		This function identifies which sequencer the script is running on and then looks to see if a run has finished which is not already being monitored.
 		If it's a newly started run, display a window to say not to do anything until sequencing is complete and integrity checks done.
-		When checksums are done, display a message box displaying pass/fail messages
+		When checksums are done, display a message box displaying pass/fail messages.
 		"""
 		# check what sequencer it is.
-		# look if  the nextseq temp folder exists
+		# look if the nextseq temp folder exists
 		if os.path.isdir(self.nextseqtemp_folder):
 			# set the temp folder to the nextseq temp folder path
 			self.temp_folder = self.nextseqtemp_folder
 			# set flag to denote nextseq
-			self.nextseq=True
+			self.nextseq = True
 		# if the nextseq folder doesn't exist the miseq temp folder should
 		elif os.path.isdir(self.miseqtemp_folder):
 			# set the temp folder to the miseq temp folder path
@@ -85,10 +85,10 @@ class Nextseq_Integrity_Check():
 
 
 		# for each runfolder in temp folder
-		for runfolder in os.listdir(self.temp_folder):
+		for temp_runfolder in os.listdir(self.temp_folder):
 			# look to see if the run has already been caught by this script at a previous time
-			if runfolder in os.listdir(self.run_in_progress):
-				# skip this runfolder
+			if temp_runfolder in os.listdir(self.run_in_progress):
+				# skip this temp_runfolder
 				if self.testing:
 					print "run already being monitored. stopping"
 				else:
@@ -97,30 +97,30 @@ class Nextseq_Integrity_Check():
 			# if this is the start of a run:
 			else:
 				# assign run folder name
-				self.runfolder = runfolder
+				self.runfolder = temp_runfolder
 				# create a file to denote this run is being monitored
-				with open(os.path.join(self.run_in_progress,runfolder),'w') as new_run_marker:
+				with open(os.path.join(self.run_in_progress,temp_runfolder),'w') as new_run_marker:
 					# write timestamp to file
 					new_run_marker.write(str(datetime.datetime.now()))
 				
-				# call function which opens a window to say run in progress - don't do anything until a message box appears denoting  integrity check has been performed
+				# call function which opens a window to say run in progress - don't do anything until a message box appears denoting integrity check has been performed
 				# this function will close when the run ends and (if nextseq) the checksum has been calculated
 				self.open_window()
 
-				# call functon to assess result of checksum and display message box
+				# call function to assess result of checksum and display message box
 				# if checksums match (integrity test pass) return a info box
 				if self.check_checksums():
 					tkMessageBox.showinfo("Integrity check complete","Integrity check passed")
 					# if checksums don't match (integrity test FAIL) return a error box
 				else:
-					tkMessageBox.showerror("Integrity check complete","Integrity check failed - please do not use this sequencer and inform the Bioinformatics team ")
+					tkMessageBox.showerror("Integrity check complete","Integrity check failed - please do not use this sequencer and inform the Bioinformatics team immediately")
 
 
 	def open_window(self):
 		"""
 		This function uses TKinter to create a window which remains until a process has finished.
 		This process is complete when the run has finished and checksums have been calculated.
-		The window closes and replaced by the info or error in look_for_folder boxes
+		The window closes and is replaced by the info or error in look_for_folder boxes.
 		"""
 		# create a object for pop up box
 		window = Tkinter.Tk()
@@ -130,7 +130,7 @@ class Nextseq_Integrity_Check():
 		# message box title
 		window.title("Please wait") 
 		# create a label for inside the message box
-		label = Tkinter.Label(window, text = "Please don't use this sequencer until a message box stating \"Integrity check passed\" is displayed")
+		label = Tkinter.Label(window, text = "Please don't use this sequencer or close this window until a message box stating \"Integrity check passed\" is displayed")
 		# display the label in the window
 		label.pack()
 		# using threading run the function run_has_finished which closes when the checksums have been generated
@@ -149,18 +149,17 @@ class Nextseq_Integrity_Check():
 	def run_has_finished(self):
 		"""
 		This function looks at the runfolder, assesses if the run has finished and the data transferred.
-		If required the checksums are generated, or if not the script waits until the checksums have been generated (by the demultiplexing script)
-
+		If required the checksums are generated, or if not the script waits until the checksums have been generated (by the demultiplexing script).
 		"""
 		# build path to the runfolder
 		self.sequencer_runfolder = os.path.join(self.temp_folder, self.runfolder)
 		# build paths on the workstation
 		self.workstation_runfolder = os.path.join(self.mapped_workstation_folder, self.runfolder)
-		#flag to denote run and dat transfer has finished
+		#flag to denote run and data transfer has finished
 		finished = False
 		# while variable finished is false
 		while not finished:
-			# check the run has finished and transferred (presense of RTA_complete in the runfolder and on workstation)
+			# check the run has finished and transferred (presence of RTA_complete in the runfolder and on workstation)
 			if self.RTA_complete in os.listdir(self.sequencer_runfolder) and self.RTA_complete in os.listdir(self.workstation_runfolder):
 					# if it's a testing run print a message
 					if self.testing:
@@ -203,7 +202,7 @@ class Nextseq_Integrity_Check():
 	def prepare_checksum_calculations(self):
 		"""
 		On the nextseq the checksums are calculated by this script.
-		This function checks the runfolder has not already been checksummed, marks the folder as being checksummed and then calls the function to generate the checksums
+		This function checks the runfolder has not already been checksummed, marks the folder as being checksummed and then calls the function to generate the checksums.
 		"""
 		if self.testing:
 			print "in prepare_checksum_calculations"
@@ -227,11 +226,11 @@ class Nextseq_Integrity_Check():
 
 	def run_integrity_check(self):
 		"""
-		This function uses self variables for the filepaths and calculates the checksums on directories
-		The checksums are written to a file on the workstation for the demultiplexing script
+		This function uses self variables for the filepaths and calculates the checksums on directories.
+		The checksums are written to a file on the workstation for the demultiplexing script.
 		"""
 		if self.testing:
-		   print "starting integrity checking"
+			print "starting integrity checking"
 		# calculate md5 checksums using dirhash package for both folders
 		workstation_checksum = dirhash(self.workstation_runfolder, 'md5')
 		sequencer_checksum = dirhash(self.sequencer_runfolder, 'md5')
@@ -247,8 +246,8 @@ class Nextseq_Integrity_Check():
 
 	def checksums_done(self):
 		"""
-		This function is used to detect if the checksum file is present in the workstation runfolder - used for miseq runs which are calculated by the demultiplexing script
-		Returns False until checksum file is detected
+		This function is used to detect if the checksum file is present in the workstation runfolder - used for miseq runs which are calculated by the demultiplexing script.
+		Returns False until checksum file is detected.
 		"""
 		# assess if the checksum file is present in the workstation runfolder
 		while self.output_file not in os.listdir(self.workstation_runfolder):
