@@ -9,7 +9,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v5.0"
+script_release = "v6.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -68,7 +68,9 @@ app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
 workflow_path = "Workflows/GATK3.5_v2.8"
 # path to the oncology workflow in the app project
-onco_path = "Workflows/Mokaonc_v1.1"
+onco_path = "Workflows/Mokaonc_v1.2"
+# path to paddy app
+peddy_path = "Apps/multiqc" # "~~PLACEHOLDER~~"
 # path to multiqc app
 multiqc_path = "Apps/multiqc"
 # smartsheet app
@@ -101,7 +103,7 @@ picard_fasta_index= " -istage-Bz4Vj200jy1xj2vg9Zb71y9G.fasta_index=\"project-Byf
 ingenuity_input = human_exome_gatk_jar_input + vcf_annotator_gatk_jar_file_input + vcf_annotator_prev_class_vcf_input + bwa_ref_genome + picard_fasta_index + ingenuity_input
 
 # amplivar fastq input
-onco_input = " -istage-F5XGz7j0jy1VqPVFBgb75K4f.fastqs=" # 
+onco_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs=" # 
 vcf_novariants = " -istage-F5k1PB00jy1zxKZ28JX5b41q.email=" # email if no variants app input for amplivar workflow
 onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email=" # ingenuity app input for amplivar workflow
 
@@ -117,7 +119,8 @@ onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email=" # ingenuity app inpu
 # # concatenate all 
 # onco_ingenuity = amplivar_reference_genome_input + amplivar_flanking_seq_input + amplivar_usual_suspects + varscan2_ref_genome + varscan2_bedfile + vardict_reference_genome + vardict_bedfile + amplivar_coverage_report + onco_ingenuity
 
-
+# Peddy
+peddy_project_input  = " -iproject_for_multiqc=" # ~~PLACEHOLDER~~ #" -iproject_for_peddy" 
 # MultiQC
 multiqc_project_input = " -iproject_for_multiqc="
 # Smartsheet
