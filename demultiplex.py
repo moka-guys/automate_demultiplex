@@ -342,10 +342,13 @@ class ready2start_demultiplexing():
         if self.prepare_integrity_check():
             # Set demultiplex log file name for this runfolder.
             demultiplex_log = (self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed)
+            # create this file to ensure demultiplexing doesn't start again - bcl2fastq2 v2.20 doesn't produce any standard out for a while after starting so create this here and append later
+            create_file = open(demultiplex_log, 'w')
+            #close file immediately
+            create_file.close()
 
             # Set a string with the shell command to run demultiplexing.
-            # The command writes bcl2fastq stdout and stderr to the demultiplex_log file.
-            # The presence of this file stops future re-processing of the runfolder.
+            # The command appends bcl2fastq stdout and stderr to the demultiplex_log file.
             # Example: "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq
             #           -R 160822_NB551068_0006_AHGYM7BGXY/
             #           --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv
