@@ -595,6 +595,7 @@ class ready2start_demultiplexing():
         # now have determined is a NextSeq run set the path to the checksum file
         # checksum file should have been written to the runfolder on the workstation by sequencer_checksum.py
         checksum_file_path = os.path.join(self.runfolderpath, config.md5checksum_name)
+
         
         # It's possible that the checksums file has not yet ben created - test if the file exist and if not wait 5 minutes (300 secs)
         # create a count to only wait 60 mins (it usually takes < 20 mins)
@@ -625,7 +626,7 @@ class ready2start_demultiplexing():
         #assess last line in file (last element in list) to see if the flag which denotes checksum test has already been performed is present.
         if config.checksum_complete_flag in checksums[-1]:
             # if integrity check already reported write to sys.log that this has been seen
-            self.logger("already reported failed integrity check " + sequencer_copy_path, "demultiplex_fail")
+            self.logger("already reported failed integrity check " + self.runfolder, "demultiplex_fail")
             # return false to report integrity check not passed
             return False
         
