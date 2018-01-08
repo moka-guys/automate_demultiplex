@@ -145,6 +145,7 @@ class upload2Nexus():
         self.createprojectcommand="project_id=\"$(dx new project --bill-to %s \"%s\" --brief --auth-token "+Nexus_API_Key+")\"\n"
         self.addprojecttag="dx tag $project_id "
         self.base_command = "jobid=$(dx run "+app_project+workflow_path+" -y"
+        self.peddy_command = "jobid=$(dx run " + app_project + peddy_path
         self.multiqc_command= "dx run "+app_project+multiqc_path
         self.smartsheet_update_command="dx run "+app_project+smartsheet_path
         self.RPKM_command="dx run "+app_project+RPKM_path
@@ -159,7 +160,7 @@ class upload2Nexus():
         #arguments for command
         self.dest = " --dest="
         self.project = " --project="
-        self.token = " --brief --auth-token "+Nexus_API_Key+")"
+        self.token = " --brief --auth-token "+Nexus_API_Key+")" 
         self.depends= " -y $depends_list"
 
         #argument to capture jobids
@@ -720,6 +721,14 @@ class upload2Nexus():
                         app = ampworkflow
 
         if not cancer: #  multiqc command for non-cancer samples. 
+        # ----> ADD Peddy here <----
+            # build peddy command - eg command = dx run peddy -iproject_for_peddy=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
+            peddy_command=self.peddy_command+peddy_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.depends+ self.token
+            # write peddy run commands to bash script
+            self.DNA_Nexus_bash_script.write(peddy_command+"\n")
+            # write line to append job id to depends_list so downstream function (e.g. MultiQC and smartsheet) wait for peddy to complete
+            self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
+
             # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
             multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.token.replace(")","")+self.depends
             # write commands to bash script
