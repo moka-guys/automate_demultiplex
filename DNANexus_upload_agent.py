@@ -690,6 +690,8 @@ class upload2Nexus():
         # loop through all dx_run commands:     
         # identify cancer samples
         cancer = True  
+        # identify WES samples
+        WES = False
         # capture the workflow used
         app=""
         for command in self.dx_run:
@@ -700,7 +702,10 @@ class upload2Nexus():
             # Idenify if non cancer samples are included in the run
             if "Pan1190_" not in command:
                 cancer = False
-                # Capture WES workflow
+                # identify if a WES test is included in the run, update WES flag. 
+                if "Pan493" in command:
+                    WES = True
+                # Capture workflow
                 workflow = workflow_path.replace("Workflows/","")
                 if workflow in app:
                     pass
@@ -720,14 +725,15 @@ class upload2Nexus():
                     else:
                         app = ampworkflow
 
-        if not cancer: # generate peddy and multiqc command for non-cancer samples. 
-    
-            # build peddy command - eg command = dx run peddy -iproject_for_peddy=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
-            peddy_command=self.peddy_command+peddy_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.depends+ self.token
-            # write peddy run commands to bash script
-            self.DNA_Nexus_bash_script.write(peddy_command+"\n")
-            # write line to append job id to depends_list so downstream functions (e.g. MultiQC and smartsheet) wait for peddy to complete
-            self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
+        if not cancer: # generate multiqc command for all non-cancer samples. 
+            # generate peddy for WES samples only
+            if WES:    
+                # build peddy command - eg command = dx run peddy -iproject_for_peddy=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
+                peddy_command=self.peddy_command+peddy_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.depends+ self.token
+                # write peddy run commands to bash script
+                self.DNA_Nexus_bash_script.write(peddy_command+"\n")
+                # write line to append job id to depends_list so downstream functions (e.g. MultiQC and smartsheet) wait for peddy to complete
+                self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
 
             # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
             multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.token.replace(")","")+self.depends
