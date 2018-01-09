@@ -720,13 +720,13 @@ class upload2Nexus():
                     else:
                         app = ampworkflow
 
-        if not cancer: #  multiqc command for non-cancer samples. 
-        # ----> ADD Peddy here <----
+        if not cancer: # generate peddy and multiqc command for non-cancer samples. 
+    
             # build peddy command - eg command = dx run peddy -iproject_for_peddy=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
             peddy_command=self.peddy_command+peddy_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.depends+ self.token
             # write peddy run commands to bash script
             self.DNA_Nexus_bash_script.write(peddy_command+"\n")
-            # write line to append job id to depends_list so downstream function (e.g. MultiQC and smartsheet) wait for peddy to complete
+            # write line to append job id to depends_list so downstream functions (e.g. MultiQC and smartsheet) wait for peddy to complete
             self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
 
             # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
