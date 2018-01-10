@@ -586,7 +586,8 @@ class upload2Nexus():
         
 
     def  create_run_pipeline_command(self):
-        '''loop through the list of fastqs to create a set of commands to initiate the pipeline'''
+        '''loop through the list of fastqs to create a list of commands used to initiate the pipeline and define what extra apps are run once all workflows are completed. 
+        The list of apps and workflows used is included in the 'MOKAPIPE ALERT - ACTION NEEDED' email.'''
         
         # Update script log file to say what is being done.
         self.upload_agent_script_logfile.write("\n\n----------------------RUN WORKFLOW----------------------\n")
@@ -693,12 +694,12 @@ class upload2Nexus():
         # identify WES samples
         WES = False
         # capture the workflow used
-        app=""
+        app = ""
         for command in self.dx_run:
             # write command to log file
-            self.DNA_Nexus_bash_script.write(command+"\n")
+            self.DNA_Nexus_bash_script.write(command + "\n")
             # write line to append job id to depends_list
-            self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
+            self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
             # Idenify if non cancer samples are included in the run
             if "Pan1190_" not in command:
                 cancer = False
@@ -728,25 +729,25 @@ class upload2Nexus():
         if not cancer: # generate multiqc command for all non-cancer samples. 
             # generate peddy for WES samples only
             if WES:    
-                # build peddy command - eg command = dx run peddy -iproject_for_peddy=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
-                peddy_command=self.peddy_command+peddy_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.depends+ self.token
+                # build peddy command - eg command = dx run peddy -iproject_for_peddy = 002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
+                peddy_command = self.peddy_command + peddy_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.depends + self.token
                 # write peddy run commands to bash script
-                self.DNA_Nexus_bash_script.write(peddy_command+"\n")
+                self.DNA_Nexus_bash_script.write(peddy_command + "\n")
                 # write line to append job id to depends_list so downstream functions (e.g. MultiQC and smartsheet) wait for peddy to complete
-                self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
+                self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
 
             # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
-            multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.token.replace(")","")+self.depends
+            multiqc_command = self.multiqc_command + multiqc_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.token.replace(")","") + self.depends
             # write commands to bash script
             self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
 
         # build smartsheet update command
-        smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder +self.project+self.projectid.rstrip()+ self.depends+self.token.replace(")","")
+        smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder + self.project + self.projectid.rstrip() + self.depends + self.token.replace(")","")
         # write commands to bash script
-        self.DNA_Nexus_bash_script.write(smartsheet_update_command+"\n")
+        self.DNA_Nexus_bash_script.write(smartsheet_update_command + "\n")
         
         # if there are custom panels run RPKM analysis
-        if len(self.panels_in_run)>0:
+        if len(self.panels_in_run) > 0:
             self.RPKM()
 
         # close bash script file handle
