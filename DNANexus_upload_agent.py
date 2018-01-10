@@ -586,8 +586,7 @@ class upload2Nexus():
         
 
     def  create_run_pipeline_command(self):
-        '''loop through the list of fastqs to create a list of commands used to initiate the pipeline and define what extra apps are run once all workflows are completed. 
-        The list of apps and workflows used is included in the 'MOKAPIPE ALERT - ACTION NEEDED' email.'''
+        '''loop through the list of fastqs to create a commands used to initiate the pipeline.'''
         
         # Update script log file to say what is being done.
         self.upload_agent_script_logfile.write("\n\n----------------------RUN WORKFLOW----------------------\n")
@@ -686,14 +685,16 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.close()
 
     def run_pipeline(self):
-        '''issue dna nexus run commands''' 
+        '''issue dna nexus run commands, and define what extra apps are run once all workflows are completed. 
+        The list of apps and workflows used is included in the 'MOKAPIPE ALERT - ACTION NEEDED' email''' 
                
-        # loop through all dx_run commands:     
-        # identify cancer samples
+        # loop through all dx_run commands and generate a list of commands/ workflow paths for the alert email
+        # Identify different workflows to direct/ define the running of additional apps following completion of the workflow     
+        # identify any cancer samples
         cancer = True  
-        # identify WES samples
+        # identify any WES samples
         WES = False
-        # capture the workflow used
+        # capture the workflow used 
         app = ""
         for command in self.dx_run:
             # write command to log file
