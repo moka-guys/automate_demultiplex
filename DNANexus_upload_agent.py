@@ -145,6 +145,7 @@ class upload2Nexus():
         self.createprojectcommand="project_id=\"$(dx new project --bill-to %s \"%s\" --brief --auth-token "+Nexus_API_Key+")\"\n"
         self.addprojecttag="dx tag $project_id "
         self.base_command = "jobid=$(dx run "+app_project+workflow_path+" -y"
+        self.peddy_command = "jobid=$(dx run " + app_project + peddy_path
         self.multiqc_command= "dx run "+app_project+multiqc_path
         self.smartsheet_update_command="dx run "+app_project+smartsheet_path
         self.RPKM_command="dx run "+app_project+RPKM_path
@@ -159,7 +160,7 @@ class upload2Nexus():
         #arguments for command
         self.dest = " --dest="
         self.project = " --project="
-        self.token = " --brief --auth-token "+Nexus_API_Key+")"
+        self.token = " --brief --auth-token "+Nexus_API_Key+")" 
         self.depends= " -y $depends_list"
 
         #argument to capture jobids
@@ -585,7 +586,7 @@ class upload2Nexus():
         
 
     def  create_run_pipeline_command(self):
-        '''loop through the list of fastqs to create a set of commands to initiate the pipeline'''
+        '''loop through the list of fastqs to create a commands used to initiate the pipeline.'''
         
         # Update script log file to say what is being done.
         self.upload_agent_script_logfile.write("\n\n----------------------RUN WORKFLOW----------------------\n")
@@ -684,22 +685,29 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.close()
 
     def run_pipeline(self):
-        '''issue dna nexus run commands''' 
+        '''issue dna nexus run commands, and define what extra apps are run once all workflows are completed. 
+        The list of apps and workflows used is included in the 'MOKAPIPE ALERT - ACTION NEEDED' email''' 
                
-        # loop through all dx_run commands:     
-        # identify cancer samples
+        # loop through all dx_run commands and generate a list of commands/ workflow paths for the alert email
+        # Identify different workflows to direct/ define the running of additional apps following completion of the workflow     
+        # identify any cancer samples
         cancer = True  
-        # capture the workflow used
-        app=""
+        # identify any WES samples
+        WES = False
+        # capture the workflow used 
+        app = ""
         for command in self.dx_run:
             # write command to log file
-            self.DNA_Nexus_bash_script.write(command+"\n")
+            self.DNA_Nexus_bash_script.write(command + "\n")
             # write line to append job id to depends_list
-            self.DNA_Nexus_bash_script.write(self.depends_list+"\n")
+            self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
             # Idenify if non cancer samples are included in the run
             if "Pan1190_" not in command:
                 cancer = False
-                # Capture WES workflow
+                # identify if a WES test is included in the run, update WES flag. 
+                if "Pan493" in command:
+                    WES = True
+                # Capture workflow
                 workflow = workflow_path.replace("Workflows/","")
                 if workflow in app:
                     pass
@@ -719,19 +727,28 @@ class upload2Nexus():
                     else:
                         app = ampworkflow
 
-        if not cancer: #  multiqc command for non-cancer samples. 
+        if not cancer: # generate multiqc command for all non-cancer samples. 
+            # generate peddy for WES samples only
+            if WES:    
+                # build peddy command - eg command = dx run peddy -iproject_for_peddy = 002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
+                peddy_command = self.peddy_command + peddy_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.depends + self.token
+                # write peddy run commands to bash script
+                self.DNA_Nexus_bash_script.write(peddy_command + "\n")
+                # write line to append job id to depends_list so downstream functions (e.g. MultiQC and smartsheet) wait for peddy to complete
+                self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
+
             # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
-            multiqc_command=self.multiqc_command+multiqc_project_input+self.nexusproject+self.project+self.projectid.rstrip()+self.token.replace(")","")+self.depends
+            multiqc_command = self.multiqc_command + multiqc_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.token.replace(")","") + self.depends
             # write commands to bash script
             self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
 
         # build smartsheet update command
-        smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder +self.project+self.projectid.rstrip()+ self.depends+self.token.replace(")","")
+        smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder + self.project + self.projectid.rstrip() + self.depends + self.token.replace(")","")
         # write commands to bash script
-        self.DNA_Nexus_bash_script.write(smartsheet_update_command+"\n")
+        self.DNA_Nexus_bash_script.write(smartsheet_update_command + "\n")
         
         # if there are custom panels run RPKM analysis
-        if len(self.panels_in_run)>0:
+        if len(self.panels_in_run) > 0:
             self.RPKM()
 
         # close bash script file handle

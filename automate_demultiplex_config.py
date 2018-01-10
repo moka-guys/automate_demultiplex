@@ -70,7 +70,7 @@ workflow_path = "Workflows/GATK3.5_v2.8"
 # path to the oncology workflow in the app project
 onco_path = "Workflows/Mokaonc_v1.2"
 # path to paddy app
-peddy_path = "Apps/multiqc" # "~~PLACEHOLDER~~"
+peddy_path = "Apps/peddy" 
 # path to multiqc app
 multiqc_path = "Apps/multiqc"
 # smartsheet app
@@ -120,7 +120,7 @@ onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email=" # ingenuity app inpu
 # onco_ingenuity = amplivar_reference_genome_input + amplivar_flanking_seq_input + amplivar_usual_suspects + varscan2_ref_genome + varscan2_bedfile + vardict_reference_genome + vardict_bedfile + amplivar_coverage_report + onco_ingenuity
 
 # Peddy
-peddy_project_input  = " -iproject_for_multiqc=" # ~~PLACEHOLDER~~ #" -iproject_for_peddy" 
+peddy_project_input  = " -iproject_for_peddy=" 
 # MultiQC
 multiqc_project_input = " -iproject_for_multiqc="
 # Smartsheet
