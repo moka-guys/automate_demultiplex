@@ -659,7 +659,7 @@ class upload2Nexus():
                     dest_cmd = self.nexusproject +":/"
 
                     # create the MokaWES dx command
-                    command = self.wes_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + sambamba_input + iva_email_input + ingenuity_email+ self.dest + dest_cmd + self.token
+                    command = self.wes_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + iva_email_input + ingenuity_email+ self.dest + dest_cmd + self.token
                      #add command for each pair of fastqs to a list 
                     self.dx_run.append(command)
 
@@ -707,9 +707,9 @@ class upload2Nexus():
                
         # loop through all dx_run commands and generate a list of commands/ workflow paths for the alert email
         # Identify different workflows to direct/ define the running of additional apps following completion of the workflow     
-        # identify any cancer samples
+        # Flag to identify any cancer samples - used to direct additional apps
         cancer = True  
-        # identify any WES samples
+        # Flag to identify any WES samples - used to direct additional apps
         WES = False
         # capture the workflow used 
         app = ""
@@ -718,33 +718,29 @@ class upload2Nexus():
             self.DNA_Nexus_bash_script.write(command + "\n")
             # write line to append job id to depends_list
             self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
-            # Idenify if non cancer samples are included in the run
-            if "Pan1190_" not in command:
+            # Identify and capture the workflow for cancer samples
+            if "Pan1190_" in command:
+                workflow = onco_path.replace("Workflows/","")
+            # Identify and capture the workflow for WES samples.
+            elif "Pan493_" in command:
+                # Update Flags to call additional apps
                 cancer = False
-                # identify if a WES test is included in the run, update WES flag. 
-                if "Pan493" in command:
-                    WES = True
-                # Capture workflow
+                WES = True
+                workflow = wes_path.replace("Workflows/","")
+            else:  # Capture workflow for all other tests
+                # Update Flags to call additional apps
+                cancer = False
                 workflow = workflow_path.replace("Workflows/","")
-                if workflow in app:
-                    pass
+            # Generate workflow string to be included in email
+            if workflow in app:
+                pass
+            else:
+                if len(app) > 1:
+                    app = app + " and " + workflow
                 else:
-                    if len(app) > 1:
-                        app = app + " and " + workflow
-                    else:
-                        app = workflow
-            # Identify workflow for cancer samples
-            elif "Pan1190_" in command:
-                ampworkflow = onco_path.replace("Workflows/","")
-                if ampworkflow in app:
-                    pass
-                else:
-                    if len(app) > 1:
-                        app = app + " and " + ampworkflow
-                    else:
-                        app = ampworkflow
-
-        if not cancer: # generate multiqc command for all non-cancer samples. 
+                    app = workflow
+           
+        if not cancer: # use flags to generate multiqc command for all non-cancer samples. 
             # generate peddy for WES samples only
             if WES:    
                 # build peddy command - eg command = dx run peddy -iproject_for_peddy = 002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
@@ -802,9 +798,17 @@ class upload2Nexus():
         
         # create empty list for the sql queries
         sql = []
+        # Set variable to count the number of records to be updated by SQL
+        records = 0
 
         # loop through the WES DNA numbers to generate sql query to record Pipeline version
         if len(self.list_of_DNA_numbers_WES) > 0:
+            # count the number of records the SQL will update to include in email - (WES) 
+            if records == 0:
+                records = len(set(self.list_of_DNA_numbers_WES))  
+            else:
+                records = record + len(set(self.list_of_DNA_numbers_WES))
+                        
             # start string
             DNA_list = "('"
             # loop through unique list of dna numbers obtained from fastq filenames
@@ -813,15 +817,21 @@ class upload2Nexus():
                 DNA_list = DNA_list + DNA + "','"
             # close string
             DNA_list = DNA_list + ")"
-
             # remove the excess ,' from the end of the string
             DNA_list = DNA_list.replace(",')",")")
             
-            # build the rest of the sql update query and append to list
-            sql.append("update NGSTest set PipelineVersion = " + moka_pipeline_ID + " where dna in " + DNA_list)
+            # build the rest of the sql update query and append to list. 
+            # Query will update pipeline and test status for tests which are currently active
+            sql.append("update NGSTest set PipelineVersion = " + mokawes_pipeline_ID + " , StatusID = " + mokastatus_dataproc_ID + " where dna in " + DNA_list + " and StatusID = " + mokastat_nextsq_ID)
 
         # custom panels requires insert queries (one per sample)
         if len(self.list_of_DNA_numbers_nonWES) > 0:
+            # count the number of records SQL will update to include in email (non-WES)
+            if records == 0:
+                records = len(set(self.list_of_DNA_numbers_nonWES))  
+            else:
+                records = record + len(set(self.list_of_DNA_numbers_nonWES))
+
             # loop through unique list of dna numbers obtained from fastq filenames
             for DNA in set(self.list_of_DNA_numbers_nonWES):
                 # build the rest of the sql update query
@@ -838,15 +848,15 @@ class upload2Nexus():
         else:
             # otherwise loop through each statement and create a string.
             for statement in sql:
-                sql_statements=sql_statements+statement+"\n"
+                sql_statements = sql_statements+statement+"\n"
 
         # write action to system log file
-        self.logger("SQL statement email sent for run "+ self.runfolder,"UA_pass")
+        self.logger("SQL statement email sent for run " + self.runfolder, "UA_pass")
         
         # email this query
         self.email_subject = "MOKAPIPE ALERT - ACTION NEEDED: Started pipeline for " + self.runfolder
         self.email_priority = 1 # high priority
-        self.email_message = self.runfolder + " being processed using workflow " + app +"\n\nPlease update Moka using the below query and ensure that "+str(len(sql))+" rows are updated:\n\n"+sql_statements
+        self.email_message = self.runfolder + " being processed using workflow " + app + "\n\nPlease update Moka using the below query and ensure that " + str(records) + " records are updated:\n\n"+sql_statements
                 
         if not debug:
             #call function to update smartsheet to say run in progress
