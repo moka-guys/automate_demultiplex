@@ -55,6 +55,9 @@ upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux
 
 # =====Moka settings=====
 moka_pipeline_ID = "1941"
+mokawes_pipeline_ID = "2037"
+mokastat_nextsq_ID = "1202218804"
+mokastatus_dataproc_ID = "1202218805"
 
 # =====DNA Nexus settings=====
 # project to upload run folder into
