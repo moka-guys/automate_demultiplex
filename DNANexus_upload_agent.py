@@ -627,20 +627,18 @@ class upload2Nexus():
                         # build path in nexus to the relevant sambamba bed
                         sambamba_bedfile = app_project + bedfile_folder + panel + "dataSambamba.bed"
                         
-                        # moka vendor bedfile
-                        if panel == "Pan493":
-                            # specified in workflow for MokaWES
+                        # specify moka vendor bedfile
+                        if panel == "Pan493":  # identify WES tests
+                            # skip for WES samples as mokavendor files are already specified in DNAnexus workflow for MokaWES
                             pass
-                            # specify this for the WES samples
-                            # moka_vendor_bedfile=app_project+bedfile_folder+"agilent_sureselect_human_all_exon_v5_b37_targets.bed"
-                        elif panel == "Pan1120":
+                        elif panel == "Pan1120":  # Identify focused exome tests
                             #specify this for the focused exome
                             moka_vendor_bedfile = app_project + bedfile_folder + "S06588914_Regions_three_col.bed"
                             #use the exome bedfile to calculate coverage
                             sambamba_bedfile = app_project + bedfile_folder + "Pan493dataSambamba.bed"   
                         else:
                             # otherwise build path in nexus to the relevant bed file
-                            moka_vendor_bedfile = app_project+bedfile_folder+panel+"data.bed"
+                            moka_vendor_bedfile = app_project + bedfile_folder + panel + "data.bed"
 
                         # use same panelname to get the email which will be used to upload to IVA
                         ingenuity_email = email_panel_dict[panel]
@@ -652,11 +650,11 @@ class upload2Nexus():
                 # Generate command to call MokaWES workflow for WES samples
                 elif "Pan493_" in fastq:
                     # create the input command for the fastqc
-                    read1_cmd = self.nexusproject +":"+ read1
-                    read2_cmd = self.nexusproject +":"+ read2
+                    read1_cmd = self.nexusproject + ":" + read1
+                    read2_cmd = self.nexusproject + ":" + read2
                     
                     # set the destination command as the root of the project
-                    dest_cmd = self.nexusproject +":/"
+                    dest_cmd = self.nexusproject + ":/"
 
                     # create the MokaWES dx command
                     command = self.wes_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + iva_email_input + ingenuity_email+ self.dest + dest_cmd + self.token
@@ -666,11 +664,11 @@ class upload2Nexus():
                 # Set Mokapipe command for all other samples
                 else:        
                     # create the input command for the fastqc and BWA inputs
-                    read1_cmd = self.nexusproject +":"+ read1
-                    read2_cmd = self.nexusproject +":"+ read2
+                    read1_cmd = self.nexusproject + ":" + read1
+                    read2_cmd = self.nexusproject + ":" + read2
 
                     # set the destination command as the root of the project
-                    dest_cmd = self.nexusproject +":/"
+                    dest_cmd = self.nexusproject + ":/"
 
                     # create the dx command
                     command = self.base_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + sambamba_input + sambamba_bedfile + mokavendor_input + moka_vendor_bedfile + ingenuity_input + ingenuity_email+ self.dest + dest_cmd + self.token
@@ -682,7 +680,7 @@ class upload2Nexus():
         if len(list_onco_fastq) > 1: 
             command = self.onco_command 
             for fastq in list_onco_fastq:
-                read_cmd = onco_input + self.nexusproject +":"+ fastq
+                read_cmd = onco_input + self.nexusproject + ":" + fastq
                 command = command + read_cmd
 
             # set the destination command as the root of the project in dir AmplivarOutput
@@ -711,27 +709,27 @@ class upload2Nexus():
         cancer = True  
         # Flag to identify any WES samples - used to direct additional apps
         WES = False
-        # capture the workflow used 
+        # capture the workflow used for notification email
         app = ""
         for command in self.dx_run:
             # write command to log file
             self.DNA_Nexus_bash_script.write(command + "\n")
             # write line to append job id to depends_list
             self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
-            # Identify and capture the workflow for cancer samples
+            # Identify and capture the workflow for cancer samples for notification email
             if "Pan1190_" in command:
-                workflow = onco_path.replace("Workflows/","")
-            # Identify and capture the workflow for WES samples.
+                workflow = onco_path.replace("Workflows/","") # file structure not required for email notification, only keep the workflow name  
+            # Identify and capture the workflow for WES samples for notification email.
             elif "Pan493_" in command:
                 # Update Flags to call additional apps
                 cancer = False
                 WES = True
-                workflow = wes_path.replace("Workflows/","")
-            else:  # Capture workflow for all other tests
+                workflow = wes_path.replace("Workflows/","")  # file structure not required for email notification, only keep the workflow name
+            else:  # Capture workflow for all other tests for notification email
                 # Update Flags to call additional apps
                 cancer = False
-                workflow = workflow_path.replace("Workflows/","")
-            # Generate workflow string to be included in email
+                workflow = workflow_path.replace("Workflows/","")  # file structure not required for email notification, only keep the workflow name
+            # Generate the workflow string to be included in email
             if workflow in app:
                 pass
             else:
@@ -739,7 +737,7 @@ class upload2Nexus():
                     app = app + " and " + workflow
                 else:
                     app = workflow
-           
+
         if not cancer: # use flags to generate multiqc command for all non-cancer samples. 
             # generate peddy for WES samples only
             if WES:    
@@ -803,12 +801,12 @@ class upload2Nexus():
 
         # loop through the WES DNA numbers to generate sql query to record Pipeline version
         if len(self.list_of_DNA_numbers_WES) > 0:
-            # count the number of records the SQL will update to include in email - (WES) 
+            # count the number of records the SQL will update to include in email - (WES)
             if records == 0:
-                records = len(set(self.list_of_DNA_numbers_WES))  
-            else:
-                records = record + len(set(self.list_of_DNA_numbers_WES))
-                        
+                records = len(set(self.list_of_DNA_numbers_WES))
+            else: 
+                records += len(set(self.list_of_DNA_numbers_WES))
+
             # start string
             DNA_list = "('"
             # loop through unique list of dna numbers obtained from fastq filenames
@@ -819,8 +817,8 @@ class upload2Nexus():
             DNA_list = DNA_list + ")"
             # remove the excess ,' from the end of the string
             DNA_list = DNA_list.replace(",')",")")
-            
-            # build the rest of the sql update query and append to list. 
+
+            # build the rest of the sql update query and append to list.
             # Query will update pipeline and test status for tests which are currently active
             sql.append("update NGSTest set PipelineVersion = " + mokawes_pipeline_ID + " , StatusID = " + mokastatus_dataproc_ID + " where dna in " + DNA_list + " and StatusID = " + mokastat_nextsq_ID)
 
@@ -830,7 +828,7 @@ class upload2Nexus():
             if records == 0:
                 records = len(set(self.list_of_DNA_numbers_nonWES))  
             else:
-                records = record + len(set(self.list_of_DNA_numbers_nonWES))
+                records += len(set(self.list_of_DNA_numbers_nonWES))
 
             # loop through unique list of dna numbers obtained from fastq filenames
             for DNA in set(self.list_of_DNA_numbers_nonWES):
