@@ -54,9 +54,15 @@ upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux
 
 
 # =====Moka settings=====
+# Moka IDs for generating SQLs to update the Mokadatabase
+# Current Mokapipe ID
 moka_pipeline_ID = "1941"
+# Current MokaWES ID
 mokawes_pipeline_ID = "2037"
+# -- Moka WES test status-- 
+# Test Status = NextSEQ sequencing
 mokastat_nextsq_ID = "1202218804"
+# Test Status = Data Processing
 mokastatus_dataproc_ID = "1202218805"
 
 # =====DNA Nexus settings=====
