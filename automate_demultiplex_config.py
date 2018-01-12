@@ -77,7 +77,7 @@ app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
 workflow_path = "Workflows/GATK3.5_v2.8"
 # path to the WES workflow in the app project
-wes_path = "003_180110_MokaWES:MokaWES_v1.0"  # ~~PLACEHOLDER~~
+wes_path = "Workflows/MokaWES_v1.0"
 # path to the oncology workflow in the app project
 onco_path = "Workflows/Mokaonc_v1.2"
 # path to paddy app

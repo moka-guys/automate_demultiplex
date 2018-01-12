@@ -145,7 +145,7 @@ class upload2Nexus():
         self.createprojectcommand ="project_id=\"$(dx new project --bill-to %s \"%s\" --brief --auth-token " + Nexus_API_Key + ")\"\n"
         self.addprojecttag = "dx tag $project_id "
         self.base_command = "jobid=$(dx run " + app_project + workflow_path + " -y"
-        self.wes_command = "jobid=$(dx run " + wes_path + " -y"  # ~~PLACEHOLDER~~  Add app_project variable in once tested
+        self.wes_command = "jobid=$(dx run " + app_project + wes_path + " -y"
         self.peddy_command = "jobid=$(dx run " + app_project + peddy_path
         self.multiqc_command = "dx run " + app_project + multiqc_path
         self.smartsheet_update_command = "dx run " + app_project + smartsheet_path
@@ -531,8 +531,8 @@ class upload2Nexus():
         #open bash script
         DNA_Nexus_bash_script = open(project_bash_script, 'w')
         DNA_Nexus_bash_script.write(self.source_command)
-        # DNA_Nexus_bash_script.write(self.createprojectcommand % (prod_organisation,self.nexusproject))
-        DNA_Nexus_bash_script.write(self.createprojectcommand % (dev_organisation,self.nexusproject))
+        DNA_Nexus_bash_script.write(self.createprojectcommand % (prod_organisation,self.nexusproject))
+        # DNA_Nexus_bash_script.write(self.createprojectcommand % (dev_organisation,self.nexusproject))
 
         #then need to share the project with the nexus usernames in the list in config file
         for user in users:
