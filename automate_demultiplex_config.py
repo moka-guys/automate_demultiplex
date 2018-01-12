@@ -54,7 +54,16 @@ upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux
 
 
 # =====Moka settings=====
+# Moka IDs for generating SQLs to update the Mokadatabase
+# Current Mokapipe ID
 moka_pipeline_ID = "1941"
+# Current MokaWES ID
+mokawes_pipeline_ID = "2037"
+# -- Moka WES test status-- 
+# Test Status = NextSEQ sequencing
+mokastat_nextsq_ID = "1202218804"
+# Test Status = Data Processing
+mokastatus_dataproc_ID = "1202218805"
 
 # =====DNA Nexus settings=====
 # project to upload run folder into
@@ -67,10 +76,12 @@ project_success = "Created new project called \"%s\""
 app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
 workflow_path = "Workflows/GATK3.5_v2.8"
+# path to the WES workflow in the app project
+wes_path = "Workflows/MokaWES_v1.0"
 # path to the oncology workflow in the app project
 onco_path = "Workflows/Mokaonc_v1.2"
 # path to paddy app
-peddy_path = "Apps/peddy" 
+peddy_path = "Apps/peddy"
 # path to multiqc app
 multiqc_path = "Apps/multiqc"
 # smartsheet app
@@ -87,22 +98,23 @@ dev_organisation = "org-viapath_dev"
 live_tag = "live"
 
 # =====istages=====
-# GATK workflow
+# GATK and MokaWES workflow input
 fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
 mokavendor_input = " -istage-F35FvQ00jy1pb8f11vB4Xjf1.vendor_exome_bedfile="  # HSMetrics Bed file
-ingenuity_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email address
-human_exome_gatk_jar_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.gatk_jar_file=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-Byy2gGj0V695BXBb6Q33j2Kj\"" # gatk jar file for human exome app in 001_ToolsReferenceData
-vcf_annotator_gatk_jar_file_input = " -istage-F2gPqFQ025p601qgGq0QVvX2.gatk_jar_file=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-Byy2gGj0V695BXBb6Q33j2Kj\"" # gatk jar file used for variant annotator in 001_ToolsReferenceData
-vcf_annotator_prev_class_vcf_input = " -istage-F2gPqFQ025p601qgGq0QVvX2.prev_class=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-F2YPPj80j4gFP8ZB3VGfkq43\"" # vcf with previous classifications used for vcf annotator in 001_ToolsReferenceData
-bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=\"project-B6JG85Z2J35vb6Z7pQ9Q02j8:file-B6ZY4942J35xX095VZyQBk0v\"" # reference genome used for bwa (in a dna nexus maintained project) in 001_ToolsReferenceData
-picard_fasta_index= " -istage-Bz4Vj200jy1xj2vg9Zb71y9G.fasta_index=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv\"" # reference fasta file from 001_ToolsReferenceData
+iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email address
 
+# GATK workflow
+human_exome_gatk_jar_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.gatk_jar_file=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-Byy2gGj0V695BXBb6Q33j2Kj\""  # gatk jar file for human exome app in 001_ToolsReferenceData
+vcf_annotator_gatk_jar_file_input = " -istage-F2gPqFQ025p601qgGq0QVvX2.gatk_jar_file=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-Byy2gGj0V695BXBb6Q33j2Kj\""  # gatk jar file used for variant annotator in 001_ToolsReferenceData
+vcf_annotator_prev_class_vcf_input = " -istage-F2gPqFQ025p601qgGq0QVvX2.prev_class=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-F2YPPj80j4gFP8ZB3VGfkq43\""  # vcf with previous classifications used for vcf annotator in 001_ToolsReferenceData
+bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=\"project-B6JG85Z2J35vb6Z7pQ9Q02j8:file-B6ZY4942J35xX095VZyQBk0v\""  # reference genome used for bwa (in a dna nexus maintained project) in 001_ToolsReferenceData
+picard_fasta_index = " -istage-Bz4Vj200jy1xj2vg9Zb71y9G.fasta_index=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv\""  # reference fasta file from 001_ToolsReferenceData
 # combine all commands so don't have to edit the main script.
-ingenuity_input = human_exome_gatk_jar_input + vcf_annotator_gatk_jar_file_input + vcf_annotator_prev_class_vcf_input + bwa_ref_genome + picard_fasta_index + ingenuity_input
+ingenuity_input = human_exome_gatk_jar_input + vcf_annotator_gatk_jar_file_input + vcf_annotator_prev_class_vcf_input + bwa_ref_genome + picard_fasta_index + iva_email_input
 
-# amplivar fastq input
+# MokaOnc amplivar fastq input
 onco_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs=" # 
 vcf_novariants = " -istage-F5k1PB00jy1zxKZ28JX5b41q.email=" # email if no variants app input for amplivar workflow
 onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email=" # ingenuity app input for amplivar workflow
