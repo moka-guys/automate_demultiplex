@@ -253,7 +253,7 @@ class ready2start_demultiplexing():
     def look_for_sample_sheet(self):
         """Check that the sample sheet for the current runfolder is present."""
         # Set the name and path of the sample sheet to find
-        self.samplesheet = self.samplesheets + "/" + self.runfolder + "_SampleSheet.csv"
+        self.samplesheet = self.samplesheets + self.runfolder + "_SampleSheet.csv"
 
         # Get a list of samplesheets in the samplesheets folder
         all_runfolders = os.listdir(self.samplesheets)
