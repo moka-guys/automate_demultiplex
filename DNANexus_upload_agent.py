@@ -1088,15 +1088,15 @@ class upload2Nexus():
 
         if not debug:
             # run the command, redirecting stderror to stdout
-            proc = subprocess.Popen([nexus_upload_command+" & "+samplesheet_nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
+            proc = subprocess.Popen([nexus_upload_command + " & " + samplesheet_nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
             
             # capture the streams (err is redirected to out above)
             (out, err) = proc.communicate()
-        
+
         else:
             print nexus_upload_command
-            out="x"
-            err="y"
+            out = "x"
+            err = "y"
 
         # capture stdout to log file containing stdour and stderr
         runfolder_upload_stdout_file = open(self.runfolderpath + "/" + upload_started_file, 'a')
@@ -1221,10 +1221,15 @@ class upload2Nexus():
         If present email link to the log file
         NB any errors from the fastq upload and run folderwould also be detected here.'''
 
+        # flag so no errors found statement only written once
+        upload_error = False
+
         # Open the log file and split for each individual upload command
         for upload in open(self.runfolderpath + "/" + upload_started_file).read().split("Uploading file"):
             # if there was an error during the upload...
             if self.ua_error in upload:
+                # if error seen set flag
+                upload_error = True
                 # if it still completed successfully carry on
                 if "uploaded successfully" in upload:
                     self.upload_agent_script_logfile.write("There was a disruption to the network when uploading logfiles but it completed successfully\n")                    
@@ -1233,10 +1238,11 @@ class upload2Nexus():
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the netowkr which prevented log files being uploaded\n")
                     self.logger("upload of log files failed for run "+self.runfolder,"UA_fail")
-            else:
-                #write to log file check was ok
-                self.upload_agent_script_logfile.write("There were no issues when uploading the logfiles\n")
-                self.logger("upload of log files complete without issue "+self.runfolder,"UA_pass")
+        # only state no errors seen if no errors were seen!
+        if not upload_error:
+            #write to log file check was ok
+            self.upload_agent_script_logfile.write("There were no issues when uploading the logfiles\n")
+            self.logger("upload of log files complete without issue "+self.runfolder,"UA_pass")
 
 
     def logger(self, message, tool):
