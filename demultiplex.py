@@ -628,8 +628,7 @@ class ready2start_demultiplexing():
         
         #assess last line in file (last element in list) to see if the flag which denotes checksum test has already been performed is present.
         if config.checksum_complete_flag in checksums[-1]:
-            # if integrity check already reported write to sys.log that this has been seen
-            self.logger("already reported failed integrity check " + self.runfolder, "demultiplex_fail")
+            self.script_logfile.write("Previously reported failed integrity check\n")
             # return false to report integrity check not passed
             return False
         
@@ -679,7 +678,7 @@ class ready2start_demultiplexing():
         # open the file containing the md5 checksums as write, which  will overwrite the file
         with open(checksum_file_path, 'a') as checksum_file:
             # Add a flag into the checksum file which will stop it getting this far
-            checksum_file.write(config.checksum_complete_flag)
+            checksum_file.write("\n"+config.checksum_complete_flag)
 
         # if the checksums match
         if self.workstation_checksum == self.sequencer_checksum:
