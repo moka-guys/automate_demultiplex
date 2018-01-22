@@ -946,17 +946,35 @@ class upload2Nexus():
 
 
         if not debug:
-            run_upload_agent_script="bash " + temp_bash + " >> "+ self.runfolderpath + "/" + upload_started_file
+            # create command redirecting stderror to the log file
+            run_upload_agent_script = "bash " + temp_bash + " >> " + self.runfolderpath + "/" + upload_started_file + " 2>&1"
             # run the command
             proc = subprocess.Popen([run_upload_agent_script], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             
             # capture the streams
             (out, err) = proc.communicate()
-            if err:
-                self.upload_agent_script_logfile.write("Error when executing script:\n"+err+"\n\n")
-                self.logger("Error whilst uploading rest of runfolder:"+err,"UA_fail")
-            else:
-                self.upload_agent_script_logfile.write("No errors reported\n")
+            
+            # All standard error is redirected to stdout in the command need to parse this forn error
+            # set a flag so a "no errors reported" message is only written if no errors are seen!
+            error = False
+            # for each line in the standard out
+            for linenumber,line in enumerate(out):
+                # skip if the line is empty, or it starts with Uploading or ends with the expected success statement
+                if line.startswith("Uploading") or line.endswith("was uploaded successfully. Closing...") or len(line) < 2:
+                    pass
+                # if the line doesn't contain any of these expected lines
+                else:
+                    # set the flag so the no errors reported message is not written
+                    error = True
+                    # write the line before and this line to log
+                    self.upload_agent_script_logfile.write("Error when executing script:\nError lines = " + out[linenumber - 1] + "\n" + line +"\n")
+                    # write to logger that there was an issue
+                    self.logger("Error whilst uploading rest of runfolder - see all standard out " + self.runfolderpath + "/" + upload_started_file ,"UA_fail")
+            # if there were no errors write this to log file
+            if not error:
+                # write the 
+                self.upload_agent_script_logfile.write("No errors reported\n")    
+            
         
         # copy commands from temporary upload agent file to the one containing the fastq upload command
         command = "cat " + temp_bash + " >> " + self.runfolderpath + "/" + runfolder_upload_cmds
