@@ -1199,21 +1199,29 @@ class upload2Nexus():
         '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
         If present email link to the log file
         NB any errors from the fastq upload would also be detected here.'''
+        
+        # flag so no errors found statement only written once
+        upload_error = False
+
         for upload in open(self.runfolderpath + "/" + upload_started_file).read().split("Uploading file"):
             # if there was an error during the upload...
             if self.ua_error in upload:
+                # if error seen set flag
+                upload_error = True
                 # if it still completed successfully carry on
                 if "uploaded successfully" in upload:
                     self.upload_agent_script_logfile.write("There was a disruption to the network when uploading the rest of the runfolder but it completed successfully\n")                    
-                    self.logger("upload of runfolder was disrupted but completed for run "+self.runfolder,"UA_disrupted")
+                    self.logger("upload of runfolder was disrupted but completed for run " + self.runfolder,"UA_disrupted")
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
-                    self.logger("upload of runfolder failed for run "+self.runfolder,"UA_fail")
-            else:
-                #write to log file check was ok
-                self.upload_agent_script_logfile.write("There were no issues when backing up the run folder\n")
-                self.logger("backup of runfolder complete for run "+self.runfolder,"UA_pass")
+                    self.logger("upload of runfolder failed for run " + self.runfolder,"UA_fail")
+        
+        # only state no errors seen if no errors were seen!
+        if not upload_error:
+            #write to log file check was ok
+            self.upload_agent_script_logfile.write("There were no issues when backing up the run folder\n")
+            self.logger("backup of runfolder complete for run " + self.runfolder,"UA_pass")
 
         
     def look_for_upload_errors_logfiles(self):
@@ -1233,16 +1241,16 @@ class upload2Nexus():
                 # if it still completed successfully carry on
                 if "uploaded successfully" in upload:
                     self.upload_agent_script_logfile.write("There was a disruption to the network when uploading logfiles but it completed successfully\n")                    
-                    self.logger("upload of logfiles was disrupted but completed for run "+self.runfolder,"UA_disrupted")
+                    self.logger("upload of logfiles was disrupted but completed for run " + self.runfolder,"UA_disrupted")
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the netowkr which prevented log files being uploaded\n")
-                    self.logger("upload of log files failed for run "+self.runfolder,"UA_fail")
+                    self.logger("upload of log files failed for run " +self.runfolder,"UA_fail")
         # only state no errors seen if no errors were seen!
         if not upload_error:
             #write to log file check was ok
             self.upload_agent_script_logfile.write("There were no issues when uploading the logfiles\n")
-            self.logger("upload of log files complete without issue "+self.runfolder,"UA_pass")
+            self.logger("upload of log files complete without issue " + self.runfolder,"UA_pass")
 
 
     def logger(self, message, tool):
