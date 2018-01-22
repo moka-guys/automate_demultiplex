@@ -1135,43 +1135,43 @@ class upload2Nexus():
         
         #capture the NGS run number and count
         count = 0
-        for file in os.listdir(self.runfolderpath+"/Data/Intensities/BaseCalls"):
+        for file in os.listdir(self.runfolderpath + "/Data/Intensities/BaseCalls"):
             if file.endswith("fastq.gz"):
                 if file.startswith("Undetermined"):
                     pass
                 else:
                     count = count + 0.5
-                    runnumber=file.split("_")[0]
+                    runnumber = file.split("_")[0]
         
         # set all values to be inserted
-        payload='{"cells": [{"columnId": '+self.ss_title+', "value": "'+self.runfolder+'"}, {"columnId": '+self.ss_description+', "value": "MokaPipe"},{"columnId": '+self.ss_samples+', "value": '+str(count)+'},{"columnId": '+self.ss_status+', "value": "In Progress"},{"columnId": '+self.ss_priority+', "value": "Medium"},{"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},{"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}], "toBottom":true}'
+        payload ='{"cells": [{"columnId": ' + self.ss_title + ', "value": "' + self.runfolder + '"}, {"columnId": ' + self.ss_description + ', "value": "MokaPipe"},{"columnId": ' + self.ss_samples + ', "value": ' + str(count) + '},{"columnId": ' + self.ss_status + ', "value": "In Progress"},{"columnId": ' + self.ss_priority + ', "value": "Medium"},{"columnId": ' + self.ss_assigned + ', "value": "aledjones@nhs.net"},{"columnId": ' + self.ss_received + ', "value": "' + str(self.smartsheet_now) + '"}], "toBottom":true}'
         #print payload
         # create url for uploading a new row
-        url=self.url+"/rows"
+        url = self.url + "/rows"
         
         # add the row using POST 
         r = requests.post(url,headers=self.headers,data=payload)
         
         # capture the row id
-        response= r.json()
+        response = r.json()
         #print response
 
         for i in response["result"]:
             if i == "id":
-                self.rowid=response["result"][i]
+                self.rowid = response["result"][i]
 
         self.upload_agent_script_logfile.write("\n----------------------UPDATE SMARTSHEET----------------------\n")
         #check the result of the update attempt
         for i in response:  
             #print i
             if i == "message":
-                if response[i] =="SUCCESS":
+                if response[i] == "SUCCESS":
 
                     self.upload_agent_script_logfile.write("smartsheet updated to say in progress\n")
                     self.logger("run started added to smartsheet","smartsheet_pass")
                 else:
-                    self.logger("run started NOT added to smartsheet for run "+self.runfolder,"smartsheet_fail")
-                    self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
+                    self.logger("run started NOT added to smartsheet for run " + self.runfolder,"smartsheet_fail")
+                    self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
 
     def look_for_upload_errors_fastq(self):
         '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
