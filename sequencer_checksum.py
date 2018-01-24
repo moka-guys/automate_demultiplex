@@ -42,8 +42,10 @@ class Nextseq_Integrity_Check():
 		self.workstation_runfolder = ""
 		self.sequencer_runfolder = ""
 
+		# files to ignore from checksum
+		self.exclude = ["RTAStart.bat", "CorrectedIntMetrics.bin", "EmpiricalPhasingMetrics.bin", "ErrorMetrics.bin", "EventMetrics.bin", "ExtractionMetrics.bin", "PFGridMetrics.bin", "QMetrics.bin", "RegistrationMetrics.bin", "TileMetrics.bin", "000_000_000_na_rtabat.trans", "FilesAdded.csv", "FilesCopied.csv", "md5checksum.txt"]
 		# flag to set testing		
-		self.testing=False
+		self.testing = False
 
 		# if testing overwrite the paths to that of the testing 
 		if self.testing:
@@ -52,7 +54,7 @@ class Nextseq_Integrity_Check():
 			# path to the fake nextseqtemp folder
 			self.nextseqtemp_folder = self.mapped_drive + "integrity_testing//sequencer_temp"
 			# path to the fake miseqtemp folder
-			self.miseqtemp_folder = self.mapped_drive + "integrity_testing//sequencer_temp"
+			#self.miseqtemp_folder = self.mapped_drive + "integrity_testing//sequencer_temp"
 			# path to the fake workstation folder
 			self.mapped_workstation_folder = self.mapped_drive + "integrity_testing//workstation"
 			# path to the fake checksums_inprogress folder
@@ -110,9 +112,17 @@ class Nextseq_Integrity_Check():
 				# call function to assess result of checksum and display message box
 				# if checksums match (integrity test pass) return a info box
 				if self.check_checksums():
+					# create root window which can then be hidden
+					root = Tkinter.Tk()
+					# hide 
+					root.withdraw()
 					tkMessageBox.showinfo("Integrity check complete","Integrity check passed")
 					# if checksums don't match (integrity test FAIL) return a error box
 				else:
+					# create root window which can then be hidden
+					root = Tkinter.Tk()
+					# hide 
+					root.withdraw()
 					tkMessageBox.showerror("Integrity check complete","Integrity check failed - please do not use this sequencer and inform the Bioinformatics team immediately")
 
 
@@ -168,7 +178,10 @@ class Nextseq_Integrity_Check():
 					if self.nextseq:
 						# if it's a testing run print a message
 						if self.testing:
-							print "NextSeq"
+							print "skipping 2 hour wait"
+						else:
+							# sleep 2 hours to ensure all file transfers are done
+							time.sleep(7200)
 						# call function which triggers the checksum calculations
 						self.prepare_checksum_calculations()
 					else:
@@ -227,21 +240,24 @@ class Nextseq_Integrity_Check():
 	def run_integrity_check(self):
 		"""
 		This function uses self variables for the filepaths and calculates the checksums on directories.
+		It looks for the presense of any files which should be ignored as they are not copied from temp to output.
 		The checksums are written to a file on the workstation for the demultiplexing script.
 		"""
 		if self.testing:
 			print "starting integrity checking"
-		# calculate md5 checksums using dirhash package for both folders
-		workstation_checksum = dirhash(self.workstation_runfolder, 'md5')
-		sequencer_checksum = dirhash(self.sequencer_runfolder, 'md5')
+
+		# calculate the checksum, using the to_exclude list
+		workstation_checksum = dirhash(self.workstation_runfolder, 'md5',excluded_files=self.exclude)
+		sequencer_checksum = dirhash(self.sequencer_runfolder, 'md5',excluded_files=self.exclude)
+		
 		if self.testing:
 			print "workstation checksum = " + workstation_checksum
 			print "sequencer checksum = " + sequencer_checksum	   
 
 		# write the checksums to the output file (on workstation)
 		with open(os.path.join(self.workstation_runfolder, self.output_file), 'w') as outputfile:
-			outputfile.write("workstation checksum (" + self.workstation_runfolder + ")=" + workstation_checksum+"\n")
-			outputfile.write("sequencer checksum (" + self.sequencer_runfolder + ")=" + sequencer_checksum)
+			outputfile.write("workstation checksum (" + self.workstation_runfolder + ")=" + workstation_checksum + "\n")
+			outputfile.write("sequencer checksum (" + self.sequencer_runfolder + ")=" + sequencer_checksum + "\n")
 
 
 	def checksums_done(self):
