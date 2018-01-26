@@ -225,7 +225,7 @@ smtp_do_tls = True
 # ================ Integrity check
 # the filename which holds the checksum results
 md5checksum_name = "md5checksum.txt"
-#checksum complete statement
+# checksum complete statement
 checksum_complete_flag = "Checksum result reported"
 # statement to write when checksums match
 checksum_match = "Checksums match"
@@ -235,13 +235,13 @@ integrity_check_first_wait = 3
 integrity_check_repeat_wait = 1
 # maximum number of times to perform integrity test
 max_number_of_attempts = 10
-# list of files containing files which differ between temp and output
+# list of files which differ between temp and output
 missing_files_output = "missing_files.txt"
-#files to exclude from integrity check
+# files to exclude from integrity check
 exclude = ["RTAStart.bat", "CorrectedIntMetrics.bin", "EmpiricalPhasingMetrics.bin", "ErrorMetrics.bin", "EventMetrics.bin", "ExtractionMetrics.bin", "PFGridMetrics.bin", "QMetrics.bin", "RegistrationMetrics.bin", "TileMetrics.bin", "000_000_000_na_rtabat.trans", "FilesAdded.csv", "FilesCopied.csv", "md5checksum.txt", missing_files_output]
 # ================ demultiplexing 
 logfile_success = "Processing completed with 0 errors and 0 warnings."
 
 #=================turnaround time
 # if a task takes more than this amount of time it is out of TAT
-allowed_time_for_tasks=4
+allowed_time_for_tasks = 4
