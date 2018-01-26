@@ -366,14 +366,18 @@ class ready2start_demultiplexing():
 
             # Run the bcl2fastq command to start demultiplexing. the script won't continue until this 
             # process finishes. Stderr and stdout streams are redirected to the log file by the command
-            subprocess.call([command], shell=True)
+            if not config.debug:
+                subprocess.call([command], shell=True)
 
-            # Add runfolder name to self.processed_runfolders. Runfolder names in this list are appended
-            # to the script log file at the end of the script cycle.
-            self.processed_runfolders.append(self.runfolder)
+                # Add runfolder name to self.processed_runfolders. Runfolder names in this list are appended
+                # to the script log file at the end of the script cycle.
+                self.processed_runfolders.append(self.runfolder)
 
-            # Call method to check the success of demultiplexing
-            self.check_demultiplexlog_file()
+                # Call method to check the success of demultiplexing
+                self.check_demultiplexlog_file()
+
+            else:
+                print "would have demultipexed but debug mode is on"
 
     def check_demultiplexlog_file(self):
         """Check demultiplexing completed successfully. Read the stderr and stdout from bcl2fastq in
@@ -582,15 +586,8 @@ class ready2start_demultiplexing():
         # write to log file to say integrity checking is being performed
         self.script_logfile.write("Data integrity checks starting...\n")
 
-         # test runfolders (starting with 999999) won't exist on the sequencer. Therefore if it is a test folder return true, skipping any integrity checks (the function of the integrity check has already been tested)
-        if self.runfolder.startswith('999999'):
-            # write to the logfile that this runfolder is a test one so integrity check not being performed
-            self.script_logfile.write("test run identified. This run folder is not on any sequencer so skipping integrity check\n")
-            # return True to report integrity checking has passed
-            return True
-        
         # if it's not a nextseq run return true to continue without integrity check
-        elif "NB551068" not in self.runfolder:
+        if "NB551068" not in self.runfolder:
             self.script_logfile.write("MiSeq run identified. Integrity test not possible.\n")
             # return True to report integrity checking has passed
             return True
@@ -600,89 +597,70 @@ class ready2start_demultiplexing():
         checksum_file_path = os.path.join(self.runfolderpath, config.md5checksum_name)
 
         
-        # It's possible that the checksums file has not yet ben created - test if the file exist and if not wait 5 minutes (300 secs)
-        # create a count to only wait 60 mins (it usually takes < 20 mins)
-        time_count = 0
-        while not os.path.isfile(checksum_file_path):
-            # if we have waited an hour
-            if time_count > 11:
-                # checksums have taken a lot longer than expected - send an error message
-                self.logger("integrity check not performed by NextSeq in expected timeframe for" + self.runfolder + ". Please ensure script is running on NextSeq", "demultiplex_fail")
+        # if the integrity check hasn't been performed yet there won't be a checksum file. If there isn't return False to skip this run until integrity test has been performed
+        if not os.path.isfile(checksum_file_path):
                 # write to log file
-                self.script_logfile.write("Integrity check not performed on NextSeq in expected time frame. stopping....\n")
+                self.script_logfile.write("Integrity check not yet performed on NextSeq. stopping....\n")
                 #and return false to stop the script
                 return False
-            else:
-                #write to script that we are waiting
-                self.script_logfile.write("md5checksums not yet performed by nextseq. waiting 5 mins...\n")
-                # increase time count
-                time_count += 1
-                # sleep for 5 mins
-                time.sleep(300)
         
-
-        # To ensure that the checksum has not already been checked - open the file containing the md5 checksums
-        with open(checksum_file_path, 'r') as checksum_file:
-            # read the checksum file into a list
-            checksums = checksum_file.readlines()
+        # if it has been performed check if it is a previously reported failed run
+        else:
+            # To ensure that the checksum has not already been checked - open the file containing the md5 checksums
+            with open(checksum_file_path, 'r') as checksum_file:
+                # read the checksum file into a list
+                checksums = checksum_file.readlines()
         
-        #assess last line in file (last element in list) to see if the flag which denotes checksum test has already been performed is present.
-        if config.checksum_complete_flag in checksums[-1]:
-            # if integrity check already reported write to sys.log that this has been seen
-            self.logger("already reported failed integrity check " + self.runfolder, "demultiplex_fail")
-            # return false to report integrity check not passed
-            return False
-        
-        # if integrity check not yet performed perform it.
-        else:    
-            # pass checksum file path to function which compares checksums. function returns true if the checksums match
-            if self.check_checksums(checksum_file_path):
-                # write to sys log
-                self.logger("integrity check of runfolder " + self.runfolder + " passed", "demultiplex_success")
-                # return True to report integrity checking has passed
-                return True
-            # if md5checksums do not match send an email
-            else:
-                # send an email as it's very urgent
-                self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
-                self.email_priority = 1
-                self.email_message = "run:\t" + self.runfolder + "\nsequencer checksum =" + self.sequencer_checksum + "\n" \
-                                    + "workstation checksum =" + self.workstation_checksum + "\n" \
-                                    + "Please follow the protocol for when integrity checks fail"
-                self.send_an_email()
-        
-                # record test failed in sys log
-                self.logger("Integrity check fail. checksums do not match for " + self.runfolder + "see " + checksum_file_path, "demultiplex_fail")
-                # return false to stop the script, saying integrity checking has not been completed      
+            # assess last line in file (last element in list) to see if the flag which denotes integrity test result has already been assessed and reported is present
+            if config.checksum_complete_flag in checksums[-1]:
+                # return false to report integrity check not passed
                 return False
+        
+            # if the integrity check result has not yet been assessed...
+            else:
+                # pass checksum file path to function which determines if integrity check passed. will return true if the integrity check passed
+                if self.check_checksums(checksum_file_path):
+                    # write to sys log
+                    self.logger("integrity check of runfolder " + self.runfolder + " passed", "demultiplex_success")
+                    # return True to report integrity checking has passed
+                    return True
+                # if integrity check failed...
+                else:
+                    # if it's not a debug run
+                    if not config.debug:
+                        # send an email
+                        self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
+                        self.email_priority = 1
+                        self.email_message = "run:\t" + self.runfolder + "\nPlease follow the protocol for when integrity checks fail"
+                        self.send_an_email()
+                    # record test failed in sys log
+                    self.logger("Integrity check fail. checksums do not match for " + self.runfolder + "see " + checksum_file_path, "demultiplex_fail")
+                    # return false to stop the script, saying integrity checking has not been completed      
+                    return False
 
-            
 
     def check_checksums(self, checksum_file_path):
         """
         This function receives the path to a file which should contain the checksums for both copies of a run folder.
-        Each line contains the checksum and some information about the folder which that checksum relates to
-        The checksums are extracted from the lines and compared
-        If they match the function returns true else it returns false.
+        Line 1 contains a pass/fail statement and the checksums are found on lines 2 and 3 
+        A line is added to this file to denote that the integrity check has been assessed - this stops this being repeated should it fail
+        If the test passed the function returns true else it returns false.
         All error reporting is done outside this function
         """
         # open the file containing the md5 checksums
         with open(checksum_file_path, 'r') as checksum_file:
             # read the checksums into a list
             checksums = checksum_file.readlines()
-        # each line contains the location of each checksum with an equals sign and then the checksum.
-        # split on equals to capture just the checksum (and remove any new line characters incase they result in a differenece)
-        self.workstation_checksum = checksums[0].split("=")[1].rstrip()
-        self.sequencer_checksum = checksums[1].split("=")[1].rstrip()
-        
+
         # Should the test fail the script will stop here but it will continue to reach this point every hour. 
         # open the file containing the md5 checksums as write, which  will overwrite the file
         with open(checksum_file_path, 'a') as checksum_file:
             # Add a flag into the checksum file which will stop it getting this far
             checksum_file.write(config.checksum_complete_flag)
 
-        # if the checksums match
-        if self.workstation_checksum == self.sequencer_checksum:
+        
+        # first line contains a pass/fail statement from the integrity check script.
+        if config.checksum_match in checksums[0]:
             # if md5checksums match return to say test passed
             return True
         else:
