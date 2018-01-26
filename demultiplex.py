@@ -592,20 +592,12 @@ class ready2start_demultiplexing():
             # return True to report integrity checking has passed
             return True
 
-        # # test runfolders (starting with 999999) won't exist on the sequencer. Therefore if it is a test folder return true, skipping any integrity checks (the function of the integrity check has already been tested)
-        # elif self.runfolder.startswith('999999'):
-        #     # write to the logfile that this runfolder is a test one so integrity check not being performed
-        #     self.script_logfile.write("test run identified. This run folder is not on any sequencer so skipping integrity check\n")
-        #     # return True to report integrity checking has passed
-        #     return True
-        
-
         # now have determined is a NextSeq run set the path to the checksum file
         # checksum file should have been written to the runfolder on the workstation by sequencer_checksum.py
         checksum_file_path = os.path.join(self.runfolderpath, config.md5checksum_name)
 
         
-        # if the integrity check hasn't been performed yet...
+        # if the integrity check hasn't been performed yet there won't be a checksum file. If there isn't return False to skip this run until integrity test has been performed
         if not os.path.isfile(checksum_file_path):
                 # write to log file
                 self.script_logfile.write("Integrity check not yet performed on NextSeq. stopping....\n")
@@ -625,7 +617,7 @@ class ready2start_demultiplexing():
                 return False
         
             # if the integrity check result has not yet been assessed...
-            else:    
+            else:
                 # pass checksum file path to function which determines if integrity check passed. will return true if the integrity check passed
                 if self.check_checksums(checksum_file_path):
                     # write to sys log
