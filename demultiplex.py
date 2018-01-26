@@ -605,44 +605,42 @@ class ready2start_demultiplexing():
         checksum_file_path = os.path.join(self.runfolderpath, config.md5checksum_name)
 
         
-        # see if integrity check has been performed
+        # if the integrity check hasn't been performed yet...
         if not os.path.isfile(checksum_file_path):
                 # write to log file
                 self.script_logfile.write("Integrity check not yet performed on NextSeq. stopping....\n")
                 #and return false to stop the script
                 return False
         
-        # if it has been performed
+        # if it has been performed check if it is a previously reported failed run
         else:
             # To ensure that the checksum has not already been checked - open the file containing the md5 checksums
             with open(checksum_file_path, 'r') as checksum_file:
                 # read the checksum file into a list
                 checksums = checksum_file.readlines()
         
-            #assess last line in file (last element in list) to see if the flag which denotes checksum test has already been performed is present.
+            # assess last line in file (last element in list) to see if the flag which denotes integrity test result has already been assessed and reported is present
             if config.checksum_complete_flag in checksums[-1]:
-                # if integrity check already reported write to sys.log that this has been seen
-                self.logger("already reported failed integrity check " + self.runfolder, "demultiplex_fail")
                 # return false to report integrity check not passed
                 return False
         
-            # if integrity check not yet performed perform it.
+            # if the integrity check result has not yet been assessed...
             else:    
-                # pass checksum file path to function which determines if integrity check passed. return true if the checksums match
+                # pass checksum file path to function which determines if integrity check passed. will return true if the integrity check passed
                 if self.check_checksums(checksum_file_path):
                     # write to sys log
                     self.logger("integrity check of runfolder " + self.runfolder + " passed", "demultiplex_success")
                     # return True to report integrity checking has passed
                     return True
-                # if md5checksums do not match send an email
+                # if integrity check failed...
                 else:
+                    # if it's not a debug run
                     if not config.debug:
-                        # send an email as it's very urgent
+                        # send an email
                         self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
                         self.email_priority = 1
                         self.email_message = "run:\t" + self.runfolder + "\nPlease follow the protocol for when integrity checks fail"
                         self.send_an_email()
-            
                     # record test failed in sys log
                     self.logger("Integrity check fail. checksums do not match for " + self.runfolder + "see " + checksum_file_path, "demultiplex_fail")
                     # return false to stop the script, saying integrity checking has not been completed      

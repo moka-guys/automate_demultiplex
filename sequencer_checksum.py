@@ -38,11 +38,8 @@ class Nextseq_Integrity_Check():
 		# checksums match
 		self.checksum_match = False
 
-		# flag to set testing		
-		self.testing = False
-
-		# if testing overwrite the paths to that of the testing 
-		if self.testing:
+		# if testing, overwrite the paths to that of the testing folders (currently on a USB stick)
+		if config.debug:
 			# drive letter given to usb stick
 			self.mapped_drive = "E:\\"
 			# path to the fake nextseqtemp folder
@@ -65,9 +62,9 @@ class Nextseq_Integrity_Check():
 		# for each runfolder in temp folder
 		for temp_runfolder in os.listdir(self.nextseqtemp_folder):
 			# if the run has not already been monitored by this script OR it's a testing run
-			if temp_runfolder not in os.listdir(self.run_in_progress) or self.testing:
+			if temp_runfolder not in os.listdir(self.run_in_progress) or config.debug:
 				# if testing print message
-				if self.testing:
+				if config.debug:
 					print "testing run skipping test to see if run already being monitored"
 
 			
@@ -145,10 +142,10 @@ class Nextseq_Integrity_Check():
 			# check the run has finished and transferred (presence of RTA_complete in the runfolder and on workstation)
 			if self.RTA_complete in os.listdir(self.sequencer_runfolder) and self.RTA_complete in os.listdir(self.workstation_runfolder):
 					# if it's a testing run print a message
-					if self.testing:
-						print "run finished - skipping 2 hour wait"
+					if config.debug:
+						print "run finished - skipping integrity_check_first_wait"
 					else:
-						# sleep 3 hours to ensure all file transfers are done
+						# wait the number of hours defined in config file to ensure all file transfers are done
 						time.sleep(config.integrity_check_first_wait * 3600)
 						
 					# call function which triggers the checksum calculations
@@ -159,14 +156,14 @@ class Nextseq_Integrity_Check():
 			# if run has not finished 
 			else:
 				# if a testing run, wait 20 seconds and print a message
-				if self.testing:
+				if config.debug:
 					print "waiting 20 seconds for sequencing and data transfer to finish"
 					time.sleep(20)
 				# if not testing wait longer
 				else:
 					# wait 10 minutes
 					time.sleep(600)
-		if self.testing:
+		if config.debug:
 			print "checksums done"
 			
 
@@ -175,12 +172,12 @@ class Nextseq_Integrity_Check():
 		The checksums are calculated by this script.
 		This function checks the runfolder has not already been checksummed, marks the folder as being checksummed and then calls the function to generate the checksums.
 		"""
-		if self.testing:
+		if config.debug:
 			print "in prepare_checksum_calculations"
 		# create name for file to denote checksum in progress
 		checksum_in_progress_file=self.runfolder+".txt"
-		# check integrity check has not already been calculated, or isn't currently being calculated
-		if not self.testing and self.output_file not in os.listdir(self.workstation_runfolder) and checksum_in_progress_file not in os.listdir(self.checksum_in_progress):
+		# check integrity check has not already been calculated, or isn't currently being calculated and it isn't a testing run.
+		if not config.debug and self.output_file not in os.listdir(self.workstation_runfolder) and checksum_in_progress_file not in os.listdir(self.checksum_in_progress):
 			# create a file to denote checksum in progress
 			with open(os.path.join(self.checksum_in_progress,checksum_in_progress_file),'w') as checksum_in_progress_file_path:
 				# create a timestamp
@@ -190,8 +187,8 @@ class Nextseq_Integrity_Check():
 
 			# call function to generate checksum for workstation and sequencer runfolders
 			self.run_integrity_check()
-		# if a testing run print statement to explain stopping
-		elif self.testing:
+		# if a test run print statement to explain stopping
+		elif config.debug:
 			print "checksums already generated but as testing continuing anyway"
 				# create a file to denote checksum in progress
 			with open(os.path.join(self.checksum_in_progress,checksum_in_progress_file),'w') as checksum_in_progress_file_path:
@@ -211,7 +208,7 @@ class Nextseq_Integrity_Check():
 		It looks for the presense of any files which should be ignored as they are not copied from temp to output.
 		The checksums are written to a file on the workstation for the demultiplexing script.
 		"""
-		if self.testing:
+		if config.debug:
 			print "starting integrity checking"
 
 		# set a count for max number of attempts at checksum (one test per hour)
@@ -224,7 +221,7 @@ class Nextseq_Integrity_Check():
 			sequencer_checksum = dirhash(self.sequencer_runfolder, 'md5', excluded_files = config.exclude)
 			
 			# if testing print checksums
-			if self.testing:
+			if config.debug:
 				print "workstation checksum = " + workstation_checksum
 				print "sequencer checksum = " + sequencer_checksum	   
 
@@ -241,11 +238,11 @@ class Nextseq_Integrity_Check():
 				count += 1
 				
 				# if testing skip the wait
-				if self.testing:
+				if config.debug:
 					print "waiting 15 seconds... change the runfolder now!"
 					time.sleep(15)
 				else:
-					#wait an hour
+					# wait the number of hours defined in config file
 					time.sleep(config.integrity_check_repeat_wait * 3600)
 		
 		# report if integrity test has passed or failed after max number of tries
