@@ -253,7 +253,7 @@ class ready2start_demultiplexing():
     def look_for_sample_sheet(self):
         """Check that the sample sheet for the current runfolder is present."""
         # Set the name and path of the sample sheet to find
-        self.samplesheet = self.samplesheets + "/" + self.runfolder + "_SampleSheet.csv"
+        self.samplesheet = self.samplesheets + self.runfolder + "_SampleSheet.csv"
 
         # Get a list of samplesheets in the samplesheets folder
         all_runfolders = os.listdir(self.samplesheets)
@@ -611,10 +611,12 @@ class ready2start_demultiplexing():
                 # read the checksum file into a list
                 checksums = checksum_file.readlines()
         
-            # assess last line in file (last element in list) to see if the flag which denotes integrity test result has already been assessed and reported is present
-            if config.checksum_complete_flag in checksums[-1]:
-                # return false to report integrity check not passed
-                return False
+        #assess last line in file (last element in list) to see if the flag which denotes checksum test has already been performed is present.
+        if config.checksum_complete_flag in checksums[-1]:
+            self.script_logfile.write("Previously reported failed integrity check\n")
+            # return false to report integrity check not passed
+            return False
+
         
             # if the integrity check result has not yet been assessed...
             else:
@@ -656,7 +658,7 @@ class ready2start_demultiplexing():
         # open the file containing the md5 checksums as write, which  will overwrite the file
         with open(checksum_file_path, 'a') as checksum_file:
             # Add a flag into the checksum file which will stop it getting this far
-            checksum_file.write(config.checksum_complete_flag)
+            checksum_file.write("\n"+config.checksum_complete_flag)
 
         
         # first line contains a pass/fail statement from the integrity check script.
