@@ -9,8 +9,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v10.0"
-
+script_release = "v11.0"
 
 # =====location of input/output files=====
 # path to run folders
