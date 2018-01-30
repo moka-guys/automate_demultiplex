@@ -57,39 +57,40 @@ class get_list_of_runs():
 
     def combine_log_files(self):
         # count number of log files that match the time stamp
-        count=0
+        count = 0
         # empty list
-        list_of_logfiles=[]
+        list_of_logfiles = []
         #loop through the folder containing log files
-        for file in os.listdir(DNA_Nexus_workflow_logfolder):
+        for file in os.listdir(upload_agent_logfile):
             #if is one with this time stamp, ie if was made by this running of this script
-            if fnmatch.fnmatch(file,self.now+'*'):
+            if self.now in file:
                 #add count and append to list
-                count=count+1
-                list_of_logfiles.append(DNA_Nexus_workflow_logfolder+file)
-        
+                count += 1
+                list_of_logfiles.append(upload_agent_logfile + file)
+
         #if more than one log file we want to concatenate them
-        if count >1:
+        if count > 1:
             # create the start of the path to the logfile using the path to the log file and the time stamp (without.txt extension)
-            logfile_name=os.path.join(DNA_Nexus_workflow_logfolder,self.now)
+            logfile_name = os.path.join(upload_agent_logfile, self.now)
             # loop through all the log files to capture the run names 
             for logfile in list_of_logfiles:
                 #skip the empty timestamp
-                if self.now+".txt" in logfile:
+                if self.now + "_.txt" in logfile:
                     pass
                 else:
                     # remove the time stamp and the logfolder path from each filename in the list and concatenate to the logfile_name created above
-                    logfile_name=logfile_name+logfile.replace(self.now,'').replace(DNA_Nexus_workflow_logfolder,'').replace(".txt","")
+                    logfile_name = logfile_name + logfile.replace(self.now, '').replace(upload_agent_logfile, '').replace(".txt", "").replace(".txt.txt","")
+            
             #add extension
-            logfile_name=logfile_name+".txt"
+            logfile_name = logfile_name + ".txt"
 
             #concatenate all the remaining filenames into a string, seperated by spaces
-            remaining_files=" ".join(list_of_logfiles)
+            remaining_files = " ".join(list_of_logfiles)
             
             # combine all into one file with the longest filename (that will have the run folder name)            
             cmd = "cat " + remaining_files + " >> " + logfile_name
-            # remove the files that have been written to the longer file
-            rmcmd= "rm " + remaining_files
+            # remove the files that have been written to the longer file (removing the combined log file name from this list)
+            rmcmd = "rm " + remaining_files.replace(logfile_name,"")
                     
             # run the command, redirecting stderror to stdout
             proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
@@ -132,8 +133,8 @@ class upload2Nexus():
         self.wes_number = '' # WES number near the end of fastq file name.
 
         #variables to rename log file.
-        self.rename=""
-        self.now=""
+        self.rename = ""
+        self.now = ""
 
         #####################################DNA Nexus########################
         # bash script that is used to execute dx commands
@@ -220,7 +221,7 @@ class upload2Nexus():
         self.now=now
         
         #open the logfile for this hour's cron job.
-        self.upload_agent_logfile_name=upload_agent_logfile+self.now+"_"+self.rename+".txt"
+        self.upload_agent_logfile_name = upload_agent_logfile + self.now + "_" + self.rename + ".txt"
         self.upload_agent_script_logfile = open(self.upload_agent_logfile_name,'a')
 
         # capture the runfolder 
@@ -475,7 +476,7 @@ class upload2Nexus():
         
         # server details
         server = smtplib.SMTP(host = host,port = port,timeout = 10)
-        server.set_debuglevel(1) # verbosity
+        server.set_debuglevel(False) # verbosity turned off - set to true to get debug messages
         server.starttls()
         server.ehlo()
         server.login(user, pw)
@@ -946,17 +947,42 @@ class upload2Nexus():
 
 
         if not debug:
-            run_upload_agent_script="bash " + temp_bash + " >> "+ self.runfolderpath + "/" + upload_started_file
+            # create command redirecting stderror to the log file
+            run_upload_agent_script = "bash " + temp_bash + " >> " + self.runfolderpath + "/" + upload_started_file + " 2>&1"
             # run the command
             proc = subprocess.Popen([run_upload_agent_script], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             
             # capture the streams
             (out, err) = proc.communicate()
-            if err:
-                self.upload_agent_script_logfile.write("Error when executing script:\n"+err+"\n\n")
-                self.logger("Error whilst uploading rest of runfolder:"+err,"UA_fail")
-            else:
-                self.upload_agent_script_logfile.write("No errors reported\n")
+            
+            # All standard error is redirected to stdout in the command need -  to parse STDout for errors
+            # set a flag so a "no errors reported" message is only written if no errors are seen!
+            error = False
+            # for each line in the standard out
+            for linenumber,line in enumerate(out):
+                # skip if the line is empty, or it starts with Uploading or ends with the expected success statement
+                if line.startswith("Uploading") or line.endswith("was uploaded successfully. Closing...") or len(line) < 2:
+                    pass
+                # if the line doesn't contain any of these expected lines
+                else:
+                    # set the flag so the no errors reported message is not written
+                    error = True
+                    # expect a pair of lines for each file to be uploaded, the first one detailing which file is being uploaded and the second a pass/fail statement.
+                    # we are looking for the error in the second line so we want this and the line before it
+                    # however if the error message is the first line can't record the line before it so use a if loop
+                    if linenumber == 0:
+                        # write only this line to log
+                        self.upload_agent_script_logfile.write("Error when executing script:\n" + line +"\n")
+                    else:
+                        # write this line and the line before (as this contains the name of the file trying to upload) to log
+                        self.upload_agent_script_logfile.write("Error when executing script:\nError lines = " + out[linenumber - 1] + "\n" + line +"\n")
+                    # write to logger that there was an issue
+                    self.logger("Error whilst uploading rest of runfolder - see all standard out " + self.runfolderpath + "/" + upload_started_file ,"UA_fail")
+            # if there were no errors write this to log file
+            if not error:
+                # write the 
+                self.upload_agent_script_logfile.write("No errors reported\n")    
+            
         
         # copy commands from temporary upload agent file to the one containing the fastq upload command
         command = "cat " + temp_bash + " >> " + self.runfolderpath + "/" + runfolder_upload_cmds
@@ -987,12 +1013,16 @@ class upload2Nexus():
         self.upload_agent_script_logfile.close()
 
         # rename file to show what runs were affected.
-        self.rename=self.rename+self.runfolder
-        os.rename(self.upload_agent_logfile_name,self.upload_agent_logfile_name.replace('.txt','')+self.rename+".txt")
+        self.rename = self.runfolder + "_upload_agent_log.txt"
+        os.rename(self.upload_agent_logfile_name, self.upload_agent_logfile_name.replace('.txt', self.rename))
 
+        
         # capture the new file name so can continue to write to it.
-        self.upload_agent_logfile_name=self.upload_agent_logfile_name.replace('.txt','')+self.rename+".txt"
-
+        self.upload_agent_logfile_name = self.upload_agent_logfile_name.replace('.txt', self.rename)
+        
+        #reset self.rename to prevent logfile being renamed incorrectly.
+        self.rename = ""
+        
         # call function to upload log files
         self.upload_log_files()
 
@@ -1006,7 +1036,6 @@ class upload2Nexus():
         6. logfile used to set off the workflow (/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
         7. samplesheet
         '''
-
         #empty list to hold files (and paths) to be uploaded
         logfile_list=[]
         
@@ -1070,15 +1099,15 @@ class upload2Nexus():
 
         if not debug:
             # run the command, redirecting stderror to stdout
-            proc = subprocess.Popen([nexus_upload_command+" & "+samplesheet_nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
+            proc = subprocess.Popen([nexus_upload_command + " & " + samplesheet_nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
             
             # capture the streams (err is redirected to out above)
             (out, err) = proc.communicate()
-        
+
         else:
             print nexus_upload_command
-            out="x"
-            err="y"
+            out = "x"
+            err = "y"
 
         # capture stdout to log file containing stdour and stderr
         runfolder_upload_stdout_file = open(self.runfolderpath + "/" + upload_started_file, 'a')
@@ -1117,43 +1146,43 @@ class upload2Nexus():
         
         #capture the NGS run number and count
         count = 0
-        for file in os.listdir(self.runfolderpath+"/Data/Intensities/BaseCalls"):
+        for file in os.listdir(self.runfolderpath + "/Data/Intensities/BaseCalls"):
             if file.endswith("fastq.gz"):
                 if file.startswith("Undetermined"):
                     pass
                 else:
                     count = count + 0.5
-                    runnumber=file.split("_")[0]
+                    runnumber = file.split("_")[0]
         
         # set all values to be inserted
-        payload='{"cells": [{"columnId": '+self.ss_title+', "value": "'+self.runfolder+'"}, {"columnId": '+self.ss_description+', "value": "MokaPipe"},{"columnId": '+self.ss_samples+', "value": '+str(count)+'},{"columnId": '+self.ss_status+', "value": "In Progress"},{"columnId": '+self.ss_priority+', "value": "Medium"},{"columnId": '+self.ss_assigned+', "value": "aledjones@nhs.net"},{"columnId": '+self.ss_received+', "value": "'+str(self.smartsheet_now)+'"}], "toBottom":true}'
+        payload ='{"cells": [{"columnId": ' + self.ss_title + ', "value": "' + self.runfolder + '"}, {"columnId": ' + self.ss_description + ', "value": "MokaPipe"},{"columnId": ' + self.ss_samples + ', "value": ' + str(count) + '},{"columnId": ' + self.ss_status + ', "value": "In Progress"},{"columnId": ' + self.ss_priority + ', "value": "Medium"},{"columnId": ' + self.ss_assigned + ', "value": "aledjones@nhs.net"},{"columnId": ' + self.ss_received + ', "value": "' + str(self.smartsheet_now) + '"}], "toBottom":true}'
         #print payload
         # create url for uploading a new row
-        url=self.url+"/rows"
+        url = self.url + "/rows"
         
         # add the row using POST 
         r = requests.post(url,headers=self.headers,data=payload)
         
         # capture the row id
-        response= r.json()
+        response = r.json()
         #print response
 
         for i in response["result"]:
             if i == "id":
-                self.rowid=response["result"][i]
+                self.rowid = response["result"][i]
 
         self.upload_agent_script_logfile.write("\n----------------------UPDATE SMARTSHEET----------------------\n")
         #check the result of the update attempt
         for i in response:  
             #print i
             if i == "message":
-                if response[i] =="SUCCESS":
+                if response[i] == "SUCCESS":
 
                     self.upload_agent_script_logfile.write("smartsheet updated to say in progress\n")
                     self.logger("run started added to smartsheet","smartsheet_pass")
                 else:
-                    self.logger("run started NOT added to smartsheet for run "+self.runfolder,"smartsheet_fail")
-                    self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n"+str(response))
+                    self.logger("run started NOT added to smartsheet for run " + self.runfolder,"smartsheet_fail")
+                    self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
 
     def look_for_upload_errors_fastq(self):
         '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
@@ -1175,27 +1204,33 @@ class upload2Nexus():
                 self.logger("upload of fastq files complete for run "+self.runfolder,"UA_pass")
 
 
-
-
     def look_for_upload_errors_runfolder(self):
         '''parse the file containing standard error/standard out from the upload agent and look for the phrase "ERROR".
         If present email link to the log file
         NB any errors from the fastq upload would also be detected here.'''
+        
+        # flag so no errors found statement only written once
+        upload_error = False
+
         for upload in open(self.runfolderpath + "/" + upload_started_file).read().split("Uploading file"):
             # if there was an error during the upload...
             if self.ua_error in upload:
+                # if error seen set flag
+                upload_error = True
                 # if it still completed successfully carry on
                 if "uploaded successfully" in upload:
                     self.upload_agent_script_logfile.write("There was a disruption to the network when uploading the rest of the runfolder but it completed successfully\n")                    
-                    self.logger("upload of runfolder was disrupted but completed for run "+self.runfolder,"UA_disrupted")
+                    self.logger("upload of runfolder was disrupted but completed for run " + self.runfolder, "UA_disrupted")
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
-                    self.logger("upload of runfolder failed for run "+self.runfolder,"UA_fail")
-            else:
-                #write to log file check was ok
-                self.upload_agent_script_logfile.write("There were no issues when backing up the run folder\n")
-                self.logger("backup of runfolder complete for run "+self.runfolder,"UA_pass")
+                    self.logger("upload of runfolder failed for run " + self.runfolder, "UA_fail")
+        
+        # only state no errors seen if no errors were seen!
+        if not upload_error:
+            #write to log file check was ok
+            self.upload_agent_script_logfile.write("There were no issues when backing up the run folder\n")
+            self.logger("backup of runfolder complete for run " + self.runfolder, "UA_pass")
 
         
     def look_for_upload_errors_logfiles(self):
@@ -1203,22 +1238,28 @@ class upload2Nexus():
         If present email link to the log file
         NB any errors from the fastq upload and run folderwould also be detected here.'''
 
+        # flag so no errors found statement only written once
+        upload_error = False
+
         # Open the log file and split for each individual upload command
         for upload in open(self.runfolderpath + "/" + upload_started_file).read().split("Uploading file"):
             # if there was an error during the upload...
             if self.ua_error in upload:
+                # if error seen set flag
+                upload_error = True
                 # if it still completed successfully carry on
                 if "uploaded successfully" in upload:
                     self.upload_agent_script_logfile.write("There was a disruption to the network when uploading logfiles but it completed successfully\n")                    
-                    self.logger("upload of logfiles was disrupted but completed for run "+self.runfolder,"UA_disrupted")
+                    self.logger("upload of logfiles was disrupted but completed for run " + self.runfolder, "UA_disrupted")
                 # other wise send an email and write to log
                 else:
                     self.upload_agent_script_logfile.write("There was a disruption to the netowkr which prevented log files being uploaded\n")
-                    self.logger("upload of log files failed for run "+self.runfolder,"UA_fail")
-            else:
-                #write to log file check was ok
-                self.upload_agent_script_logfile.write("There were no issues when uploading the logfiles\n")
-                self.logger("upload of log files complete without issue "+self.runfolder,"UA_pass")
+                    self.logger("upload of log files failed for run " +self.runfolder, "UA_fail")
+        # only state no errors seen if no errors were seen!
+        if not upload_error:
+            #write to log file check was ok
+            self.upload_agent_script_logfile.write("There were no issues when uploading the logfiles\n")
+            self.logger("upload of log files complete without issue " + self.runfolder, "UA_pass")
 
 
     def logger(self, message, tool):
