@@ -57,39 +57,39 @@ class get_list_of_runs():
 
     def combine_log_files(self):
         # count number of log files that match the time stamp
-        count=0
+        count = 0
         # empty list
-        list_of_logfiles=[]
+        list_of_logfiles = []
         #loop through the folder containing log files
         for file in os.listdir(DNA_Nexus_workflow_logfolder):
             #if is one with this time stamp, ie if was made by this running of this script
-            if fnmatch.fnmatch(file,self.now+'*'):
+            if fnmatch.fnmatch(file, self.now + '*'):
                 #add count and append to list
-                count=count+1
-                list_of_logfiles.append(DNA_Nexus_workflow_logfolder+file)
+                count = count + 1
+                list_of_logfiles.append(DNA_Nexus_workflow_logfolder + file)
         
         #if more than one log file we want to concatenate them
-        if count >1:
+        if count > 1:
             # create the start of the path to the logfile using the path to the log file and the time stamp (without.txt extension)
-            logfile_name=os.path.join(DNA_Nexus_workflow_logfolder,self.now)
+            logfile_name = os.path.join(DNA_Nexus_workflow_logfolder, self.now)
             # loop through all the log files to capture the run names 
             for logfile in list_of_logfiles:
                 #skip the empty timestamp
-                if self.now+".txt" in logfile:
+                if self.now + ".txt" in logfile:
                     pass
                 else:
                     # remove the time stamp and the logfolder path from each filename in the list and concatenate to the logfile_name created above
-                    logfile_name=logfile_name+logfile.replace(self.now,'').replace(DNA_Nexus_workflow_logfolder,'').replace(".txt","")
+                    logfile_name = logfile_name + logfile.replace(self.now,'').replace(DNA_Nexus_workflow_logfolder,'').replace(".txt","")
             #add extension
-            logfile_name=logfile_name+".txt"
+            logfile_name = logfile_name + "uploadagent_log.txt"
 
             #concatenate all the remaining filenames into a string, seperated by spaces
-            remaining_files=" ".join(list_of_logfiles)
+            remaining_files = " ".join(list_of_logfiles)
             
             # combine all into one file with the longest filename (that will have the run folder name)            
             cmd = "cat " + remaining_files + " >> " + logfile_name
             # remove the files that have been written to the longer file
-            rmcmd= "rm " + remaining_files
+            rmcmd = "rm " + remaining_files
                     
             # run the command, redirecting stderror to stdout
             proc = subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
