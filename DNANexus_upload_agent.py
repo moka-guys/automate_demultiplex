@@ -81,7 +81,7 @@ class get_list_of_runs():
                     # remove the time stamp and the logfolder path from each filename in the list and concatenate to the logfile_name created above
                     logfile_name = logfile_name + logfile.replace(self.now,'').replace(DNA_Nexus_workflow_logfolder,'').replace(".txt","")
             #add extension
-            logfile_name = logfile_name + "uploadagent_log.txt"
+            logfile_name = logfile_name + "_uploadagent_log.txt"
 
             #concatenate all the remaining filenames into a string, seperated by spaces
             remaining_files = " ".join(list_of_logfiles)
