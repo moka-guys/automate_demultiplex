@@ -967,7 +967,7 @@ class upload2Nexus():
                 else:
                     # set the flag so the no errors reported message is not written
                     error = True
-                    # write the line before and this line to log
+                    # write this line and the line before (as this contains the name of the file trying to upload) to log
                     self.upload_agent_script_logfile.write("Error when executing script:\nError lines = " + out[linenumber - 1] + "\n" + line +"\n")
                     # write to logger that there was an issue
                     self.logger("Error whilst uploading rest of runfolder - see all standard out " + self.runfolderpath + "/" + upload_started_file ,"UA_fail")
