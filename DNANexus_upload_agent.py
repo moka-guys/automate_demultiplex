@@ -967,8 +967,15 @@ class upload2Nexus():
                 else:
                     # set the flag so the no errors reported message is not written
                     error = True
-                    # write this line and the line before (as this contains the name of the file trying to upload) to log
-                    self.upload_agent_script_logfile.write("Error when executing script:\nError lines = " + out[linenumber - 1] + "\n" + line +"\n")
+                    # expect a pair of lines for each file to be uploaded, the first one detailing which file is being uploaded and the second a pass/fail statement.
+                    # we are looking for the error in the second line so we want this and the line before it
+                    # however if the error message is the first line can't record the line before it so use a if loop
+                    if linenumber == 0:
+                        # write only this line to log
+                        self.upload_agent_script_logfile.write("Error when executing script:\n" + line +"\n")
+                    else:
+                        # write this line and the line before (as this contains the name of the file trying to upload) to log
+                        self.upload_agent_script_logfile.write("Error when executing script:\nError lines = " + out[linenumber - 1] + "\n" + line +"\n")
                     # write to logger that there was an issue
                     self.logger("Error whilst uploading rest of runfolder - see all standard out " + self.runfolderpath + "/" + upload_started_file ,"UA_fail")
             # if there were no errors write this to log file
