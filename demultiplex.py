@@ -618,27 +618,27 @@ class ready2start_demultiplexing():
             return False
 
         
-            # if the integrity check result has not yet been assessed...
+        # if the integrity check result has not yet been assessed...
+        else:
+            # pass checksum file path to function which determines if integrity check passed. will return true if the integrity check passed
+            if self.check_checksums(checksum_file_path):
+                # write to sys log
+                self.logger("integrity check of runfolder " + self.runfolder + " passed", "demultiplex_success")
+                # return True to report integrity checking has passed
+                return True
+            # if integrity check failed...
             else:
-                # pass checksum file path to function which determines if integrity check passed. will return true if the integrity check passed
-                if self.check_checksums(checksum_file_path):
-                    # write to sys log
-                    self.logger("integrity check of runfolder " + self.runfolder + " passed", "demultiplex_success")
-                    # return True to report integrity checking has passed
-                    return True
-                # if integrity check failed...
-                else:
-                    # if it's not a debug run
-                    if not config.debug:
-                        # send an email
-                        self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
-                        self.email_priority = 1
-                        self.email_message = "run:\t" + self.runfolder + "\nPlease follow the protocol for when integrity checks fail"
-                        self.send_an_email()
-                    # record test failed in sys log
-                    self.logger("Integrity check fail. checksums do not match for " + self.runfolder + "see " + checksum_file_path, "demultiplex_fail")
-                    # return false to stop the script, saying integrity checking has not been completed      
-                    return False
+                # if it's not a debug run
+                if not config.debug:
+                    # send an email
+                    self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
+                    self.email_priority = 1
+                    self.email_message = "run:\t" + self.runfolder + "\nPlease follow the protocol for when integrity checks fail"
+                    self.send_an_email()
+                # record test failed in sys log
+                self.logger("Integrity check fail. checksums do not match for " + self.runfolder + "see " + checksum_file_path, "demultiplex_fail")
+                # return false to stop the script, saying integrity checking has not been completed      
+                return False
 
 
     def check_checksums(self, checksum_file_path):
