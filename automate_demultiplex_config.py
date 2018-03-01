@@ -149,7 +149,7 @@ wook_email = "joowook.ahn@nhs.net" # wook email
 WES_email = "gst-tr.wesviapath@nhs.net" # WES email
 
 # DNA Nexus authentication token
-Nexus_API_Key = "VL1GgQzrdFSXRGAQ062mMaOsqQtcZQhj"
+Nexus_API_Key = "MK8QlLFLwGvFDkgc9MnaWIgrTARHlO3e"
 
 # list of DNA Nexus users for project to be shared with
 users = ["org-viapath_prod", "InterpretationRequest"]
