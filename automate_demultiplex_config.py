@@ -9,7 +9,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v13.0"
+script_release = "v14.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -87,7 +87,7 @@ multiqc_path = "Apps/multiqc"
 # smartsheet app
 smartsheet_path = "Apps/smartsheet_mokapipe_complete"
 # RPKM path
-RPKM_path = "Apps/RPKM_using_conifer"
+RPKM_path = "Apps/RPKM_using_conifer_v1.3"
 # bedfile folder
 bedfile_folder = "Data/BED/"
 # DNA Nexus organisation to create the project within
