@@ -672,7 +672,7 @@ class upload2Nexus():
                     dest_cmd = self.nexusproject + ":/"
 
                     # create the dx command
-                    command = self.base_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + sambamba_input + sambamba_bedfile + mokavendor_input + moka_vendor_bedfile + ingenuity_input + ingenuity_email+ self.dest + dest_cmd + self.token
+                    command = self.base_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + sambamba_input + sambamba_bedfile + mokavendor_input + moka_vendor_bedfile + iva_email_input + ingenuity_email+ self.dest + dest_cmd + self.token
                     
                     #add command for each pair of fastqs to a list 
                     self.dx_run.append(command)
@@ -686,8 +686,8 @@ class upload2Nexus():
 
             # set the destination command as the root of the project in dir AmplivarOutput
             dest_cmd = self.nexusproject +":/Onco_Output"
-            # create the dx command include email address for ingenuity and to alert if no variants found
-            command = command + vcf_novariants + onco_email + onco_ingenuity + onco_email + self.dest + dest_cmd + self.token
+            # create the dx command include email address for ingenuity
+            command = command + onco_ingenuity + onco_email + self.dest + dest_cmd + self.token
             # print command
             #add command to  list 
             self.dx_run.append(command)
@@ -834,7 +834,7 @@ class upload2Nexus():
             # loop through unique list of dna numbers obtained from fastq filenames
             for DNA in set(self.list_of_DNA_numbers_nonWES):
                 # build the rest of the sql update query
-                sql.append("insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('" + DNA + "','" + moka_pipeline_ID + "')")
+                sql.append("insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('" + DNA + "','" + mokapipe_pipeline_ID + "')")
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~ TODO ~~~~~~~~~~~~~~~~~~~~~~~~
         # Generate SQL for cancer samples.
