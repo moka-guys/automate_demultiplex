@@ -334,12 +334,14 @@ class ready2start_demultiplexing():
         # Call function to test if bcl2fastq is installed and working as expected
         # if it fails an exception is raised.
         self.test_bcl2fastq()
-        # Call function to add the run to smartsheet, with status set to 'in progress'
-        self.smartsheet_demultiplex_in_progress()
 
         # before demultiplexing starts check the integrity of the runfolder against that on the sequencer. 
         # If the checks pass the funcion will return true. if it fails errors are reported within the function
         if self.prepare_integrity_check():
+
+            # Call function to add the run to smartsheet, with status set to 'in progress' - only do this after integrity check passed otherwise smartsheet updated multiple times
+            self.smartsheet_demultiplex_in_progress()
+
             # Set demultiplex log file name for this runfolder.
             demultiplex_log = (self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed)
             # create this file to ensure demultiplexing doesn't start again - bcl2fastq2 v2.20 doesn't produce any standard out for a while after starting so create this here and append later

@@ -9,7 +9,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v13.0"
+script_release = "v14.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -56,10 +56,10 @@ upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # Current Mokapipe ID
-moka_pipeline_ID = "1941"
+mokapipe_pipeline_ID = "2209"
 # Current MokaWES ID
-mokawes_pipeline_ID = "2037"
-# -- Moka WES test status-- 
+mokawes_pipeline_ID = "2210"
+# -- Moka WES test status--
 # Test Status = NextSEQ sequencing
 mokastat_nextsq_ID = "1202218804"
 # Test Status = Data Processing
@@ -75,19 +75,19 @@ project_success = "Created new project called \"%s\""
 # The project containing the app and data
 app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
-workflow_path = "Workflows/GATK3.5_v2.8"
+workflow_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
-wes_path = "Workflows/MokaWES_v1.0"
+wes_path = "Workflows/MokaWES_v1.1"
 # path to the oncology workflow in the app project
-onco_path = "Workflows/Mokaonc_v1.2"
+onco_path = "Workflows/Mokaonc_v1.3"
 # path to paddy app
-peddy_path = "Apps/peddy"
+peddy_path = "Apps/peddy_v1.1"
 # path to multiqc app
-multiqc_path = "Apps/multiqc"
+multiqc_path = "Apps/multiqc_v1.5"
 # smartsheet app
-smartsheet_path = "Apps/smartsheet_mokapipe_complete"
+smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.1"
 # RPKM path
-RPKM_path = "Apps/RPKM_using_conifer"
+RPKM_path = "Apps/RPKM_using_conifer_v1.3"
 # bedfile folder
 bedfile_folder = "Data/BED/"
 # DNA Nexus organisation to create the project within
@@ -102,37 +102,15 @@ live_tag = "live"
 fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
-mokavendor_input = " -istage-F35FvQ00jy1pb8f11vB4Xjf1.vendor_exome_bedfile="  # HSMetrics Bed file
+mokavendor_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email address
-
-# GATK workflow
-human_exome_gatk_jar_input = " -istage-F28y4qQ0jy1fkqfy5v2b8byx.gatk_jar_file=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-Byy2gGj0V695BXBb6Q33j2Kj\""  # gatk jar file for human exome app in 001_ToolsReferenceData
-vcf_annotator_gatk_jar_file_input = " -istage-F2gPqFQ025p601qgGq0QVvX2.gatk_jar_file=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-Byy2gGj0V695BXBb6Q33j2Kj\""  # gatk jar file used for variant annotator in 001_ToolsReferenceData
-vcf_annotator_prev_class_vcf_input = " -istage-F2gPqFQ025p601qgGq0QVvX2.prev_class=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-F2YPPj80j4gFP8ZB3VGfkq43\""  # vcf with previous classifications used for vcf annotator in 001_ToolsReferenceData
-bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=\"project-B6JG85Z2J35vb6Z7pQ9Q02j8:file-B6ZY4942J35xX095VZyQBk0v\""  # reference genome used for bwa (in a dna nexus maintained project) in 001_ToolsReferenceData
-picard_fasta_index = " -istage-Bz4Vj200jy1xj2vg9Zb71y9G.fasta_index=\"project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv\""  # reference fasta file from 001_ToolsReferenceData
-# combine all commands so don't have to edit the main script.
-ingenuity_input = human_exome_gatk_jar_input + vcf_annotator_gatk_jar_file_input + vcf_annotator_prev_class_vcf_input + bwa_ref_genome + picard_fasta_index + iva_email_input
 
 # MokaOnc amplivar fastq input
 onco_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs=" # 
-vcf_novariants = " -istage-F5k1PB00jy1zxKZ28JX5b41q.email=" # email if no variants app input for amplivar workflow
 onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email=" # ingenuity app input for amplivar workflow
 
-# amplivar_reference_genome_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-F4g9Y280jy1ZKkq164Vq0FZ9\""
-# amplivar_flanking_seq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.ampliconflank=project-ByfFPz00jy1fk6PjpZ95F27J:file-F5VfXQQ0p3fq52zGG21218zZ\""
-# amplivar_usual_suspects= " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.usual_suspects=project-ByfFPz00jy1fk6PjpZ95F27J:file-F3J35f00jy1Z797p8bj9J0Zx\""
-# varscan2_ref_genome = " -istage-F5XGzF80jy1y9Q8F2VvvbXkb.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-F4g9Y280jy1ZKkq164Vq0FZ9
-# varscan2_bedfile = " -istage-F5XGzF80jy1y9Q8F2VvvbXkb.bed_file=project-ByfFPz00jy1fk6PjpZ95F27J:file-F516ZyQ0jy1vP3P2FZZ3VFpQ"
-# vardict_reference_genome = " -istage-F5XGzG00jy1q5y612VQ9KXxx.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-F4g9Y280jy1ZKkq164Vq0FZ9"
-# vardict_bedfile = " -istage-F5XGzG00jy1q5y612VQ9KXxx.bedfile=project-ByfFPz00jy1fk6PjpZ95F27J:file-F516ZyQ0jy1vP3P2FZZ3VFpQ"
-# amplivar_coverage_report = " -istage-F5XGz980jy1VqPVFBgb75K4g.lookup=project-ByfFPz00jy1fk6PjpZ95F27J:file-F516b2Q0jy1QZ4G99XV16Jy4"
-
-# # concatenate all 
-# onco_ingenuity = amplivar_reference_genome_input + amplivar_flanking_seq_input + amplivar_usual_suspects + varscan2_ref_genome + varscan2_bedfile + vardict_reference_genome + vardict_bedfile + amplivar_coverage_report + onco_ingenuity
-
 # Peddy
-peddy_project_input  = " -iproject_for_peddy=" 
+peddy_project_input  = " -iproject_for_peddy="
 # MultiQC
 multiqc_project_input = " -iproject_for_multiqc="
 # Smartsheet
@@ -166,9 +144,9 @@ panelnumbers = {"Pan493": "",
                 "Pan1009": "Pan1010",
                 "Pan1459": "Pan1458",
                 "Pan1464": "Pan1471",
-                "Pan1157": "Pan1455",
-                "Pan1158": "Pan1456",
-                "Pan1159": "Pan1457"}
+                "Pan1965": "Pan2000",
+                "Pan1158": "",
+                "Pan1159": ""}
 
 # =====Dict linking panel and Ingenuity account for sample to be shared with =====
 email_panel_dict = {"Pan493": WES_email,
@@ -184,7 +162,7 @@ email_panel_dict = {"Pan493": WES_email,
                     "Pan1453": interpretation_request_email,
                     "Pan1459": interpretation_request_email,
                     "Pan1464": interpretation_request_email,
-                    "Pan1157": interpretation_request_email,
+                    "Pan1965": interpretation_request_email,
                     "Pan1158": interpretation_request_email,
                     "Pan1159": interpretation_request_email}
 
@@ -241,6 +219,6 @@ exclude = ["RTAStart.bat", "CorrectedIntMetrics.bin", "EmpiricalPhasingMetrics.b
 # ================ demultiplexing 
 logfile_success = "Processing completed with 0 errors and 0 warnings."
 
-#=================turnaround time
+# =================turnaround time
 # if a task takes more than this amount of time it is out of TAT
 allowed_time_for_tasks = 4
