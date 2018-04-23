@@ -865,24 +865,25 @@ class upload2Nexus():
         
     def RPKM(self):
         '''This function loops through all the panel numbers found in the fastq folders and where relevant submits a RPKM job '''
-        
-        # self.panel_in_run contains all panels found in the run, except for Pan493 and Pan1190 (swift5)
+        # create a copy of the list of unique panels in this run - this will be used to report which panels have been processed in the log file.
+        CNV_panels_reported = set(self.panels_in_run)
+        # self.panel_in_run contains all panels found in the run, except for Pan493 and Pan1190 (swift5) - loop through this copy of the list not CNV_panels_reported as this list will have items removed
         for panel in set(self.panels_in_run):
-            # ignore focussed exome 
-            if panel == "Pan1120":
-                pass
-            else:
+            # ignore focussed exome  as this will never have RPKM (other panels which won't have RPKM have been filtered out previously)
+            if panel != "Pan1120":
                 # ensure there is a CNV bedfile in the dictionary but if not don't raise an exception, trigger a alert via system log. 
-                if panelnumbers[panel] == "":
-                    self.logger("Error when issuing RPKM command for run " + self.runfolder + ". stderror = " + err, "UA_fail")
+                if not panelnumbers[panel]:
+                    self.logger("Unknown CNV bedfile for "+ panel, "UA_fail")
+                    # remove this panel from the list of RPKM panels issued below
+                    CNV_panels_reported.remove(panel)
                 else:
                     # build RPKM command
                     RPKM_command = self.RPKM_command + RPKM_bedfile + app_project + bedfile_folder + panelnumbers[panel] + "_RPKM.bed"  + RPKM_project + self.nexusproject + RPKM_bedfile_to_download + panel + self.project + self.projectid.rstrip() + self.depends + self.token.replace(")", "")
                     # write commands to bash script
                     self.DNA_Nexus_bash_script.write(RPKM_command + "\n")
 
-        # write to cron job script
-        self.upload_agent_script_logfile.write("RPKM commands build for " + str(len(set(self.panels_in_run))) + " panels (" + " ".join(set(self.panels_in_run)) + ") - see " + self.bash_script + "\n\n")
+        # write to cron job script using panels in CNV_panels_reported
+        self.upload_agent_script_logfile.write("RPKM commands build for " + str(len(CNV_panels_reported)) + " panels (" + " ".join(CNV_panels_reported) + ") - see " + self.bash_script + "\n\n")
 
     def upload_rest_of_runfolder(self):
         # write status update to log file
