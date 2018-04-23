@@ -9,7 +9,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v14.0"
+script_release = "v15.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -134,9 +134,9 @@ users = ["org-viapath_prod", "InterpretationRequest"]
 
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
-panelnumbers = {"Pan493": "",
-                "Pan1120": "",
-                "Pan1190": "",
+panelnumbers = {"Pan493": None,
+                "Pan1120": None,
+                "Pan1190": None,
                 "Pan1449": "Pan1450",
                 "Pan1451": "Pan1452",
                 "Pan1453": "Pan1454",
@@ -145,8 +145,8 @@ panelnumbers = {"Pan493": "",
                 "Pan1459": "Pan1458",
                 "Pan1464": "Pan1471",
                 "Pan1965": "Pan2000",
-                "Pan1158": "",
-                "Pan1159": ""}
+                "Pan1158": None,
+                "Pan1159": None}
 
 # =====Dict linking panel and Ingenuity account for sample to be shared with =====
 email_panel_dict = {"Pan493": WES_email,
