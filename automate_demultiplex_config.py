@@ -135,7 +135,7 @@ users = ["org-viapath_prod", "InterpretationRequest"]
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
 panelnumbers = {"Pan493": None,
-                "Pan1120": None,
+                "Pan1620": None,
                 "Pan1190": None,
                 "Pan1449": "Pan1450",
                 "Pan1451": "Pan1452",
@@ -143,16 +143,16 @@ panelnumbers = {"Pan493": None,
                 "Pan1063": "Pan1064",
                 "Pan1009": "Pan1010",
                 "Pan1459": "Pan1458",
-                "Pan1464": "Pan1471",
+                "Pan2022": "Pan1974",
                 "Pan1965": "Pan2000",
-                "Pan1158": None,
+                "Pan1158": "Pan2023",
                 "Pan1159": None}
 
 # =====Dict linking panel and Ingenuity account for sample to be shared with =====
 email_panel_dict = {"Pan493": WES_email,
                     "Pan1009": interpretation_request_email,
                     "Pan1063": interpretation_request_email,
-                    "Pan1120": wook_email,
+                    "Pan1620": wook_email,
                     "Pan1157": interpretation_request_email,
                     "Pan1158": interpretation_request_email,
                     "Pan1159": interpretation_request_email,
@@ -161,7 +161,7 @@ email_panel_dict = {"Pan493": WES_email,
                     "Pan1451": interpretation_request_email,
                     "Pan1453": interpretation_request_email,
                     "Pan1459": interpretation_request_email,
-                    "Pan1464": interpretation_request_email,
+                    "Pan2022": interpretation_request_email,
                     "Pan1965": interpretation_request_email,
                     "Pan1158": interpretation_request_email,
                     "Pan1159": interpretation_request_email}
