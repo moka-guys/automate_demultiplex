@@ -632,9 +632,9 @@ class upload2Nexus():
                         if panel == "Pan493":  # identify WES tests
                             # skip for WES samples as mokavendor files are already specified in DNAnexus workflow for MokaWES
                             pass
-                        elif panel == "Pan1120":  # Identify focused exome tests
+                        elif panel == "Pan1620":  # Identify focused exome tests
                             #specify this for the focused exome
-                            moka_vendor_bedfile = app_project + bedfile_folder + "S06588914_Regions_three_col.bed"
+                            moka_vendor_bedfile = app_project + bedfile_folder + "UK_focused_exome_3_col.bed"
                             #use the exome bedfile to calculate coverage
                             sambamba_bedfile = app_project + bedfile_folder + "Pan493dataSambamba.bed"   
                         else:
@@ -870,7 +870,7 @@ class upload2Nexus():
         # self.panel_in_run contains all panels found in the run, except for Pan493 and Pan1190 (swift5) - loop through this copy of the list not CNV_panels_reported as this list will have items removed
         for panel in set(self.panels_in_run):
             # ignore focussed exome  as this will never have RPKM (other panels which won't have RPKM have been filtered out previously)
-            if panel != "Pan1120":
+            if panel != "Pan1620":
                 # ensure there is a CNV bedfile in the dictionary but if not don't raise an exception, trigger a alert via system log. 
                 if not panelnumbers[panel]:
                     self.logger("Unknown CNV bedfile for "+ panel, "UA_fail")
