@@ -81,7 +81,7 @@ wes_path = "Workflows/MokaWES_v1.1"
 # path to the oncology workflow in the app project
 onco_path = "Workflows/Mokaonc_v1.3"
 # path to paddy app
-peddy_path = "Apps/peddy_v1.1"
+peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.5"
 # smartsheet app
