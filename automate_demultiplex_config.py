@@ -146,7 +146,8 @@ panelnumbers = {"Pan493": None,
                 "Pan2022": "Pan1974",
                 "Pan1965": "Pan2000",
                 "Pan1158": "Pan2023",
-                "Pan1159": None}
+                "Pan1159": None,
+                "Pan1646": "Pan1651"}
 
 # =====Dict linking panel and Ingenuity account for sample to be shared with =====
 email_panel_dict = {"Pan493": WES_email,
@@ -164,7 +165,8 @@ email_panel_dict = {"Pan493": WES_email,
                     "Pan2022": interpretation_request_email,
                     "Pan1965": interpretation_request_email,
                     "Pan1158": interpretation_request_email,
-                    "Pan1159": interpretation_request_email}
+                    "Pan1159": interpretation_request_email,
+                    "Pan1646": interpretation_request_email}
 
 # =====smartsheet API=====
 # smartsheet sheet ID
