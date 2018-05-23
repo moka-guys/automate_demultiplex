@@ -9,7 +9,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v16.0"
+script_release = "v17.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -81,7 +81,7 @@ wes_path = "Workflows/MokaWES_v1.1"
 # path to the oncology workflow in the app project
 onco_path = "Workflows/Mokaonc_v1.3"
 # path to paddy app
-peddy_path = "Apps/peddy_v1.1"
+peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.5"
 # smartsheet app
@@ -146,7 +146,8 @@ panelnumbers = {"Pan493": None,
                 "Pan2022": "Pan1974",
                 "Pan1965": "Pan2000",
                 "Pan1158": "Pan2023",
-                "Pan1159": None}
+                "Pan1159": None,
+                "Pan1646": "Pan1651"}
 
 # =====Dict linking panel and Ingenuity account for sample to be shared with =====
 email_panel_dict = {"Pan493": WES_email,
@@ -164,7 +165,8 @@ email_panel_dict = {"Pan493": WES_email,
                     "Pan2022": interpretation_request_email,
                     "Pan1965": interpretation_request_email,
                     "Pan1158": interpretation_request_email,
-                    "Pan1159": interpretation_request_email}
+                    "Pan1159": interpretation_request_email,
+                    "Pan1646": interpretation_request_email}
 
 # =====smartsheet API=====
 # smartsheet sheet ID
