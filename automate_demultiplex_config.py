@@ -9,7 +9,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v17.0"
+script_release = "v18.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -79,7 +79,7 @@ workflow_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
 wes_path = "Workflows/MokaWES_v1.1"
 # path to the oncology workflow in the app project
-onco_path = "Workflows/Mokaonc_v1.3"
+onco_path = "Workflows/Mokaonc_v1.4"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
