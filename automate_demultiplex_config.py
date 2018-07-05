@@ -80,7 +80,7 @@ workflow_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
 wes_path = "Workflows/MokaWES_v1.1"
 # path to the oncology workflow in the app project
-onco_path = "Workflows/Mokaonc_v1.3"
+onco_path = "Workflows/Mokaonc_v1.4"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
