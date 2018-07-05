@@ -37,13 +37,9 @@ class get_list_of_runs():
         
         # create a list of all the folders in the runfolders directory
         if debug: # use test folder
-            all_runfolders = ['999999_NB551068_0024_AHHVCTAFXX_ALED_TEST']
+            all_runfolders = ['999999_NB551068_testWES','999999_M02353_testOnco']
         else:
             all_runfolders = os.listdir(runfolders)
-            #all_runfolders = ['99999_M02353_0119_000000000-D2RWA']
-        
-        #create instance of the class
-        upload=upload2Nexus()
         
         # for each folder if it is not samplesheets pass the runfolder to the next class
         for folder in all_runfolders:
@@ -51,7 +47,8 @@ class get_list_of_runs():
                 if folder.endswith('.gz'):
                     pass
                 else:
-                    upload.already_uploaded(folder, self.now)
+                    # don't create a re-used instance of the class
+                    upload2nexus().already_uploaded(folder, self.now)
 
         self.combine_log_files()
 

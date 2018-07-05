@@ -58,7 +58,8 @@ upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux
 # Current Mokapipe ID
 mokapipe_pipeline_ID = "2209"
 # Current MokaWES ID
-mokawes_pipeline_ID = "2210"
+mokawes_pipeline_ID = "2405"
+
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
 mokastat_nextsq_ID = "1202218804"
@@ -79,7 +80,7 @@ workflow_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
 wes_path = "Workflows/MokaWES_v1.1"
 # path to the oncology workflow in the app project
-onco_path = "Workflows/Mokaonc_v1.4"
+onco_path = "Workflows/Mokaonc_v1.3"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
