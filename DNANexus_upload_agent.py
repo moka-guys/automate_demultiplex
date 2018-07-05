@@ -39,6 +39,7 @@ class get_list_of_runs():
         if debug: # use test folder
             all_runfolders = ['999999_NB551068_testWES','999999_M02353_testOnco']
         else:
+            #all_runfolders = ['999999_NB551068_testWES','999999_M02353_testOnco']
             all_runfolders = os.listdir(runfolders)
         
         # for each folder if it is not samplesheets pass the runfolder to the next class
@@ -48,7 +49,7 @@ class get_list_of_runs():
                     pass
                 else:
                     # don't create a re-used instance of the class
-                    upload2nexus().already_uploaded(folder, self.now)
+                    upload2Nexus().already_uploaded(folder, self.now)
 
         self.combine_log_files()
 
