@@ -9,7 +9,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v18.0"
+script_release = "v19.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -58,7 +58,7 @@ upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux
 # Current Mokapipe ID
 mokapipe_pipeline_ID = "2209"
 # Current MokaWES ID
-mokawes_pipeline_ID = "2405"
+mokawes_pipeline_ID = "2428"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -78,7 +78,7 @@ app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
 workflow_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
-wes_path = "Workflows/MokaWES_v1.1"
+wes_path = "Workflows/MokaWES_v1.2"
 # path to the oncology workflow in the app project
 onco_path = "Workflows/Mokaonc_v1.4"
 # path to paddy app
