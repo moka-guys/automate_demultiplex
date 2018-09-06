@@ -9,7 +9,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v20.0"
+script_release = "v21.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -84,7 +84,7 @@ onco_path = "Workflows/Mokaonc_v1.4"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.5"
+multiqc_path = "Apps/multiqc_v1.6"
 # smartsheet app
 smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.1"
 # RPKM path
