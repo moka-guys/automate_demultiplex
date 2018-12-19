@@ -83,8 +83,10 @@ wes_path = "Workflows/MokaWES_v1.4"
 onco_path = "Workflows/Mokaonc_v1.4"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.2"
-# path to multiqc workflow
-multiqc_path = "Workflows/Automate_MultiQC_v1.1"
+# path to multiqc app
+multiqc_path = "Apps/multiqc_v1.8"
+# path to app which uplaods multiqc report
+upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
 smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.1"
 # RPKM path
@@ -109,7 +111,7 @@ iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email a
  # MokaWES workflow_inputs
 wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-wes_sention_samplename = "-istage-FQ8JPpj076Gybkq459GfqfZb.sample=" # sention app
+wes_sention_samplename = " -istage-FQ8JPpj076Gybkq459GfqfZb.sample=" # sention app
 wes_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email address
 
 # MokaOnc amplivar fastq input
@@ -120,8 +122,12 @@ onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email=" # ingenuity app inpu
 peddy_project_input  = " -iproject_for_peddy="
 
 # MultiQC workflow
-multiqc_project_input = " -istage-FQ3BJjj0jy1qFYP1J93fYvKx.project_for_multiqc="
-multiqc_coverage_level_input = " -istage-FQ3BJjj0jy1qFYP1J93fYvKx.coverage_level="
+multiqc_project_input = " -iproject_for_multiqc="
+multiqc_coverage_level_input = " -icoverage_level="
+multiqc_html_output= "multiqc_report"
+upload_multiqc_input= " -imultiqc_html="
+wes_coverage_level = "20" # HSMetrics coverage level to be reported for wes
+custom_panel_coverage_level = "30" # HSMetrics coverage level to be reported for custom panel
 
 # Smartsheet
 smartsheet_mokapipe_complete = " -iNGS_run="
@@ -140,9 +146,9 @@ WES_email = "gst-tr.wesviapath@nhs.net" # WES email
 # DNA Nexus authentication token
 Nexus_API_Key = "MK8QlLFLwGvFDkgc9MnaWIgrTARHlO3e"
 
-# list of DNA Nexus users for project to be shared with
-users = ["org-viapath_prod", "InterpretationRequest", "mokaguys"]
-
+# list of DNA Nexus users for project to be shared with - ensure mokaguys is last as this is granted admin rights
+view_users = ["org-viapath_prod", "InterpretationRequest"]
+admin_users = ["mokaguys"]
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
 panelnumbers = {"Pan493": None,

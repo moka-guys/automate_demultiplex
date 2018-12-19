@@ -146,7 +146,8 @@ class upload2Nexus():
         self.base_command = "jobid=$(dx run " + app_project + workflow_path + " -y"
         self.wes_command = "jobid=$(dx run " + app_project + wes_path + " -y"
         self.peddy_command = "jobid=$(dx run " + app_project + peddy_path
-        self.multiqc_command = "dx run " + app_project + multiqc_path
+        self.multiqc_command = "jobid=$(dx run " + app_project + multiqc_path
+        self.upload_multiqc_command = "dx run " + app_project + upload_multiqc_path + " -y"
         self.smartsheet_update_command = "dx run " + app_project + smartsheet_path
         self.RPKM_command = "dx run " + app_project + RPKM_path
         self.onco_command = "jobid=$(dx run " + app_project + onco_path + " -y"
@@ -533,15 +534,13 @@ class upload2Nexus():
         DNA_Nexus_bash_script.write(self.createprojectcommand % (prod_organisation,self.nexusproject))
         # DNA_Nexus_bash_script.write(self.createprojectcommand % (dev_organisation,self.nexusproject))
 
-        #then need to share the project with the nexus usernames in the list in config file
-        for user in users:
-            # only the mokaguys account should have admin access
-            # mokaguys user is also in org-viapath_prod but mokaguys is at the end of the list 'users' so the admin permissions should be granted over the view permissions granted to the org
-            if user == "mokaguys":
-                DNA_Nexus_bash_script.write("dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n" % (user,Nexus_API_Key))
-            # all other users should have view only
-            else:   
-                DNA_Nexus_bash_script.write("dx invite %s $project_id VIEW --no-email --auth-token %s\n" % (user,Nexus_API_Key))
+        # Share the project with the nexus usernames in the list in config file
+        # first give view permissions
+        for user in view_users:
+            DNA_Nexus_bash_script.write("dx invite %s $project_id VIEW --no-email --auth-token %s\n" % (user,Nexus_API_Key))
+        # then give admin permissions - ensure done in this order incase some users are in both lists.
+        for user in admin_users:
+            DNA_Nexus_bash_script.write("dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n" % (user,Nexus_API_Key))
         
         #add a tag to denote live project (as opposed to archived)
         DNA_Nexus_bash_script.write(self.addprojecttag + live_tag + " --auth-token %s\n" % (Nexus_API_Key))
@@ -575,12 +574,19 @@ class upload2Nexus():
             else:               
                 # build a string of the users list to make log look nice
                 user_str = ""
-                for i in users:
-                    user_str = user_str + i + ","
+                for user in view_users:
+                    user_str = user_str + user + ","
                 
                 # write to log 
-                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared to " % (self.nexusproject) + user_str +"\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
+                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (VIEW) to " % (self.nexusproject) + user_str +"\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
+                # repeat for admins
+                user_str = ""
+                for user in admin_users:
+                    user_str = user_str + user + ","
                 
+                # write to log 
+                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (ADMIN) to " % (self.nexusproject) + user_str +"\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
+        
         else:
             # for debug mode use example project id
             self.projectid="project-F2gzY2j0xyXJ4x3z5Pq8BjQ4"
@@ -658,7 +664,7 @@ class upload2Nexus():
                     dest_cmd = self.nexusproject + ":/"
 
                     # if a sample name is not provided sention cleans the fastq file name to create one. However this includes removing all "_1", which is not ideal - theerfore specify one, using everything before "_R1" from read1 fastq filename
-                    sention_sample_name = read1.split("_R1_")[0]
+                    sention_sample_name = fastq.split("_R1_")[0]
 
                     # create the MokaWES dx command
                     command = self.wes_command + wes_fastqc1 + read1_cmd + wes_fastqc2 + read2_cmd + wes_sention_samplename + sention_sample_name + wes_iva_email_input + ingenuity_email+ self.dest + dest_cmd + self.token
@@ -746,8 +752,8 @@ class upload2Nexus():
             # If WES need to run peddy and use lower multiqc coverage level
             if WES:
                 #state the coverage level used by multiqc
-                multiqc_coverage_level = 20
-                # build peddy command - eg command = dx run peddy -iproject_for_peddy = 002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
+                multiqc_coverage_level = wes_coverage_level
+                # build peddy command - eg command = jobid=$(dx run peddy -iproject_for_peddy = 002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid)
                 peddy_command = self.peddy_command + peddy_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.depends + self.token
                 # write peddy run commands to bash script
                 self.DNA_Nexus_bash_script.write(peddy_command + "\n")
@@ -756,11 +762,13 @@ class upload2Nexus():
             # if custom panel state coverage level
             else:
                 #state the coverage level used by multiqc
-                multiqc_coverage_level = 30
-            # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
-            multiqc_command = self.multiqc_command + multiqc_project_input + self.nexusproject + multiqc_coverage_level_input + multiqc_coverage_level  + self.project + self.projectid.rstrip() + self.token.replace(")","") + self.depends
-            # write commands to bash script
-            self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
+                multiqc_coverage_level = custom_panel_coverage_level
+            # build multiqc command - eg command = jobid=$(dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST -icoveragelevel=20 --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid --brief --auth xyz)
+            multiqc_command = self.multiqc_command + multiqc_project_input + self.nexusproject + multiqc_coverage_level_input + multiqc_coverage_level  + self.project + self.projectid.rstrip() + self.depends + self.token
+            # build upload_multiqc_report command
+            upload_multiqc_command = self.upload_multiqc_command + upload_multiqc_input + "$jobid:" + multiqc_html_output + self.token.replace(")", "")
+            # write command to bash script
+            self.DNA_Nexus_bash_script.write(multiqc_command+"\n"+upload_multiqc_command+"\n")
 
         # build smartsheet update command
         smartsheet_update_command = self.smartsheet_update_command + smartsheet_mokapipe_complete + self.runfolder + self.project + self.projectid.rstrip() + self.depends + self.token.replace(")","")
