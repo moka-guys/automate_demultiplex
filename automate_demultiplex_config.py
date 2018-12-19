@@ -208,7 +208,7 @@ user = 'AKIAIO3XY2MMSBEQNNXQ'
 pw = '***REMOVED***'
 host = 'email-smtp.eu-west-1.amazonaws.com'
 port = 587
-me = 'gst-tr.mokaguys@nhs.net'
+me = 'moka.alerts@gstt.nhs.uk'
 you = ('gst-tr.mokaguys@nhs.net',)
 smtp_do_tls = True
 
