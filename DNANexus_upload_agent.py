@@ -655,8 +655,11 @@ class upload2Nexus():
                     # set the destination command as the root of the project
                     dest_cmd = self.nexusproject + ":/"
 
+                    # if a sample name is not provided sention cleans the fastq file name to create one. However this includes removing all "_1", which is not ideal - theerfore specify one, using everything before "_R1" from read1 fastq filename
+                    sention_sample_name = read1.split("_R1_")[0]
+
                     # create the MokaWES dx command
-                    command = self.wes_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + iva_email_input + ingenuity_email+ self.dest + dest_cmd + self.token
+                    command = self.wes_command + wes_fastqc1 + read1_cmd + wes_fastqc2 + read2_cmd + wes_sention_samplename + sention_sample_name + wes_iva_email_input + ingenuity_email+ self.dest + dest_cmd + self.token
                      #add command for each pair of fastqs to a list 
                     self.dx_run.append(command)
 
@@ -738,17 +741,22 @@ class upload2Nexus():
                     app = workflow
 
         if not cancer: # use flags to generate multiqc command for all non-cancer samples. 
-            # generate peddy for WES samples only
-            if WES:    
+            # If WES need to run peddy and use lower multiqc coverage level
+            if WES:
+                #state the coverage level used by multiqc
+                multiqc_coverage_level = 20
                 # build peddy command - eg command = dx run peddy -iproject_for_peddy = 002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
                 peddy_command = self.peddy_command + peddy_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.depends + self.token
                 # write peddy run commands to bash script
                 self.DNA_Nexus_bash_script.write(peddy_command + "\n")
                 # write line to append job id to depends_list so downstream functions (e.g. MultiQC and smartsheet) wait for peddy to complete
                 self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
-
+            # if custom panel state coverage level
+            else:
+                #state the coverage level used by multiqc
+                multiqc_coverage_level = 30
             # build multiqc command - eg command = dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid
-            multiqc_command = self.multiqc_command + multiqc_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.token.replace(")","") + self.depends
+            multiqc_command = self.multiqc_command + multiqc_project_input + self.nexusproject + multiqc_coverage_level_input + multiqc_coverage_level  + self.project + self.projectid.rstrip() + self.token.replace(")","") + self.depends
             # write commands to bash script
             self.DNA_Nexus_bash_script.write(multiqc_command+"\n")
 
