@@ -751,8 +751,8 @@ class upload2Nexus():
         if not cancer: # use flags to generate multiqc command for all non-cancer samples. 
             # If WES need to run peddy and use lower multiqc coverage level
             if WES:
-                #state the coverage level used by multiqc
-                multiqc_coverage_level = wes_coverage_level
+                # state the coverage level used by multiqc, converting to str to help concatenation when building dx run cmd.
+                multiqc_coverage_level = str(wes_coverage_level)
                 # build peddy command - eg command = jobid=$(dx run peddy -iproject_for_peddy = 002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid)
                 peddy_command = self.peddy_command + peddy_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.depends + self.token
                 # write peddy run commands to bash script
@@ -761,12 +761,12 @@ class upload2Nexus():
                 self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
             # if custom panel state coverage level
             else:
-                #state the coverage level used by multiqc
                 multiqc_coverage_level = custom_panel_coverage_level
-            # build multiqc command - eg command = jobid=$(dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST -icoveragelevel=20 --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid --brief --auth xyz)
+            # build multiqc command, capturing the job id- eg command = jobid=$(dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST -icoveragelevel=20 --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid --brief --auth xyz)
             multiqc_command = self.multiqc_command + multiqc_project_input + self.nexusproject + multiqc_coverage_level_input + multiqc_coverage_level  + self.project + self.projectid.rstrip() + self.depends + self.token
-            # build upload_multiqc_report command
-            upload_multiqc_command = self.upload_multiqc_command + upload_multiqc_input + "$jobid:" + multiqc_html_output + self.token.replace(")", "")
+            # build upload_multiqc_report command. Need to strip the close bracket from  self.token as this is used when capturing jobids
+            # use the job id from multiqc command to define the input for this app
+            upload_multiqc_command = self.upload_multiqc_command + upload_multiqc_input + "$jobid:" + multiqc_html_output + self.project + self.projectid.rstrip() + self.token.replace(")", "")
             # write command to bash script
             self.DNA_Nexus_bash_script.write(multiqc_command+"\n"+upload_multiqc_command+"\n")
 
