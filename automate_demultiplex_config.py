@@ -141,7 +141,7 @@ WES_email = "gst-tr.wesviapath@nhs.net" # WES email
 Nexus_API_Key = "MK8QlLFLwGvFDkgc9MnaWIgrTARHlO3e"
 
 # list of DNA Nexus users for project to be shared with
-users = ["org-viapath_prod", "InterpretationRequest"]
+users = ["org-viapath_prod", "InterpretationRequest", "mokaguys"]
 
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====

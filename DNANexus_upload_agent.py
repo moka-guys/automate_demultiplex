@@ -535,11 +535,13 @@ class upload2Nexus():
 
         #then need to share the project with the nexus usernames in the list in config file
         for user in users:
-            # interpretation request account should only have view access.
-            if user == "InterpretationRequest":
-                DNA_Nexus_bash_script.write("dx invite %s $project_id VIEW --no-email --auth-token %s\n" % (user,Nexus_API_Key))
-            else:   
+            # only the mokaguys account should have admin access
+            # mokaguys user is also in org-viapath_prod but mokaguys is at the end of the list 'users' so the admin permissions should be granted over the view permissions granted to the org
+            if user == "mokaguys":
                 DNA_Nexus_bash_script.write("dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n" % (user,Nexus_API_Key))
+            # all other users should have view only
+            else:   
+                DNA_Nexus_bash_script.write("dx invite %s $project_id VIEW --no-email --auth-token %s\n" % (user,Nexus_API_Key))
         
         #add a tag to denote live project (as opposed to archived)
         DNA_Nexus_bash_script.write(self.addprojecttag + live_tag + " --auth-token %s\n" % (Nexus_API_Key))
