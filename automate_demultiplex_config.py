@@ -52,7 +52,8 @@ demultiplex_logfiles = "/home/mokaguys/Documents/automate_demultiplexing_logfile
 # path to upload agent
 upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 
-
+#command to test dx toolkit
+dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # Current Mokapipe ID
@@ -76,7 +77,7 @@ project_success = "Created new project called \"%s\""
 # The project containing the app and data
 app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
-workflow_path = "Workflows/GATK3.5_v2.9"
+mokapipe_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
 wes_path = "Workflows/MokaWES_v1.4"
 # path to the oncology workflow in the app project
