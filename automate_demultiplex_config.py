@@ -84,7 +84,7 @@ onco_path = "Workflows/Mokaonc_v1.4"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.8"
+multiqc_path = "Apps/multiqc_v1.9"
 # path to app which uplaods multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
