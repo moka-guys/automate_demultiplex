@@ -491,7 +491,7 @@ class upload2Nexus():
         # capture the streams
         (out, err) = proc.communicate()
 
-        if "dx v0.2" not in out:
+        if config.dx_sdk_test_expected_result not in out:
             self.logger("dx toolkit function test failed", "UA_fail")
             raise Exception, "dx toolkit not installed"
         self.logger("dx toolkit function test passed", "UA_pass")
@@ -730,12 +730,12 @@ class upload2Nexus():
             multiqc_command = self.multiqc_command + config.multiqc_project_input + self.nexusproject + config.multiqc_coverage_level_input + multiqc_coverage_level + self.project + self.projectid.rstrip() + self.depends + self.token
             # build upload_multiqc_report command. Need to strip the close bracket from  self.token as this is used when capturing jobids
             # use the job id from multiqc command to define the input for this app
-            upload_multiqc_command = self.upload_multiqc_command + config.upload_multiqc_input + "$jobid:" + config.multiqc_html_output + self.project + self.projectid.rstrip() + self.token.replace(")", "")
+            upload_multiqc_command = self.upload_multiqc_command + config.upload_multiqc_input + "$jobid:" + config.multiqc_html_output + self.project + self.projectid.rstrip() + self.token.rstrip(")")
             # write command to bash script
             self.DNA_Nexus_bash_script.write(multiqc_command + "\n" + upload_multiqc_command + "\n")
 
         # build smartsheet update command
-        smartsheet_update_command = self.smartsheet_update_command + config.smartsheet_mokapipe_complete + self.runfolder + self.project + self.projectid.rstrip() + self.depends + self.token.replace(")", "")
+        smartsheet_update_command = self.smartsheet_update_command + config.smartsheet_mokapipe_complete + self.runfolder + self.project + self.projectid.rstrip() + self.depends + self.token.rstrip(")")
         # write commands to bash script
         self.DNA_Nexus_bash_script.write(smartsheet_update_command + "\n")
 
@@ -858,7 +858,7 @@ class upload2Nexus():
                     CNV_panels_reported.remove(panel)
                 else:
                     # build RPKM command
-                    RPKM_command = self.RPKM_command + config.RPKM_bedfile + config.app_project + config.bedfile_folder + config.panelnumbers[panel] + "_RPKM.bed" + config.RPKM_project + self.nexusproject + config.RPKM_bedfile_to_download + panel + self.project + self.projectid.rstrip() + self.depends + self.token.replace(")", "")
+                    RPKM_command = self.RPKM_command + config.RPKM_bedfile + config.app_project + config.bedfile_folder + config.panelnumbers[panel] + "_RPKM.bed" + config.RPKM_project + self.nexusproject + config.RPKM_bedfile_to_download + panel + self.project + self.projectid.rstrip() + self.depends + self.token.rstrip(")")
                     # write commands to bash script
                     self.DNA_Nexus_bash_script.write(RPKM_command + "\n")
 
@@ -1254,4 +1254,3 @@ if __name__ == '__main__':
     runs = get_list_of_runs()
     # call function
     runs.loop_through_runs()
-    
