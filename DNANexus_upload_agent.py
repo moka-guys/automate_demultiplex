@@ -681,7 +681,7 @@ class upload2Nexus():
                     dest_cmd = self.nexusproject + ":/"
 
                     # create the dx command
-                    command = self.base_command + fastqc1 + read1_cmd + fastqc2 + read2_cmd + sambamba_input + sambamba_bedfile + mokavendor_input + moka_vendor_bedfile + iva_email_input + ingenuity_email+ self.dest + dest_cmd + self.token
+                    command = self.base_command + mokapipe_fastqc1 + read1_cmd + mokapipe_fastqc2 + read2_cmd + mokapipe_sambamba_input + sambamba_bedfile + mokapipe_mokapicard_vendorbed_input + moka_vendor_bedfile + mokapipe_iva_email_input + ingenuity_email+ self.dest + dest_cmd + self.token
                     
                     #add command for each pair of fastqs to a list 
                     self.dx_run.append(command)

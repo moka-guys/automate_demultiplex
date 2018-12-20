@@ -85,7 +85,7 @@ onco_path = "Workflows/Mokaonc_v1.4"
 peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.9"
-# path to app which uplaods multiqc report
+# path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
 smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.1"
@@ -102,16 +102,16 @@ live_tag = "live"
 
 # =====istages=====
 # Mokapipe workflow inputs
-fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
-fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
-mokavendor_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
-iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email address
+mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
+mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
+mokapipe_sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
+mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
+mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email address
 
  # MokaWES workflow_inputs
 wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-wes_sention_samplename = " -istage-FQ8JPpj076Gybkq459GfqfZb.sample=" # sention app
+wes_sention_samplename = " -istage-FQ8JPpj076Gybkq459GfqfZb.sample=" # sample name for sention app - prevents sample being incorrectly parsed from fastq filename 
 wes_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email address
 
 # MokaOnc amplivar fastq input
@@ -121,7 +121,7 @@ onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email=" # ingenuity app inpu
 # Peddy
 peddy_project_input  = " -iproject_for_peddy="
 
-# MultiQC workflow
+# MultiQC and upload_multiqc inputs, outputs and variables
 multiqc_project_input = " -iproject_for_multiqc="
 multiqc_coverage_level_input = " -icoverage_level="
 multiqc_html_output= "multiqc_report"
