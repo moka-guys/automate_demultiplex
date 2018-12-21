@@ -5,11 +5,10 @@ The variables defined in this module are required by the "demultiplex.py" and
 "DNANexus_upload_agent.py" scripts.
 """
 # Set debug mode
-#debug = True
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v21.0"
+script_release = "v22.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -52,13 +51,17 @@ demultiplex_logfiles = "/home/mokaguys/Documents/automate_demultiplexing_logfile
 # path to upload agent
 upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 
+# command to test dx toolkit
+dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
+# expected result from testing
+dx_sdk_test_expected_result = "dx v0.2"
 
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # Current Mokapipe ID
 mokapipe_pipeline_ID = "2209"
 # Current MokaWES ID
-mokawes_pipeline_ID = "2442"
+mokawes_pipeline_ID = "2774"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -76,15 +79,17 @@ project_success = "Created new project called \"%s\""
 # The project containing the app and data
 app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
-workflow_path = "Workflows/GATK3.5_v2.9"
+mokapipe_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
-wes_path = "Workflows/MokaWES_v1.3"
+wes_path = "Workflows/MokaWES_v1.4"
 # path to the oncology workflow in the app project
 onco_path = "Workflows/Mokaonc_v1.4"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.6"
+multiqc_path = "Apps/multiqc_v1.9"
+# path to app which uploads multiqc report
+upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
 smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.1"
 # RPKM path
@@ -99,40 +104,55 @@ dev_organisation = "org-viapath_dev"
 live_tag = "live"
 
 # =====istages=====
-# GATK and MokaWES workflow input
-fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
-fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
-mokavendor_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
-iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email=" # ingenuity email address
+# Mokapipe workflow inputs
+mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
+mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
+mokapipe_sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
+mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
+mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
+
+# MokaWES workflow_inputs
+wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
+wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
+wes_sention_samplename = " -istage-FQ8JPpj076Gybkq459GfqfZb.sample="  # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
+wes_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
 
 # MokaOnc amplivar fastq input
-onco_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs=" # 
-onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email=" # ingenuity app input for amplivar workflow
+onco_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
+onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="  # ingenuity app input for amplivar workflow
 
 # Peddy
-peddy_project_input  = " -iproject_for_peddy="
-# MultiQC
+peddy_project_input = " -iproject_for_peddy="
+
+# MultiQC and upload_multiqc inputs, outputs and variables
 multiqc_project_input = " -iproject_for_multiqc="
+multiqc_coverage_level_input = " -icoverage_level="
+multiqc_html_output = "multiqc_report"
+upload_multiqc_input = " -imultiqc_html="
+wes_coverage_level = "20"  # HSMetrics coverage level to be reported for wes
+custom_panel_coverage_level = "30"  # HSMetrics coverage level to be reported for custom panel
+
 # Smartsheet
 smartsheet_mokapipe_complete = " -iNGS_run="
+
 # RPKM inputs
 RPKM_bedfile = " -ibedfile="
 RPKM_project = " -iproject_name="
 RPKM_bedfile_to_download = " -ibamfile_name="
 
 # emails addresses for Ingenuity
-onco_email = "gst-tr.oncology.interpret@nhs.net" # general oncology email
-interpretation_request_email = "gst-tr.interpretation.request@nhs.net" # email for Interpretation_requests
-wook_email = "joowook.ahn@nhs.net" # wook email
-WES_email = "gst-tr.wesviapath@nhs.net" # WES email
+onco_email = "gst-tr.oncology.interpret@nhs.net"  # general oncology email
+interpretation_request_email = "gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
+wook_email = "joowook.ahn@nhs.net"  # wook email
+WES_email = "gst-tr.wesviapath@nhs.net"  # WES email
 
 # DNA Nexus authentication token
 Nexus_API_Key = "MK8QlLFLwGvFDkgc9MnaWIgrTARHlO3e"
 
-# list of DNA Nexus users for project to be shared with
-users = ["org-viapath_prod", "InterpretationRequest"]
-
+# list of DNA Nexus users with view access to project
+view_users = ["org-viapath_prod", "InterpretationRequest"]
+# list of DNA Nexus users with admin access of project
+admin_users = ["mokaguys"]
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
 panelnumbers = {"Pan493": None,
@@ -156,8 +176,6 @@ email_panel_dict = {"Pan493": WES_email,
                     "Pan1063": interpretation_request_email,
                     "Pan1620": wook_email,
                     "Pan1157": interpretation_request_email,
-                    "Pan1158": interpretation_request_email,
-                    "Pan1159": interpretation_request_email,
                     "Pan1190": onco_email,
                     "Pan1449": interpretation_request_email,
                     "Pan1451": interpretation_request_email,
@@ -198,7 +216,7 @@ user = 'AKIAIO3XY2MMSBEQNNXQ'
 pw = 'AmkKC7nXvLrxsvBHZf3zagNq953nun9c0iYN+zjifIbN'
 host = 'email-smtp.eu-west-1.amazonaws.com'
 port = 587
-me = 'gst-tr.mokaguys@nhs.net'
+me = 'moka.alerts@gstt.nhs.uk'
 you = ('gst-tr.mokaguys@nhs.net',)
 smtp_do_tls = True
 
@@ -209,7 +227,7 @@ md5checksum_name = "md5checksum.txt"
 checksum_complete_flag = "Checksum result reported"
 # statement to write when checksums match
 checksum_match = "Checksums match"
-# hours to wait after RTAcomplete.txt file before first integrity check 
+# hours to wait after RTAcomplete.txt file before first integrity check
 integrity_check_first_wait = 3
 # hours between integrity checks
 integrity_check_repeat_wait = 1
@@ -219,7 +237,8 @@ max_number_of_attempts = 10
 missing_files_output = "missing_files.txt"
 # files to exclude from integrity check
 exclude = ["RTAStart.bat", "CorrectedIntMetrics.bin", "EmpiricalPhasingMetrics.bin", "ErrorMetrics.bin", "EventMetrics.bin", "ExtractionMetrics.bin", "PFGridMetrics.bin", "QMetrics.bin", "RegistrationMetrics.bin", "TileMetrics.bin", "000_000_000_na_rtabat.trans", "FilesAdded.csv", "FilesCopied.csv", "md5checksum.txt", missing_files_output]
-# ================ demultiplexing 
+
+# ================ demultiplexing
 logfile_success = "Processing completed with 0 errors and 0 warnings."
 
 # =================turnaround time
