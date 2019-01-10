@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 debug = False
 
 # =====git release for the automate_demultiplexing repo=====
-script_release = "v22.0"
+script_release = "v23.0"
 
 # =====location of input/output files=====
 # path to run folders
@@ -121,6 +121,9 @@ wes_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity em
 onco_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
 onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="  # ingenuity app input for amplivar workflow
 
+# MokaAMP
+
+
 # Peddy
 peddy_project_input = " -iproject_for_peddy="
 
@@ -147,7 +150,10 @@ wook_email = "joowook.ahn@nhs.net"  # wook email
 WES_email = "gst-tr.wesviapath@nhs.net"  # WES email
 
 # DNA Nexus authentication token
-Nexus_API_Key = "MK8QlLFLwGvFDkgc9MnaWIgrTARHlO3e"
+nexus_api_key_file = "/home/mokaguys/.dnanexus_auth_token"
+with open(nexus_api_key_file, 'r') as nexus_api:
+    Nexus_API_Key =  nexus_api.readline().rstrip()
+
 
 # list of DNA Nexus users with view access to project
 view_users = ["org-viapath_prod", "InterpretationRequest"]
@@ -192,7 +198,9 @@ email_panel_dict = {"Pan493": WES_email,
 smartsheet_sheetid = 2798264106936196
 
 # API key
-smartsheet_api_key = "3asfndq3oi2zbww3td8gb67liv"
+smartsheet_api_key_file = "/home/mokaguys/.smartsheet_auth_token"
+with open(smartsheet_api_key_file, 'r') as ss_api:
+    smartsheet_api_key = ss_api.readline().rstrip()
 
 # columnIds
 ss_title = 6197963270711172
@@ -213,7 +221,9 @@ smartsheet_request_url = 'https://api.smartsheet.com/2.0/sheets/' + str(smartshe
 
 # =================== Email server settings
 user = 'AKIAIO3XY2MMSBEQNNXQ'
-pw = 'AmkKC7nXvLrxsvBHZf3zagNq953nun9c0iYN+zjifIbN'
+pw_file = '/home/mokaguys/.amazon_email_pw'
+with open(pw_file, 'r') as email_password_file:
+    pw = email_password_file.readline().rstrip()
 host = 'email-smtp.eu-west-1.amazonaws.com'
 port = 587
 me = 'moka.alerts@gstt.nhs.uk'
