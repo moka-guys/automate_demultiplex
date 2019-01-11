@@ -637,7 +637,7 @@ class upload2Nexus():
                         # use same panelname to get the email which will be used to upload to IVA
                         ingenuity_email = config.email_panel_dict[panel]
 
-                # MokaAMP command construstion for EGFR samples.
+                # MokaAMP command construction for EGFR samples.
                 if "Pan1190_" in fastq:
                     # create the input command for the fastqc
                     read1_cmd = self.nexusproject + ":" + read1
