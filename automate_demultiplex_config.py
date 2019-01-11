@@ -83,7 +83,9 @@ mokapipe_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
 wes_path = "Workflows/MokaWES_v1.4"
 # path to the oncology workflow in the app project
-onco_path = "Workflows/Mokaonc_v1.4"
+mokaonc_path = "Workflows/Mokaonc_v1.4"
+# path to mokaamp
+mokaamp_path = "Workflows/MokaAMP_v1.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.2"
 # path to multiqc app
@@ -118,11 +120,26 @@ wes_sention_samplename = " -istage-FQ8JPpj076Gybkq459GfqfZb.sample="  # sample n
 wes_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
 
 # MokaOnc amplivar fastq input
-onco_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
-onco_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="  # ingenuity app input for amplivar workflow
+mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
+mokaonc_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="  # ingenuity app input for amplivar workflow
 
 # MokaAMP
+mokaamp_fastq_R1 = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz=" 
+mokaamp_fastq_R2 = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
+mokaamp_mokapicard_input = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile=" 
+mokaamp_capturetype=" -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
+mokaamp_bed_PE=" -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
+mokaamp_cov_level=" -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
+mokaamp_sambamba_bed = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
+mokaamp_vardict_bed= " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
+mokaamp_varscan_bed= " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
+mokaamp_varscan_strandfilter= " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
+mokaamp_lofreq_bed= " -istage-FPzGjgQ0jy1fBy972zq9f1PY.bedfile="
 
+mokaamp_strandfilter = "True"
+mokaamp_coverage_level = "1000"
+mokaamp_capture_type = "Amplicon"
+mokaamp_email_message = "If both MokaAMP and MokaOnc (amplivar) have been run, please record the version of MokaOnc used."
 
 # Peddy
 peddy_project_input = " -iproject_for_peddy="
@@ -132,8 +149,9 @@ multiqc_project_input = " -iproject_for_multiqc="
 multiqc_coverage_level_input = " -icoverage_level="
 multiqc_html_output = "multiqc_report"
 upload_multiqc_input = " -imultiqc_html="
-wes_coverage_level = "20"  # HSMetrics coverage level to be reported for wes
-custom_panel_coverage_level = "30"  # HSMetrics coverage level to be reported for custom panel
+wes_multiqc_coverage_level = "20"  # HSMetrics coverage level to be reported for wes
+custom_panel_multiqc_coverage_level = "30"  # HSMetrics coverage level to be reported for custom panel
+mokaamp_multiqc_coverage_level = "100" # HSMetrics coverage level to be reported for mokaamp
 
 # Smartsheet
 smartsheet_mokapipe_complete = " -iNGS_run="
@@ -144,16 +162,16 @@ RPKM_project = " -iproject_name="
 RPKM_bedfile_to_download = " -ibamfile_name="
 
 # emails addresses for Ingenuity
-onco_email = "gst-tr.oncology.interpret@nhs.net"  # general oncology email
+oncology_email = 'gst-tr.oncology.interpret@nhs.net'  # general oncology email
 interpretation_request_email = "gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
 wook_email = "joowook.ahn@nhs.net"  # wook email
 WES_email = "gst-tr.wesviapath@nhs.net"  # WES email
+mokaguys_email = 'gst-tr.mokaguys@nhs.net'
 
 # DNA Nexus authentication token
 nexus_api_key_file = "/home/mokaguys/.dnanexus_auth_token"
 with open(nexus_api_key_file, 'r') as nexus_api:
     Nexus_API_Key =  nexus_api.readline().rstrip()
-
 
 # list of DNA Nexus users with view access to project
 view_users = ["org-viapath_prod", "InterpretationRequest"]
@@ -182,7 +200,7 @@ email_panel_dict = {"Pan493": WES_email,
                     "Pan1063": interpretation_request_email,
                     "Pan1620": wook_email,
                     "Pan1157": interpretation_request_email,
-                    "Pan1190": onco_email,
+                    "Pan1190": oncology_email,
                     "Pan1449": interpretation_request_email,
                     "Pan1451": interpretation_request_email,
                     "Pan1453": interpretation_request_email,
@@ -227,7 +245,8 @@ with open(pw_file, 'r') as email_password_file:
 host = 'email-smtp.eu-west-1.amazonaws.com'
 port = 587
 me = 'moka.alerts@gstt.nhs.uk'
-you = ('gst-tr.mokaguys@nhs.net',)
+you = mokaguys_email
+oncology_you = oncology_email
 smtp_do_tls = True
 
 # ================ Integrity check
