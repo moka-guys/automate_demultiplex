@@ -7,9 +7,6 @@ The variables defined in this module are required by the "demultiplex.py" and
 # Set debug mode
 debug = False
 
-# =====git release for the automate_demultiplexing repo=====
-script_release = "v23.0"
-
 # =====location of input/output files=====
 # path to run folders
 runfolders = "/media/data1/share"
