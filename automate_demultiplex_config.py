@@ -124,17 +124,17 @@ mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
 mokaonc_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="  # ingenuity app input for amplivar workflow
 
 # MokaAMP
-mokaamp_fastq_R1 = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz=" 
+mokaamp_fastq_R1 = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz="
 mokaamp_fastq_R2 = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
-mokaamp_mokapicard_input = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile=" 
-mokaamp_capturetype=" -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
-mokaamp_bed_PE=" -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
-mokaamp_cov_level=" -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
+mokaamp_mokapicard_input = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
+mokaamp_capturetype = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
+mokaamp_bed_PE = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
+mokaamp_cov_level = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
 mokaamp_sambamba_bed = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
-mokaamp_vardict_bed= " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
-mokaamp_varscan_bed= " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
-mokaamp_varscan_strandfilter= " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
-mokaamp_lofreq_bed= " -istage-FPzGjgQ0jy1fBy972zq9f1PY.bedfile="
+mokaamp_vardict_bed = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
+mokaamp_varscan_bed = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
+mokaamp_varscan_strandfilter = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
+mokaamp_lofreq_bed = " -istage-FPzGjgQ0jy1fBy972zq9f1PY.bedfile="
 
 mokaamp_strandfilter = "True"
 mokaamp_coverage_level = "1000"
@@ -151,7 +151,7 @@ multiqc_html_output = "multiqc_report"
 upload_multiqc_input = " -imultiqc_html="
 wes_multiqc_coverage_level = "20"  # HSMetrics coverage level to be reported for wes
 custom_panel_multiqc_coverage_level = "30"  # HSMetrics coverage level to be reported for custom panel
-mokaamp_multiqc_coverage_level = "100" # HSMetrics coverage level to be reported for mokaamp
+mokaamp_multiqc_coverage_level = "100"  # HSMetrics coverage level to be reported for mokaamp
 
 # Smartsheet
 smartsheet_mokapipe_complete = " -iNGS_run="
@@ -171,7 +171,7 @@ mokaguys_email = 'gst-tr.mokaguys@nhs.net'
 # DNA Nexus authentication token
 nexus_api_key_file = "/home/mokaguys/.dnanexus_auth_token"
 with open(nexus_api_key_file, 'r') as nexus_api:
-    Nexus_API_Key =  nexus_api.readline().rstrip()
+    Nexus_API_Key = nexus_api.readline().rstrip()
 
 # list of DNA Nexus users with view access to project
 view_users = ["org-viapath_prod", "InterpretationRequest"]
