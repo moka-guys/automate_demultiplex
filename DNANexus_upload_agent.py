@@ -150,7 +150,8 @@ class upload2Nexus():
         self.upload_multiqc_command = "dx run " + config.app_project + config.upload_multiqc_path + " -y"
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path
-        self.onco_command = "jobid=$(dx run " + config.app_project + config.onco_path + " -y"
+        self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y"
+        self.mokaamp_command = "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y"
 
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
@@ -216,7 +217,8 @@ class upload2Nexus():
         # create full path to runfolder
         self.runfolderpath = os.path.join(config.runfolders, self.runfolder)
 
-        self.upload_agent_script_logfile.write("automate_demultiplexing release:" + config.script_release + "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "----------------------\nAssessing " + self.runfolderpath + "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
+        self.upload_agent_script_logfile.write("automate_demultiplexing release:" + config.script_release + "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) \
+        + "----------------------\nAssessing " + self.runfolderpath + "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
 
         # look for the file denoting the upload has started
         if os.path.isfile(os.path.join(self.runfolderpath, config.upload_started_file)):
@@ -319,7 +321,8 @@ class upload2Nexus():
                 # add to logger
                 self.logger("unrecognised panel number found in run " + self.runfolder, "UA_fail")
                 # write to logfile
-                self.upload_agent_script_logfile.write(str(to_be_nexified) + " fastqs found.\nSome fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
+                self.upload_agent_script_logfile.write(str(to_be_nexified) + " fastqs found.\nSome fastq files contained an unrecognised panel number: " + ",".join(not_processed) \
+                + "\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
             else:
                 self.upload_agent_script_logfile.write(str(to_be_nexified) + " fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
             # build the file path with WES batch and NGS run numbers
@@ -403,7 +406,8 @@ class upload2Nexus():
         self.test_dx_toolkit()
 
         # build the nexus upload command
-        nexus_upload_command = self.restart_ua_1 + config.upload_agent + " --auth-token " + config.Nexus_API_Key + " --project " + self.nexusproject + "  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string + self.restart_ua_2 % ("fastq files")
+        nexus_upload_command = self.restart_ua_1 + config.upload_agent + " --auth-token " + config.Nexus_API_Key + " --project " + self.nexusproject \
+        + "  --folder /" + self.nexus_path + " --do-not-compress --upload-threads 10" + self.fastq_string + self.restart_ua_2 % ("fastq files")
 
         # open a file to hold all the upload agent commands
         runfolder_upload_cmd_file = open(os.path.join(self.runfolderpath, config.runfolder_upload_cmds), 'w')
@@ -411,7 +415,8 @@ class upload2Nexus():
         runfolder_upload_cmd_file.write("----------------------Upload of fastqs----------------------\n" + nexus_upload_command + "\n\n----------------------Upload rest of runfolder----------------------\n")
 
         # write to logfile
-        self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus. See commands at " + os.path.join(self.runfolderpath, config.runfolder_upload_cmds) + "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
+        self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus. See commands at " + os.path.join(self.runfolderpath, config.runfolder_upload_cmds) \
+        + "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
 
         # open file to show upload has started and to hold upload agent standard out
         upload_started = open(os.path.join(self.runfolderpath, config.upload_started_file), 'a')
@@ -439,7 +444,7 @@ class upload2Nexus():
         # back up rest of run folder to nexus
         self.upload_rest_of_runfolder()
 
-    def send_an_email(self):
+    def send_an_email(self, to):
         '''function to send an email. uses self.email_subject, self.email_message and self.email_priority'''
         # create message object
         m = Message()
@@ -456,7 +461,7 @@ class upload2Nexus():
         server.starttls()
         server.ehlo()
         server.login(config.user, config.pw)
-        server.sendmail(config.me, [config.you], m.as_string())
+        server.sendmail(config.me, to, m.as_string())
 
         # write to logfile
         self.upload_agent_script_logfile.write("\nEmail sent to...... " + str(config.you) + "\nsubject:" + self.email_subject + "\nbody:" + self.email_message + "\n\n")
@@ -549,11 +554,13 @@ class upload2Nexus():
                 # build a string of the users list to make log look nice
                 user_str = ",".join(config.view_users)
                 # write to log
-                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (VIEW) to " % (self.nexusproject) + user_str + "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
+                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (VIEW) to " % (self.nexusproject) + user_str + \
+                "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
                 # repeat for admins
                 user_str = ",".join(config.admin_users)
                 # write to log
-                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (ADMIN) to " % (self.nexusproject) + user_str + "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
+                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (ADMIN) to " % (self.nexusproject) + user_str + \
+                "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
 
         else:
             # for debug mode use example project id
@@ -575,7 +582,7 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.write(self.source_command)
 
         # initilise list of oncology fastq
-        list_onco_fastq = []
+        list_oncology_fastq = []
 
         # loop through list of fastq files
         for fastq in self.list_of_samples:
@@ -591,8 +598,20 @@ class upload2Nexus():
                     # add underscore to Pan number so Pan1000 is not true when looking for Pan100
                     # Find oncology samples and generate a list of fastq to run through amplivar pipeline
                     if panel + "_" in fastq and panel == "Pan1190":
-                        list_onco_fastq.append(read1)
-                        list_onco_fastq.append(read2)
+                        list_oncology_fastq.append(read1)
+                        list_oncology_fastq.append(read2)
+                        
+                        # specify input files for stages
+                        # sambamba_bedfile = config.app_project + config.bedfile_folder + panel + "Sambamba.bed"
+                        # picard_bedfile = config.app_project + config.bedfile_folder + panel + ".bed"
+                        # mokaamp_bed_PE_input = config.app_project + config.bedfile_folder + panel + "_PE.bed"
+                        # variant_calling_bed = config.app_project + config.bedfile_folder + panel + "_flat.bed"
+
+                        # temp files for testing.
+                        sambamba_bedfile = config.app_project + config.bedfile_folder + "Pan2684Sambamba.bed"
+                        picard_bedfile = config.app_project + config.bedfile_folder + "Pan2684.bed"
+                        mokaamp_bed_PE_input = config.app_project + config.bedfile_folder + "Pan2684_PE.bed"
+                        variant_calling_bed = config.app_project + config.bedfile_folder + "Pan2684_flat.bed"
 
                     # Find NGS or WES samples
                     elif panel + "_" in fastq:
@@ -615,9 +634,36 @@ class upload2Nexus():
                         # use same panelname to get the email which will be used to upload to IVA
                         ingenuity_email = config.email_panel_dict[panel]
 
-                # Skip over Mokapipe command construstion for cancer samples.
+                # MokaAMP command construstion for EGFR samples.
                 if "Pan1190_" in fastq:
-                    pass
+                    # create the input command for the fastqc
+                    read1_cmd = self.nexusproject + ":" + read1
+                    read2_cmd = self.nexusproject + ":" + read2
+
+                    # set the destination command as the root of the project
+                    dest_cmd = self.nexusproject + ":/"
+
+                    
+                    # create the MokaAMP dx command
+                    command = self.mokaamp_command + config.mokaamp_fastq_R1 + read1_cmd + \
+                                        config.mokaamp_fastq_R2 + read2_cmd + \
+                                        config.mokaamp_mokapicard_input + mokaamp_bed_PE_input + \
+                                        config.mokaamp_capturetype + config.mokaamp_capture_type + \
+                                        config.mokaamp_bed_PE + mokaamp_bed_PE_input + \
+                                        config.mokaamp_cov_level + config.mokaamp_coverage_level + \
+                                        config.mokaamp_sambamba_bed + sambamba_bedfile + \
+                                        config.mokaamp_vardict_bed + variant_calling_bed + \
+                                        config.mokaamp_varscan_bed + variant_calling_bed + \
+                                        config.mokaamp_lofreq_bed + variant_calling_bed + \
+                                        config.mokaamp_varscan_strandfilter + config.mokaamp_strandfilter + \
+                                        self.dest + dest_cmd + self.token
+
+                    # remove the depends on for the negative controls
+                    if "NTCcon" in read1:
+                        command = command.replace("jobid=$(", "").replace(config.Nexus_API_Key + ")", config.Nexus_API_Key)
+
+                    # add command for each pair of fastqs to a list
+                    self.dx_run.append(command)
 
                 # Generate command to call MokaWES workflow for WES samples
                 elif "Pan493_" in fastq:
@@ -632,7 +678,11 @@ class upload2Nexus():
                     sention_sample_name = fastq.split("_R1_")[0]
 
                     # create the MokaWES dx command
-                    command = self.wes_command + config.wes_fastqc1 + read1_cmd + config.wes_fastqc2 + read2_cmd + config.wes_sention_samplename + sention_sample_name + config.wes_iva_email_input + ingenuity_email + self.dest + dest_cmd + self.token
+                    command = self.wes_command + config.wes_fastqc1 + read1_cmd + config.wes_fastqc2 + read2_cmd + \
+                    config.wes_sention_samplename + sention_sample_name + \
+                    config.wes_iva_email_input + ingenuity_email + \
+                    self.dest + dest_cmd + self.token
+
                     # add command for each pair of fastqs to a list
                     self.dx_run.append(command)
 
@@ -646,22 +696,27 @@ class upload2Nexus():
                     dest_cmd = self.nexusproject + ":/"
 
                     # create the dx command
-                    command = self.base_command + config.mokapipe_fastqc1 + read1_cmd + config.mokapipe_fastqc2 + read2_cmd + config.mokapipe_sambamba_input + sambamba_bedfile + config.mokapipe_mokapicard_vendorbed_input + moka_vendor_bedfile + config.mokapipe_iva_email_input + ingenuity_email + self.dest + dest_cmd + self.token
+                    command = self.base_command + config.mokapipe_fastqc1 + read1_cmd \
+                    + config.mokapipe_fastqc2 + read2_cmd \
+                    + config.mokapipe_sambamba_input + sambamba_bedfile \
+                    + config.mokapipe_mokapicard_vendorbed_input + moka_vendor_bedfile \
+                    + config.mokapipe_iva_email_input + ingenuity_email \
+                    + self.dest + dest_cmd + self.token
 
                     # add command for each pair of fastqs to a list
                     self.dx_run.append(command)
 
         # if oncology samples present, construct Amplivar dx run command inputs
-        if len(list_onco_fastq) > 1:
-            command = self.onco_command
-            for fastq in list_onco_fastq:
-                read_cmd = config.onco_input + self.nexusproject + ":" + fastq
+        if len(list_oncology_fastq) > 1:
+            command = self.mokaonc_command
+            for fastq in list_oncology_fastq:
+                read_cmd = config.mokaonc_fq_input + self.nexusproject + ":" + fastq
                 command = command + read_cmd
 
             # set the destination command as the root of the project in dir AmplivarOutput
             dest_cmd = self.nexusproject + ":/Onco_Output"
             # create the dx command include email address for ingenuity
-            command = command + config.onco_ingenuity + config.onco_email + self.dest + dest_cmd + self.token
+            command = command + config.mokaonc_ingenuity + config.oncology_email + self.dest + dest_cmd + self.token
             # add command to list
             self.dx_run.append(command)
 
@@ -679,60 +734,58 @@ class upload2Nexus():
 
         # loop through all dx_run commands and generate a list of commands/ workflow paths for the alert email
         # Identify different workflows to direct/ define the running of additional apps following completion of the workflow
-        # Flag to identify any cancer samples - used to direct additional apps
-        cancer = True
+        
         # Flag to identify any WES samples - used to direct additional apps
-        WES = False
-        # capture the workflow used for notification email
-        app = ""
+        wes = False
+        mokaamp = False
+        custom_panel = False
+        workflows = []
+        # loop through each command in the dx run list
         for command in self.dx_run:
             # write command to log file
             self.DNA_Nexus_bash_script.write(command + "\n")
             # write line to append job id to depends_list
             self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
-            # Identify and capture the workflow for cancer samples for notification email
+            # Identify the workflows run (for notification email)
             if "Pan1190_" in command:
-                workflow = config.onco_path.replace("Workflows/", "")  # file structure not required for email notification, only keep the workflow name
-            # Identify and capture the workflow for WES samples for notification email.
+                workflows.append(config.mokaonc_path.replace("Workflows/", ""))
+                workflows.append(config.mokaamp_path.replace("Workflows/", ""))
+                # Update Flag to call mokaamp specific apps
+                mokaamp = True
             elif "Pan493_" in command:
-                # Update Flags to call additional apps
-                cancer = False
-                WES = True
-                workflow = config.wes_path.replace("Workflows/", "")  # file structure not required for email notification, only keep the workflow name
-            else:  # Capture workflow for all other tests for notification email
-                # Update Flags to call additional apps
-                cancer = False
-                workflow = config.mokapipe_path.replace("Workflows/", "")  # file structure not required for email notification, only keep the workflow name
-            # Generate the workflow string to be included in email
-            if workflow in app:
-                pass
+                # Update Flag to call WES specific apps
+                wes = True
+                workflows.append(config.wes_path.replace("Workflows/", ""))
             else:
-                if len(app) > 1:
-                    app = app + " and " + workflow
-                else:
-                    app = workflow
+                # file structure not required for email notification, only keep the workflow name
+                workflows.append(config.mokapipe_path.replace("Workflows/", ""))
+                custom_panel = True
 
-        if not cancer:  # use flags to generate multiqc command for all non-cancer samples.
-            # If WES need to run peddy and use lower multiqc coverage level
-            if WES:
-                # state the coverage level used by multiqc, converting to str to help concatenation when building dx run cmd.
-                multiqc_coverage_level = str(config.wes_coverage_level)
-                # build peddy command - eg command = jobid=$(dx run peddy -iproject_for_peddy = 002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid)
-                peddy_command = self.peddy_command + config.peddy_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.depends + self.token
-                # write peddy run commands to bash script
-                self.DNA_Nexus_bash_script.write(peddy_command + "\n")
-                # write line to append job id to depends_list so downstream functions (e.g. MultiQC and smartsheet) wait for peddy to complete
-                self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
-            # if custom panel state coverage level
-            else:
-                multiqc_coverage_level = config.custom_panel_coverage_level
-            # build multiqc command, capturing the job id- eg command = jobid=$(dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST -icoveragelevel=20 --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid --brief --auth xyz)
-            multiqc_command = self.multiqc_command + config.multiqc_project_input + self.nexusproject + config.multiqc_coverage_level_input + multiqc_coverage_level + self.project + self.projectid.rstrip() + self.depends + self.token
-            # build upload_multiqc_report command. Need to strip the close bracket from  self.token as this is used when capturing jobids
-            # use the job id from multiqc command to define the input for this app
-            upload_multiqc_command = self.upload_multiqc_command + config.upload_multiqc_input + "$jobid:" + config.multiqc_html_output + self.project + self.projectid.rstrip() + self.token.rstrip(")")
-            # write command to bash script
-            self.DNA_Nexus_bash_script.write(multiqc_command + "\n" + upload_multiqc_command + "\n")
+
+
+        # If WES need to run peddy and use specific multiqc coverage level
+        if wes:
+            # state the coverage level used by multiqc, converting to str to help concatenation when building dx run cmd.
+            multiqc_coverage_level = str(config.wes_multiqc_coverage_level)
+            # build peddy command - eg command = jobid=$(dx run peddy -iproject_for_peddy = 002_170222_ALEDTEST --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid)
+            peddy_command = self.peddy_command + config.peddy_project_input + self.nexusproject + self.project + self.projectid.rstrip() + self.depends + self.token
+            # write peddy run commands to bash script
+            self.DNA_Nexus_bash_script.write(peddy_command + "\n")
+            # write line to append job id to depends_list so downstream functions (e.g. MultiQC and smartsheet) wait for peddy to complete
+            self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
+        # if custom panel state coverage level
+        elif custom_panel:
+            multiqc_coverage_level = config.custom_panel_multiqc_coverage_level
+        elif mokaamp:
+            multiqc_coverage_level = config.mokaamp_multiqc_coverage_level
+        # build multiqc command, capturing the job id- eg command = jobid=$(dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST -icoveragelevel=20 --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid --brief --auth xyz)
+        multiqc_command = self.multiqc_command + config.multiqc_project_input + self.nexusproject + config.multiqc_coverage_level_input + multiqc_coverage_level \
+        + self.project + self.projectid.rstrip() + self.depends + self.token
+        # build upload_multiqc_report command. Need to strip the close bracket from  self.token as this is used when capturing jobids
+        # use the job id from multiqc command to define the input for this app
+        upload_multiqc_command = self.upload_multiqc_command + config.upload_multiqc_input + "$jobid:" + config.multiqc_html_output + self.project + self.projectid.rstrip() + self.token.rstrip(")")
+        # write command to bash script
+        self.DNA_Nexus_bash_script.write(multiqc_command + "\n" + upload_multiqc_command + "\n")
 
         # build smartsheet update command
         smartsheet_update_command = self.smartsheet_update_command + config.smartsheet_mokapipe_complete + self.runfolder + self.project + self.projectid.rstrip() + self.depends + self.token.rstrip(")")
@@ -747,7 +800,8 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.close()
 
         # write to cron job script
-        self.upload_agent_script_logfile.write("dx run commands issued - see " + self.bash_script + "\nMultiQC and Smartsheet complete apps set with the project id:" + self.projectid.rstrip() + "\n\njob ids captured from standard out:\n")
+        self.upload_agent_script_logfile.write("dx run commands issued - see " + self.bash_script + "\nMultiQC and Smartsheet complete apps set with the project id:" + self.projectid.rstrip() \
+        + "\n\njob ids captured from standard out:\n")
 
         # run a command to execute the bash script made above
         cmd = "bash " + self.bash_script
@@ -816,32 +870,37 @@ class upload2Nexus():
                 # build the rest of the sql update query
                 sql.append("insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('" + DNA + "','" + config.mokapipe_pipeline_ID + "')")
 
-        # ~~~~~~~~~~~~~~~~~~~~~~~~ TODO ~~~~~~~~~~~~~~~~~~~~~~~~
-        # Generate SQL for cancer samples.
-
+        
         # combine all the queries into a string suitable for an email
         sql_statements = ""
-        # if there are no sql commands it must be an oncology run
+        
+        # if there are no sql commands in the list it must be an oncology run
         if len(sql) == 0:
-            sql_statements = "No SQL for oncology samples"
+            # email the workflow used so this can be entered manually
+            self.email_subject = "TESTING - MOKAPIPE ALERT : Started pipeline for " + self.runfolder
+            self.email_message = self.runfolder + " being processed using workflow " + ",".join(set(workflows)) + "\n\n" + config.mokaamp_email_message
+            # send email
+            self.send_an_email([config.oncology_you, config.you])
+        # otherwise loop through each statement and create a string.
         else:
-            # otherwise loop through each statement and create a string.
             for statement in sql:
                 sql_statements = sql_statements + statement + "\n"
 
-        # write action to system log file
-        self.logger("SQL statement email sent for run " + self.runfolder, "UA_pass")
+            # write action to system log file
+            self.logger("SQL statement email sent for run " + self.runfolder, "UA_pass")
 
-        # email this query
-        self.email_subject = "MOKAPIPE ALERT - ACTION NEEDED: Started pipeline for " + self.runfolder
-        self.email_priority = 1  # high priority
-        self.email_message = self.runfolder + " being processed using workflow " + app + "\n\nPlease update Moka using the below query and ensure that " + str(records) + " records are updated:\n\n" + sql_statements
+            # email this query
+            self.email_subject = "MOKAPIPE ALERT - ACTION NEEDED: Started pipeline for " + self.runfolder
+            self.email_priority = 1  # high priority
+            self.email_message = self.runfolder + " being processed using workflow " + ",".join(set(workflows)) + "\n\nPlease update Moka using the below query and ensure that " + \
+            str(records) + " records are updated:\n\n" + sql_statements
+            # send email
+            self.send_an_email(config.you)
 
         if not config.debug:
             # call function to update smartsheet to say run in progress
             self.smartsheet_mokapipe_in_progress()
-            # send email
-            self.send_an_email()
+
 
     def RPKM(self):
         '''This function loops through all the panel numbers found in the fastq folders and where relevant submits a RPKM job '''
@@ -858,7 +917,8 @@ class upload2Nexus():
                     CNV_panels_reported.remove(panel)
                 else:
                     # build RPKM command
-                    RPKM_command = self.RPKM_command + config.RPKM_bedfile + config.app_project + config.bedfile_folder + config.panelnumbers[panel] + "_RPKM.bed" + config.RPKM_project + self.nexusproject + config.RPKM_bedfile_to_download + panel + self.project + self.projectid.rstrip() + self.depends + self.token.rstrip(")")
+                    RPKM_command = self.RPKM_command + config.RPKM_bedfile + config.app_project + config.bedfile_folder + config.panelnumbers[panel] + "_RPKM.bed" + config.RPKM_project + \
+                    self.nexusproject + config.RPKM_bedfile_to_download + panel + self.project + self.projectid.rstrip() + self.depends + self.token.rstrip(")")
                     # write commands to bash script
                     self.DNA_Nexus_bash_script.write(RPKM_command + "\n")
 
@@ -890,7 +950,8 @@ class upload2Nexus():
         copyfile(config.samplesheets + samplesheet_name, os.path.join(self.runfolderpath, samplesheet_name))
 
         # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
-        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands in " + os.path.join(self.runfolderpath, config.runfolder_upload_cmds) + "\nsee standard out from these commands in log file @ " + os.path.join(self.runfolderpath, config.upload_started_file) + "\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
+        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using commands in " + os.path.join(self.runfolderpath, config.runfolder_upload_cmds) \
+        + "\nsee standard out from these commands in log file @ " + os.path.join(self.runfolderpath, config.upload_started_file) + "\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
 
         # loop through the run folder
         for root, subFolder, files in os.walk(self.runfolderpath):
@@ -919,7 +980,8 @@ class upload2Nexus():
                     path_for_nexus = path.replace(self.runfolder, self.nexusproject.replace(config.NexusProjectPrefix, "")).replace(config.runfolders, "").replace(item, "")
 
                     # build the nexus upload command
-                    nexus_upload_command = self.restart_ua_1 + config.upload_agent + " --auth-token " + config.Nexus_API_Key + " --project " + self.nexusproject + "  --folder " + path_for_nexus + " --do-not-compress --upload-threads 10 " + path_to_upload + self.restart_ua_2 % (path_to_upload)
+                    nexus_upload_command = self.restart_ua_1 + config.upload_agent + " --auth-token " + config.Nexus_API_Key + " --project " + self.nexusproject \
+                    + "  --folder " + path_for_nexus + " --do-not-compress --upload-threads 10 " + path_to_upload + self.restart_ua_2 % (path_to_upload)
 
                     # copy the command to the temporary cmd file
                     temp_runfolder_upload_cmd_file.write(nexus_upload_command + "\n")
@@ -1057,10 +1119,12 @@ class upload2Nexus():
 
         # ######### samplesheet (file7) #########
         # create a upload agent command for samplesheet (copied into the runfolder above) which is being uploaded into the runfolder
-        samplesheet_nexus_upload_command = self.restart_ua_1 + config.upload_agent + " --auth-token " + config.Nexus_API_Key + " --project " + self.nexusproject + "  --folder /" + self.nexusproject.replace(config.NexusProjectPrefix, "") + "/" + " --do-not-compress --upload-threads 10 " + self.runfolderpath + "/" + self.runfolder + "_SampleSheet.csv " + self.restart_ua_2
+        samplesheet_nexus_upload_command = self.restart_ua_1 + config.upload_agent + " --auth-token " + config.Nexus_API_Key + " --project " + self.nexusproject \
+        + "  --folder /" + self.nexusproject.replace(config.NexusProjectPrefix, "") + "/" + " --do-not-compress --upload-threads 10 " + self.runfolderpath + "/" + self.runfolder + "_SampleSheet.csv " + self.restart_ua_2
 
         # create command line for files in the logfile_list (to be put into a logfiles subfolder)
-        nexus_upload_command = self.restart_ua_1 + config.upload_agent + " --auth-token " + config.Nexus_API_Key + " --project " + self.nexusproject + "  --folder /" + self.nexusproject.replace(config.NexusProjectPrefix, "") + "/Logfiles/" + " --do-not-compress --upload-threads 10 " + " ".join(logfile_list) + self.restart_ua_2
+        nexus_upload_command = self.restart_ua_1 + config.upload_agent + " --auth-token " + config.Nexus_API_Key + " --project " + self.nexusproject \
+        + "  --folder /" + self.nexusproject.replace(config.NexusProjectPrefix, "") + "/Logfiles/" + " --do-not-compress --upload-threads 10 " + " ".join(logfile_list) + self.restart_ua_2
 
         # write these commands to the runfolder_upload_cmds_logfile before upload.
         runfolder_upload_cmd_file = open(os.path.join(self.runfolderpath, config.runfolder_upload_cmds), 'a')
@@ -1082,7 +1146,8 @@ class upload2Nexus():
 
         # capture stdout to log file containing stdour and stderr
         runfolder_upload_stdout_file = open(os.path.join(self.runfolderpath, config.upload_started_file), 'a')
-        runfolder_upload_stdout_file.write("\n----------------------Uploading logfiles (this will not be included in the file within DNA Nexus) " + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
+        runfolder_upload_stdout_file.write("\n----------------------Uploading logfiles (this will not be included in the file within DNA Nexus) " \
+        + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
         runfolder_upload_stdout_file.write(out)
         runfolder_upload_stdout_file.close()
 
