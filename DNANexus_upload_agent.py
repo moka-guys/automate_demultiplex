@@ -19,6 +19,8 @@ from shutil import copyfile
 import requests
 # import config file
 import automate_demultiplex_config as config
+# import function which reads the git tag
+import git_tag as git_tag
 
 
 class get_list_of_runs():
@@ -217,7 +219,8 @@ class upload2Nexus():
         # create full path to runfolder
         self.runfolderpath = os.path.join(config.runfolders, self.runfolder)
 
-        self.upload_agent_script_logfile.write("automate_demultiplexing release:" + config.script_release + "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) \
+        # write to log file including the github repo tag and time stamp
+        self.upload_agent_script_logfile.write("automate_demultiplexing release:" + git_tag.git_tag() + "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) \
             + "----------------------\nAssessing " + self.runfolderpath + "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
 
         # look for the file denoting the upload has started
