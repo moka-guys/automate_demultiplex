@@ -467,8 +467,8 @@ class upload2Nexus():
         server.sendmail(config.me, to, m.as_string())
 
         # write to logfile
-        self.upload_agent_script_logfile.write("\nEmail sent to...... " + str(config.you) + "\nsubject:" + self.email_subject + "\nbody:" + self.email_message + "\n\n")
-        self.logger("Upload Agent email sent"+ str(config.you) + ". Subject:" + self.email_subject + ". Body:" + self.email_message, "UA_pass")
+        self.upload_agent_script_logfile.write("\nEmail sent to...... " + str(to) + "\nsubject:" + self.email_subject + "\nbody:" + self.email_message + "\n\n")
+        self.logger("Upload Agent email sent" + str(to) + ". Subject:" + self.email_subject + ". Body:" + self.email_message, "UA_pass")
 
     def test_upload_agent(self):
         '''test the upload agent is installed'''
