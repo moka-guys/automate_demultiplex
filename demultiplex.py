@@ -27,6 +27,8 @@ import json
 from checksumdir import dirhash
 #import config file
 import automate_demultiplex_config as config
+# import function which reads the git tag
+import git_tag as git_tag
 
 
 
@@ -62,7 +64,7 @@ class get_list_of_runs():
         # Create a class instance for checking and running demultiplexing on each runfolder
         demultiplex = ready2start_demultiplexing(self.now)
         # Write to system log to signal the start of the automate demultiplex script
-        demultiplex.logger("automate demultiplex release %s started on workstation." % config.script_release,
+        demultiplex.logger("automate demultiplex release %s started on workstation." % git_tag.git_tag(),
                            "demultiplex_started")
 
         # Loop through directory listing and pass runfolders to demultiplex.already_demultiplexed()
@@ -77,7 +79,7 @@ class get_list_of_runs():
 
         # Write message to system log to indicate demultiplex complete
         demultiplex.logger("automate demultiplex release %s complete. %s runfolder(s) processed." % \
-                          (config.script_release, str(num_processed_runfolders)), "demultiplex_complete")
+                          (git_tag.git_tag(), str(num_processed_runfolders)), "demultiplex_complete")
 
         # Close the script log file when all processing is complete
         demultiplex.script_logfile.close()
@@ -223,7 +225,7 @@ class ready2start_demultiplexing():
         self.runfolderpath = self.runfolders + "/" + self.runfolder
 
         # Write to log file, recording the version of the automate_demultiplex repository
-        self.script_logfile.write("\nautomate_demultiplexing release: "+ config.script_release + "\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
+        self.script_logfile.write("\nautomate_demultiplexing release: " + git_tag.git_tag() + "\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
 
         # Check if the demultiplex log file is present 
         # using the os.path.isfile() function to determine if demultiplexlog.txt is present
@@ -283,6 +285,7 @@ class ready2start_demultiplexing():
             # No samplesheet found. Stop and log message.
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
             self.logger("No samplesheet found for run " + self.runfolder, "demultiplex_fail_samplesheet")
+            raise SystemExit(0)
 
     def check_valid_samplesheet(self):
         '''Validate the 'Sample_ID' and 'Sample_Name' table columns within the sample sheet csv
@@ -298,27 +301,31 @@ class ready2start_demultiplexing():
         valid_char_set = set(valid_chars.split())
 
         # Open samplesheet as read only.
-        with open(self.samplesheet, 'r') as samplesheet_stream:
-            # read the file into a list and loop through the list in reverse (bottom to top).
-            # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
-            for line in reversed(samplesheet_stream.readlines()):
-                # If the line contains table headers, stop looping through the file
-                if line.startswith("Sample_ID"):
-                    break
-                # if it's a line detailing a sample 
-                else:
-                    # Split the current line of the csv, with commas as the delimiter
-                    columns = line.split(",")
-                    # Remove leading and trailing whitespace from sampleID and sampleName.
-                    # bcl2fastq tolerates leading and trailing whitespace.
-                    sample_id, sample_name = columns[0].strip(" "), columns[1].strip(" ")
-                    # Append sample id and sample name to sampleStrings for testing
-                    sample_strings.append(sample_id)
-                    sample_strings.append(sample_name)
+        try:
+            with open(self.samplesheet, 'r') as samplesheet_stream:
+                # read the file into a list and loop through the list in reverse (bottom to top).
+                # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
+                for line in reversed(samplesheet_stream.readlines()):
+                    # If the line contains table headers, stop looping through the file
+                    if line.startswith("Sample_ID"):
+                        break
+                    # if it's a line detailing a sample 
+                    else:
+                        # Split the current line of the csv, with commas as the delimiter
+                        columns = line.split(",")
+                        # Remove leading and trailing whitespace from sampleID and sampleName.
+                        # bcl2fastq tolerates leading and trailing whitespace.
+                        sample_id, sample_name = columns[0].strip(" "), columns[1].strip(" ")
+                        # Append sample id and sample name to sampleStrings for testing
+                        sample_strings.append(sample_id)
+                        sample_strings.append(sample_name)
 
-                    # increase sample count to record in smartsheet how many samples have been processed
-                    self.sample_count += 1
-
+                        # increase sample count to record in smartsheet how many samples have been processed
+                        self.sample_count += 1
+        except:
+            # Write progress/status to script log file
+            self.script_logfile.write("Unable to open the samplesheet. check naming of samplesheet\n")
+            self.logger("Unable to open samplesheet found for run " + self.runfolder + ". Check naming of samplesheet", "demultiplex_fail_samplesheet")
         # Loop through the characters of each sample string
         for sample_string in sample_strings:
             for char in sample_string:
