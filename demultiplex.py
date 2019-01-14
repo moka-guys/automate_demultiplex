@@ -20,16 +20,12 @@ import os
 import subprocess
 import datetime
 import smtplib
-import time
-from email.Message import Message
+from email.message import Message
 import requests
-import json
-from checksumdir import dirhash
-#import config file
+# import config file
 import automate_demultiplex_config as config
 # import function which reads the git tag
 import git_tag as git_tag
-
 
 
 class get_list_of_runs():
@@ -71,14 +67,14 @@ class get_list_of_runs():
         # This function determines if the runfolder is ready to be demultiplexed and triggers demultiplexing
         for folder in all_runfolders:
             # Ignore folders in the list config.ignore_directories and test that it is a directory (ignoring files)
-            if folder not in config.ignore_directories and os.path.isdir(self.runfolders + "/" + folder):  
+            if folder not in config.ignore_directories and os.path.isdir(self.runfolders + "/" + folder):
                 demultiplex.already_demultiplexed(folder)
 
         # Get number of runfolders processed by bcl2fastq during this cycle
         num_processed_runfolders = len(demultiplex.processed_runfolders)
 
         # Write message to system log to indicate demultiplex complete
-        demultiplex.logger("automate demultiplex release %s complete. %s runfolder(s) processed." % \
+        demultiplex.logger("automate demultiplex release %s complete. %s runfolder(s) processed." %
                           (git_tag.git_tag(), str(num_processed_runfolders)), "demultiplex_complete")
 
         # Close the script log file when all processing is complete
@@ -86,20 +82,20 @@ class get_list_of_runs():
 
         # If runfolders were processed by bcl2fastq during this cycle.
         if num_processed_runfolders > 0:
-        # Create an underscore-delimited string of all runfolders demultiplexed in this cycle, 
-        # ending with '_demultiplex_script_log.txt'.
+            # Create an underscore-delimited string of all runfolders demultiplexed in this cycle,
+            # ending with '_demultiplex_script_log.txt'.
             processed_run_string = "_" + "_".join(demultiplex.processed_runfolders) + "_demultiplex_script_log.txt"
-        # Use os.path.splitext() to remove the ".txt" extension from the current script log file name 
-        # and append processed_run_string. Store this in new_scriptlog_name.
+            # Use os.path.splitext() to remove the ".txt" extension from the current script log file name
+            # and append processed_run_string. Store this in new_scriptlog_name.
             new_scriptlog_name = os.path.splitext(demultiplex.logfile_name)[0] + processed_run_string
-        # Rename the script log file to new_scriptlog_name. Allows processed runs to be easily 
-        # identified from the script log name and differentiates this log from others uploaded to DNA nexus.
+            # Rename the script log file to new_scriptlog_name. Allows processed runs to be easily
+            # identified from the script log name and differentiates this log from others uploaded to DNA nexus.
             os.rename(demultiplex.logfile_name, new_scriptlog_name)
 
 
 class ready2start_demultiplexing():
     """Call bcl2fastq on runfolders after asserting that runfolder has not been demultiplexed and a
-    valid samplesheet is present. 
+    valid samplesheet is present.
 
     Arguments:
     now
@@ -160,7 +156,6 @@ class ready2start_demultiplexing():
         # Open the script logfile for logging throughout script.
         self.script_logfile = open(self.logfile_name, 'a')
 
-
         # Email server settings
         self.user = config.user
         self.pw = config.pw
@@ -171,11 +166,11 @@ class ready2start_demultiplexing():
         self.me = config.me
         # who the email is going to
         self.you = config.you
-        
+
         # some variables used by send_an_email function
-        self.email_subject=""
-        self.email_priority=1
-        self.email_message=""
+        self.email_subject = ""
+        self.email_priority = 1
+        self.email_message = ""
 
         # Smartsheet config
         # API key
@@ -205,10 +200,9 @@ class ready2start_demultiplexing():
         # variables to hold checksums:
         self.sequencer_checksum = ""
         self.workstation_checksum = ""
-        
-        # variable to count # samples on a run - used to update smartsheet
-        self.sample_count=0
 
+        # variable to count # samples on a run - used to update smartsheet
+        self.sample_count = 0
 
     def already_demultiplexed(self, runfolder):
         """Check if the runfolder has been demultiplexed. This is denoted by the presence of the
@@ -217,7 +211,7 @@ class ready2start_demultiplexing():
 
         Arguments:
         runfolder (str)
-            The runfolder name 
+            The runfolder name
         """
 
         # Capture the runfolder and its path
@@ -225,9 +219,9 @@ class ready2start_demultiplexing():
         self.runfolderpath = self.runfolders + "/" + self.runfolder
 
         # Write to log file, recording the version of the automate_demultiplex repository
-        self.script_logfile.write("\nautomate_demultiplexing release: " + git_tag.git_tag() + "\n----------------------"+str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))+"-----------------\nAssessing......... " + self.runfolderpath+"\n")
+        self.script_logfile.write("\nautomate_demultiplexing release: " + git_tag.git_tag() + "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\nAssessing......... " + self.runfolderpath + "\n")
 
-        # Check if the demultiplex log file is present 
+        # Check if the demultiplex log file is present
         # using the os.path.isfile() function to determine if demultiplexlog.txt is present
         if os.path.isfile(self.runfolderpath + "/" + self.demultiplexed):
             # Stop processing this run folder and write to log file
@@ -268,7 +262,7 @@ class ready2start_demultiplexing():
         # Check that the expected samplesheet exists
         if expected_samplesheet in self.list_of_samplesheets:
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " + self.samplesheet + "\n")
-            # Test if the samplesheet contains valid characters using self.check_valid_samplsheet(). 
+            # Test if the samplesheet contains valid characters using self.check_valid_samplsheet().
             # Returns true if the sample sheet does not contain illegal characters
             if self.check_valid_samplesheet():
                 self.logger("Sample sheet is valid - no illegal characters found for run " + self.runfolder, "demultiplex_success")
@@ -297,8 +291,6 @@ class ready2start_demultiplexing():
 
         # Set a string containing valid characters, defined by bcl2fastq as an alphanumeric, '-', or '_' character.
         valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-        # Separate characters into a set for quick lookup
-        valid_char_set = set(valid_chars.split())
 
         # Open samplesheet as read only.
         try:
@@ -309,7 +301,7 @@ class ready2start_demultiplexing():
                     # If the line contains table headers, stop looping through the file
                     if line.startswith("Sample_ID"):
                         break
-                    # if it's a line detailing a sample 
+                    # if it's a line detailing a sample
                     else:
                         # Split the current line of the csv, with commas as the delimiter
                         columns = line.split(",")
@@ -326,14 +318,16 @@ class ready2start_demultiplexing():
             # Write progress/status to script log file
             self.script_logfile.write("Unable to open the samplesheet. check naming of samplesheet\n")
             self.logger("Unable to open samplesheet found for run " + self.runfolder + ". Check naming of samplesheet", "demultiplex_fail_samplesheet")
+
         # Loop through the characters of each sample string
         for sample_string in sample_strings:
             for char in sample_string:
                 # Check that each character in the string is valid, returning True if valid and False if not
                 if char not in valid_chars:
                     return False
-        else:
-            return True
+
+        # if haven't already returned false after parsing samplestrings return True to say all is ok.
+        return True
 
     def run_demultiplexing(self):
         """Run bcl2fastq using runfolder as input. Create demultiplex log file in runfolder."""
@@ -342,7 +336,7 @@ class ready2start_demultiplexing():
         # if it fails an exception is raised.
         self.test_bcl2fastq()
 
-        # before demultiplexing starts check the integrity of the runfolder against that on the sequencer. 
+        # before demultiplexing starts check the integrity of the runfolder against that on the sequencer.
         # If the checks pass the funcion will return true. if it fails errors are reported within the function
         if self.prepare_integrity_check():
 
@@ -353,7 +347,7 @@ class ready2start_demultiplexing():
             demultiplex_log = (self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed)
             # create this file to ensure demultiplexing doesn't start again - bcl2fastq2 v2.20 doesn't produce any standard out for a while after starting so create this here and append later
             create_file = open(demultiplex_log, 'w')
-            #close file immediately
+            # close file immediately
             create_file.close()
 
             # Set a string with the shell command to run demultiplexing.
@@ -361,10 +355,10 @@ class ready2start_demultiplexing():
             # Example: "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq
             #           -R 160822_NB551068_0006_AHGYM7BGXY/
             #           --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv
-            #           --no-lane-splitting >> 
+            #           --no-lane-splitting >>
             #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/demultiplexlog.txt 2&>1"
             # where --no-lane-splitting creates a single fastq for a sample, not into one fastq per lane
-            command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder + 
+            command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder +
                       " --sample-sheet " + self.samplesheet + " --no-lane-splitting >> " +
                       demultiplex_log + " 2>&1")
 
@@ -373,7 +367,7 @@ class ready2start_demultiplexing():
             # Add entry to system log
             self.logger("Demultiplexing started for run " + self.runfolder, "demultiplex_success")
 
-            # Run the bcl2fastq command to start demultiplexing. the script won't continue until this 
+            # Run the bcl2fastq command to start demultiplexing. the script won't continue until this
             # process finishes. Stderr and stdout streams are redirected to the log file by the command
             if not config.debug:
                 subprocess.call([command], shell=True)
@@ -392,12 +386,12 @@ class ready2start_demultiplexing():
         """Check demultiplexing completed successfully. Read the stderr and stdout from bcl2fastq in
         the demultiplex log file, searching the last line for the expected success statement.
         """
-        
+
         # Set the path to the demultiplex log file for this runfolder
         run_logfile_path = self.runfolderpath + "/" + self.demultiplexed
-        # Read the last 10 lines of the runfolder's demultiplex log file, which details the success 
+        # Read the last 10 lines of the runfolder's demultiplex log file, which details the success
         # or failure of the bcl2fastq command. In the event of errors, this is written to the script log file.
-        bcl2fastq_log_tail = subprocess.check_output(["tail","-n","10", run_logfile_path])
+        bcl2fastq_log_tail = subprocess.check_output(["tail", "-n", "10", run_logfile_path])
 
         # If demultiplexing completed successfully - looking for expected success statement as defined in config file
         if config.logfile_success in bcl2fastq_log_tail:
@@ -409,14 +403,14 @@ class ready2start_demultiplexing():
         # If demultiplexing did not complete without errors
         else:
             # Write to log file and report last few lines of the failed runfolder's demultiplex log.
-            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see " + 
-                                      run_logfile_path + "\n" + bcl2fastq_log_tail )
+            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see " +
+                                      run_logfile_path + "\n" + bcl2fastq_log_tail)
             # Write to system log
             self.logger("BCL2FastQ ERROR. Demultiplexing failed for run " + self.runfolder, "demultiplex_fail")
 
     def send_an_email(self):
         """Send progress log messages via email to recipient (self.you) via SMTP.
-        
+
         Arguments:
         m_message
             Message to be sent in e-mail body (str)
@@ -450,9 +444,9 @@ class ready2start_demultiplexing():
 
     def test_bcl2fastq(self):
         """Raise exception if bcl2fastq is not installed."""
-        
+
         # call the path to bcl2fastq2 using subprocess to capture the stderr and stdout. NB the required text is in stderr not stdout
-        proc = subprocess.Popen([self.bcl2fastq],stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen([self.bcl2fastq], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         # Capture the streams
         (out, err) = proc.communicate()
 
@@ -471,7 +465,7 @@ class ready2start_demultiplexing():
         """Update smartsheet to say that demultiplexing is in progress."""
 
         # Take current time stamp
-        self.smartsheet_started ='{:%Y-%m-%d}'.format(datetime.datetime.now())
+        self.smartsheet_started = '{:%Y-%m-%d}'.format(datetime.datetime.now())
 
         # Uncomment this block to get the column ids for a new sheet
         ########################################################################
@@ -485,8 +479,6 @@ class ready2start_demultiplexing():
         #     print i['title'], i['id']
         ########################################################################
 
-                    
-
         # create a json object that is used to inserted row into  into smartsheet
         payload = '{"cells": [{"columnId": ' + self.ss_title + ', "value": "' + self.runfolder + '"}, {"columnId": ' + self.ss_description + \
         ', "value": "Demultiplex"}, {"columnId": ' + self.ss_samples + ', "value": ' + str(self.sample_count) + '},{"columnId": ' + self.ss_status + \
@@ -499,7 +491,7 @@ class ready2start_demultiplexing():
         # Add the row using POST
         r = requests.post(url, headers=self.headers, data=payload)
 
-        # capture the output of the POST statement to capture the id of the row that has been updated. 
+        # capture the output of the POST statement to capture the id of the row that has been updated.
         # This can be used when updating the status to complete in function smartsheet_demultiplex_complete().
         response = r.json()
         # capture the value of the row id from the json response
@@ -512,22 +504,21 @@ class ready2start_demultiplexing():
         else:
             # Record error message to script log file
             self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
-            # Record failure in system logs so that an error can be reported via slack. 
+            # Record failure in system logs so that an error can be reported via slack.
             # Failure to update smartsheet is not critical as it does not stop the run being processed.
             self.logger("Smartsheet was NOT updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_fail")
 
-
     def smartsheet_demultiplex_complete(self):
-        """Update smartsheet to say demultiplexing is complete. 
+        """Update smartsheet to say demultiplexing is complete.
         Add the completed date and calculate the duration (in days) and if met TAT.
         """
         # assign current timestamp to self.smartsheet_complete
         self.smartsheet_complete = '{:%Y-%m-%d}'.format(datetime.datetime.now())
-                
+
         # Calculate the number of days taken (add one so if same day this counts as 1 day not 0).
         # This is the difference between now and the date received (recorded in smartsheet).
         # need to convert self.smartsheet_complete and self.smartsheet_started from string to datetime object
-        duration = (datetime.datetime.strptime(self.smartsheet_complete, "%Y-%m-%d") -datetime.datetime.strptime(self.smartsheet_started, "%Y-%m-%d")).days + 1
+        duration = (datetime.datetime.strptime(self.smartsheet_complete, "%Y-%m-%d") - datetime.datetime.strptime(self.smartsheet_started, "%Y-%m-%d")).days + 1
 
         # Set flag to show if TAT was met. Give default value of 1, which can be changed to 0
         # if the duration exceeds the expected turnaround time.
@@ -557,41 +548,39 @@ class ready2start_demultiplexing():
             # Failure to update smartsheet is not critical as it does not stop the run being processed.
             self.logger("Smartsheet NOT updated at end of demultiplexing for run " + self.runfolder, "smartsheet_fail")
 
-
     def logger(self, message, tool):
         """Write log messages to the system log.
         Arguments:
         message (str)
-            Details about the logged event. 
+            Details about the logged event.
         tool (str)
             Tool name. Used to search within the insight ops website.
         """
         # Create subprocess command string, passing message and tool name to the command
         log = "/usr/bin/logger -t %s '%s'" % (tool, message)
-        
-        if subprocess.call([log],shell=True) == 0:
+
+        if subprocess.call([log], shell=True) == 0:
             # If the log command produced no errors, record the log command string to the script logfile.
-            self.script_logfile.write("Log written - " + tool + ": "+ message + "\n")
+            self.script_logfile.write("Log written - " + tool + ": " + message + "\n")
         # Else record failure to write to system log to the script log file
         else:
             self.script_logfile.write("Failed to write log to /usr/bin/logger\n" + log + "\n")
-
 
     def prepare_integrity_check(self):
         """
         We want to ensure the runfolder which was copied to the workstation hasn't been corrupted by the transfer.
         This is only possible for the NextSeq.
         Checksums are generated by a script running on the sequencer and these are assessed by this script.
-        
+
         For nextseq runs the presence of the file containing the checksums is assessed.
         If the checksums are not present the script is stopped and it will be re-assessed the next time the script is run.
-        This is recorded in the system log so an alert can be made if the checksums are not present after a number of hours        
+        This is recorded in the system log so an alert can be made if the checksums are not present after a number of hours
         If the checksums are present these are read into a list and compared. If they match the function returns True and the script will proceed, else the script will return False and stop
         Records are written to the logfile and to the sys.log
-        
+
         test runs (starting with 999999) will not exist on the sequencer so this step is skipped.
         """
-        
+
         # write to log file to say integrity checking is being performed
         self.script_logfile.write("Data integrity checks starting...\n")
 
@@ -605,28 +594,26 @@ class ready2start_demultiplexing():
         # checksum file should have been written to the runfolder on the workstation by sequencer_checksum.py
         checksum_file_path = os.path.join(self.runfolderpath, config.md5checksum_name)
 
-        
         # if the integrity check hasn't been performed yet there won't be a checksum file. If there isn't return False to skip this run until integrity test has been performed
         if not os.path.isfile(checksum_file_path):
-                # write to log file
-                self.script_logfile.write("Integrity check not yet performed on NextSeq. stopping....\n")
-                #and return false to stop the script
-                return False
-        
+            # write to log file
+            self.script_logfile.write("Integrity check not yet performed on NextSeq. stopping....\n")
+            # and return false to stop the script
+            return False
+
         # if it has been performed check if it is a previously reported failed run
         else:
             # To ensure that the checksum has not already been checked - open the file containing the md5 checksums
             with open(checksum_file_path, 'r') as checksum_file:
                 # read the checksum file into a list
                 checksums = checksum_file.readlines()
-        
-        #assess last line in file (last element in list) to see if the flag which denotes checksum test has already been performed is present.
+
+        # assess last line in file (last element in list) to see if the flag which denotes checksum test has already been performed is present.
         if config.checksum_complete_flag in checksums[-1]:
             self.script_logfile.write("Previously reported failed integrity check\n")
             # return false to report integrity check not passed
             return False
 
-        
         # if the integrity check result has not yet been assessed...
         else:
             # pass checksum file path to function which determines if integrity check passed. will return true if the integrity check passed
@@ -646,14 +633,13 @@ class ready2start_demultiplexing():
                     self.send_an_email()
                 # record test failed in sys log
                 self.logger("Integrity check fail. checksums do not match for " + self.runfolder + "see " + checksum_file_path, "demultiplex_fail")
-                # return false to stop the script, saying integrity checking has not been completed      
+                # return false to stop the script, saying integrity checking has not been completed
                 return False
-
 
     def check_checksums(self, checksum_file_path):
         """
         This function receives the path to a file which should contain the checksums for both copies of a run folder.
-        Line 1 contains a pass/fail statement and the checksums are found on lines 2 and 3 
+        Line 1 contains a pass/fail statement and the checksums are found on lines 2 and 3
         A line is added to this file to denote that the integrity check has been assessed - this stops this being repeated should it fail
         If the test passed the function returns true else it returns false.
         All error reporting is done outside this function
@@ -663,25 +649,22 @@ class ready2start_demultiplexing():
             # read the checksums into a list
             checksums = checksum_file.readlines()
 
-        # Should the test fail the script will stop here but it will continue to reach this point every hour. 
+        # Should the test fail the script will stop here but it will continue to reach this point every hour.
         # open the file containing the md5 checksums as write, which  will overwrite the file
         with open(checksum_file_path, 'a') as checksum_file:
             # Add a flag into the checksum file which will stop it getting this far
-            checksum_file.write("\n"+config.checksum_complete_flag)
+            checksum_file.write("\n" + config.checksum_complete_flag)
 
-        
         # first line contains a pass/fail statement from the integrity check script.
         if config.checksum_match in checksums[0]:
             # if md5checksums match return to say test passed
             return True
         else:
-            #otherwise return false
+            # otherwise return false
             return False
-
 
 if __name__ == '__main__':
     # Create instance of get_list_of_runs
     runs = get_list_of_runs()
     # Process all runfolders
     runs.loop_through_runs()
-
