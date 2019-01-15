@@ -27,6 +27,9 @@ file_demultiplexing = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
+# runfolders used for debugging/testing
+test_folders = []
+
 # path to log file which records the output of the upload agent
 upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
 
@@ -84,15 +87,15 @@ mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
 mokaamp_path = "Workflows/MokaAMP_v1.0"
 # path to paddy app
-peddy_path = "Apps/peddy_v1.2"
+peddy_path = "Apps/peddy_v1.3"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.9"
+multiqc_path = "Apps/multiqc_v1.10"
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
 smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.1"
 # RPKM path
-RPKM_path = "Apps/RPKM_using_conifer_v1.3"
+RPKM_path = "Apps/RPKM_using_conifer_v1.4"
 # bedfile folder
 bedfile_folder = "Data/BED/"
 # DNA Nexus organisation to create the project within
@@ -175,10 +178,14 @@ view_users = ["org-viapath_prod", "InterpretationRequest"]
 # list of DNA Nexus users with admin access of project
 admin_users = ["mokaguys"]
 
+#list of oncology panels
+oncology_panels = ["Pan1190","Pan2684"]
+
 # =====Dict linking panel numbers for +/-10 and CNVs=====
 panelnumbers = {"Pan493": None,
                 "Pan1620": None,
                 "Pan1190": None,
+                "Pan2684": None,
                 "Pan1449": "Pan1450",
                 "Pan1451": "Pan1452",
                 "Pan1453": "Pan1454",
@@ -198,6 +205,7 @@ email_panel_dict = {"Pan493": WES_email,
                     "Pan1620": wook_email,
                     "Pan1157": interpretation_request_email,
                     "Pan1190": oncology_email,
+                    "Pan2684": oncology_email,
                     "Pan1449": interpretation_request_email,
                     "Pan1451": interpretation_request_email,
                     "Pan1453": interpretation_request_email,
