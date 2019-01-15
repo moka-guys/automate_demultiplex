@@ -27,10 +27,8 @@ class get_list_of_runs():
     '''Loop through the directories in the directory containing the runfolders'''
 
     def __init__(self):
-        # directory of run folders - must be same as in upload2Nexus()
-        # self.runfolders = "/media/data1/share" # workstation
-        # self.runfolders = "/home/aled/demultiplex_testing" # aledpc
-        # self.runfolders = "/media/data2/data" # workstation dummy
+        # set variables for time and runfolder  folder
+        self.runfolders = config.runfolders
         self.now = ""
 
     def loop_through_runs(self):
@@ -38,21 +36,19 @@ class get_list_of_runs():
         self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
 
         # create a list of all the folders in the runfolders directory
-        if config.debug:  # use test folder
-            all_runfolders = ['999999_NB551068_testWES', '999999_M02353_testOnco']
+        if config.debug:  # use test folder(s)
+            all_runfolders = config.test_folders
         else:
-            # all_runfolders = ['999999_NB551068_testWES','999999_M02353_testOnco']
-            all_runfolders = os.listdir(config.runfolders)
+            all_runfolders = os.listdir(self.runfolders)
 
-        # for each folder if it is not samplesheets pass the runfolder to the next class
+        # for each folder if it is not samplesheets/tar.gz folder pass the runfolder to the next class
         for folder in all_runfolders:
-            if folder != "samplesheets":
-                if folder.endswith('.gz'):
-                    pass
-                else:
-                    # don't create a re-used instance of the class
-                    upload2Nexus().already_uploaded(folder, self.now)
+            # Ignore folders in the list config.ignore_directories and test that it is a directory (ignoring files)
+            if folder not in config.ignore_directories and os.path.isdir(self.runfolders + "/" + folder):
+                # pass folder and timestamp to class
+                upload2Nexus().already_uploaded(folder, self.now)
 
+        # combine all the log files
         self.combine_log_files()
 
     def combine_log_files(self):
@@ -302,7 +298,7 @@ class upload2Nexus():
                                     # split line to get DNA number
                                     self.list_of_DNA_numbers_WES.append(fastq.split("_")[2])
                                 # if oncology panel append onc list:
-                                elif panel == "Pan1190":
+                                elif panel in config.oncology_panels:
                                     # split line to get DNA number
                                     self.list_of_DNA_numbers_Onc.append(fastq.split("_")[2])
                                 # otherwise add to non_WES list
@@ -601,7 +597,7 @@ class upload2Nexus():
                 for panel in config.panelnumbers:
                     # add underscore to Pan number so Pan1000 is not true when looking for Pan100
                     # Find oncology samples and generate a list of fastq to run through amplivar pipeline
-                    if panel + "_" in fastq and panel == "Pan1190":
+                    if panel + "_" in fastq and panel in config.oncology_panels:
                         list_oncology_fastq.append(read1)
                         list_oncology_fastq.append(read2)
 
@@ -632,8 +628,8 @@ class upload2Nexus():
                         # use same panelname to get the email which will be used to upload to IVA
                         ingenuity_email = config.email_panel_dict[panel]
 
-                # MokaAMP command construction for EGFR samples.
-                if "Pan1190_" in fastq:
+                # MokaAMP command construction for mokaamp samples.
+                if "Pan1190_" in fastq or "Pan2684_" in fastq:
                     # create the input command for the fastqc
                     read1_cmd = self.nexusproject + ":" + read1
                     read2_cmd = self.nexusproject + ":" + read2
@@ -746,6 +742,10 @@ class upload2Nexus():
             # Identify the workflows run (for notification email)
             if "Pan1190_" in command:
                 workflows.append(config.mokaonc_path.replace("Workflows/", ""))
+                workflows.append(config.mokaamp_path.replace("Workflows/", ""))
+                # Update Flag to call mokaamp specific apps
+                mokaamp = True
+            elif "Pan2684_" in command:
                 workflows.append(config.mokaamp_path.replace("Workflows/", ""))
                 # Update Flag to call mokaamp specific apps
                 mokaamp = True
@@ -899,7 +899,7 @@ class upload2Nexus():
         '''This function loops through all the panel numbers found in the fastq folders and where relevant submits a RPKM job '''
         # create a copy of the list of unique panels in this run - this will be used to report which panels have been processed in the log file.
         CNV_panels_reported = set(self.panels_in_run)
-        # self.panel_in_run contains all panels found in the run, except for Pan493 and Pan1190 (swift5) - loop through this copy of the list not CNV_panels_reported as this list will have items removed
+        # self.panel_in_run contains all panels found in the run, except for Pan493 and oncology panels - loop through this copy of the list not CNV_panels_reported as this list will have items removed
         for panel in set(self.panels_in_run):
             # ignore focussed exome  as this will never have RPKM (other panels which won't have RPKM have been filtered out previously)
             if panel != "Pan1620":
