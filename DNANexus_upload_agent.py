@@ -27,8 +27,7 @@ class get_list_of_runs():
     '''Loop through the directories in the directory containing the runfolders'''
 
     def __init__(self):
-        # set variables for time and runfolder  folder
-        self.runfolders = config.runfolders
+        # set variables for time
         self.now = ""
 
     def loop_through_runs(self):
@@ -37,14 +36,14 @@ class get_list_of_runs():
 
         # create a list of all the folders in the runfolders directory
         if config.debug:  # use test folder(s)
-            all_runfolders = config.test_folders
+            all_runfolders = config.upload_test_folders
         else:
-            all_runfolders = os.listdir(self.runfolders)
+            all_runfolders = os.listdir(config.runfolders)
 
         # for each folder if it is not samplesheets/tar.gz folder pass the runfolder to the next class
         for folder in all_runfolders:
             # Ignore folders in the list config.ignore_directories and test that it is a directory (ignoring files)
-            if folder not in config.ignore_directories and os.path.isdir(self.runfolders + "/" + folder):
+            if folder not in config.ignore_directories and os.path.isdir(os.path.join(config.runfolders, folder)):
                 # pass folder and timestamp to class
                 upload2Nexus().already_uploaded(folder, self.now)
 
@@ -871,7 +870,7 @@ class upload2Nexus():
         # if there are no sql commands in the list it must be an oncology run
         if len(sql) == 0:
             # email the workflow used so this can be entered manually
-            self.email_subject = "TESTING - MOKAPIPE ALERT : Started pipeline for " + self.runfolder
+            self.email_subject = "MOKAPIPE ALERT : Started pipeline for " + self.runfolder
             self.email_message = self.runfolder + " being processed using workflow " + ",".join(set(workflows)) + "\n\n" + config.mokaamp_email_message
             # send email
             self.send_an_email([config.oncology_you, config.you])

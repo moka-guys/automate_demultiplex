@@ -55,7 +55,10 @@ class get_list_of_runs():
         self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
 
         # List all files and folders in the runfolder directory
-        all_runfolders = os.listdir(self.runfolders)
+        if config.debug:
+            all_runfolders = config.demultiplex_test_folder
+        else:
+            all_runfolders = os.listdir(self.runfolders)
 
         # Create a class instance for checking and running demultiplexing on each runfolder
         demultiplex = ready2start_demultiplexing(self.now)

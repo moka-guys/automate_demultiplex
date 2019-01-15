@@ -28,7 +28,8 @@ file_demultiplexing = "demultiplexlog.txt"
 ignore_directories = ["samplesheets", "GlacierTest"]
 
 # runfolders used for debugging/testing
-test_folders = []
+upload_test_folders = ["999999_NB551068_WES_test","999999_NB551068_custom_panel_test","999999_M02353_ONC_test"]
+demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
 upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
