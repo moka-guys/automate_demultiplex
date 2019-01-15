@@ -581,7 +581,7 @@ class upload2Nexus():
         self.DNA_Nexus_bash_script.write(self.source_command)
 
         # initilise list of oncology fastq
-        list_oncology_fastq = []
+        mokaonc_fastq_list = []
 
         # loop through list of fastq files
         for fastq in self.list_of_samples:
@@ -597,8 +597,10 @@ class upload2Nexus():
                     # add underscore to Pan number so Pan1000 is not true when looking for Pan100
                     # Find oncology samples and generate a list of fastq to run through amplivar pipeline
                     if panel + "_" in fastq and panel in config.oncology_panels:
-                        list_oncology_fastq.append(read1)
-                        list_oncology_fastq.append(read2)
+                        # if it's an mokaonc (amplivar) panel add fastq to list - this stops other oncology panels being processed by this
+                        if panel == "Pan1190":
+                            mokaonc_fastq_list.append(read1)
+                            mokaonc_fastq_list.append(read2)
 
                         # specify input files for stages
                         sambamba_bedfile = config.app_project + config.bedfile_folder + panel + "Sambamba.bed"
@@ -699,9 +701,9 @@ class upload2Nexus():
                     self.dx_run.append(command)
 
         # if oncology samples present, construct Amplivar dx run command inputs
-        if len(list_oncology_fastq) > 1:
+        if len(mokaonc_fastq_list) > 1:
             command = self.mokaonc_command
-            for fastq in list_oncology_fastq:
+            for fastq in mokaonc_fastq_list:
                 read_cmd = config.mokaonc_fq_input + self.nexusproject + ":" + fastq
                 command = command + read_cmd
 
