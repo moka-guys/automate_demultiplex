@@ -11,6 +11,7 @@ It will trigger the upload agent to upload into the required project
 '''
 
 import os
+import re
 import subprocess
 import datetime
 import smtplib
@@ -738,8 +739,9 @@ class upload2Nexus():
         for command in self.dx_run:
             # write command to log file
             self.DNA_Nexus_bash_script.write(command + "\n")
-            # write line to append job id to depends_list
-            self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
+            # If command isn't a MokaAmp negative control, write line to append job id to depends_list
+            if not re.search('MokaAMP.*NTCcon', command):
+                self.DNA_Nexus_bash_script.write(self.depends_list + "\n")
             # Identify the workflows run (for notification email)
             if "Pan1190_" in command:
                 workflows.append(config.mokaonc_path.replace("Workflows/", ""))
