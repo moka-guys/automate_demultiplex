@@ -108,7 +108,7 @@ class upload2Nexus():
         self.fastq_folder_path = ""
 
         # upload_agent_logfile
-        # self.upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Upload_agent_log/"
+        # self.upload_agent_logfile = "/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_log/"
         self.upload_agent_logfile_name = ""
         self.upload_agent_script_logfile = ""
 
@@ -1061,12 +1061,12 @@ class upload2Nexus():
 
     def upload_log_files(self):
         ''' log files include:
-        1. the log file for this script containing all commands used (/home/mokaguys/Documents/automate_demultiplexing_logfiles/Upload_agent_log)
-        2. demultiplexing log file (/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files)
-        3. nexus project creation logs (/home/mokaguys/Documents/automate_demultiplexing_logfiles/Nexus_project_creation_logs)
+        1. the log file for this script containing all commands used (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_log)
+        2. demultiplexing log file (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files)
+        3. nexus project creation logs (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Nexus_project_creation_logs)
         4. runfolder_upload_commands (in the run folder)
         5. runfolder_upload_stdout (in the run folder)
-        6. logfile used to set off the workflow (/home/mokaguys/Documents/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
+        6. logfile used to set off the workflow (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
         7. samplesheet
         '''
         # empty list to hold files (and paths) to be uploaded
