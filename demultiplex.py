@@ -282,7 +282,6 @@ class ready2start_demultiplexing():
             # No samplesheet found. Stop and log message.
             self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
             self.logger("No samplesheet found for run " + self.runfolder, "demultiplex_fail_samplesheet")
-            raise SystemExit(0)
 
     def check_valid_samplesheet(self):
         '''Validate the 'Sample_ID' and 'Sample_Name' table columns within the sample sheet csv
