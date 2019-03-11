@@ -12,7 +12,8 @@ debug = False
 
 # =====location of input/output files=====
 
-# directory of this script
+# root of folder that contains the apps, automate_demultiplexing_logfiles and development_area scripts 
+# (2 levels up from this file)
 document_root = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-2])
 
 # path to run folders
