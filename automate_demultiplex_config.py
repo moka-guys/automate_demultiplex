@@ -13,7 +13,7 @@ debug = False
 # =====location of input/output files=====
 
 # directory of this script
-script_root = os.path.dirname(os.path.realpath(__file__))
+document_root = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-2])
 
 # path to run folders
 runfolders = "/media/data1/share"
@@ -39,7 +39,7 @@ upload_test_folders = ["999999_NB551068_WES_test","999999_NB551068_custom_panel_
 demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
-upload_agent_logfile = "{script_root}/automate_demultiplexing_logfiles/upload_agent_script_logfiles/".format(script_root=script_root)
+upload_agent_logfile = "{document_root}/automate_demultiplexing_logfiles/upload_agent_script_logfiles/".format(document_root=document_root)
 
 # name of log file which records the output of the upload agent
 upload_started_file = "DNANexus_upload_started.txt"
@@ -48,16 +48,16 @@ upload_started_file = "DNANexus_upload_started.txt"
 runfolder_upload_cmds = "add_runfolder_to_nexus_cmds.txt"
 
 # Path to DNA Nexus run command log file
-DNA_Nexus_workflow_logfolder = "{script_root}/automate_demultiplexing_logfiles/dx_run_commands/".format(script_root=script_root)
+DNA_Nexus_workflow_logfolder = "{document_root}/automate_demultiplexing_logfiles/dx_run_commands/".format(document_root=document_root)
 
 # log folder containing project creation logs
-DNA_Nexus_project_creation_logfolder = "{script_root}/automate_demultiplexing_logfiles/nexus_project_creation_scripts/create_nexus_project_".format(script_root=script_root)
+DNA_Nexus_project_creation_logfolder = "{document_root}/automate_demultiplexing_logfiles/nexus_project_creation_scripts/create_nexus_project_".format(document_root=document_root)
 
 # folder containing demultiplex logs
-demultiplex_logfiles = "{script_root}/automate_demultiplexing_logfiles/Demultiplexing_log_files/".format(script_root=script_root)
+demultiplex_logfiles = "{document_root}/automate_demultiplexing_logfiles/Demultiplexing_log_files/".format(document_root=document_root)
 
 # path to upload agent
-upload_agent = "{script_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua".format(script_root=script_root)
+upload_agent = "{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua".format(document_root=document_root)
 
 # command to test dx toolkit
 dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
