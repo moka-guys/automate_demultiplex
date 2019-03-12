@@ -177,7 +177,7 @@ WES_email = "gst-tr.wesviapath@nhs.net"  # WES email
 mokaguys_email = 'gst-tr.mokaguys@nhs.net'
 
 # DNA Nexus authentication token
-nexus_api_key_file = "/home/mokaguys/.dnanexus_auth_token"
+nexus_api_key_file = "{document_root}/.dnanexus_auth_token".format(document_root=document_root)
 with open(nexus_api_key_file, 'r') as nexus_api:
     Nexus_API_Key = nexus_api.readline().rstrip()
 
@@ -229,7 +229,7 @@ email_panel_dict = {"Pan493": WES_email,
 smartsheet_sheetid = 2798264106936196
 
 # API key
-smartsheet_api_key_file = "/home/mokaguys/.smartsheet_auth_token"
+smartsheet_api_key_file = "{document_root}/.smartsheet_auth_token".format(document_root=document_root)
 with open(smartsheet_api_key_file, 'r') as ss_api:
     smartsheet_api_key = ss_api.readline().rstrip()
 
@@ -252,7 +252,7 @@ smartsheet_request_url = 'https://api.smartsheet.com/2.0/sheets/' + str(smartshe
 
 # =================== Email server settings
 user = 'AKIAIO3XY2MMSBEQNNXQ'
-pw_file = '/home/mokaguys/.amazon_email_pw'
+pw_file = '{document_root}/.amazon_email_pw'.format(document_root=document_root)
 with open(pw_file, 'r') as email_password_file:
     pw = email_password_file.readline().rstrip()
 host = 'email-smtp.eu-west-1.amazonaws.com'
