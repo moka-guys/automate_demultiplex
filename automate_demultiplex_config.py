@@ -4,10 +4,18 @@ Automate demultiplex configuration.
 The variables defined in this module are required by the "demultiplex.py" and
 "DNANexus_upload_agent.py" scripts.
 """
+
+import os
+
 # Set debug mode
 debug = False
 
 # =====location of input/output files=====
+
+# root of folder that contains the apps, automate_demultiplexing_logfiles and development_area scripts 
+# (2 levels up from this file)
+document_root = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-2])
+
 # path to run folders
 runfolders = "/media/data1/share"
 
@@ -32,7 +40,7 @@ upload_test_folders = ["999999_NB551068_WES_test","999999_NB551068_custom_panel_
 demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
-upload_agent_logfile = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
+upload_agent_logfile = "{document_root}/automate_demultiplexing_logfiles/upload_agent_script_logfiles/".format(document_root=document_root)
 
 # name of log file which records the output of the upload agent
 upload_started_file = "DNANexus_upload_started.txt"
@@ -41,16 +49,16 @@ upload_started_file = "DNANexus_upload_started.txt"
 runfolder_upload_cmds = "add_runfolder_to_nexus_cmds.txt"
 
 # Path to DNA Nexus run command log file
-DNA_Nexus_workflow_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/dx_run_commands/"
+DNA_Nexus_workflow_logfolder = "{document_root}/automate_demultiplexing_logfiles/dx_run_commands/".format(document_root=document_root)
 
 # log folder containing project creation logs
-DNA_Nexus_project_creation_logfolder = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/nexus_project_creation_scripts/create_nexus_project_"
+DNA_Nexus_project_creation_logfolder = "{document_root}/automate_demultiplexing_logfiles/nexus_project_creation_scripts/create_nexus_project_".format(document_root=document_root)
 
 # folder containing demultiplex logs
-demultiplex_logfiles = "/home/mokaguys/Documents/automate_demultiplexing_logfiles/Demultiplexing_log_files/"
+demultiplex_logfiles = "{document_root}/automate_demultiplexing_logfiles/Demultiplexing_log_files/".format(document_root=document_root)
 
 # path to upload agent
-upload_agent = "/home/mokaguys/Documents/apps/dnanexus-upload-agent-1.5.17-linux/ua"
+upload_agent = "{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua".format(document_root=document_root)
 
 # command to test dx toolkit
 dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
@@ -170,7 +178,7 @@ WES_email = "gst-tr.wesviapath@nhs.net"  # WES email
 mokaguys_email = 'gst-tr.mokaguys@nhs.net'
 
 # DNA Nexus authentication token
-nexus_api_key_file = "/home/mokaguys/.dnanexus_auth_token"
+nexus_api_key_file = "{document_root}/.dnanexus_auth_token".format(document_root=document_root)
 with open(nexus_api_key_file, 'r') as nexus_api:
     Nexus_API_Key = nexus_api.readline().rstrip()
 
@@ -222,7 +230,7 @@ email_panel_dict = {"Pan493": WES_email,
 smartsheet_sheetid = 2798264106936196
 
 # API key
-smartsheet_api_key_file = "/home/mokaguys/.smartsheet_auth_token"
+smartsheet_api_key_file = "{document_root}/.smartsheet_auth_token".format(document_root=document_root)
 with open(smartsheet_api_key_file, 'r') as ss_api:
     smartsheet_api_key = ss_api.readline().rstrip()
 
@@ -245,7 +253,7 @@ smartsheet_request_url = 'https://api.smartsheet.com/2.0/sheets/' + str(smartshe
 
 # =================== Email server settings
 user = 'AKIAIO3XY2MMSBEQNNXQ'
-pw_file = '/home/mokaguys/.amazon_email_pw'
+pw_file = '{document_root}/.amazon_email_pw'.format(document_root=document_root)
 with open(pw_file, 'r') as email_password_file:
     pw = email_password_file.readline().rstrip()
 host = 'email-smtp.eu-west-1.amazonaws.com'
