@@ -70,7 +70,7 @@ dx_sdk_test_expected_result = "dx v0.2"
 # Current Mokapipe ID
 mokapipe_pipeline_ID = "2209"
 # Current MokaWES ID
-mokawes_pipeline_ID = "2774"
+mokawes_pipeline_ID = "3053"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -90,7 +90,7 @@ app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
 mokapipe_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
-wes_path = "Workflows/MokaWES_v1.4"
+wes_path = "Workflows/MokaWES_v1.5"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
