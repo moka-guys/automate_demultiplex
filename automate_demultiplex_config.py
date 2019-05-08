@@ -283,7 +283,8 @@ exclude = ["RTAStart.bat", "CorrectedIntMetrics.bin", "EmpiricalPhasingMetrics.b
 
 # ================ demultiplexing
 logfile_success = "Processing completed with 0 errors and 0 warnings."
-
+# list of sequencers which require md5 checksums from integrity check to be assessed
+sequencers_with_integrity_check = ["NB551068"]
 # =================turnaround time
 # if a task takes more than this amount of time it is out of TAT
 allowed_time_for_tasks = 4
