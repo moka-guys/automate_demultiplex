@@ -94,7 +94,7 @@ wes_path = "Workflows/MokaWES_v1.5"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.0"
+mokaamp_path = "Workflows/MokaAMP_v1.1"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.3"
 # path to multiqc app
@@ -133,17 +133,17 @@ mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
 mokaonc_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="  # ingenuity app input for amplivar workflow
 
 # MokaAMP
-mokaamp_fastq_R1 = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz="
-mokaamp_fastq_R2 = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
-mokaamp_mokapicard_input = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
-mokaamp_capturetype = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
-mokaamp_bed_PE = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
-mokaamp_cov_level = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
-mokaamp_sambamba_bed = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
-mokaamp_vardict_bed = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
-mokaamp_varscan_bed = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
-mokaamp_varscan_strandfilter = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
-mokaamp_lofreq_bed = " -istage-FPzGjgQ0jy1fBy972zq9f1PY.bedfile="
+mokaamp_fastq_R1_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz="
+mokaamp_fastq_R2_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
+mokaamp_mokapicard_bed_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
+mokaamp_mokapicard_capturetype_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
+mokaamp_bamclipper_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
+mokaamp_chanjo_cov_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
+mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
+mokaamp_vardict_bed_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
+mokaamp_varscan_bed_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
+mokaamp_varscan_strandfilter_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
+mokaamp_lofreq_bed_stage = " -istage-FPzGjgQ0jy1fBy972zq9f1PY.bedfile="
 
 mokaamp_strandfilter = "True"
 mokaamp_coverage_level = "1000"
@@ -270,13 +270,11 @@ md5checksum_name = "md5checksum.txt"
 checksum_complete_flag = "Checksum result reported"
 # statement to write when checksums match
 checksum_match = "Checksums match"
-# files to exclude from integrity check
-exclude = ["RTAStart.bat", "CorrectedIntMetrics.bin", "EmpiricalPhasingMetrics.bin", "ErrorMetrics.bin", "EventMetrics.bin", "ExtractionMetrics.bin", "PFGridMetrics.bin", "QMetrics.bin", "RegistrationMetrics.bin", "TileMetrics.bin", "000_000_000_na_rtabat.trans", "FilesAdded.csv", "FilesCopied.csv", "md5checksum.txt", missing_files_output]
 
 # ================ demultiplexing
 logfile_success = "Processing completed with 0 errors and 0 warnings."
 # list of sequencers which require md5 checksums from integrity check to be assessed
-sequencers_with_integrity_check = ["NB551068","NB552085"]
+sequencers_with_integrity_check = ["NB551068", "NB552085"]
 # =================turnaround time
 # if a task takes more than this amount of time it is out of TAT
 allowed_time_for_tasks = 4
