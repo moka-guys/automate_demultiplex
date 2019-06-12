@@ -640,17 +640,17 @@ class upload2Nexus():
                     dest_cmd = self.nexusproject + ":/"
 
                     # create the MokaAMP dx command
-                    command = self.mokaamp_command + config.mokaamp_fastq_R1 + read1_cmd + \
-                        config.mokaamp_fastq_R2 + read2_cmd + \
-                        config.mokaamp_mokapicard_input + picard_bedfile + \
-                        config.mokaamp_capturetype + config.mokaamp_capture_type + \
-                        config.mokaamp_bed_PE + mokaamp_bed_PE_input + \
-                        config.mokaamp_cov_level + config.mokaamp_coverage_level + \
-                        config.mokaamp_sambamba_bed + sambamba_bedfile + \
-                        config.mokaamp_vardict_bed + variant_calling_bed + \
-                        config.mokaamp_varscan_bed + variant_calling_bed + \
-                        config.mokaamp_lofreq_bed + variant_calling_bed + \
-                        config.mokaamp_varscan_strandfilter + config.mokaamp_strandfilter + \
+                    command = self.mokaamp_command + config.mokaamp_fastq_R1_stage + read1_cmd + \
+                        config.mokaamp_fastq_R2_stage + read2_cmd + \
+                        config.mokaamp_mokapicard_bed_stage + picard_bedfile + \
+                        config.mokaamp_mokapicard_capturetype_stage + config.mokaamp_capture_type + \
+                        config.mokaamp_bamclipper_BEDPE_stage + mokaamp_bed_PE_input + \
+                        config.mokaamp_chanjo_cov_level_stage + config.mokaamp_coverage_level + \
+                        config.mokaamp_sambamba_bed_stage + sambamba_bedfile + \
+                        config.mokaamp_vardict_bed_stage + variant_calling_bed + \
+                        config.mokaamp_varscan_bed_stage + variant_calling_bed + \
+                        config.mokaamp_lofreq_bed_stage + variant_calling_bed + \
+                        config.mokaamp_varscan_strandfilter_stage + config.mokaamp_strandfilter + \
                         self.dest + dest_cmd + self.token
 
                     # remove the bit that adds the job to the depends on list for the negative control as varscan fails on nearempty/-empty BAM files and this will stop multiqc etc running
