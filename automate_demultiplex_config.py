@@ -17,7 +17,7 @@ debug = False
 document_root = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-2])
 
 # path to run folders
-runfolders = "/media/data1/share"
+runfolders = "/media/data3/share"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
