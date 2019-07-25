@@ -274,9 +274,10 @@ class upload2Nexus():
         # find all fastqs
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
-                # exclude undertermined samples
+                # Only upload undertermined samples - do not test for panel numbers
                 if fastq.startswith('Undetermined'):
-                    pass
+                    # build the list of fastqs with full file paths
+                    self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
                 else:
                     # set up a flag to record fastq files which will not be processed
                     recognised_panel = False
