@@ -94,7 +94,7 @@ wes_path = "Workflows/MokaWES_v1.5"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.1"
+mokaamp_path = "Workflows/MokaAMP_v1.2"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.3"
 # path to multiqc app
