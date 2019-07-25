@@ -33,7 +33,7 @@ class get_list_of_runs():
 
     def loop_through_runs(self):
         # set a time stamp to name the log file
-        self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
+        self.now = str('{:%Y%m%d_%H%M%S}'.format(datetime.datetime.now()))
 
         # create a list of all the folders in the runfolders directory
         if config.debug:  # use test folder(s)
