@@ -593,7 +593,10 @@ class upload2Nexus():
                 read1 = os.path.join(self.nexus_path, fastq)
                 # assign read2 by replacing R1 with R2
                 read2 = os.path.join(self.nexus_path, fastq.replace("_R1_", "_R2_"))
-
+                
+                # analysis name allows easy navigation of nexus monitor page
+                analysis_name = fastq.split("_R1_")[0]
+                
                 # get panel name and bed file
                 for panel in config.panelnumbers:
                     # add underscore to Pan number so Pan1000 is not true when looking for Pan100
@@ -638,10 +641,7 @@ class upload2Nexus():
                     read2_cmd = self.nexusproject + ":" + read2
 
                     # set the destination command as the root of the project
-                    dest_cmd = self.nexusproject + ":/"
-                    
-                    # analysis name allows easy navigation of nexus monitor page
-                    analysis_name = fastq.split("_R1_")[0]
+                    dest_cmd = self.nexusproject + ":/"    
                     
                     # create the MokaAMP dx command
                     command = self.mokaamp_command + analysis_name + config.mokaamp_fastq_R1_stage + read1_cmd + \
@@ -675,9 +675,6 @@ class upload2Nexus():
 
                     # if a sample name is not provided sention cleans the fastq file name to create one. However this includes removing all "_1", which is not ideal - theerfore specify one, using everything before "_R1" from read1 fastq filename
                     sention_sample_name = fastq.split("_R1_")[0]
-
-                    # analysis name allows easy navigation of nexus monitor page
-                    analysis_name = fastq.split("_R1_")[0]
                     
                     # create the MokaWES dx command
                     command = self.wes_command + analysis_name + config.wes_fastqc1 + read1_cmd + config.wes_fastqc2 + read2_cmd + \
@@ -696,9 +693,6 @@ class upload2Nexus():
 
                     # set the destination command as the root of the project
                     dest_cmd = self.nexusproject + ":/"
-
-                    # analysis name allows easy navigation of nexus monitor page
-                    analysis_name = fastq.split("_R1_")[0]
                     
                     # create the dx command
                     command = self.base_command + analysis_name + config.mokapipe_fastqc1 + read1_cmd \
