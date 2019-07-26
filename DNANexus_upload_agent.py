@@ -642,7 +642,7 @@ class upload2Nexus():
 
                     # set the destination command as the root of the project
                     dest_cmd = self.nexusproject + ":/"    
-                    
+
                     # create the MokaAMP dx command
                     command = self.mokaamp_command + analysis_name + config.mokaamp_fastq_R1_stage + read1_cmd + \
                         config.mokaamp_fastq_R2_stage + read2_cmd + \
@@ -675,7 +675,7 @@ class upload2Nexus():
 
                     # if a sample name is not provided sention cleans the fastq file name to create one. However this includes removing all "_1", which is not ideal - theerfore specify one, using everything before "_R1" from read1 fastq filename
                     sention_sample_name = fastq.split("_R1_")[0]
-                    
+
                     # create the MokaWES dx command
                     command = self.wes_command + analysis_name + config.wes_fastqc1 + read1_cmd + config.wes_fastqc2 + read2_cmd + \
                         config.wes_sention_samplename + sention_sample_name + \
@@ -693,7 +693,7 @@ class upload2Nexus():
 
                     # set the destination command as the root of the project
                     dest_cmd = self.nexusproject + ":/"
-                    
+
                     # create the dx command
                     command = self.base_command + analysis_name + config.mokapipe_fastqc1 + read1_cmd \
                         + config.mokapipe_fastqc2 + read2_cmd \
