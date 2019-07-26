@@ -593,10 +593,10 @@ class upload2Nexus():
                 read1 = os.path.join(self.nexus_path, fastq)
                 # assign read2 by replacing R1 with R2
                 read2 = os.path.join(self.nexus_path, fastq.replace("_R1_", "_R2_"))
-                
+
                 # analysis name allows easy navigation of nexus monitor page
                 analysis_name = fastq.split("_R1_")[0]
-                
+
                 # get panel name and bed file
                 for panel in config.panelnumbers:
                     # add underscore to Pan number so Pan1000 is not true when looking for Pan100
