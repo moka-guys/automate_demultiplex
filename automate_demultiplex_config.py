@@ -98,7 +98,7 @@ mokaamp_path = "Workflows/MokaAMP_v1.2"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.3"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.10"
+multiqc_path = "Apps/multiqc_v1.11"
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
