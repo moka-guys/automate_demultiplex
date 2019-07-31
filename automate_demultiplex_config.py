@@ -68,7 +68,7 @@ dx_sdk_test_expected_result = "dx v0.2"
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # Current Mokapipe ID
-mokapipe_pipeline_ID = "2209"
+mokapipe_pipeline_ID = "3229"
 # Current MokaWES ID
 mokawes_pipeline_ID = "3053"
 
@@ -88,17 +88,17 @@ project_success = "Created new project called \"%s\""
 # The project containing the app and data
 app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
-mokapipe_path = "Workflows/GATK3.5_v2.9"
+mokapipe_path = "Workflows/GATK3.5_v2.10"
 # path to the WES workflow in the app project
 wes_path = "Workflows/MokaWES_v1.5"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.1"
+mokaamp_path = "Workflows/MokaAMP_v1.2"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.3"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.10"
+multiqc_path = "Apps/multiqc_v1.11"
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
