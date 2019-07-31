@@ -33,7 +33,7 @@ class get_list_of_runs():
 
     def loop_through_runs(self):
         # set a time stamp to name the log file
-        self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
+        self.now = str('{:%Y%m%d_%H%M%S}'.format(datetime.datetime.now()))
 
         # create a list of all the folders in the runfolders directory
         if config.debug:  # use test folder(s)
@@ -141,15 +141,15 @@ class upload2Nexus():
 
         self.createprojectcommand = "project_id=\"$(dx new project --bill-to %s \"%s\" --brief --auth-token " + config.Nexus_API_Key + ")\"\n"
         self.addprojecttag = "dx tag $project_id "
-        self.base_command = "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y"
-        self.wes_command = "jobid=$(dx run " + config.app_project + config.wes_path + " -y"
+        self.base_command = "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
+        self.wes_command = "jobid=$(dx run " + config.app_project + config.wes_path + " -y --name "
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = "dx run " + config.app_project + config.upload_multiqc_path + " -y"
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path
         self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y"
-        self.mokaamp_command = "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y"
+        self.mokaamp_command = "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
 
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
@@ -274,9 +274,10 @@ class upload2Nexus():
         # find all fastqs
         for fastq in all_fastqs:
             if fastq.endswith('fastq.gz'):
-                # exclude undertermined samples
+                # Only upload undertermined samples - do not test for panel numbers
                 if fastq.startswith('Undetermined'):
-                    pass
+                    # build the list of fastqs with full file paths
+                    self.fastq_string = self.fastq_string + " " + self.fastq_folder_path + "/" + fastq
                 else:
                     # set up a flag to record fastq files which will not be processed
                     recognised_panel = False
@@ -593,6 +594,9 @@ class upload2Nexus():
                 # assign read2 by replacing R1 with R2
                 read2 = os.path.join(self.nexus_path, fastq.replace("_R1_", "_R2_"))
 
+                # analysis name allows easy navigation of nexus monitor page
+                analysis_name = fastq.split("_R1_")[0]
+
                 # get panel name and bed file
                 for panel in config.panelnumbers:
                     # add underscore to Pan number so Pan1000 is not true when looking for Pan100
@@ -637,10 +641,10 @@ class upload2Nexus():
                     read2_cmd = self.nexusproject + ":" + read2
 
                     # set the destination command as the root of the project
-                    dest_cmd = self.nexusproject + ":/"
+                    dest_cmd = self.nexusproject + ":/"    
 
                     # create the MokaAMP dx command
-                    command = self.mokaamp_command + config.mokaamp_fastq_R1_stage + read1_cmd + \
+                    command = self.mokaamp_command + analysis_name + config.mokaamp_fastq_R1_stage + read1_cmd + \
                         config.mokaamp_fastq_R2_stage + read2_cmd + \
                         config.mokaamp_mokapicard_bed_stage + picard_bedfile + \
                         config.mokaamp_mokapicard_capturetype_stage + config.mokaamp_capture_type + \
@@ -673,7 +677,7 @@ class upload2Nexus():
                     sention_sample_name = fastq.split("_R1_")[0]
 
                     # create the MokaWES dx command
-                    command = self.wes_command + config.wes_fastqc1 + read1_cmd + config.wes_fastqc2 + read2_cmd + \
+                    command = self.wes_command + analysis_name + config.wes_fastqc1 + read1_cmd + config.wes_fastqc2 + read2_cmd + \
                         config.wes_sention_samplename + sention_sample_name + \
                         config.wes_iva_email_input + ingenuity_email + \
                         self.dest + dest_cmd + self.token
@@ -691,7 +695,7 @@ class upload2Nexus():
                     dest_cmd = self.nexusproject + ":/"
 
                     # create the dx command
-                    command = self.base_command + config.mokapipe_fastqc1 + read1_cmd \
+                    command = self.base_command + analysis_name + config.mokapipe_fastqc1 + read1_cmd \
                         + config.mokapipe_fastqc2 + read2_cmd \
                         + config.mokapipe_sambamba_input + sambamba_bedfile \
                         + config.mokapipe_mokapicard_vendorbed_input + moka_vendor_bedfile \

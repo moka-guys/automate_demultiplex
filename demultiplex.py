@@ -52,7 +52,7 @@ class get_list_of_runs():
         After demultiplexing is performed (or skipped) for all runfolders, close script log file.
         """
         # Set a time stamp to append to the logfile name
-        self.now = str('{:%Y%m%d_%H}'.format(datetime.datetime.now()))
+        self.now = str('{:%Y%m%d_%H%M%S}'.format(datetime.datetime.now()))
 
         # List all files and folders in the runfolder directory
         if config.debug:
