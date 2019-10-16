@@ -242,14 +242,13 @@ class process_runfolder():
 
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds())
                 self.run_dx_run_commands()
-                self.smartsheet_in_progress()
+                self.smartsheet_workflows_commands_sent()
                 self.write_opms_queries_mokawes()
                 self.write_opms_queries_oncology()
                 self.write_opms_queries_mokapipe()
                 self.send_opms_queries()
                 self.look_for_upload_errors(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
-
 
     def setup_variables(self, runfolder, now):
         """
@@ -274,8 +273,6 @@ class process_runfolder():
         # bash script for dx run commands
         self.bash_script = config.DNA_Nexus_workflow_logfolder + self.runfolder + ".sh"
 
-
-
     def set_panel_dictionary(self):
         """ 
         Populate the dictionary detailing panel specific settings.
@@ -288,7 +285,6 @@ class process_runfolder():
             self.panel_dictionary[panel] = config.default_panel_properties
             for setting in config.panel_settings[panel]:
                 self.panel_dictionary[panel][setting] = config.panel_settings[panel][setting]
-    
     
     def test_upload_agent(self):
         """
@@ -359,7 +355,6 @@ class process_runfolder():
             self.upload_agent_script_logfile.write("NO - self.upload_started_file not present so continue\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
             return False
             
-
     def demultiplex_completed_successfully(self):
         """
         Check if the demultiplexing finished successfully by reading the last line of the demultiplex log
@@ -384,8 +379,6 @@ class process_runfolder():
             self.upload_agent_script_logfile.write("demultiplexing has not been performed.\n----------------------STOP----------------------\n")
             return False
     
-    
-
     def find_fastqs(self):
         """
         Loops through all the fastq files in the expected location within the runfolder
@@ -428,7 +421,6 @@ class process_runfolder():
             self.upload_agent_script_logfile.write(str(len(self.list_of_processed_samples)) + " fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
             return True
 
-
     def capture_any_WES_batch_numbers(self):
         """
         DNANexus project names are the runfolder suffixed with identifiers to help future dearchival easier.
@@ -449,7 +441,6 @@ class process_runfolder():
                 wes_numbers.append(wesbatch)
 
         self.wes_number = "_".join(set(wesnumbers))
-        
         
     def capture_library_batch_numbers(self):
         """
@@ -588,7 +579,6 @@ class process_runfolder():
         upload_started.write("\n----------------------Uploading fastqs " + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n" + out)
         upload_started.close()
     
-
     def look_for_upload_errors_fastq(self):
         """
         Parse the file containing standard error/standard out from the upload agent.
@@ -611,7 +601,6 @@ class process_runfolder():
             else:
                 # write to log file check was ok
                 self.logger("upload of fastq files complete for run " + self.runfolder, "UA_pass")
-
 
     def nexus_fastq_paths(self, read1):
         """
@@ -1179,6 +1168,9 @@ class process_runfolder():
         
     def upload_log_files(self):
         pass
+    def look_for_upload_errors(self):
+        # assess backup runfolder output
+        #and assess upload agent when uploading log files
 
 
     #     # create empty list for the sql queries
