@@ -60,6 +60,12 @@ demultiplex_logfiles = "{document_root}/automate_demultiplexing_logfiles/Demulti
 # path to upload agent
 upload_agent = "{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua".format(document_root=document_root)
 
+# path to backup_runfolder script
+backup_runfolder_script = "/usr/local/src/mokaguys/apps/workstation_housekeeping/backup_runfolder.py"
+
+# backup runfolder folder
+backup_runfolder_logfile = "/usr/local/src/mokaguys/automate_demultiplexing_logfiles/backup_runfolder_logfiles"
+
 # command to test dx toolkit
 dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
 # expected result from testing
@@ -90,7 +96,7 @@ app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
 mokapipe_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
-wes_path = "Workflows/MokaWES_v1.5"
+mokawes_path = "Workflows/MokaWES_v1.5"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
@@ -99,6 +105,10 @@ mokaamp_path = "Workflows/MokaAMP_v1.1"
 peddy_path = "Apps/peddy_v1.3"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.10"
+# path to senteion upload app
+sentieon_app_path = "Apps/senteion_upload_v1.0"
+# path to iva upload app
+iva_app_path = "app-ingenuity_variant_transfer/1.0.6"
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
@@ -123,10 +133,10 @@ mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_
 mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
 
 # MokaWES workflow_inputs
-wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
-wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-wes_sention_samplename = " -istage-FQ8JPpj076Gybkq459GfqfZb.sample="  # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
-wes_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
+wes_fastqc1 = " -istage-Ff0P5Jj0GYKY717pKX3vX8Z3.reads="  # FastQC Read 1
+wes_fastqc2 = " -istage-Ff0P5V00GYKyJfpX5bqX69Yg.reads="  # FastQC Read 2
+wes_sention_samplename = " -istage-<>.sample="  # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
+wes_picard_bedfile = " -istage-Ff0P5pQ0GYKVBB0g1FG27BV8.vendor_exome_bedfile=" # bedfile for hs metrics
 
 # MokaOnc amplivar fastq input
 mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
@@ -166,15 +176,16 @@ mokaamp_multiqc_coverage_level = "100"  # HSMetrics coverage level to be reporte
 smartsheet_mokapipe_complete = " -iNGS_run="
 
 # RPKM inputs
-RPKM_bedfile = " -ibedfile="
-RPKM_project = " -iproject_name="
-RPKM_bedfile_to_download = " -ibamfile_name="
+rpkm_bedfile_input = " -ibedfile="
+rpkm_project_input = " -iproject_name="
+rpkm_bamfiles_to_download_input = " -ibamfile_name="
 
 # emails addresses for Ingenuity
+iva_email_input_name = " -iemail="
 oncology_email = 'gst-tr.oncology.interpret@nhs.net'  # general oncology email
 interpretation_request_email = "gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
 wook_email = "joowook.ahn@nhs.net"  # wook email
-WES_email = "gst-tr.wesviapath@nhs.net"  # WES email
+wes_email_address = "gst-tr.wesviapath@nhs.net"  # WES email
 mokaguys_email = 'gst-tr.mokaguys@nhs.net'
 
 # DNA Nexus authentication token
@@ -190,12 +201,78 @@ admin_users = ["mokaguys"]
 #list of oncology panels
 oncology_panels = ["Pan1190","Pan2684"]
 
+
+# =====Sapientia
+# list of St George's analyses, with the corresponding sapientia project-id as value
+decision_support_tool_input_script = "decision_support_tool_inputs.py"
+sapientia_uploads = {"Pan3237":130}
+mokawes_senteion_bam_output_name = "mappings_bam"
+mokawes_senteion_bai_output_name = "mappings_bam_bai"
+mokawes_senteion_vcf_output_name = "variants_vcf"
+sapientia_vcf_inputname = " -ivcfs="
+sapientia_bam_inputname = " -ibams="
+iva_vcf_inputname = " -ivcf="
+iva_bam_inputname = " -ibam_files="
+iva_bai_inputname = " -ibai_files="
+mokawes_senteion_stage_id= "stage-Ff0P73j0GYKX41VkF3j62F9j"
+
+
 # =====Dict linking panel numbers for +/-10 and CNVs=====
-panelnumbers = {"Pan493": None,
-                "Pan1620": None,
-                "Pan1190": None,
-                "Pan2684": None,
-                "Pan1449": "Pan1450",
+panel_list=["Pan493","Pan1009", "Pan1063","Pan1620", "Pan1157","Pan1190","Pan2684","Pan1449","Pan1451","Pan1453","Pan1459","Pan2022","Pan1965","Pan1158","Pan1159","Pan1646"]
+default_panel_properties = {
+                    "UMI":False,
+                    "UMI_bcl2fastq":None, # eg Y145,I8,Y9I8,Y145
+                    "RPKM_bedfile_pan_number":None,
+                    "RPKM_also_analyse":None, # This is a list containing additional pan numbers that decribe which BAM files should be downloaded
+                    "onePGT":False,
+                    "mokawes":False,
+                    "joint_variant_calling":False,
+                    "mokaamp":False,
+                    "capture_type":"Hybridisation", # "Amplicon" or "Hybridisation"
+                    "mokaonc":False,
+                    "mokapipe":False,
+                    "mokaamp_varscan_strandfilter":True,
+                    "iva_upload": False,
+                    "sapientia_upload": False,
+                    "oncology":False, 
+                    "clinical_coverage_depth":None,
+                    "multiqc_coverage_level":None,
+                    "hsmetrics_bedfile":None, # only when using bed file with a different pannumber 
+                    "sambamba_bedfile":None, # only when using bed file with a different pannumber 
+                    "ingenuity_email":None,
+                    "sapientia_project":None,
+                    "peddy":False
+                    }
+
+# override default panel settings
+panel_settings = {"Pan493": {
+                    "mokawes":True,
+                    "iva_upload": True,
+                    "clinical_coverage_depth":20,
+                    "multiqc_coverage_level":20,
+                    "hsmetrics_bedfile":None, # only when using bed file with a different pannumber 
+                    "sambamba_bedfile":None, # only when using bed file with a different pannumber 
+                    "ingenuity_email":wes_email_address,
+                    "peddy":True
+                    },
+                "Pan1620": {
+                    "pipeline":[mokawes_path],
+                    "ingenuity_email":wes_email_address
+                    },
+                "Pan1190": {
+                    "RPKM_pan":None,
+                    "pipeline":[mokaamp_path],
+                    "capture_type":"Amplicon",
+                    "ingenuity_email":oncology_email},
+                "Pan2684": {
+                    "RPKM_pan":None,
+                    "pipeline":[mokawes_path],
+                    "capture_type":"Amplicon",
+                    "ingenuity_email":wes_email_address},
+                "Pan1449": {
+                    "RPKM_pan":"Pan1450",
+                    "RPKM_also_analyse":["Pan1234"]
+                    },
                 "Pan1451": "Pan1452",
                 "Pan1453": "Pan1454",
                 "Pan1063": "Pan1064",
@@ -205,10 +282,11 @@ panelnumbers = {"Pan493": None,
                 "Pan1965": "Pan2000",
                 "Pan1158": "Pan2023",
                 "Pan1159": None,
-                "Pan1646": "Pan1651"}
+                "Pan1646": "Pan1651",
+                "Pan3237": None}
 
 # =====Dict linking panel and Ingenuity account for sample to be shared with =====
-email_panel_dict = {"Pan493": WES_email,
+email_panel_dict = {"Pan493": wes_email_address,
                     "Pan1009": interpretation_request_email,
                     "Pan1063": interpretation_request_email,
                     "Pan1620": wook_email,
