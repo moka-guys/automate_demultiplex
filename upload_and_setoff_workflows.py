@@ -142,8 +142,8 @@ QA
         self.list_of_DNA_numbers_nonWES = []
 
         # strings for NGSrun and wes numbers
-        self.library_batch = ''  # first element of fastq file name.
-        self.wes_number = ''  # WES number near the end of fastq file name.
+        #self.library_batch = ''  # first element of fastq file name.
+        #self.wes_number = ''  # WES number near the end of fastq file name.
 
         # variables to rename log file.
         self.rename = ""
@@ -159,15 +159,15 @@ QA
 
         self.createprojectcommand = "project_id=\"$(dx new project --bill-to %s \"%s\" --brief --auth-token " + config.Nexus_API_Key + ")\"\n"
         self.addprojecttag = "dx tag $project_id "
-        self.base_command = "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y"
-        self.wes_command = "jobid=$(dx run " + config.app_project + config.mokawes_path + " -y"
+        self.base_command = "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
+        self.wes_command = "jobid=$(dx run " + config.app_project + config.mokawes_path + " -y --name "
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = "dx run " + config.app_project + config.upload_multiqc_path + " -y"
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path
         self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y"
-        self.mokaamp_command = "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y"
+        self.mokaamp_command = "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name"
         self.decision_support_preperation = "analysisid=$(python %s -a " % (os.path.join(os.path.dirname(os.path.realpath(__file__)),config.decision_support_tool_input_script))
         self.sapientia_upload_command = "jobid=$(dx run " + config.app_project + config.sentieon_app_path + " -y"
         self.iva_upload_command = "jobid=$(dx run " + config.app_project + config.iva_app_path + " -y"
@@ -241,14 +241,12 @@ QA
         
         # check if already uploaded and demultiplkexing finished sucessfully
         if not self.already_uploaded() and self.demultiplex_completed_successfully():
-
-            if self.find_fastqs():
-                # build the file path with WES batch and NGS run numbers
-                self.capture_any_WES_batch_numbers()
-                self.capture_library_batch_numbers()
-                self.build_nexus_project_name()
+            self.list_of_processed_samples, self.fastq_string = self.find_fastqs(self.runfolder_obj.fastq_folder_path):
+            if self.list_of_processed_samples:
+                # build the project name using the WES batch and NGS run numbers
+                self.dest_cmd, self.runfolder_obj.nexus_path, self.runfolder_obj.nexus_project_name = self.build_nexus_project_name(self.capture_any_WES_batch_numbers(),self.capture_library_batch_numbers())
                 # create nexus project
-                self.create_project()
+                self.projectid = self.create_project()
                 # send list to module to trigger upload
                 self.upload_fastqs()
                 # check fastqs uploaded successfully
@@ -257,9 +255,9 @@ QA
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds())
                 self.run_dx_run_commands()
                 self.smartsheet_workflows_commands_sent()
-                self.write_opms_queries_mokawes()
-                self.write_opms_queries_oncology()
-                self.write_opms_queries_mokapipe()
+                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes()
+                self.sql_queries["oncology"] = self.write_opms_queries_oncology()
+                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe()
                 self.send_opms_queries()
                 self.look_for_upload_errors(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
@@ -297,7 +295,7 @@ QA
         """
         # for each panel 
         for panel in config.panel_list:           
-            # 
+            # set defaults and then loop through panel settings from config, overwriting any defaults
             self.panel_dictionary[panel] = config.default_panel_properties
             for setting in config.panel_settings[panel]:
                 self.panel_dictionary[panel][setting] = config.panel_settings[panel][setting]
@@ -395,9 +393,9 @@ QA
             self.upload_agent_script_logfile.write("demultiplexing has not been performed.\n----------------------STOP----------------------\n")
             return False
     
-    def find_fastqs(self):
+    def find_fastqs(self, runfolder_fastq_path):
         """
-        Loops through all the fastq files in the expected location within the runfolder
+        Loops through all the fastq files in the given folder
         Identifies the pan number and checks for presense in the dictionary of panel settings.
         If there are any files where the pan number was not found sent an alert.
         If samples which do require processing are found variables are updated with a list of samples to be processed and a string of fastq names and the function returns True.
@@ -405,18 +403,19 @@ QA
 
         # set up list of fastqs not to be processed
         not_processed = []
-
+        list_of_processed_samples = []
+        fastq_string = ""
         # find all fastqs
-        for fastq in os.listdir(self.runfolder_obj.fastq_folder_path):
+        for fastq in os.listdir(runfolder_fastq_path):
             if fastq.endswith('fastq.gz') and not fastq.startswith('Undetermined'):
                 pannumber = ""
                 pannumber = "Pan" + fastq.split("_Pan")[1].split("_")[0]
                 if pannumber in config.panelnumbers:
                     # we know what to do with it:
                     # append to string of paths for upload agent
-                    self.fastq_string = self.fastq_string + " " + self.runfolder_obj.fastq_folder_path + "/" + fastq
+                    fastq_string = fastq_string + " " + self.runfolder_obj.fastq_folder_path + "/" + fastq
                     # add the fastq name to a list to be used in create_nexus_file_path
-                    self.list_of_processed_samples.append(fastq)
+                    list_of_processed_samples.append(fastq)
                 elif pannumber == "":
                     # haven't identified pan number
                     # TO DO warn or something?
@@ -430,18 +429,20 @@ QA
             # write to logfile
             self.upload_agent_script_logfile.write("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
         
-        if len(self.list_of_processed_samples) == 0:
+        if len(list_of_processed_samples) == 0:
             self.upload_agent_script_logfile.write("List of fastqs did not contain any known Pan numbers. Stopping\n")
-            return False
+            # if no fastqs to be processed return none object rather than empty list
+            list_of_processed_samples = None
+            fastq_string = None
         else:
-            self.upload_agent_script_logfile.write(str(len(self.list_of_processed_samples)) + " fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
-            return True
+            self.upload_agent_script_logfile.write(str(len(list_of_processed_samples)) + " fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
+        return (list_of_processed_samples, fastq_string)
 
     def capture_any_WES_batch_numbers(self):
         """
         DNANexus project names are the runfolder suffixed with identifiers to help future dearchival easier.
         This function parses samplenames and identifies any WES batch numbers from the samplenames (identified as anything between "_WES" and "_Pan".
-        This is captures as a string within updates a class wide variable
+        If found a string is returned, else None is returned
         """
         # a list to hold all the wes numbers
         wes_numbers = []
@@ -455,14 +456,18 @@ QA
                 # remove any underscores and suffix to WES to make WES5
                 wesbatch = "WES" + fastq.split("_WES")[1].split("_Pan").replace('_', '')
                 wes_numbers.append(wesbatch)
-
-        self.wes_number = "_".join(set(wesnumbers))
+        # if no wes numbers are found return None rather than an empty string
+        if len(wesnumbers) > 0:
+            return "_".join(set(wesnumbers))
+        else:
+            return None
+        
         
     def capture_library_batch_numbers(self):
         """
         DNANexus project names are the runfolder suffixed with identifiers to help future dearchival easier.
         This function parses samplenames and identifies the library prep numbers, identified as the first element in the sample name (before the first underscore)
-        This updates a class wide variable
+        library batch numbers should always be dentified so this is returned as a string - if not an error is raised
         """
         # a list to hold all the librray batch numbers
         library_batch_numbers = []
@@ -471,32 +476,45 @@ QA
         for fastq in self.list_of_processed_samples:
             # split on underscores to capture the first element which is the library_batch number eg ONC100 or NGS100
             library_batch_numbers.append(fastq.split("_")[0])
-
-        self.library_batch = "_".join(set(library_batch_numbers))
         
-    def build_nexus_project_name(self):
+        # There should always be  library batch numbers found - raise an error if not
+        if len(library_batch_numbers) > 0:
+            return "_".join(set(library_batch_numbers))
+        else:
+            # write to logger to prompt slack alert
+            self.logger("unable to identify library batch numbers - are there underscores in the samplenames???" + self.runfolder_obj.runfolder_name, "UA_fail")
+
+            # raise exception to stop script
+            raise Exception, "Unable to identify library batch numbers"
+            
+        
+    def build_nexus_project_name(self,wes_number,library_batch):
         """
         The DNA Nexus project name contains all the information required to quickly and easily identify the contents, which may help in the future.
         The project name starts with a code to denote the status of the project (eg live clinical, development or archived) and is followed by the name of the runfolder.
-        The WES batches and library prep strings are suffixed onto the project name.
-        Project names (and relevant file paths within the projext are saved to variables)
+        The WES batches and library prep strings are suffixed onto the project name (received as inputs from other functions)
+        A tuple is returned containing strings for self.dest, runfolder_obj.nexus_path and runfolder_obj.nexus_project_name
+        Project names (and relevant file paths within the projext are saved to self.runfolderobject), the string for self.
         """
+        nexus_path = ""
+        nexus_project_name = ""
         # if wes batch numbers add this into the nexus path
-        if self.wes_number != '':
+        if wes_number:
             # self.nexus path
-            self.runfolder_obj.nexus_path = self.runfolder_obj.runfolder_name + "_" + self.library_batch + "_" + self.wes_number + config.fastq_folder
+            nexus_path = self.runfolder_obj.runfolder_name + "_" + library_batch + "_" + wes_number + config.fastq_folder
             # build project name
-            self.runfolder_obj.nexusproject = config.NexusProjectPrefix + self.runfolder_obj.runfolder_name + "_" + self.library_batch + "_" + self.wes_number
+            nexus_project_name = config.NexusProjectPrefix + self.runfolder_obj.runfolder_name + "_" + library_batch + "_" + wes_number
         else:
             # self.nexus path
-            self.runfolder_obj.nexus_path = self.runfolder_obj.runfolder_name + "_" + self.library_batch + config.fastq_folder
+            nexus_path = self.runfolder_obj.runfolder_name + "_" + library_batch + config.fastq_folder
             # build project name
-            self.runfolder_obj.nexusproject = config.NexusProjectPrefix + self.runfolder_obj.runfolder_name + "_" + self.library_batch
+            nexus_project_name = config.NexusProjectPrefix + self.runfolder_obj.runfolder_name + "_" + library_batch
 
-        self.dest_cmd = self.runfolder_obj.nexusproject + ":/"
         # write to log
         self.upload_agent_script_logfile.write("fastqs will be uploaded to " + self.runfolder_obj.nexus_path + "\n\n----------------------CREATE AND SHARED DNA NEXUS PROJECT----------------------\n")
-    
+        # return tuple of string for self.dest
+        return (self.runfolder_obj.nexusproject + ":/", nexus_path, nexus_project_name)
+
     def create_project(self):
         """
         Once the project name has been defined the project can be created.
@@ -504,6 +522,8 @@ QA
         The project is created and shared with users, with varying degrees of access as defined in the config file.
         Successful creation of the project is assertained by assessing the capture of a project id which fits the expected project name pattern (project-132456)
         Any issues identifying the project id will result in an alert being sent.
+        The project id is returned as a string
+        If debug mode is on a dummy projectid is provided
         """
         project_bash_script = config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
 
@@ -538,10 +558,10 @@ QA
             (out, err) = proc.communicate()
 
             # split std_out on "project" and get the last item to capture the project ID
-            self.projectid = "project" + out.split("project")[-1].rstrip()
+            projectid = "project" + out.split("project")[-1].rstrip()
 
             # if haven't captured a project id report an error to system log
-            if self.projectid == "":
+            if projectid == "":
                 self.logger("failed to create project in dna nexus " + self.runfolder_obj.nexusproject, "UA_fail")
 
                 # raise exception to stop script
@@ -549,15 +569,17 @@ QA
             else:
                 # record in log file who project was shared with (VIEW)
                 self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (VIEW) to " % (self.runfolder_obj.nexusproject) + ",".join(config.view_users) +
-                    "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
+                    "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (projectid))
                 
                 # record in log file who project was shared with (ADMIN)
                 self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (ADMIN) to " % (self.runfolder_obj.nexusproject) + ",".join(config.admin_users) +
-                    "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (self.projectid))
+                    "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (projectid))
 
         else:
             # for debug mode use example project id
-            self.projectid = "project-F2gzY2j0xyXJ4x3z5Pq8BjQ4"
+            projectid = "project-F2gzY2j0xyXJ4x3z5Pq8BjQ4"
+        
+        return project_id
 
     def upload_fastqs(self):
         """
@@ -600,7 +622,7 @@ QA
         Parse the file containing standard error/standard out from the upload agent.
         The upload agent command is reissued until it exists with a status of 0 which must be taken into account when identifying errors.
         If the expected error message (defined in config file) is present but the string "upload successfully" is still present it is assumed it uploaded successfully on the repeated attempt.
-        If the success statement is absent raise an alert 
+        If the success statement is absent raise an alert but do not stop script from running
         """
         # Open the log file and read to look for the string "ERROR"
         for upload in open(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file)).read().split("Uploading file"):
@@ -620,14 +642,19 @@ QA
 
     def nexus_fastq_paths(self, read1):
         """
+        Creates some variables used in the dx run commands
         Receive name of read 1 fastq file
-        Returns a tuple with the DNA Nexus fastq file paths for both reads to be used to build the dx run comand
+        Creates a nexus filepath for read1 and read2
+        Uses filename to create a sample name - this is supplied to senteion and BWA 
+        Returns a tuple (r1_filepath,r2_filepath,samplename)
         """
         # build full file nexus path including project
         read1_nexus_path = self.runfolder_obj.nexusproject + ":" + os.path.join(self.runfolder_obj.nexus_path, read1)
         # create read2 by replacing R1 with R2
         read2_nexus_path = self.runfolder_obj.nexusproject + ":" + os.path.join(self.runfolder_obj.nexus_path, read1.replace("_R1_", "_R2_"))
-        return ((read1_nexus_path,read2_nexus_path))
+        # samplename is used to assign read groups in BWA or as an input to senteion
+        sample_name = read1.split("_R1_")[0]
+        return ((read1_nexus_path,read2_nexus_path,sample_name))
 
     def nexus_bedfiles(self, pannumber):
         """
@@ -763,17 +790,16 @@ QA
         Takes fastq file and pan number for single sample and builds the mokawes dx run command
         Returns dx run command (string)
         """        
-        # call function to build nexus fastq paths - returns tuple for read1 and read2
+        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
         fastqs = self.nexus_fastq_paths(fastq)
 
         bedfiles = self.nexus_bedfiles(pannumber)
 
-        # if a sample name is not provided sention cleans the fastq file name to create one. However this includes removing all "_1", which is not ideal - theerfore specify one, using everything before "_R1" from read1 fastq filename
-        sention_sample_name = fastq.split("_R1_")[0]
-
         # create the MokaWES dx command
-        command = self.wes_command + config.wes_fastqc1 + fastqs[0] + config.wes_fastqc2 + fastqs[1] + \
-            config.wes_sention_samplename + sention_sample_name + \
+        command = self.wes_command + fastqs[2] +\
+            config.wes_fastqc1 + fastqs[0] +\
+            config.wes_fastqc2 + fastqs[1] + \
+            config.wes_sention_samplename + fastqs[2] + \
             config.wes_picard_bedfile + bedfiles["hsmetrics"] + \
             self.dest + self.dest_cmd + self.token
 
@@ -786,13 +812,15 @@ QA
         Returns dx run command for mokapipe (string)
         Valid for workflow GATK v3.10
         """
-        # build nexus fastq paths - returns tuple for read1 and read2 and dictionary for bed files
+        # build nexus fastq paths - returns tuple for read1 and read2 and samplename and dictionary for bed files
         fastqs = self.nexus_fastq_paths(fastq)
         bedfiles = self.nexus_bedfiles(pannumber)
 
         # create the dx command
-        command = self.base_command + config.mokapipe_fastqc1 + fastqs[0] \
+        command = self.base_command +fastqs[2]\
+            + config.mokapipe_fastqc1 + fastqs[0] \
             + config.mokapipe_fastqc2 + fastqs[1] \
+            + config.mokapipe_bwa_rg_sample + fastqs[2] \
             + config.mokapipe_sambamba_input + bedfiles["sambamba"] \
             + config.mokapipe_mokapicard_vendorbed_input + bedfiles["hsmetrics"] \
             + config.mokapipe_iva_email_input + ingenuity_email \
@@ -856,7 +884,8 @@ QA
         bedfiles = self.nexus_bedfiles(pannumber)
 
         # create the MokaAMP dx command
-        dx_command = self.mokaamp_command + config.mokaamp_fastq_R1_stage + fastqs[0] + \
+        dx_command = self.mokaamp_command + fastqs[2]+ \
+                    config.mokaamp_fastq_R1_stage + fastqs[0] + \
                     config.mokaamp_fastq_R2_stage + fastqs[1] + \
                     config.mokaamp_mokapicard_bed_stage + bedfiles["hsmetrics"] + \
                     config.mokaamp_mokapicard_capturetype_stage + self.panel_dictionary[pannumber]["capture_type"] + \
@@ -1068,7 +1097,9 @@ QA
                     queries.append("insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('" + str(fastq.split("_")[2]) + "','" + config.mokapipe_pipeline_ID + "')")
         if len(queries)> 0:
             # add workflow to sql dictionary
-            self.sql_queries["mokapipe"]={"count":len(queries),"query":queries}
+            return {"count":len(queries),"query":queries}
+        else:
+            return None
 
     def write_opms_queries_mokawes(self):
         """
@@ -1087,7 +1118,9 @@ QA
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
         if len(dnanumbers) > 0:
-            self.sql_queries["mokawes"] = {"count":len(dnanumbers),"query":"update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " + config.mokastatus_dataproc_ID + " where dna in ('" + ("','").join(dnanumbers) + "') and StatusID = " + config.mokastat_nextsq_ID}
+            return {"count":len(dnanumbers),"query":"update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " + config.mokastatus_dataproc_ID + " where dna in ('" + ("','").join(dnanumbers) + "') and StatusID = " + config.mokastat_nextsq_ID}
+        else:
+            return None
 
     def write_opms_queries_oncology(self):
         """
@@ -1112,9 +1145,10 @@ QA
                         workflows.append(config.mokaonc_path.split("/")[-1])
         # if oncology workflows were applied add email message (to dictionary to be sent)
         if len(workflows) > 0:
-            self.sql_queries["oncology"] = {"workflows": set(workflows), \
+            return {"workflows": set(workflows), \
                     "query": self.runfolder_obj.runfolder_name + " being processed using workflow " + ",".join(set(workflows))+ "\n\n" + config.mokaamp_email_message}
-
+        else:
+            return None
         
     def send_opms_queries(self):
         """
@@ -1124,7 +1158,7 @@ QA
         The oncology and rare disease emails are sent seperately and independantly of each other.
         """
         # send oncology email first
-        if "oncology" in self.sql_queries:
+        if self.sql_queries["oncology"]:
             # email the workflow used to the oncology team 
             self.email_subject = "MOKAPIPE ALERT : Started pipeline for " + self.runfolder_obj.runfolder_name
             self.email_message = self.runfolder_obj.runfolder_name + " being processed using workflow " + ",".join(self.sql_queries["oncology"]["workflows"]) \
@@ -1137,11 +1171,11 @@ QA
         sql_statements=[]
         count=0
         # use the dnanexus workflow path, taking only the workflow name
-        if "mokapipe" in self.sql_queries:
+        if self.sql_queries["mokapipe"]:
             workflows.append(config.mokapipe_path.split("/")[-1])
             sql_statements += self.sql_queries["mokapipe"]["query"]
             count+=self.sql_queries["mokapipe"]["count"]
-        if "mokawes" in self.sql_queries:
+        if self.sql_queries["mokawes"]:
             workflows.append(config.mokawes_path.split("/")[-1])
             sql_statements += self.sql_queries["mokawes"]["query"]
             count+=self.sql_queries["mokapipe"]["count"]
@@ -1180,14 +1214,12 @@ QA
         # capture the streams
         (out, err) = proc.communicate()
         
-
-        
     def upload_log_files(self):
         pass
+
     def look_for_upload_errors(self):
         # assess backup runfolder output
         #and assess upload agent when uploading log files
-
 
     def send_an_email(self, to):
         '''function to send an email. uses self.email_subject, self.email_message and self.email_priority'''
