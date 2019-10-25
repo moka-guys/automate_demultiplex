@@ -10,6 +10,9 @@ import os
 # Set debug mode
 debug = False
 
+# testing projects
+test_projects = ["999999_NB552085_9999_automated_tests","999999_NB552085_9999_automated_tests_no_panumbers"]
+
 # =====location of input/output files=====
 
 # root of folder that contains the apps, automate_demultiplexing_logfiles and development_area scripts 
@@ -69,7 +72,9 @@ backup_runfolder_logfile = "/usr/local/src/mokaguys/automate_demultiplexing_logf
 # command to test dx toolkit
 dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
 # expected result from testing
-dx_sdk_test_expected_result = "dx v0.2"
+dx_sdk_test_expected_stdout = "dx v0.2"
+
+upload_agent_expected_stdout = "Upload Agent Version:"
 
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
@@ -257,34 +262,61 @@ panel_settings = {"Pan493": {
                     "peddy":True
                     },
                 "Pan1620": {
-                    "pipeline":[mokawes_path],
+                    "mokawes":True,
                     "ingenuity_email":wes_email_address
                     },
                 "Pan1190": {
-                    "RPKM_pan":None,
-                    "pipeline":[mokaamp_path],
+                    "RPKM_bedfile_pan_number":None,
+                    "mokaamp":True,
                     "capture_type":"Amplicon",
                     "ingenuity_email":oncology_email},
                 "Pan2684": {
-                    "RPKM_pan":None,
-                    "pipeline":[mokawes_path],
+                    "RPKM_bedfile_pan_number":None,
+                    "mokawes":True,
                     "capture_type":"Amplicon",
                     "ingenuity_email":wes_email_address},
                 "Pan1449": {
-                    "RPKM_pan":"Pan1450",
+                    "RPKM_bedfile_pan_number":"Pan1450",
                     "RPKM_also_analyse":["Pan1234"]
                     },
-                "Pan1451": "Pan1452",
-                "Pan1453": "Pan1454",
-                "Pan1063": "Pan1064",
-                "Pan1009": "Pan1010",
-                "Pan1459": "Pan1458",
-                "Pan2022": "Pan1974",
-                "Pan1965": "Pan2000",
-                "Pan1158": "Pan2023",
-                "Pan1159": None,
-                "Pan1646": "Pan1651",
-                "Pan3237": None}
+                "Pan1451": {
+                    "RPKM_bedfile_pan_number":"Pan1452"
+                    },
+                "Pan1453": {
+                    "RPKM_bedfile_pan_number":"Pan1454"
+                    },
+                "Pan1063": {
+                    "RPKM_bedfile_pan_number":"Pan1064"
+                    },
+                "Pan1009": {
+                    "RPKM_bedfile_pan_number": "Pan1010"
+                    },
+                "Pan1459": {
+                    "RPKM_bedfile_pan_number": "Pan1458"
+                    },
+                "Pan2022": {
+                    "RPKM_bedfile_pan_number": "Pan1974"
+                    },
+                "Pan1965": {
+                    "RPKM_bedfile_pan_number": "Pan2000"
+                    },
+                "Pan1158": {
+                    "RPKM_bedfile_pan_number": "Pan2023"
+                    },
+                "Pan1159": {
+                    "RPKM_bedfile_pan_number": None
+                    },
+                "Pan1646": {
+                    "RPKM_bedfile_pan_number": "Pan1651"
+                    },
+                "Pan3237": {
+                    "RPKM_bedfile_pan_number": None
+                    },
+                "Pan1157": {
+                    "RPKM_bedfile_pan_number": None
+                    }
+
+                }
 
 # =====Dict linking panel and Ingenuity account for sample to be shared with =====
 email_panel_dict = {"Pan493": wes_email_address,
@@ -351,7 +383,7 @@ checksum_complete_flag = "Checksum result reported"
 checksum_match = "Checksums match"
 
 # ================ demultiplexing
-logfile_success = "Processing completed with 0 errors and 0 warnings."
+demultiplex_success_string = "Processing completed with 0 errors and 0 warnings."
 # list of sequencers which require md5 checksums from integrity check to be assessed
 sequencers_with_integrity_check = ["NB551068", "NB552085"]
 # =================turnaround time

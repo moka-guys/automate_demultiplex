@@ -45,8 +45,9 @@ class get_list_of_runs():
         for folder in all_runfolders:
             # Ignore folders in the list config.ignore_directories and test that it is a directory (ignoring files)
             if folder not in config.ignore_directories and os.path.isdir(os.path.join(config.runfolders, folder)):
-                # pass folder and timestamp to class
-                process_runfolder().quarterback(folder, self.now)
+                # pass folder and timestamp to class instance
+                runfolder_instance = process_runfolder(folder, self.now)
+                runfolder_instance().quarterback()
 
         # combine all the log files
         self.combine_log_files()
@@ -92,22 +93,27 @@ class get_list_of_runs():
             subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
             subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
 
-class runfolder_settings():
+class runfolder_object():
     """
     This class holds all the runfolder specific 
     """
-    def __init__(self,runfolder):
+    def __init__(self, runfolder):
         # set empty variables to be defined based on the run
         self.runfolder_name = runfolder
         # create full path to runfolder
-        self.runfolderpath = os.path.join(config.runfolders, self.runfolder_name)
+        self.runfolderpath = os.path.join(config.runfolders, runfolder)
+        
         # folder containing the fastqs for this project
-        self.fastq_folder_path = self.runfolderpath + config.fastq_folder
+        self.fastq_folder_path = self.runfolderpath +  config.fastq_folder
+        
         # path to the run folder's dx run commands
         self.runfolder_dx_run_script = config.DNA_Nexus_workflow_logfolder + self.runfolder_name + ".sh"
 
-        self.nexusproject =  ""
+        self.nexus_project_name =  ""
         self.nexus_path = ""
+
+    def main(self):
+        pass
 
 
 class process_runfolder():
@@ -118,19 +124,18 @@ class process_runfolder():
     A new instance of this class is initiated for each runfolder being assessed. 
     '''
 
-    def __init__(self):
-QA
+    def __init__(self,runfolder, now, debug_mode=False):
         # name of file which denotes demultiplexing is underway/complete
         self.demultiplexed = "demultiplexlog.txt"
-
+        self.debug_mode = debug_mode
         # # fastq folder
         #self.fastq_folder_path = ""
 
-        # upload_agent_logfile
-        # self.upload_agent_logfile = "/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_log/"
-        self.upload_agent_logfile_name = ""
-        self.upload_agent_script_logfile = ""
-
+        self.runfolder_obj = runfolder_object(runfolder)
+        self.now = now
+        
+        self.upload_agent_logfile_path = config.upload_agent_logfile + self.now + "_.txt"
+        
         # string of fastqs for upload agent
         self.fastq_string = ""
 
@@ -145,9 +150,6 @@ QA
         #self.library_batch = ''  # first element of fastq file name.
         #self.wes_number = ''  # WES number near the end of fastq file name.
 
-        # variables to rename log file.
-        self.rename = ""
-        self.now = ""
 
         # ####################################DNA Nexus########################
         # bash script that is used to execute dx commands
@@ -211,29 +213,32 @@ QA
         self.rowid = ""
 
         # time stamp
-        self.smartsheet_now = ""
+        self.smartsheet_now =  str('{:%Y-%m-%d}'.format(datetime.datetime.utcnow()))
 
         # requests info
         self.headers = {"Authorization": "Bearer " + config.smartsheet_api_key, "Content-Type": "application/json"}
         self.smartsheet_url = 'https://api.smartsheet.com/2.0/sheets/' + str(config.smartsheet_sheetid)
 
-        self.panel_dictionary = {}
+        self.panel_dictionary = self.set_panel_dictionary()
+        # perform upload agent test
+        self.test_upload_agent()
+        # test dx toolkit installation
+        self.test_dx_toolkit()
 
         self.sql_queries={}
-    
-    def test(self):
-        return "Hello world"
 
-    def quarterback (self, runfolder, now):
+    
+    # def test(self):
+    #     print vars(self.runfolder_obj)
+    #     return "Hello world"
+
+    def quarterback (self):
         """
         This module calls all other modules in order
         """
-        # runfolder object
-        self.runfolder_obj = runfolder_settings(runfolder)
-        # set up runfolder variables
-        self.setup_variables(runfolder, now)
+
         # build dictionary of panel settings
-        self.set_panel_dictionary()
+        self.panel_dictionary = self.set_panel_dictionary()
         # perform upload agent test
         self.test_upload_agent()
         # test dx toolkit installation
@@ -241,12 +246,14 @@ QA
         
         # check if already uploaded and demultiplkexing finished sucessfully
         if not self.already_uploaded() and self.demultiplex_completed_successfully():
-            self.list_of_processed_samples, self.fastq_string = self.find_fastqs(self.runfolder_obj.fastq_folder_path):
+            self.list_of_processed_samples, self.fastq_string, not_processed = self.find_fastqs(self.runfolder_obj.fastq_folder_path)
             if self.list_of_processed_samples:
                 # build the project name using the WES batch and NGS run numbers
-                self.dest_cmd, self.runfolder_obj.nexus_path, self.runfolder_obj.nexus_project_name = self.build_nexus_project_name(self.capture_any_WES_batch_numbers(),self.capture_library_batch_numbers())
-                # create nexus project
-                self.projectid = self.create_project()
+                self.dest_cmd, self.runfolder_obj.nexus_path, self.runfolder_obj.nexus_project_name = self.build_nexus_project_name(self.capture_any_WES_batch_numbers(self.list_of_processed_samples),self.capture_library_batch_numbers(self.list_of_processed_samples))
+                # create bash script to create and share nexus project
+                self.write_create_project_script()
+                # run project creation script
+                self.projectid = self.run_project_creation_script()
                 # send list to module to trigger upload
                 self.upload_fastqs()
                 # check fastqs uploaded successfully
@@ -255,94 +262,97 @@ QA
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds())
                 self.run_dx_run_commands()
                 self.smartsheet_workflows_commands_sent()
-                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes()
-                self.sql_queries["oncology"] = self.write_opms_queries_oncology()
-                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe()
+                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
+                self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
+                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
                 self.send_opms_queries()
                 self.look_for_upload_errors(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
 
-    def setup_variables(self, runfolder, now):
-        """
-        Set up all run specific variables - A new instance of class containing this function is created for each runfolder so variables are runfolde specific.
-        """
-        # capture timestamp
-        self.now = now
-        
-        # take current timestamp for recieved
-        self.smartsheet_now = str('{:%Y-%m-%d}'.format(self.now))
-
-        # open the logfile for this run's cron job.
-        self.upload_agent_logfile_name = config.upload_agent_logfile + self.now + "_" + self.rename + ".txt"
-        self.upload_agent_script_logfile = open(self.upload_agent_logfile_name, 'a')
-
-        
-        
-        # capture the runfolder
-        #self.runfolder = str(runfolder)
-        # create full path to runfolder
-        #self.runfolderpath = os.path.join(config.runfolders, self.runfolder_name)
-        # folder containing the fastqs for this project
-        #self.fastq_folder_path = self.runfolderpath + config.fastq_folder
-        # bash script for dx run commands
-#        self.runfolder_dx_run_script = config.DNA_Nexus_workflow_logfolder + self.runfolder_name + ".sh"
-
+   
     def set_panel_dictionary(self):
         """ 
         Populate the dictionary detailing panel specific settings.
         Default settings are set in the config file and then updated as and when required for each panel the defaults in config file.
         Loop through panel specific properties in config file and overwrite any default with panel specific settings
+        Return dictionary
         """
+        dictionary_to_return = {}
         # for each panel 
-        for panel in config.panel_list:           
-            # set defaults and then loop through panel settings from config, overwriting any defaults
-            self.panel_dictionary[panel] = config.default_panel_properties
+        for panel in config.panel_list:          
+            # loop through default settings, adding to dictionary and  then loop through panel settings from config, overwriting any defaults
+            dictionary_to_return[panel] = {}
+            for setting in  config.default_panel_properties:
+                dictionary_to_return[panel][setting] = config.default_panel_properties[setting]
             for setting in config.panel_settings[panel]:
-                self.panel_dictionary[panel][setting] = config.panel_settings[panel][setting]
+                dictionary_to_return[panel][setting] = config.panel_settings[panel][setting]
+        return dictionary_to_return
     
     def test_upload_agent(self):
         """
         Tests the upload agent is installed by calling upload agent command with --version.
-        Assesses if expected string is present in response. Raises exception if test fails.
+        Passess stdout to function perform_test which returns False if expected string not present
+        This function raises exception if function returns False.
         """
 
         # command
         command = config.upload_agent + " --version"
-
+    
         # run the command
-        proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-
-        # capture the streams
-        (out, err) = proc.communicate()
-
-        if "Upload Agent Version:" not in out:
+        out, err = self.execute_subprocess_command(command)
+        
+        if not self.perform_test(out,"ua"):
             self.logger("Upload Agent Test Failed", "UA_fail")
             raise Exception, "Upload agent not installed"
+        else:
+            self.logger("Upload Agent function test passed", "UA_pass")
+            # write this to the log file
+            self.write_to_uascript_logfile("upload agent check passed\n\n----------------------TEST DX TOOLKIT IS FUNCTIONING----------------------\n")
 
-        self.logger("Upload Agent function test passed", "UA_pass")
 
-        # write this to the log file
-        self.upload_agent_script_logfile.write("upload agent check passed\n\n----------------------TEST DX TOOLKIT IS FUNCTIONING----------------------\n")
+    def perform_test(self, test_input, test):
+        """
+        Recieves test name and stdout from execution of command
+        Return False if expected response (as per config) not in stdout
+        otherwise returns True
+        """
+        # if expected string not in stdout return False
+        if test == "ua":
+            if config.upload_agent_expected_stdout not in test_input:
+                return False
+        # if expected string not in stdout return False
+        if test == "dx_toolkit":
+            if config.dx_sdk_test_expected_stdout not in test_input:
+                return False
+        # For already_uplaoded or demultiplex_started want to return False if the files DO NOT exist
+        if test in ["already_uploaded","demultiplex_started",]:
+            if not os.path.isfile(test_input):
+                return False
+        # demultiplex success -return False  if expected string NOT in last line of log file 
+        if test == "demultiplex_success":
+            if config.demultiplex_success_string not in test_input:
+                return False
+
+
+        return True
 
     def test_dx_toolkit(self):
         """
         Tests if the dx toolkit is installed. 
-        Calls dx run command and assesses if the expected string (set in config file) is present in output.
+        Calls dx run command and passes stdout to function which will test for expected string (set in config file) is present in output - this will return True if ok.
         Raises exception if test fails.
         """
-
+        (out,err) = self.execute_subprocess_command(config.dx_sdk_test)
         # run the command
-        proc = subprocess.Popen(config.dx_sdk_test, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, executable="/bin/bash")
-
-        # capture the streams
-        (out, err) = proc.communicate()
-
-        if config.dx_sdk_test_expected_result not in out:
+        #proc = subprocess.Popen(config.dx_sdk_test, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, executable="/bin/bash")
+        
+        if not self.perform_test(out, "dx_toolkit"):
             self.logger("dx toolkit function test failed", "UA_fail")
             raise Exception, "dx toolkit not installed"
-        self.logger("dx toolkit function test passed", "UA_pass")
-        # write this to the log file
-        self.upload_agent_script_logfile.write("dx toolkit check passed\n\n----------------------UPLOAD FASTQS----------------------\n")
+        else:
+            self.logger("dx toolkit function test passed", "UA_pass")
+            # write this to the log file
+            self.write_to_uascript_logfile("dx toolkit check passed\n\n----------------------UPLOAD FASTQS----------------------\n")
 
     def already_uploaded(self):
         """
@@ -351,22 +361,22 @@ QA
         Returns False if not already processed.
         """
         # write to log file including the github repo tag and time stamp
-        self.upload_agent_script_logfile.write("automate_demultiplexing release:" + git_tag.git_tag() + \
+        self.write_to_uascript_logfile("automate_demultiplexing release:" + git_tag.git_tag() + \
             "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + \
             "----------------------\nAssessing " + self.runfolder_obj.runfolderpath + \
             "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
-
-        # look for the file denoting the upload has started
-        if os.path.isfile(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file)):
+        
+        # use perform_test function to assert if the file exists - will return True if file exists
+        if self.perform_test(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file),"already_uploaded"):
             if not config.debug:
-                self.upload_agent_script_logfile.write("YES - self.upload_started_file present \n----------------------STOP----------------------\n")
+                self.write_to_uascript_logfile("YES - self.upload_started_file present \n----------------------STOP----------------------\n")
                 return True
             else:
-                self.upload_agent_script_logfile.write("YES - self.upload_started_file present but DEBUG MODE IS TRUE SO CONTINUING.......\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
+                self.write_to_uascript_logfile("YES - self.upload_started_file present but DEBUG MODE IS TRUE SO CONTINUING.......\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
                 return False
         else:
             # if not check demultiplex has finished succesfully and write to file
-            self.upload_agent_script_logfile.write("NO - self.upload_started_file not present so continue\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
+            self.write_to_uascript_logfile("NO - self.upload_started_file not present so continue\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
             return False
             
     def demultiplex_completed_successfully(self):
@@ -376,31 +386,33 @@ QA
         Uses expected success status defined in config.
         Returns True is completed sucessfully
         """
-        # check demultiplexing has actually been done
-        if os.path.isfile(os.path.join(config.runfolders, self.runfolder_name, self.demultiplexed)):
-            with open(os.path.join(config.runfolders, self.runfolder_obj.runfolder_name, self.demultiplexed), 'r') as logfile:
-                # check if the success statement is in the last line
-                if config.logfile_success in logfile.readlines()[-1]:
-                    self.upload_agent_script_logfile.write("Demultiplex was successfully completed.\ncompiling a list of fastqs....... ")
+        demultiplex_file_path =  os.path.join(self.runfolder_obj.runfolder_path, self.demultiplexed)
+        # check demultiplexing has actually been done using perform_test - returns true if file present
+        if self.perform_test(demultiplex_file_path, "demultiplex_started"):        
+            with open(demultiplex_file_path, 'r') as logfile:
+                # check if successful demuliplex statement in last line of log
+                if self.perform_test(logfile.readlines()[-1],"demultiplex_success"):
+                    self.write_to_uascript_logfile("Demultiplex was successfully completed.\ncompiling a list of fastqs....... ")
                     # if successfull call the module which creates a list of fastqs
                     return True
                 else:
                     # write to logfile that demultplex was not successful
-                    self.upload_agent_script_logfile.write("!!!!!!!DEMULTIPLEXING DID NOT COMPLETE SUCCESSFULLY.!!!!!!!!!\n----------------------STOP----------------------\n")
+                    self.write_to_uascript_logfile("!!!!!!!DEMULTIPLEXING DID NOT COMPLETE SUCCESSFULLY.!!!!!!!!!\n----------------------STOP----------------------\n")
                     return False
         else:
             # write to logfile that not yet demultiplexed
-            self.upload_agent_script_logfile.write("demultiplexing has not been performed.\n----------------------STOP----------------------\n")
+            self.write_to_uascript_logfile("demultiplexing has not been performed.\n----------------------STOP----------------------\n")
             return False
+
     
+
     def find_fastqs(self, runfolder_fastq_path):
         """
         Loops through all the fastq files in the given folder
         Identifies the pan number and checks for presense in the dictionary of panel settings.
         If there are any files where the pan number was not found sent an alert.
-        If samples which do require processing are found variables are updated with a list of samples to be processed and a string of fastq names and the function returns True.
+        returns a tuple of list of processed samples, string of fastq filepaths and list of not_processed samples.
         """
-
         # set up list of fastqs not to be processed
         not_processed = []
         list_of_processed_samples = []
@@ -410,7 +422,8 @@ QA
             if fastq.endswith('fastq.gz') and not fastq.startswith('Undetermined'):
                 pannumber = ""
                 pannumber = "Pan" + fastq.split("_Pan")[1].split("_")[0]
-                if pannumber in config.panelnumbers:
+                
+                if pannumber in config.panel_list:
                     # we know what to do with it:
                     # append to string of paths for upload agent
                     fastq_string = fastq_string + " " + self.runfolder_obj.fastq_folder_path + "/" + fastq
@@ -427,18 +440,19 @@ QA
             # add to logger
             self.logger("unrecognised panel number found in run " + self.runfolder_obj.runfolder_name, "UA_fail")
             # write to logfile
-            self.upload_agent_script_logfile.write("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
+            self.write_to_uascript_logfile("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
         
         if len(list_of_processed_samples) == 0:
-            self.upload_agent_script_logfile.write("List of fastqs did not contain any known Pan numbers. Stopping\n")
+            self.write_to_uascript_logfile("List of fastqs did not contain any known Pan numbers. Stopping\n")
             # if no fastqs to be processed return none object rather than empty list
             list_of_processed_samples = None
             fastq_string = None
         else:
-            self.upload_agent_script_logfile.write(str(len(list_of_processed_samples)) + " fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
-        return (list_of_processed_samples, fastq_string)
+            self.write_to_uascript_logfile(str(len(list_of_processed_samples)) + " fastqs found.\n\n----------------------PREPARING UPLOAD OF FASTQS----------------------\ndefining path for fastq files.......")
+        
+        return (list_of_processed_samples, fastq_string, not_processed)
 
-    def capture_any_WES_batch_numbers(self):
+    def capture_any_WES_batch_numbers(self,list_of_processed_samples):
         """
         DNANexus project names are the runfolder suffixed with identifiers to help future dearchival easier.
         This function parses samplenames and identifies any WES batch numbers from the samplenames (identified as anything between "_WES" and "_Pan".
@@ -448,22 +462,23 @@ QA
         wes_numbers = []
         
         # for each fastq in the list of fastqs
-        for fastq in self.list_of_processed_samples:
+        for fastq in list_of_processed_samples:
             # if the run has any WES samples
             if "WES" in fastq:
+                
                 # split on _WES to split the fastq name into two, take the second half of it and split on "_Pan"
                 # this will capture 5 or _5 depending if was WES5 or WES_5
                 # remove any underscores and suffix to WES to make WES5
-                wesbatch = "WES" + fastq.split("_WES")[1].split("_Pan").replace('_', '')
+                wesbatch = "WES" + fastq.split("_WES")[1].split("_Pan")[0].replace('_', '')
                 wes_numbers.append(wesbatch)
         # if no wes numbers are found return None rather than an empty string
-        if len(wesnumbers) > 0:
-            return "_".join(set(wesnumbers))
+        if len(wes_numbers) > 0:
+            return "_".join(set(wes_numbers))
         else:
             return None
         
         
-    def capture_library_batch_numbers(self):
+    def capture_library_batch_numbers(self, list_of_processed_samples):
         """
         DNANexus project names are the runfolder suffixed with identifiers to help future dearchival easier.
         This function parses samplenames and identifies the library prep numbers, identified as the first element in the sample name (before the first underscore)
@@ -473,9 +488,11 @@ QA
         library_batch_numbers = []
 
         # for each fastq in the list of fastqs
-        for fastq in self.list_of_processed_samples:
-            # split on underscores to capture the first element which is the library_batch number eg ONC100 or NGS100
-            library_batch_numbers.append(fastq.split("_")[0])
+        for fastq in list_of_processed_samples:
+            # check there are underscores present
+            if "_" in fastq:
+                # split on underscores to capture the first element which is the library_batch number eg ONC100 or NGS100
+                library_batch_numbers.append(fastq.split("_")[0])
         
         # There should always be  library batch numbers found - raise an error if not
         if len(library_batch_numbers) > 0:
@@ -483,9 +500,11 @@ QA
         else:
             # write to logger to prompt slack alert
             self.logger("unable to identify library batch numbers - are there underscores in the samplenames???" + self.runfolder_obj.runfolder_name, "UA_fail")
-
-            # raise exception to stop script
-            raise Exception, "Unable to identify library batch numbers"
+            if not self.debug_mode:
+                # raise exception to stop script
+                raise Exception, "Unable to identify library batch numbers"
+            else:
+                return "would raise value error!"
             
         
     def build_nexus_project_name(self,wes_number,library_batch):
@@ -511,11 +530,11 @@ QA
             nexus_project_name = config.NexusProjectPrefix + self.runfolder_obj.runfolder_name + "_" + library_batch
 
         # write to log
-        self.upload_agent_script_logfile.write("fastqs will be uploaded to " + self.runfolder_obj.nexus_path + "\n\n----------------------CREATE AND SHARED DNA NEXUS PROJECT----------------------\n")
+        self.write_to_uascript_logfile("fastqs will be uploaded to " + self.runfolder_obj.nexus_path + "\n\n----------------------CREATE AND SHARED DNA NEXUS PROJECT----------------------\n")
         # return tuple of string for self.dest
-        return (self.runfolder_obj.nexusproject + ":/", nexus_path, nexus_project_name)
+        return (nexus_project_name + ":/", nexus_path, nexus_project_name)
 
-    def create_project(self):
+    def write_create_project_script(self):
         """
         Once the project name has been defined the project can be created.
         This uses the DNANexus sdk, where commands are written to a bash script and executed using subprocess.
@@ -523,61 +542,54 @@ QA
         Successful creation of the project is assertained by assessing the capture of a project id which fits the expected project name pattern (project-132456)
         Any issues identifying the project id will result in an alert being sent.
         The project id is returned as a string
-        If debug mode is on a dummy projectid is provided
+
         """
         project_bash_script = config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
 
         # open bash script
-        create_nexus_project_script = open(project_bash_script, 'w')
-        create_nexus_project_script.write(self.source_command)
-        create_nexus_project_script.write(self.createprojectcommand % (config.prod_organisation, self.runfolder_obj.nexusproject))
+        with open(project_bash_script, 'w') as create_nexus_project_script :
+            create_nexus_project_script.write(self.source_command)
+            create_nexus_project_script.write(self.createprojectcommand % (config.prod_organisation, self.runfolder_obj.nexus_project_name))
 
-        # Share the project with the nexus usernames in the list in config file
-        # first give view permissions
-        for user in config.view_users:
-            create_nexus_project_script.write("dx invite %s $project_id VIEW --no-email --auth-token %s\n" % (user, config.Nexus_API_Key))
-        # then give admin permissions - ensure done in this order incase some users are in both lists.
-        for user in config.admin_users:
-            create_nexus_project_script.write("dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n" % (user, config.Nexus_API_Key))
+            # Share the project with the nexus usernames in the list in config file
+            # first give view permissions
+            for user in config.view_users:
+                create_nexus_project_script.write("dx invite %s $project_id VIEW --no-email --auth-token %s\n" % (user, config.Nexus_API_Key))
+            # then give admin permissions - ensure done in this order incase some users are in both lists.
+            for user in config.admin_users:
+                create_nexus_project_script.write("dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n" % (user, config.Nexus_API_Key))
 
-        # add a tag to denote live project (as opposed to archived)
-        create_nexus_project_script.write(self.addprojecttag + config.live_tag + " --auth-token %s\n" % (config.Nexus_API_Key))
+            # add a tag to denote live project (as opposed to archived)
+            create_nexus_project_script.write(self.addprojecttag + config.live_tag + " --auth-token %s\n" % (config.Nexus_API_Key))
 
-        # echo the project id so it can be captured below
-        create_nexus_project_script.write("echo $project_id")
+            # echo the project id so it can be captured below
+            create_nexus_project_script.write("echo $project_id")
 
-        # close before running
-        create_nexus_project_script.close()
+    def run_project_creation_script(self):
+        """
+        run script that was created in previous step
+        """
+        # run a command to execute the bash script made above
+        cmd = "bash " + project_bash_script
+        (out,err) = self.execute_subprocess_command(cmd)
+        
+        # split std_out on "project" and get the last item to capture the project ID
+        projectid = "project" + out.split("project")[-1].rstrip()
 
-        if not config.debug:
-            # run a command to execute the bash script made above
-            cmd = "bash " + project_bash_script
-            proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        # if haven't captured a project id report an error to system log
+        if projectid == "":
+            self.logger("failed to create project in dna nexus " + self.runfolder_obj.nexusproject, "UA_fail")
 
-            # capture the streams
-            (out, err) = proc.communicate()
-
-            # split std_out on "project" and get the last item to capture the project ID
-            projectid = "project" + out.split("project")[-1].rstrip()
-
-            # if haven't captured a project id report an error to system log
-            if projectid == "":
-                self.logger("failed to create project in dna nexus " + self.runfolder_obj.nexusproject, "UA_fail")
-
-                # raise exception to stop script
-                raise Exception, "Unable to create DNA Nexus project"
-            else:
-                # record in log file who project was shared with (VIEW)
-                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (VIEW) to " % (self.runfolder_obj.nexusproject) + ",".join(config.view_users) +
-                    "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (projectid))
-                
-                # record in log file who project was shared with (ADMIN)
-                self.upload_agent_script_logfile.write("DNA Nexus project %s created and shared (ADMIN) to " % (self.runfolder_obj.nexusproject) + ",".join(config.admin_users) +
-                    "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (projectid))
-
+            # raise exception to stop script
+            raise Exception, "Unable to create DNA Nexus project"
         else:
-            # for debug mode use example project id
-            projectid = "project-F2gzY2j0xyXJ4x3z5Pq8BjQ4"
+            # record in log file who project was shared with (VIEW)
+            self.write_to_uascript_logfile("DNA Nexus project %s created and shared (VIEW) to " % (self.runfolder_obj.nexusproject) + ",".join(config.view_users) +
+                "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (projectid))
+            
+            # record in log file who project was shared with (ADMIN)
+            self.write_to_uascript_logfile("DNA Nexus project %s created and shared (ADMIN) to " % (self.runfolder_obj.nexusproject) + ",".join(config.admin_users) +
+                "\nProjectid=%s \n\n----------------------TEST UPLOAD AGENT----------------------\n" % (projectid))
         
         return project_id
 
@@ -597,24 +609,21 @@ QA
             runfolder_upload_cmd_file.write("----------------------Upload of fastqs----------------------\n" + nexus_upload_command + "\n\n----------------------Upload rest of runfolder----------------------\n")
 
         # write to logfile
-        self.upload_agent_script_logfile.write("Uploading Fastqs to Nexus. See commands at " + os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds) +
+        self.write_to_uascript_logfile("Uploading Fastqs to Nexus. See commands at " + os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds) +
             "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
 
         # open file to show upload has started and to hold upload agent standard out
         upload_started = open(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file), 'a')
 
         if not config.debug:
-            # run the command, redirecting stderror to stdout
-            proc = subprocess.Popen([nexus_upload_command], stderr=subprocess.STDOUT, stdout=subprocess.PIPE, shell=True)
-
-            # capture the streams (err is redirected to out above)
-            (out, err) = proc.communicate()
+            (out,err) = self.execute_subprocess_command(nexus_upload_command)
+            
         else:
             out = "x"
             err = "y"
 
         # write to log
-        upload_started.write("\n----------------------Uploading fastqs " + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n" + out)
+        upload_started.write("\n----------------------Uploading fastqs " + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n" + out + err)
         upload_started.close()
     
     def look_for_upload_errors_fastq(self):
@@ -630,11 +639,11 @@ QA
             if self.ua_error in upload:
                 # if it still completed successfully carry on
                 if "uploaded successfully" in upload:
-                    self.upload_agent_script_logfile.write("There was a disruption to the network when uploading the Fastq files but it completed successfully\n")
+                    self.write_to_uascript_logfile("There was a disruption to the network when uploading the Fastq files but it completed successfully\n")
                     self.logger("upload of fastq was disrupted but completed for run " + self.runfolder_obj.runfolder_name, "UA_disrupted")
                 # other wise write to log
                 else:
-                    self.upload_agent_script_logfile.write("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
+                    self.write_to_uascript_logfile("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
                     self.logger("upload of fastqs failed for run " + self.runfolder_obj.runfolder_name, "UA_fail")
             else:
                 # write to log file check was ok
@@ -693,7 +702,7 @@ QA
         """
 
         # Update script log file to say what is being done.
-        self.upload_agent_script_logfile.write("\n\n----------------------RUN WORKFLOW----------------------\n")
+        self.write_to_uascript_logfile("\n\n----------------------RUN WORKFLOW----------------------\n")
         # list to hold all commands.
         commands_list = []
         commands_list.append(self.source_command)
@@ -1014,23 +1023,21 @@ QA
 
         if not config.debug:
             # execute command
-            proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-
-            # capture the streams
-            (out, err) = proc.communicate()
+            (out,err) = self.execute_subprocess_command(cmd)
+            
         else:
             out = "debug stdout example when setting off dx run commands"
             err = "debug stderr example when setting off dx run commands"
 
         # capture standard out (the job ids) to the log file
-        self.upload_agent_script_logfile.write(out)
+        self.write_to_uascript_logfile(out)
 
         # if any standard error
         if err:
             self.logger("Error when starting pipeline for run " + self.runfolder_obj.runfolder_name + " stderror = " + err, "UA_fail")
 
             # write error message to log file# exact error message is written to log file by logger function
-            self.upload_agent_script_logfile.write("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: " + err + "\n\n")
+            self.write_to_uascript_logfile("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: " + err + "\n\n")
         else:
             # write error message to log file
             self.logger("dx run commands issued without error for run " + self.runfolder_obj.runfolder_name, "UA_pass")
@@ -1043,7 +1050,7 @@ QA
         This is posted using the requests module to a given url
         The response is parsed to check the status was "success" otherwise an error is raised.
         """
-        self.upload_agent_script_logfile.write("\n----------------------UPDATE SMARTSHEET----------------------\n")
+        self.write_to_uascript_logfile("\n----------------------UPDATE SMARTSHEET----------------------\n")
         # #uncomment this block if want to get the column ids for a new sheet
         ########################################################################
         # # Get all columns.
@@ -1075,19 +1082,21 @@ QA
         for line_key in response:
             if line_key == "message":
                 if response[line_key] == "SUCCESS":
-                    self.upload_agent_script_logfile.write("smartsheet updated to say in progress\n")
+                    self.write_to_uascript_logfile("smartsheet updated to say in progress\n")
                     self.logger("run started added to smartsheet", "smartsheet_pass")
                 else:
                     self.logger("run started NOT added to smartsheet for run " + self.runfolder_obj.runfolder_name, "smartsheet_fail")
-                    self.upload_agent_script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
+                    self.write_to_uascript_logfile("smartsheet NOT updated at in progress step\n" + str(response))
                     
-    def write_opms_queries_mokapipe(self):
+    def write_opms_queries_mokapipe(self,list_of_processed_samples):
         """
         Samples processed using Mokapipe are recorded in moka using an insert query.
         This function will create an insert query for each sample processed through mokapipe.
+        If mokapipe samples are found this function will return a dictionary of sample counts, and a list of queries to be added to global dictionary. 
+        If no mokapipe samples are found None object is returned
         """
         queries = []
-        for fastq in self.list_of_processed_samples:
+        for fastq in list_of_processed_samples:
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
@@ -1101,15 +1110,16 @@ QA
         else:
             return None
 
-    def write_opms_queries_mokawes(self):
+    def write_opms_queries_mokawes(self,list_of_processed_samples):
         """
         Samples processed using MokaWES are recorded in moka using an update query.
-        This function will create an single query for all sample processed using mokawes.
+        If wes samples found this function will return a dictionary of sample counts, and a query (str) to be added to global dictionary. 
+        If no wes samples are found None object is returned
         """
-        dnanumbers=[]
+        dnanumbers = []
         # add workflow to sql dictionary
         
-        for fastq in self.list_of_processed_samples:
+        for fastq in list_of_processed_samples:
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
@@ -1118,20 +1128,22 @@ QA
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
         if len(dnanumbers) > 0:
-            return {"count":len(dnanumbers),"query":"update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " + config.mokastatus_dataproc_ID + " where dna in ('" + ("','").join(dnanumbers) + "') and StatusID = " + config.mokastat_nextsq_ID}
+            return {"count":len(dnanumbers),"query":"update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " \
+            + config.mokastatus_dataproc_ID + " where dna in ('" + ("','").join(dnanumbers) + "') and StatusID = " + config.mokastat_nextsq_ID}
         else:
             return None
 
-    def write_opms_queries_oncology(self):
+    def write_opms_queries_oncology(self,list_of_processed_samples):
         """
         Samples tested using mokaamp or mokaonc are not booked into moka until the analysis stage so queries cannot be used to record pipeline version.
         This is recorded manually when creating the test in Moka
         Therefore an email informing the oncology team which version of the pipeline was applied is sent.
+        If present a dictionary is returned with a list of workflows and a message (str). If not a None object is returned
         """
         # list of workflows used in this run
-        workflows=[]
+        workflows = []
         # loop through fastqs to see which workflows were used
-        for fastq in self.list_of_processed_samples:
+        for fastq in list_of_processed_samples:
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
@@ -1146,7 +1158,8 @@ QA
         # if oncology workflows were applied add email message (to dictionary to be sent)
         if len(workflows) > 0:
             return {"workflows": set(workflows), \
-                    "query": self.runfolder_obj.runfolder_name + " being processed using workflow " + ",".join(set(workflows))+ "\n\n" + config.mokaamp_email_message}
+                    "query": self.runfolder_obj.runfolder_name + " being processed using workflow " + ",".join(set(workflows))+ "\n\n" \
+                    + config.mokaamp_email_message}
         else:
             return None
         
@@ -1168,17 +1181,17 @@ QA
 
         # determine if need to send rare disease email too.
         workflows = []
-        sql_statements=[]
-        count=0
+        sql_statements = []
+        count = 0
         # use the dnanexus workflow path, taking only the workflow name
         if self.sql_queries["mokapipe"]:
             workflows.append(config.mokapipe_path.split("/")[-1])
             sql_statements += self.sql_queries["mokapipe"]["query"]
-            count+=self.sql_queries["mokapipe"]["count"]
+            count += self.sql_queries["mokapipe"]["count"]
         if self.sql_queries["mokawes"]:
             workflows.append(config.mokawes_path.split("/")[-1])
             sql_statements += self.sql_queries["mokawes"]["query"]
-            count+=self.sql_queries["mokapipe"]["count"]
+            count += self.sql_queries["mokapipe"]["count"]
         
         if len(workflows) > 0 and len(sql_statements) > 0:
             # email this query
@@ -1195,7 +1208,7 @@ QA
         A python script which is a wrapper for the upload agent is used.
         """
         # write status update to log file
-        self.upload_agent_script_logfile.write("\n----------------------UPLOAD REST OF RUNFOLDER----------------------\n")
+        self.write_to_uascript_logfile("\n----------------------UPLOAD REST OF RUNFOLDER----------------------\n")
         
         # create the samplesheet name to copy
         samplesheet_name = self.runfolder_obj.runfolder_name + "_SampleSheet.csv"
@@ -1206,13 +1219,11 @@ QA
         cmd = "python config.backup_runfolder_script -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexusproject + "  --ignore L00 --logpath " + config.backup_runfolder_logfile
 
         # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
-        self.upload_agent_script_logfile.write("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n " + cmd /
+        self.write_to_uascript_logfile("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n " + cmd /
                 + "\nsee standard out from these commands in log file @ " + os.path.join(config.backup_runfolder_logfile, self.runfolder_obj.runfolder_name) + "\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
         
-        proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-
-        # capture the streams
-        (out, err) = proc.communicate()
+        # run the command
+        out, err = self.execute_subprocess_command(cmd)
         
     def upload_log_files(self):
         pass
@@ -1220,6 +1231,20 @@ QA
     def look_for_upload_errors(self):
         # assess backup runfolder output
         #and assess upload agent when uploading log files
+        pass
+    
+    def execute_subprocess_command(self,command):
+        """
+        Takes a command, executes using subprocess and returns tuple of (stdout,stderr)
+        """
+        if not self.debug_mode:
+            proc = subprocess.Popen([command], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, executable="/bin/bash")
+
+            # capture the streams
+            return proc.communicate()
+        else:
+            return (" ".join([config.upload_agent_expected_stdout,config.dx_sdk_test_expected_stdout, config.demultiplex_success_string]),"err")
+
 
     def send_an_email(self, to):
         '''function to send an email. uses self.email_subject, self.email_message and self.email_priority'''
@@ -1241,8 +1266,17 @@ QA
         server.sendmail(config.me, to, m.as_string())
 
         # write to logfile
-        self.upload_agent_script_logfile.write("\nEmail sent to...... " + str(to) + "\nsubject:" + self.email_subject + "\nbody:" + self.email_message + "\n\n")
+        self.write_to_uascript_logfile("\nEmail sent to...... " + str(to) + "\nsubject:" + self.email_subject + "\nbody:" + self.email_message + "\n\n")
         self.logger("Upload Agent email sent" + str(to) + ". Subject:" + self.email_subject + ". Body:" + self.email_message, "UA_pass")
+    
+    def write_to_uascript_logfile(self,message):
+        """
+        Write message to logfile - open file in append mode each time
+        """
+        if not self.debug_mode:
+            with open(self.upload_agent_logfile_path,'a+') as logfile:
+                logfile.write(message)
+    
 
     def logger(self, message, tool):
         """Write log messages to the system log.
@@ -1252,15 +1286,16 @@ QA
         tool (str)
             Tool name. Used to search within the insight ops website.
         """
-        # Create subprocess command string, passing message and tool name to the command
-        log = "/usr/bin/logger -t %s '%s'" % (tool, message)
+        if not self.debug_mode:
+            # Create subprocess command string, passing message and tool name to the command
+            log = "/usr/bin/logger -t %s '%s'" % (tool, message)
 
-        if subprocess.call([log], shell=True) == 0:
-            # If the log command produced no errors, record the log command string to the script logfile.
-            self.upload_agent_script_logfile.write("Log written to /usr/bin/logger\n" + log + "\n")
-        # Else record failure to write to system log to the script log file
-        else:
-            self.upload_agent_script_logfile.write("Failed to write log to /usr/bin/logger\n" + log + "\n")
+            if subprocess.call([log], shell=True) == 0:
+                # If the log command produced no errors, record the log command string to the script logfile.
+                self.write_to_uascript_logfile("Log written to /usr/bin/logger\n" + log + "\n")
+            # Else record failure to write to system log to the script log file
+            else:
+                self.write_to_uascript_logfile("Failed to write log to /usr/bin/logger\n" + log + "\n")
 
 
 if __name__ == '__main__':

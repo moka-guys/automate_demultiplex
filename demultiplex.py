@@ -396,7 +396,7 @@ class ready2start_demultiplexing():
         bcl2fastq_log_tail = subprocess.check_output(["tail", "-n", "10", run_logfile_path])
 
         # If demultiplexing completed successfully - looking for expected success statement as defined in config file
-        if config.logfile_success in bcl2fastq_log_tail:
+        if config.demultiplex_success_string in bcl2fastq_log_tail:
             # Write to system log
             self.logger("Demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
             # Call function which updates smartsheet, changing status for this run from in progress to complete, where task = demultiplex.
