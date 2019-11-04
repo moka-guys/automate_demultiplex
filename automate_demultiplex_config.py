@@ -18,6 +18,7 @@ document_root = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[
 
 # path to run folders
 runfolders = "/media/data3/share"
+runfolders = "/home/aled/Documents/workstation/runfolders"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -58,7 +59,10 @@ DNA_Nexus_project_creation_logfolder = "{document_root}/automate_demultiplexing_
 demultiplex_logfiles = "{document_root}/automate_demultiplexing_logfiles/Demultiplexing_log_files/".format(document_root=document_root)
 
 # path to upload agent
-upload_agent = "{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua".format(document_root=document_root)
+#upload_agent = "{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua".format(document_root=document_root)
+upload_agent_path = "/usr/bin/ua"
+upload_agent_test_command = " --version"
+ua_error = "Error Message: 'Could not resolve: api.dnanexus.com"
 
 # path to backup_runfolder script
 backup_runfolder_script = "/usr/local/src/mokaguys/apps/workstation_housekeeping/backup_runfolder.py"
@@ -67,9 +71,12 @@ backup_runfolder_script = "/usr/local/src/mokaguys/apps/workstation_housekeeping
 backup_runfolder_logfile = "/usr/local/src/mokaguys/automate_demultiplexing_logfiles/backup_runfolder_logfiles"
 
 # command to test dx toolkit
-dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
+# dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
+dx_sdk_test = "source ~/dx-toolkit/environment;dx --version"
 # expected result from testing
-dx_sdk_test_expected_result = "dx v0.2"
+dx_sdk_test_expected_stdout = "dx v0.2"
+
+upload_agent_expected_stdout = "Upload Agent Version:"
 
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
@@ -219,7 +226,7 @@ mokawes_senteion_stage_id= "stage-Ff0P73j0GYKX41VkF3j62F9j"
 
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
-panel_list=["Pan493","Pan1009", "Pan1063","Pan1620", "Pan1157","Pan1190","Pan2684","Pan1449","Pan1451","Pan1453","Pan1459","Pan2022","Pan1965","Pan1158","Pan1159","Pan1646"]
+panel_list=["Pan493","Pan1009", "Pan1063","Pan1620", "Pan1157","Pan1190","Pan2684","Pan3237","Pan1449","Pan1451","Pan1453","Pan1459","Pan2022","Pan1965","Pan1158","Pan1159","Pan1646"]
 default_panel_properties = {
                     "UMI":False,
                     "UMI_bcl2fastq":None, # eg Y145,I8,Y9I8,Y145
@@ -257,34 +264,71 @@ panel_settings = {"Pan493": {
                     "peddy":True
                     },
                 "Pan1620": {
-                    "pipeline":[mokawes_path],
+                    "mokawes":True,
                     "ingenuity_email":wes_email_address
                     },
                 "Pan1190": {
-                    "RPKM_pan":None,
-                    "pipeline":[mokaamp_path],
+                    "RPKM_bedfile_pan_number":None,
+                    "mokaamp":True,
                     "capture_type":"Amplicon",
                     "ingenuity_email":oncology_email},
                 "Pan2684": {
-                    "RPKM_pan":None,
-                    "pipeline":[mokawes_path],
+                    "RPKM_bedfile_pan_number":None,
+                    "mokawes":True,
                     "capture_type":"Amplicon",
                     "ingenuity_email":wes_email_address},
                 "Pan1449": {
-                    "RPKM_pan":"Pan1450",
+                    "RPKM_bedfile_pan_number":"Pan1450",
                     "RPKM_also_analyse":["Pan1234"]
                     },
-                "Pan1451": "Pan1452",
-                "Pan1453": "Pan1454",
-                "Pan1063": "Pan1064",
-                "Pan1009": "Pan1010",
-                "Pan1459": "Pan1458",
-                "Pan2022": "Pan1974",
-                "Pan1965": "Pan2000",
-                "Pan1158": "Pan2023",
-                "Pan1159": None,
-                "Pan1646": "Pan1651",
-                "Pan3237": None}
+                "Pan1451": {
+                    "RPKM_bedfile_pan_number":"Pan1452"
+                    },
+                "Pan3237":{
+                    "mokawes":True,
+                    "sapientia_upload": True,
+                    "clinical_coverage_depth":20,
+                    "multiqc_coverage_level":20,
+                    "hsmetrics_bedfile":None, # only when using bed file with a different pannumber 
+                    "sambamba_bedfile":None, # only when using bed file with a different pannumber 
+                    "sapientia_project":"123",
+                    "peddy":True                    
+                    },
+                "Pan1453": {
+                    "RPKM_bedfile_pan_number":"Pan1454"
+                    },
+                "Pan1063": {
+                    "RPKM_bedfile_pan_number":"Pan1064"
+                    },
+                "Pan1009": {
+                    "RPKM_bedfile_pan_number": "Pan1010"
+                    },
+                "Pan1459": {
+                    "RPKM_bedfile_pan_number": "Pan1458"
+                    },
+                "Pan2022": {
+                    "RPKM_bedfile_pan_number": "Pan1974"
+                    },
+                "Pan1965": {
+                    "RPKM_bedfile_pan_number": "Pan2000"
+                    },
+                "Pan1158": {
+                    "RPKM_bedfile_pan_number": "Pan2023"
+                    },
+                "Pan1159": {
+                    "RPKM_bedfile_pan_number": None
+                    },
+                "Pan1646": {
+                    "RPKM_bedfile_pan_number": "Pan1651"
+                    },
+                "Pan3237": {
+                    "RPKM_bedfile_pan_number": None
+                    },
+                "Pan1157": {
+                    "RPKM_bedfile_pan_number": None
+                    }
+
+                }
 
 # =====Dict linking panel and Ingenuity account for sample to be shared with =====
 email_panel_dict = {"Pan493": wes_email_address,
@@ -351,7 +395,7 @@ checksum_complete_flag = "Checksum result reported"
 checksum_match = "Checksums match"
 
 # ================ demultiplexing
-logfile_success = "Processing completed with 0 errors and 0 warnings."
+demultiplex_success_string = "Processing completed with 0 errors and 0 warnings."
 # list of sequencers which require md5 checksums from integrity check to be assessed
 sequencers_with_integrity_check = ["NB551068", "NB552085"]
 # =================turnaround time
