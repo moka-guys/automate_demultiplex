@@ -43,7 +43,7 @@ class get_list_of_runs():
             if folder not in config.ignore_directories and os.path.isdir(os.path.join(config.runfolders, folder)):
                 # pass folder and timestamp to class instance
                 runfolder_instance = process_runfolder(folder, self.now)
-                runfolder_instance().quarterback()
+                runfolder_instance.quarterback()
 
         # combine all the log files
         self.combine_log_files()
@@ -222,7 +222,7 @@ class process_runfolder():
         # perform upload agent test
         if not self.test_upload_agent(self.perform_test(self.execute_subprocess_command(config.upload_agent_path + config.upload_agent_test_command)[0], "ua")):
             raise Exception, "Upload agent not installed"
-            
+
         # test dx toolkit installation
         if not self.test_dx_toolkit(self.perform_test(self.execute_subprocess_command(config.dx_sdk_test)[0],"dx_toolkit")):
             raise Exception, "dx toolkit not installed"
@@ -299,6 +299,7 @@ class process_runfolder():
                 self.logger("Upload Agent function test passed", "UA_pass")
                 # write this to the log file
                 self.write_to_uascript_logfile("upload agent check passed\n\n----------------------TEST DX TOOLKIT IS FUNCTIONING----------------------\n")
+                return True
             else:
                 return True
 
@@ -343,6 +344,7 @@ class process_runfolder():
                 self.logger("dx toolkit function test passed", "UA_pass")
                 # write this to the log file
                 self.write_to_uascript_logfile("dx toolkit check passed\n\n----------------------UPLOAD FASTQS----------------------\n")
+                return True
             else:
                 return True
 
