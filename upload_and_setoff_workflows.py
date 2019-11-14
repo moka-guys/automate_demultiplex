@@ -376,7 +376,7 @@ class process_runfolder():
         Uses expected success status defined in config.
         Returns True is completed sucessfully
         """
-        demultiplex_file_path =  os.path.join(self.runfolder_obj.runfolder_path, self.demultiplexed)
+        demultiplex_file_path =  os.path.join(self.runfolder_obj.runfolderpath, self.demultiplexed)
         # check demultiplexing has actually been done using perform_test - returns true if file present
         if self.perform_test(demultiplex_file_path, "demultiplex_started"):        
             with open(demultiplex_file_path, 'r') as logfile:
