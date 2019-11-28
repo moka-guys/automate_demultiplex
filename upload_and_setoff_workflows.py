@@ -165,7 +165,7 @@ class process_runfolder():
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path
         self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y"
-        self.mokaamp_command = "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name"
+        self.mokaamp_command = "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
         self.decision_support_preperation = "analysisid=$(python %s -a " % (os.path.join(os.path.dirname(os.path.realpath(__file__)),config.decision_support_tool_input_script))
         self.sapientia_upload_command = "jobid=$(dx run " + config.app_project + config.sentieon_app_path + " -y"
         self.iva_upload_command = "jobid=$(dx run " + config.app_project + config.iva_app_path + " -y"
@@ -248,20 +248,21 @@ class process_runfolder():
                 self.dest_cmd, self.runfolder_obj.nexus_path, self.runfolder_obj.nexus_project_name = self.build_nexus_project_name(self.capture_any_WES_batch_numbers(self.list_of_processed_samples),self.capture_library_batch_numbers(self.list_of_processed_samples))
                 # create bash script to create and share nexus project -return filepath
                 #  pass filepath into module which runs project creation script - capturing projectid
-                self.projectid = self.run_project_creation_script(self.write_create_project_script())
+                #self.projectid = self.run_project_creation_script(self.write_create_project_script()) TODO: UNCOMMENT
+                self.projectid = 'project-Fg6fQF00J7ZQ2J7z8YQ7J3b0'
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass the path to ua_stdout_log to function which checks fastqs were uploaded without error
-                self.look_for_upload_errors_fastq(self.upload_fastqs())
+                #self.look_for_upload_errors_fastq(self.upload_fastqs())
 
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
                 self.run_dx_run_commands()
-                self.smartsheet_workflows_commands_sent()
+                #self.smartsheet_workflows_commands_sent()
                 self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
                 self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
                 self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
-                self.send_opms_queries()
-                self.look_for_upload_errors(self.upload_rest_of_runfolder())
-                self.look_for_upload_errors(self.upload_log_files())
+                #self.send_opms_queries()
+                #self.look_for_upload_errors(self.upload_rest_of_runfolder()[0])
+                #self.look_for_upload_errors(self.upload_log_files())
 
    
     def set_panel_dictionary(self):
@@ -354,20 +355,21 @@ class process_runfolder():
         This function checks for presense of this file.
         Returns False if not already processed.
         """
-        # write to log file including the github repo tag and time stamp
-        self.write_to_uascript_logfile("automate_demultiplexing release:" + git_tag.git_tag() + \
-            "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + \
-            "----------------------\nAssessing " + self.runfolder_obj.runfolderpath + \
-            "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
+        return False
+        # # write to log file including the github repo tag and time stamp
+        # self.write_to_uascript_logfile("automate_demultiplexing release:" + git_tag.git_tag() + \
+        #     "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + \
+        #     "----------------------\nAssessing " + self.runfolder_obj.runfolderpath + \
+        #     "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
         
-        # use perform_test function to assert if the file exists - will return True if file exists
-        if self.perform_test(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file),"already_uploaded"):
-            self.write_to_uascript_logfile("YES - self.upload_started_file present \n----------------------STOP----------------------\n")
-            return True
-        else:
-            # if file doesn't exist return false to continue and write to log file
-            self.write_to_uascript_logfile("NO - self.upload_started_file not present so continue\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
-            return False
+        # # use perform_test function to assert if the file exists - will return True if file exists
+        # if self.perform_test(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file),"already_uploaded"):
+        #     self.write_to_uascript_logfile("YES - self.upload_started_file present \n----------------------STOP----------------------\n")
+        #     return True
+        # else:
+        #     # if file doesn't exist return false to continue and write to log file
+        #     self.write_to_uascript_logfile("NO - self.upload_started_file not present so continue\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
+        #     return False
             
     def demultiplex_completed_successfully(self):
         """
@@ -539,7 +541,7 @@ class process_runfolder():
         # open bash script
         with open(project_bash_script_path, 'w') as create_nexus_project_script :
             create_nexus_project_script.write(self.source_command)
-            create_nexus_project_script.write(self.createprojectcommand % (config.prod_organisation, self.runfolder_obj.nexus_project_name))
+            #create_nexus_project_script.write(self.createprojectcommand % (config.prod_organisation, self.runfolder_obj.nexus_project_name))
 
             # Share the project with the nexus usernames in the list in config file
             # first give view permissions
@@ -698,17 +700,17 @@ class process_runfolder():
         if self.panel_dictionary[pannumber]["sambamba_bedfile"]:
             bed_dict["sambamba"] = config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["sambamba_bedfile"]
         else:
-            bed_dict["sambamba"] = config.app_project + config.bedfile_folder + pannumber + "Sambamba.bed"
+            bed_dict["sambamba"] = config.app_project + config.bedfile_folder + pannumber + "dataSambamba.bed"
             
         if self.panel_dictionary[pannumber]["hsmetrics_bedfile"]:
             bed_dict["hsmetrics"] = config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["hsmetrics_bedfile"]
         else:
-            bed_dict["hsmetrics"] = config.app_project + config.bedfile_folder + pannumber + "Data.bed"
+            bed_dict["hsmetrics"] = config.app_project + config.bedfile_folder + pannumber + "data.bed"
         
         bed_dict["mokaamp_bed_PE_input"] = config.app_project + config.bedfile_folder + pannumber + "_PE.bed"
         bed_dict["mokaamp_variant_calling_bed"] = config.app_project + config.bedfile_folder + pannumber + "_flat.bed"
         if self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]:
-            bed_dict["rpkm_bedfile"] = [config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]]
+            bed_dict["rpkm_bedfile"] = config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]
         
         return bed_dict
 
@@ -772,7 +774,7 @@ class process_runfolder():
                         commands_list.append(self.build_sapientia_input_command())
                         commands_list.append(self.run_sapientia_command())
                         commands_list.append(self.add_to_depends_list())
-                    if self.panel_dictionary[panel]["RPKM_pan"]:
+                    if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
 
 
@@ -790,8 +792,6 @@ class process_runfolder():
                         commands_list.append(self.add_to_depends_list())
         
         # run wide jobs
-#        if len(mokaamp_list) !=0:
-#            commands_list.append(self.create_mokaamp_command(mokaamp_list))
         if len(mokaonc_list) != 0:
             commands_list.append(self.create_mokaonc_command(mokaonc_list))
         if joint_variant_calling:
@@ -825,12 +825,14 @@ class process_runfolder():
         bedfiles = self.nexus_bedfiles(pannumber)
 
         # create the MokaWES dx command
-        dx_command = self.wes_command + fastqs[2] +\
-            config.wes_fastqc1 + fastqs[0] +\
-            config.wes_fastqc2 + fastqs[1] + \
-            config.wes_sention_samplename + fastqs[2] + \
-            config.wes_picard_bedfile + bedfiles["hsmetrics"] + \
-            self.dest + self.dest_cmd + self.token
+        dx_command_list = [self.wes_command , fastqs[2] ,
+            config.wes_fastqc1 , fastqs[0] ,
+            config.wes_fastqc2 , fastqs[1] , 
+            config.wes_sention_samplename , fastqs[2] , 
+            config.wes_picard_bedfile , bedfiles["hsmetrics"] , 
+            self.dest , self.dest_cmd , self.token]
+
+        dx_command = "".join(map(str, dx_command_list))
 
         return dx_command
 
@@ -852,7 +854,7 @@ class process_runfolder():
             + config.mokapipe_bwa_rg_sample + fastqs[2] \
             + config.mokapipe_sambamba_input + bedfiles["sambamba"] \
             + config.mokapipe_mokapicard_vendorbed_input + bedfiles["hsmetrics"] \
-            + config.mokapipe_iva_email_input + ingenuity_email \
+            + config.mokapipe_iva_email_input + self.panel_dictionary[pannumber]["ingenuity_email"] \
             + self.dest + self.dest_cmd + self.token
 
         return dx_command
@@ -913,22 +915,26 @@ class process_runfolder():
         bedfiles = self.nexus_bedfiles(pannumber)
 
         # create the MokaAMP dx command
-        dx_command = self.mokaamp_command + fastqs[2]+ \
-                    config.mokaamp_fastq_R1_stage + fastqs[0] + \
-                    config.mokaamp_fastq_R2_stage + fastqs[1] + \
-                    config.mokaamp_mokapicard_bed_stage + bedfiles["hsmetrics"] + \
-                    config.mokaamp_mokapicard_capturetype_stage + self.panel_dictionary[pannumber]["capture_type"] + \
-                    config.mokaamp_bamclipper_BEDPE_stage + bedfiles["mokaamp_bed_PE_input"] + \
-                    config.mokaamp_chanjo_cov_level_stage + self.panel_dictionary[pannumber]["clinical_coverage_depth"] + \
-                    config.mokaamp_sambamba_bed_stage + bedfiles["sambamba"] + \
-                    config.mokaamp_vardict_bed_stage + bedfiles["mokaamp_variant_calling_bed"] + \
-                    config.mokaamp_varscan_bed_stage + bedfiles["mokaamp_variant_calling_bed"] + \
-                    config.mokaamp_lofreq_bed_stage + bedfiles["mokaamp_variant_calling_bed"] + \
-                    config.mokaamp_varscan_strandfilter_stage + self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"] + \
-                    self.dest + self.dest_cmd + self.token
+        dx_command_list = [self.mokaamp_command , fastqs[2], 
+                    config.mokaamp_fastq_R1_stage , fastqs[0] , 
+                    config.mokaamp_fastq_R2_stage , fastqs[1] , 
+                    config.mokaamp_mokapicard_bed_stage , bedfiles["hsmetrics"] , 
+                    config.mokaamp_mokapicard_capturetype_stage , self.panel_dictionary[pannumber]["capture_type"] , 
+                    config.mokaamp_bamclipper_BEDPE_stage , bedfiles["mokaamp_bed_PE_input"] , 
+                    config.mokaamp_chanjo_cov_level_stage , self.panel_dictionary[pannumber]["clinical_coverage_depth"] , 
+                    config.mokaamp_sambamba_bed_stage , bedfiles["sambamba"] , 
+                    config.mokaamp_vardict_bed_stage , bedfiles["mokaamp_variant_calling_bed"] , 
+                    config.mokaamp_varscan_bed_stage , bedfiles["mokaamp_variant_calling_bed"] , 
+                    config.mokaamp_lofreq_bed_stage , bedfiles["mokaamp_variant_calling_bed"] , 
+                    config.mokaamp_varscan_strandfilter_stage , self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"] , 
+                    self.dest , self.dest_cmd , self.token
+            ]
+
+        # Variables from dx_command_list are read from config file as various atomic types. Convert to string and join to create dx_command.
+        dx_command = "".join(map(str, dx_command_list))
         
         # remove the bit that adds the job to the depends on list for the negative control as varscan fails on nearempty/-empty BAM files and this will stop multiqc etc running
-        if "NTCcon" in read1:
+        if "NTCcon" in fastqs[0]:
             dx_command = dx_command.replace("jobid=$(", "").replace(config.Nexus_API_Key + ")", config.Nexus_API_Key)
         return dx_command
 
@@ -1148,7 +1154,7 @@ class process_runfolder():
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
         if len(dnanumbers) > 0:
-            return {"count":len(dnanumbers),"query":"update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " \
+            return {"count":len(dnanumbers), "query":"update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " \
             + config.mokastatus_dataproc_ID + " where dna in ('" + ("','").join(dnanumbers) + "') and StatusID = " + config.mokastat_nextsq_ID}
         else:
             return None
@@ -1239,7 +1245,7 @@ class process_runfolder():
         cmd = "python config.backup_runfolder_script -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + "  --ignore L00 --logpath " + config.backup_runfolder_logfile
 
         # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
-        self.write_to_uascript_logfile("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n " + cmd /
+        self.write_to_uascript_logfile("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n " + cmd \
                 + "\nsee standard out from these commands in log file @ " + os.path.join(config.backup_runfolder_logfile, self.runfolder_obj.runfolder_name) + "\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
         
         # run the command

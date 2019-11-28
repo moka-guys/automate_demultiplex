@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 import os
 
 # Set debug mode
-debug = False
+debug = True
 
 # =====location of input/output files=====
 
@@ -17,8 +17,9 @@ debug = False
 document_root = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-2])
 
 # path to run folders
-runfolders = "/media/data3/share"
-runfolders = "/home/aled/Documents/workstation/runfolders"
+## WARNING: A test directory has been passed
+#runfolders = "/media/data3/share"
+runfolders = "/home/mokaguys/Documents/development_area/complete_refactor/share"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -59,8 +60,8 @@ DNA_Nexus_project_creation_logfolder = "{document_root}/automate_demultiplexing_
 demultiplex_logfiles = "{document_root}/automate_demultiplexing_logfiles/Demultiplexing_log_files/".format(document_root=document_root)
 
 # path to upload agent
-#upload_agent = "{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua".format(document_root=document_root)
-upload_agent_path = "/usr/bin/ua"
+upload_agent_path = "{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua".format(document_root=document_root)
+#upload_agent_path = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 upload_agent_test_command = " --version"
 ua_error = "Error Message: 'Could not resolve: api.dnanexus.com"
 
@@ -141,10 +142,10 @@ mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_
 mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
 
 # MokaWES workflow_inputs
-wes_fastqc1 = " -istage-Ff0P5Jj0GYKY717pKX3vX8Z3.reads="  # FastQC Read 1
-wes_fastqc2 = " -istage-Ff0P5V00GYKyJfpX5bqX69Yg.reads="  # FastQC Read 2
-wes_sention_samplename = " -istage-<>.sample="  # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
-wes_picard_bedfile = " -istage-Ff0P5pQ0GYKVBB0g1FG27BV8.vendor_exome_bedfile=" # bedfile for hs metrics
+wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
+wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
+wes_sention_samplename = " -istage-FQ8JPpj076Gybkq459GfqfZb.sample="  # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
+wes_picard_bedfile = " -istage-F9GGBQj0jy1yBbpZPvK5GvPJ.vendor_exome_bedfile=" # bedfile for hs metrics
 
 # MokaOnc amplivar fastq input
 mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
@@ -243,11 +244,11 @@ default_panel_properties = {
                     "iva_upload": False,
                     "sapientia_upload": False,
                     "oncology":False, 
-                    "clinical_coverage_depth":None,
-                    "multiqc_coverage_level":None,
+                    "clinical_coverage_depth":None, # only found in mokamp command
+                    "multiqc_coverage_level":30,
                     "hsmetrics_bedfile":None, # only when using bed file with a different pannumber 
                     "sambamba_bedfile":None, # only when using bed file with a different pannumber 
-                    "ingenuity_email":None,
+                    "ingenuity_email":interpretation_request_email,
                     "sapientia_project":None,
                     "peddy":False
                     }
@@ -256,7 +257,6 @@ default_panel_properties = {
 panel_settings = {"Pan493": {
                     "mokawes":True,
                     "iva_upload": True,
-                    "clinical_coverage_depth":20,
                     "multiqc_coverage_level":20,
                     "hsmetrics_bedfile":None, # only when using bed file with a different pannumber 
                     "sambamba_bedfile":None, # only when using bed file with a different pannumber 
@@ -271,13 +271,18 @@ panel_settings = {"Pan493": {
                     "RPKM_bedfile_pan_number":None,
                     "mokaamp":True,
                     "capture_type":"Amplicon",
-                    "ingenuity_email":oncology_email},
+                    "ingenuity_email":oncology_email,
+                    "clinical_coverage_depth":1000,
+                    "multiqc_coverage_level": 100
+                },
                 "Pan2684": {
                     "RPKM_bedfile_pan_number":None,
                     "mokawes":True,
                     "capture_type":"Amplicon",
                     "ingenuity_email":wes_email_address},
                 "Pan1449": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,                    
                     "RPKM_bedfile_pan_number":"Pan1450",
                     "RPKM_also_analyse":["Pan1234"]
                     },
