@@ -8,6 +8,7 @@ The script will print the output to the command line, in a tool specific format 
 import subprocess
 import json
 import argparse
+import time
 # import config file
 import automate_demultiplex_config as config
 
@@ -42,7 +43,6 @@ def get_job_id (project,analysis_id):
     #print json_ob
     for stage in json_ob["stages"]:
         if stage["execution"]["stage"] in config.wes_sention_samplename:
-            #print "found senteion stage id"
             # Outputs from the sention job in the workflow/analysis are linked to a sub-job.
             # The ID for the sub-job can be pulled from the first dependsOn field of the sention job.
             return stage['execution']['dependsOn'][0]
@@ -63,7 +63,20 @@ def print_iva_input (jobid):
 
 if __name__ == "__main__":
     args = get_arguments()
-    jobid=get_job_id(args.project,args.analysis_id)
+
+    # jobid comes from the sention sub-job, which takes a few moments to initiate after calling the sention app.
+    # Running this script immeidately after running the sention workflow raises an IndexError.
+    #   We retry in the while loop until the jobid becomes available.
+    jobid = None
+    tries = 0
+    while jobid == None:
+        try:
+            jobid = get_job_id(args.project,args.analysis_id)
+        except IndexError:
+            tries += 1
+            if tries == 50:
+                raise
+
     if args.tool == "iva":
         print_iva_input(jobid)
     if args.tool == "sapientia":

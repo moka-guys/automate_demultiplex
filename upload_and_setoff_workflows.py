@@ -889,8 +889,7 @@ class process_runfolder():
         A python script is run after each dx run command, taking the analysis id, project name and decision support tool and prints the required input to command line
         This function returns the command for this python program
         """
-        # A sleep command has been added as the jobid for the sention subprocess needs time to be generated.
-        dx_command = "sleep 30\n%s $jobid -t iva -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
+        dx_command = "%s $jobid -t iva -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
         return dx_command
 
     def sapientia_input_command(self):
@@ -1016,8 +1015,9 @@ class process_runfolder():
     
     def create_upload_multiqc_command(self):
         """
-
         """
+        # dx run + config.app_project + config.upload_multiqc_path + -imultiqc_html= + input.html
+        dx_command = "dx run " + config.app_project + config.upload_multiqc_path + " -y"
         return "#put upload_multiqc command here"
     
     def run_peddy_command(self):
