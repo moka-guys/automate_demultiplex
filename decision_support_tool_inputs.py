@@ -43,7 +43,9 @@ def get_job_id (project,analysis_id):
     for stage in json_ob["stages"]:
         if stage["execution"]["stage"] in config.wes_sention_samplename:
             #print "found senteion stage id"
-            return str(stage["execution"]["id"])
+            # Outputs from the sention job in the workflow/analysis are linked to a sub-job.
+            # The ID for the sub-job can be pulled from the first dependsOn field of the sention job.
+            return stage['execution']['dependsOn'][0]
 
 def print_sapientia_input (jobid):
     """
@@ -57,7 +59,7 @@ def print_iva_input (jobid):
     The IVA import app takes VCFs, BAMs and BAIs. 
     Return the app specific input, using the sapientia job id and output names.
     """
-    print(" %s%s.%s%s%s.%s%s%s.%s" % (config.iva_vcf_inputname, jobid, config.mokawes_senteion_vcf_output_name, config.iva_bam_inputname, jobid, config.mokawes_senteion_bam_output_name,config.iva_bai_inputname, jobid, config.mokawes_senteion_bai_output_name))
+    print(" %s%s:%s%s%s:%s%s%s:%s" % (config.iva_vcf_inputname, jobid, config.mokawes_senteion_vcf_output_name, config.iva_bam_inputname, jobid, config.mokawes_senteion_bam_output_name,config.iva_bai_inputname, jobid, config.mokawes_senteion_bai_output_name))
 
 if __name__ == "__main__":
     args = get_arguments()

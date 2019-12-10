@@ -168,7 +168,7 @@ class process_runfolder():
         self.mokaamp_command = "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
         self.decision_support_preperation = "analysisid=$(python %s -a " % (os.path.join(os.path.dirname(os.path.realpath(__file__)),config.decision_support_tool_input_script))
         self.sapientia_upload_command = "jobid=$(dx run " + config.app_project + config.sentieon_app_path + " -y"
-        self.iva_upload_command = "jobid=$(dx run " + config.app_project + config.iva_app_path + " -y"
+        self.iva_upload_command = "jobid=$(dx run " + config.iva_app_path + " -y"
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
 
@@ -710,7 +710,7 @@ class process_runfolder():
         bed_dict["mokaamp_bed_PE_input"] = config.app_project + config.bedfile_folder + pannumber + "_PE.bed"
         bed_dict["mokaamp_variant_calling_bed"] = config.app_project + config.bedfile_folder + pannumber + "_flat.bed"
         if self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]:
-            bed_dict["rpkm_bedfile"] = config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]
+            bed_dict["rpkm_bedfile"] = config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"] + '_RPKM.bed'
         
         return bed_dict
 
@@ -889,7 +889,8 @@ class process_runfolder():
         A python script is run after each dx run command, taking the analysis id, project name and decision support tool and prints the required input to command line
         This function returns the command for this python program
         """
-        dx_command = "%s $jobid -t iva -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
+        # A sleep command has been added as the jobid for the sention subprocess needs time to be generated.
+        dx_command = "sleep 30\n%s $jobid -t iva -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
         return dx_command
 
     def sapientia_input_command(self):
@@ -981,7 +982,7 @@ class process_runfolder():
         The ingenuity email is taken from the panel dictionary using the pan number input to this function.
         The dx run command is returned (string)
         """
-        dx_command = self.iva_upload_command + " $analysisid" + config.iva_email_input_name + self.panel_dictionary[pannumber]["ingenuity_email"] + self.project + self.projectid + self.token
+        dx_command = self.iva_upload_command + " $analysisid" + config.iva_email_input_name + self.panel_dictionary[pannumber]["ingenuity_email"] + self.project + self.projectid + config.iva_reference_inputname + config.iva_reference_default + self.token
         return dx_command
     
     def add_to_depends_list(self):

@@ -100,7 +100,7 @@ NexusProjectPrefix = "002_"
 project_success = "Created new project called \"%s\""
 
 # The project containing the app and data
-app_project = "001_ToolsReferenceData:"
+app_project = "001_ToolsReferenceData:/"
 # path to the workflow in the app project
 mokapipe_path = "Workflows/GATK3.5_v2.9"
 # path to the WES workflow in the app project
@@ -215,14 +215,16 @@ oncology_panels = ["Pan1190","Pan2684"]
 # list of St George's analyses, with the corresponding sapientia project-id as value
 decision_support_tool_input_script = "decision_support_tool_inputs.py"
 sapientia_uploads = {"Pan3237":130}
-mokawes_senteion_bam_output_name = "mappings_bam"
-mokawes_senteion_bai_output_name = "mappings_bam_bai"
+mokawes_senteion_bam_output_name = "mappings_realigned_bam" #ENSURE WE WANT REALIGNED NOT DEDUP BAM
+mokawes_senteion_bai_output_name = "mappings_realigned_bai"
 mokawes_senteion_vcf_output_name = "variants_vcf"
 sapientia_vcf_inputname = " -ivcfs="
 sapientia_bam_inputname = " -ibams="
-iva_vcf_inputname = " -ivcf="
+iva_vcf_inputname = " -ivcfs="
 iva_bam_inputname = " -ibam_files="
 iva_bai_inputname = " -ibai_files="
+iva_reference_inputname = " -ireference_genome_name="
+iva_reference_default = "GRCh37"
 #mokawes_senteion_stage_id= "stage-Ff0P73j0GYKX41VkF3j62F9j" # ? Get from MokaWES sample name. This isn't the correct stage currently?
 
 
