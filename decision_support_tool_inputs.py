@@ -76,7 +76,7 @@ if __name__ == "__main__":
             jobid = get_job_id(args.project,args.analysis_id)
         except IndexError:
             tries += 1
-            if tries == 300: # Can take a while for the server to update
+            if tries == 200: # Can take a while for the server to update
                 raise
 
     if args.tool == "iva":

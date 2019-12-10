@@ -265,7 +265,7 @@ panel_settings = {"Pan493": {
                     "ingenuity_email":wes_email_address,
                     "peddy":True
                     },
-                "Pan1620": { # Focused Exome. Are we uploading to Ingenuity?
+                "Pan1620": { # Focused Exome. Are we uploading to Ingenuity? Note: NO vendorexome bedfile
                     "mokawes":True,
                     "ingenuity_email":wes_email_address,
                     "iva_upload": True
