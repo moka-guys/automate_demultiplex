@@ -161,7 +161,7 @@ class process_runfolder():
         self.wes_command = "jobid=$(dx run " + config.app_project + config.mokawes_path + " -y --name "
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
-        self.upload_multiqc_command = "dx run " + config.app_project + config.upload_multiqc_path + " -y"
+        self.upload_multiqc_command = "jobid=$(dx run " + config.app_project + config.upload_multiqc_path + " -y"
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path
         self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y"
@@ -1017,8 +1017,11 @@ class process_runfolder():
         """
         """
         # dx run + config.app_project + config.upload_multiqc_path + -imultiqc_html= + input.html
-        dx_command = "dx run " + config.app_project + config.upload_multiqc_path + " -y"
-        return "#put upload_multiqc command here"
+        dx_command = "".join([
+            self.upload_multiqc_command, " -y", " -imultiqc_html=$jobid:multiqc_report",
+            self.project, self.projectid, self.token
+        ])
+        return dx_command
     
     def run_peddy_command(self):
         """
