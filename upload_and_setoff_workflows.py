@@ -430,9 +430,10 @@ class process_runfolder():
         
         if len(not_processed) > 0:
             # add to logger
-            self.logger("unrecognised panel number found in run " + self.runfolder_obj.runfolder_name, "UA_fail")
+            pass
+            #self.logger("unrecognised panel number found in run " + self.runfolder_obj.runfolder_name, "UA_fail")
             # write to logfile
-            self.write_to_uascript_logfile("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
+            #self.write_to_uascript_logfile("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
         
         if len(list_of_processed_samples) == 0:
             self.write_to_uascript_logfile("List of fastqs did not contain any known Pan numbers. Stopping\n")
@@ -1018,7 +1019,7 @@ class process_runfolder():
         """
         # dx run + config.app_project + config.upload_multiqc_path + -imultiqc_html= + input.html
         dx_command = "".join([
-            self.upload_multiqc_command, " -y", " -imultiqc_html=$jobid:multiqc_report",
+            self.upload_multiqc_command, " -imultiqc_html=$jobid:multiqc_report",
             self.project, self.projectid, self.token
         ])
         return dx_command

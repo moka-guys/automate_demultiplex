@@ -46,6 +46,8 @@ def get_job_id (project,analysis_id):
             # Outputs from the sention job in the workflow/analysis are linked to a sub-job.
             # The ID for the sub-job can be pulled from the first dependsOn field of the sention job.
             return stage['execution']['dependsOn'][0]
+    else:
+        raise Exception('No stage found in job')
 
 def print_sapientia_input (jobid):
     """
@@ -74,7 +76,7 @@ if __name__ == "__main__":
             jobid = get_job_id(args.project,args.analysis_id)
         except IndexError:
             tries += 1
-            if tries == 50:
+            if tries == 300: # Can take a while for the server to update
                 raise
 
     if args.tool == "iva":

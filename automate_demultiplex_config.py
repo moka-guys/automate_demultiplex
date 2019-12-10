@@ -265,9 +265,10 @@ panel_settings = {"Pan493": {
                     "ingenuity_email":wes_email_address,
                     "peddy":True
                     },
-                "Pan1620": {
+                "Pan1620": { # Focused Exome. Are we uploading to Ingenuity?
                     "mokawes":True,
-                    "ingenuity_email":wes_email_address
+                    "ingenuity_email":wes_email_address,
+                    "iva_upload": True
                     },
                 "Pan1190": {
                     "RPKM_bedfile_pan_number":None,
@@ -279,9 +280,9 @@ panel_settings = {"Pan493": {
                 },
                 "Pan2684": {
                     "RPKM_bedfile_pan_number":None,
-                    "mokawes":True,
-                    "capture_type":"Amplicon",
-                    "ingenuity_email":wes_email_address},
+                    "mokaamp":True,
+                    "capture_type":"Amplicon"
+                },
                 "Pan1449": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,                    
@@ -289,9 +290,11 @@ panel_settings = {"Pan493": {
                     "RPKM_also_analyse":["Pan1234"]
                     },
                 "Pan1451": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number":"Pan1452"
                     },
-                "Pan3237":{
+                "Pan3237":{ # SAPIENTIA PANEL - SKIPPING FOR NOW
                     "mokawes":True,
                     "sapientia_upload": True,
                     "clinical_coverage_depth":20,
@@ -302,36 +305,58 @@ panel_settings = {"Pan493": {
                     "peddy":True                    
                     },
                 "Pan1453": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number":"Pan1454"
                     },
                 "Pan1063": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number":"Pan1064"
                     },
                 "Pan1009": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number": "Pan1010"
                     },
                 "Pan1459": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number": "Pan1458"
                     },
                 "Pan2022": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number": "Pan1974"
                     },
                 "Pan1965": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number": "Pan2000"
                     },
                 "Pan1158": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number": "Pan2023"
                     },
                 "Pan1159": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number": None
                     },
                 "Pan1646": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number": "Pan1651"
                     },
                 "Pan3237": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number": None
                     },
                 "Pan1157": {
+                    "mokapipe":True,
+                    "multiqc_coverage_level":30,
                     "RPKM_bedfile_pan_number": None
                     }
 
@@ -341,7 +366,7 @@ panel_settings = {"Pan493": {
 email_panel_dict = {"Pan493": wes_email_address,
                     "Pan1009": interpretation_request_email,
                     "Pan1063": interpretation_request_email,
-                    "Pan1620": wook_email,
+                    "Pan1620": 'wook_email', # No LONGER WOOK EMAIL??
                     "Pan1157": interpretation_request_email,
                     "Pan1190": oncology_email,
                     "Pan2684": oncology_email,
