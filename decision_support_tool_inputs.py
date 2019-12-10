@@ -30,7 +30,7 @@ def get_job_id (project,analysis_id):
     For a given analysis id do a dx describe and parse the json file to return the job id of the desired stage
     """
     # obtain json for dx describe on the given analysis id
-    cmd = "source ~/dx-toolkit/environment; dx describe %s:%s --json --auth-token %s " % (project,analysis_id, config.Nexus_API_Key)
+    cmd = "source /etc/profile.d/dnanexus.environment.sh; dx describe %s:%s --json --auth-token %s " % (project,analysis_id, config.Nexus_API_Key)
 
     # execute command
     proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
@@ -41,7 +41,7 @@ def get_job_id (project,analysis_id):
     json_ob=json.loads(out)
     #print json_ob
     for stage in json_ob["stages"]:
-        if stage["execution"]["stage"] == config.mokawes_senteion_stage_id:
+        if stage["execution"]["stage"] in config.wes_sention_samplename:
             #print "found senteion stage id"
             return str(stage["execution"]["id"])
 
@@ -50,14 +50,14 @@ def print_sapientia_input (jobid):
     The sapientia import app takes VCFs and BAMs. 
     Return the app specific input, using the senteion job id and output name.
     """
-    print config.sapientia_vcf_inputname + jobid + "." + config.mokawes_senteion_vcf_output_name + config.sapientia_bam_inputname + jobid + "." + config.mokawes_senteion_bam_output_name
+    print(config.sapientia_vcf_inputname + jobid + "." + config.mokawes_senteion_vcf_output_name + config.sapientia_bam_inputname + jobid + "." + config.mokawes_senteion_bam_output_name)
 
 def print_iva_input (jobid):
     """
     The IVA import app takes VCFs, BAMs and BAIs. 
     Return the app specific input, using the sapientia job id and output names.
     """
-    print " %s%s.%s%s%s.%s%s%s.%s" % (config.iva_vcf_inputname, jobid, config.mokawes_senteion_vcf_output_name, config.iva_bam_inputname, jobid, config.mokawes_senteion_bam_output_name,config.iva_bai_inputname, jobid, config.mokawes_senteion_bai_output_name)
+    print(" %s%s.%s%s%s.%s%s%s.%s" % (config.iva_vcf_inputname, jobid, config.mokawes_senteion_vcf_output_name, config.iva_bam_inputname, jobid, config.mokawes_senteion_bam_output_name,config.iva_bai_inputname, jobid, config.mokawes_senteion_bai_output_name))
 
 if __name__ == "__main__":
     args = get_arguments()

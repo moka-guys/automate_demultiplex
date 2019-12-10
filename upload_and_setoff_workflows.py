@@ -970,7 +970,7 @@ class process_runfolder():
         These inputs are created by a python script, which is called immediately before this job, and the output is captures into the variable $analysisid
         The dx run command is returned (string)
         """
-        dx_command = self.sapientia_upload_command + " $analysisid" + self.dest + self.dest_cmd + self.project + self.projectid + self.token
+        dx_command = self.sapientia_upload_command + " $analysisid" + self.dest + self.dest_cmd + self.token
         return dx_command
     
     def run_iva_command(self, pannumber):
@@ -981,7 +981,7 @@ class process_runfolder():
         The ingenuity email is taken from the panel dictionary using the pan number input to this function.
         The dx run command is returned (string)
         """
-        dx_command = self.iva_upload_command + " $analysisid" + config.iva_email_input_name + self.panel_dictionary[pannumber]["ingenuity_email"] + self.dest + self.dest_cmd + self.project + self.projectid + self.token
+        dx_command = self.iva_upload_command + " $analysisid" + config.iva_email_input_name + self.panel_dictionary[pannumber]["ingenuity_email"] + self.project + self.projectid + self.token
         return dx_command
     
     def add_to_depends_list(self):
@@ -1017,7 +1017,7 @@ class process_runfolder():
         """
 
         """
-        return "put upload_multiqc command here"
+        return "#put upload_multiqc command here"
     
     def run_peddy_command(self):
         """
@@ -1042,7 +1042,7 @@ class process_runfolder():
         Takes a list of commands and writes them to file.
         """
         with open(self.runfolder_obj.runfolder_dx_run_script, 'w') as dxrun_commands:
-            dxrun_commands.writelines(command_list)
+            dxrun_commands.writelines([ line + "\n" for line in command_list ])
 
     def run_dx_run_commands(self):
         """
@@ -1252,9 +1252,12 @@ class process_runfolder():
         out, err = self.execute_subprocess_command(cmd)
         
     def upload_log_files(self):
+        # TODO: lopop and find logfiles not in runfolder
         pass
 
     def look_for_upload_errors(self):
+        # TODO: Parse logfiles and look for error strings. We already have the code that does this.
+        # Aled: main difference is backup_runfolder logilfe missing.
         # assess backup runfolder output
         #and assess upload agent when uploading log files
         pass

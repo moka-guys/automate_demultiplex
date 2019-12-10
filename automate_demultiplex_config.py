@@ -223,7 +223,7 @@ sapientia_bam_inputname = " -ibams="
 iva_vcf_inputname = " -ivcf="
 iva_bam_inputname = " -ibam_files="
 iva_bai_inputname = " -ibai_files="
-mokawes_senteion_stage_id= "stage-Ff0P73j0GYKX41VkF3j62F9j"
+#mokawes_senteion_stage_id= "stage-Ff0P73j0GYKX41VkF3j62F9j" # ? Get from MokaWES sample name. This isn't the correct stage currently?
 
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
