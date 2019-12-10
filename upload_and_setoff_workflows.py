@@ -255,14 +255,15 @@ class process_runfolder():
                 #self.look_for_upload_errors_fastq(self.upload_fastqs())
 
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
-                self.run_dx_run_commands()
-                #self.smartsheet_workflows_commands_sent()
-                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
-                self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
-                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
-                #self.send_opms_queries()
-                #self.look_for_upload_errors(self.upload_rest_of_runfolder()[0])
-                #self.look_for_upload_errors(self.upload_log_files())
+                # self.run_dx_run_commands()
+                # self.smartsheet_workflows_commands_sent() # TEST?
+                ## TODO: test queries
+                # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
+                # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
+                # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
+                # self.send_opms_queries()
+                self.look_for_upload_errors(self.upload_rest_of_runfolder()[0])
+                # self.look_for_upload_errors(self.upload_log_files())
 
    
     def set_panel_dictionary(self):
@@ -1247,7 +1248,7 @@ class process_runfolder():
         # copy samplesheet into project
         copyfile(config.samplesheets + samplesheet_name, os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name))
 
-        cmd = "python config.backup_runfolder_script -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + "  --ignore L00 --logpath " + config.backup_runfolder_logfile
+        cmd = "python3 " + config.backup_runfolder_script + " -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + " --ignore L00 --logpath " + config.backup_runfolder_logfile + " -a " + config.Nexus_API_Key
 
         # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
         self.write_to_uascript_logfile("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n " + cmd \
@@ -1255,6 +1256,7 @@ class process_runfolder():
         
         # run the command
         out, err = self.execute_subprocess_command(cmd)
+        return out, err
         
     def upload_log_files(self):
         # TODO: lopop and find logfiles not in runfolder
