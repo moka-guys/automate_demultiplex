@@ -70,6 +70,7 @@ backup_runfolder_script = "/usr/local/src/mokaguys/apps/workstation_housekeeping
 
 # backup runfolder folder
 backup_runfolder_logfile = "/usr/local/src/mokaguys/automate_demultiplexing_logfiles/backup_runfolder_logfiles"
+backup_runfolder_success = "backup_runfolder INFO - END"
 
 # command to test dx toolkit
 # dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"

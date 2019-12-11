@@ -262,7 +262,8 @@ class process_runfolder():
                 # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
                 # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
                 # self.send_opms_queries()
-                self.look_for_upload_errors(self.upload_rest_of_runfolder()[0])
+                self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
+                pass
                 # self.look_for_upload_errors(self.upload_log_files())
 
    
@@ -1255,19 +1256,45 @@ class process_runfolder():
                 + "\nsee standard out from these commands in log file @ " + os.path.join(config.backup_runfolder_logfile, self.runfolder_obj.runfolder_name) + "\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
         
         # run the command
-        out, err = self.execute_subprocess_command(cmd)
-        return out, err
+        #out, err = self.execute_subprocess_command(cmd)
+        #TODO: uncomment running the command
+        backup_logfile = config.backup_runfolder_logfile + '/' + self.runfolder_obj.runfolder_name + '.log'
+        return backup_logfile
         
     def upload_log_files(self):
         # TODO: lopop and find logfiles not in runfolder
         pass
 
-    def look_for_upload_errors(self):
-        # TODO: Parse logfiles and look for error strings. We already have the code that does this.
-        # Aled: main difference is backup_runfolder logilfe missing.
-        # assess backup runfolder output
-        #and assess upload agent when uploading log files
-        pass
+    def look_for_upload_errors(self, logfile, success=None):
+        successful_upload = False
+        upload_error = False
+
+        for upload in open(logfile ,'r').read().split("Uploading file"):
+            # if there was an error during the upload...
+            if config.ua_error in upload:
+                # if error seen set flag
+                upload_error = True
+                # if it still completed successfully carry on
+                if "uploaded successfully" in upload:
+                    self.write_to_uascript_logfile("There was a disruption to the network when uploading the rest of the runfolder but it completed successfully\n")
+                    self.logger("upload of runfolder was disrupted but completed for run " + self.runfolder_obj.runfolder_name, "UA_disrupted")
+                # other wise send an email and write to log
+                else:
+                    self.write_to_uascript_logfile("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
+                    self.logger("upload of runfolder failed for run " + self.runfolder_obj.runfolder_name, "UA_fail")
+            # Check upload success if success string passed
+            if success and (success in upload):
+                successful_upload = True
+
+        # Write an error if a success string was passed but not found
+        if success and not successful_upload:
+            self.write_to_uascript_logfile("Backup script did not complete successfully\n")
+            self.logger("backup of runfolder incomplete for run " + self.runfolder, "UA_fail")
+        # only state no errors seen if no errors were seen!
+        elif not upload_error:
+            # write to log file check was ok
+            self.write_to_uascript_logfile("There were no issues when backing up the run folder\n")
+            self.logger("backup of runfolder complete for run " + self.runfolder_obj.runfolder_name, "UA_pass")
     
     def execute_subprocess_command(self,command):
         """
