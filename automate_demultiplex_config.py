@@ -85,7 +85,7 @@ upload_agent_expected_stdout = "Upload Agent Version:"
 # Current Mokapipe ID
 mokapipe_pipeline_ID = "3229"
 # Current MokaWES ID
-mokawes_pipeline_ID = "3053"
+mokawes_pipeline_ID = "3558"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -105,7 +105,7 @@ app_project = "001_ToolsReferenceData:/"
 # path to the workflow in the app project
 mokapipe_path = "Workflows/GATK3.5_v2.10"
 # path to the WES workflow in the app project
-mokawes_path = "Workflows/MokaWES_v1.5"
+mokawes_path = "Workflows/MokaWES_v1.6"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
@@ -235,7 +235,7 @@ default_panel_properties = {
                     "UMI":False,
                     "UMI_bcl2fastq":None, # eg Y145,I8,Y9I8,Y145
                     "RPKM_bedfile_pan_number":None,
-                    "RPKM_also_analyse":None, # This is a list containing additional pan numbers that decribe which BAM files should be downloaded
+                    "RPKM_also_analyse":None, # This is a comma seperated list containing additional pan numbers that decribe which BAM files should be downloaded
                     "onePGT":False,
                     "mokawes":False,
                     "joint_variant_calling":False,
@@ -261,8 +261,7 @@ panel_settings = {"Pan493": {
                     "mokawes":True,
                     "iva_upload": True,
                     "multiqc_coverage_level":20,
-                    "hsmetrics_bedfile":None, # only when using bed file with a different pannumber 
-                    "sambamba_bedfile":None, # only when using bed file with a different pannumber 
+                    "hsmetrics_bedfile":"agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber 
                     "ingenuity_email":wes_email_address,
                     "peddy":True
                     },
@@ -272,34 +271,41 @@ panel_settings = {"Pan493": {
                     "iva_upload": True
                     },
                 "Pan1190": {
-                    "RPKM_bedfile_pan_number":None,
                     "mokaamp":True,
+                    "oncology":True,
+                    "mokaonc":True,
                     "capture_type":"Amplicon",
                     "ingenuity_email":oncology_email,
                     "clinical_coverage_depth":1000,
                     "multiqc_coverage_level": 100,
-                    "iva_upload": True,
-                },
+                    "iva_upload": True
+                    },
                 "Pan2684": {
                     "RPKM_bedfile_pan_number":None,
                     "mokaamp":True,
                     "capture_type":"Amplicon",
                     "iva_upload": True
+                    "oncology":False, 
+                    "clinical_coverage_depth":600, # only found in mokamp command
+                    "multiqc_coverage_level":100,
+                    "ingenuity_email":oncology_email
                 },
                 "Pan1449": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,                    
                     "RPKM_bedfile_pan_number":"Pan1450",
                     "RPKM_also_analyse":["Pan3320"],
-                    "iva_upload": True,
+                    "iva_upload": True
                     },
-                "Pan3220": {
+                "Pan3320": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,                    
                     "RPKM_bedfile_pan_number":"Pan1450",
                     "RPKM_also_analyse":["Pan1449"],
                     "sapientia_upload": True,
-                    "sapientia_project":228
+                    "sapientia_project":261,
+                    "hsmetrics_bedfile":"Pan1449", # only when using bed file with a different pannumber 
+                    "sambamba_bedfile":"Pan1449" # only when using bed file with a different pannumber 
                     },
                 "Pan1451": {
                     "mokapipe":True,
@@ -307,60 +313,69 @@ panel_settings = {"Pan493": {
                     "RPKM_bedfile_pan_number":"Pan1452",
                     "iva_upload": True
                     },
-                "Pan3221":{ # SAPIENTIA PANEL - SKIPPING FOR NOW
+                "Pan3321":{ # SAPIENTIA WES - won't be live until April 2020
                     "mokawes":True,
                     "sapientia_upload": True,
                     "clinical_coverage_depth":20,
                     "multiqc_coverage_level":20,
-                    "hsmetrics_bedfile":None, # only when using bed file with a different pannumber 
-                    "sambamba_bedfile":None, # only when using bed file with a different pannumber 
-                    "sapientia_project":"123",
-                    "peddy":True                    
+                    "hsmetrics_bedfile":"agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber 
+                    "sambamba_bedfile":"Pan493", # only when using bed file with a different pannumber 
+                    "sapientia_project":"999999",
+                    "peddy":True
                     },
                 "Pan1453": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number":"Pan1454"
+                    "RPKM_bedfile_pan_number":"Pan1454",
+                    "iva_upload": True
                     },
                 "Pan1063": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number":"Pan1064"
+                    "RPKM_bedfile_pan_number":"Pan1064",
+                    "iva_upload": True
                     },
                 "Pan1009": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": "Pan1010"
+                    "RPKM_bedfile_pan_number": "Pan1010",
+                    "iva_upload": True
                     },
                 "Pan1459": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": "Pan1458"
+                    "RPKM_bedfile_pan_number": "Pan1458",
+                    "iva_upload": True
                     },
                 "Pan2022": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": "Pan1974"
+                    "RPKM_bedfile_pan_number": "Pan1974",
+                    "iva_upload": True
                     },
                 "Pan1965": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": "Pan2000"
+                    "RPKM_bedfile_pan_number": "Pan2000",
+                    "iva_upload": True
                     },
                 "Pan1158": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": "Pan2023"
+                    "RPKM_bedfile_pan_number": "Pan2023",
+                    "iva_upload": True
                     },
                 "Pan1159": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": None
+                    "RPKM_bedfile_pan_number": "Pan1973",
+                    "iva_upload": True
                     },
                 "Pan1646": {
                     "mokapipe":True,
                     "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": "Pan1651"
+                    "RPKM_bedfile_pan_number": "Pan1651",
+                    "iva_upload": True
                     },
                 "Pan3237": {
                     "mokapipe":True,
