@@ -215,7 +215,7 @@ oncology_panels = ["Pan1190","Pan2684"]
 # =====Sapientia
 # list of St George's analyses, with the corresponding sapientia project-id as value
 decision_support_tool_input_script = "decision_support_tool_inputs.py"
-sapientia_uploads = {"Pan3237":130}
+#sapientia_uploads = {"Pan3237":130}
 mokawes_senteion_bam_output_name = "mappings_realigned_bam" #ENSURE WE WANT REALIGNED NOT DEDUP BAM
 mokawes_senteion_bai_output_name = "mappings_realigned_bai"
 mokawes_senteion_vcf_output_name = "variants_vcf"
@@ -284,8 +284,8 @@ panel_settings = {"Pan493": {
                     "RPKM_bedfile_pan_number":None,
                     "mokaamp":True,
                     "capture_type":"Amplicon",
-                    "iva_upload": True
-                    "oncology":False, 
+                    "iva_upload": True,
+                    "oncology":False,
                     "clinical_coverage_depth":600, # only found in mokamp command
                     "multiqc_coverage_level":100,
                     "ingenuity_email":oncology_email
