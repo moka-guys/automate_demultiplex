@@ -256,7 +256,7 @@ class process_runfolder():
 
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
                 # self.run_dx_run_commands()
-                # self.smartsheet_workflows_commands_sent() # TEST?
+                # self.smartsheet_workflows_commands_sent()
                 ## TODO: test queries
                 # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
                 # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
@@ -951,10 +951,10 @@ class process_runfolder():
         """
         # call function to return all the bedfile paths
         bedfiles = self.nexus_bedfiles(pannumber)
+
         # Samples with different pannumbers can be included in the same rpkm analysis.
         # The app takes these pan numbers as a string, and will seperate on commas to identify multiple pan numbers
         # Multiple pannumbers are specified in the panel dictionary as a list under "RPKM_also_analyse"
-
         string_of_pannumbers_to_analyse = pannumber
         if self.panel_dictionary[pannumber]["RPKM_also_analyse"]:
             string_of_pannumbers_to_analyse + "," + ",".join(self.panel_dictionary[pannumber]["RPKM_also_analyse"])
@@ -967,14 +967,14 @@ class process_runfolder():
     def create_joint_variant_calling_command(self):
         return dx_command
 
-    def run_sapientia_command(self):
+    def run_sapientia_command(self, pannumber):
         """
         The app which imports samples into ingenuity has been removed form the workflow. 
         It is now run as a seperate app, using the jobid.outputname as the input, which ensures the job doesn't run until the vcfs have been created.
         These inputs are created by a python script, which is called immediately before this job, and the output is captures into the variable $analysisid
         The dx run command is returned (string)
         """
-        dx_command = self.sapientia_upload_command + " $analysisid" + self.dest + self.dest_cmd + self.token
+        dx_command = self.sapientia_upload_command + " $analysisid -isapientia_project=" + self.panel_dictionary[pannumber]["sapientia_project"] + self.dest + self.dest_cmd + self.token
         return dx_command
     
     def run_iva_command(self, pannumber):
@@ -1248,63 +1248,22 @@ class process_runfolder():
         samplesheet_name = self.runfolder_obj.runfolder_name + "_SampleSheet.csv"
 
         # copy samplesheet into project
-        copyfile(
-            config.samplesheets + samplesheet_name,
-            os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name)
-        )
+        copyfile(config.samplesheets + samplesheet_name, os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name))
 
-        cmd = "python3 " + config.backup_runfolder_script + " -i " + \
-            self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + \
-            " --ignore /L00,DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath " + \
-            config.backup_runfolder_logfile + " -a " + config.Nexus_API_Key
+        cmd = "python3 " + config.backup_runfolder_script + " -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + " --ignore L00 --logpath " + config.backup_runfolder_logfile + " -a " + config.Nexus_API_Key
 
         # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
         self.write_to_uascript_logfile("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n " + cmd \
                 + "\nsee standard out from these commands in log file @ " + os.path.join(config.backup_runfolder_logfile, self.runfolder_obj.runfolder_name) + "\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
         
         # run the command
-        out, err = self.execute_subprocess_command(cmd)
+        #out, err = self.execute_subprocess_command(cmd)
         #TODO: uncomment running the command
         backup_logfile = config.backup_runfolder_logfile + '/' + self.runfolder_obj.runfolder_name + '.log'
         return backup_logfile
         
     def upload_log_files(self):
-        """
-        log files include:
-        1. the log file for this script containing all commands used (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_log)
-        2. demultiplexing log file (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files)
-        3. nexus project creation logs (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Nexus_project_creation_logs)
-        4. runfolder_upload_commands (in the run folder)
-        5. runfolder_upload_stdout (in the run folder)
-        6. logfile used to set off the workflow (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
-        7. samplesheet
-        """
-        
-        logfiles = [
-            self.upload_agent_logfile_path, # Script logfile containing all commands used
-            config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + '.sh', # Nexus project creation log
-            os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds), # Runfolder upload commands
-            os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file), # Runfolder upload stdout
-            self.runfolder_obj.runfolder_dx_run_script # File used to set off dx run commands
-            #os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name + "_SampleSheet.csv") # SampleSheet
-        ]
-
-        demultiplex_logfiles = [ os.path.join(config.demultiplex_logfiles, filename) for filename in os.listdir(config.demultiplex_logfiles) if self.runfolder_obj.runfolder_name in filename ]
-        logfiles.extend(demultiplex_logfiles)
-
-        nexus_upload_folder = "/" + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "") + "/Logfiles/"
-        command_list = [
-            config.upload_agent_path, "--auth-token", config.Nexus_API_Key, "--project",
-            self.runfolder_obj.nexus_project_name, "--folder", nexus_upload_folder, "--do-not-compress", "--upload-threads", "10"]
-        command_list.extend(logfiles)
-        cmd = subprocess.list2cmdline(command_list)
-
-                # run the command
-        out, err = self.execute_subprocess_command(cmd)
-        #TODO: uncomment running the command
-        a = 10
-        #TODO: Write to runfolder upload command before initating. Capture stderr and stdout. Pass to 'look for upload errors'
-        pass
+        # TODO: lopop and find logfiles not in runfolder
         pass
 
     def look_for_upload_errors(self, logfile, success=None):
