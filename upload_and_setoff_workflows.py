@@ -701,12 +701,12 @@ class process_runfolder():
 
         # for sambamba/hs metrics bed file if a different bed file is specified in config file use that, otherwise use the pannumber
         if self.panel_dictionary[pannumber]["sambamba_bedfile"]:
-            bed_dict["sambamba"] = config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["sambamba_bedfile"]
+            bed_dict["sambamba"] = config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["sambamba_bedfile"] + "dataSambamba.bed"
         else:
             bed_dict["sambamba"] = config.app_project + config.bedfile_folder + pannumber + "dataSambamba.bed"
             
         if self.panel_dictionary[pannumber]["hsmetrics_bedfile"]:
-            bed_dict["hsmetrics"] = config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["hsmetrics_bedfile"]
+            bed_dict["hsmetrics"] = config.app_project + config.bedfile_folder + self.panel_dictionary[pannumber]["hsmetrics_bedfile"] + "data.bed"
         else:
             bed_dict["hsmetrics"] = config.app_project + config.bedfile_folder + pannumber + "data.bed"
         
@@ -770,7 +770,7 @@ class process_runfolder():
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_mokawes_input_command()) #TODO: make generic
+                        commands_list.append(self.build_iva_mokawes_input_command()) #TODO: make generic not mokawes
                         commands_list.append(self.run_iva_command(panel))
                         commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["sapientia_upload"]:

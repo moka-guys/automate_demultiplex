@@ -29,28 +29,6 @@ def get_arguments():
     # Return the arguments
     return parser.parse_args()
 
-# def get_sapientia_job_id(project, analysis_id):
-#     cmd = "source /etc/profile.d/dnanexus.environment.sh; dx describe %s:%s --json --auth-token %s " % (project,analysis_id, config.Nexus_API_Key)
-
-
-
-
-
-
-# def print_sapientia_input (jobid):
-#     """
-#     The sapientia import app takes VCFs and BAMs. 
-#     Return the app specific input, using the senteion job id and output name.
-#     """
-#     print(config.sapientia_vcf_inputname + jobid + "." + config.mokawes_senteion_vcf_output_name + config.sapientia_bam_inputname + jobid + "." + config.mokawes_senteion_bam_output_name)
-
-# def print_iva_input (jobid):
-#     """
-#     The IVA import app takes VCFs, BAMs and BAIs. 
-#     Return the app specific input, using the sapientia job id and output names.
-#     """
-#     print(" %s%s:%s%s%s:%s%s%s:%s" % (config.iva_vcf_inputname, jobid, config.mokawes_senteion_vcf_output_name, config.iva_bam_inputname, jobid, config.mokawes_senteion_bam_output_name,config.iva_bai_inputname, jobid, config.mokawes_senteion_bai_output_name))
-
 def set_panel_dictionary():
     """ 
     Populate the dictionary detailing panel specific settings.
@@ -114,13 +92,17 @@ class DecisionTooler():
         # capture the streams
         (out, err) = proc.communicate()
         json_ob=json.loads(out)
+        jobid, bamjobid = None, None
         for stage in json_ob["stages"]:
             if stage["execution"]["stage"] == 'stage-F2gPqFQ025p601qgGq0QVvX2':
-                return stage['execution']['id']
+                jobid = stage['execution']['id']
+            elif stage["execution"]["stage"] == 'stage-F28y4qQ0jy1fkqfy5v2b8byx':
+                bamjobid = stage['execution']['id']
+        return jobid, bamjobid
 
     def get_job_id(self, analysis_id, project, workflow):
         if workflow.name == 'mokawes':
-            return self._get_mokawes_jobid(analysis_id, project)
+            return self._get_mokawes_jobid(analysis_id, project), None
         elif workflow.name == 'mokapipe':
             return self._get_mokapipe_jobid(analysis_id, project)
 
@@ -128,9 +110,9 @@ class DecisionTooler():
         if ps['mokawes']:
             return self.wfo('mokawes', config.mokawes_senteion_vcf_output_name, config.mokawes_senteion_bam_output_name, config.mokawes_senteion_bai_output_name)
         elif ps['mokapipe']:
-            return self.wfo('mokapipe', config.mokapipe_vcf_output_name, None, None)
+            return self.wfo('mokapipe', config.mokapipe_vcf_output_name, config.mokapipe_bam_output_name, None)
 
-    def printer(self, workflow, tool):
+    def printer(self, jobid, workflow, tool, pipe_bam_jobid=None):
         if tool == "iva":
             if workflow.name == 'mokawes':
                 print(
@@ -147,12 +129,20 @@ class DecisionTooler():
                     )
                 )
         if tool == "sapientia":
-            print(
-                " %s%s:%s%s%s:%s" % (
-                config.sapientia_vcf_inputname, jobid, workflow.vcf_out,
-                config.sapientia_bam_inputname, jobid, workflow.bam_out
+            if workflow.name == 'mokawes':
+                print(
+                    " %s%s:%s%s%s:%s" % (
+                    config.sapientia_vcf_inputname, jobid, workflow.vcf_out,
+                    config.sapientia_bam_inputname, jobid, workflow.bam_out
+                    )
                 )
-            )
+            elif workflow.name == 'mokapipe':
+                print(
+                    " %s%s:%s%s%s:%s" % (
+                    config.sapientia_vcf_inputname, jobid, workflow.vcf_out,
+                    config.sapientia_bam_inputname, pipe_bam_jobid, workflow.bam_out
+                    )
+                )
 
 
 if __name__ == "__main__":
@@ -162,19 +152,15 @@ if __name__ == "__main__":
             [ 'dx', 'describe', args.analysis_id, '--auth', config.Nexus_API_Key, '--json']
         )
     )
+
+    # Get settings for analysis panel (used to determine which workflow is running)
     pannumber = re.search('Pan\d+', ajson['name']).group()
     paneldict = set_panel_dictionary()
     pansettings = paneldict[pannumber]
 
+    # Print decision support tool inputs
     tooler = DecisionTooler()
     workflow = tooler.get_workflow(pansettings)
-    jobid = tooler.get_job_id(args.analysis_id, args.project, workflow)
-    tooler.printer(workflow, args.tool)
-
-    # if args.tool == "iva":
-    #     jobid = get_sention_job_id(args.project, args.analysis_id)
-    #     print_iva_input(jobid)
-    # if args.tool == "sapientia":
-    #     jobid = get_sention_job_id(args.project, args.analysis_id)
-    #     print_sapientia_input(jobid)
-        
+    # bamjobid is None and only used for mokapipe+sapientia
+    jobid, bamjobid = tooler.get_job_id(args.analysis_id, args.project, workflow) 
+    tooler.printer(jobid, workflow, args.tool, pipe_bam_jobid=bamjobid)
