@@ -258,12 +258,12 @@ class process_runfolder():
                 #self.look_for_upload_errors_fastq(self.upload_fastqs())
 
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
-                #self.run_dx_run_commands()
+                self.run_dx_run_commands()
                 # self.smartsheet_workflows_commands_sent()
-                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
-                self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
-                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
-                self.send_opms_queries()
+                # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
+                # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
+                # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
+                # self.send_opms_queries()
                 # self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
                 # self.look_for_upload_errors(self.upload_log_files())
    
@@ -434,7 +434,8 @@ class process_runfolder():
             
             self.logger("unrecognised panel number found in run " + self.runfolder_obj.runfolder_name, "UA_fail")
             # write to logfile
-            self.write_to_uascript_logfile("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
+            #TODO: uncomment below
+            #self.write_to_uascript_logfile("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
         
         if len(list_of_processed_samples) == 0:
             self.write_to_uascript_logfile("List of fastqs did not contain any known Pan numbers. Stopping\n")
@@ -757,7 +758,7 @@ class process_runfolder():
                         commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["sapientia_upload"]:
                         commands_list.append(self.build_sapientia_input_command())
-                        commands_list.append(self.run_sapientia_command())
+                        commands_list.append(self.run_sapientia_command(panel))
                         commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["peddy"]:
                         peddy = True
@@ -768,14 +769,14 @@ class process_runfolder():
                 if self.panel_dictionary[panel]["mokapipe"]:
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
-                    if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_input_command())
-                        commands_list.append(self.run_iva_command(panel))
-                        commands_list.append(self.add_to_depends_list())
-                    if self.panel_dictionary[panel]["sapientia_upload"]:
-                        commands_list.append(self.build_sapientia_input_command())
-                        commands_list.append(self.run_sapientia_command())
-                        commands_list.append(self.add_to_depends_list())
+                    # if self.panel_dictionary[panel]["iva_upload"]: #TODO: IVA INPUT FOR MOKAPIPE
+                    #     # commands_list.append(self.build_iva_input_command())
+                    #     # commands_list.append(self.run_iva_command(panel))
+                    #     # commands_list.append(self.add_to_depends_list())
+                    # if self.panel_dictionary[panel]["sapientia_upload"]: #TODO: sapientia INPUT FOR MOKAPIPE
+                    #     commands_list.append(self.build_sapientia_input_command())
+                    #     commands_list.append(self.run_sapientia_command())
+                    #     commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
 
@@ -786,12 +787,12 @@ class process_runfolder():
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
-                    if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_input_command())
-                        commands_list.append(self.add_to_depends_list())
-                    if self.panel_dictionary[panel]["sapientia_upload"]:
-                        commands_list.append(self.build_sapientia_input_command())
-                        commands_list.append(self.add_to_depends_list())
+                    # if self.panel_dictionary[panel]["iva_upload"]: #TODO: IVA INPUT FOR MOKA AMP 
+                    #     commands_list.append(self.build_iva_input_command())
+                    #     commands_list.append(self.add_to_depends_list())
+                    # if self.panel_dictionary[panel]["sapientia_upload"]:
+                    #     commands_list.append(self.build_sapientia_input_command())
+                    #     commands_list.append(self.add_to_depends_list())
         
         # run wide jobs
         if len(mokaonc_list) != 0:
@@ -875,12 +876,12 @@ class process_runfolder():
             # call function to build nexus fastq paths - returns tuple for read1 and read2
             fastqs = self.nexus_fastq_paths(sample_fq)
             # add each as an input 
-            dx_command = config.mokaonc_fq_input +  fastqs[0] + config.mokaonc_fq_input + fastqs[1]
+            dx_command += config.mokaonc_fq_input +  fastqs[0] + config.mokaonc_fq_input + fastqs[1]
 
         # create the dx command include email address for ingenuity - NB only one panel is supported by MokaONC hense hard coded pan number
-        dx_command = dx_command + config.mokaonc_ingenuity + self.panel_dictionary["Pan1190"]["ingenuity_email"] + self.dest + self.dest_cmd + "MokaONC_Output" + self.token
+        command_out = dx_command + config.mokaonc_ingenuity + self.panel_dictionary["Pan1190"]["ingenuity_email"] + self.dest + self.dest_cmd + "MokaONC_Output" + self.token
         
-        return dx_command
+        return command_out
 
 
     def build_iva_input_command(self):
