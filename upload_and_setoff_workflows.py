@@ -232,7 +232,7 @@ class process_runfolder():
         """
         This module calls all other modules in order
         """
-        self.run_tests()
+        #self.run_tests()
         # # build dictionary of panel settings
         # self.panel_dictionary = self.set_panel_dictionary()
         # # perform upload agent test
@@ -257,11 +257,10 @@ class process_runfolder():
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
                 # self.run_dx_run_commands()
                 # self.smartsheet_workflows_commands_sent()
-                ## TODO: test queries
-                # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
-                # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
-                # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
-                # self.send_opms_queries()
+                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
+                self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
+                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
+                self.send_opms_queries()
                 self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
                 # TODO: Fix this
                 self.look_for_upload_errors(self.upload_log_files())
@@ -1162,8 +1161,8 @@ class process_runfolder():
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
         if len(dnanumbers) > 0:
-            return {"count":len(dnanumbers), "query":"update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " \
-            + config.mokastatus_dataproc_ID + " where dna in ('" + ("','").join(dnanumbers) + "') and StatusID = " + config.mokastat_nextsq_ID}
+            return {"count":len(dnanumbers), "query":["update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " \
+            + config.mokastatus_dataproc_ID + " where dna in ('" + ("','").join(dnanumbers) + "') and StatusID = " + config.mokastat_nextsq_ID]}
         else:
             return None
 
@@ -1367,4 +1366,3 @@ if __name__ == '__main__':
     runs = get_list_of_runs()
     # call function
     runs.loop_through_runs()
-    print(None)
