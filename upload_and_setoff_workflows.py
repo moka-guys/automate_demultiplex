@@ -1248,16 +1248,22 @@ class process_runfolder():
         samplesheet_name = self.runfolder_obj.runfolder_name + "_SampleSheet.csv"
 
         # copy samplesheet into project
-        copyfile(config.samplesheets + samplesheet_name, os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name))
+        copyfile(
+            config.samplesheets + samplesheet_name,
+            os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name)
+        )
 
-        cmd = "python3 " + config.backup_runfolder_script + " -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + " --ignore L00 --logpath " + config.backup_runfolder_logfile + " -a " + config.Nexus_API_Key
+        cmd = "python3 " + config.backup_runfolder_script + " -i " + \
+            self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + \
+            " --ignore /L00,DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath " + \
+            config.backup_runfolder_logfile + " -a " + config.Nexus_API_Key
 
         # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
         self.write_to_uascript_logfile("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n " + cmd \
                 + "\nsee standard out from these commands in log file @ " + os.path.join(config.backup_runfolder_logfile, self.runfolder_obj.runfolder_name) + "\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
         
         # run the command
-        #out, err = self.execute_subprocess_command(cmd)
+        out, err = self.execute_subprocess_command(cmd)
         #TODO: uncomment running the command
         backup_logfile = config.backup_runfolder_logfile + '/' + self.runfolder_obj.runfolder_name + '.log'
         return backup_logfile
@@ -1291,8 +1297,13 @@ class process_runfolder():
             config.upload_agent_path, "--auth-token", config.Nexus_API_Key, "--project",
             self.runfolder_obj.nexus_project_name, "--folder", nexus_upload_folder, "--do-not-compress", "--upload-threads", "10"]
         command_list.extend(logfiles)
-        command = subprocess.list2cmdline(command_list)
+        cmd = subprocess.list2cmdline(command_list)
+
+                # run the command
+        out, err = self.execute_subprocess_command(cmd)
+        #TODO: uncomment running the command
         a = 10
+        #TODO: Write to runfolder upload command before initating. Capture stderr and stdout. Pass to 'look for upload errors'
         pass
         pass
 
