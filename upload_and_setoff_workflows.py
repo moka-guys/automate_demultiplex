@@ -157,7 +157,7 @@ class process_runfolder():
 
         self.createprojectcommand = "project_id=\"$(dx new project --bill-to %s \"%s\" --brief --auth-token " + config.Nexus_API_Key + ")\"\n"
         self.addprojecttag = "dx tag $project_id "
-        self.base_command = "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
+        self.mokapipe_command = "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
         self.wes_command = "jobid=$(dx run " + config.app_project + config.mokawes_path + " -y --name "
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
@@ -233,36 +233,39 @@ class process_runfolder():
         This module calls all other modules in order
         """
         #self.run_tests()
-        # # build dictionary of panel settings
-        # self.panel_dictionary = self.set_panel_dictionary()
-        # # perform upload agent test
-        # self.test_upload_agent()
-        # # test dx toolkit installation
-        # self.test_dx_toolkit()
+        # build dictionary of panel settings
+        self.panel_dictionary = self.set_panel_dictionary()
+        # perform upload agent test
+        #self.test_upload_agent()
+        # test dx toolkit installation
+        #self.test_dx_toolkit()
         
         # check if already uploaded and demultiplkexing finished sucessfully
-        if not self.already_uploaded() and self.demultiplex_completed_successfully():
+        #if not self.already_uploaded() and self.demultiplex_completed_successfully():
+        #TODO: change
+        if self.already_uploaded() and self.demultiplex_completed_successfully():
             self.list_of_processed_samples, self.fastq_string, not_processed = self.find_fastqs(self.runfolder_obj.fastq_folder_path)
             if self.list_of_processed_samples:
                 # build the project name using the WES batch and NGS run numbers
                 self.dest_cmd, self.runfolder_obj.nexus_path, self.runfolder_obj.nexus_project_name = self.build_nexus_project_name(self.capture_any_WES_batch_numbers(self.list_of_processed_samples),self.capture_library_batch_numbers(self.list_of_processed_samples))
                 # create bash script to create and share nexus project -return filepath
-                #  pass filepath into module which runs project creation script - capturing projectid
-                #self.projectid = self.run_project_creation_script(self.write_create_project_script()) TODO: UNCOMMENT
-                self.projectid = 'project-Fg6fQF00J7ZQ2J7z8YQ7J3b0'
+                # pass filepath into module which runs project creation script - capturing projectid
+                # TODO: Uncode project
+                #self.projectid = self.run_project_creation_script(self.write_create_project_script())
+                self.projectid = 'project-Fgk679j00b4Qkxxq3ZxKXy4F'
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass the path to ua_stdout_log to function which checks fastqs were uploaded without error
                 #self.look_for_upload_errors_fastq(self.upload_fastqs())
 
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
-                # self.run_dx_run_commands()
+                #self.run_dx_run_commands()
                 # self.smartsheet_workflows_commands_sent()
                 # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
                 # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
                 # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
                 # self.send_opms_queries()
-                # self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
-                # self.look_for_upload_errors(self.upload_log_files())
+                self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
+                self.look_for_upload_errors(self.upload_log_files())
    
     def set_panel_dictionary(self):
         """ 
@@ -354,21 +357,20 @@ class process_runfolder():
         This function checks for presense of this file.
         Returns False if not already processed.
         """
-        return False
-        # # write to log file including the github repo tag and time stamp
-        # self.write_to_uascript_logfile("automate_demultiplexing release:" + git_tag.git_tag() + \
-        #     "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + \
-        #     "----------------------\nAssessing " + self.runfolder_obj.runfolderpath + \
-        #     "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
+        # write to log file including the github repo tag and time stamp
+        self.write_to_uascript_logfile("automate_demultiplexing release:" + git_tag.git_tag() + \
+            "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + \
+            "----------------------\nAssessing " + self.runfolder_obj.runfolderpath + \
+            "\n\n----------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n")
         
-        # # use perform_test function to assert if the file exists - will return True if file exists
-        # if self.perform_test(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file),"already_uploaded"):
-        #     self.write_to_uascript_logfile("YES - self.upload_started_file present \n----------------------STOP----------------------\n")
-        #     return True
-        # else:
-        #     # if file doesn't exist return false to continue and write to log file
-        #     self.write_to_uascript_logfile("NO - self.upload_started_file not present so continue\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
-        #     return False
+        # use perform_test function to assert if the file exists - will return True if file exists
+        if self.perform_test(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file),"already_uploaded"):
+            self.write_to_uascript_logfile("YES - self.upload_started_file present \n----------------------STOP----------------------\n")
+            return True
+        else:
+            # if file doesn't exist return false to continue and write to log file
+            self.write_to_uascript_logfile("NO - self.upload_started_file not present so continue\n\n----------------------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY----------------------\n")
+            return False
             
     def demultiplex_completed_successfully(self):
         """
@@ -429,10 +431,10 @@ class process_runfolder():
         
         if len(not_processed) > 0:
             # add to logger
-            pass
-            #self.logger("unrecognised panel number found in run " + self.runfolder_obj.runfolder_name, "UA_fail")
+            
+            self.logger("unrecognised panel number found in run " + self.runfolder_obj.runfolder_name, "UA_fail")
             # write to logfile
-            #self.write_to_uascript_logfile("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
+            self.write_to_uascript_logfile("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
         
         if len(list_of_processed_samples) == 0:
             self.write_to_uascript_logfile("List of fastqs did not contain any known Pan numbers. Stopping\n")
@@ -541,7 +543,7 @@ class process_runfolder():
         # open bash script
         with open(project_bash_script_path, 'w') as create_nexus_project_script :
             create_nexus_project_script.write(self.source_command)
-            #create_nexus_project_script.write(self.createprojectcommand % (config.prod_organisation, self.runfolder_obj.nexus_project_name))
+            create_nexus_project_script.write(self.createprojectcommand % (config.prod_organisation, self.runfolder_obj.nexus_project_name))
 
             # Share the project with the nexus usernames in the list in config file
             # first give view permissions
@@ -848,7 +850,7 @@ class process_runfolder():
         bedfiles = self.nexus_bedfiles(pannumber)
 
         # create the dx command
-        dx_command = self.base_command +fastqs[2]\
+        dx_command = self.mokapipe_command +fastqs[2]\
             + config.mokapipe_fastqc1 + fastqs[0] \
             + config.mokapipe_fastqc2 + fastqs[1] \
             + config.mokapipe_bwa_rg_sample + fastqs[2] \
@@ -1253,8 +1255,7 @@ class process_runfolder():
                 + "\nsee standard out from these commands in log file @ " + os.path.join(config.backup_runfolder_logfile, self.runfolder_obj.runfolder_name) + "\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n")
         
         # run the command
-        #out, err = self.execute_subprocess_command(cmd)
-        #TODO: uncomment running the command
+        out, err = self.execute_subprocess_command(cmd)
         backup_logfile = config.backup_runfolder_logfile + '/' + self.runfolder_obj.runfolder_name + '.log'
         return backup_logfile
 
@@ -1293,9 +1294,7 @@ class process_runfolder():
         runfolder_upload_cmd_file.close()
         # Write to logfiles
 
-        #out, err = self.execute_subprocess_command(cmd)
-        # TODO: replace with actual commands
-        out, err = "None", "None"
+        out, err = self.execute_subprocess_command(cmd)
 
         # capture stdout to log file containing stdour and stderr
         runfolder_upload_stdout_file = open(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file), 'a')
