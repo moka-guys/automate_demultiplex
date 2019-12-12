@@ -167,7 +167,7 @@ class process_runfolder():
         self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y"
         self.mokaamp_command = "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
         self.decision_support_preperation = "analysisid=$(python %s -a " % (os.path.join(os.path.dirname(os.path.realpath(__file__)),config.decision_support_tool_input_script))
-        self.sapientia_upload_command = "jobid=$(dx run " + config.app_project + config.sentieon_app_path + " -y"
+        self.sapientia_upload_command = "jobid=$(dx run " + config.app_project + config.sapientia_app_path + " -y"
         self.iva_upload_command = "jobid=$(dx run " + config.iva_app_path + " -y"
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix

@@ -115,7 +115,7 @@ peddy_path = "Apps/peddy_v1.3"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.10"
 # path to senteion upload app
-sentieon_app_path = "Apps/senteion_upload_v1.0"
+sapientia_app_path = "Apps/sapientia_upload_v1.0"
 # path to iva upload app
 iva_app_path = "app-ingenuity_variant_transfer/1.0.6"
 # path to app which uploads multiqc report
@@ -219,8 +219,8 @@ sapientia_uploads = {"Pan3237":130}
 mokawes_senteion_bam_output_name = "mappings_realigned_bam" #ENSURE WE WANT REALIGNED NOT DEDUP BAM
 mokawes_senteion_bai_output_name = "mappings_realigned_bai"
 mokawes_senteion_vcf_output_name = "variants_vcf"
-sapientia_vcf_inputname = " -ivcfs="
-sapientia_bam_inputname = " -ibams="
+sapientia_vcf_inputname = " -ivcf="
+sapientia_bam_inputname = " -ibam="
 iva_vcf_inputname = " -ivcfs="
 iva_bam_inputname = " -ibam_files="
 iva_bai_inputname = " -ibai_files="

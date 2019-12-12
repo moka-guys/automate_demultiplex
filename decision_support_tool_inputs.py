@@ -78,15 +78,18 @@ class DecisionTooler():
                 (out, err) = proc.communicate()
                 json_ob=json.loads(out)
                 for stage in json_ob["stages"]:
-                    if stage["execution"]["stage"] in config.wes_sention_samplename:
-                        # Outputs from the sention job in the workflow/analysis are linked to a sub-job.
-                        # The ID for the sub-job can be pulled from the first dependsOn field of the sention job.
-                        return stage['execution']['dependsOn'][0]
+                    if stage["execution"]["name"] == "Sentieon DNAseq FASTQ to VCF":
+                        if stage['execution']['output'] and 'mappings_realigned_bam' in stage['execution']['output']:
+                            return stage['execution']['id']
+                        elif stage['execution']['dependsOn'] != []:
+                            return stage['execution']['dependsOn'][0]
                 else:
-                    raise Exception('No stage found in job')
+                    tries += 1
+                    if tries == 1000:
+                        raise Exception('No stage found in job')
             except IndexError:
                 tries += 1
-                if tries == 200: # Can take a while for the server to update
+                if tries == 1000: # Can take a while for the server to update
                     raise Exception('Maximum Tries Exceeded')
 
     def get_job_id(self, analysis_id, project, workflow):
@@ -104,6 +107,13 @@ class DecisionTooler():
                 config.iva_vcf_inputname, jobid, workflow.vcf_out,
                 config.iva_bam_inputname, jobid, workflow.bam_out,
                 config.iva_bai_inputname, jobid, workflow.bai_out
+                )
+            )
+        if tool == "sapientia":
+            print(
+                " %s%s:%s%s%s:%s" % (
+                config.sapientia_vcf_inputname, jobid, workflow.vcf_out,
+                config.sapientia_bam_inputname, jobid, workflow.bam_out
                 )
             )
 
