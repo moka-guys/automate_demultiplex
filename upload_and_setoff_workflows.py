@@ -261,9 +261,8 @@ class process_runfolder():
                 # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
                 # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
                 # self.send_opms_queries()
-                self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
-                self.look_for_upload_errors(self.upload_log_files())
-
+                # self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
+                # self.look_for_upload_errors(self.upload_log_files())
    
     def set_panel_dictionary(self):
         """ 
