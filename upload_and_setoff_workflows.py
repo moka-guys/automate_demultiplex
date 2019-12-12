@@ -257,14 +257,12 @@ class process_runfolder():
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
                 # self.run_dx_run_commands()
                 # self.smartsheet_workflows_commands_sent()
-                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
-                self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
-                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
-                self.send_opms_queries()
+                # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
+                # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
+                # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
+                # self.send_opms_queries()
                 self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
-                # TODO: Fix this
                 self.look_for_upload_errors(self.upload_log_files())
-                pass
 
    
     def set_panel_dictionary(self):
@@ -1260,10 +1258,39 @@ class process_runfolder():
         #TODO: uncomment running the command
         backup_logfile = config.backup_runfolder_logfile + '/' + self.runfolder_obj.runfolder_name + '.log'
         return backup_logfile
-        
+
+    def list_log_files(self):
+           """
+        log files include:
+        1. the log file for this script containing all commands used (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_log)
+        2. demultiplexing log file (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files)
+        3. nexus project creation logs (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Nexus_project_creation_logs)
+        4. runfolder_upload_commands (in the run folder)
+        5. runfolder_upload_stdout (in the run folder)
+        6. logfile used to set off the workflow (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
+        """
+        ua_log = self.upload_agent_logfile_path, # Script logfile containing all commands used
+        nexus_create_log = config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + '.sh' # Nexus project creation log
+        runfolder_upload_log =   os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds) # Runfolder upload commands
+        runfolder_upload_start_log =  os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file) # Runfolder upload stdout
+        workflow_command_log =  self.runfolder_obj.runfolder_dx_run_script # File used to set off dx run commands
+        demultiplex_logfiles = [ os.path.join(config.demultiplex_logfiles, filename) for filename in os.listdir(config.demultiplex_logfiles) if self.runfolder_obj.runfolder_name in filename ]
+        logfiles = [ua_log, nexus_create_log, runfolder_upload_log, runfolder_upload_start_log, workflow_command_log] + demultiplex_logfiles
+        return logfiles
+
     def upload_log_files(self):
-        # TODO: lopop and find logfiles not in runfolder
-        pass
+
+        # nexus_upload_folder = "/" + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "") + "/Logfiles/"
+        # command_list = [
+        #     config.upload_agent_path, "--auth-token", config.Nexus_API_Key, "--project",
+        #     self.runfolder_obj.nexus_project_name, "--folder", nexus_upload_folder, "--do-not-compress", "--upload-threads", "10"]
+        # command_list.extend(logfiles)
+        # cmd = subprocess.list2cmdline(command_list)
+
+        #         # run the command
+        # out, err = self.execute_subprocess_command(cmd)
+
+        # pass
 
     def look_for_upload_errors(self, logfile, success=None):
         successful_upload = False
