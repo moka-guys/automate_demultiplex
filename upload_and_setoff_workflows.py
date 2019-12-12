@@ -232,7 +232,7 @@ class process_runfolder():
         """
         This module calls all other modules in order
         """
-        self.run_tests()
+        #self.run_tests()
         # # build dictionary of panel settings
         # self.panel_dictionary = self.set_panel_dictionary()
         # # perform upload agent test
@@ -257,16 +257,12 @@ class process_runfolder():
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
                 # self.run_dx_run_commands()
                 # self.smartsheet_workflows_commands_sent()
-                ## TODO: test queries
                 # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
                 # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
                 # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
                 # self.send_opms_queries()
-                self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
-                # TODO: Fix this
-                self.look_for_upload_errors(self.upload_log_files())
-                pass
-
+                # self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
+                # self.look_for_upload_errors(self.upload_log_files())
    
     def set_panel_dictionary(self):
         """ 
@@ -1162,8 +1158,8 @@ class process_runfolder():
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
         if len(dnanumbers) > 0:
-            return {"count":len(dnanumbers), "query":"update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " \
-            + config.mokastatus_dataproc_ID + " where dna in ('" + ("','").join(dnanumbers) + "') and StatusID = " + config.mokastat_nextsq_ID}
+            return {"count":len(dnanumbers), "query":["update NGSTest set PipelineVersion = " + config.mokawes_pipeline_ID + " , StatusID = " \
+            + config.mokastatus_dataproc_ID + " where dna in ('" + ("','").join(dnanumbers) + "') and StatusID = " + config.mokastat_nextsq_ID]}
         else:
             return None
 
@@ -1250,7 +1246,7 @@ class process_runfolder():
         # copy samplesheet into project
         copyfile(config.samplesheets + samplesheet_name, os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name))
 
-        cmd = "python3 " + config.backup_runfolder_script + " -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + " --ignore L00 --logpath " + config.backup_runfolder_logfile + " -a " + config.Nexus_API_Key
+        cmd = "python3 " + config.backup_runfolder_script + " -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + " --ignore /L00,DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath " + config.backup_runfolder_logfile + " -a " + config.Nexus_API_Key
 
         # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
         self.write_to_uascript_logfile("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n " + cmd \
@@ -1261,10 +1257,56 @@ class process_runfolder():
         #TODO: uncomment running the command
         backup_logfile = config.backup_runfolder_logfile + '/' + self.runfolder_obj.runfolder_name + '.log'
         return backup_logfile
-        
+
+    def list_log_files(self):
+        """
+        log files include:
+        1. the log file for this script containing all commands used (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_log)
+        2. demultiplexing log file (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files)
+        3. nexus project creation logs (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Nexus_project_creation_logs)
+        4. runfolder_upload_commands (in the run folder)
+        5. runfolder_upload_stdout (in the run folder)
+        6. logfile used to set off the workflow (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
+        """
+        ua_log = self.upload_agent_logfile_path # Script logfile containing all commands used
+        nexus_create_log = config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + '.sh' # Nexus project creation log
+        runfolder_upload_log =   os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds) # Runfolder upload commands
+        runfolder_upload_start_log =  os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file) # Runfolder upload stdout
+        workflow_command_log =  self.runfolder_obj.runfolder_dx_run_script # File used to set off dx run commands
+        demultiplex_logfiles = [ os.path.join(config.demultiplex_logfiles, filename) for filename in os.listdir(config.demultiplex_logfiles) if self.runfolder_obj.runfolder_name in filename ]
+        logfiles = [ua_log, nexus_create_log, runfolder_upload_log, runfolder_upload_start_log, workflow_command_log] + demultiplex_logfiles
+        return logfiles
+
     def upload_log_files(self):
-        # TODO: lopop and find logfiles not in runfolder
-        pass
+        nexus_upload_folder = "/" + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "") + "/Logfiles/"
+        command_list = [
+            config.upload_agent_path, "--auth-token", config.Nexus_API_Key, "--project",
+            self.runfolder_obj.nexus_project_name, "--folder", nexus_upload_folder, "--do-not-compress", "--upload-threads", "10"
+            ] + self.list_log_files()
+
+        cmd = subprocess.list2cmdline(command_list)
+
+        # write these commands to the runfolder_upload_cmds_logfile before upload.
+        runfolder_upload_cmd_file = open(os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds), 'a')
+        runfolder_upload_cmd_file.write("\n----------------------Upload log files----------------------\n")
+        runfolder_upload_cmd_file.write(cmd+ "\n")
+        runfolder_upload_cmd_file.close()
+        # Write to logfiles
+
+        #out, err = self.execute_subprocess_command(cmd)
+        # TODO: replace with actual commands
+        out, err = "None", "None"
+
+        # capture stdout to log file containing stdour and stderr
+        runfolder_upload_stdout_file = open(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file), 'a')
+        runfolder_upload_stdout_file.write("\n----------------------Uploading logfiles (this will not be included in the file within DNA Nexus) " +
+            str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
+        runfolder_upload_stdout_file.write(out)
+        runfolder_upload_stdout_file.write(err)
+        runfolder_upload_stdout_file.close()
+
+        return os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file)
+
 
     def look_for_upload_errors(self, logfile, success=None):
         successful_upload = False
@@ -1367,4 +1409,3 @@ if __name__ == '__main__':
     runs = get_list_of_runs()
     # call function
     runs.loop_through_runs()
-    print(None)
