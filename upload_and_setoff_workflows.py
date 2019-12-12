@@ -1247,7 +1247,7 @@ class process_runfolder():
         # copy samplesheet into project
         copyfile(config.samplesheets + samplesheet_name, os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name))
 
-        cmd = "python3 " + config.backup_runfolder_script + " -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + " --ignore L00 --logpath " + config.backup_runfolder_logfile + " -a " + config.Nexus_API_Key
+        cmd = "python3 " + config.backup_runfolder_script + " -i " + self.runfolder_obj.runfolderpath + " -p " + self.runfolder_obj.nexus_project_name + " --ignore /L00,DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath " + config.backup_runfolder_logfile + " -a " + config.Nexus_API_Key
 
         # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
         self.write_to_uascript_logfile("Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n " + cmd \
