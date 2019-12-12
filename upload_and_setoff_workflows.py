@@ -1367,3 +1367,4 @@ if __name__ == '__main__':
     runs = get_list_of_runs()
     # call function
     runs.loop_through_runs()
+    print(None)
