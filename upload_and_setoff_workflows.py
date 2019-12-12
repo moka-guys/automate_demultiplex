@@ -260,12 +260,12 @@ class process_runfolder():
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
                 #self.run_dx_run_commands()
                 # self.smartsheet_workflows_commands_sent()
-                # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
-                # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
-                # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
-                # self.send_opms_queries()
-                #self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
-                self.look_for_upload_errors(self.upload_log_files())
+                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
+                self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
+                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
+                self.send_opms_queries()
+                # self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
+                # self.look_for_upload_errors(self.upload_log_files())
    
     def set_panel_dictionary(self):
         """ 
@@ -1223,7 +1223,7 @@ class process_runfolder():
         if self.sql_queries["mokawes"]:
             workflows.append(config.mokawes_path.split("/")[-1])
             sql_statements += self.sql_queries["mokawes"]["query"]
-            count += self.sql_queries["mokapipe"]["count"]
+            count += self.sql_queries["mokawes"]["count"]
         
         if len(workflows) > 0 and len(sql_statements) > 0:
             # email this query

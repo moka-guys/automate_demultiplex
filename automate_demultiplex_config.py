@@ -273,7 +273,9 @@ panel_settings = {"Pan493": {
                     },
                 "Pan1190": {
                     "RPKM_bedfile_pan_number":None,
+                    "oncology":True,
                     "mokaamp":True,
+                    "mokaonc": True,
                     "capture_type":"Amplicon",
                     "ingenuity_email":oncology_email,
                     "clinical_coverage_depth":1000,
@@ -283,6 +285,7 @@ panel_settings = {"Pan493": {
                 "Pan2684": {
                     "RPKM_bedfile_pan_number":None,
                     "mokaamp":True,
+                    "oncology":True,
                     "capture_type":"Amplicon",
                     "iva_upload": True
                 },
