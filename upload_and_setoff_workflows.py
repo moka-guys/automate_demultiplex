@@ -753,7 +753,7 @@ class process_runfolder():
                     commands_list.append(self.create_mokawes_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_input_command())
+                        commands_list.append(self.build_iva_mokawes_input_command())
                         commands_list.append(self.run_iva_command(panel))
                         commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["sapientia_upload"]:
@@ -769,14 +769,15 @@ class process_runfolder():
                 if self.panel_dictionary[panel]["mokapipe"]:
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
-                    # if self.panel_dictionary[panel]["iva_upload"]: #TODO: IVA INPUT FOR MOKAPIPE
-                    #     # commands_list.append(self.build_iva_input_command())
-                    #     # commands_list.append(self.run_iva_command(panel))
-                    #     # commands_list.append(self.add_to_depends_list())
-                    # if self.panel_dictionary[panel]["sapientia_upload"]: #TODO: sapientia INPUT FOR MOKAPIPE
-                    #     commands_list.append(self.build_sapientia_input_command())
-                    #     commands_list.append(self.run_sapientia_command())
-                    #     commands_list.append(self.add_to_depends_list())
+                    if self.panel_dictionary[panel]["iva_upload"]:
+                        commands_list.append(self.build_iva_mokapipe_input_command())
+                        commands_list.append(self.run_iva_command(panel))
+                        commands_list.append(self.add_to_depends_list())
+                    if self.panel_dictionary[panel]["sapientia_upload"]:
+                        commands_list.append(self.build_sapientia_input_command())
+                        commands_list.append(self.run_sapientia_command())
+                        commands_list.append(self.add_to_depends_list())
+
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
 
@@ -787,12 +788,13 @@ class process_runfolder():
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
-                    # if self.panel_dictionary[panel]["iva_upload"]: #TODO: IVA INPUT FOR MOKA AMP 
-                    #     commands_list.append(self.build_iva_input_command())
-                    #     commands_list.append(self.add_to_depends_list())
-                    # if self.panel_dictionary[panel]["sapientia_upload"]:
-                    #     commands_list.append(self.build_sapientia_input_command())
-                    #     commands_list.append(self.add_to_depends_list())
+                    if self.panel_dictionary[panel]["iva_upload"]:
+                        commands_list.append(self.build_iva_mokaamp_input_command())
+                        commands_list.append(self.add_to_depends_list())
+                    if self.panel_dictionary[panel]["sapientia_upload"]:
+                        commands_list.append(self.build_sapientia_input_command())
+                        commands_list.append(self.add_to_depends_list())
+
         
         # run wide jobs
         if len(mokaonc_list) != 0:
@@ -884,7 +886,29 @@ class process_runfolder():
         return command_out
 
 
-    def build_iva_input_command(self):
+    def build_iva_mokapipe_input_command(self):
+        """
+        Ingenuity import app is run once at the end of all workflows for all panels with iva_upload = True
+        The ingenuity inputs are a list of jobid.output name. 
+        Each workflow has a analysis-id so further steps are required to obtain the required job-id.
+        A python script is run after each dx run command, taking the analysis id, project name and decision support tool and prints the required input to command line
+        This function returns the command for this python program
+        """
+        dx_command = "%s $jobid -t iva_mokapipe -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
+        return dx_command
+
+    def build_iva_mokaamp_input_command(self):
+        """
+        Ingenuity import app is run once at the end of all workflows for all panels with iva_upload = True
+        The ingenuity inputs are a list of jobid.output name. 
+        Each workflow has a analysis-id so further steps are required to obtain the required job-id.
+        A python script is run after each dx run command, taking the analysis id, project name and decision support tool and prints the required input to command line
+        This function returns the command for this python program
+        """
+        dx_command = "%s $jobid -t iva_mokaamp -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
+        return dx_command
+        
+    def build_iva_mokawes_input_command(self):
         """
         Ingenuity import app is run once at the end of all workflows for all panels with iva_upload = True
         The ingenuity inputs are a list of jobid.output name. 
