@@ -157,7 +157,7 @@ class process_runfolder():
 
         self.createprojectcommand = "project_id=\"$(dx new project --bill-to %s \"%s\" --brief --auth-token " + config.Nexus_API_Key + ")\"\n"
         self.addprojecttag = "dx tag $project_id "
-        self.base_command = "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
+        self.mokapipe_command = "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
         self.wes_command = "jobid=$(dx run " + config.app_project + config.mokawes_path + " -y --name "
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
@@ -848,7 +848,7 @@ class process_runfolder():
         bedfiles = self.nexus_bedfiles(pannumber)
 
         # create the dx command
-        dx_command = self.base_command +fastqs[2]\
+        dx_command = self.mokapipe_command +fastqs[2]\
             + config.mokapipe_fastqc1 + fastqs[0] \
             + config.mokapipe_fastqc2 + fastqs[1] \
             + config.mokapipe_bwa_rg_sample + fastqs[2] \

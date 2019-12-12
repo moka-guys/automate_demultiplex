@@ -83,7 +83,7 @@ upload_agent_expected_stdout = "Upload Agent Version:"
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # Current Mokapipe ID
-mokapipe_pipeline_ID = "2209"
+mokapipe_pipeline_ID = "3229"
 # Current MokaWES ID
 mokawes_pipeline_ID = "3053"
 
@@ -103,7 +103,7 @@ project_success = "Created new project called \"%s\""
 # The project containing the app and data
 app_project = "001_ToolsReferenceData:/"
 # path to the workflow in the app project
-mokapipe_path = "Workflows/GATK3.5_v2.9"
+mokapipe_path = "Workflows/GATK3.5_v2.10"
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.5"
 # path to the oncology workflow in the app project
