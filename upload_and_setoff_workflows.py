@@ -1260,7 +1260,7 @@ class process_runfolder():
         return backup_logfile
 
     def list_log_files(self):
-           """
+        """
         log files include:
         1. the log file for this script containing all commands used (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_log)
         2. demultiplexing log file (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files)
@@ -1269,7 +1269,7 @@ class process_runfolder():
         5. runfolder_upload_stdout (in the run folder)
         6. logfile used to set off the workflow (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
         """
-        ua_log = self.upload_agent_logfile_path, # Script logfile containing all commands used
+        ua_log = self.upload_agent_logfile_path # Script logfile containing all commands used
         nexus_create_log = config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + '.sh' # Nexus project creation log
         runfolder_upload_log =   os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds) # Runfolder upload commands
         runfolder_upload_start_log =  os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file) # Runfolder upload stdout
@@ -1279,18 +1279,35 @@ class process_runfolder():
         return logfiles
 
     def upload_log_files(self):
+        nexus_upload_folder = "/" + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "") + "/Logfiles/"
+        command_list = [
+            config.upload_agent_path, "--auth-token", config.Nexus_API_Key, "--project",
+            self.runfolder_obj.nexus_project_name, "--folder", nexus_upload_folder, "--do-not-compress", "--upload-threads", "10"
+            ] + self.list_log_files()
 
-        # nexus_upload_folder = "/" + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "") + "/Logfiles/"
-        # command_list = [
-        #     config.upload_agent_path, "--auth-token", config.Nexus_API_Key, "--project",
-        #     self.runfolder_obj.nexus_project_name, "--folder", nexus_upload_folder, "--do-not-compress", "--upload-threads", "10"]
-        # command_list.extend(logfiles)
-        # cmd = subprocess.list2cmdline(command_list)
+        cmd = subprocess.list2cmdline(command_list)
 
-        #         # run the command
-        # out, err = self.execute_subprocess_command(cmd)
+        # write these commands to the runfolder_upload_cmds_logfile before upload.
+        runfolder_upload_cmd_file = open(os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds), 'a')
+        runfolder_upload_cmd_file.write("\n----------------------Upload log files----------------------\n")
+        runfolder_upload_cmd_file.write(cmd+ "\n")
+        runfolder_upload_cmd_file.close()
+        # Write to logfiles
 
-        # pass
+        #out, err = self.execute_subprocess_command(cmd)
+        # TODO: replace with actual commands
+        out, err = "None", "None"
+
+        # capture stdout to log file containing stdour and stderr
+        runfolder_upload_stdout_file = open(os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file), 'a')
+        runfolder_upload_stdout_file.write("\n----------------------Uploading logfiles (this will not be included in the file within DNA Nexus) " +
+            str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\n")
+        runfolder_upload_stdout_file.write(out)
+        runfolder_upload_stdout_file.write(err)
+        runfolder_upload_stdout_file.close()
+
+        return os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file)
+
 
     def look_for_upload_errors(self, logfile, success=None):
         successful_upload = False
