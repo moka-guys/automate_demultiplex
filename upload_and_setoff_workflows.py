@@ -770,12 +770,12 @@ class process_runfolder():
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_mokapipe_input_command())
+                        commands_list.append(self.build_iva_mokawes_input_command()) #TODO: make generic
                         commands_list.append(self.run_iva_command(panel))
                         commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["sapientia_upload"]:
                         commands_list.append(self.build_sapientia_input_command())
-                        commands_list.append(self.run_sapientia_command())
+                        commands_list.append(self.run_sapientia_command(panel))
                         commands_list.append(self.add_to_depends_list())
 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
@@ -788,12 +788,12 @@ class process_runfolder():
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
-                    if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_mokaamp_input_command())
-                        commands_list.append(self.add_to_depends_list())
-                    if self.panel_dictionary[panel]["sapientia_upload"]:
-                        commands_list.append(self.build_sapientia_input_command())
-                        commands_list.append(self.add_to_depends_list())
+                    # if self.panel_dictionary[panel]["iva_upload"]:
+                    #     commands_list.append(self.build_iva_mokaamp_input_command())
+                    #     commands_list.append(self.add_to_depends_list())
+                    # if self.panel_dictionary[panel]["sapientia_upload"]:
+                    #     commands_list.append(self.build_sapientia_input_command())
+                    #     commands_list.append(self.add_to_depends_list())
 
         
         # run wide jobs

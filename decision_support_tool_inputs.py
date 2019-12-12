@@ -51,8 +51,23 @@ def get_arguments():
 #     """
 #     print(" %s%s:%s%s%s:%s%s%s:%s" % (config.iva_vcf_inputname, jobid, config.mokawes_senteion_vcf_output_name, config.iva_bam_inputname, jobid, config.mokawes_senteion_bam_output_name,config.iva_bai_inputname, jobid, config.mokawes_senteion_bai_output_name))
 
-def get_panel_settings(analysis_id):
-    pass
+def set_panel_dictionary():
+    """ 
+    Populate the dictionary detailing panel specific settings.
+    Default settings are set in the config file and then updated as and when required for each panel the defaults in config file.
+    Loop through panel specific properties in config file and overwrite any default with panel specific settings
+    Return dictionary
+    """
+    dictionary_to_return = {}
+    # for each panel 
+    for panel in config.panel_list:          
+        # loop through default settings, adding to dictionary and  then loop through panel settings from config, overwriting any defaults
+        dictionary_to_return[panel] = {}
+        for setting in  config.default_panel_properties:
+            dictionary_to_return[panel][setting] = config.default_panel_properties[setting]
+        for setting in config.panel_settings[panel]:
+            dictionary_to_return[panel][setting] = config.panel_settings[panel][setting]
+    return dictionary_to_return
 
 class DecisionTooler():
 
@@ -92,23 +107,45 @@ class DecisionTooler():
                 if tries == 1000: # Can take a while for the server to update
                     raise Exception('Maximum Tries Exceeded')
 
+
+    def _get_mokapipe_jobid(self, analysis_id, project):
+        cmd = "source /etc/profile.d/dnanexus.environment.sh; dx describe %s:%s --json --auth-token %s " % (project,analysis_id, config.Nexus_API_Key)
+        proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        # capture the streams
+        (out, err) = proc.communicate()
+        json_ob=json.loads(out)
+        for stage in json_ob["stages"]:
+            if stage["execution"]["stage"] == 'stage-F2gPqFQ025p601qgGq0QVvX2':
+                return stage['execution']['id']
+
     def get_job_id(self, analysis_id, project, workflow):
         if workflow.name == 'mokawes':
             return self._get_mokawes_jobid(analysis_id, project)
+        elif workflow.name == 'mokapipe':
+            return self._get_mokapipe_jobid(analysis_id, project)
 
     def get_workflow(self, ps):
         if ps['mokawes']:
             return self.wfo('mokawes', config.mokawes_senteion_vcf_output_name, config.mokawes_senteion_bam_output_name, config.mokawes_senteion_bai_output_name)
+        elif ps['mokapipe']:
+            return self.wfo('mokapipe', config.mokapipe_vcf_output_name, None, None)
 
     def printer(self, workflow, tool):
         if tool == "iva":
-            print(
-                " %s%s:%s%s%s:%s%s%s:%s" % (
-                config.iva_vcf_inputname, jobid, workflow.vcf_out,
-                config.iva_bam_inputname, jobid, workflow.bam_out,
-                config.iva_bai_inputname, jobid, workflow.bai_out
+            if workflow.name == 'mokawes':
+                print(
+                    " %s%s:%s%s%s:%s%s%s:%s" % (
+                    config.iva_vcf_inputname, jobid, workflow.vcf_out,
+                    config.iva_bam_inputname, jobid, workflow.bam_out,
+                    config.iva_bai_inputname, jobid, workflow.bai_out
+                    )
                 )
-            )
+            elif workflow.name == 'mokapipe':
+                print(
+                    " %s%s:%s" % (
+                    config.iva_vcf_inputname, jobid, workflow.vcf_out
+                    )
+                )
         if tool == "sapientia":
             print(
                 " %s%s:%s%s%s:%s" % (
@@ -126,7 +163,8 @@ if __name__ == "__main__":
         )
     )
     pannumber = re.search('Pan\d+', ajson['name']).group()
-    pansettings = config.panel_settings[pannumber]
+    paneldict = set_panel_dictionary()
+    pansettings = paneldict[pannumber]
 
     tooler = DecisionTooler()
     workflow = tooler.get_workflow(pansettings)
