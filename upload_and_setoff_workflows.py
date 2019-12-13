@@ -1,13 +1,11 @@
-'''
-Created on 21 Sep 2016
+"""upload_and_setoff_workflows.py
 Once demultiplexing has been complete the files require uploading to DNANexus.
 This script will be scheduled to run and identify any folders that require further processing
 get_list_of_runs loops through runfolders and creates an instance of the process_runfolder class for each runfolder
 The process_runfolder class creates an instance of the runfolder_object class and the quarterback module calls all other modules to assess the runfolder
 if required, a Nexus project is created and shared, data uploaded and the pipelines set off as determined by the panel number encoded in the filename
-
 @author: aled
-'''
+"""
 
 import os
 import re
@@ -108,10 +106,6 @@ class runfolder_object():
         self.nexus_project_name =  ""
         self.nexus_path = ""
 
-    def main(self):
-        pass
-
-
 class process_runfolder():
     ''' 
     This class assesses a runfolder to check if it required processing.  if the runfolder meets the criteria to be processed.
@@ -142,16 +136,7 @@ class process_runfolder():
         self.list_of_DNA_numbers_Onc = []
         self.list_of_DNA_numbers_nonWES = []
 
-        # strings for NGSrun and wes numbers
-        #self.library_batch = ''  # first element of fastq file name.
-        #self.wes_number = ''  # WES number near the end of fastq file name.
-
-
         # ####################################DNA Nexus########################
-        # bash script that is used to execute dx commands
-        #self.runfolder_dx_run_script = ""
-        self.DNA_Nexus_bash_script = ""
-
         # DNA Nexus commands
         self.source_command = "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''\n"
 
@@ -186,16 +171,12 @@ class process_runfolder():
         self.depends_list = "depends_list=\"${depends_list} -d ${jobid} \"" + "\n"
         self.dx_run = []
 
-        # create path to data in nexus eg /runfolder/Data
-        #self.nexus_path = ""
-
         # list of panels
         self.panels_in_run = []
 
         # command to restart upload agent part 1
         self.restart_ua_1 = "ua_status=1; while [ $ua_status -ne 0 ]; do "
         self.restart_ua_2 = "; ua_status=$?; if [[ $ua_status -ne 0 ]]; then echo \"temporary issue when uploading file %s\"; fi ; done"
-
 
         # ######################email message###############################
         self.email_subject = ""
@@ -232,40 +213,32 @@ class process_runfolder():
         """
         This module calls all other modules in order
         """
-        #self.run_tests()
+        self.run_tests()
         # build dictionary of panel settings
         self.panel_dictionary = self.set_panel_dictionary()
-        # perform upload agent test
-        #self.test_upload_agent()
-        # test dx toolkit installation
-        #self.test_dx_toolkit()
         
         # check if already uploaded and demultiplkexing finished sucessfully
-        #if not self.already_uploaded() and self.demultiplex_completed_successfully():
-        #TODO: change
-        if self.already_uploaded() and self.demultiplex_completed_successfully():
+        if not self.already_uploaded() and self.demultiplex_completed_successfully():
             self.list_of_processed_samples, self.fastq_string, not_processed = self.find_fastqs(self.runfolder_obj.fastq_folder_path)
             if self.list_of_processed_samples:
                 # build the project name using the WES batch and NGS run numbers
                 self.dest_cmd, self.runfolder_obj.nexus_path, self.runfolder_obj.nexus_project_name = self.build_nexus_project_name(self.capture_any_WES_batch_numbers(self.list_of_processed_samples),self.capture_library_batch_numbers(self.list_of_processed_samples))
                 # create bash script to create and share nexus project -return filepath
                 # pass filepath into module which runs project creation script - capturing projectid
-                # TODO: Uncode project
-                #self.projectid = self.run_project_creation_script(self.write_create_project_script())
-                self.projectid = 'project-Fgk679j00b4Qkxxq3ZxKXy4F'
+                self.projectid = self.run_project_creation_script(self.write_create_project_script())
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass the path to ua_stdout_log to function which checks fastqs were uploaded without error
-                #self.look_for_upload_errors_fastq(self.upload_fastqs())
+                self.look_for_upload_errors_fastq(self.upload_fastqs())
 
                 self.write_dx_run_cmds(self.start_building_dx_run_cmds(self.list_of_processed_samples))
                 self.run_dx_run_commands()
-                # self.smartsheet_workflows_commands_sent()
-                # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
-                # self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
-                # self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
-                # self.send_opms_queries()
-                # self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
-                # self.look_for_upload_errors(self.upload_log_files())
+                self.smartsheet_workflows_commands_sent()
+                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(self.list_of_processed_samples)
+                self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
+                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
+                self.send_opms_queries()
+                self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
+                self.look_for_upload_errors(self.upload_log_files())
    
     def set_panel_dictionary(self):
         """ 
@@ -434,8 +407,7 @@ class process_runfolder():
             
             self.logger("unrecognised panel number found in run " + self.runfolder_obj.runfolder_name, "UA_fail")
             # write to logfile
-            #TODO: uncomment below
-            #self.write_to_uascript_logfile("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
+            self.write_to_uascript_logfile("Some fastq files contained an unrecognised panel number: " + ",".join(not_processed) + "\n")
         
         if len(list_of_processed_samples) == 0:
             self.write_to_uascript_logfile("List of fastqs did not contain any known Pan numbers. Stopping\n")
@@ -471,8 +443,7 @@ class process_runfolder():
             return "_".join(set(wes_numbers))
         else:
             return None
-        
-        
+            
     def capture_library_batch_numbers(self, list_of_processed_samples):
         """
         DNANexus project names are the runfolder suffixed with identifiers to help future dearchival easier.
@@ -500,8 +471,7 @@ class process_runfolder():
                 raise Exception, "Unable to identify library batch numbers"
             else:
                 return False
-            
-        
+                
     def build_nexus_project_name(self, wes_number, library_batch):
         """
         The DNA Nexus project name contains all the information required to quickly and easily identify the contents, which may help in the future.
@@ -753,7 +723,7 @@ class process_runfolder():
                     commands_list.append(self.create_mokawes_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_mokawes_input_command())
+                        commands_list.append(self.build_iva_input_command())
                         commands_list.append(self.run_iva_command(panel))
                         commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["sapientia_upload"]:
@@ -770,7 +740,7 @@ class process_runfolder():
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_mokawes_input_command()) #TODO: make generic not mokawes
+                        commands_list.append(self.build_iva_input_command())
                         commands_list.append(self.run_iva_command(panel))
                         commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["sapientia_upload"]:
@@ -886,29 +856,29 @@ class process_runfolder():
         return command_out
 
 
-    def build_iva_mokapipe_input_command(self):
-        """
-        Ingenuity import app is run once at the end of all workflows for all panels with iva_upload = True
-        The ingenuity inputs are a list of jobid.output name. 
-        Each workflow has a analysis-id so further steps are required to obtain the required job-id.
-        A python script is run after each dx run command, taking the analysis id, project name and decision support tool and prints the required input to command line
-        This function returns the command for this python program
-        """
-        dx_command = "%s $jobid -t iva_mokapipe -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
-        return dx_command
+    # def build_iva_mokapipe_input_command(self):
+    #     """
+    #     Ingenuity import app is run once at the end of all workflows for all panels with iva_upload = True
+    #     The ingenuity inputs are a list of jobid.output name. 
+    #     Each workflow has a analysis-id so further steps are required to obtain the required job-id.
+    #     A python script is run after each dx run command, taking the analysis id, project name and decision support tool and prints the required input to command line
+    #     This function returns the command for this python program
+    #     """
+    #     dx_command = "%s $jobid -t iva_mokapipe -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
+    #     return dx_command
 
-    def build_iva_mokaamp_input_command(self):
-        """
-        Ingenuity import app is run once at the end of all workflows for all panels with iva_upload = True
-        The ingenuity inputs are a list of jobid.output name. 
-        Each workflow has a analysis-id so further steps are required to obtain the required job-id.
-        A python script is run after each dx run command, taking the analysis id, project name and decision support tool and prints the required input to command line
-        This function returns the command for this python program
-        """
-        dx_command = "%s $jobid -t iva_mokaamp -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
-        return dx_command
+    # def build_iva_mokaamp_input_command(self):
+    #     """
+    #     Ingenuity import app is run once at the end of all workflows for all panels with iva_upload = True
+    #     The ingenuity inputs are a list of jobid.output name. 
+    #     Each workflow has a analysis-id so further steps are required to obtain the required job-id.
+    #     A python script is run after each dx run command, taking the analysis id, project name and decision support tool and prints the required input to command line
+    #     This function returns the command for this python program
+    #     """
+    #     dx_command = "%s $jobid -t iva_mokaamp -p %s)" % (self.decision_support_preperation, self.runfolder_obj.nexus_project_name)
+    #     return dx_command
         
-    def build_iva_mokawes_input_command(self):
+    def build_iva_input_command(self):
         """
         Ingenuity import app is run once at the end of all workflows for all panels with iva_upload = True
         The ingenuity inputs are a list of jobid.output name. 
