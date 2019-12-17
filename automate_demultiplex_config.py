@@ -141,6 +141,8 @@ mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample=" 
 mokapipe_sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
 mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
+mokapipe_variant_annotator_stage = "stage-F2gPqFQ025p601qgGq0QVvX2"
+mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 mokapipe_vcf_output_name = "vcf"
 mokapipe_bam_output_name = "bam"
 
@@ -232,7 +234,7 @@ iva_reference_default = "GRCh37"
 
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
-panel_list=["Pan493","Pan1009", "Pan1063","Pan1620", "Pan1157","Pan1190","Pan2684","Pan3237","Pan1449","Pan1451","Pan1453","Pan1459","Pan2022","Pan1965","Pan1158","Pan1159","Pan1646","Pan3320","Pan3321"]
+panel_list=["Pan493","Pan1009", "Pan1063","Pan1620", "Pan1157","Pan1190","Pan2684","Pan3237","Pan1449","Pan1451","Pan1453","Pan1459","Pan2022","Pan1965","Pan2835","Pan1158","Pan1159","Pan1646","Pan3320","Pan3321"]
 default_panel_properties = {
                     "UMI":False,
                     "UMI_bcl2fastq":None, # eg Y145,I8,Y9I8,Y145
@@ -260,6 +262,14 @@ default_panel_properties = {
 
 # override default panel settings
 panel_settings = {"Pan493": {
+                    "mokawes":True,
+                    "iva_upload": True,
+                    "multiqc_coverage_level":20,
+                    "hsmetrics_bedfile":"agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber 
+                    "ingenuity_email":wes_email_address,
+                    "peddy":True
+                    },
+                "Pan2835": {# TWIST WES
                     "mokawes":True,
                     "iva_upload": True,
                     "multiqc_coverage_level":20,
