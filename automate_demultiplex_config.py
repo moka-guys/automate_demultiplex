@@ -8,18 +8,15 @@ The variables defined in this module are required by the "demultiplex.py" and
 import os
 
 # Set debug mode
-debug = True
+debug = False
 
 # =====location of input/output files=====
-
-# root of folder that contains the apps, automate_demultiplexing_logfiles and development_area scripts 
+# root of folder that contains the apps, automate_demultiplexing_logfiles and development_area scripts
 # (2 levels up from this file)
 document_root = '/'.join(os.path.dirname(os.path.realpath(__file__)).split('/')[:-2])
 
 # path to run folders
-## WARNING: A test directory has been passed
-#runfolders = "/media/data3/share"
-runfolders = "/home/mokaguys/Documents/development_area/complete_refactor/share"
+runfolders = "/media/data3/share"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -38,7 +35,7 @@ file_demultiplexing = "demultiplexlog.txt"
 ignore_directories = ["samplesheets", "GlacierTest"]
 
 # runfolders used for debugging/testing
-upload_test_folders = ["999999_NB551068_WES_test","999999_NB551068_custom_panel_test","999999_M02353_ONC_test"]
+upload_test_folders = ["999999_NB551068_WES_test", "999999_NB551068_custom_panel_test", "999999_M02353_ONC_test"]
 demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
@@ -83,9 +80,9 @@ upload_agent_expected_stdout = "Upload Agent Version:"
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # Current Mokapipe ID
-mokapipe_pipeline_ID = "3229"
+mokapipe_pipeline_ID = "3559"
 # Current MokaWES ID
-mokawes_pipeline_ID = "3558"
+mokawes_pipeline_ID = "3053"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -103,17 +100,17 @@ project_success = "Created new project called \"%s\""
 # The project containing the app and data
 app_project = "001_ToolsReferenceData:/"
 # path to the workflow in the app project
-mokapipe_path = "Workflows/GATK3.5_v2.10"
+mokapipe_path = "Workflows/GATK3.5_v2.11"
 # path to the WES workflow in the app project
-mokawes_path = "Workflows/MokaWES_v1.6"
+mokawes_path = "Workflows/MokaWES_v1.5"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.1"
+mokaamp_path = "Workflows/MokaAMP_v1.2"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.3"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.10"
+multiqc_path = "Apps/multiqc_v1.11"
 # path to senteion upload app
 sapientia_app_path = "Apps/sapientia_upload_v1.0"
 # path to iva upload app
@@ -146,11 +143,15 @@ mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 mokapipe_vcf_output_name = "vcf"
 mokapipe_bam_output_name = "bam"
 
+
 # MokaWES workflow_inputs
 wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-wes_sention_samplename = " -istage-FQ8JPpj076Gybkq459GfqfZb.sample="  # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
 wes_picard_bedfile = " -istage-F9GGBQj0jy1yBbpZPvK5GvPJ.vendor_exome_bedfile=" # bedfile for hs metrics
+senteion_stage_id = "stage-FQ8JPpj076Gybkq459GfqfZb"
+wes_sention_samplename = " -i%s.sample=" % senteion_stage_id # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
+wes_sention_targets_bed = " -i%s.targets_bed=" % senteion_stage_id # BED file used to restrict Senteion variant calling
+
 
 # MokaOnc amplivar fastq input
 mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
@@ -212,14 +213,9 @@ view_users = ["org-viapath_prod", "InterpretationRequest"]
 # list of DNA Nexus users with admin access of project
 admin_users = ["mokaguys"]
 
-#list of oncology panels
-oncology_panels = ["Pan1190","Pan2684"]
-
-
-# =====Sapientia
-# list of St George's analyses, with the corresponding sapientia project-id as value
+# =====Decision support script
+# takes an analysis id and builds inputs for the decision support upload.
 decision_support_tool_input_script = "decision_support_tool_inputs.py"
-#sapientia_uploads = {"Pan3237":130}
 mokawes_senteion_bam_output_name = "mappings_realigned_bam" #ENSURE WE WANT REALIGNED NOT DEDUP BAM
 mokawes_senteion_bai_output_name = "mappings_realigned_bai"
 mokawes_senteion_vcf_output_name = "variants_vcf"
@@ -230,197 +226,150 @@ iva_bam_inputname = " -ibam_files="
 iva_bai_inputname = " -ibai_files="
 iva_reference_inputname = " -ireference_genome_name="
 iva_reference_default = "GRCh37"
-#mokawes_senteion_stage_id= "stage-Ff0P73j0GYKX41VkF3j62F9j" # ? Get from MokaWES sample name. This isn't the correct stage currently?
 
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
-panel_list=["Pan493","Pan1009", "Pan1063","Pan1620", "Pan1157","Pan1190","Pan2684","Pan3237","Pan1449","Pan1451","Pan1453","Pan1459","Pan2022","Pan1965","Pan2835","Pan1158","Pan1159","Pan1646","Pan3320","Pan3321"]
+panel_list = ["Pan493", "Pan1063", "Pan1190", "Pan2684", "Pan1449", "Pan2022", "Pan1965", "Pan1158", "Pan1159", "Pan1646", "Pan3320"]#, "Pan3321"] 
 default_panel_properties = {
-                    "UMI":False,
-                    "UMI_bcl2fastq":None, # eg Y145,I8,Y9I8,Y145
-                    "RPKM_bedfile_pan_number":None,
-                    "RPKM_also_analyse":None, # This is a comma seperated list containing additional pan numbers that decribe which BAM files should be downloaded
-                    "onePGT":False,
-                    "mokawes":False,
-                    "joint_variant_calling":False,
-                    "mokaamp":False,
-                    "capture_type":"Hybridisation", # "Amplicon" or "Hybridisation"
-                    "mokaonc":False,
-                    "mokapipe":False,
-                    "mokaamp_varscan_strandfilter":True,
+                    "UMI": False,
+                    "UMI_bcl2fastq": None, # eg Y145,I8,Y9I8,Y145
+                    "RPKM_bedfile_pan_number": None,
+                    "RPKM_also_analyse": None, # This is a comma seperated list containing additional pan numbers that decribe which BAM files should be downloaded
+                    "onePGT": False,
+                    "mokawes": False,
+                    "joint_variant_calling": False,
+                    "mokaamp": False,
+                    "capture_type": "Hybridisation", # "Amplicon" or "Hybridisation"
+                    "mokaonc": False,
+                    "mokapipe": False,
+                    "mokaamp_varscan_strandfilter": True,
                     "iva_upload": False,
                     "sapientia_upload": False,
-                    "oncology":False, 
-                    "clinical_coverage_depth":None, # only found in mokamp command
-                    "multiqc_coverage_level":30,
-                    "hsmetrics_bedfile":None, # only when using bed file with a different pannumber 
-                    "sambamba_bedfile":None, # only when using bed file with a different pannumber 
-                    "ingenuity_email":interpretation_request_email,
-                    "sapientia_project":None,
-                    "peddy":False
-                    }
+                    "oncology": False,
+                    "clinical_coverage_depth": None, # only found in mokamp command
+                    "multiqc_coverage_level": 30,
+                    "hsmetrics_bedfile": None, # only when using bed file with a different pannumber
+                    "mokawes_variant_calling_bedfile": None, # only when using bed file with a different pannumber
+                    "sambamba_bedfile": None, # only when using bed file with a different pannumber
+                    "ingenuity_email": interpretation_request_email,
+                    "sapientia_project": None,
+                    "peddy": False
+                }
 
 # override default panel settings
 panel_settings = {"Pan493": {
-                    "mokawes":True,
+                    "mokawes": True,
                     "iva_upload": True,
-                    "multiqc_coverage_level":20,
-                    "hsmetrics_bedfile":"agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber 
+                    "multiqc_coverage_level": 20,
+                    "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber
+                    "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed", # only when using bed file with a different pannumber
                     "ingenuity_email":wes_email_address,
-                    "peddy":True
+                    "peddy": True
                     },
-                "Pan2835": {# TWIST WES
-                    "mokawes":True,
+                "Pan2835": {# TWIST WES at GSTT
+                    "mokawes": True,
                     "iva_upload": True,
-                    "multiqc_coverage_level":20,
-                    "hsmetrics_bedfile":"agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber 
+                    "multiqc_coverage_level": 20,
+                    # uncomment after mokabed PR
+                    #"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed", # only when using bed file with a different pannumber
+                    #"mokawes_variant_calling_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_padded.bed", # only when using bed file with a different pannumber
                     "ingenuity_email":wes_email_address,
-                    "peddy":True
+                    "peddy": True
                     },
-                "Pan1620": { # Focused Exome. Are we uploading to Ingenuity? Note: NO vendorexome bedfile
-                    "mokawes":True,
-                    "ingenuity_email":wes_email_address,
-                    "iva_upload": True
-                    },
-                "Pan1190": {
-                    "mokaamp":True,
-                    "oncology":True,
-                    "mokaonc":True,
-                    "capture_type":"Amplicon",
+                # "Pan3321": {# TWIST singleton WES at STG
+                #     "mokawes": True,
+                #     "sapientia_upload": True,
+                #     #"sapientia_project": "1099",#live service
+                #     "sapientia_project": "261", # testing
+                #     "multiqc_coverage_level": 20,
+                #     # uncomment after mokabed PR
+                #     #"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed", # only when using bed file with a different pannumber
+                #     #"mokawes_variant_calling_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_padded.bed", # only when using bed file with a different pannumber
+                #     "peddy": True
+                #     },
+                # "Pan1620": { # Focused Exome. Are we uploading to Ingenuity? Note: NO vendorexome bedfile
+                #     "mokawes": True,
+                #     "ingenuity_email":wes_email_address,
+                #     "iva_upload": True
+                #     },
+                "Pan1190": { # EGFR SWIFT Panel
+                    "mokaamp": True,
+                    "oncology": True,
+                    "mokaonc": True,
+                    "capture_type": "Amplicon",
                     "ingenuity_email":oncology_email,
                     "clinical_coverage_depth":1000,
                     "multiqc_coverage_level": 100,
                     "iva_upload": True
                     },
-                "Pan2684": {
-                    "RPKM_bedfile_pan_number":None,
-                    "mokaamp":True,
-                    "oncology":True,
-                    "capture_type":"Amplicon",
+                "Pan2684": { # 57G panel
+                    "RPKM_bedfile_pan_number": None,
+                    "mokaamp": True,
+                    "oncology": True,
+                    "capture_type": "Amplicon",
                     "iva_upload": True,
-                    "oncology":False,
                     "clinical_coverage_depth":600, # only found in mokamp command
                     "multiqc_coverage_level":100,
                     "ingenuity_email":oncology_email
                 },
-                "Pan1449": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,                    
-                    "RPKM_bedfile_pan_number":"Pan1450",
-                    "RPKM_also_analyse":["Pan3320"],
+                "Pan1449": { # germline BRCA
+                    "mokapipe": True,
+                    "multiqc_coverage_level": 30,
+                    "RPKM_bedfile_pan_number": "Pan1450",
+                    "RPKM_also_analyse": ["Pan3320"],
                     "iva_upload": True
                     },
-                "Pan3320": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,                    
-                    "RPKM_bedfile_pan_number":"Pan1450",
-                    "RPKM_also_analyse":["Pan1449"],
+                "Pan3320": { # STG germline BRCA
+                    "mokapipe": True,
+                    "multiqc_coverage_level": 30,
+                    "RPKM_bedfile_pan_number": "Pan1450",
+                    "RPKM_also_analyse": ["Pan1449"],
                     "sapientia_upload": True,
-                    #"sapientia_project":"228",#live service
-                    "sapientia_project":"261", # testing
-                    "hsmetrics_bedfile":"Pan1449", # only when using bed file with a different pannumber 
-                    "sambamba_bedfile":"Pan1449" # only when using bed file with a different pannumber 
+                    #"sapientia_project": "1099",#live service
+                    "sapientia_project": "261", # testing
+                    "hsmetrics_bedfile": "Pan1449", # only when using bed file with a different pannumber
+                    "sambamba_bedfile": "Pan1449" # only when using bed file with a different pannumber
                     },
-                "Pan1451": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number":"Pan1452",
+                "Pan1063": { # IMDv2
+                    "mokapipe": True,
+                    "multiqc_coverage_level": 30,
+                    "RPKM_bedfile_pan_number": "Pan1064",
                     "iva_upload": True
                     },
-                "Pan3321":{ # SAPIENTIA WES - won't be live until April 2020
-                    "mokawes":True,
-                    "sapientia_upload": True,
-                    "clinical_coverage_depth":20,
-                    "multiqc_coverage_level":20,
-                    "hsmetrics_bedfile":"agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber 
-                    "sambamba_bedfile":"Pan493", # only when using bed file with a different pannumber 
-                    "sapientia_project":"999999",
-                    "peddy":True
-                    },
-                "Pan1453": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number":"Pan1454",
-                    "iva_upload": True
-                    },
-                "Pan1063": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number":"Pan1064",
-                    "iva_upload": True
-                    },
-                "Pan1009": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": "Pan1010",
-                    "iva_upload": True
-                    },
-                "Pan1459": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": "Pan1458",
-                    "iva_upload": True
-                    },
-                "Pan2022": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
+                "Pan2022": { # CMCMD
+                    "mokapipe": True,
+                    "multiqc_coverage_level": 30,
                     "RPKM_bedfile_pan_number": "Pan1974",
                     "iva_upload": True
                     },
-                "Pan1965": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
+                "Pan1965": { # NGSEQ1
+                    "mokapipe": True,
+                    "multiqc_coverage_level": 30,
                     "RPKM_bedfile_pan_number": "Pan2000",
                     "iva_upload": True
                     },
-                "Pan1158": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
+                "Pan1158": { # NGSEQ2
+                    "mokapipe": True,
+                    "multiqc_coverage_level": 30,
                     "RPKM_bedfile_pan_number": "Pan2023",
                     "iva_upload": True
                     },
-                "Pan1159": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
+                "Pan1159": { # NGSEQ3
+                    "mokapipe": True,
+                    "multiqc_coverage_level": 30,
                     "RPKM_bedfile_pan_number": "Pan1973",
                     "iva_upload": True
                     },
-                "Pan1646": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": "Pan1651",
-                    "iva_upload": True
-                    },
-                "Pan3237": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": None
-                    },
-                "Pan1157": {
-                    "mokapipe":True,
-                    "multiqc_coverage_level":30,
-                    "RPKM_bedfile_pan_number": None
+                "Pan1646": { # ICTHYOSIS - use same settings as WES and Pan1646 for coverage
+                    "mokawes": True,
+                    "iva_upload": True,
+                    "multiqc_coverage_level": 20,
+                    "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber
+                    "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed", # only when using bed file with a different pannumber
+                    "ingenuity_email":wes_email_address,
+                    "peddy": True
                     }
-
                 }
-
-# =====Dict linking panel and Ingenuity account for sample to be shared with =====
-email_panel_dict = {"Pan493": wes_email_address,
-                    "Pan1009": interpretation_request_email,
-                    "Pan1063": interpretation_request_email,
-                    "Pan1620": 'wook_email', # No LONGER WOOK EMAIL??
-                    "Pan1157": interpretation_request_email,
-                    "Pan1190": oncology_email,
-                    "Pan2684": oncology_email,
-                    "Pan1449": interpretation_request_email,
-                    "Pan1451": interpretation_request_email,
-                    "Pan1453": interpretation_request_email,
-                    "Pan1459": interpretation_request_email,
-                    "Pan2022": interpretation_request_email,
-                    "Pan1965": interpretation_request_email,
-                    "Pan1158": interpretation_request_email,
-                    "Pan1159": interpretation_request_email,
-                    "Pan1646": interpretation_request_email}
 
 # =====smartsheet API=====
 # smartsheet sheet ID

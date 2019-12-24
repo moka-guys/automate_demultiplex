@@ -69,13 +69,14 @@ class DecisionTooler():
         #for each stage
         for stage in json_ob["stages"]:
             # check for app name
-            if stage["execution"]["name"] == "Sentieon DNAseq FASTQ to VCF":
-                if stage['execution']['output'] and 'mappings_realigned_bam' in stage['execution']['output']:
+            if stage["id"] == config.senteion_stage_id:
+                return stage["execution"]["id"]
+                #if stage['execution']['output'] and 'mappings_realigned_bam' in stage['execution']['output']:
                     # return job id
-                    return stage['execution']['id']
+                    #return stage['execution']['id']
                 # the workflow depends on the job set off within the workflow so alternativly can access the jobid here too.
-                elif stage['execution']['dependsOn'] != []:
-                    return stage['execution']['dependsOn'][0]
+                # elif stage['execution']['dependsOn'] != []:
+                #     return stage['execution']['dependsOn'][0]
         # if not found return null - this function is called multiple times
         return None
         
