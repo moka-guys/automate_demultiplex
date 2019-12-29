@@ -149,9 +149,10 @@ wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 wes_picard_bedfile = " -istage-F9GGBQj0jy1yBbpZPvK5GvPJ.vendor_exome_bedfile=" # bedfile for hs metrics
 senteion_stage_id = "stage-FQ8JPpj076Gybkq459GfqfZb"
+wes_sambamba_bedfile = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="
 wes_sention_samplename = " -i%s.sample=" % senteion_stage_id # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
 wes_sention_targets_bed = " -i%s.targets_bed=" % senteion_stage_id # BED file used to restrict Senteion variant calling
-
+wes_ingenuity_email = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
 
 # MokaOnc amplivar fastq input
 mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
@@ -196,12 +197,9 @@ rpkm_project_input = " -iproject_name="
 rpkm_bamfiles_to_download_input = " -ibamfile_pannumbers="
 
 # emails addresses for Ingenuity
-iva_email_input_name = " -iemail="
 oncology_email = 'gst-tr.oncology.interpret@nhs.net'  # general oncology email
 interpretation_request_email = "gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
-wook_email = "joowook.ahn@nhs.net"  # wook email
-wes_email_address = "gst-tr.wesviapath@nhs.net"  # WES email
-mokaguys_email = 'gst-tr.mokaguys@nhs.net'
+wes_email_address = "gst-tr.wesviapath@nhs.net" # WES email
 
 # DNA Nexus authentication token
 nexus_api_key_file = "{document_root}/.dnanexus_auth_token".format(document_root=document_root)
@@ -216,7 +214,7 @@ admin_users = ["mokaguys"]
 # =====Decision support script
 # takes an analysis id and builds inputs for the decision support upload.
 decision_support_tool_input_script = "decision_support_tool_inputs.py"
-mokawes_senteion_bam_output_name = "mappings_realigned_bam" #ENSURE WE WANT REALIGNED NOT DEDUP BAM
+mokawes_senteion_bam_output_name = "mappings_realigned_bam"
 mokawes_senteion_bai_output_name = "mappings_realigned_bai"
 mokawes_senteion_vcf_output_name = "variants_vcf"
 sapientia_vcf_inputname = " -ivcf="
@@ -224,12 +222,13 @@ sapientia_bam_inputname = " -ibam="
 iva_vcf_inputname = " -ivcfs="
 iva_bam_inputname = " -ibam_files="
 iva_bai_inputname = " -ibai_files="
+iva_email_input_name = " -iemail="
 iva_reference_inputname = " -ireference_genome_name="
 iva_reference_default = "GRCh37"
 
 
 # =====Dict linking panel numbers for +/-10 and CNVs=====
-panel_list = ["Pan493", "Pan1063", "Pan1190", "Pan2684", "Pan1449", "Pan2022", "Pan1965", "Pan1158", "Pan1159", "Pan1646", "Pan3320"]#, "Pan3321"] 
+panel_list = ["Pan493", "Pan1063", "Pan1190", "Pan2684", "Pan1449", "Pan2022", "Pan1965", "Pan1158", "Pan1159", "Pan1646", "Pan3320"]#, "Pan3321"]
 default_panel_properties = {
                     "UMI": False,
                     "UMI_bcl2fastq": None, # eg Y145,I8,Y9I8,Y145
@@ -259,7 +258,7 @@ default_panel_properties = {
 # override default panel settings
 panel_settings = {"Pan493": {
                     "mokawes": True,
-                    "iva_upload": True,
+                    #"iva_upload": True,
                     "multiqc_coverage_level": 20,
                     "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber
                     "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed", # only when using bed file with a different pannumber
@@ -268,7 +267,7 @@ panel_settings = {"Pan493": {
                     },
                 "Pan2835": {# TWIST WES at GSTT
                     "mokawes": True,
-                    "iva_upload": True,
+                    #"iva_upload": True,
                     "multiqc_coverage_level": 20,
                     # uncomment after mokabed PR
                     #"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed", # only when using bed file with a different pannumber
@@ -290,7 +289,7 @@ panel_settings = {"Pan493": {
                 # "Pan1620": { # Focused Exome. Are we uploading to Ingenuity? Note: NO vendorexome bedfile
                 #     "mokawes": True,
                 #     "ingenuity_email":wes_email_address,
-                #     "iva_upload": True
+                #     #"iva_upload": True
                 #     },
                 "Pan1190": { # EGFR SWIFT Panel
                     "mokaamp": True,
@@ -362,7 +361,7 @@ panel_settings = {"Pan493": {
                     },
                 "Pan1646": { # ICTHYOSIS - use same settings as WES and Pan1646 for coverage
                     "mokawes": True,
-                    "iva_upload": True,
+                    #"iva_upload": True,
                     "multiqc_coverage_level": 20,
                     "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed", # only when using bed file with a different pannumber
                     "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed", # only when using bed file with a different pannumber
@@ -396,9 +395,15 @@ ss_metTAT = 4267975390848900
 smartsheet_request_headers = {"Authorization": "Bearer " + smartsheet_api_key, "Content-Type": "application/json"}
 smartsheet_request_url = 'https://api.smartsheet.com/2.0/sheets/' + str(smartsheet_sheetid)
 
+# =================turnaround time
+# if a task takes more than this amount of time it is out of TAT
+allowed_time_for_tasks = 4
 
 # =================== Email server settings
-user = 'AKIAIO3XY2MMSBEQNNXQ'
+mokaguys_email = 'gst-tr.mokaguys@nhs.net'
+username_file_path = '{document_root}/.amazon_email_username'.format(document_root=document_root)
+with open(username_file_path, 'r') as username_file:
+    user = username_file.readline().rstrip()
 pw_file = '{document_root}/.amazon_email_pw'.format(document_root=document_root)
 with open(pw_file, 'r') as email_password_file:
     pw = email_password_file.readline().rstrip()
@@ -421,6 +426,5 @@ checksum_match = "Checksums match"
 demultiplex_success_string = "Processing completed with 0 errors and 0 warnings."
 # list of sequencers which require md5 checksums from integrity check to be assessed
 sequencers_with_integrity_check = ["NB551068", "NB552085"]
-# =================turnaround time
-# if a task takes more than this amount of time it is out of TAT
-allowed_time_for_tasks = 4
+
+

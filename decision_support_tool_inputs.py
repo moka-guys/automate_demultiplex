@@ -7,15 +7,14 @@ The script will print the output to the command line, in a tool specific format 
 
 import subprocess
 import json
+import re
+import datetime
+from collections import namedtuple
 import argparse
 # import config file
 import automate_demultiplex_config as config
 from upload_and_setoff_workflows import process_runfolder
-import json
-import re
-import datetime
 
-from collections import namedtuple
 
 def get_arguments():
     """
@@ -26,27 +25,10 @@ def get_arguments():
     # Define the arguments that will be taken.
     parser.add_argument('-a', '--analysis_id', required=True, help='workflow Analysis ID in format Analysis-abc123')
     parser.add_argument('-t', '--tool', choices=['iva', 'sapientia'], required=True, help='decision support tool (iva or sapientia)')
-    parser.add_argument('-p', '--project',  required=True, help='The DNAnexus project id in which the analysis is running')
+    parser.add_argument('-p', '--project', required=True, help='The DNAnexus project id in which the analysis is running')
     # Return the arguments
     return parser.parse_args()
 
-# def set_panel_dictionary():
-#     """ 
-#     Populate the dictionary detailing panel specific settings.
-#     Default settings are set in the config file and then updated as and when required for each panel the defaults in config file.
-#     Loop through panel specific properties in config file and overwrite any default with panel specific settings
-#     Return dictionary
-#     """
-#     dictionary_to_return = {}
-#     # for each panel 
-#     for panel in config.panel_list:          
-#         # loop through default settings, adding to dictionary and  then loop through panel settings from config, overwriting any defaults
-#         dictionary_to_return[panel] = {}
-#         for setting in  config.default_panel_properties:
-#             dictionary_to_return[panel][setting] = config.default_panel_properties[setting]
-#         for setting in config.panel_settings[panel]:
-#             dictionary_to_return[panel][setting] = config.panel_settings[panel][setting]
-#     return dictionary_to_return
 
 class DecisionTooler():
     """
@@ -58,14 +40,14 @@ class DecisionTooler():
     def __init__(self):
         pass
 
-    def _parse_mokawes_json(self,json_ob):
+    def _parse_mokawes_json(self, json_ob):
         """
         Take the JSON from dx describe on MokaWES.
-        MokaWES Senteion app is itself a workflow, this means there are two valid approaches to obtaining the job id depending on 
+        MokaWES Senteion app is itself a workflow, this means there are two valid approaches to obtaining the job id depending on
         how quickly the dx run command is processed and the senteion workflow is established
         Parse to get the job id using two approaches.
         If not found return null
-        """        
+        """
         #for each stage
         for stage in json_ob["stages"]:
             # check for app name
@@ -79,14 +61,13 @@ class DecisionTooler():
                 #     return stage['execution']['dependsOn'][0]
         # if not found return null - this function is called multiple times
         return None
-        
 
-    def _parse_mokapipe_json(self,json_ob):
+    def _parse_mokapipe_json(self, json_ob):
         """
         Parse the dx describe output from the mokapipe analysis id
         use the stage id to identify the job id of the required stage (see config file)
         return the job id for the variant annotator app for vcf and the gatk human exome pipeline for BAM
-        """        
+        """
         jobid = None
         bamjobid = None
         for stage in json_ob["stages"]:
@@ -106,20 +87,20 @@ class DecisionTooler():
         returns tuple of job ids that created vcf and bam
         """
         # obtain json for dx describe on the given analysis id
-        cmd = "source /etc/profile.d/dnanexus.environment.sh; dx describe %s:%s --json --auth-token %s " % (project,analysis_id, config.Nexus_API_Key)
+        cmd = "source /etc/profile.d/dnanexus.environment.sh; dx describe %s:%s --json --auth-token %s " % (project, analysis_id, config.Nexus_API_Key)
         # jobid comes from the sention sub-job, which takes a few moments to initiate after calling the sention app.
         # Running this script immeidately after running the sention workflow raises an IndexError.
         #   We retry in the while loop until the jobid becomes available.
         jobid = None
-        bamjobid= None
+        bamjobid = None
         tries = 0
-        while jobid == None:
+        while not jobid:
             try:
                 # execute command
                 proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
                 # capture the streams
                 (out, err) = proc.communicate()
-                json_ob=json.loads(out)
+                json_ob = json.loads(out)
                 if workflow.name == "mokawes":
                     # same stage is used for BAM and VCF
                     jobid = self._parse_mokawes_json(json_ob)
@@ -149,7 +130,7 @@ class DecisionTooler():
         """
         recieves the jobids that created vcf and bam and the decision support tool to be used
         also recieves the named tuple containing the workflow details (output names for each relevant decision support tool input)
-        Each tool and each workflow requires a slightly different input. 
+        Each tool and each workflow requires a slightly different input.
         prints to stdout the required input for the decision support tool app in form
         decision_suport_tool_input=jobid.outputname
         """
@@ -189,18 +170,18 @@ if __name__ == "__main__":
     args = get_arguments()
     ajson = json.loads(
         subprocess.check_output(
-            [ 'dx', 'describe', args.analysis_id, '--auth', config.Nexus_API_Key, '--json']
+            ['dx', 'describe', args.analysis_id, '--auth', config.Nexus_API_Key, '--json']
         )
     )
-    
+
     # Get settings for analysis panel (used to determine which workflow is running)
     pannumber = re.search('Pan\d+', ajson['name']).group()
     # using function imported from upload_and_setoff_workflow.py build the panel dict to be used to determine the workflow etc
-    paneldict = process_runfolder("test",str('{:%Y%m%d_%H}'.format(datetime.datetime.now())),True).set_panel_dictionary()
+    paneldict = process_runfolder("test", str('{:%Y%m%d_%H}'.format(datetime.datetime.now())), True).set_panel_dictionary()
     pansettings = paneldict[pannumber]
 
     # # Print decision support tool inputs
     tooler = DecisionTooler()
     workflow = tooler.get_workflow(pansettings)
-    jobid, bamjobid = tooler.get_job_id(args.analysis_id, args.project, workflow) 
+    jobid, bamjobid = tooler.get_job_id(args.analysis_id, args.project, workflow)
     tooler.printer(jobid, workflow, args.tool, pipe_bam_jobid=bamjobid)

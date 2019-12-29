@@ -736,14 +736,16 @@ class process_runfolder():
                 if self.panel_dictionary[panel]["mokawes"]:
                     commands_list.append(self.create_mokawes_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
-                    if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_input_command())
-                        commands_list.append(self.run_iva_command(panel))
-                        commands_list.append(self.add_to_depends_list())
-                    if self.panel_dictionary[panel]["sapientia_upload"]:
-                        commands_list.append(self.build_sapientia_input_command())
-                        commands_list.append(self.run_sapientia_command(panel))
-                        commands_list.append(self.add_to_depends_list())
+                    # currently on MokaWES v1.5 which still includes IVA import
+                    # when move to MokaWS v1.6 can uncomment this block
+                    # if self.panel_dictionary[panel]["iva_upload"]:
+                    #     commands_list.append(self.build_iva_input_command())
+                    #     commands_list.append(self.run_iva_command(panel))
+                    #     commands_list.append(self.add_to_depends_list())
+                    # if self.panel_dictionary[panel]["sapientia_upload"]:
+                    #     commands_list.append(self.build_sapientia_input_command())
+                    #     commands_list.append(self.run_sapientia_command(panel))
+                    #     commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["peddy"]:
                         peddy = True
                     if self.panel_dictionary[panel]["joint_variant_calling"]:
@@ -786,9 +788,11 @@ class process_runfolder():
             commands_list.append(self.create_joint_variant_calling_command())
         if rpkm_list:
             # Create a set of RPKM numbers for one command per panel
-            for rpkm in set(rpkm_list):
+            # pass this list into function which takes into account panels which are to be analysed together and returns a "cleaned_list"
+            for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
                 commands_list.append(self.create_rpkm_command(rpkm))
         if peddy:
+            #TODO low priority - if custom panels and WES done together currently no way to stop custom panels being analysed by peddy - may cause problems
             commands_list.append(self.run_peddy_command())
         # multiqc
         commands_list.append(self.create_multiqc_command())
@@ -796,7 +800,8 @@ class process_runfolder():
         # smartsheet
         commands_list.append(self.create_smartsheet_command())
         return commands_list
-
+    
+    
     def create_mokawes_command(self, fastq, pannumber):
         """
         Takes fastq file and pan number for single sample and builds the mokawes dx run command
@@ -813,6 +818,12 @@ class process_runfolder():
             bedfiles_string = config.wes_sention_targets_bed +  bedfiles["mokawes_variant_calling_bedfile"]
         else:
             bedfiles_string = ""
+        
+        # The iva_upload flag in panel dictionary means the iva upload app is run outside of the workflow.
+        # If this is not done need to specify the email for ingenuity to the dx run command
+        ingenuity_email_string = ""
+        if not self.panel_dictionary[pannumber]["iva_upload"]:
+            ingenuity_email_string = config.wes_ingenuity_email + self.panel_dictionary[pannumber]["ingenuity_email"]
 
         # create the MokaWES dx command
         dx_command_list = [self.wes_command, fastqs[2],
@@ -820,7 +831,9 @@ class process_runfolder():
                            config.wes_fastqc2, fastqs[1],
                            config.wes_sention_samplename, fastqs[2],
                            config.wes_picard_bedfile, bedfiles["hsmetrics"],
+                           config.wes_sambamba_bedfile, bedfiles["sambamba"],
                            bedfiles_string,
+                           ingenuity_email_string,
                            self.dest, self.dest_cmd, self.token]
 
         dx_command = "".join(map(str, dx_command_list))
@@ -926,6 +939,35 @@ class process_runfolder():
             dx_command = dx_command.replace("jobid=$(", "").replace(config.Nexus_API_Key + ")", config.Nexus_API_Key)
         return dx_command
 
+    def prepare_rpkm_list(self, rpkm_list):
+        """
+        If there are multiple pan numbers to be combined for a RPKM analysis need to prevent the RPKM job from being set off once for each pan number
+        This class determines if it's a pan number that is combined with another and makes sure only one job is set off
+        A list is returned with one pan number per analysis.
+        """
+        # empty list to return
+        cleaned_list = []
+        # list of bedfiles which already have a rpkm command
+        sorted_panels = []
+        # for each panel which requires rpkm
+        for pannumber in rpkm_list:
+            rpkm_analysis_list = [pannumber]
+            # if it is analysed with other panels create a list of all panels to be analysed.
+            if self.panel_dictionary[pannumber]["RPKM_also_analyse"]:
+                rpkm_analysis_list += self.panel_dictionary[pannumber]["RPKM_also_analyse"]
+            # for each panel in this list
+            for panel in rpkm_analysis_list:
+                # if one of the panels involved in the analysis has already been parsed this panel will be in the sorted_panels list
+                if panel in sorted_panels:
+                    pass
+                # if it's not in the sorted_panels list it means none of the panels whichin this analysis have been assessed
+                # add all the panels in this analysis to sorted list and just one panel to the cleaned list to set of one RPKM job
+                else:
+                    sorted_panels += rpkm_analysis_list
+                    cleaned_list.append(panel)
+        self.write_to_uascript_logfile("\n----------------------COMBINING PANELS FOR RPKM ANALYSIS----------------------\nOriginal panels: " + ",".join(rpkm_list) +"\nPanels to analyse: "+",".join(cleaned_list)+"\n")
+        # return list to be used to build rpkm command(s).
+        return cleaned_list
 
     def create_rpkm_command(self, pannumber):
         """
@@ -941,7 +983,7 @@ class process_runfolder():
         # Multiple pannumbers are specified in the panel dictionary as a list under "RPKM_also_analyse"
         string_of_pannumbers_to_analyse = pannumber
         if self.panel_dictionary[pannumber]["RPKM_also_analyse"]:
-            string_of_pannumbers_to_analyse = "," + ",".join(self.panel_dictionary[pannumber]["RPKM_also_analyse"])
+            string_of_pannumbers_to_analyse = string_of_pannumbers_to_analyse + "," + ",".join(self.panel_dictionary[pannumber]["RPKM_also_analyse"])
 
         # build RPKM command
         dx_command = self.RPKM_command + config.rpkm_bedfile_input + bedfiles["rpkm_bedfile"] + config.rpkm_project_input + self.runfolder_obj.nexus_project_name \
@@ -1042,15 +1084,19 @@ class process_runfolder():
     def clean_stderr(self,err):
         """
         Currently have a conflict between packages from different python instances. 
-        parse stderr to ignore these so real error messages standout
+        parse stderr to ignore these so real error messages stand out
+        This function can be removed after the conflict is sorted
         """
         cleaned_error = []
-        for line in err:
-            print line
-            if not line.startswith("/usr/local/lib/python2.7/dist-packages/urllib3/util/ssl_.py:357: SNIMissingWarning: An HTTPS request has been made, but the SNI (Server Name Indication) extension to TLS is not available on this platform. This may cause the server to present an incorrect TLS certificate, which can cause validation failures. You can upgrade to a newer version of Python to solve this. For more information, see https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings") or not line.endswith("SNIMissingWarning"):
+        for line in err.split("\n"):
+            # if the line exists after rstrip and doesn't contain a string that should be ignored
+            if line.rstrip() and not line.rstrip().startswith("/usr/local/lib/python2.7/dist-packages/urllib3/util/ssl_.py:") and line.rstrip() != '  SNIMissingWarning':
                 cleaned_error.append(line)
-
-        return cleaned_err
+        #        print "real error " + line
+        #     else:
+        #         print "ignored " + line
+        # print cleaned_error
+        return cleaned_error
 
     def run_dx_run_commands(self):
         """
