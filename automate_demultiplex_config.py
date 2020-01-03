@@ -68,6 +68,7 @@ backup_runfolder_script = "/usr/local/src/mokaguys/apps/workstation_housekeeping
 # backup runfolder folder
 backup_runfolder_logfile = "/usr/local/src/mokaguys/automate_demultiplexing_logfiles/backup_runfolder_logfiles"
 backup_runfolder_success = "backup_runfolder INFO - END"
+backup_runfolder_error = "backup_runfolder.UAcaller ERROR"
 
 # command to test dx toolkit
 # dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
@@ -426,5 +427,3 @@ checksum_match = "Checksums match"
 demultiplex_success_string = "Processing completed with 0 errors and 0 warnings."
 # list of sequencers which require md5 checksums from integrity check to be assessed
 sequencers_with_integrity_check = ["NB551068", "NB552085"]
-
-

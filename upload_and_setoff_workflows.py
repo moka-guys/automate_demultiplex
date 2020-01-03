@@ -37,60 +37,59 @@ class get_list_of_runs():
         # create a list of all the folders in the runfolders directory
         all_runfolders = os.listdir(config.runfolders)
         all_runfolders = ['999999_NB552085_9999_automated_testing']
+        processed_runfolders = []
         # for each folder if it is not samplesheets/tar.gz folder pass the runfolder to the next class
         for folder in all_runfolders:
             # Ignore folders in the list config.ignore_directories and test that it is a directory (ignoring files)
             if folder not in config.ignore_directories and os.path.isdir(os.path.join(config.runfolders, folder)):
                 # pass folder and timestamp to class instance
                 runfolder_instance = process_runfolder(folder, self.now, debug_mode=config.debug)
-                runfolder_instance.quarterback()
+                if runfolder_instance.quarterback():
+                    processed_runfolders.append(folder)
 
-        # combine all the log files
-        self.combine_log_files()
+        # once all runfolders are processed see if need to rename the logfile to contain the runfolder name
+        if processed_runfolders:
+            # original and new filepaths
+            original_logfile_path = config.upload_agent_logfile + self.now + "_.txt"
+            new_logfile_name_with_runfolders = original_logfile_path.replace(".txt", "_".join(processed_runfolders))
+            # use os.rename to rename
+            os.rename(original_logfile_path, new_logfile_name_with_runfolders)
 
-    def combine_log_files(self):
-        """
-        Once all runfolders have been parsed rename the log files to easily associate logfiles with a run
-        """
-        # count number of log files that match the time stamp
-        count = 0
-        # empty list
-        list_of_logfiles = []
-        # loop through the folder containing log files
-        for log in os.listdir(config.upload_agent_logfile):
-            # if is one with this time stamp, ie if was made by this running of this script
-            if self.now in log:
-                # add count and append to list
-                count += 1
-                list_of_logfiles.append(config.upload_agent_logfile + log)
+        # # loop through the folder containing log files
+        # for log in os.listdir(config.upload_agent_logfile):
+        #     # if is one with this time stamp, ie if was made by this running of this script
+        #     if self.now in log:
+        #         # add count and append to list
+        #         count += 1
+        #         list_of_logfiles.append(config.upload_agent_logfile + log)
 
         # if more than one log file we want to concatenate them
-        if count > 1:
-            # create the start of the path to the logfile using the path to the log file and the time stamp (without.txt extension)
-            logfile_name = os.path.join(config.upload_agent_logfile, self.now)
-            # loop through all the log files to capture the run names
-            for logfile in list_of_logfiles:
-                # skip the empty timestamp
-                if self.now + "_.txt" in logfile:
-                    pass
-                else:
-                    # remove the time stamp and the logfolder path from each filename in the list and concatenate to the logfile_name created above
-                    logfile_name = logfile_name + logfile.replace(self.now, '').replace(config.upload_agent_logfile, '').replace(".txt", "").replace(".txt.txt", "")
+        # if count > 1:
+        #     # create the start of the path to the logfile using the path to the log file and the time stamp (without.txt extension)
+        #     logfile_name = os.path.join(config.upload_agent_logfile, self.now)
+        #     # loop through all the log files to capture the run names
+        #     for logfile in list_of_logfiles:
+        #         # skip the empty (original_logfile_pathtimestamp
+        #         if self.now + "_.txt" in logfile:
+        #             pass
+        #         else:
+        #             # remove the time stamp and the logfolder path from each filename in the list and concatenate to the logfile_name created above
+        #             logfile_name = logfile_name + logfile.replace(self.now, '').replace(config.upload_agent_logfile, '').replace(".txt", "").replace(".txt.txt", "")
 
-            # add extension
-            logfile_name = logfile_name + ".txt"
+        #     # add extension
+        #     logfile_name = logfile_name + ".txt"
 
-            # concatenate all the remaining filenames into a string, seperated by spaces
-            remaining_files = " ".join(list_of_logfiles)
+        #     # concatenate all the remaining filenames into a string, seperated by spaces
+        #     remaining_files = " ".join(list_of_logfiles)
 
-            # combine all into one file with the longest filename (that will have the run folder name)
-            cmd = "cat " + remaining_files + " >> " + logfile_name
-            # remove the files that have been written to the longer file (removing the combined log file name from this list)
-            rmcmd = "rm " + remaining_files.replace(logfile_name, "")
+        #     # combine all into one file with the longest filename (that will have the run folder name)
+        #     cmd = "cat " + remaining_files + " >> " + logfile_name
+        #     # remove the files that have been written to the longer file (removing the combined log file name from this list)
+        #     rmcmd = "rm " + remaining_files.replace(logfile_name, "")
 
-            # run the commands
-            subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-            subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        #     # run the commands
+        #     subprocess.call([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        #     subprocess.call([rmcmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
 
 class runfolder_object():
     """
@@ -242,8 +241,10 @@ class process_runfolder():
                 self.sql_queries["oncology"] = self.write_opms_queries_oncology(self.list_of_processed_samples)
                 self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(self.list_of_processed_samples)
                 self.send_opms_queries()
-                self.look_for_upload_errors(self.upload_rest_of_runfolder(), success=config.backup_runfolder_success)
-                self.look_for_upload_errors(self.upload_log_files())
+                self.look_for_upload_errors(self.upload_rest_of_runfolder(), stage="rest_of_folder")
+                self.look_for_upload_errors(self.upload_log_files(), stage="Uploading logfiles")
+                # return true to denote that a runfolder was processed
+                return True
 
     def set_panel_dictionary(self):
         """
@@ -594,7 +595,7 @@ class process_runfolder():
                 + "\n\n----------------------Upload rest of runfolder----------------------\n")
 
         # write to logfile
-        self.write_to_uascript_logfile("----------------------UPLOADING FASTQS----------------------\nSee commands at " + \
+        self.write_to_uascript_logfile("\n----------------------UPLOADING FASTQS----------------------\nSee commands at " + \
                     os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds) + \
                     "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n")
         upload_agent_stdout_path = os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file)
@@ -1080,10 +1081,11 @@ class process_runfolder():
         """
         with open(self.runfolder_obj.runfolder_dx_run_script, 'w') as dxrun_commands:
             dxrun_commands.writelines([line + "\n" for line in command_list])
-    
-    def clean_stderr(self,err):
+        #TODO! "write to logfile"
+
+    def clean_stderr(self, err):
         """
-        Currently have a conflict between packages from different python instances. 
+        Currently have a conflict between packages from different python instances.
         parse stderr to ignore these so real error messages stand out
         This function can be removed after the conflict is sorted
         """
@@ -1357,42 +1359,40 @@ class process_runfolder():
         return os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file)
 
 
-    def look_for_upload_errors(self, logfile, success=None):
+    def look_for_upload_errors(self, logfile, stage):
         """
-        Check for errors during the upload.
-        splits the logfile to assess each file upload. for each one looks for presence of expected success/failure message
-        Alerts are sent if upload fails.
-        If was disrupted but went on to complete no alerts sent but is logged.
+        Check for errors during the upload or rest of runfolder and logfiles
+        Each stage has the upload error stdout in a different file/format
+        The presence of expected success/failure messages are checked and reported
         """
-        successful_upload = False
-        upload_error = False
+        # parse the output of the backup runfolder script, looking for either error message or a success message and report accordingly
+        if stage == "rest_of_runfolder":
+            with open(logfile, 'r') as backup_logfile:
+                for line in backup_logfile.readlines():
+                    if config.backup_runfolder_error in line:
+                        self.logger("Error in upload of rest of runfolder: " + line + "in runfolder" + self.runfolder_obj.runfolder_name, "UA_fail")
+                    elif config.backup_runfolder_success in line:
+                        self.logger("Rest of runfolder " + self.runfolder_obj.runfolder_name + " uploaded ok", "UA_pass")
 
-        for upload in open(logfile, 'r').read().split("Uploading file"):
-            # if there was an error during the upload...
-            if config.ua_error in upload:
-                # if error seen set flag
-                upload_error = True
-                # if it still completed successfully carry on
-                if "uploaded successfully" in upload:
-                    self.write_to_uascript_logfile("There was a disruption to the network when uploading the rest of the runfolder but it completed successfully\n")
-                    self.logger("upload of runfolder was disrupted but completed for run " + self.runfolder_obj.runfolder_name, "UA_disrupted")
-                # other wise send an email and write to log
-                else:
-                    self.write_to_uascript_logfile("There was a disruption to the network which prevented the rest of the runfolder being uploaded\n")
-                    self.logger("upload of runfolder failed for run " + self.runfolder_obj.runfolder_name, "UA_fail")
-            # Check upload success if success string passed
-            if success and (success in upload):
-                successful_upload = True
-
-        # Write an error if a success string was passed but not found
-        if success and not successful_upload:
-            self.write_to_uascript_logfile("Backup script did not complete successfully\n")
-            self.logger("backup of runfolder incomplete for run " + self.runfolder_obj.runfolder_name, "UA_fail")
-        # only state no errors seen if no errors were seen!
-        elif not upload_error:
-            # write to log file check was ok
-            self.write_to_uascript_logfile("There were no issues when backing up the run folder\n")
-            self.logger("backup of runfolder complete for run " + self.runfolder_obj.runfolder_name, "UA_pass")
+        # check the DNANexus_upload_started.txt file for the results of upload agent upload of logfiles
+        elif stage == "Uploading logfiles":
+            # want to skip stdout from fastq upload
+            skip = True
+            ok = True
+            # open the logfile and parse line by line
+            with open(logfile, 'r') as upload_agent_stdout:
+                for line in upload_agent_stdout.readlines():
+                    # loop through skipping lines until get to section of interest
+                    if skip and "Uploading logfiles" in line:
+                        skip = False
+                    # loop through lines relating to logfile upload
+                    elif not skip:
+                        # if the api error is noted report a failure
+                        if config.ua_error in line:
+                            ok = False
+                            self.logger("Unsucessful upload of logfile " + line + " for run " + self.runfolder_obj.runfolder_name, "UA_fail")
+            if ok:
+                self.logger("Logfiles from " + self.runfolder_obj.runfolder_name + " uploaded ok", "UA_pass")
 
     def execute_subprocess_command(self, command):
         """
@@ -1428,7 +1428,7 @@ class process_runfolder():
 
         # write to logfile
         self.write_to_uascript_logfile("\nEmail sent to...... " + str(to) + "\nsubject:" + self.email_subject + "\nbody:" + self.email_message + "\n\n")
-        self.logger("Upload Agent email sent" + str(to) + ". Subject:" + self.email_subject + ". Body:" + self.email_message, "UA_pass")
+        #self.logger("Upload Agent email sent" + str(to) + ". Subject:" + self.email_subject + ". Body:" + self.email_message, "UA_pass")
 
     def write_to_uascript_logfile(self, message):
         """
