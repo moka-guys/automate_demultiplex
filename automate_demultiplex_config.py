@@ -334,28 +334,9 @@ panel_settings = {
         "mokawes": True,
         # "iva_upload": True,
         "multiqc_coverage_level": 20,
-        # TODO: uncomment after mokabed PR
-        # "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
-        # "mokawes_variant_calling_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_padded.bed",
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
-    # "Pan3321": {# TWIST singleton WES at STG
-    #     "mokawes": True,
-    #     "sapientia_upload": True,
-    #     #"sapientia_project": "1099",#live service
-    #     "sapientia_project": "261", # testing
-    #     "multiqc_coverage_level": 20,
-    #     # uncomment after mokabed PR
-    #     #"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
-    #     #"mokawes_variant_calling_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_padded.bed",
-    #     "peddy": True
-    #     },
-    # "Pan1620": { # Focused Exome. Are we uploading to Ingenuity? Note: NO vendorexome bedfile
-    #     "mokawes": True,
-    #     "ingenuity_email":wes_email_address,
-    #     #"iva_upload": True
-    #     },
     "Pan1190": {  # EGFR SWIFT Panel
         "mokaamp": True,
         "oncology": True,
