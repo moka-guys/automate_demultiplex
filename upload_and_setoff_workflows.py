@@ -9,6 +9,7 @@ encoded in the filename.
 @author: aled
 """
 import os
+import re
 import subprocess
 import datetime
 import smtplib
@@ -353,7 +354,7 @@ class process_runfolder:
                 return False
         # demultiplex success -return False  if expected string NOT in last line of log file
         if test == "demultiplex_success":
-            if config.demultiplex_success_string not in test_input:
+            if not re.search(config.demultiplex_success_match, test_input):
                 return False
         return True
 
@@ -1930,7 +1931,7 @@ class process_runfolder:
                     [
                         config.upload_agent_expected_stdout,
                         config.dx_sdk_test_expected_stdout,
-                        config.demultiplex_success_string,
+                        config.demultiplex_success_match,
                     ]
                 ),
                 "err",

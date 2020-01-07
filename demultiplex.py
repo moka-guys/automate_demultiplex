@@ -21,6 +21,7 @@ import subprocess
 import datetime
 import smtplib
 from email.message import Message
+import re
 import requests
 # import config file
 import automate_demultiplex_config as config
@@ -396,7 +397,7 @@ class ready2start_demultiplexing():
         bcl2fastq_log_tail = subprocess.check_output(["tail", "-n", "10", run_logfile_path])
 
         # If demultiplexing completed successfully - looking for expected success statement as defined in config file
-        if config.demultiplex_success_string in bcl2fastq_log_tail:
+        if re.search(config.demultiplex_success_match, bcl2fastq_log_tail):
             # Write to system log
             self.logger("Demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
             # Call function which updates smartsheet, changing status for this run from in progress to complete, where task = demultiplex.
