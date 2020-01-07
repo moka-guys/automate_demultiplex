@@ -67,13 +67,13 @@ class DecisionTooler(object):
         Take the JSON from dx describe on MokaWES.
         MokaWES Senteion app is itself a workflow, this means there are two valid approaches to
         obtaining the job id depending on how quickly the dx run command is processed and the
-        senteion workflow is established. Parse to get the job id using two approaches.
+        sentieon workflow is established. Parse to get the job id using two approaches.
         If not found return null
         """
         # for each stage
         for stage in json_ob["stages"]:
             # check for app name
-            if stage["id"] == config.senteion_stage_id:
+            if stage["id"] == config.sentieon_stage_id:
                 return stage["execution"]["id"]
         return None
 
@@ -106,8 +106,8 @@ class DecisionTooler(object):
             "source /etc/profile.d/dnanexus.environment.sh; dx describe"
             " {}:{} --json --auth-token {}"
         ).format(project, analysis_id, config.Nexus_API_Key)
-        # jobid comes from the sention sub-job, which takes a few moments to initiate after
-        # calling the sention app. Running this script immeidately after running the sention
+        # jobid comes from the sentieon sub-job, which takes a few moments to initiate after
+        # calling the sentieon app. Running this script immeidately after running the sentieon
         # workflow raises an IndexError. We retry in the while loop until the jobid is available.
         jobid = None
         bamjobid = None
@@ -143,9 +143,9 @@ class DecisionTooler(object):
         if ps["mokawes"]:
             return self.wfo(
                 "mokawes",
-                config.mokawes_senteion_vcf_output_name,
-                config.mokawes_senteion_bam_output_name,
-                config.mokawes_senteion_bai_output_name,
+                config.mokawes_sentieon_vcf_output_name,
+                config.mokawes_sentieon_bam_output_name,
+                config.mokawes_sentieon_bai_output_name,
             )
         elif ps["mokapipe"]:
             return self.wfo(

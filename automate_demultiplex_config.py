@@ -135,7 +135,7 @@ mokaamp_path = "Workflows/MokaAMP_v1.2"
 peddy_path = "Apps/peddy_v1.3"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.11"
-# path to senteion upload app
+# path to sentieon upload app
 sapientia_app_path = "Apps/sapientia_upload_v1.0"
 # path to iva upload app
 iva_app_path = "app-ingenuity_variant_transfer/1.0.6"
@@ -181,12 +181,12 @@ wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 # bedfile for hs metrics
 wes_picard_bedfile = " -istage-F9GGBQj0jy1yBbpZPvK5GvPJ.vendor_exome_bedfile="
-senteion_stage_id = "stage-FQ8JPpj076Gybkq459GfqfZb"
+sentieon_stage_id = "stage-FQ8JPpj076Gybkq459GfqfZb"
 wes_sambamba_bedfile = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="
-# sample name for sention app - prevents sample being incorrectly parsed from fastq filename
-wes_sention_samplename = " -i%s.sample=" % senteion_stage_id
+# sample name for sentieon app - prevents sample being incorrectly parsed from fastq filename
+wes_sentieon_samplename = " -i%s.sample=" % sentieon_stage_id
 # BED file used to restrict Senteion variant calling
-wes_sention_targets_bed = " -i%s.targets_bed=" % senteion_stage_id
+wes_sentieon_targets_bed = " -i%s.targets_bed=" % sentieon_stage_id
 wes_ingenuity_email = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
 
 # MokaOnc amplivar fastq input
@@ -263,9 +263,9 @@ admin_users = ["mokaguys"]
 # =====Decision support script
 # takes an analysis id and builds inputs for the decision support upload.
 decision_support_tool_input_script = "decision_support_tool_inputs.py"
-mokawes_senteion_bam_output_name = "mappings_realigned_bam"
-mokawes_senteion_bai_output_name = "mappings_realigned_bai"
-mokawes_senteion_vcf_output_name = "variants_vcf"
+mokawes_sentieon_bam_output_name = "mappings_realigned_bam"
+mokawes_sentieon_bai_output_name = "mappings_realigned_bai"
+mokawes_sentieon_vcf_output_name = "variants_vcf"
 sapientia_vcf_inputname = " -ivcf="
 sapientia_bam_inputname = " -ibam="
 iva_vcf_inputname = " -ivcfs="

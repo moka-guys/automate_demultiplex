@@ -834,7 +834,7 @@ class process_runfolder:
         Creates some variables used in the dx run commands
         Receive name of read 1 fastq file
         Creates a nexus filepath for read1 and read2
-        Uses filename to create a sample name - this is supplied to senteion and BWA
+        Uses filename to create a sample name - this is supplied to sentieon and BWA
         Returns a tuple (r1_filepath,r2_filepath,samplename)
         """
         # build full file nexus path including project
@@ -849,7 +849,7 @@ class process_runfolder:
             + ":"
             + os.path.join(self.runfolder_obj.nexus_path, read1.replace("_R1_", "_R2_"))
         )
-        # samplename is used to assign read groups in BWA or as an input to senteion
+        # samplename is used to assign read groups in BWA or as an input to sentieon
         sample_name = read1.split("_R1_")[0]
         return (read1_nexus_path, read2_nexus_path, sample_name)
 
@@ -1044,7 +1044,7 @@ class process_runfolder:
         # In the future we may not restrict variant calling using a bed file so support this possible use case.
         if bedfiles["mokawes_variant_calling_bedfile"]:
             bedfiles_string = (
-                config.wes_sention_targets_bed + bedfiles["mokawes_variant_calling_bedfile"]
+                config.wes_sentieon_targets_bed + bedfiles["mokawes_variant_calling_bedfile"]
             )
         else:
             bedfiles_string = ""
@@ -1065,7 +1065,7 @@ class process_runfolder:
             fastqs[0],
             config.wes_fastqc2,
             fastqs[1],
-            config.wes_sention_samplename,
+            config.wes_sentieon_samplename,
             fastqs[2],
             config.wes_picard_bedfile,
             bedfiles["hsmetrics"],
