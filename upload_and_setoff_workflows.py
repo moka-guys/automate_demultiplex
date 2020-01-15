@@ -1283,8 +1283,7 @@ class RunfolderProcessor:
         return dx_command
 
     def create_joint_variant_calling_command(self):
-        """ """
-        # TODO
+        """# TODO"""
         raise NotImplementedError
 
     def run_sapientia_command(self, pannumber):
@@ -1345,7 +1344,7 @@ class RunfolderProcessor:
             # take read one
             if re.search(r'_R1_', fastq):
                 # extract_Pan number and use this to determine which dx run commands are needed for the sample
-                pannumber =  re.search(r"Pan\d+", fastq).group()
+                pannumber = re.search(r"Pan\d+", fastq).group()
                 if (
                         int(self.panel_dictionary[pannumber]["multiqc_coverage_level"])
                         < lowest_coverage_level
@@ -1430,21 +1429,17 @@ class RunfolderProcessor:
         parse stderr to ignore these so real error messages stand out
         This function can be removed after the conflict is sorted
         """
+        std_err_ignore_match = r'/usr/local/lib/python2.7/dist-packages/urllib3/util/ssl_.py:'
+        sni_warning_ignore_match = r'SNIMissingWarning'
         cleaned_error = []
         for line in err.split("\n"):
-            # if the line exists after rstrip and doesn't contain a string that should be ignored
+            clean_line = line.rstrip()
+            # If the line doesn't contain a string that should be ignored
             if (
-                    line.rstrip()
-                    and not line.rstrip().startswith(
-                        "/usr/local/lib/python2.7/dist-packages/urllib3/util/ssl_.py:"
-                    )
-                    and line.rstrip() != "  SNIMissingWarning"
-                ):
+                    not re.match(std_err_ignore_match, clean_line) and
+                    not re.search(sni_warning_ignore_match, clean_line)
+            ):
                 cleaned_error.append(line)
-        #        print "real error " + line
-        #     else:
-        #         print "ignored " + line
-        # print cleaned_error
         return cleaned_error
 
     def run_dx_run_commands(self):
