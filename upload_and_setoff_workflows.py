@@ -971,16 +971,6 @@ class RunfolderProcessor:
                 if self.panel_dictionary[panel]["mokawes"]:
                     commands_list.append(self.create_mokawes_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
-                    # currently on MokaWES v1.5 which still includes IVA import
-                    # when move to MokaWS v1.6 can uncomment this block
-                    # if self.panel_dictionary[panel]["iva_upload"]:
-                    #     commands_list.append(self.build_iva_input_command())
-                    #     commands_list.append(self.run_iva_command(panel))
-                    #     commands_list.append(self.add_to_depends_list())
-                    # if self.panel_dictionary[panel]["sapientia_upload"]:
-                    #     commands_list.append(self.build_sapientia_input_command())
-                    #     commands_list.append(self.run_sapientia_command(panel))
-                    #     commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["peddy"]:
                         peddy = True
                     if self.panel_dictionary[panel]["joint_variant_calling"]:
@@ -1007,12 +997,6 @@ class RunfolderProcessor:
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
-                    # if self.panel_dictionary[panel]["iva_upload"]:
-                    #     commands_list.append(self.build_iva_mokaamp_input_command())
-                    #     commands_list.append(self.add_to_depends_list())
-                    # if self.panel_dictionary[panel]["sapientia_upload"]:
-                    #     commands_list.append(self.build_sapientia_input_command())
-                    #     commands_list.append(self.add_to_depends_list())
 
         # run wide jobs
         if mokaonc_list:
