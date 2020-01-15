@@ -52,7 +52,7 @@ class GetListOfRuns:
                     os.path.join(config.runfolders, folder)
                 ):
                 # pass folder and timestamp to class instance
-                runfolder_instance = process_runfolder(folder, self.now, debug_mode=config.debug)
+                runfolder_instance = ProcessRunfolder(folder, self.now, debug_mode=config.debug)
                 if runfolder_instance.quarterback():
                     processed_runfolders.append(folder)
 
@@ -66,7 +66,7 @@ class GetListOfRuns:
             os.rename(original_logfile_path, new_logfile)
 
 
-class runfolder_object:
+class RunfolderObject:
     """
     An object with runfolder specific properties.
     """
@@ -86,7 +86,7 @@ class runfolder_object:
         self.nexus_path = ""
 
 
-class process_runfolder:
+class ProcessRunfolder:
     """
     This class assesses a runfolder to check if it required processing. If therunfolder meets the
     criteria to be processed.
@@ -103,7 +103,7 @@ class process_runfolder:
         # # fastq folder
         # self.fastq_folder_path = ""
 
-        self.runfolder_obj = runfolder_object(runfolder)
+        self.runfolder_obj = RunfolderObject(runfolder)
         self.now = now
 
         self.upload_agent_logfile_path = config.upload_agent_logfile + self.now + "_.txt"
