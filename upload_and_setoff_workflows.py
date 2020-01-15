@@ -243,14 +243,14 @@ class RunfolderProcessor:
 
     def quarterback(self):
         """
-        This module calls all other modules in order
+        This method calls other methods in order
         """
         self.run_tests()
         # build dictionary of panel settings
         self.panel_dictionary = self.set_panel_dictionary()
 
         # check if already uploaded and demultiplkexing finished sucessfully
-        if not self.already_uploaded() and self.demultiplex_completed_successfully():
+        if not self.already_uploaded() and self.has_demultiplexed():
             self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                 self.runfolder_obj.fastq_folder_path
             )
@@ -416,7 +416,7 @@ class RunfolderProcessor:
             )
             return False
 
-    def demultiplex_completed_successfully(self):
+    def has_demultiplexed(self):
         """
         Check if the demultiplexing finished successfully by reading the last line of the
         demultiplex log. The demultiplexing script will raise any alerts if issues are found with
