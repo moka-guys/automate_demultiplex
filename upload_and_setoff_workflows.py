@@ -1342,9 +1342,9 @@ class RunfolderProcessor:
         lowest_coverage_level = 1000000
         for fastq in self.list_of_processed_samples:
             # take read one
-            if "_R1_" in fastq:
-                # extract_Pan number
-                pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+            if re.search(r'_R1_', fastq):
+                # extract_Pan number and use this to determine which dx run commands are needed for the sample
+                panel =  re.search(r"Pan\d+", fastq).group()
                 if (
                         int(self.panel_dictionary[pannumber]["multiqc_coverage_level"])
                         < lowest_coverage_level
