@@ -55,7 +55,7 @@ class SequencingRuns(list):
 
         for folder in self:
             # pass folder and timestamp to class instance
-            runfolder_instance = ProcessRunfolder(folder, self.now, debug_mode=config.debug)
+            runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.debug)
             if runfolder_instance.quarterback():
                 processed_runfolders.append(folder)
 
@@ -89,7 +89,7 @@ class RunfolderObject:
         self.nexus_path = ""
 
 
-class ProcessRunfolder:
+class RunfolderProcessor:
     """
     This class assesses a runfolder to check if it required processing. If therunfolder meets the
     criteria to be processed.
