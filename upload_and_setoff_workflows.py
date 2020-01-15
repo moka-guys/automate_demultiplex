@@ -640,9 +640,9 @@ class RunfolderProcessor:
         )
 
         # open bash script
-        with open(project_bash_script_path, "w") as create_nexus_project_script:
-            create_nexus_project_script.write(self.source_command + "\n")
-            create_nexus_project_script.write(
+        with open(project_bash_script_path, "w") as project_script:
+            project_script.write(self.source_command + "\n")
+            project_script.write(
                 self.createprojectcommand
                 % (config.prod_organisation, self.runfolder_obj.nexus_project_name)
             )
@@ -650,24 +650,24 @@ class RunfolderProcessor:
             # Share the project with the nexus usernames in the list in config file
             # first give view permissions
             for user in config.view_users:
-                create_nexus_project_script.write(
+                project_script.write(
                     "dx invite %s $project_id VIEW --no-email --auth-token %s\n"
                     % (user, config.Nexus_API_Key)
                 )
             # then give admin permissions - ensure done in this order incase some users are in both lists.
             for user in config.admin_users:
-                create_nexus_project_script.write(
+                project_script.write(
                     "dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n"
                     % (user, config.Nexus_API_Key)
                 )
 
             # add a tag to denote live project (as opposed to archived)
-            create_nexus_project_script.write(
+            project_script.write(
                 self.addprojecttag + config.live_tag + " --auth-token %s\n" % (config.Nexus_API_Key)
             )
 
             # echo the project id so it can be captured below
-            create_nexus_project_script.write("echo $project_id")
+            project_script.write("echo $project_id")
         return project_bash_script_path
 
     def run_project_creation_script(self, project_bash_script_path):
@@ -1300,7 +1300,7 @@ class RunfolderProcessor:
 
     def create_joint_variant_calling_command(self):
         """
-        TODO!
+        #TODO!
         """
         return None
 
