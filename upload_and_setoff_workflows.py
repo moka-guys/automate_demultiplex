@@ -1283,10 +1283,8 @@ class RunfolderProcessor:
         return dx_command
 
     def create_joint_variant_calling_command(self):
-        """
-        #TODO!
-        """
-        return None
+        # TODO
+        raise NotImplementedError
 
     def run_sapientia_command(self, pannumber):
         """
