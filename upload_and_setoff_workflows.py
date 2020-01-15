@@ -966,7 +966,7 @@ class RunfolderProcessor:
             # take read one
             if re.search(r'_R1_', fastq):
                 # extract_Pan number and use this to determine which dx run commands are needed for the sample
-                panel =  re.search(r"Pan\d+", fastq).group()
+                panel = re.search(r"Pan\d+", fastq).group()
                 # The order in which the modules are called here is important to ensure the order of dx run commands is correct. This can affect which decision support tool data is sent to.
                 if self.panel_dictionary[panel]["mokawes"]:
                     commands_list.append(self.create_mokawes_command(fastq, panel))
@@ -1283,6 +1283,7 @@ class RunfolderProcessor:
         return dx_command
 
     def create_joint_variant_calling_command(self):
+        """ """
         # TODO
         raise NotImplementedError
 
@@ -1344,7 +1345,7 @@ class RunfolderProcessor:
             # take read one
             if re.search(r'_R1_', fastq):
                 # extract_Pan number and use this to determine which dx run commands are needed for the sample
-                panel =  re.search(r"Pan\d+", fastq).group()
+                pannumber =  re.search(r"Pan\d+", fastq).group()
                 if (
                         int(self.panel_dictionary[pannumber]["multiqc_coverage_level"])
                         < lowest_coverage_level
