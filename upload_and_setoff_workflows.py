@@ -966,7 +966,7 @@ class RunfolderProcessor:
             # take read one
             if re.search(r'_R1_', fastq):
                 # extract_Pan number and use this to determine which dx run commands are needed for the sample
-                panel = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+                panel =  re.search(r"Pan\d+", fastq).group()
                 # The order in which the modules are called here is important to ensure the order of dx run commands is correct. This can affect which decision support tool data is sent to.
                 if self.panel_dictionary[panel]["mokawes"]:
                     commands_list.append(self.create_mokawes_command(fastq, panel))
