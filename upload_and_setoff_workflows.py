@@ -24,26 +24,17 @@ import automate_demultiplex_config as config
 import git_tag as git_tag
 
 
-class GetListOfRuns:
+class SequencingRuns(list):
     """Loop through the directories in the directory containing the runfolders"""
 
     def __init__(self):
-        # set variables for time
-        self.now = ""
-
-    def loop_through_runs(self):
-        """
-        This function sets up this instance of the script.
-        It creates the log file which holds the decisions made for all runfolders as it loops
-        through the runfolders.
-        """
-        # set a time stamp to name the log file
+        super(SequencingRuns, self).__init__()
+        # Timestamp to name the logfile
         self.now = str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
 
-        # create a list of all the folders in the runfolders directory
+    def set_runfolders(self):
+        """Return a list of all valid runfolders"""
         all_runfolders = os.listdir(config.runfolders)
-        all_runfolders = ["999999_NB552085_9999_automated_testing"]
-        processed_runfolders = []
         # for each folder if it is not samplesheets/tar.gz folder, pass to the next class
         for folder in all_runfolders:
             # Ignore folders in the list config.ignore_directories
@@ -51,10 +42,22 @@ class GetListOfRuns:
             if folder not in config.ignore_directories and os.path.isdir(
                     os.path.join(config.runfolders, folder)
                 ):
-                # pass folder and timestamp to class instance
-                runfolder_instance = ProcessRunfolder(folder, self.now, debug_mode=config.debug)
-                if runfolder_instance.quarterback():
-                    processed_runfolders.append(folder)
+                self.append(folder)
+
+    def loop_through_runs(self):
+        """
+        This function sets up this instance of the script.
+        It creates the log file which holds the decisions made for all runfolders as it loops
+        through the runfolders.
+        """
+
+        processed_runfolders = []
+
+        for folder in self:
+            # pass folder and timestamp to class instance
+            runfolder_instance = ProcessRunfolder(folder, self.now, debug_mode=config.debug)
+            if runfolder_instance.quarterback():
+                processed_runfolders.append(folder)
 
         # If any runfolders have been processed
         if processed_runfolders:
@@ -1999,7 +2002,9 @@ class ProcessRunfolder:
 
 
 if __name__ == "__main__":
-    # Create instance of get_list_of_runs
-    runs = GetListOfRuns()
-    # call function
+    # Create a custom list object to hold sequencing runs
+    runs = SequencingRuns()
+    # Set list with runfolder objects
+    runs.set_runfolders()
+    # Call upload and workflow logic on runfolders
     runs.loop_through_runs()
