@@ -964,7 +964,7 @@ class RunfolderProcessor:
         # loop through samples
         for fastq in list_of_processed_samples:
             # take read one
-            if "_R1_" in fastq:
+            if re.search(r'_R1_', fastq):
                 # extract_Pan number and use this to determine which dx run commands are needed for the sample
                 panel = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
                 # The order in which the modules are called here is important to ensure the order of dx run commands is correct. This can affect which decision support tool data is sent to.
