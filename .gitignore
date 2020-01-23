@@ -1,6 +1,6 @@
 DNANexus_upload_agent_single_folder.py
 *.pyc
-test_materials/create_nexus_project.sh
+test/data
 .vscode
 share/
 make_panel_fastqs/
