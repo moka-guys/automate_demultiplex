@@ -70,7 +70,7 @@ dx_sdk_test_expected_result = "dx v0.2"
 # Current Mokapipe ID
 mokapipe_pipeline_ID = "3229"
 # Current MokaWES ID
-mokawes_pipeline_ID = "3053"
+mokawes_pipeline_ID = "3639"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
