@@ -70,7 +70,7 @@ dx_sdk_test_expected_result = "dx v0.2"
 # Current Mokapipe ID
 mokapipe_pipeline_ID = "3229"
 # Current MokaWES ID
-mokawes_pipeline_ID = "3053"
+mokawes_pipeline_ID = "3639"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -90,7 +90,7 @@ app_project = "001_ToolsReferenceData:"
 # path to the workflow in the app project
 mokapipe_path = "Workflows/GATK3.5_v2.10"
 # path to the WES workflow in the app project
-wes_path = "Workflows/MokaWES_v1.5"
+wes_path = "Workflows/MokaWES_v1.7"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
@@ -123,10 +123,10 @@ mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_
 mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
 
 # MokaWES workflow_inputs
-wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
-wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-wes_sention_samplename = " -istage-FQ8JPpj076Gybkq459GfqfZb.sample="  # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
-wes_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
+wes_fastqc1 = " -istage-Ff0P5Jj0GYKY717pKX3vX8Z3.reads="  # FastQC Read 1
+wes_fastqc2 = " -istage-Ff0P5V00GYKyJfpX5bqX69Yg.reads="  # FastQC Read 2
+wes_sention_samplename = " -istage-Ff0P73j0GYKX41VkF3j62F9j.sample="  # sample name for sention app - prevents sample being incorrectly parsed from fastq filename
+wes_iva_email_input = " -istage-FjQyFy80pvjKyVb7BZVz94qY.email="  # ingenuity email address
 
 # MokaOnc amplivar fastq input
 mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
