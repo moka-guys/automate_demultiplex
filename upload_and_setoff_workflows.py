@@ -69,7 +69,7 @@ class SequencingRuns(list):
             os.rename(original_logfile_path, new_logfile)
 
 
-class RunfolderObject:
+class RunfolderObject(object):
     """
     An object with runfolder specific properties.
     """
@@ -89,7 +89,7 @@ class RunfolderObject:
         self.nexus_path = ""
 
 
-class RunfolderProcessor:
+class RunfolderProcessor(object):
     """
     This class assesses a runfolder to check if it required processing. If therunfolder meets the
     criteria to be processed.
