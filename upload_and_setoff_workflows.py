@@ -16,6 +16,7 @@ import smtplib
 from email.message import Message
 from shutil import copyfile
 import requests
+from adlogger import ADLoggers
 
 # import config file
 import automate_demultiplex_config as config
@@ -161,6 +162,9 @@ class RunfolderProcessor(object):
         self.iva_upload_command = "jobid=$(dx run " + config.iva_app_path + " -y"
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
+        self.project_bash_script_path = (
+            config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
+        )
 
         # project_ID of created project
         self.projectid = ""
@@ -210,6 +214,28 @@ class RunfolderProcessor(object):
         self.panel_dictionary = self.set_panel_dictionary()
 
         self.sql_queries = {}
+
+        self.log_config={
+            "script": os.path.join(config.upload_agent_logfile, self.now + "_.txt"),
+            "project": os.path.join(
+                config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
+            ),
+            "dx_run": self.runfolder_obj.runfolder_dx_run_script,
+            "demultiplex": [ # Demultiplex log has timestamp that can differ from self.now
+                os.path.join(config.demultiplex_logfiles, filename)
+                for filename in os.listdir(config.demultiplex_logfiles)
+                if self.runfolder_obj.runfolder_name in filename
+            ].pop(),
+            "fastq_upload": os.path.join(
+                self.runfolder_obj.runfolderpath, config.upload_started_file
+            ),
+            "backup": os.path.join(
+                config.backup_runfolder_logfile,
+                self.runfolder_obj.runfolder_name + ".log"
+            )
+        }
+        self.loggers = ADLoggers(**self.log_config)
+
 
     def run_tests(self):
         """
@@ -635,12 +661,9 @@ class RunfolderProcessor(object):
         The project id is returned as a string
 
         """
-        project_bash_script_path = (
-            config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
-        )
 
         # open bash script
-        with open(project_bash_script_path, "w") as project_script:
+        with open(self.project_bash_script_path, "w") as project_script:
             project_script.write(self.source_command + "\n")
             project_script.write(
                 self.createprojectcommand
@@ -668,7 +691,6 @@ class RunfolderProcessor(object):
 
             # echo the project id so it can be captured below
             project_script.write("echo $project_id")
-        return project_bash_script_path
 
     def run_project_creation_script(self, project_bash_script_path):
         """
@@ -1775,7 +1797,7 @@ class RunfolderProcessor(object):
             os.path.join(config.demultiplex_logfiles, filename)
             for filename in os.listdir(config.demultiplex_logfiles)
             if self.runfolder_obj.runfolder_name in filename
-        ]
+        ].pop()
         logfiles = [
             ua_log,
             nexus_create_log,
