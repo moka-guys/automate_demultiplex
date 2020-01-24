@@ -11,7 +11,7 @@ class ADLoggers():
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    def __init__( self, script, project, dx_run, demultiplex, fastq_upload, backup):
+    def __init__( self, project, dx_run, demultiplex, fastq_upload, backup, script=None):
         self.script = self._get_ad_logger('automate_demultiplex', script)
         self.project = self._get_ad_logger('create_project', project, file_only=True)
         self.dx_run = self._get_ad_logger('dx_run', dx_run, file_only=True)
@@ -47,14 +47,9 @@ class ADLoggers():
         logger.addHandler(self._get_syslog_handler())
         return logger
 
-loggers = ADLoggers(None, None, None, None, None, None)
-
-# # Each logger has a .path variable
-# # Each logger has 
-# loggers = ADLOGGER()
-# loggers.script
-# loggers.uploadagent
-# loggers.demultiplexlog
-# loggers.uploadstartedlog
-# loggers.dxrun
-# loggers.projectcreation
+if __name__ == '__main__':
+    loggers = ADLoggers(None, None, None, None, None, script='test.log')
+    print('Writing test to {} and syslog'.format(loggers.script.filepath))
+    loggers.script.info('This is a test')
+    for logger in loggers.all:
+        print(logger.name, logger.filepath)
