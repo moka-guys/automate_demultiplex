@@ -215,7 +215,8 @@ class RunfolderProcessor(object):
 
         self.sql_queries = {}
 
-        self.log_config={
+        # Configuration for ADLoggers. Provides mapping between logger shorthand name and the logfile filepath.
+        self.log_config = {
             "script": os.path.join(config.upload_agent_logfile, self.now + "_.txt"),
             "project": os.path.join(
                 config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
@@ -231,23 +232,16 @@ class RunfolderProcessor(object):
             ),
             "backup": os.path.join(
                 config.backup_runfolder_logfile,
-                self.runfolder_obj.runfolder_name + ".log"
-            )
+                self.runfolder_obj.runfolder_name + ".log",
+            ),
         }
         self.loggers = ADLoggers(**self.log_config)
-
 
     def run_tests(self):
         """
         Test the performance of the required software (upload agent and dx toolkit)
         """
-        self.write_to_uascript_logfile(
-            "automate_demultiplexing release:"
-            + git_tag.git_tag()
-            + "\n----------------------"
-            + str("{:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
-            + "\n----------------------TESTING UPLOAD AGENT FUNCTIONALITY----------------------\n"
-        )
+        self.loggers.script.info("automate_demultiplexing release:{}".format(git_tag.git_tag()))
         # perform upload agent test
         if not self.test_upload_agent(
                 self.perform_test(
@@ -292,9 +286,8 @@ class RunfolderProcessor(object):
                 )
                 # create bash script to create and share nexus project -return filepath
                 # pass filepath into module which runs project creation script - capturing projectid
-                self.projectid = self.run_project_creation_script(
-                    self.write_create_project_script()
-                )
+                self.write_create_project_script()
+                self.projectid = self.run_project_creation_script()
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks fastqs were uploaded without error
                 self.look_for_upload_errors_fastq(self.upload_fastqs())
@@ -347,18 +340,13 @@ class RunfolderProcessor(object):
         """
         if not test_result:
             if not self.debug_mode:
-                self.logger("Upload Agent Test Failed", "UA_fail")
+                self.loggers.script.error("UA_fail 'Upload Agent Test Failed'")
                 return False
             else:
                 return False
         else:
             if not self.debug_mode:
-                self.logger("Upload Agent function test passed", "UA_pass")
-                # write this to the log file
-                self.write_to_uascript_logfile(
-                    "upload agent check passed\n"
-                    "\n----------------------TEST DX TOOLKIT IS FUNCTIONING----------------------\n"
-                )
+                self.loggers.script.info("UA_pass 'Upload Agent function test passed'")
                 return True
             else:
                 return True
@@ -377,9 +365,13 @@ class RunfolderProcessor(object):
         if test == "dx_toolkit":
             if config.dx_sdk_test_expected_stdout not in test_input:
                 return False
-        # For already_uplaoded or demultiplex_started want to return False if the files DO NOT exist
-        if test in ["already_uploaded", "demultiplex_started"]:
+        # False if the demultiplex started file does not exist
+        if test == "demulitplex_started":
             if not os.path.isfile(test_input):
+                return False
+        # False if the upload file does not exist or does not contain data
+        if test == "already_uploaded":
+            if not os.path.isfile(test_input) or (os.path.getsize(test_input) == 0):
                 return False
         # demultiplex success -return False  if expected string NOT in last line of log file
         if test == "demultiplex_success":
@@ -396,18 +388,13 @@ class RunfolderProcessor(object):
         """
         if not test_result:
             if not self.debug_mode:
-                self.logger("dx toolkit function test failed", "UA_fail")
+                self.loggers.script.error("UA_fail 'dx toolkit function test failed'")
                 return False
             else:
                 return False
         else:
             if not self.debug_mode:
-                self.logger("dx toolkit function test passed", "UA_pass")
-                # write this to the log file
-                self.write_to_uascript_logfile(
-                    "dx toolkit check passed\n"
-                    "\n----------------------UPLOAD FASTQS----------------------\n"
-                )
+                self.loggers.script.info("UA_pass 'dx toolkit function test passed'")
                 return True
             else:
                 return True
@@ -419,27 +406,18 @@ class RunfolderProcessor(object):
         Returns False if not already processed.
         """
         # write to log file including the github repo tag and time stamp
-        self.write_to_uascript_logfile(
-            "Assessing "
-            + self.runfolder_obj.runfolderpath
-            + "\n\n------------------HAS THIS FOLDER ALREADY BEEN UPLOADED?----------------------\n"
-        )
+        self.loggers.script.info("Working on {}".format(self.runfolder_obj.runfolderpath))
 
         # use perform_test function to assert if the file exists - will return True if file exists
         if self.perform_test(
                 os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file),
                 "already_uploaded",
         ):
-            self.write_to_uascript_logfile(
-                "YES - self.upload_started_file present \n--------------STOP--------------n"
-            )
+            self.loggers.script.info("Upload started file present. Terminating.")
             return True
         else:
             # if file doesn't exist return false to continue and write to log file
-            self.write_to_uascript_logfile(
-                "NO - self.upload_started_file not present so continue\n"
-                "\n-----------CHECKING DEMULTIPLEXING COMPLETED SUCCESSFULLY-----------n"
-            )
+            self.loggers.script.info("Upload started file not found. Continuing.")
             return False
 
     def has_demultiplexed(self):
@@ -455,24 +433,15 @@ class RunfolderProcessor(object):
             with open(demultiplex_file_path, "r") as logfile:
                 # check if successful demuliplex statement in last line of log
                 if self.perform_test(logfile.readlines()[-1], "demultiplex_success"):
-                    self.write_to_uascript_logfile(
-                        "Demultiplex was successfully completed.\ncompiling a list of fastqs......."
-                    )
-                    # if successfull call the module which creates a list of fastqs
+                    self.loggers.script.info("Demultiplex completed succesfully.")
                     return True
                 else:
                     # write to logfile that demultplex was not successful
-                    self.write_to_uascript_logfile(
-                        "!!!!!!!DEMULTIPLEXING DID NOT COMPLETE SUCCESSFULLY.!!!!!!!!!"
-                        "\n----------------------STOP----------------------\n"
-                    )
+                    self.loggers.script.info("Demultiplex failed.")
                     return False
         else:
             # write to logfile that not yet demultiplexed
-            self.write_to_uascript_logfile(
-                "demultiplexing has not been performed."
-                "\n----------------------STOP----------------------\n"
-            )
+            self.loggers.script.info("Demultiplex has not been performed.")
             return False
 
     def find_fastqs(self, runfolder_fastq_path):
@@ -512,32 +481,24 @@ class RunfolderProcessor(object):
                     not_processed.append(fastq)
 
         if not_processed:
-            # add to logger
-            self.logger(
-                "unrecognised panel number found in run " + self.runfolder_obj.runfolder_name,
-                "UA_fail",
+            self.loggers.script.error(
+                "UA_fail 'Unrecognised panel number found in run {}.'".format(
+                    self.runfolder_obj.runfolder_name
+                )
             )
-            # write to logfile
-            self.write_to_uascript_logfile(
-                "Some fastq files contained an unrecognised panel number: "
-                + ",".join(not_processed)
-                + "\n"
+            self.loggers.script.error(
+                "UA_fail 'Some fastq files contained an unrecognised panel number: {}'".format(
+                    ",".join(not_processed)
+                )
             )
 
         if not list_of_processed_samples:
-            self.write_to_uascript_logfile(
-                "List of fastqs did not contain any known Pan numbers. Stopping\n"
-            )
+            self.loggers.script.error("UA_fail 'No known Pan numbers in fastq list'")
             # if no fastqs to be processed return none object rather than empty list
             list_of_processed_samples = None
             fastq_string = None
         else:
-            self.write_to_uascript_logfile(
-                str(len(list_of_processed_samples))
-                + " fastqs found.\n" + \
-                "\n----------------------PREPARING UPLOAD OF FASTQS----------------------\n" + \
-                "defining path for fastq files......."
-            )
+            self.loggers.script.info("{} fastqs found".format(str(len(list_of_processed_samples))))
 
         return (list_of_processed_samples, fastq_string)
 
@@ -590,11 +551,12 @@ class RunfolderProcessor(object):
         if library_batch_numbers:
             return "_".join(set(library_batch_numbers))
         else:
-            # write to logger to prompt slack alert
-            self.logger(
-                "unable to identify library batch numbers - are there underscores in the samplenames?"
-                + self.runfolder_obj.runfolder_name,
-                "UA_fail",
+            # Prompt a slack alert
+            self.loggers.script.error(
+                (
+                    "UA_fail '{} - Unable to identify library batch numbers. "
+                    "Check for underscores in the samplenames."
+                ).format(self.runfolder_obj.runfolder_name)
             )
             if not self.debug_mode:
                 # raise exception to stop script
@@ -642,12 +604,6 @@ class RunfolderProcessor(object):
                 config.NexusProjectPrefix + self.runfolder_obj.runfolder_name + "_" + library_batch
             )
 
-        # write to log
-        self.write_to_uascript_logfile(
-            "fastqs will be uploaded to "
-            + self.runfolder_obj.nexus_path
-            + "\n\n----------------------CREATE AND SHARE DNA NEXUS PROJECT----------------------\n"
-        )
         # return tuple of string for self.dest
         return (nexus_project_name + ":/", nexus_path, nexus_project_name)
 
@@ -692,7 +648,7 @@ class RunfolderProcessor(object):
             # echo the project id so it can be captured below
             project_script.write("echo $project_id")
 
-    def run_project_creation_script(self, project_bash_script_path):
+    def run_project_creation_script(self):
         """
         Recieves path to previously created script as input
         Calls subprocess command
@@ -704,12 +660,12 @@ class RunfolderProcessor(object):
 
         """
         # run a command to execute the bash script made above
-        cmd = "bash " + project_bash_script_path
+        cmd = "bash " + self.project_bash_script_path
         (out, _) = self.execute_subprocess_command(cmd)
         # if debug mode subprocess output is not useful to test this function
         # therefore the input to this function can be the expected subprocess stdout - assign this input to the out variable
         if self.debug_mode:
-            out = project_bash_script_path
+            out = self.project_bash_script_path
 
         # if start of project id is in out capture the id and write to logfiles and return
         if "project-" in out:
@@ -718,18 +674,21 @@ class RunfolderProcessor(object):
 
             string_viewuser_list = ",".join(config.view_users)
             # record in log file who project was shared with (VIEW)
-            self.write_to_uascript_logfile(
-                "DNA Nexus project %s created and shared (VIEW) to %s\n"
-                % (self.runfolder_obj.nexus_project_name, string_viewuser_list)
+            self.loggers.script.info(
+                "DNA Nexus project {} created and shared (VIEW) to {}".format(
+                    self.runfolder_obj.nexus_project_name, string_viewuser_list
+                )
             )
 
             # record in log file who project was shared with (ADMIN)
             string_adminuser_list = ",".join(config.admin_users)
-            self.write_to_uascript_logfile(
-                "DNA Nexus project %s created and shared (ADMIN) to %s\n"
-                % (self.runfolder_obj.nexus_project_name, string_adminuser_list)
-                + "\nProjectid=%s\n" % (projectid)
+            self.loggers.script.info(
+                "DNA Nexus project {} created and shared (ADMIN) to {}".format(
+                    self.runfolder_obj.nexus_project_name, string_adminuser_list
+                )
             )
+
+            self.loggers.script.info("Projectid={}".format(projectid))
             # return projectid
             return projectid
         # return false if debug mode otherwise raise an exception.
@@ -737,11 +696,7 @@ class RunfolderProcessor(object):
             if self.debug_mode:
                 return False
             else:
-                self.logger(
-                    "failed to create project in dna nexus "
-                    + self.runfolder_obj.nexus_project_name,
-                    "UA_fail",
-                )
+                self.loggers.script.error("UA_fail 'failed to create project in dna nexus'")
                 # raise exception to stop script
                 raise Exception, "Unable to create DNA Nexus project"
 
@@ -769,41 +724,20 @@ class RunfolderProcessor(object):
         )
         if self.debug_mode:
             return nexus_upload_command
-        # open a file to hold all the upload agent commands
-        with open(
-            os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds), "w"
-        ) as runfolder_upload_cmd_file:
-            # write fastq upload commands and a way of distinguishing between upload of fastq and rest of runfolder
-            runfolder_upload_cmd_file.write(
-                "----------------------Upload of fastqs----------------------\n"
-                + nexus_upload_command
-                + "\n\n----------------------Upload rest of runfolder----------------------\n"
+
+        # Log fastq upload command to runfolder upload
+        self.loggers.backup.info("Fastq upload commands:\n{}".format(nexus_upload_command))
+        # Log fastq upload script location
+        self.loggers.script.info(
+            "Uploading fastqs. See commands at {}".format(
+                self.loggers.fastq_upload.filepath
             )
-
-        # write to logfile
-        self.write_to_uascript_logfile(
-            "\n----------------------UPLOADING FASTQS----------------------\nSee commands at "
-            + os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds)
-            + "\n\n----------------------CHECKING SUCCESSFUL UPLOAD OF FASTQS----------------------\n"
         )
-        upload_agent_stdout_path = os.path.join(
-            self.runfolder_obj.runfolderpath, config.upload_started_file
-        )
-        # open file to show upload has started and to hold upload agent standard out
-        with open(upload_agent_stdout_path, "a") as upload_agent_stdout_log:
 
-            # capture stdout and stderr from execution of command
-            (out, err) = self.execute_subprocess_command(nexus_upload_command)
-
-            # write to uplaod agent std out logfile
-            upload_agent_stdout_log.write(
-                "\n----------------------Uploading fastqs "
-                + str("{:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
-                + "-----------------\n"
-                + out
-                + err
-            )
-        return upload_agent_stdout_path
+        # Create file to show upload has started and to hold upload agent standard output
+        (out, err) = self.execute_subprocess_command(nexus_upload_command)
+        self.loggers.fastq_upload.info("Uploading fastqs:\n{}\n{}".format(out, err))
+        return self.loggers.fastq_upload.filepath
 
     def look_for_upload_errors_fastq(self, upload_agent_stdout_path):
         """
@@ -822,26 +756,18 @@ class RunfolderProcessor(object):
                     if self.debug_mode:
                         return "disrupted but complete"
                     else:
-                        self.write_to_uascript_logfile(
-                            "There was a disruption to the network when uploading the Fastq files but it completed successfully\n"
-                        )
-                        self.logger(
-                            "upload of fastq was disrupted but completed for run "
-                            + self.runfolder_obj.runfolder_name,
-                            "UA_disrupted",
-                        )
+                        self.loggers.script.info("UA_disrupted 'upload of fastq was disrupted but complete for run'")
                 # other wise write to log
                 else:
                     if self.debug_mode:
                         return "fail"
                     else:
-                        self.write_to_uascript_logfile(
-                            "There was a disruption to the network which prevented the rest of the runfolder being uploaded\n"
+                        self.loggers.script.error(
+                            "UA_fail 'upload of fastqs failed for run {}'".format(
+                                self.runfolder_obj.runfolder_name
+                            )
                         )
-                        self.logger(
-                            "upload of fastqs failed for run " + self.runfolder_obj.runfolder_name,
-                            "UA_fail",
-                        )
+
             # if error status is not present
             else:
                 # return
@@ -849,11 +775,7 @@ class RunfolderProcessor(object):
                     return "no error"
                 else:
                     # write to log file check was ok
-                    self.logger(
-                        "upload of fastq files complete for run "
-                        + self.runfolder_obj.runfolder_name,
-                        "UA_pass",
-                    )
+                    self.loggers.script.info("UA_pass 'upload of fastq files complete for run'")
 
     def nexus_fastq_paths(self, read1):
         """
@@ -969,9 +891,7 @@ class RunfolderProcessor(object):
         """
 
         # Update script log file to say what is being done.
-        self.write_to_uascript_logfile(
-            "\n\n----------------------RUN WORKFLOW----------------------\n"
-        )
+        self.loggers.script.info('Building dx run commands')
         # list to hold all commands.
         commands_list = []
         commands_list.append(self.source_command)
@@ -1258,13 +1178,13 @@ class RunfolderProcessor(object):
                 else:
                     sorted_panels += rpkm_analysis_list
                     cleaned_list.append(panel)
-        self.write_to_uascript_logfile(
-            "\n----------------------COMBINING PANELS FOR RPKM ANALYSIS----------------------\nOriginal panels: "
-            + ",".join(rpkm_list)
-            + "\nPanels to analyse: "
-            + ",".join(cleaned_list)
-            + "\n"
+
+        self.loggers.script.info(
+            "Combining panels for RPKM analysis.\nOriginal panels: {}\nPanels to analyse: {}".format(
+                ",".join(rpkm_list), ",".join(cleaned_list)
+            )
         )
+
         # return list to be used to build rpkm command(s).
         return cleaned_list
 
@@ -1470,6 +1390,7 @@ class RunfolderProcessor(object):
         Writes the job ids to log file
         Reports any standard error
         """
+
         # run a command to execute the bash script made above
         cmd = "bash " + self.runfolder_obj.runfolder_dx_run_script
         (_, err) = self.execute_subprocess_command(cmd)
@@ -1481,20 +1402,18 @@ class RunfolderProcessor(object):
             # if stderr after ignorning lines referring to the package conflict write to logger
             if cleaned_error:
                 # send message to logger/log file
-                self.logger(
-                    "Error when starting pipeline for run "
-                    + self.runfolder_obj.runfolder_name
-                    + " stderror = "
-                    + "\n".join(cleaned_error),
-                    "UA_fail",
+                self.loggers.script.error(
+                    "UA_fail 'Error when starting pipeline for run {}. Stderror = \n{}".format(
+                        self.runfolder_obj.runfolder_name, "\n".join(cleaned_error)
+                    )
                 )
-                # # write error message to log file# exact error message is written to log file by logger function
-                # self.write_to_uascript_logfile("\n\n!!!!!!!!!Uh Oh!!!!!!!!\nstandard error: " + "\n".join(cleaned_error) + "\n\n")
+
         else:
             # write error message to log file
-            self.logger(
-                "dx run commands issued without error for run " + self.runfolder_obj.runfolder_name,
-                "UA_pass",
+            self.loggers.script.info(
+                "UA_pass 'dx run commands issued without error for run {}'".format(
+                    self.runfolder_obj.runfolder_name
+                )
             )
 
     def smartsheet_workflows_commands_sent(self):
@@ -1504,9 +1423,7 @@ class RunfolderProcessor(object):
         This is posted using the requests module to a given url
         The response is parsed to check the status was "success" otherwise an error is raised.
         """
-        self.write_to_uascript_logfile(
-            "\n----------------------UPDATE SMARTSHEET----------------------\n"
-        )
+
         # #uncomment this block if want to get the column ids for a new sheet
         ########################################################################
         # # Get all columns.
@@ -1557,17 +1474,13 @@ class RunfolderProcessor(object):
         for line_key in response:
             if line_key == "message":
                 if response[line_key] == "SUCCESS":
-                    self.write_to_uascript_logfile("smartsheet updated to say in progress\n")
-                    self.logger("run started added to smartsheet", "smartsheet_pass")
+                    self.loggers.script.info("smartsheet_pass 'smartsheet updated to say in progress'")
                 else:
-                    self.logger(
-                        "run started NOT added to smartsheet for run "
-                        + self.runfolder_obj.runfolder_name,
-                        "smartsheet_fail",
-                    )
-                    self.write_to_uascript_logfile(
-                        "smartsheet NOT updated at in progress step\n" + str(response)
-                    )
+                    self.loggers.script.error(
+                        "smartsheet_fail 'run started NOT added to smartsheet for run {}'".format(
+                            self.runfolder_obj.runfolder_name
+                            )
+                        )
 
     def write_opms_queries_mokapipe(self, list_of_processed_samples):
         """
@@ -1726,10 +1639,6 @@ class RunfolderProcessor(object):
         The rest of the runfolder requires backing up, excluding bcl files.
         A python script which is a wrapper for the upload agent is used.
         """
-        # write status update to log file
-        self.write_to_uascript_logfile(
-            "\n----------------------UPLOAD REST OF RUNFOLDER----------------------\n"
-        )
 
         # create the samplesheet name to copy
         samplesheet_name = self.runfolder_obj.runfolder_name + "_SampleSheet.csv"
@@ -1740,6 +1649,7 @@ class RunfolderProcessor(object):
                 config.samplesheets + samplesheet_name,
                 os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name),
             )
+        self.loggers.script.info("Samplesheet copied to runfolder: {}".format(samplesheet_name))
 
         cmd = (
             "python3 "
@@ -1755,57 +1665,18 @@ class RunfolderProcessor(object):
         )
 
         # write to the log file that samplesheet was copied and runfolder is being uploaded, linking to log files for cmds and stdout
-        self.write_to_uascript_logfile(
-            "Copied samplesheet to runfolder\nUploading rest of run folder to Nexus using backup_runfolder.py:\n "
-            + cmd
-            + "\nsee standard out from these commands in log file @ "
-            + os.path.join(config.backup_runfolder_logfile, self.runfolder_obj.runfolder_name)
-            + "\n\n----------------CHECKING SUCCESSFUL UPLOAD OF RUNFOLDER----------------\n"
+        self.loggers.script.info("Uploading rest of run folder to Nexus using backup_runfolder.py")
+        self.loggers.script.info(cmd)
+        self.loggers.script.info(
+            "See standard out from these commands in logfile at {}".format(
+                self.loggers.backup.filepath
+            )
         )
 
         # run the command
         _out, _err = self.execute_subprocess_command(cmd)
-        backup_logfile = (
-            config.backup_runfolder_logfile + "/" + self.runfolder_obj.runfolder_name + ".log"
-        )
-        return backup_logfile
 
-    def list_log_files(self):
-        """
-        log files include:
-        1. the log file for this script containing all commands used (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_log)
-        2. demultiplexing log file (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files)
-        3. nexus project creation logs (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Nexus_project_creation_logs)
-        4. runfolder_upload_commands (in the run folder)
-        5. runfolder_upload_stdout (in the run folder)
-        6. logfile used to set off the workflow (/usr/local/src/mokaguys/automate_demultiplexing_logfiles/DNA_Nexus_workflow_logs)
-        """
-        ua_log = self.upload_agent_logfile_path  # Script logfile containing all commands used
-        nexus_create_log = (
-            config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
-        )  # Nexus project creation log
-        runfolder_upload_log = os.path.join(
-            self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds
-        )  # Runfolder upload commands
-        runfolder_upload_start_log = os.path.join(
-            self.runfolder_obj.runfolderpath, config.upload_started_file
-        )  # Runfolder upload stdout
-        workflow_command_log = (
-            self.runfolder_obj.runfolder_dx_run_script
-        )  # File used to set off dx run commands
-        demultiplex_logfiles = [
-            os.path.join(config.demultiplex_logfiles, filename)
-            for filename in os.listdir(config.demultiplex_logfiles)
-            if self.runfolder_obj.runfolder_name in filename
-        ].pop()
-        logfiles = [
-            ua_log,
-            nexus_create_log,
-            runfolder_upload_log,
-            runfolder_upload_start_log,
-            workflow_command_log,
-        ] + demultiplex_logfiles
-        return logfiles
+        return self.loggers.backup.filepath
 
     def upload_log_files(self):
         """
@@ -1827,37 +1698,23 @@ class RunfolderProcessor(object):
             "--do-not-compress",
             "--upload-threads",
             "10",
-        ] + self.list_log_files()
+        ] + [logger.filepath for logger in self.loggers.all]
 
         cmd = subprocess.list2cmdline(command_list)
 
-        # write these commands to the runfolder_upload_cmds_logfile before upload.
-        runfolder_upload_cmd_file = open(
-            os.path.join(self.runfolder_obj.runfolderpath, config.runfolder_upload_cmds), "a"
-        )
-        runfolder_upload_cmd_file.write(
-            "\n----------------------Upload log files----------------------\n"
-        )
-        runfolder_upload_cmd_file.write(cmd + "\n")
-        runfolder_upload_cmd_file.close()
+        # write these commands to the backup_runfolder logfile before upload.
+        self.loggers.backup.info("Uploading logfiles.")
+        self.loggers.backup.info(cmd)
 
-        # Write to logfiles
+        # Upload fastqs
         out, err = self.execute_subprocess_command(cmd)
 
         # capture stdout to log file containing stdour and stderr
-        runfolder_upload_stdout_file = open(
-            os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file), "a"
-        )
-        runfolder_upload_stdout_file.write(
-            "\n----------------------Uploading logfiles (this will not be included in the file within DNA Nexus) "
-            + str("{:%Y-%m-%d %H:%M:%S}".format(datetime.datetime.now()))
-            + "-----------------\n"
-        )
-        runfolder_upload_stdout_file.write(out)
-        runfolder_upload_stdout_file.write(err)
-        runfolder_upload_stdout_file.close()
+        self.loggers.fastq_upload.info("Uploading logfiles (this will not be included in DNANexus)")
+        self.loggers.fastq_upload.info(out)
+        self.loggers.fastq_upload.info(err)
 
-        return os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file)
+        return self.loggers.fastq_upload.filepath
 
     def look_for_upload_errors(self, logfile, stage):
         """
@@ -1870,19 +1727,14 @@ class RunfolderProcessor(object):
             with open(logfile, "r") as backup_logfile:
                 for line in backup_logfile.readlines():
                     if config.backup_runfolder_error in line:
-                        self.logger(
-                            "Error in upload of rest of runfolder: "
-                            + line
-                            + "in runfolder"
-                            + self.runfolder_obj.runfolder_name,
-                            "UA_fail",
+                        self.loggers.script.error(
+                            "UA_fail 'Error in upload of rest of runfolder: {} in runfolder {}'".format(
+                                line, self.runfolder_obj.runfolder_name
+                            )
                         )
                     elif config.backup_runfolder_success in line:
-                        self.logger(
-                            "Rest of runfolder "
-                            + self.runfolder_obj.runfolder_name
-                            + " uploaded ok",
-                            "UA_pass",
+                        self.loggers.script.info(
+                            "UA_pass 'Rest of runfolder {} uploaded ok'".format(self.runfolder_obj.runfolder_name)
                         )
 
         # check the DNANexus_upload_started.txt file for the results of upload agent upload of logfiles
@@ -1901,16 +1753,16 @@ class RunfolderProcessor(object):
                         # if the api error is noted report a failure
                         if config.ua_error in line:
                             ok = False
-                            self.logger(
-                                "Unsucessful upload of logfile "
-                                + line
-                                + " for run "
-                                + self.runfolder_obj.runfolder_name,
-                                "UA_fail",
+                            self.loggers.script.error(
+                                "UA_fail 'Unsuccessful upload of logfile {} for run {}'".format(
+                                    line, self.runfolder_obj.runfolder_name
+                                )
                             )
             if ok:
-                self.logger(
-                    "Logfiles from " + self.runfolder_obj.runfolder_name + " uploaded ok", "UA_pass"
+                self.loggers.script.info(
+                    "UA_pass 'Logfiles from {} uploaded ok'".format(
+                        self.runfolder_obj.runfolder_name
+                    )
                 )
 
     def execute_subprocess_command(self, command):
@@ -1960,45 +1812,11 @@ class RunfolderProcessor(object):
         server.sendmail(config.me, to, m.as_string())
 
         # write to logfile
-        self.write_to_uascript_logfile(
-            "\nEmail sent to...... "
-            + str(to)
-            + "\nsubject:"
-            + self.email_subject
-            + "\nbody:"
-            + self.email_message
-            + "\n\n"
+        self.loggers.script.info(
+            "UA_pass Email sent to {}. Subject {}. Body:\n{}".format(
+                str(to), self.email_subject, self.email_message
+            )
         )
-        # self.logger("Upload Agent email sent" + str(to) + ". Subject:" + self.email_subject + ". Body:" + self.email_message, "UA_pass")
-
-    def write_to_uascript_logfile(self, message):
-        """
-        Write message to logfile - open file in append mode each time
-        """
-        if not self.debug_mode:
-            with open(self.upload_agent_logfile_path, "a+") as logfile:
-                logfile.write(message)
-
-    def logger(self, message, tool):
-        """Write log messages to the system log.
-        Arguments:
-        message (str)
-            Details about the logged event.
-        tool (str)
-            Tool name. Used to search within the insight ops website.
-        """
-        if not self.debug_mode:
-            # Create subprocess command string, passing message and tool name to the command
-            log = "/usr/bin/logger -t %s '%s'" % (tool, message)
-            # self.write_to_uascript_logfile(log)
-            if subprocess.call([log], shell=True) == 0:
-                # If the log command produced no errors, record the log command string to the script logfile.
-                self.write_to_uascript_logfile("Log written to /usr/bin/logger\n" + log + "\n")
-            # Else record failure to write to system log to the script log file
-            else:
-                self.write_to_uascript_logfile(
-                    "Failed to write log to /usr/bin/logger\n" + log + "\n"
-                )
 
 
 if __name__ == "__main__":

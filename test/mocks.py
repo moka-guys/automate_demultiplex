@@ -11,9 +11,6 @@ class MockRunfolderProcessor(RunfolderProcessor):
     def __init__(self, *args, **kwargs):
         super(MockRunfolderProcessor, self).__init__(*args, **kwargs)
 
-    def run_tests(self):
-        pass
-
     def already_uploaded(self):
         return False
 
@@ -44,8 +41,11 @@ class MockRunfolderProcessor(RunfolderProcessor):
     def send_opms_queries(self):
         pass
 
-    def run_project_creation_script(self, project_bash_script_path):
+    def run_project_creation_script(self):
         return "project-Fj4zZ200jYvx0FGP60vyykqY"
+
+def mock_email(*args):
+    pass
 
 def mock_rename(original, new):
     pass

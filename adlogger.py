@@ -12,12 +12,16 @@ class ADLoggers():
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     def __init__( self, project, dx_run, demultiplex, fastq_upload, backup, script=None):
+        # Logfiles the demultiplex script writes to
         self.script = self._get_ad_logger('automate_demultiplex', script)
+        self.fastq_upload = self._get_ad_logger('fastq_upload', fastq_upload)
+        self.backup = self._get_ad_logger('backup_runfolder', backup)
+        # Logfiles not written to or bash files created by script. File_only skips file handler
+        #  creation but still provides convenience attributes .name and .filename
         self.project = self._get_ad_logger('create_project', project, file_only=True)
         self.dx_run = self._get_ad_logger('dx_run', dx_run, file_only=True)
         self.demultiplex = self._get_ad_logger('demultiplex', demultiplex, file_only=True)
-        self.fastq_upload = self._get_ad_logger('fastq_upload', fastq_upload, file_only=True)
-        self.backup = self._get_ad_logger('backup_runfolder', backup, file_only=True)
+
         # Container for all logfiles
         self.all = [self.script, self.project, self.dx_run, self.demultiplex, self.fastq_upload, self.backup]
 
@@ -25,7 +29,7 @@ class ADLoggers():
         return [ logger.filepath for logger in self.all ]
 
     def _get_file_handler(self, filepath):
-        fh = logging.FileHandler(filepath)
+        fh = logging.FileHandler(filepath, mode='a')
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(self.formatter)
         return fh
@@ -48,7 +52,7 @@ class ADLoggers():
         return logger
 
 if __name__ == '__main__':
-    loggers = ADLoggers(None, None, None, None, None, script='test.log')
+    loggers = ADLoggers(None, None, None, None, None, None, script='test.log')
     print('Writing test to {} and syslog'.format(loggers.script.filepath))
     loggers.script.info('This is a test')
     for logger in loggers.all:
