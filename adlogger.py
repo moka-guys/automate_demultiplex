@@ -7,7 +7,7 @@ import logging.handlers
 def get_runfolder_log_config(runfolder, timestamp):
     #  Demultiplex script log has timestamp that differs from current time. Find first.
     any_demultiplex_logs = [
-        os.path.abspath(filename)
+        os.path.join(config.demultiplex_logfiles, filename)
         for filename in os.listdir(config.demultiplex_logfiles)
         if runfolder.runfolder_name in filename
     ]
