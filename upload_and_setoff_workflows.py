@@ -16,7 +16,7 @@ import smtplib
 from email.message import Message
 from shutil import copyfile
 import requests
-from adlogger import ADLoggers
+from adlogger import ADLoggers, get_runfolder_log_config
 
 # import config file
 import automate_demultiplex_config as config
@@ -215,26 +215,7 @@ class RunfolderProcessor(object):
 
         self.sql_queries = {}
 
-        # Configuration for ADLoggers. Provides mapping between logger shorthand name and the logfile filepath.
-        self.log_config = {
-            "script": os.path.join(config.upload_agent_logfile, self.now + "_.txt"),
-            "project": os.path.join(
-                config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
-            ),
-            "dx_run": self.runfolder_obj.runfolder_dx_run_script,
-            "demultiplex": [ # Demultiplex log has timestamp that can differ from self.now
-                os.path.join(config.demultiplex_logfiles, filename)
-                for filename in os.listdir(config.demultiplex_logfiles)
-                if self.runfolder_obj.runfolder_name in filename
-            ].pop(),
-            "fastq_upload": os.path.join(
-                self.runfolder_obj.runfolderpath, config.upload_started_file
-            ),
-            "backup": os.path.join(
-                config.backup_runfolder_logfile,
-                self.runfolder_obj.runfolder_name + ".log",
-            ),
-        }
+        self.log_config = get_runfolder_log_config(self.runfolder_obj, self.now)
         self.loggers = ADLoggers(**self.log_config)
 
     def run_tests(self):
@@ -312,7 +293,8 @@ class RunfolderProcessor(object):
                 # return true to denote that a runfolder was processed
                 return True
 
-    def set_panel_dictionary(self):
+    @staticmethod
+    def set_panel_dictionary():
         """
         Populate the dictionary detailing panel specific settings.
         Default settings are set in the config file and then updated as and when required for each
@@ -735,7 +717,7 @@ class RunfolderProcessor(object):
         )
 
         # Create file to show upload has started and to hold upload agent standard output
-        (out, err) = self.execute_subprocess_command(nexus_upload_command)
+        out, err = self.execute_subprocess_command(nexus_upload_command)
         self.loggers.fastq_upload.info("Uploading fastqs:\n{}\n{}".format(out, err))
         return self.loggers.fastq_upload.filepath
 
@@ -746,6 +728,7 @@ class RunfolderProcessor(object):
         If the expected error message (defined in config file) is present but the string "upload successfully" is still present it is assumed it uploaded successfully on the repeated attempt.
         If the success statement is absent raise an alert but do not stop script from running
         """
+        #TODO: Refactor this function. Should print once rather than for every line
         # Open the log file and read to look for the string "ERROR"
         for upload in open(upload_agent_stdout_path).read().split("Uploading file"):
             # if there was an error during the upload...
@@ -775,7 +758,11 @@ class RunfolderProcessor(object):
                     return "no error"
                 else:
                     # write to log file check was ok
-                    self.loggers.script.info("UA_pass 'upload of fastq files complete for run'")
+                    self.loggers.script.info(
+                        "UA_pass 'upload of fastq file complete for run {}'".format(
+                            self.runfolder_obj.runfolder_name
+                        )
+                    )
 
     def nexus_fastq_paths(self, read1):
         """
@@ -1698,7 +1685,7 @@ class RunfolderProcessor(object):
             "--do-not-compress",
             "--upload-threads",
             "10",
-        ] + [logger.filepath for logger in self.loggers.all]
+        ] + [logger.filepath for logger in self.loggers.all if logger.filepath]
 
         cmd = subprocess.list2cmdline(command_list)
 
