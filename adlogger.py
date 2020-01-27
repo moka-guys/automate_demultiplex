@@ -1,6 +1,36 @@
+import os
 import automate_demultiplex_config as config
 import logging
 import logging.handlers
+
+
+def get_runfolder_log_config(runfolder, timestamp):
+    #  Demultiplex script log has timestamp that differs from current time. Find first.
+    any_demultiplex_logs = [
+        os.path.abspath(filename)
+        for filename in os.listdir(config.demultiplex_logfiles)
+        if runfolder.runfolder_name in filename
+    ]
+    demultiplex_log = any_demultiplex_logs.pop() if any_demultiplex_logs else None
+
+    # Configuration for ADLoggers. Provides mapping between logger shorthand name and the logfile filepath.
+    log_config = {
+        "script": os.path.join(config.upload_agent_logfile, timestamp + "_.txt"),
+        "project": os.path.join(
+            config.DNA_Nexus_project_creation_logfolder + runfolder.runfolder_name + ".sh"
+        ),
+        "dx_run": runfolder.runfolder_dx_run_script,
+        "demultiplex": demultiplex_log,
+        "fastq_upload": os.path.join(
+            runfolder.runfolderpath, config.upload_started_file
+        ),
+        "backup": os.path.join(
+            config.backup_runfolder_logfile,
+            runfolder.runfolder_name + ".log",
+        ),
+    }
+
+    return log_config
 
 class LOGFILE():
     def __init__(self, name, filepath):
