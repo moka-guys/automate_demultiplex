@@ -14,7 +14,7 @@ import argparse
 
 # import config file
 import automate_demultiplex_config as config
-from upload_and_setoff_workflows import process_runfolder
+from upload_and_setoff_workflows import RunfolderProcessor
 
 
 def get_arguments():
@@ -218,9 +218,7 @@ if __name__ == "__main__":
     pannumber = re.search(r"Pan\d+", ajson["name"]).group()
     # using function imported from upload_and_setoff_workflow.py build the panel dict to be used to
     # determine the workflow etc
-    paneldict = process_runfolder(
-        "test", str("{:%Y%m%d_%H}".format(datetime.datetime.now())), True
-    ).set_panel_dictionary()
+    paneldict = RunfolderProcessor.set_panel_dictionary()
     pansettings = paneldict[pannumber]
 
     # # Print decision support tool inputs
