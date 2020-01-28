@@ -178,7 +178,7 @@ class DecisionTooler(object):
                     )
                 )
             elif workflow.name == "mokapipe":
-                print " %s%s:%s" % (config.iva_vcf_inputname, jobid, workflow.vcf_out)
+                print(" %s%s:%s" % (config.iva_vcf_inputname, jobid, workflow.vcf_out))
         if tool == "sapientia":
             if workflow.name == "mokawes":
                 print(
