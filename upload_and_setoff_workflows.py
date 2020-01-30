@@ -804,7 +804,6 @@ class RunfolderProcessor(object):
                 config.app_project
                 + config.bedfile_folder
                 + self.panel_dictionary[pannumber]["sambamba_bedfile"]
-                + "dataSambamba.bed"
             )
         else:
             bed_dict["sambamba"] = (
@@ -813,20 +812,11 @@ class RunfolderProcessor(object):
 
         # given bed file could be a pan number or the name of a capture kit
         if self.panel_dictionary[pannumber]["hsmetrics_bedfile"]:
-            # given bed file could be a pan number or the name of a capture kit
-            if self.panel_dictionary[pannumber]["hsmetrics_bedfile"][0:3] == "Pan":
-                bed_dict["hsmetrics"] = (
-                    config.app_project
-                    + config.bedfile_folder
-                    + self.panel_dictionary[pannumber]["hsmetrics_bedfile"]
-                    + "data.bed"
-                )
-            else:
-                bed_dict["hsmetrics"] = (
-                    config.app_project
-                    + config.bedfile_folder
-                    + self.panel_dictionary[pannumber]["hsmetrics_bedfile"]
-                )
+            bed_dict["hsmetrics"] = (
+                config.app_project
+                + config.bedfile_folder
+                + self.panel_dictionary[pannumber]["hsmetrics_bedfile"]
+            )
         else:
             bed_dict["hsmetrics"] = (
                 config.app_project + config.bedfile_folder + pannumber + "data.bed"
@@ -904,17 +894,20 @@ class RunfolderProcessor(object):
                         peddy = True
                     if self.panel_dictionary[panel]["joint_variant_calling"]:
                         joint_variant_calling = True
+                    if self.panel_dictionary[panel]["iva_upload"]:
+                        commands_list.append(self.build_iva_input_command())
+                        commands_list.append(self.run_iva_command(fastq, panel))
 
                 if self.panel_dictionary[panel]["mokapipe"]:
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["iva_upload"]:
                         commands_list.append(self.build_iva_input_command())
-                        commands_list.append(self.run_iva_command(panel))
+                        commands_list.append(self.run_iva_command(fastq, panel))
                         commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["sapientia_upload"]:
                         commands_list.append(self.build_sapientia_input_command())
-                        commands_list.append(self.run_sapientia_command(panel))
+                        commands_list.append(self.run_sapientia_command(fastq, panel))
                         commands_list.append(self.add_to_depends_list())
 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
@@ -966,14 +959,6 @@ class RunfolderProcessor(object):
         else:
             bedfiles_string = ""
 
-        # The iva_upload flag in panel dictionary means the iva upload app is run outside of the workflow.
-        # If this is not done need to specify the email for ingenuity to the dx run command
-        ingenuity_email_string = ""
-        if not self.panel_dictionary[pannumber]["iva_upload"]:
-            ingenuity_email_string = (
-                config.wes_ingenuity_email + self.panel_dictionary[pannumber]["ingenuity_email"]
-            )
-
         # create the MokaWES dx command
         dx_command_list = [
             self.wes_command,
@@ -989,7 +974,6 @@ class RunfolderProcessor(object):
             config.wes_sambamba_bedfile,
             bedfiles["sambamba"],
             bedfiles_string,
-            ingenuity_email_string,
             self.dest,
             self.dest_cmd,
             self.token,
@@ -1215,24 +1199,26 @@ class RunfolderProcessor(object):
         """# TODO"""
         raise NotImplementedError
 
-    def run_sapientia_command(self, pannumber):
+    def run_sapientia_command(self, fastq, pannumber):
         """
         The app which imports samples into ingenuity has been removed form the workflow.
         It is now run as a seperate app, using the jobid.outputname as the input, which ensures the job doesn't run until the vcfs have been created.
         These inputs are created by a python script, which is called immediately before this job, and the output is captures into the variable $analysisid
         The dx run command is returned (string)
         """
+        fastqs = self.nexus_fastq_paths(fastq)
         dx_command = (
             self.sapientia_upload_command
             + " $analysisid -isapientia_project="
             + self.panel_dictionary[pannumber]["sapientia_project"]
+            + " --name " + "SAPIENTIA_" + fastqs[2]
             + self.dest
             + self.dest_cmd
             + self.token
         )
         return dx_command
 
-    def run_iva_command(self, pannumber):
+    def run_iva_command(self, fastq, pannumber):
         """
         The app which imports samples into ingenuity has been removed form the workflow.
         It is now run as a seperate app, using the jobid.outputname as the input, which ensures the job doesn't run until the vcfs have been created.
@@ -1240,9 +1226,12 @@ class RunfolderProcessor(object):
         The ingenuity email is taken from the panel dictionary using the pan number input to this function.
         The dx run command is returned (string)
         """
+        fastqs = self.nexus_fastq_paths(fastq)
+
         dx_command = (
             self.iva_upload_command
             + " $analysisid"
+            + " --name " + "QIAGEN_IVA_" + fastqs[2] 
             + config.iva_email_input_name
             + self.panel_dictionary[pannumber]["ingenuity_email"]
             + self.project

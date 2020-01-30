@@ -42,7 +42,7 @@ class MockRunfolderProcessor(RunfolderProcessor):
         pass
 
     def run_project_creation_script(self):
-        return "project-Fj4zZ200jYvx0FGP60vyykqY"
+        return "project-FjgVbxj01qbKyVb7BZVzVgq0"
 
 def mock_email(*args):
     pass

@@ -127,7 +127,7 @@ app_project = "001_ToolsReferenceData:/"
 # path to the workflow in the app project
 mokapipe_path = "Workflows/GATK3.5_v2.11"
 # path to the WES workflow in the app project
-mokawes_path = "Workflows/MokaWES_v1.5"
+mokawes_path = "Workflows/MokaWES_v1.8"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
@@ -178,17 +178,16 @@ mokapipe_bam_output_name = "bam"
 
 
 # MokaWES workflow_inputs
-wes_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
-wes_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
+wes_fastqc1 = " -istage-Ff0P5Jj0GYKY717pKX3vX8Z3.reads="  # FastQC Read 1
+wes_fastqc2 = " -istage-Ff0P5V00GYKyJfpX5bqX69Yg.reads="  # FastQC Read 2
 # bedfile for hs metrics
-wes_picard_bedfile = " -istage-F9GGBQj0jy1yBbpZPvK5GvPJ.vendor_exome_bedfile="
-sentieon_stage_id = "stage-FQ8JPpj076Gybkq459GfqfZb"
-wes_sambamba_bedfile = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="
+wes_picard_bedfile = " -istage-Ff0P5pQ0GYKVBB0g1FG27BV8.vendor_exome_bedfile="
+sentieon_stage_id = "stage-Ff0P73j0GYKX41VkF3j62F9j"
+wes_sambamba_bedfile = " -istage-Ff0P82Q0GYKQ4j8b4gXzjqxX.sambamba_bed="
 # sample name for sentieon app - prevents sample being incorrectly parsed from fastq filename
 wes_sentieon_samplename = " -i%s.sample=" % sentieon_stage_id
 # BED file used to restrict Senteion variant calling
 wes_sentieon_targets_bed = " -i%s.targets_bed=" % sentieon_stage_id
-wes_ingenuity_email = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="
 
 # MokaOnc amplivar fastq input
 mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
@@ -290,6 +289,7 @@ panel_list = [
     "Pan1159",
     "Pan1646",
     "Pan3320",
+    "Pan2835"
 ]  # , "Pan3321"]
 default_panel_properties = {
     "UMI": False,
@@ -324,7 +324,7 @@ default_panel_properties = {
 panel_settings = {
     "Pan493": {
         "mokawes": True,
-        # "iva_upload": True,
+        "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed",
         "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
@@ -333,8 +333,10 @@ panel_settings = {
     },
     "Pan2835": {  # TWIST WES at GSTT
         "mokawes": True,
-        # "iva_upload": True,
+        "iva_upload": True,
         "multiqc_coverage_level": 20,
+        "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
+        "sambamba_bedfile": "Pan493dataSambamba.bed",
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
@@ -373,8 +375,8 @@ panel_settings = {
         "sapientia_upload": True,
         # "sapientia_project": "1099",#live service
         "sapientia_project": "261",  # testing
-        "hsmetrics_bedfile": "Pan1449",
-        "sambamba_bedfile": "Pan1449",
+        "hsmetrics_bedfile": "Pan1449data.bed",
+        "sambamba_bedfile": "Pan1449dataSambamba.bed",
     },
     "Pan1063": {  # IMDv2
         "mokapipe": True,
@@ -408,7 +410,7 @@ panel_settings = {
     },
     "Pan1646": {  # ICTHYOSIS - use same settings as WES and Pan1646 for coverage
         "mokawes": True,
-        # "iva_upload": True,
+        "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed",
         "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",

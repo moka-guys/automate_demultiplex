@@ -162,23 +162,8 @@ class DecisionTooler(object):
         decision_suport_tool_input=jobid.outputname
         """
         if tool == "iva":
-            if workflow.name == "mokawes":
-                print(
-                    " %s%s:%s%s%s:%s%s%s:%s"
-                    % (
-                        config.iva_vcf_inputname,
-                        jobid,
-                        workflow.vcf_out,
-                        config.iva_bam_inputname,
-                        jobid,
-                        workflow.bam_out,
-                        config.iva_bai_inputname,
-                        jobid,
-                        workflow.bai_out,
-                    )
-                )
-            elif workflow.name == "mokapipe":
-                print(" %s%s:%s" % (config.iva_vcf_inputname, jobid, workflow.vcf_out))
+            # IVA is simply passed the VCF
+            print(" %s%s:%s" % (config.iva_vcf_inputname, jobid, workflow.vcf_out))
         if tool == "sapientia":
             if workflow.name == "mokawes":
                 print(
