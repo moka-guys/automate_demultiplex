@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/python2
 """upload_and_setoff_workflows.py
 Once demultiplexing has been complete the files require uploading to DNANexus.
 This script will be scheduled to run and identify any folders that require further processing
@@ -42,8 +42,8 @@ class SequencingRuns(list):
             # Ignore folders in the list config.ignore_directories
             # and test that it is a directory (ignoring files)
             if folder not in config.ignore_directories and os.path.isdir(
-                    os.path.join(config.runfolders, folder)
-                ):
+                os.path.join(config.runfolders, folder)
+            ):
                 self.append(folder)
 
     def loop_through_runs(self):
@@ -65,9 +65,7 @@ class SequencingRuns(list):
         if processed_runfolders:
             # Rename the logfile with the runfolder name(s)
             original_logfile_path = config.upload_agent_logfile + self.now + "_.txt"
-            new_logfile = original_logfile_path.replace(
-                ".txt", "_".join(processed_runfolders)
-            )
+            new_logfile = original_logfile_path.replace(".txt", "_".join(processed_runfolders))
             os.rename(original_logfile_path, new_logfile)
 
 
@@ -188,7 +186,7 @@ class RunfolderProcessor(object):
         # command to restart upload agent part 1
         self.restart_ua_1 = "ua_status=1; while [ $ua_status -ne 0 ]; do "
         self.restart_ua_2 = (
-            '; ua_status=$?; if [[ $ua_status -ne 0 ]]; then echo '
+            "; ua_status=$?; if [[ $ua_status -ne 0 ]]; then echo "
             '"temporary issue when uploading file %s"; fi ; done'
         )
 
@@ -227,21 +225,19 @@ class RunfolderProcessor(object):
         self.loggers.script.info("automate_demultiplexing release:{}".format(git_tag.git_tag()))
         # perform upload agent test
         if not self.test_upload_agent(
-                self.perform_test(
-                    self.execute_subprocess_command(
-                        config.upload_agent_path + config.upload_agent_test_command
-                    )[0],
-                    "ua",
-                )
-            ):
+            self.perform_test(
+                self.execute_subprocess_command(
+                    config.upload_agent_path + config.upload_agent_test_command
+                )[0],
+                "ua",
+            )
+        ):
             raise Exception, "Upload agent not installed"
 
         # test dx toolkit installation
         if not self.test_dx_toolkit(
-                self.perform_test(
-                    self.execute_subprocess_command(config.dx_sdk_test)[0], "dx_toolkit"
-                )
-            ):
+            self.perform_test(self.execute_subprocess_command(config.dx_sdk_test)[0], "dx_toolkit")
+        ):
             raise Exception, "dx toolkit not installed"
 
     def quarterback(self):
@@ -394,8 +390,8 @@ class RunfolderProcessor(object):
 
         # use perform_test function to assert if the file exists - will return True if file exists
         if self.perform_test(
-                os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file),
-                "already_uploaded",
+            os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file),
+            "already_uploaded",
         ):
             self.loggers.script.info("Upload started file present. Terminating.")
             return True
@@ -443,13 +439,12 @@ class RunfolderProcessor(object):
         for fastq in os.listdir(runfolder_fastq_path):
             # exclude undetermined and any fastqs created by miseq (seerated by "-" rather than "_")
             if (
-                    fastq.endswith("fastq.gz")
-                    and not fastq.startswith("Undetermined")
-                    and "-Pan" not in fastq
-                ):
-                pannumber = ""
-                pannumber = "Pan" + fastq.split("_Pan")[1].split("_")[0]
-                if pannumber in config.panel_list:
+                fastq.endswith("fastq.gz")
+                and not fastq.startswith("Undetermined")
+                and "-Pan" not in fastq
+            ):
+                pan_match = re.search(r'Pan\d+', fastq)
+                if pan_match and (pan_match.group()) in config.panel_list:
                     # we know what to do with it:
                     # append to string of paths for upload agent
                     fastq_string = (
@@ -457,11 +452,10 @@ class RunfolderProcessor(object):
                     )
                     # add the fastq name to a list to be used in create_nexus_file_path
                     list_of_processed_samples.append(fastq)
-                elif pannumber == "":
-                    # haven't identified pan number
-                    # TO DO warn or something?
-                    pass
                 else:
+                    self.loggers.script.warning(
+                        'UA_warning unable to find PanNumber in {}.'.format(fastq)
+                    )
                     not_processed.append(fastq)
 
         if not_processed:
@@ -713,9 +707,7 @@ class RunfolderProcessor(object):
         self.loggers.backup.info("Fastq upload commands:\n{}".format(nexus_upload_command))
         # Log fastq upload script location
         self.loggers.script.info(
-            "Uploading fastqs. See commands at {}".format(
-                self.loggers.fastq_upload.filepath
-            )
+            "Uploading fastqs. See commands at {}".format(self.loggers.fastq_upload.filepath)
         )
 
         # Create file to show upload has started and to hold upload agent standard output
@@ -730,7 +722,7 @@ class RunfolderProcessor(object):
         If the expected error message (defined in config file) is present but the string "upload successfully" is still present it is assumed it uploaded successfully on the repeated attempt.
         If the success statement is absent raise an alert but do not stop script from running
         """
-        #TODO: Refactor this function. Should print once rather than for every line
+        # TODO: Refactor this function. Should print once rather than for every line
         # Open the log file and read to look for the string "ERROR"
         for upload in open(upload_agent_stdout_path).read().split("Uploading file"):
             # if there was an error during the upload...
@@ -741,7 +733,9 @@ class RunfolderProcessor(object):
                     if self.debug_mode:
                         return "disrupted but complete"
                     else:
-                        self.loggers.script.info("UA_disrupted 'upload of fastq was disrupted but complete for run'")
+                        self.loggers.script.info(
+                            "UA_disrupted 'upload of fastq was disrupted but complete for run'"
+                        )
                 # other wise write to log
                 else:
                     if self.debug_mode:
@@ -870,7 +864,7 @@ class RunfolderProcessor(object):
         """
 
         # Update script log file to say what is being done.
-        self.loggers.script.info('Building dx run commands')
+        self.loggers.script.info("Building dx run commands")
         # list to hold all commands.
         commands_list = []
         commands_list.append(self.source_command)
@@ -885,7 +879,7 @@ class RunfolderProcessor(object):
         # loop through samples
         for fastq in list_of_processed_samples:
             # take read one
-            if re.search(r'_R1_', fastq):
+            if re.search(r"_R1_", fastq):
                 # extract_Pan number and use this to determine which dx run commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
                 # The order in which the modules are called here is important to ensure the order of dx run commands is correct. This can affect which decision support tool data is sent to.
@@ -933,7 +927,8 @@ class RunfolderProcessor(object):
             for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
                 commands_list.append(self.create_rpkm_command(rpkm))
         if peddy:
-            # TODO low priority - if custom panels and WES done together currently no way to stop custom panels being analysed by peddy - may cause problems
+            # TODO low priority - if custom panels and WES done together currently no way
+            #   to stop custom panels being analysed by peddy - may cause problems
             commands_list.append(self.run_peddy_command())
         # multiqc
         commands_list.append(self.create_multiqc_command())
@@ -1198,7 +1193,8 @@ class RunfolderProcessor(object):
         return dx_command
 
     def create_joint_variant_calling_command(self):
-        """# TODO"""
+        """-"""
+        # TODO: Implement joint-variant calling command for peddy
         raise NotImplementedError
 
     def run_sapientia_command(self, fastq, pannumber):
@@ -1213,7 +1209,9 @@ class RunfolderProcessor(object):
             self.sapientia_upload_command
             + " $analysisid -isapientia_project="
             + self.panel_dictionary[pannumber]["sapientia_project"]
-            + " --name " + "SAPIENTIA_" + fastqs[2]
+            + " --name "
+            + "SAPIENTIA_"
+            + fastqs[2]
             + self.dest
             + self.dest_cmd
             + self.token
@@ -1233,7 +1231,9 @@ class RunfolderProcessor(object):
         dx_command = (
             self.iva_upload_command
             + " $analysisid"
-            + " --name " + "QIAGEN_IVA_" + fastqs[2] 
+            + " --name "
+            + "QIAGEN_IVA_"
+            + fastqs[2]
             + config.iva_email_input_name
             + self.panel_dictionary[pannumber]["ingenuity_email"]
             + self.project
@@ -1262,13 +1262,13 @@ class RunfolderProcessor(object):
         lowest_coverage_level = 1000000
         for fastq in self.list_of_processed_samples:
             # take read one
-            if re.search(r'_R1_', fastq):
+            if re.search(r"_R1_", fastq):
                 # extract_Pan number and use this to determine which dx run commands are needed for the sample
                 pannumber = re.search(r"Pan\d+", fastq).group()
                 if (
-                        int(self.panel_dictionary[pannumber]["multiqc_coverage_level"])
-                        < lowest_coverage_level
-                    ):
+                    int(self.panel_dictionary[pannumber]["multiqc_coverage_level"])
+                    < lowest_coverage_level
+                ):
                     lowest_coverage_level = self.panel_dictionary[pannumber][
                         "multiqc_coverage_level"
                     ]
@@ -1349,15 +1349,14 @@ class RunfolderProcessor(object):
         parse stderr to ignore these so real error messages stand out
         This function can be removed after the conflict is sorted
         """
-        std_err_ignore_match = r'/usr/local/lib/python2.7/dist-packages/urllib3/util/ssl_.py:'
-        sni_warning_ignore_match = r'SNIMissingWarning'
+        std_err_ignore_match = r"/usr/local/lib/python2.7/dist-packages/urllib3/util/ssl_.py:"
+        sni_warning_ignore_match = r"SNIMissingWarning"
         cleaned_error = []
         for line in err.split("\n"):
             clean_line = line.rstrip()
             # If the line doesn't contain a string that should be ignored
-            if (
-                    not re.match(std_err_ignore_match, clean_line) and
-                    not re.search(sni_warning_ignore_match, clean_line)
+            if not re.match(std_err_ignore_match, clean_line) and not re.search(
+                sni_warning_ignore_match, clean_line
             ):
                 cleaned_error.append(line)
         return cleaned_error
@@ -1452,13 +1451,15 @@ class RunfolderProcessor(object):
         for line_key in response:
             if line_key == "message":
                 if response[line_key] == "SUCCESS":
-                    self.loggers.script.info("smartsheet_pass 'smartsheet updated to say in progress'")
+                    self.loggers.script.info(
+                        "smartsheet_pass 'smartsheet updated to say in progress'"
+                    )
                 else:
                     self.loggers.script.error(
                         "smartsheet_fail 'run started NOT added to smartsheet for run {}'".format(
                             self.runfolder_obj.runfolder_name
-                            )
                         )
+                    )
 
     def write_opms_queries_mokapipe(self, list_of_processed_samples):
         """
@@ -1548,10 +1549,10 @@ class RunfolderProcessor(object):
             return {
                 "workflows": set(workflows),
                 "query": self.runfolder_obj.runfolder_name
-                         + " being processed using workflow "
-                         + ",".join(set(workflows))
-                         + "\n\n"
-                         + config.mokaamp_email_message,
+                + " being processed using workflow "
+                + ",".join(set(workflows))
+                + "\n\n"
+                + config.mokaamp_email_message,
             }
         else:
             return None
@@ -1712,7 +1713,9 @@ class RunfolderProcessor(object):
                         )
                     elif config.backup_runfolder_success in line:
                         self.loggers.script.info(
-                            "UA_pass 'Rest of runfolder {} uploaded ok'".format(self.runfolder_obj.runfolder_name)
+                            "UA_pass 'Rest of runfolder {} uploaded ok'".format(
+                                self.runfolder_obj.runfolder_name
+                            )
                         )
 
         # check the DNANexus_upload_started.txt file for the results of upload agent upload of logfiles
