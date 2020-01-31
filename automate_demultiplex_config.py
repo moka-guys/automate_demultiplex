@@ -413,7 +413,7 @@ panel_settings = {
         "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed",
-        "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
+        "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed", #TODO: Check this works
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
