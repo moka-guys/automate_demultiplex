@@ -21,55 +21,54 @@ def get_runfolder_log_config(runfolder, timestamp):
         ),
         "dx_run": runfolder.runfolder_dx_run_script,
         "demultiplex": demultiplex_log,
-        "fastq_upload": os.path.join(
-            runfolder.runfolderpath, config.upload_started_file
-        ),
-        "backup": os.path.join(
-            config.backup_runfolder_logfile,
-            runfolder.runfolder_name + ".log",
-        ),
+        "fastq_upload": os.path.join(runfolder.runfolderpath, config.upload_started_file),
+        "backup": os.path.join(config.backup_runfolder_logfile, runfolder.runfolder_name + ".log",),
     }
 
     return log_config
 
-class LOGFILE():
+
+class LOGFILE:
     def __init__(self, name, filepath):
         self.name = name
         self.filepath = filepath
 
-class ADLoggers():
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+class ADLoggers:
 
-    def __init__( self, project, dx_run, demultiplex, fastq_upload, backup, script=None):
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    def __init__(self, project, dx_run, demultiplex, fastq_upload, backup, script=None):
         # Logfiles the demultiplex script writes to
-        self.script = self._get_ad_logger('automate_demultiplex', script)
-        self.backup = self._get_ad_logger('backup_runfolder', backup)
-        self._fastq_upload = fastq_upload # Fastq upload file created later using `add_fastq_upload`
+        self.script = self._get_ad_logger("automate_demultiplex", script)
+        self.backup = self._get_ad_logger("backup_runfolder", backup)
+        self._fastq_upload = (
+            fastq_upload  # Fastq upload file created later using `add_fastq_upload`
+        )
         # Logfiles not written to or bash files created by script. File_only skips file handler
         #  creation but still provides convenience attributes .name and .filename
-        self.project = self._get_ad_logger('create_project', project, file_only=True)
-        self.dx_run = self._get_ad_logger('dx_run', dx_run, file_only=True)
-        self.demultiplex = self._get_ad_logger('demultiplex', demultiplex, file_only=True)
+        self.project = self._get_ad_logger("create_project", project, file_only=True)
+        self.dx_run = self._get_ad_logger("dx_run", dx_run, file_only=True)
+        self.demultiplex = self._get_ad_logger("demultiplex", demultiplex, file_only=True)
 
         # Container for all logfiles
         self.all = [self.script, self.project, self.dx_run, self.demultiplex, self.backup]
 
     def set_fastq_upload(self):
-        self.fastq_upload = self._get_ad_logger('fastq_upload', self._fastq_upload)
+        self.fastq_upload = self._get_ad_logger("fastq_upload", self._fastq_upload)
         self.all.append(self.fastq_upload)
 
     def list_logfiles(self):
-        return [ logger.filepath for logger in self.all ]
+        return [logger.filepath for logger in self.all]
 
     def _get_file_handler(self, filepath):
-        fh = logging.FileHandler(filepath, mode='a')
+        fh = logging.FileHandler(filepath, mode="a")
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(self.formatter)
         return fh
 
     def _get_syslog_handler(self):
-        slh = logging.handlers.SysLogHandler(address = '/dev/log')
+        slh = logging.handlers.SysLogHandler(address="/dev/log")
         slh.setLevel(logging.DEBUG)
         slh.setFormatter(self.formatter)
         return slh
@@ -85,9 +84,10 @@ class ADLoggers():
         logger.addHandler(self._get_syslog_handler())
         return logger
 
-if __name__ == '__main__':
-    loggers = ADLoggers(None, None, None, None, None, None, script='test.log')
-    print('Writing test to {} and syslog'.format(loggers.script.filepath))
-    loggers.script.info('This is a test')
+
+if __name__ == "__main__":
+    loggers = ADLoggers(None, None, None, None, None, script="test.log")
+    print("Writing test to {} and syslog".format(loggers.script.filepath))
+    loggers.script.info("This is a test")
     for logger in loggers.all:
         print(logger.name, logger.filepath)
