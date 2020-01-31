@@ -8,7 +8,6 @@ The script prints the output to the command line formatted for the tool given in
 import subprocess
 import json
 import re
-import datetime
 from collections import namedtuple
 import argparse
 
