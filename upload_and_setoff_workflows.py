@@ -348,7 +348,7 @@ class RunfolderProcessor(object):
             if config.dx_sdk_test_expected_stdout not in test_input:
                 return False
         # False if the demultiplex started file does not exist
-        if test == "demulitplex_started":
+        if test == "demultiplex_started":
             if not os.path.isfile(test_input):
                 return False
         # False if the upload file does not exist or does not contain data
