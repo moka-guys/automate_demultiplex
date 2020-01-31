@@ -11,12 +11,6 @@ class MockRunfolderProcessor(RunfolderProcessor):
     def __init__(self, *args, **kwargs):
         super(MockRunfolderProcessor, self).__init__(*args, **kwargs)
 
-    def already_uploaded(self):
-        return False
-
-    def has_demultiplexed(self):
-        return True
-
     def upload_fastqs(self):
         return "UPLOAD_AGENT_PATH.txt"
 
