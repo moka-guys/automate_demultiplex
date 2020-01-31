@@ -44,8 +44,8 @@ class ADLoggers():
     def __init__( self, project, dx_run, demultiplex, fastq_upload, backup, script=None):
         # Logfiles the demultiplex script writes to
         self.script = self._get_ad_logger('automate_demultiplex', script)
-        self.fastq_upload = self._get_ad_logger('fastq_upload', fastq_upload)
         self.backup = self._get_ad_logger('backup_runfolder', backup)
+        self._fastq_upload = fastq_upload # Fastq upload file created later using `add_fastq_upload`
         # Logfiles not written to or bash files created by script. File_only skips file handler
         #  creation but still provides convenience attributes .name and .filename
         self.project = self._get_ad_logger('create_project', project, file_only=True)
@@ -53,7 +53,11 @@ class ADLoggers():
         self.demultiplex = self._get_ad_logger('demultiplex', demultiplex, file_only=True)
 
         # Container for all logfiles
-        self.all = [self.script, self.project, self.dx_run, self.demultiplex, self.fastq_upload, self.backup]
+        self.all = [self.script, self.project, self.dx_run, self.demultiplex, self.backup]
+
+    def set_fastq_upload(self):
+        self.fastq_upload = self._get_ad_logger('fastq_upload', self._fastq_upload)
+        self.all.append(self.fastq_upload)
 
     def list_logfiles(self):
         return [ logger.filepath for logger in self.all ]

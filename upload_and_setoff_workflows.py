@@ -269,6 +269,8 @@ class RunfolderProcessor(object):
                 self.projectid = self.run_project_creation_script()
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks fastqs were uploaded without error
+                ## Fastq logfile created here to indicate DNANexus upload started
+                self.loggers.set_fastq_upload()
                 self.look_for_upload_errors_fastq(self.upload_fastqs())
 
                 self.write_dx_run_cmds(
@@ -351,7 +353,7 @@ class RunfolderProcessor(object):
                 return False
         # False if the upload file does not exist or does not contain data
         if test == "already_uploaded":
-            if not os.path.isfile(test_input) or (os.path.getsize(test_input) == 0):
+            if not os.path.isfile(test_input):
                 return False
         # demultiplex success -return False  if expected string NOT in last line of log file
         if test == "demultiplex_success":
