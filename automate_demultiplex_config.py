@@ -17,8 +17,8 @@ debug = False
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
 # path to run folders
-#runfolders = "/media/data3/share"
-runfolders = "/home/mokaguys/Documents/development_area/complete_refactor/share"
+# runfolders = "/media/data3/share"
+runfolders = "/media/data3/share"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -72,9 +72,9 @@ demultiplex_logfiles = (
 ).format(document_root=document_root)
 
 # path to upload agent
-upload_agent_path = (
-    "{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
-).format(document_root=document_root)
+upload_agent_path = ("{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua").format(
+    document_root=document_root
+)
 
 # upload_agent_path = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 upload_agent_test_command = " --version"
@@ -87,8 +87,7 @@ backup_runfolder_script = (
 
 # backup runfolder folder
 backup_runfolder_logfile = (
-    "/usr/local/src/mokaguys/automate_demultiplexing_logfiles"
-    "/backup_runfolder_logfiles"
+    "/usr/local/src/mokaguys/automate_demultiplexing_logfiles" "/backup_runfolder_logfiles"
 )
 
 backup_runfolder_success = "backup_runfolder INFO - END"
@@ -107,7 +106,7 @@ upload_agent_expected_stdout = "Upload Agent Version:"
 # Current Mokapipe ID
 mokapipe_pipeline_ID = "3559"
 # Current MokaWES ID
-mokawes_pipeline_ID = "3053"
+mokawes_pipeline_ID = "3650"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -159,18 +158,12 @@ live_tag = "live"
 # Mokapipe workflow inputs
 mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-mokapipe_bwa_rg_sample = (
-    " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
-)
-mokapipe_sambamba_input = (
-    " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
-)
+mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
+mokapipe_sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
 mokapipe_mokapicard_vendorbed_input = (
     " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 )
-mokapipe_iva_email_input = (
-    " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
-)
+mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
 mokapipe_variant_annotator_stage = "stage-F2gPqFQ025p601qgGq0QVvX2"
 mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 mokapipe_vcf_output_name = "vcf"
@@ -198,9 +191,7 @@ mokaonc_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="
 mokaamp_fastq_R1_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz="
 mokaamp_fastq_R2_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
 mokaamp_mokapicard_bed_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
-mokaamp_mokapicard_capturetype_stage = (
-    " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
-)
+mokaamp_mokapicard_capturetype_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
 mokaamp_bamclipper_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
 mokaamp_chanjo_cov_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
 mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
@@ -229,9 +220,7 @@ wes_multiqc_coverage_level = "20"  # HSMetrics coverage level to be reported for
 custom_panel_multiqc_coverage_level = (
     "30"  # HSMetrics coverage level to be reported for custom panel
 )
-mokaamp_multiqc_coverage_level = (
-    "100"  # HSMetrics coverage level to be reported for mokaamp
-)
+mokaamp_multiqc_coverage_level = "100"  # HSMetrics coverage level to be reported for mokaamp
 
 # Smartsheet
 smartsheet_mokapipe_complete = " -iNGS_run="
@@ -249,9 +238,7 @@ interpretation_request_email = (
 wes_email_address = "gst-tr.wesviapath@nhs.net"  # WES email
 
 # DNA Nexus authentication token
-nexus_api_key_file = "{document_root}/.dnanexus_auth_token".format(
-    document_root=document_root
-)
+nexus_api_key_file = "{document_root}/.dnanexus_auth_token".format(document_root=document_root)
 with open(nexus_api_key_file, "r") as nexus_api:
     Nexus_API_Key = nexus_api.readline().rstrip()
 
@@ -289,8 +276,8 @@ panel_list = [
     "Pan1159",
     "Pan1646",
     "Pan3320",
-    "Pan2835"
-]  # , "Pan3321"]
+    "Pan2835",
+]
 default_panel_properties = {
     "UMI": False,
     "UMI_bcl2fastq": None,  # eg Y145,I8,Y9I8,Y145
@@ -447,9 +434,7 @@ smartsheet_request_headers = {
     "Authorization": "Bearer " + smartsheet_api_key,
     "Content-Type": "application/json",
 }
-smartsheet_request_url = "https://api.smartsheet.com/2.0/sheets/" + str(
-    smartsheet_sheetid
-)
+smartsheet_request_url = "https://api.smartsheet.com/2.0/sheets/" + str(smartsheet_sheetid)
 
 # =================turnaround time
 # if a task takes more than this amount of time it is out of TAT
@@ -457,9 +442,7 @@ allowed_time_for_tasks = 4
 
 # =================== Email server settings
 mokaguys_email = "gst-tr.mokaguys@nhs.net"
-username_file_path = "{document_root}/.amazon_email_username".format(
-    document_root=document_root
-)
+username_file_path = "{document_root}/.amazon_email_username".format(document_root=document_root)
 with open(username_file_path, "r") as username_file:
     user = username_file.readline().rstrip()
 pw_file = "{document_root}/.amazon_email_pw".format(document_root=document_root)
