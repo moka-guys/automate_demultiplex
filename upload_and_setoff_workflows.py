@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 """upload_and_setoff_workflows.py
 Once demultiplexing has been complete the files require uploading to DNANexus.
 This script will be scheduled to run and identify any folders that require further processing
@@ -88,6 +89,7 @@ class RunfolderObject(object):
         )
         self.nexus_project_name = ""
         self.nexus_path = ""
+        self.nexus_project_id = ""
 
 
 class RunfolderProcessor(object):
@@ -1235,7 +1237,7 @@ class RunfolderProcessor(object):
             + config.iva_email_input_name
             + self.panel_dictionary[pannumber]["ingenuity_email"]
             + self.project
-            + self.runfolder_obj.nexus_project_name
+            + self.projectid
             + config.iva_reference_inputname
             + config.iva_reference_default
             + self.token
