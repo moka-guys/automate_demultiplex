@@ -132,7 +132,7 @@ mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
 mokaamp_path = "Workflows/MokaAMP_v1.2"
 # path to paddy app
-peddy_path = "Apps/peddy_v1.3"
+peddy_path = "Apps/peddy_v1.4"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.11"
 # path to sentieon upload app
