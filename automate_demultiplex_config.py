@@ -17,7 +17,6 @@ debug = False
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
 # path to run folders
-# runfolders = "/media/data3/share"
 runfolders = "/media/data3/share"
 
 # samplesheet folder
@@ -132,7 +131,7 @@ mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
 mokaamp_path = "Workflows/MokaAMP_v1.2"
 # path to paddy app
-peddy_path = "Apps/peddy_v1.4"
+peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.11"
 # path to sentieon upload app
