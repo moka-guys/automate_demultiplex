@@ -724,7 +724,6 @@ class RunfolderProcessor(object):
         If the expected error message (defined in config file) is present but the string "upload successfully" is still present it is assumed it uploaded successfully on the repeated attempt.
         If the success statement is absent raise an alert but do not stop script from running
         """
-        # TODO: Refactor this function. Should print once rather than for every line
         # Open the log file and read to look for the string "ERROR"
         for upload in open(upload_agent_stdout_path).read().split("Uploading file"):
             # if there was an error during the upload...
