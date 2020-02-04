@@ -12,19 +12,13 @@ class MockRunfolderProcessor(RunfolderProcessor):
         super(MockRunfolderProcessor, self).__init__(*args, **kwargs)
 
     def upload_fastqs(self):
-        return "UPLOAD_AGENT_PATH.txt"
+        return "test/data/UPLOAD_AGENT_PATH.txt"
 
     def upload_rest_of_runfolder(self):
-        return "UPLOAD_PATH.txt"
+        return "test/data/UPLOAD_PATH.txt"
 
     def upload_log_files(self):
-        return "UPLOAD_LOGFILES.txt"
-
-    def look_for_upload_errors(self, filepath, stage):
-        pass
-
-    def look_for_upload_errors_fastq(self, upload_agent_stdout_path):
-        pass
+        return "test/data/UPLOAD_LOGFILES.txt"
 
     def run_dx_run_commands(self):
         pass
