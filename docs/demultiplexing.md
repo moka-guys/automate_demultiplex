@@ -1,10 +1,10 @@
 # Demultiplexing
 
-NGS runs are demultiplexed by `demultiplexing.py`. This module processes NGS runfolders that satisfy the following criteria:
+NGS runfolders that satisfy the following criteria are demultiplexed by `demultiplexing.py`:
 
-1. Sequencing has finished, indicated by the **presence** of `RTAcomplete.txt`
-1. Demultiplexing has not been performed, indicated by the **absence** of `demultiplexlog.txt`
-1. A samplesheet containing the runfolder name is present in the `samplesheets/` folder
+1. `RTAcomplete.txt` is present, indicating that sequencing is complete.
+1. `demultiplexlog.txt` is absent, indicating that demultiplexing has not been performed
+1. A samplesheet named after the runfolder name is present in the `samplesheets/` folder
 
 ## Protocol
 When a runfolder meets these criteria, the script calculated an md5 checksum to verify data integrity between the workstation and sequencer. Checksums for MiSeq runs are calculated by this script, whereas checksums for the NextSeq are calculated on the sequencer itself.
@@ -13,7 +13,7 @@ If the integrity check passes, samples are demlutiplexed using bcl2fastq2 (v2.20
 
 ## Configuration
 
-All settings are imported from `automate_demultiplex_config.py`.
+Settings are imported from `automate_demultiplex_config.py`.
 
 ## Logging
 
