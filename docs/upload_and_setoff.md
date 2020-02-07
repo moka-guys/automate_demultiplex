@@ -12,13 +12,18 @@
 1. Send emails and update smartsheet
 1. Write and upload logfiles to DNA Nexus
 
-
 ## Configuration
 
 Settings are imported from `automate_demultiplex_config.py`.
 
 ## Logging
-TODO!
+
+An instance of the `adloggers.ADLoggers` class contains a python logging object for each logfile accessed by `upload_and_setoff_workflows.py`. See `adloggers.py` for details.
+
+| Alias | Description | Filename | Location
+|---|---|---|---
+|Upload agent script log|Records decisions made for multiple runfodlers each time the script is run|Test|/usr/local/src/mokaguys/automate_demultiplexing_logfiles/upload_agent_script_logfiles
+
 1. "upload_agent_script_log" (named with a timestamp and any runfolders processed in that run)- records the decisions made each time the script is run (contains information from multiple run folders). Can be found at /usr/local/src/mokaguys/automate_demultiplexing_logfiles/upload_agent_script_logfiles
 2. DNANexus_Upload_started.txt - contains the standard err and standard out from the upload agent. - this can be found in the run folder
 3. Upload agent script standard err/out - records the standard error and out from cronjob when executing the script. Can be found in /usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_stdout
