@@ -359,8 +359,7 @@ panel_settings = {
         "RPKM_bedfile_pan_number": "Pan1450",
         "RPKM_also_analyse": ["Pan1449"],
         "sapientia_upload": True,
-        # "sapientia_project": "1099",#live service
-        "sapientia_project": "261",  # testing
+        "sapientia_project": "1099",
         "hsmetrics_bedfile": "Pan1449data.bed",
         "sambamba_bedfile": "Pan1449dataSambamba.bed",
     },
