@@ -18,27 +18,38 @@ from adlogger import ADLoggers, get_runfolder_log_config
 
 
 class SequencingRuns(list):
-    """Loop through the directories in the directory containing the runfolders"""
+    """TODO: COMMENT
+    
+    Args:
+        None
+    Methods:
+        set_runfolders():
+        loop_through_runs():
+    """
 
     def __init__(self):
+        # Enable this class to hold sequencing runs by inheriting from python's List object.
         super(SequencingRuns, self).__init__()
-        # Timestamp to name the logfile
+        # Timestamp for each instance is used to name logfiles.
         self.now = str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
 
     def set_runfolders(self):
-        """Return a list of all valid runfolders"""
+        """Update internal list with NGS runfolders present on the system. The root directory to
+        search for runfolders is specified in the config object.
+
+        >>> runs = SequencingRuns()
+        >>> # runs == []
+        >>> runs.set_runfolders()
+        >>> # runs == ['runfolder1', 'runfolder2', 'runfolder3']
+        """
         all_runfolders = os.listdir(config.runfolders)
-        # for each folder if it is not samplesheets/tar.gz folder, pass to the next class
         for folder in all_runfolders:
-            # Ignore folders in the list config.ignore_directories
-            # and test that it is a directory (ignoring files)
-            if folder not in config.ignore_directories and os.path.isdir(
-                os.path.join(config.runfolders, folder)
-            ):
+            folder_exists = os.path.isdir(os.path.join(config.runfolders, folder))
+            if folder not in config.ignore_directories and folder_exists:
                 self.append(folder)
 
     def loop_through_runs(self):
-        """
+        """TODO: COMMENT
         This function sets up this instance of the script.
         It creates the log file which holds the decisions made for all runfolders as it loops
         through the runfolders.
