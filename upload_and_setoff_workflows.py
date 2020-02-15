@@ -1,29 +1,20 @@
 #!/usr/bin/python2
 """upload_and_setoff_workflows.py
-Once demultiplexing has been complete the files require uploading to DNANexus.
-This script will be scheduled to run and identify any folders that require further processing
-get_list_of_runs loops through runfolders and creates an instance of the process_runfolder class for
-each runfolder. The process_runfolder class creates an instance of the runfolder_object class and
-the quarterback module calls all other modules to assess the runfolder if required, a Nexus project
-is created and shared, data uploaded and the pipelines set off as determined by the panel number
-encoded in the filename.
-@author: aled
+
+Upload NGS data to DNANexus and trigger analysis workflows.
 """
+import datetime
 import os
 import re
-import subprocess
-import datetime
 import smtplib
+import subprocess
 from email.message import Message
 from shutil import copyfile
+
+import automate_demultiplex_config as config
+import git_tag as git_tag
 import requests
 from adlogger import ADLoggers, get_runfolder_log_config
-
-# import config file
-import automate_demultiplex_config as config
-
-# import function which reads the git tag
-import git_tag as git_tag
 
 
 class SequencingRuns(list):
