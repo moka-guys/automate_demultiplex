@@ -18,13 +18,13 @@ from adlogger import ADLoggers, get_runfolder_log_config
 
 
 class SequencingRuns(list):
-    """TODO: COMMENT
+    """A container for NGS runfolders with methods to initiate runfolder processing.
     
     Args:
         None
     Methods:
-        set_runfolders():
-        loop_through_runs():
+        set_runfolders(): Update list to contain NGS runfolders on the system
+        loop_through_runs(): Process all NGS runfolders in class instance list
     """
 
     def __init__(self):
@@ -49,28 +49,25 @@ class SequencingRuns(list):
                 self.append(folder)
 
     def loop_through_runs(self):
-        """TODO: COMMENT
-        This function sets up this instance of the script.
-        It creates the log file which holds the decisions made for all runfolders as it loops
-        through the runfolders.
-        """
+        """Process all NGS runfolders in class instance list."""
 
+        # Track processed runfolders to use later for naming logfiles.
         processed_runfolders = []
 
+        # Process any runfolders added to class instance with self.set_runfolders()
         for folder in self:
-            # pass folder and timestamp to class instance
             runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.debug)
+            # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
                 processed_runfolders.append(folder)
 
-        # If any runfolders have been processed
+        # Add names of any processed runfolders to logfile
         if processed_runfolders:
-            # Rename the logfile with the runfolder name(s)
             original_logfile_path = config.upload_agent_logfile + self.now + "_.txt"
             new_logfile = original_logfile_path.replace(".txt", "_".join(processed_runfolders))
             os.rename(original_logfile_path, new_logfile)
 
-
+#TODO: Comments and docstrings from Line 70 onwards
 class RunfolderObject(object):
     """
     An object with runfolder specific properties.
