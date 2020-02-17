@@ -92,7 +92,7 @@ class RunfolderObject(object):
 
 class RunfolderProcessor(object):
     """
-    This class assesses a runfolder to check if it required processing. If therunfolder meets the
+    This class assesses a runfolder to check if it required processing. If the runfolder meets the
     criteria to be processed.
     Fastqs are uploaded to DNA Nexus, dx run commands built and executed and then the rest of the
     runfolder is also uploaded.
@@ -101,15 +101,12 @@ class RunfolderProcessor(object):
     """
 
     def __init__(self, runfolder, now, debug_mode=False):
-        # name of file which denotes demultiplexing is underway/complete
-        self.demultiplexed = "demultiplexlog.txt"
+        # capture class inputs
         self.debug_mode = debug_mode
-        # # fastq folder
-        # self.fastq_folder_path = ""
-
         self.runfolder_obj = RunfolderObject(runfolder)
         self.now = now
-
+        
+        # define logfile path for this execution of this script.
         self.upload_agent_logfile_path = config.upload_agent_logfile + self.now + "_.txt"
 
         # string of fastqs for upload agent
@@ -118,12 +115,7 @@ class RunfolderProcessor(object):
         # list of fastqs to get ngs run number and WES batch
         self.list_of_processed_samples = []
 
-        self.list_of_DNA_numbers_WES = []
-        self.list_of_DNA_numbers_Onc = []
-        self.list_of_DNA_numbers_nonWES = []
-
-        # ####################################DNA Nexus########################
-        # DNA Nexus commands
+        # DNA Nexus commands to be built on later
         self.source_command = (
             "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''"
         )
@@ -132,7 +124,7 @@ class RunfolderProcessor(object):
             + config.Nexus_API_Key
             + ')"\n'
         )
-        self.addprojecttag = "dx tag $project_id "
+        # self.addprojecttag = "dx tag $project_id "
         self.mokapipe_command = (
             "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
         )
@@ -142,11 +134,11 @@ class RunfolderProcessor(object):
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = (
-            "jobid=$(dx run " + config.app_project + config.upload_multiqc_path + " -y"
+            "jobid=$(dx run " + config.app_project + config.upload_multiqc_path + " -y "
         )
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path
-        self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y"
+        self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y "
         self.mokaamp_command = (
             "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
         )
@@ -157,19 +149,15 @@ class RunfolderProcessor(object):
             )
         )
         self.sapientia_upload_command = (
-            "jobid=$(dx run " + config.app_project + config.sapientia_app_path + " -y"
+            "jobid=$(dx run " + config.app_project + config.sapientia_app_path + " -y "
         )
-        self.iva_upload_command = "jobid=$(dx run " + config.iva_app_path + " -y"
+        self.iva_upload_command = "jobid=$(dx run " + config.iva_app_path + " -y "
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
         self.project_bash_script_path = (
             config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
         )
 
-        # project_ID of created project
-        self.projectid = ""
-
-        # arguments for command
         self.dest = " --dest="
         self.dest_cmd = ""
         self.project = " --project="
@@ -178,10 +166,6 @@ class RunfolderProcessor(object):
 
         # argument to capture jobids
         self.depends_list = 'depends_list="${depends_list} -d ${jobid} "'
-        self.dx_run = []
-
-        # list of panels
-        self.panels_in_run = []
 
         # command to restart upload agent part 1
         self.restart_ua_1 = "ua_status=1; while [ $ua_status -ne 0 ]; do "
@@ -190,12 +174,12 @@ class RunfolderProcessor(object):
             '"temporary issue when uploading file %s"; fi ; done'
         )
 
-        # ######################email message###############################
+        # email message
         self.email_subject = ""
         self.email_message = ""
         self.email_priority = 3
 
-        # ########################################smartsheet API##############
+        # smartsheet API
         # newly inserted row
         self.rowid = ""
 
@@ -212,19 +196,19 @@ class RunfolderProcessor(object):
         )
 
         self.panel_dictionary = self.set_panel_dictionary()
-
         self.sql_queries = {}
-
         self.log_config = get_runfolder_log_config(self.runfolder_obj, self.now)
         self.loggers = ADLoggers(**self.log_config)
 
     def run_tests(self):
         """
         Test the performance of the required software (upload agent and dx toolkit)
+        Calls the perform_test function and passes the output of this to functions which assess the performance of the software
+        Raises exception if any test does not pass
         """
         self.loggers.script.info("automate_demultiplexing release:{}".format(git_tag.git_tag()))
-        # perform upload agent test
-        if not self.test_upload_agent(
+        # Call upload agent,using perform test function. Pass output of this to self.test_upload_agent
+        if not self.test_upload_agent( 
             self.perform_test(
                 self.execute_subprocess_command(
                     config.upload_agent_path + config.upload_agent_test_command
@@ -248,7 +232,7 @@ class RunfolderProcessor(object):
         # build dictionary of panel settings
         self.panel_dictionary = self.set_panel_dictionary()
 
-        # check if already uploaded and demultiplkexing finished sucessfully
+        # check if already uploaded and demultiplexing finished sucessfully
         if not self.already_uploaded() and self.has_demultiplexed():
             self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                 self.runfolder_obj.fastq_folder_path
@@ -266,7 +250,7 @@ class RunfolderProcessor(object):
                 # create bash script to create and share nexus project -return filepath
                 # pass filepath into module which runs project creation script - capturing projectid
                 self.write_create_project_script()
-                self.projectid = self.run_project_creation_script()
+                self.runfolder_obj.nexus_project_id = self.run_project_creation_script().rstrip()
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks fastqs were uploaded without error
                 ## Fastq logfile created here to indicate DNANexus upload started
@@ -409,7 +393,7 @@ class RunfolderProcessor(object):
         demultiplexing. Uses expected success status defined in config.
         Returns True is completed sucessfully
         """
-        demultiplex_file_path = os.path.join(self.runfolder_obj.runfolderpath, self.demultiplexed)
+        demultiplex_file_path = os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing)
         # check demultiplexing has been done using perform_test - returns true if file present
         if self.perform_test(demultiplex_file_path, "demultiplex_started"):
             with open(demultiplex_file_path, "r") as logfile:
@@ -620,10 +604,10 @@ class RunfolderProcessor(object):
                     % (user, config.Nexus_API_Key)
                 )
 
-            # add a tag to denote live project (as opposed to archived)
-            project_script.write(
-                self.addprojecttag + config.live_tag + " --auth-token %s\n" % (config.Nexus_API_Key)
-            )
+            # # add a tag to denote live project (as opposed to archived)
+            # project_script.write(
+            #     self.addprojecttag + config.live_tag + " --auth-token %s\n" % (config.Nexus_API_Key)
+            # )
 
             # echo the project id so it can be captured below
             project_script.write("echo $project_id")
@@ -1187,7 +1171,7 @@ class RunfolderProcessor(object):
             + config.rpkm_bamfiles_to_download_input
             + string_of_pannumbers_to_analyse
             + self.project
-            + self.projectid
+            + self.runfolder_obj.nexus_project_id
             + self.depends
             + self.token.rstrip(")")
         )
@@ -1238,7 +1222,7 @@ class RunfolderProcessor(object):
             + config.iva_email_input_name
             + self.panel_dictionary[pannumber]["ingenuity_email"]
             + self.project
-            + self.projectid
+            + self.runfolder_obj.nexus_project_id
             + config.iva_reference_inputname
             + config.iva_reference_default
             + self.token
@@ -1282,7 +1266,7 @@ class RunfolderProcessor(object):
             + config.multiqc_coverage_level_input
             + str(lowest_coverage_level)
             + self.project
-            + self.projectid
+            + self.runfolder_obj.nexus_project_id
             + self.depends
             + self.token
         )
@@ -1298,7 +1282,7 @@ class RunfolderProcessor(object):
                 self.upload_multiqc_command,
                 " -imultiqc_html=$jobid:multiqc_report",
                 self.project,
-                self.projectid,
+                self.runfolder_obj.nexus_project_id,
                 self.token,
             ]
         )
@@ -1315,7 +1299,7 @@ class RunfolderProcessor(object):
             + config.peddy_project_input
             + self.runfolder_obj.nexus_project_name
             + self.project
-            + self.projectid.rstrip()
+            + self.runfolder_obj.nexus_project_id
             + self.depends
             + self.token
         )
@@ -1331,7 +1315,7 @@ class RunfolderProcessor(object):
             + config.smartsheet_mokapipe_complete
             + self.runfolder_obj.runfolder_name
             + self.project
-            + self.projectid
+            + self.runfolder_obj.nexus_project_id
             + self.depends
             + self.token.rstrip(")")
         )
