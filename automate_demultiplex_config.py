@@ -86,8 +86,9 @@ backup_runfolder_script = (
 
 # backup runfolder folder
 backup_runfolder_logfile = (
-    "/usr/local/src/mokaguys/automate_demultiplexing_logfiles" "/backup_runfolder_logfiles"
-)
+    "{document_root}/automate_demultiplexing_logfiles"
+    "/backup_runfolder_logfiles"
+).format(document_root=document_root)
 
 backup_runfolder_success = "backup_runfolder INFO - END"
 backup_runfolder_error = "backup_runfolder.UAcaller ERROR"
