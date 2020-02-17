@@ -299,9 +299,8 @@ class RunfolderProcessor(object):
 
     def test_upload_agent(self, test_result):
         """
-        Tests the upload agent is installed by calling upload agent command with --version.
-        Passess stdout to function perform_test which returns False if expected string not present
-        This function raises exception if function returns False.
+        This function receives a True/False value from the function which assesses the output of calling the upload agent with --version
+        If debug mode the result is not logged.
         """
         if not test_result:
             if not self.debug_mode:
@@ -320,7 +319,7 @@ class RunfolderProcessor(object):
         """
         Recieves test name and stdout from execution of command
         Return False if expected response (as per config) not in stdout
-        otherwise returns True
+        Otherwise returns True
         """
         # if expected string not in stdout return Falsetest_upload_agent
         if test == "ua":
@@ -346,10 +345,8 @@ class RunfolderProcessor(object):
 
     def test_dx_toolkit(self, test_result):
         """
-        Tests if the dx toolkit is installed.
-        Calls dx run command and passes stdout to function which will test for expected string (set
-        in config file) is present in output - this will return True if ok.
-        Raises exception if test fails.
+        This function receives a True/False value from the function which assesses the output of the dx toolkit test command
+        If debug mode the result is not logged.
         """
         if not test_result:
             if not self.debug_mode:
@@ -367,7 +364,7 @@ class RunfolderProcessor(object):
     def already_uploaded(self):
         """
         Upload agent stdout is written to a file, indicating that the runfolder has been processed.
-        This function checks for presense of this file.
+        This function checks for presense of this file (using perform_test function).
         Returns False if not already processed.
         """
         # write to log file including the github repo tag and time stamp
@@ -387,9 +384,10 @@ class RunfolderProcessor(object):
 
     def has_demultiplexed(self):
         """
-        Check if the demultiplexing finished successfully by reading the last line of the
-        demultiplex log. The demultiplexing script will raise any alerts if issues are found with
-        demultiplexing. Uses expected success status defined in config.
+        Check if demultiplexing has been performed and completed sucessfully.
+        The demultiplexing script will raise any alerts if issues are found with demultiplexing, but we also need to prevent further processing of the run.
+        Passes the expected demultiplex log file path to perform_test function
+        If present, then passes the last line of this log file to perform_test to check completed successfully. 
         Returns True is completed sucessfully
         """
         demultiplex_file_path = os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing)
@@ -411,10 +409,11 @@ class RunfolderProcessor(object):
 
     def find_fastqs(self, runfolder_fastq_path):
         """
+        Input = path to fastqs in runfolder
         Loops through all the fastq files in the given folder
-        Identifies the pan number and checks for presense in the dictionary of panel settings.
+        Identifies the pan number and checks for presense of this pan number in the dictionary of panel settings.
         If there are any files where the pan number was not found sent an alert.
-        returns a tuple of list of processed samples and string of fastq filepaths.
+        Returns a tuple of list of processed samples and string of fastq filepaths.
         """
         # set up list of fastqs not to be processed
         not_processed = []
@@ -467,10 +466,12 @@ class RunfolderProcessor(object):
 
     def capture_any_WES_batch_numbers(self, list_of_processed_samples):
         """
-        DNANexus project names are the runfolder suffixed with identifiers to help future dearchival
+        Input = list of samples to be processed
+        DNANexus projects are named with the runfolder suffixed with identifiers to help future dearchival
         This function parses samplenames and identifies any WES batch numbers from the samplenames
-        (identified as anything between "_WES" and "_Pan".
-        If found a string is returned, else None is returned
+        (identified as anything between "_WES" and "_Pan").
+        If WES batch number(s) are identified, Returns a string which will be included in the project name
+        Else, None is returned
         """
         # a list to hold all the wes numbers
         wes_numbers = []
@@ -493,11 +494,12 @@ class RunfolderProcessor(object):
 
     def capture_library_batch_numbers(self, list_of_processed_samples):
         """
+        Input = list of samples to be processed
         DNANexus project names are the runfolder suffixed with identifiers to help future dearchival
         This function parses samplenames and identifies the library prep numbers, identified as the
         first element in the sample name (before the first underscore)
-        library batch numbers should always be dentified so this is returned as a string.
-        if not an error is raised
+        If no library batch numbers found raise error.
+        Returns a string of unique library batch numbers.
         """
         # a list to hold all the librray batch numbers
         library_batch_numbers = []
@@ -529,11 +531,11 @@ class RunfolderProcessor(object):
 
     def build_nexus_project_name(self, wes_number, library_batch):
         """
+        Input - WES number and library batch numbers
         The DNA Nexus project name contains all the information required to quickly and easily identify the contents, which may help in the future.
         The project name starts with a code to denote the status of the project (eg live clinical, development or archived) and is followed by the name of the runfolder.
         The WES batches and library prep strings are suffixed onto the project name (received as inputs from other functions)
-        A tuple is returned containing strings for self.dest, runfolder_obj.nexus_path and runfolder_obj.nexus_project_name
-        Project names (and relevant file paths within the projext are saved to self.runfolderobject), the string for self.
+        Returns - tuple containing strings for self.dest, runfolder_obj.nexus_path and runfolder_obj.nexus_project_name
         """
         nexus_path = ""
         nexus_project_name = ""
@@ -575,10 +577,7 @@ class RunfolderProcessor(object):
         Once the project name has been defined the project can be created.
         This uses the DNANexus sdk, where commands are written to a bash script and executed using subprocess.
         The project is created and shared with users, with varying degrees of access as defined in the config file.
-        Successful creation of the project is assertained by assessing the capture of a project id which fits the expected project name pattern (project-132456)
-        Any issues identifying the project id will result in an alert being sent.
-        The project id is returned as a string
-
+        This function writes a bash script containing the project creation command
         """
 
         # open bash script
@@ -613,14 +612,9 @@ class RunfolderProcessor(object):
 
     def run_project_creation_script(self):
         """
-        Recieves path to previously created script as input
-        Calls subprocess command
-        Will return projectid (if created) otherwise will return False (debug) or an exception (non-debug)
-
-        For testing the subprocess command will return a debug string of no use to this function.
-        Therefore the expected stdout can be passed as an input and used as the output of subprocess command
-
-
+        Calls subprocess command executing project creation bash script.
+        Output of this command is tested to see if it meets the expected pattern.
+        Returns - projectid (if created) , False (if debug) or an exception (non-debug)
         """
         # run a command to execute the bash script made above
         cmd = "bash " + self.project_bash_script_path
@@ -665,11 +659,12 @@ class RunfolderProcessor(object):
 
     def upload_fastqs(self):
         """
-        All samples to be processed were identified in find_fastqs().
-        This function populates a string of local filepaths for all fastqs that is used by the upload agent.
+        All samples to be processed were identified in find_fastqs() which also created a string of filepaths for all fastqs
+        that is required by the upload agent.
         This command is passed to execute_subprocess_command() and all standard error/standard out written to a log file
         The upload command is written in a way where it is repeated until it exits with an exit status of 0.
         If debug mode the upload agent command is returned without calling execute_subprocess_command()
+        Returns filepath to logfile (non-debug)
         """
         # build the nexus upload command
         nexus_upload_command = (
