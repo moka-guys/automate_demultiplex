@@ -1,74 +1,73 @@
 #!/usr/bin/python2
 """upload_and_setoff_workflows.py
-Once demultiplexing has been complete the files require uploading to DNANexus.
-This script will be scheduled to run and identify any folders that require further processing
-get_list_of_runs loops through runfolders and creates an instance of the process_runfolder class for
-each runfolder. The process_runfolder class creates an instance of the runfolder_object class and
-the quarterback module calls all other modules to assess the runfolder if required, a Nexus project
-is created and shared, data uploaded and the pipelines set off as determined by the panel number
-encoded in the filename.
-@author: aled
+
+Upload NGS data to DNANexus and trigger analysis workflows.
 """
+import datetime
 import os
 import re
-import subprocess
-import datetime
 import smtplib
+import subprocess
 from email.message import Message
 from shutil import copyfile
+
+import automate_demultiplex_config as config
+import git_tag as git_tag
 import requests
 from adlogger import ADLoggers, get_runfolder_log_config
 
-# import config file
-import automate_demultiplex_config as config
-
-# import function which reads the git tag
-import git_tag as git_tag
-
 
 class SequencingRuns(list):
-    """Loop through the directories in the directory containing the runfolders"""
+    """A container for NGS runfolders with methods to initiate runfolder processing.
+    
+    Args:
+        None
+    Methods:
+        set_runfolders(): Update list to contain NGS runfolders on the system
+        loop_through_runs(): Process all NGS runfolders in class instance list
+    """
 
     def __init__(self):
+        # Enable this class to hold sequencing runs by inheriting from python's List object.
         super(SequencingRuns, self).__init__()
-        # Timestamp to name the logfile
+        # Timestamp for each instance is used to name logfiles.
         self.now = str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
 
     def set_runfolders(self):
-        """Return a list of all valid runfolders"""
+        """Update internal list with NGS runfolders present on the system. The root directory to
+        search for runfolders is specified in the config object.
+
+        >>> runs = SequencingRuns()
+        >>> # runs == []
+        >>> runs.set_runfolders()
+        >>> # runs == ['runfolder1', 'runfolder2', 'runfolder3']
+        """
         all_runfolders = os.listdir(config.runfolders)
-        # for each folder if it is not samplesheets/tar.gz folder, pass to the next class
         for folder in all_runfolders:
-            # Ignore folders in the list config.ignore_directories
-            # and test that it is a directory (ignoring files)
-            if folder not in config.ignore_directories and os.path.isdir(
-                os.path.join(config.runfolders, folder)
-            ):
+            folder_exists = os.path.isdir(os.path.join(config.runfolders, folder))
+            if folder not in config.ignore_directories and folder_exists:
                 self.append(folder)
 
     def loop_through_runs(self):
-        """
-        This function sets up this instance of the script.
-        It creates the log file which holds the decisions made for all runfolders as it loops
-        through the runfolders.
-        """
+        """Process all NGS runfolders in class instance list."""
 
+        # Track processed runfolders to use later for naming logfiles.
         processed_runfolders = []
 
+        # Process any runfolders added to class instance with self.set_runfolders()
         for folder in self:
-            # pass folder and timestamp to class instance
             runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.debug)
+            # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
                 processed_runfolders.append(folder)
 
-        # If any runfolders have been processed
+        # Add names of any processed runfolders to logfile
         if processed_runfolders:
-            # Rename the logfile with the runfolder name(s)
             original_logfile_path = config.upload_agent_logfile + self.now + "_.txt"
             new_logfile = original_logfile_path.replace(".txt", "_".join(processed_runfolders))
             os.rename(original_logfile_path, new_logfile)
 
-
+#TODO: Comments and docstrings from Line 70 onwards
 class RunfolderObject(object):
     """
     An object with runfolder specific properties.
