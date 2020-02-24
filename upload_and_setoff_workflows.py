@@ -14,7 +14,7 @@ from shutil import copyfile
 import automate_demultiplex_config as config
 import git_tag as git_tag
 import requests
-from adlogger import ADLoggers, get_runfolder_log_config
+import adlogger #import ADLoggers, get_runfolder_log_config
 
 
 class SequencingRuns(list):
@@ -196,8 +196,11 @@ class RunfolderProcessor(object):
 
         self.panel_dictionary = self.set_panel_dictionary()
         self.sql_queries = {}
-        self.log_config = get_runfolder_log_config(self.runfolder_obj, self.now)
-        self.loggers = ADLoggers(**self.log_config)
+        # call the function which populates a dictionary of run specific logs and logfile paths.
+        self.log_config = adlogger.get_runfolder_log_config(self.runfolder_obj, self.now)
+        # pass the dictionary created above into ADloggers class - ** unpacks this dictionary  to populate inputs
+        # This is used as an object where various logs can be written 
+        self.loggers = adlogger.ADLoggers(**self.log_config)
 
     def run_tests(self):
         """
@@ -683,61 +686,59 @@ class RunfolderProcessor(object):
         if self.debug_mode:
             return nexus_upload_command
 
-        # Log fastq upload command to runfolder upload
+        # Log fastq upload command to backup script logfile
         self.loggers.backup.info("Fastq upload commands:\n{}".format(nexus_upload_command))
-        # Log fastq upload script location
+        # write to automated script logfile
         self.loggers.script.info(
             "Uploading fastqs. See commands at {}".format(self.loggers.fastq_upload.filepath)
         )
 
-        # Create file to show upload has started and to hold upload agent standard output
+        # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
         out, err = self.execute_subprocess_command(nexus_upload_command)
         self.loggers.fastq_upload.info("Uploading fastqs:\n{}\n{}".format(out, err))
         return self.loggers.fastq_upload.filepath
 
     def look_for_upload_errors_fastq(self, upload_agent_stdout_path):
         """
+        Input = path to DNANexus_upload_started.txt file 
         Parse the file containing standard error/standard out from the upload agent.
-        The upload agent command is reissued until it exists with a status of 0 which must be taken into account when identifying errors.
-        If the expected error message (defined in config file) is present but the string "upload successfully" is still present it is assumed it uploaded successfully on the repeated attempt.
+        For each expected fastq file to be uploaded check the expected upload success statement is present.
         If the success statement is absent raise an alert but do not stop script from running
+        Only returns strings in debug mode.
         """
-        # Open the log file and read to look for the string "ERROR"
-        for upload in open(upload_agent_stdout_path).read().split("Uploading file"):
-            # if there was an error during the upload...
-            if config.ua_error in upload:
-                # if it still completed successfully carry on
-                if "uploaded successfully" in upload:
-                    # debugmode
-                    if self.debug_mode:
-                        return "disrupted but complete"
-                    else:
-                        self.loggers.script.info(
-                            "UA_disrupted 'upload of fastq was disrupted but complete for run'"
-                        )
-                # other wise write to log
-                else:
-                    if self.debug_mode:
-                        return "fail"
-                    else:
-                        self.loggers.script.error(
-                            "UA_fail 'upload of fastqs failed for run {}'".format(
-                                self.runfolder_obj.runfolder_name
-                            )
-                        )
-
-            # if error status is not present
-            else:
-                # return
-                if self.debug_mode:
-                    return "no error"
-                else:
-                    # write to log file check was ok
-                    self.loggers.script.info(
-                        "UA_pass 'upload of fastq file complete for run {}'".format(
-                            self.runfolder_obj.runfolder_name
-                        )
+        # list to hold any fastqs with issues
+        fq_issue_list=[]
+        # for each fastq in the list to upload
+        for fastq_file in self.fastq_string:
+            # set flag to say upload unsuccessful
+            fastq_upload_ok=False
+            # loop through log file - if it's a line relating to this fastq check it's uploaded successfully.
+            for line in open(upload_agent_stdout_path).read():
+                if fastq_file in line and "was uploaded successfully. Closing..." in line:
+                    fastq_upload_ok = True
+            # if at the end of the file there was no success statement found
+            if not fastq_upload_ok:
+                fq_issue_list.append(fastq_file)
+        
+        # Report back if ok, not ok with/without debug mode
+        if fq_issue_list and self.debug_mode:
+            return  "fail"
+        elif fq_issue_list:
+            self.loggers.script.error(
+                "UA_fail 'upload of fastqs failed for run {}'".format(
+                    self.runfolder_obj.runfolder_name
                     )
+                )
+        # if no error but debug
+        elif not fq_issue_list and self.debug_mode:
+            return "no error"
+        # if no error and not debug write to log file check was ok
+        else:
+            self.loggers.script.info(
+                "UA_pass 'upload of fastq file complete for run {}'".format(
+                    self.runfolder_obj.runfolder_name
+                )
+            )
 
     def nexus_fastq_paths(self, read1):
         """
@@ -1251,7 +1252,7 @@ class RunfolderProcessor(object):
                     lowest_coverage_level = self.panel_dictionary[pannumber][
                         "multiqc_coverage_level"
                     ]
-        # multiqc_coverage_level = config.mokaamp_multiqc_coverage_level
+        
         # build multiqc command, capturing the job id- eg command = jobid=$(dx run multiqc -iproject_for_multiqc=002_170222_ALEDTEST -icoveragelevel=20 --project project-F2fpzp80P83xBBJy8F1GB2Zb -y --depends-on $jobid --brief --auth xyz)
         dx_command = (
             self.multiqc_command
