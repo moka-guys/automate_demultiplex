@@ -104,7 +104,7 @@ upload_agent_expected_stdout = "Upload Agent Version:"
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # Current Mokapipe ID
-mokapipe_pipeline_ID = "3559"
+mokapipe_pipeline_ID = "3684"
 # Current MokaWES ID
 mokawes_pipeline_ID = "3650"
 
@@ -124,7 +124,7 @@ project_success = 'Created new project called "%s"'
 # The project containing the app and data
 app_project = "001_ToolsReferenceData:/"
 # path to the workflow in the app project
-mokapipe_path = "Workflows/GATK3.5_v2.11"
+mokapipe_path = "Workflows/GATK3.5_v2.12"
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 # path to the oncology workflow in the app project
@@ -134,7 +134,7 @@ mokaamp_path = "Workflows/MokaAMP_v1.2"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.11"
+multiqc_path = "Apps/multiqc_v1.12"
 # path to sentieon upload app
 sapientia_app_path = "Apps/sapientia_upload_v1.0"
 # path to iva upload app
@@ -216,11 +216,7 @@ multiqc_project_input = " -iproject_for_multiqc="
 multiqc_coverage_level_input = " -icoverage_level="
 multiqc_html_output = "multiqc_report"
 upload_multiqc_input = " -imultiqc_html="
-wes_multiqc_coverage_level = "20"  # HSMetrics coverage level to be reported for wes
-custom_panel_multiqc_coverage_level = (
-    "30"  # HSMetrics coverage level to be reported for custom panel
-)
-mokaamp_multiqc_coverage_level = "100"  # HSMetrics coverage level to be reported for mokaamp
+
 
 # Smartsheet
 smartsheet_mokapipe_complete = " -iNGS_run="
@@ -309,7 +305,7 @@ default_panel_properties = {
 
 # override default panel settings
 panel_settings = {
-    "Pan493": {
+    "Pan493": { # WES agilent
         "mokawes": True,
         "iva_upload": True,
         "multiqc_coverage_level": 20,
