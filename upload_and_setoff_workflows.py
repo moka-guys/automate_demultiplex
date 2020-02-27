@@ -61,7 +61,8 @@ class SequencingRuns(list):
         processed_runfolders = []
 
         # Process any runfolders added to class instance with self.set_runfolders()
-        for folder in self:
+        #for folder in self:
+        for folder in ["999999_NB552085_9999_automated_testing"]:
             runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.debug)
             # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
@@ -69,7 +70,7 @@ class SequencingRuns(list):
 
         # Add names of any processed runfolders to logfile
         if processed_runfolders:
-            original_logfile_path = config.upload_agent_logfile + self.now + "_.txt"
+            original_logfile_path = config.upload_and_setoff_workflow_logfile + self.now + "_.txt"
             new_logfile = original_logfile_path.replace(".txt", "_".join(processed_runfolders))
             os.rename(original_logfile_path, new_logfile)
 
@@ -112,7 +113,7 @@ class RunfolderProcessor(object):
         self.now = now
         
         # define logfile path for this execution of this script.
-        self.upload_agent_logfile_path = config.upload_agent_logfile + self.now + "_.txt"
+        self.upload_agent_logfile_path = config.upload_and_setoff_workflow_logfile + self.now + "_.txt"
 
         # string of fastqs for upload agent
         self.fastq_string = ""
@@ -197,11 +198,13 @@ class RunfolderProcessor(object):
 
         self.panel_dictionary = self.set_panel_dictionary()
         self.sql_queries = {}
+
         # call the function which populates a dictionary of run specific logs and logfile paths.
         self.log_config = adlogger.get_runfolder_log_config(self.runfolder_obj, self.now)
         # pass the dictionary created above into ADloggers class - ** unpacks this dictionary  to populate inputs
         # This is used as an object where various logs can be written 
         self.loggers = adlogger.ADLoggers(**self.log_config)
+        
 
     def run_tests(self):
         """
@@ -260,8 +263,6 @@ class RunfolderProcessor(object):
                 self.runfolder_obj.nexus_project_id = self.run_project_creation_script().rstrip()
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks fastqs were uploaded without error
-                ## Fastq logfile created here to indicate DNANexus upload started
-                self.loggers.set_fastq_upload()
                 self.look_for_upload_errors_fastq(self.upload_fastqs())
 
                 self.write_dx_run_cmds(
@@ -453,20 +454,20 @@ class RunfolderProcessor(object):
                     # add the fastq name to a list to be used in create_nexus_file_path
                     list_of_processed_samples.append(fastq)
                 else:
-                    self.loggers.script.warning(
-                        'UA_warning unable to find PanNumber in {}.'.format(fastq)
-                    )
+                    # self.loggers.script.warning(
+                    #     'UA_warning unable to find PanNumber in {}.'.format(fastq)
+                    # )
                     not_processed.append(fastq)
 
         if not_processed:
+            # self.loggers.script.error(
+            #     "UA_fail 'Unrecognised panel number found in run {}.'".format(
+            #         self.runfolder_obj.runfolder_name
+            #     )
+            # )
             self.loggers.script.error(
-                "UA_fail 'Unrecognised panel number found in run {}.'".format(
-                    self.runfolder_obj.runfolder_name
-                )
-            )
-            self.loggers.script.error(
-                "UA_fail 'Some fastq files contained an unrecognised panel number: {}'".format(
-                    ",".join(not_processed)
+                "UA_fail '{} contained an unrecognised pan numbers: {}'".format(
+                    self.runfolder_obj.runfolder_name, ",".join(not_processed)
                 )
             )
 
@@ -704,17 +705,17 @@ class RunfolderProcessor(object):
         if self.debug_mode:
             return nexus_upload_command
 
-        # Log fastq upload command to backup script logfile
-        self.loggers.backup.info("Fastq upload commands:\n{}".format(nexus_upload_command))
+        # Log fastq upload command to the uplaod agent logfile
+        self.loggers.upload_agent.info("Fastq upload commands:\n{}".format(nexus_upload_command))
         # write to automated script logfile
         self.loggers.script.info(
-            "Uploading fastqs. See commands at {}".format(self.loggers.fastq_upload.filepath)
+            "Uploading fastqs. See commands at {}".format(self.loggers.upload_agent.filepath)
         )
 
         # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
         out, err = self.execute_subprocess_command(nexus_upload_command)
-        self.loggers.fastq_upload.info("Uploading fastqs:\n{}\n{}".format(out, err))
-        return self.loggers.fastq_upload.filepath
+        self.loggers.upload_agent.info("Uploading fastqs:\n{}\n{}".format(out, err))
+        return self.loggers.upload_agent.filepath
 
     def look_for_upload_errors_fastq(self, upload_agent_stdout_path):
         """
@@ -1759,19 +1760,19 @@ class RunfolderProcessor(object):
         #execute the command list
         cmd = subprocess.list2cmdline(command_list)
 
-        # write these commands to the backup_runfolder logfile before upload.
-        self.loggers.backup.info("Uploading logfiles.")
-        self.loggers.backup.info(cmd)
+        # write these commands to the upload agent logfile before upload.
+        self.loggers.upload_agent.info("Uploading logfiles.")
+        self.loggers.upload_agent.info(cmd)
 
         # execute ua command
         out, err = self.execute_subprocess_command(cmd)
 
-        # capture stdout to log file containing stdour and stderr
-        self.loggers.fastq_upload.info("Uploading logfiles (this will not be included in DNANexus)")
-        self.loggers.fastq_upload.info(out)
-        self.loggers.fastq_upload.info(err)
+        # capture stdout to upload agent log file
+        self.loggers.upload_agent.info("Uploading logfiles (this will not be included in DNANexus)")
+        self.loggers.upload_agent.info(out)
+        self.loggers.upload_agent.info(err)
 
-        return self.loggers.fastq_upload.filepath
+        return self.loggers.upload_agent.filepath
 
     def look_for_upload_errors(self, logfile, stage):
         """

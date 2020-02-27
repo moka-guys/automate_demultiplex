@@ -1,27 +1,17 @@
-"""adlogger.py
 
-Automate demultiplex logging.
-"""
+import os
+import automate_demultiplex_config as config
 import logging
 import logging.handlers
-import os
-
-import automate_demultiplex_config as config
 
 
 def get_runfolder_log_config(runfolder, timestamp):
-    """Return an ADLogger config for a runfolder.
-
-    Args:
-        runfolder(upload_and_setoff_workflows.RunfolderObject): A runfolder
-        timestamp(str): Timestamp as str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
-    Returns:
-        log_config(dict): A dictionary of arguments for ADLoggers
     """
-
-    # Find the demultiplex logfile for the runfolder.
-    # Logfile name contains demultiplex timestamp which is unknown at this point.
-    # Search for any demultiplex logfiles matching the runfodler name and return the first.
+    Inputs = Runfolder object and a time stamp
+    This function builds a dictionary of various log files, thier shorthand name and the path to the log file
+    output = dictionary of logs and associated filepaths 
+    """
+    #  Demultiplex script log has timestamp that differs from current time. Find first.
     any_demultiplex_logs = [
         os.path.join(config.demultiplex_logfiles, filename)
         for filename in os.listdir(config.demultiplex_logfiles)
@@ -29,112 +19,75 @@ def get_runfolder_log_config(runfolder, timestamp):
     ]
     demultiplex_log = any_demultiplex_logs.pop() if any_demultiplex_logs else None
 
-    # Configuration for ADLoggers.
-    # Dictionary where keys are ADLoggers.__init__ arguments and values are logfile paths.
+    # Configuration for ADLoggers. Provides mapping between logger shorthand name and the logfile filepath.
     log_config = {
-        "script": os.path.join(config.upload_agent_logfile, timestamp + "_.txt"),
+        "script": os.path.join(config.upload_and_setoff_workflow_logfile, timestamp + "_.txt"),
         "project": os.path.join(
-            config.DNA_Nexus_project_creation_logfolder
-            + runfolder.runfolder_name
-            + ".sh"
+            config.DNA_Nexus_project_creation_logfolder + runfolder.runfolder_name + ".sh"
         ),
         "dx_run": runfolder.runfolder_dx_run_script,
         "demultiplex": demultiplex_log,
-        "fastq_upload": os.path.join(
+        "upload_agent": os.path.join(
             runfolder.runfolderpath, config.upload_started_file
         ),
         "backup": os.path.join(
-            config.backup_runfolder_logfile, runfolder.runfolder_name + ".log",
+            config.backup_runfolder_logfile,
+            runfolder.runfolder_name + "_backup_runfolder.log",
         ),
     }
 
     return log_config
 
-
-class DataOnlyLogger:
-    """Carry name and filepath for logfiles that are not written to.
-
-    Args:
-        name(str): Logfile shorthand name
-        filepath(str): Logfile filepath
-    """
+class LOGFILE():
     def __init__(self, name, filepath):
         self.name = name
         self.filepath = filepath
 
-
-class ADLoggers:
-    """Access all logfiles uploaded to DNANexus as part of automate demultiplex scripts.
-
-    Args:
-        project(str): Path to DNANexus create project bash script
-        dx_run(str): Path to dx run commands
-        demultiplex(str): Path to logfile of decisions made during demultiplexing script
-        fastq_upload(str): Path to DNANexus_Upload_started.txt in runfolder
-        backup(str): Path to logfile for backing up rest of runfolder.
-        script(str): Path to logfile for python script that calls ADLogger.
+class ADLoggers():
     """
-    # Define log string format for all loggers
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    recieves the dictionary created by get_runfolder_log_config
+    This class is used as an object 
+    """
 
-    def __init__(self, project, dx_run, demultiplex, fastq_upload, backup, script=None):
-        # Logfiles to be written to by upload_and_setoff_workflows
-        self.script = self._get_ad_logger("automate_demultiplex", script)
-        self.backup = self._get_ad_logger("backup_runfolder", backup)
-        # DNANexus_Upload_started.txt is created when logger for fastq upload is called, however
-        # scripts use the presence of this file to process or ignore runfolders.
-        # Hold fastq upload path and allow ad-hoc logger creation using `set_upload_fastq`.
-        self._fastq_upload = fastq_upload 
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-        # Get mock objects for files that are uploaded to DNANexus but not written to by loggers.
-        self.project = self._get_ad_logger("create_project", project, file_only=True)
-        self.dx_run = self._get_ad_logger("dx_run", dx_run, file_only=True)
-        self.demultiplex = self._get_ad_logger(
-            "demultiplex", demultiplex, file_only=True
-        )
+    def __init__( self, project, dx_run, demultiplex, upload_agent, backup, script=None):
+        # Logfiles the demultiplex script writes to
+        self.script = self._get_ad_logger('automate_demultiplex', script)
+        self.upload_agent = self._get_ad_logger('upload_agent', upload_agent)
+        self.backup = self._get_ad_logger('backup_runfolder', backup)
+        # Logfiles not written to or bash files created by script. File_only skips file handler
+        #  creation but still provides convenience attributes .name and .filename
+        self.project = self._get_ad_logger('create_project', project, file_only=True)
+        self.dx_run = self._get_ad_logger('dx_run', dx_run, file_only=True)
+        self.demultiplex = self._get_ad_logger('demultiplex', demultiplex, file_only=True)
 
         # Container for all logfiles
-        self.all = [
-            self.script,
-            self.project,
-            self.dx_run,
-            self.demultiplex,
-            self.backup,
-        ]
-
-    def set_fastq_upload(self):
-        """Create logger for fastq upload logfile"""
-        self.fastq_upload = self._get_ad_logger("fastq_upload", self._fastq_upload)
-        self.all.append(self.fastq_upload)
+        self.all = [self.script, self.project, self.dx_run, self.demultiplex, self.upload_agent, self.backup]
 
     def list_logfiles(self):
-        return [logger.filepath for logger in self.all]
+        return [ logger.filepath for logger in self.all ]
 
     def _get_file_handler(self, filepath):
-        fh = logging.FileHandler(filepath, mode="a")
+        fh = logging.FileHandler(filepath, mode='a', delay=True)
         fh.setLevel(logging.DEBUG)
         fh.setFormatter(self.formatter)
         return fh
 
     def _get_syslog_handler(self):
-        slh = logging.handlers.SysLogHandler(address="/dev/log")
+        slh = logging.handlers.SysLogHandler(address = '/dev/log')
         slh.setLevel(logging.DEBUG)
         slh.setFormatter(self.formatter)
         return slh
 
     def _get_ad_logger(self, name, filepath, file_only=False):
-        """Returns a python logging object for automate demultiplex scripts.
-        
-        Args:
-            name(str): Logger name
-            filepath(str): Logfile path
-            file_only(bool): If true, return an object with the .name and .filepath attributes only
-                Useful to attach logfiles that require upload to DNANexus but are not written to.
+        """
+        Returns automate demultiplex logger
+        inputs - name = name of log
+        filepath 
         """
         if file_only or filepath is None:
-            return DataOnlyLogger(name, filepath)
+            return LOGFILE(name, filepath)
         logger = logging.getLogger(name)
         logger.filepath = filepath
         logger.setLevel(logging.DEBUG)
@@ -142,17 +95,9 @@ class ADLoggers:
         logger.addHandler(self._get_syslog_handler())
         return logger
 
-
-if __name__ == "__main__":
-    # Example ADLogger instance
-    loggers = ADLoggers(None, None, None, None, None, script="test.log")
-    loggers.set_fastq_upload()
-
-    # Example logging with script
-    loggers.script.info(
-        "This is a test. Writing to {} and syslog.".format(loggers.script.filepath)
-    )
-
-    # Example listing all logfile paths
+if __name__ == '__main__':
+    loggers = ADLoggers(None, None, None, None, None, None, script='test.log')
+    print('Writing test to {} and syslog'.format(loggers.script.filepath))
+    loggers.script.info('This is a test')
     for logger in loggers.all:
         print(logger.name, logger.filepath)

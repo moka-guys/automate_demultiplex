@@ -44,7 +44,7 @@ upload_test_folders = [
 demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
-upload_agent_logfile = (
+upload_and_setoff_workflow_logfile = (
     "{document_root}/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
 ).format(document_root=document_root)
 
