@@ -125,8 +125,9 @@ class ADLoggers():
         logger = logging.getLogger(name)
         logger.filepath = filepath
         logger.setLevel(logging.DEBUG)
-        logger.addHandler(self._get_file_handler(filepath))
-        logger.addHandler(self._get_syslog_handler())
+        if not logger.handlers:
+            logger.addHandler(self._get_file_handler(filepath))
+            logger.addHandler(self._get_syslog_handler())
         return logger
 
 if __name__ == '__main__':
