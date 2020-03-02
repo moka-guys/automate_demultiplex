@@ -75,7 +75,6 @@ upload_agent_path = ("{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua
     document_root=document_root
 )
 
-# upload_agent_path = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 upload_agent_test_command = " --version"
 ua_error = "Error Message: 'Could not resolve: api.dnanexus.com"
 
@@ -94,7 +93,6 @@ backup_runfolder_success = "backup_runfolder INFO - END"
 backup_runfolder_error = "backup_runfolder.UAcaller ERROR"
 
 # command to test dx toolkit
-# dx_sdk_test = "source /etc/profile.d/dnanexus.environment.sh;dx --version"
 dx_sdk_test = "source ~/dx-toolkit/environment;dx --version"
 # expected result from testing
 dx_sdk_test_expected_stdout = "dx v0.2"
