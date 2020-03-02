@@ -12,7 +12,7 @@ from email.message import Message
 from shutil import copyfile
 
 import automate_demultiplex_config as config
-import git_tag as git_tag
+import git_tag
 import requests
 import adlogger #import ADLoggers, get_runfolder_log_config
 
