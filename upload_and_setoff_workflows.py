@@ -283,6 +283,13 @@ class RunfolderProcessor(object):
                 self.look_for_upload_errors(self.upload_log_files(), stage="Uploading_logfiles")
                 # return true to denote that a runfolder was processed
                 return True
+        else:
+            self.loggers.script.info(
+                'Runfolder has already been processed: {}. Skipping.'.format(
+                    self.runfolder_obj.runfolder_name
+                )
+            )
+            return False
 
     @staticmethod
     def set_panel_dictionary():
