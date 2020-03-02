@@ -61,8 +61,7 @@ class SequencingRuns(list):
         processed_runfolders = []
 
         # Process any runfolders added to class instance with self.set_runfolders()
-        #for folder in self:
-        for folder in ["999999_NB552085_9999_automated_testing"]:
+        for folder in self:
             runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.debug)
             # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
