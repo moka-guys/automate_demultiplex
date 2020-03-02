@@ -56,7 +56,7 @@ class DecisionTooler(object):
 
     # named tuple to hold all the output names - This tuple name is "workflow" and has four
     # attributes which can be accessed using Workflow.attribute
-    wfo = namedtuple("Workflow", "name vcf_out bam_out bai_out")
+    workflow_object = namedtuple("Workflow", "name vcf_out bam_out bai_out")
 
     def __init__(self):
         pass
@@ -140,14 +140,14 @@ class DecisionTooler(object):
         produces the decision support tool inputs. returns the namedtuple
         """
         if ps["mokawes"]:
-            return self.wfo(
+            return self.workflow_object(
                 "mokawes",
                 config.mokawes_sentieon_vcf_output_name,
                 config.mokawes_sentieon_bam_output_name,
                 config.mokawes_sentieon_bai_output_name,
             )
         elif ps["mokapipe"]:
-            return self.wfo(
+            return self.workflow_object(
                 "mokapipe", config.mokapipe_vcf_output_name, config.mokapipe_bam_output_name, None,
             )
 
