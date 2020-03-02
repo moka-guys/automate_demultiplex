@@ -1469,7 +1469,8 @@ class RunfolderProcessor(object):
 
         # if any standard error
         if err:
-            # currently have a conflict between packages from different python instances. parse stdout to gnore these
+            # currently have a conflict between packages from different python instances.
+            # parse stdout to ignore these
             cleaned_error = self.clean_stderr(err)
             # if stderr after ignorning lines referring to the package conflict write to logger
             if cleaned_error:
