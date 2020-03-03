@@ -132,7 +132,7 @@ class ADLoggers():
 
 if __name__ == '__main__':
     # Example ADLogger instance
-    loggers = ADLoggers(None, None, None, None, None, None, script='test.log')
+    loggers = ADLoggers(None, None, None, None, None, script='test.log')
     # Example logging with script
     loggers.script.info(
         "This is a test. Writing to {} and syslog.".format(loggers.script.filepath)
