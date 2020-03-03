@@ -5,3 +5,4 @@ test/data
 .vscode
 share/
 make_panel_fastqs/
+test.log
