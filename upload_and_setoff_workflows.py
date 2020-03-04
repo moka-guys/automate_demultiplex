@@ -129,7 +129,7 @@ class RunfolderProcessor(object):
             + config.Nexus_API_Key
             + ')"\n'
         )
-        self.addprojecttag = "dx tag $project_id "
+
         self.mokapipe_command = (
             "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
         )
@@ -639,10 +639,6 @@ class RunfolderProcessor(object):
                     % (user, config.Nexus_API_Key)
                 )
 
-            # add a tag to denote live project (as opposed to archived)
-            project_script.write(
-                self.addprojecttag + config.live_tag + " --auth-token %s\n" % (config.Nexus_API_Key)
-            )
 
             # echo the project id so it can be captured below
             project_script.write("echo $project_id")
