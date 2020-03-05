@@ -31,7 +31,7 @@ def get_runfolder_log_config(runfolder, timestamp):
     # Configuration for ADLoggers.
     # Dictionary where keys are ADLoggers.__init__ arguments and values are logfile paths.
     log_config = {
-        "script": os.path.join(config.upload_and_setoff_workflow_logfile, timestamp + "_.txt"),
+        "script": os.path.join(config.upload_and_setoff_workflow_logfile, timestamp + "_upload_and_setoff_workflow.log"),
         "project": os.path.join(
             config.DNA_Nexus_project_creation_logfolder + runfolder.runfolder_name + ".sh"
         ),
@@ -96,6 +96,24 @@ class ADLoggers():
             self.backup,
         ]
 
+    def shutdown_logs(self):
+        
+        #self.script.removeHandler("fh")
+        #self.script.removeHandler("slh")
+        handlers = self.script.handlers[:]
+        for handler in handlers:
+            handler.close()
+            self.script.removeHandler(handler)
+        handlers = self.upload_agent.handlers[:]
+        for handler in handlers:
+            handler.close()
+            self.upload_agent.removeHandler(handler)
+        #self.upload_agent.removeHandler("fh")
+        #self.upload_agent.removeHandler("slh")
+
+        logging.shutdown()
+
+
     def list_logfiles(self):
         return [ logger.filepath for logger in self.all ]
 
@@ -125,9 +143,8 @@ class ADLoggers():
         logger = logging.getLogger(name)
         logger.filepath = filepath
         logger.setLevel(logging.DEBUG)
-        if not logger.handlers:
-            logger.addHandler(self._get_file_handler(filepath))
-            logger.addHandler(self._get_syslog_handler())
+        logger.addHandler(self._get_file_handler(filepath))
+        logger.addHandler(self._get_syslog_handler())
         return logger
 
 if __name__ == '__main__':

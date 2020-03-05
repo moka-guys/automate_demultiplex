@@ -66,11 +66,14 @@ class SequencingRuns(list):
             # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
                 processed_runfolders.append(folder)
+            # close down the run folder specific logger handles
+            runfolder_instance.loggers.shutdown_logs()
+            
 
         # Add names of any processed runfolders to logfile
         if processed_runfolders:
-            original_logfile_path = config.upload_and_setoff_workflow_logfile + self.now + "_.txt"
-            new_logfile = original_logfile_path.replace(".txt", "_".join(processed_runfolders))
+            original_logfile_path = config.upload_and_setoff_workflow_logfile + self.now + "_upload_and_setoff_workflow.log"
+            new_logfile = original_logfile_path.replace(self.now, self.now + "_".join(processed_runfolders)) 
             os.rename(original_logfile_path, new_logfile)
 
 #TODO: Comments and docstrings from Line 70 onwards
@@ -88,7 +91,7 @@ class RunfolderObject(object):
         self.fastq_folder_path = self.runfolderpath + config.fastq_folder
         # path to the run folder's dx run commands
         self.runfolder_dx_run_script = (
-            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + ".sh"
+            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "dx_run_commands.sh"
         )
         self.nexus_project_name = ""
         self.nexus_path = ""
@@ -1075,7 +1078,7 @@ class RunfolderProcessor(object):
             + self.panel_dictionary["Pan1190"]["ingenuity_email"]
             + self.dest
             + self.dest_cmd
-            + "MokaONC_Output"
+            + "amplivar_output"
             + self.token
         )
 
@@ -1796,6 +1799,9 @@ class RunfolderProcessor(object):
             "--do-not-compress",
             "--upload-threads",
             "10",
+            os.path.join(
+            self.runfolder_obj.runfolderpath, 
+            config.file_demultiplexing) # include bcl2fastq stdout
         ] + [logger.filepath for logger in self.loggers.all if logger.filepath]
         #execute the command list
         cmd = subprocess.list2cmdline(command_list)
