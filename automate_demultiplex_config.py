@@ -30,7 +30,8 @@ bcl2fastq = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
 
 # files for checking NGS runfolders before demultiplexing
 file_complete_run = "RTAComplete.txt"
-file_demultiplexing = "demultiplexlog.txt"
+file_demultiplexing = "bcl2fastq2_output.log"
+file_demultiplexing_old = "demultiplexlog.txt"
 
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]

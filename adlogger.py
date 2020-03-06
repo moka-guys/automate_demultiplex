@@ -97,9 +97,9 @@ class ADLoggers():
         ]
 
     def shutdown_logs(self):
-        
-        #self.script.removeHandler("fh")
-        #self.script.removeHandler("slh")
+        """
+        To prevent duplicate filehandlers and system handlers close and remove all handlers
+        """
         handlers = self.script.handlers[:]
         for handler in handlers:
             handler.close()
@@ -108,9 +108,7 @@ class ADLoggers():
         for handler in handlers:
             handler.close()
             self.upload_agent.removeHandler(handler)
-        #self.upload_agent.removeHandler("fh")
-        #self.upload_agent.removeHandler("slh")
-
+        
         logging.shutdown()
 
 

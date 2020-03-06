@@ -91,7 +91,7 @@ class RunfolderObject(object):
         self.fastq_folder_path = self.runfolderpath + config.fastq_folder
         # path to the run folder's dx run commands
         self.runfolder_dx_run_script = (
-            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "dx_run_commands.sh"
+            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_dx_run_commands.sh"
         )
         self.nexus_project_name = ""
         self.nexus_path = ""
