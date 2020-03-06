@@ -229,11 +229,13 @@ class ready2start_demultiplexing():
         # using the os.path.isfile() function to determine if bcl2fastq2_output.log is present
         if os.path.isfile(os.path.join(self.runfolderpath + "/" + self.demultiplexed)):
             # Stop processing this run folder and write to log file
-            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed  -  demultiplex log found @ " + self.runfolderpath + "/" + self.demultiplexed + " \n--- STOP ---\n")
+            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed " + \
+                "-  demultiplex log found @ " + self.runfolderpath + "/" + self.demultiplexed + " \n--- STOP ---\n")
         # to provide some backwards compatibility also check for demultiplexlog.txt flag file
         elif os.path.isfile(os.path.join(self.runfolderpath, config.file_demultiplexing_old)):
             # Stop processing this run folder and write to log file
-            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed  -  demultiplex log found @ " + self.runfolderpath + "/" + config.file_demultiplexing_old + " \n--- STOP ---\n")
+            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed " + \
+                "-  demultiplex log found @ " + self.runfolderpath + "/" + config.file_demultiplexing_old + " \n--- STOP ---\n")
         else:
             # Else proceed by calling the function which checks if sequencing has finished
             self.script_logfile.write("Checking if already demultiplexed .........Run has not yet been demultiplexed\n")
