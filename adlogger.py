@@ -100,12 +100,12 @@ class ADLoggers():
         """
         To prevent duplicate filehandlers and system handlers close and remove all handlers
         """
-        handlers = self.script.handlers[:]
-        for handler in handlers:
+        script_handlers = self.script.handlers[:]
+        for handler in script_handlers:
             handler.close()
             self.script.removeHandler(handler)
-        handlers = self.upload_agent.handlers[:]
-        for handler in handlers:
+        upload_agent_handlers = self.upload_agent.handlers[:]
+        for handler in upload_agent_handlers:
             handler.close()
             self.upload_agent.removeHandler(handler)
         
