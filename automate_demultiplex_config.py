@@ -107,6 +107,7 @@ mokapipe_pipeline_ID = "3684"
 # Current MokaWES ID
 mokawes_pipeline_ID = "3650"
 
+
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
 mokastat_nextsq_ID = "1202218804"
@@ -123,9 +124,11 @@ project_success = 'Created new project called "%s"'
 # The project containing the app and data
 app_project = "001_ToolsReferenceData:/"
 # path to the workflow in the app project
+
 mokapipe_path = "Workflows/GATK3.5_v2.12"
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
+
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
@@ -138,6 +141,7 @@ multiqc_path = "Apps/multiqc_v1.12"
 sapientia_app_path = "Apps/sapientia_upload_v1.0"
 # path to iva upload app
 iva_app_path = "app-ingenuity_variant_transfer/1.0.6"
+
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
@@ -180,6 +184,7 @@ wes_sambamba_bedfile = " -istage-Ff0P82Q0GYKQ4j8b4gXzjqxX.sambamba_bed="
 wes_sentieon_samplename = " -i%s.sample=" % sentieon_stage_id
 # BED file used to restrict Senteion variant calling
 wes_sentieon_targets_bed = " -i%s.targets_bed=" % sentieon_stage_id
+
 
 # MokaOnc amplivar fastq input
 mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
