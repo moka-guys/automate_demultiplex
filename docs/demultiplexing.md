@@ -3,7 +3,7 @@
 NGS runfolders that satisfy the following criteria are demultiplexed by `demultiplexing.py`:
 
 1. `RTAcomplete.txt` is present, indicating that sequencing is complete.
-1. `demultiplexlog.txt` is absent, indicating that demultiplexing has not been performed
+1. `bcl2fastq2_output.log` is absent, indicating that demultiplexing has not been performed
 1. A samplesheet named after the runfolder name is present in the `samplesheets/` folder
 
 ## Protocol
@@ -19,8 +19,8 @@ Settings are imported from `automate_demultiplex_config.py`.
 
 | Alias | Description | Filename | Location
 |------|----------|---------|-----------|
-|Demultiplex Log|Records the decisions made for multiple runfolders each time the script is run|`TIMESTAMP_RUNFOLDER-NAMES_demultiplex_script_log.txt`| /usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files/
-|Bcl2fastq output| STDOUT and STDERR from bcl2fastq | `demulitplexlog.txt` | Within the runfolder
+|Demultiplex Log|Records the decisions made for multiple runfolders each time the script is run|`TIMESTAMP_RUNFOLDER-NAME_demultiplex_script_log.txt`| /usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files/
+|Bcl2fastq output| STDOUT and STDERR from bcl2fastq | `bcl2fastq2_output.log` | Within the runfolder
 |Demultiplex output| STDERR and STDOUT from demultiplexing script. Includes errors from the cronjob | `TIMESTAMP.txt` | /usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout
 
 ## Alerts
