@@ -6,7 +6,7 @@ deemed complete by the presence of a file ("RTAComplete.txt"), which is created 
 when the run is ready for demultiplexing. A sample sheet must be present in the samplesheets folder
 with the name "RUN_samplesheet.csv", where "RUN" is the name of the run folder.
 
-Before demultiplexing, the script checks for the absence of the log file "demultiplexlog.txt" in
+Before demultiplexing, the script checks for the absence of the log file "bcl2fastq2_output.log" in
 the run folder. bcl2fastq stdout and stderr streams are written to this file, which when present
 indicates that demultiplexing is in process or has already been performed.
 """
@@ -21,6 +21,7 @@ import subprocess
 import datetime
 import smtplib
 from email.message import Message
+import re
 import requests
 # import config file
 import automate_demultiplex_config as config
@@ -209,7 +210,7 @@ class ready2start_demultiplexing():
 
     def already_demultiplexed(self, runfolder):
         """Check if the runfolder has been demultiplexed. This is denoted by the presence of the
-        file "demultiplexlog.txt". If the runfolder has not been demultiplexed, call
+        file "bcl2fastq2_output.log". If the runfolder has not been demultiplexed, call
         ready2start_demultiplexing.has_run_finished() to proceed.
 
         Arguments:
@@ -225,10 +226,16 @@ class ready2start_demultiplexing():
         self.script_logfile.write("\nautomate_demultiplexing release: " + git_tag.git_tag() + "\n----------------------" + str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())) + "-----------------\nAssessing......... " + self.runfolderpath + "\n")
 
         # Check if the demultiplex log file is present
-        # using the os.path.isfile() function to determine if demultiplexlog.txt is present
-        if os.path.isfile(self.runfolderpath + "/" + self.demultiplexed):
+        # using the os.path.isfile() function to determine if bcl2fastq2_output.log is present
+        if os.path.isfile(os.path.join(self.runfolderpath + "/" + self.demultiplexed)):
             # Stop processing this run folder and write to log file
-            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed  -  demultiplex log found @ " + self.runfolderpath + "/" + self.demultiplexed + " \n--- STOP ---\n")
+            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed " + \
+                "-  demultiplex log found @ " + self.runfolderpath + "/" + self.demultiplexed + " \n--- STOP ---\n")
+        # to provide some backwards compatibility also check for demultiplexlog.txt flag file
+        elif os.path.isfile(os.path.join(self.runfolderpath, config.file_demultiplexing_old)):
+            # Stop processing this run folder and write to log file
+            self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed " + \
+                "-  demultiplex log found @ " + self.runfolderpath + "/" + config.file_demultiplexing_old + " \n--- STOP ---\n")
         else:
             # Else proceed by calling the function which checks if sequencing has finished
             self.script_logfile.write("Checking if already demultiplexed .........Run has not yet been demultiplexed\n")
@@ -358,7 +365,7 @@ class ready2start_demultiplexing():
             #           -R 160822_NB551068_0006_AHGYM7BGXY/
             #           --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv
             #           --no-lane-splitting >>
-            #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/demultiplexlog.txt 2&>1"
+            #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/bcl2fastq2_output.log 2&>1"
             # where --no-lane-splitting creates a single fastq for a sample, not into one fastq per lane
             command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder +
                       " --sample-sheet " + self.samplesheet + " --no-lane-splitting >> " +
@@ -396,7 +403,7 @@ class ready2start_demultiplexing():
         bcl2fastq_log_tail = subprocess.check_output(["tail", "-n", "10", run_logfile_path])
 
         # If demultiplexing completed successfully - looking for expected success statement as defined in config file
-        if config.logfile_success in bcl2fastq_log_tail:
+        if re.search(config.demultiplex_success_match, bcl2fastq_log_tail):
             # Write to system log
             self.logger("Demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
             # Call function which updates smartsheet, changing status for this run from in progress to complete, where task = demultiplex.
