@@ -145,7 +145,7 @@ iva_app_path = "app-ingenuity_variant_transfer/1.0.6"
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.1"
 # smartsheet app
-smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.1"
+smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.2"
 # RPKM path
 RPKM_path = "Apps/RPKM_using_conifer_v1.5"
 # bedfile folder
