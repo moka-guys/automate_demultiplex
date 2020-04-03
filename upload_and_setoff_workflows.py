@@ -946,7 +946,7 @@ class RunfolderProcessor(object):
                     if self.panel_dictionary[panel]["sapientia_upload"]:
                         commands_list.append(self.build_sapientia_input_command())
                         commands_list.append(self.run_sapientia_command(fastq, panel))
-                        commands_list.append(self.add_to_depends_list(fastq))
+                        commands_list.append(self.add_to_depends_list())
                     # add panel to RPKM list 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
