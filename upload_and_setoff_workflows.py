@@ -93,6 +93,9 @@ class RunfolderObject(object):
         self.runfolder_dx_run_script = (
             config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_dx_run_commands.sh"
         )
+        self.sapientia_upload_command_script = (
+            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_sapientia_upload_commands.sh"
+        )
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
@@ -157,8 +160,15 @@ class RunfolderProcessor(object):
             )
         )
         self.sapientia_upload_command = (
-            "jobid=$(dx run " + config.app_project + config.sapientia_app_path + " -y "
+            "echo 'dx run " + config.app_project + config.sapientia_app_path + " -y "
         )
+        # create filepath for file to hold sapientia command(s)
+        self.sapientia_upload_command_script_path = (
+            config.DNA_Nexus_workflow_logfolder + self.runfolder_obj.runfolder_name + "_sapientia.sh"
+        )
+        # string to redirect command (with variables) into file
+        self.sapientia_upload_command_redirect = "' >> " + self.sapientia_upload_command_script_path
+
         self.iva_upload_command = "jobid=$(dx run " + config.iva_app_path + " -y "
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
@@ -846,25 +856,24 @@ class RunfolderProcessor(object):
         # BED file used for variant calling
         # Given bed file could have same pan number, different pan number, the name of a capture kit or None
         # BED file may not be provided for variant calling
-        if self.panel_dictionary[pannumber]["mokawes_variant_calling_bedfile"]:
+        if self.panel_dictionary[pannumber]["variant_calling_bedfile"]:
             # if bedfile starts with Pan use the Pan123data.bed
-            if self.panel_dictionary[pannumber]["mokawes_variant_calling_bedfile"][0:3] == "Pan":
-                bed_dict["mokawes_variant_calling_bedfile"] = (
+            if self.panel_dictionary[pannumber]["variant_calling_bedfile"][0:3] == "Pan":
+                bed_dict["variant_calling_bedfile"] = (
                     config.app_project
                     + config.bedfile_folder
-                    + self.panel_dictionary[pannumber]["mokawes_variant_calling_bedfile"]
-                    + "data.bed"
+                    + self.panel_dictionary[pannumber]["variant_calling_bedfile"]
                 )
             # if bedfile stated is not named with "Pan" don't add "data.bed" - could be the capture design
             else:
-                bed_dict["mokawes_variant_calling_bedfile"] = (
+                bed_dict["variant_calling_bedfile"] = (
                     config.app_project
                     + config.bedfile_folder
-                    + self.panel_dictionary[pannumber]["mokawes_variant_calling_bedfile"]
+                    + self.panel_dictionary[pannumber]["variant_calling_bedfile"]
                 )
         # if mokawes command to be executed and the variant calling bedfile not in config
         else:
-            bed_dict["mokawes_variant_calling_bedfile"] = None
+            bed_dict["variant_calling_bedfile"] = None
         
         # paired end BED file used by BAMClipper
         bed_dict["mokaamp_bed_PE_input"] = (
@@ -905,6 +914,7 @@ class RunfolderProcessor(object):
         # lists/flags for run wide commands
         mokaonc_list = [] 
         peddy = False
+        sapientia_upload = False
         joint_variant_calling = False # not currently in use
         rpkm_list = [] # list for panels needing RPKM analysis
 
@@ -944,9 +954,10 @@ class RunfolderProcessor(object):
                         commands_list.append(self.run_iva_command(fastq, panel))
                         commands_list.append(self.add_to_depends_list())
                     if self.panel_dictionary[panel]["sapientia_upload"]:
+                        sapientia_upload = True
                         commands_list.append(self.build_sapientia_input_command())
                         commands_list.append(self.run_sapientia_command(fastq, panel))
-                        commands_list.append(self.add_to_depends_list())
+                        # commands_list.append(self.add_to_depends_list())
                     # add panel to RPKM list 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
@@ -959,6 +970,10 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list())
+        
+        # if there is a sapientia uplaod create the file which will be run manually, once QC is passed.
+        if sapientia_upload:
+            self.build_sapientia_command_file()
 
         # build run wide commands 
         if mokaonc_list:
@@ -994,9 +1009,9 @@ class RunfolderProcessor(object):
 
         # A bedfile to restrict variant calling should be defined in the config file, otherwise it's None
         # In the future we may not restrict variant calling using a bed file so support this possible use case.
-        if bedfiles["mokawes_variant_calling_bedfile"]:
+        if bedfiles["variant_calling_bedfile"]:
             bedfiles_string = (
-                config.wes_sentieon_targets_bed + bedfiles["mokawes_variant_calling_bedfile"]
+                config.wes_sentieon_targets_bed + bedfiles["variant_calling_bedfile"]
             )
         else:
             bedfiles_string = ""
@@ -1034,6 +1049,21 @@ class RunfolderProcessor(object):
         fastqs = self.nexus_fastq_paths(fastq)
         bedfiles = self.nexus_bedfiles(pannumber)
 
+        # bedfiles aren't usually provided to mokapipe variant calling but this is required for sapientia
+        # STG require padding of +/- 11bp (bed files are padded +/-10bp) so may need to utilise the Haplotype caller padding argument.
+        
+        if self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"]:
+            mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input + str(self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"])
+        else:
+            mokapipe_padding_cmd = ""
+        
+        if bedfiles["variant_calling_bedfile"]:
+            bedfiles_string = (
+                config.mokapipe_haplotype_bedfile_input + bedfiles["variant_calling_bedfile"]
+            )
+        else:
+            bedfiles_string = ""
+
         # create the dx command
         dx_command = (
             self.mokapipe_command
@@ -1048,6 +1078,8 @@ class RunfolderProcessor(object):
             + bedfiles["sambamba"]
             + config.mokapipe_mokapicard_vendorbed_input
             + bedfiles["hsmetrics"]
+            + mokapipe_padding_cmd
+            + bedfiles_string
             + self.dest
             + self.dest_cmd
             + self.token
@@ -1102,6 +1134,16 @@ class RunfolderProcessor(object):
             self.runfolder_obj.nexus_project_name,
         )
         return dx_command
+    
+    def build_sapientia_command_file(self):
+        """
+        Inputs = None
+        Create the file which will hold sapientia commands. 
+        Write the source command, activating the environment (the sdk).
+        Returns = None
+        """
+        with open(self.sapientia_upload_command_script_path, "w") as sapientia_script:
+            sapientia_script.write(self.source_command + "\n")
 
     def build_sapientia_input_command(self):
         """
@@ -1274,6 +1316,7 @@ class RunfolderProcessor(object):
         These inputs are created by a python script, which is called immediately before this job,
         and the output is captures into the variable $analysisid
         The panel dictionary in the config file is used to determine the sapientia project
+        This command is appended to a file which will be run after the QC is passed.
         Returns = dx run command for sapientia import app (string)
         """
         # the nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name 
@@ -1282,14 +1325,14 @@ class RunfolderProcessor(object):
 
         dx_command = (
             self.sapientia_upload_command
-            + " $analysisid -isapientia_project="
+            + "' $analysisid ' -isapientia_project="
             + self.panel_dictionary[pannumber]["sapientia_project"]
             + " --name "
             + "SAPIENTIA_"
             + fastqs[2]
             + self.dest
             + self.dest_cmd
-            + self.token
+            + self.token.replace(")", self.sapientia_upload_command_redirect)
         )
         return dx_command
 

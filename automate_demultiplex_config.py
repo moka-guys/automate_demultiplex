@@ -158,6 +158,8 @@ dev_organisation = "org-viapath_dev"
 live_tag = "live"
 
 # =====istages=====
+mokapipe_variant_annotator_stage = "stage-F2gPqFQ025p601qgGq0QVvX2"
+mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 # Mokapipe workflow inputs
 mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
@@ -167,8 +169,8 @@ mokapipe_mokapicard_vendorbed_input = (
     " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 )
 mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
-mokapipe_variant_annotator_stage = "stage-F2gPqFQ025p601qgGq0QVvX2"
-mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
+mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
+mokapipe_haplotype_bedfile_input = " -i" +mokapipe_gatk_human_exome_stage + ".bedfile="
 mokapipe_vcf_output_name = "vcf"
 mokapipe_bam_output_name = "bam"
 
@@ -290,6 +292,7 @@ default_panel_properties = {
     "capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
     "mokaonc": False,
     "mokapipe": False,
+    "mokapipe_haplotype_caller_padding": False,
     "mokaamp_varscan_strandfilter": True,
     "iva_upload": False,
     "sapientia_upload": False,
@@ -298,8 +301,8 @@ default_panel_properties = {
     "multiqc_coverage_level": 30,
     # Note: hsmetrics_bedfile only used when BED file name differs from Pan number
     "hsmetrics_bedfile": None,
-    # Note: mokawes_variant_calling_bedfile only used when BED file differs from Pan number
-    "mokawes_variant_calling_bedfile": None,
+    # Note: variant_calling_bedfile only used when BED file differs from Pan number
+    "variant_calling_bedfile": None,
     # Note: sambamba_bedfile only used when BED file differs from Pan number
     "sambamba_bedfile": None,
     "ingenuity_email": interpretation_request_email,
@@ -314,7 +317,7 @@ panel_settings = {
         "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed",
-        "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
+        "variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
@@ -362,6 +365,8 @@ panel_settings = {
         "sapientia_upload": True,
         "sapientia_project": "1099",
         "hsmetrics_bedfile": "Pan1449data.bed",
+        "mokapipe_haplotype_caller_padding":1,
+        "variant_calling_bedfile": "Pan1449data.bed",
         "sambamba_bedfile": "Pan1449dataSambamba.bed",
     },
     "Pan1063": {  # IMDv2
@@ -399,7 +404,7 @@ panel_settings = {
         "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed",
-        "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
+        "variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
