@@ -969,7 +969,7 @@ class RunfolderProcessor(object):
                 # If panel is to be processed using MokaAMP
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
-                    commands_list.append(self.add_to_depends_list())
+                    commands_list.append(self.add_to_depends_list(fastq))
         
         # if there is a sapientia uplaod create the file which will be run manually, once QC is passed.
         if sapientia_upload:
@@ -1366,15 +1366,19 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def add_to_depends_list(self):
+    def add_to_depends_list(self, fastq):
         """
-        Input = None
+        Input = fastq file
         As jobs are set off the jobid is captured
         The job ids are built into a string which can be passed to any apps to ensure these jobs
         don't start until all specified jobs have sucessfully completed.
+        However, some jobs should be excluded from the depends list, eg negative controls
         Returns = command which adds jobid to the bash string (string) 
         """
-        return self.depends_list
+        if "NTCcon" in fastq:
+            return None
+        else:
+            return self.depends_list
 
     def create_multiqc_command(self):
         """
@@ -1475,7 +1479,8 @@ class RunfolderProcessor(object):
         Returns = None
         """
         with open(self.runfolder_obj.runfolder_dx_run_script, "w") as dxrun_commands:
-            dxrun_commands.writelines([line + "\n" for line in command_list])
+            # remove any None values from the command_list
+            dxrun_commands.writelines([line + "\n" for line in filter(None, command_list)])
 
     def clean_stderr(self, err):
         """
