@@ -365,8 +365,8 @@ panel_settings = {
         "sapientia_upload": True,
         "sapientia_project": "1099",
         "hsmetrics_bedfile": "Pan1449data.bed",
-        "mokapipe_haplotype_caller_padding":1,
-        "variant_calling_bedfile": "Pan1449data.bed",
+        # "mokapipe_haplotype_caller_padding":1,
+        # "variant_calling_bedfile": "Pan1449data.bed",
         "sambamba_bedfile": "Pan1449dataSambamba.bed",
     },
     "Pan1063": {  # IMDv2

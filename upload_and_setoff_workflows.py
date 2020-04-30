@@ -931,7 +931,7 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokawes"]:
                     # call function to build the MokaWES command and add to command list and depends list
                     commands_list.append(self.create_mokawes_command(fastq, panel))
-                    commands_list.append(self.add_to_depends_list())
+                    commands_list.append(self.add_to_depends_list(fastq))
                     # Set run-wide flags for Peddy and joint variant calling
                     if self.panel_dictionary[panel]["peddy"]:
                         peddy = True
@@ -947,17 +947,17 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokapipe"]:
                     # call function to build the Mokapipe command and add to command list and depends list
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
-                    commands_list.append(self.add_to_depends_list())
+                    commands_list.append(self.add_to_depends_list(fastq))
                     # Add command for iva or sapientia
                     if self.panel_dictionary[panel]["iva_upload"]:
                         commands_list.append(self.build_iva_input_command())
                         commands_list.append(self.run_iva_command(fastq, panel))
-                        commands_list.append(self.add_to_depends_list())
+                        commands_list.append(self.add_to_depends_list(fastq))
                     if self.panel_dictionary[panel]["sapientia_upload"]:
                         sapientia_upload = True
                         commands_list.append(self.build_sapientia_input_command())
                         commands_list.append(self.run_sapientia_command(fastq, panel))
-                        # commands_list.append(self.add_to_depends_list())
+                        commands_list.append(self.add_to_depends_list(fastq))
                     # add panel to RPKM list 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
