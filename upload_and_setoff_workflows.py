@@ -293,7 +293,7 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
-                self.look_for_upload_errors(self.upload_rest_of_runfolder(), stage="rest_of_folder")
+                self.look_for_upload_errors(self.upload_rest_of_runfolder(), stage="rest_of_runfolder")
                 self.look_for_upload_errors(self.upload_log_files(), stage="Uploading_logfiles")
                 # return true to denote that a runfolder was processed
                 return True
@@ -974,6 +974,11 @@ class RunfolderProcessor(object):
         # if there is a sapientia uplaod create the file which will be run manually, once QC is passed.
         if sapientia_upload:
             self.build_sapientia_command_file()
+            # write to logger to create slack alert that there are some sapientia files to upload
+            self.loggers.script.info("Sapientia samples to upload in project {}".format(
+                    self.runfolder_obj.nexus_project_name
+                )
+            )
 
         # build run wide commands 
         if mokaonc_list:
@@ -1053,7 +1058,8 @@ class RunfolderProcessor(object):
         # STG require padding of +/- 11bp (bed files are padded +/-10bp) so may need to utilise the Haplotype caller padding argument.
         
         if self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"]:
-            mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input + str(self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"])
+            mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input +\
+                str(self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"])
         else:
             mokapipe_padding_cmd = ""
         
@@ -1195,8 +1201,6 @@ class RunfolderProcessor(object):
             config.mokaamp_vardict_bed_stage,
             bedfiles["mokaamp_variant_calling_bed"],
             config.mokaamp_varscan_bed_stage,
-            bedfiles["mokaamp_variant_calling_bed"],
-            config.mokaamp_lofreq_bed_stage,
             bedfiles["mokaamp_variant_calling_bed"],
             config.mokaamp_varscan_strandfilter_stage,
             self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"],
@@ -1877,23 +1881,31 @@ class RunfolderProcessor(object):
         Returns = None
         # TODO seperate out stages or combine with look_for_upload_errors_fastq
         """
-        # parse the output of the backup runfolder script, looking for either error message or a
-        # success message and report accordingly
+        # parse the output of the backup runfolder script
+        # if error statement seen report it regardless of presence of success statement
+        # if success statement seen report it too.
+        # set flags to avoid multiple reports
         if stage == "rest_of_runfolder":
+            upload_ok = False
+            error_seen = []
             with open(logfile, "r") as backup_logfile:
                 for line in backup_logfile.readlines():
+                    if config.backup_runfolder_success in line:
+                        upload_ok = True
                     if config.backup_runfolder_error in line:
-                        self.loggers.script.error(
-                            "UA_fail 'Error in upload of rest of runfolder: {} in runfolder {}'".format(
-                                line, self.runfolder_obj.runfolder_name
-                            )
+                        error_seen.append(line)
+            if error_seen:
+                self.loggers.script.error(
+                    "UA_fail 'Error in upload of rest of runfolder: {} in runfolder {}'".format(
+                        ";".join(error_seen), self.runfolder_obj.runfolder_name
+                    )
+                )
+            if upload_ok:
+                self.loggers.script.info(
+                    "UA_pass 'Rest of runfolder {} uploaded ok'".format(
+                        self.runfolder_obj.runfolder_name
                         )
-                    elif config.backup_runfolder_success in line:
-                        self.loggers.script.info(
-                            "UA_pass 'Rest of runfolder {} uploaded ok'".format(
-                                self.runfolder_obj.runfolder_name
-                            )
-                        )
+                    )
 
         # check the DNANexus_upload_started.txt file for the results of upload agent upload of logfiles
         elif stage == "Uploading_logfiles":

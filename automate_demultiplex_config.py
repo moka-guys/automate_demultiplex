@@ -132,7 +132,7 @@ mokawes_path = "Workflows/MokaWES_v1.8"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.2"
+mokaamp_path = "Workflows/MokaAMP_v1.3"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
@@ -204,11 +204,7 @@ mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
 mokaamp_vardict_bed_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
 mokaamp_varscan_bed_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
 mokaamp_varscan_strandfilter_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
-mokaamp_lofreq_bed_stage = " -istage-FPzGjgQ0jy1fBy972zq9f1PY.bedfile="
 
-mokaamp_strandfilter = "True"
-mokaamp_coverage_level = "1000"
-mokaamp_capture_type = "Amplicon"
 mokaamp_email_message = (
     "If both MokaAMP and MokaOnc (amplivar) have been run,"
     "please record the version of MokaOnc used."
@@ -277,7 +273,7 @@ panel_list = [
     "Pan1158",
     "Pan1159",
     "Pan1646",
-    "Pan3320",
+    "Pan3648",
     "Pan2835",
 ]
 default_panel_properties = {
@@ -331,7 +327,6 @@ panel_settings = {
         "peddy": True,
     },
     "Pan1190": {  # EGFR SWIFT Panel
-        "mokaamp": True,
         "oncology": True,
         "mokaonc": True,
         "capture_type": "Amplicon",
@@ -354,10 +349,10 @@ panel_settings = {
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan1450",
-        "RPKM_also_analyse": ["Pan3320"],
+        "RPKM_also_analyse": ["Pan3648"],
         "iva_upload": True,
     },
-    "Pan3320": {  # STG germline BRCA
+    "Pan3648": {  # STG germline BRCA
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan1450",
@@ -365,8 +360,8 @@ panel_settings = {
         "sapientia_upload": True,
         "sapientia_project": "1099",
         "hsmetrics_bedfile": "Pan1449data.bed",
-        # "mokapipe_haplotype_caller_padding":1,
-        # "variant_calling_bedfile": "Pan1449data.bed",
+        "mokapipe_haplotype_caller_padding":1,
+        "variant_calling_bedfile": "Pan1449data.bed",
         "sambamba_bedfile": "Pan1449dataSambamba.bed",
     },
     "Pan1063": {  # IMDv2
