@@ -93,6 +93,9 @@ class RunfolderObject(object):
         self.runfolder_dx_run_script = (
             config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_dx_run_commands.sh"
         )
+        self.sapientia_upload_command_script = (
+            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_sapientia_upload_commands.sh"
+        )
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
@@ -157,8 +160,15 @@ class RunfolderProcessor(object):
             )
         )
         self.sapientia_upload_command = (
-            "jobid=$(dx run " + config.app_project + config.sapientia_app_path + " -y "
+            "echo 'dx run " + config.app_project + config.sapientia_app_path + " -y "
         )
+        # create filepath for file to hold sapientia command(s)
+        self.sapientia_upload_command_script_path = (
+            config.DNA_Nexus_workflow_logfolder + self.runfolder_obj.runfolder_name + "_sapientia.sh"
+        )
+        # string to redirect command (with variables) into file
+        self.sapientia_upload_command_redirect = "' >> " + self.sapientia_upload_command_script_path
+
         self.iva_upload_command = "jobid=$(dx run " + config.iva_app_path + " -y "
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
@@ -283,7 +293,7 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
-                self.look_for_upload_errors(self.upload_rest_of_runfolder(), stage="rest_of_folder")
+                self.look_for_upload_errors(self.upload_rest_of_runfolder(), stage="rest_of_runfolder")
                 self.look_for_upload_errors(self.upload_log_files(), stage="Uploading_logfiles")
                 # return true to denote that a runfolder was processed
                 return True
@@ -846,25 +856,24 @@ class RunfolderProcessor(object):
         # BED file used for variant calling
         # Given bed file could have same pan number, different pan number, the name of a capture kit or None
         # BED file may not be provided for variant calling
-        if self.panel_dictionary[pannumber]["mokawes_variant_calling_bedfile"]:
+        if self.panel_dictionary[pannumber]["variant_calling_bedfile"]:
             # if bedfile starts with Pan use the Pan123data.bed
-            if self.panel_dictionary[pannumber]["mokawes_variant_calling_bedfile"][0:3] == "Pan":
-                bed_dict["mokawes_variant_calling_bedfile"] = (
+            if self.panel_dictionary[pannumber]["variant_calling_bedfile"][0:3] == "Pan":
+                bed_dict["variant_calling_bedfile"] = (
                     config.app_project
                     + config.bedfile_folder
-                    + self.panel_dictionary[pannumber]["mokawes_variant_calling_bedfile"]
-                    + "data.bed"
+                    + self.panel_dictionary[pannumber]["variant_calling_bedfile"]
                 )
             # if bedfile stated is not named with "Pan" don't add "data.bed" - could be the capture design
             else:
-                bed_dict["mokawes_variant_calling_bedfile"] = (
+                bed_dict["variant_calling_bedfile"] = (
                     config.app_project
                     + config.bedfile_folder
-                    + self.panel_dictionary[pannumber]["mokawes_variant_calling_bedfile"]
+                    + self.panel_dictionary[pannumber]["variant_calling_bedfile"]
                 )
         # if mokawes command to be executed and the variant calling bedfile not in config
         else:
-            bed_dict["mokawes_variant_calling_bedfile"] = None
+            bed_dict["variant_calling_bedfile"] = None
         
         # paired end BED file used by BAMClipper
         bed_dict["mokaamp_bed_PE_input"] = (
@@ -905,6 +914,7 @@ class RunfolderProcessor(object):
         # lists/flags for run wide commands
         mokaonc_list = [] 
         peddy = False
+        sapientia_upload = False
         joint_variant_calling = False # not currently in use
         rpkm_list = [] # list for panels needing RPKM analysis
 
@@ -921,7 +931,7 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokawes"]:
                     # call function to build the MokaWES command and add to command list and depends list
                     commands_list.append(self.create_mokawes_command(fastq, panel))
-                    commands_list.append(self.add_to_depends_list())
+                    commands_list.append(self.add_to_depends_list(fastq))
                     # Set run-wide flags for Peddy and joint variant calling
                     if self.panel_dictionary[panel]["peddy"]:
                         peddy = True
@@ -937,16 +947,17 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokapipe"]:
                     # call function to build the Mokapipe command and add to command list and depends list
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
-                    commands_list.append(self.add_to_depends_list())
+                    commands_list.append(self.add_to_depends_list(fastq))
                     # Add command for iva or sapientia
                     if self.panel_dictionary[panel]["iva_upload"]:
                         commands_list.append(self.build_iva_input_command())
                         commands_list.append(self.run_iva_command(fastq, panel))
-                        commands_list.append(self.add_to_depends_list())
+                        commands_list.append(self.add_to_depends_list(fastq))
                     if self.panel_dictionary[panel]["sapientia_upload"]:
+                        sapientia_upload = True
                         commands_list.append(self.build_sapientia_input_command())
                         commands_list.append(self.run_sapientia_command(fastq, panel))
-                        commands_list.append(self.add_to_depends_list())
+                        commands_list.append(self.add_to_depends_list(fastq))
                     # add panel to RPKM list 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
@@ -958,7 +969,16 @@ class RunfolderProcessor(object):
                 # If panel is to be processed using MokaAMP
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
-                    commands_list.append(self.add_to_depends_list())
+                    commands_list.append(self.add_to_depends_list(fastq))
+        
+        # if there is a sapientia uplaod create the file which will be run manually, once QC is passed.
+        if sapientia_upload:
+            self.build_sapientia_command_file()
+            # write to logger to create slack alert that there are some sapientia files to upload
+            self.loggers.script.info("Sapientia samples to upload in project {}".format(
+                    self.runfolder_obj.nexus_project_name
+                )
+            )
 
         # build run wide commands 
         if mokaonc_list:
@@ -994,9 +1014,9 @@ class RunfolderProcessor(object):
 
         # A bedfile to restrict variant calling should be defined in the config file, otherwise it's None
         # In the future we may not restrict variant calling using a bed file so support this possible use case.
-        if bedfiles["mokawes_variant_calling_bedfile"]:
+        if bedfiles["variant_calling_bedfile"]:
             bedfiles_string = (
-                config.wes_sentieon_targets_bed + bedfiles["mokawes_variant_calling_bedfile"]
+                config.wes_sentieon_targets_bed + bedfiles["variant_calling_bedfile"]
             )
         else:
             bedfiles_string = ""
@@ -1034,6 +1054,22 @@ class RunfolderProcessor(object):
         fastqs = self.nexus_fastq_paths(fastq)
         bedfiles = self.nexus_bedfiles(pannumber)
 
+        # bedfiles aren't usually provided to mokapipe variant calling but this is required for sapientia
+        # STG require padding of +/- 11bp (bed files are padded +/-10bp) so may need to utilise the Haplotype caller padding argument.
+        
+        if self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"]:
+            mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input +\
+                str(self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"])
+        else:
+            mokapipe_padding_cmd = ""
+        
+        if bedfiles["variant_calling_bedfile"]:
+            bedfiles_string = (
+                config.mokapipe_haplotype_bedfile_input + bedfiles["variant_calling_bedfile"]
+            )
+        else:
+            bedfiles_string = ""
+
         # create the dx command
         dx_command = (
             self.mokapipe_command
@@ -1048,6 +1084,8 @@ class RunfolderProcessor(object):
             + bedfiles["sambamba"]
             + config.mokapipe_mokapicard_vendorbed_input
             + bedfiles["hsmetrics"]
+            + mokapipe_padding_cmd
+            + bedfiles_string
             + self.dest
             + self.dest_cmd
             + self.token
@@ -1102,6 +1140,16 @@ class RunfolderProcessor(object):
             self.runfolder_obj.nexus_project_name,
         )
         return dx_command
+    
+    def build_sapientia_command_file(self):
+        """
+        Inputs = None
+        Create the file which will hold sapientia commands. 
+        Write the source command, activating the environment (the sdk).
+        Returns = None
+        """
+        with open(self.sapientia_upload_command_script_path, "w") as sapientia_script:
+            sapientia_script.write(self.source_command + "\n")
 
     def build_sapientia_input_command(self):
         """
@@ -1153,8 +1201,6 @@ class RunfolderProcessor(object):
             config.mokaamp_vardict_bed_stage,
             bedfiles["mokaamp_variant_calling_bed"],
             config.mokaamp_varscan_bed_stage,
-            bedfiles["mokaamp_variant_calling_bed"],
-            config.mokaamp_lofreq_bed_stage,
             bedfiles["mokaamp_variant_calling_bed"],
             config.mokaamp_varscan_strandfilter_stage,
             self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"],
@@ -1274,6 +1320,7 @@ class RunfolderProcessor(object):
         These inputs are created by a python script, which is called immediately before this job,
         and the output is captures into the variable $analysisid
         The panel dictionary in the config file is used to determine the sapientia project
+        This command is appended to a file which will be run after the QC is passed.
         Returns = dx run command for sapientia import app (string)
         """
         # the nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name 
@@ -1282,14 +1329,14 @@ class RunfolderProcessor(object):
 
         dx_command = (
             self.sapientia_upload_command
-            + " $analysisid -isapientia_project="
+            + "' $analysisid ' -isapientia_project="
             + self.panel_dictionary[pannumber]["sapientia_project"]
             + " --name "
             + "SAPIENTIA_"
             + fastqs[2]
             + self.dest
             + self.dest_cmd
-            + self.token
+            + self.token.replace(")", self.sapientia_upload_command_redirect)
         )
         return dx_command
 
@@ -1323,15 +1370,19 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def add_to_depends_list(self):
+    def add_to_depends_list(self, fastq):
         """
-        Input = None
+        Input = fastq file
         As jobs are set off the jobid is captured
         The job ids are built into a string which can be passed to any apps to ensure these jobs
         don't start until all specified jobs have sucessfully completed.
+        However, some jobs should be excluded from the depends list, eg negative controls
         Returns = command which adds jobid to the bash string (string) 
         """
-        return self.depends_list
+        if "NTCcon" in fastq:
+            return None
+        else:
+            return self.depends_list
 
     def create_multiqc_command(self):
         """
@@ -1432,7 +1483,8 @@ class RunfolderProcessor(object):
         Returns = None
         """
         with open(self.runfolder_obj.runfolder_dx_run_script, "w") as dxrun_commands:
-            dxrun_commands.writelines([line + "\n" for line in command_list])
+            # remove any None values from the command_list
+            dxrun_commands.writelines([line + "\n" for line in filter(None, command_list)])
 
     def clean_stderr(self, err):
         """
@@ -1829,23 +1881,31 @@ class RunfolderProcessor(object):
         Returns = None
         # TODO seperate out stages or combine with look_for_upload_errors_fastq
         """
-        # parse the output of the backup runfolder script, looking for either error message or a
-        # success message and report accordingly
+        # parse the output of the backup runfolder script
+        # if error statement seen report it regardless of presence of success statement
+        # if success statement seen report it too.
+        # set flags to avoid multiple reports
         if stage == "rest_of_runfolder":
+            upload_ok = False
+            error_seen = []
             with open(logfile, "r") as backup_logfile:
                 for line in backup_logfile.readlines():
+                    if config.backup_runfolder_success in line:
+                        upload_ok = True
                     if config.backup_runfolder_error in line:
-                        self.loggers.script.error(
-                            "UA_fail 'Error in upload of rest of runfolder: {} in runfolder {}'".format(
-                                line, self.runfolder_obj.runfolder_name
-                            )
+                        error_seen.append(line)
+            if error_seen:
+                self.loggers.script.error(
+                    "UA_fail 'Error in upload of rest of runfolder: {} in runfolder {}'".format(
+                        ";".join(error_seen), self.runfolder_obj.runfolder_name
+                    )
+                )
+            if upload_ok:
+                self.loggers.script.info(
+                    "UA_pass 'Rest of runfolder {} uploaded ok'".format(
+                        self.runfolder_obj.runfolder_name
                         )
-                    elif config.backup_runfolder_success in line:
-                        self.loggers.script.info(
-                            "UA_pass 'Rest of runfolder {} uploaded ok'".format(
-                                self.runfolder_obj.runfolder_name
-                            )
-                        )
+                    )
 
         # check the DNANexus_upload_started.txt file for the results of upload agent upload of logfiles
         elif stage == "Uploading_logfiles":

@@ -132,7 +132,7 @@ mokawes_path = "Workflows/MokaWES_v1.8"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.2"
+mokaamp_path = "Workflows/MokaAMP_v1.3"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
@@ -158,6 +158,8 @@ dev_organisation = "org-viapath_dev"
 live_tag = "live"
 
 # =====istages=====
+mokapipe_variant_annotator_stage = "stage-F2gPqFQ025p601qgGq0QVvX2"
+mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 # Mokapipe workflow inputs
 mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
@@ -167,8 +169,8 @@ mokapipe_mokapicard_vendorbed_input = (
     " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 )
 mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
-mokapipe_variant_annotator_stage = "stage-F2gPqFQ025p601qgGq0QVvX2"
-mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
+mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
+mokapipe_haplotype_bedfile_input = " -i" +mokapipe_gatk_human_exome_stage + ".bedfile="
 mokapipe_vcf_output_name = "vcf"
 mokapipe_bam_output_name = "bam"
 
@@ -202,11 +204,7 @@ mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
 mokaamp_vardict_bed_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
 mokaamp_varscan_bed_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
 mokaamp_varscan_strandfilter_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
-mokaamp_lofreq_bed_stage = " -istage-FPzGjgQ0jy1fBy972zq9f1PY.bedfile="
 
-mokaamp_strandfilter = "True"
-mokaamp_coverage_level = "1000"
-mokaamp_capture_type = "Amplicon"
 mokaamp_email_message = (
     "If both MokaAMP and MokaOnc (amplivar) have been run,"
     "please record the version of MokaOnc used."
@@ -275,7 +273,7 @@ panel_list = [
     "Pan1158",
     "Pan1159",
     "Pan1646",
-    "Pan3320",
+    "Pan3648",
     "Pan2835",
 ]
 default_panel_properties = {
@@ -290,6 +288,7 @@ default_panel_properties = {
     "capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
     "mokaonc": False,
     "mokapipe": False,
+    "mokapipe_haplotype_caller_padding": False,
     "mokaamp_varscan_strandfilter": True,
     "iva_upload": False,
     "sapientia_upload": False,
@@ -298,8 +297,8 @@ default_panel_properties = {
     "multiqc_coverage_level": 30,
     # Note: hsmetrics_bedfile only used when BED file name differs from Pan number
     "hsmetrics_bedfile": None,
-    # Note: mokawes_variant_calling_bedfile only used when BED file differs from Pan number
-    "mokawes_variant_calling_bedfile": None,
+    # Note: variant_calling_bedfile only used when BED file differs from Pan number
+    "variant_calling_bedfile": None,
     # Note: sambamba_bedfile only used when BED file differs from Pan number
     "sambamba_bedfile": None,
     "ingenuity_email": interpretation_request_email,
@@ -314,7 +313,7 @@ panel_settings = {
         "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed",
-        "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
+        "variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
@@ -328,7 +327,6 @@ panel_settings = {
         "peddy": True,
     },
     "Pan1190": {  # EGFR SWIFT Panel
-        "mokaamp": True,
         "oncology": True,
         "mokaonc": True,
         "capture_type": "Amplicon",
@@ -351,10 +349,10 @@ panel_settings = {
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan1450",
-        "RPKM_also_analyse": ["Pan3320"],
+        "RPKM_also_analyse": ["Pan3648"],
         "iva_upload": True,
     },
-    "Pan3320": {  # STG germline BRCA
+    "Pan3648": {  # STG germline BRCA
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan1450",
@@ -362,6 +360,8 @@ panel_settings = {
         "sapientia_upload": True,
         "sapientia_project": "1099",
         "hsmetrics_bedfile": "Pan1449data.bed",
+        "mokapipe_haplotype_caller_padding":1,
+        "variant_calling_bedfile": "Pan1449data.bed",
         "sambamba_bedfile": "Pan1449dataSambamba.bed",
     },
     "Pan1063": {  # IMDv2
@@ -399,7 +399,7 @@ panel_settings = {
         "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed",
-        "mokawes_variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
+        "variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
