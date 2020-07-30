@@ -257,6 +257,8 @@ class RunfolderProcessor(object):
 
         # check if already uploaded and demultiplexing finished sucessfully
         if not self.already_uploaded() and self.has_demultiplexed():
+            # calculate cluster density
+            self.calculate_cluster_density()
             self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                 self.runfolder_obj.fastq_folder_path
             )
@@ -375,6 +377,9 @@ class RunfolderProcessor(object):
         if test == "demultiplex_success":
             if not re.search(config.demultiplex_success_match, test_input):
                 return False
+        if test == "cluster_density":
+            if config.cluster_density_success_statement not in test_input
+                return False
         return True
 
     def test_dx_toolkit(self, test_result):
@@ -449,6 +454,33 @@ class RunfolderProcessor(object):
             # write to logfile that not yet demultiplexed
             self.loggers.script.info("Demultiplex has not been performed.")
             return False
+
+    def calculate_cluster_density(self,runfolder_path, runfolder_name):
+        """
+        Inputs = runfolder name and runfolder path
+        Uses a dockerised version of GATK to run picard CollectIlluminaLaneMetrics
+        This calculates cluster density and saves files (runfolder.illumina_phasing_metrics and runfolder.illumina_lane_metrics) to the runfolder
+        If success statement seen in stderr record in log file else raise slack alert but do not stop run.
+        Returns = None
+        """
+        # docker command for tool
+        cmd = "sudo docker run -v {}:/input_run \
+        broadinstitute/gatk:4.1.8.1 \
+        ./gatk CollectIlluminaLaneMetrics \
+        --RUN_DIRECTORY /input_run \
+        --OUTPUT_DIRECTORY /input_run \
+        --OUTPUT_PREFIX {}".format(runfolder_path,runfolder_name)
+        # capture stdout and stderr
+        # NB all output from picard tool is in stderr
+        (out, err) = self.execute_subprocess_command(cmd)
+        # assess stderr , looking for expected success statement
+        if self.perform_test(err,"cluster_density")
+            self.loggers.script.info("Cluster density calculation saved to {}".format(runfolder_name+config.cluster_density_file_suffix))
+        # raise slack alert if success statement not present.
+        else:
+            self.loggers.script.error("UA_fail 'Cluster density calculation failed for : {}'".format(self.runfolder_obj.runfolder_name))
+            
+
 
     def find_fastqs(self, runfolder_fastq_path):
         """

@@ -466,3 +466,7 @@ checksum_match = "Checksums match"
 demultiplex_success_match = r".*Processing completed with 0 errors and 0 warnings.$"
 # list of sequencers which require md5 checksums from integrity check to be assessed
 sequencers_with_integrity_check = ["NB551068", "NB552085"]
+
+# ================ cluster density calculation
+cluster_density_success_statement = "picard.illumina.CollectIlluminaLaneMetrics done"
+cluster_density_file_suffix = ".illumina_lane_metrics"
