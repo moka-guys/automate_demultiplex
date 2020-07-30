@@ -1518,6 +1518,8 @@ class RunfolderProcessor(object):
             [
                 self.upload_multiqc_command,
                 " -imultiqc_html=$jobid:multiqc_report",
+                " -multiqc_data_input=$jobid:multiqc",
+                " -multiqc_data_input=/QC/*" + self.runfolder_obj.runfolder_name + config.cluster_density_file_suffix,
                 self.project,
                 self.runfolder_obj.nexus_project_id,
                 self.token,
