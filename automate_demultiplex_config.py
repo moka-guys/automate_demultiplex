@@ -470,3 +470,4 @@ sequencers_with_integrity_check = ["NB551068", "NB552085"]
 # ================ cluster density calculation
 cluster_density_success_statement = "picard.illumina.CollectIlluminaLaneMetrics done"
 cluster_density_file_suffix = ".illumina_lane_metrics"
+phasing_metrics_file_suffix = ".illumina_phasing_metrics"
