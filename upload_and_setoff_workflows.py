@@ -76,12 +76,11 @@ class SequencingRuns(list):
             new_logfile = original_logfile_path.replace(self.now, self.now + "_".join(processed_runfolders)) 
             os.rename(original_logfile_path, new_logfile)
 
-#TODO: Comments and docstrings from Line 70 onwards
+
 class RunfolderObject(object):
     """
     An object with runfolder specific properties.
     """
-
     def __init__(self, runfolder):
         # set empty variables to be defined based on the run
         self.runfolder_name = runfolder
@@ -1078,6 +1077,10 @@ class RunfolderProcessor(object):
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause problems
             commands_list.append(self.run_peddy_command())
+            # add to depends list so multiqc doesn't start until peddy finishes
+            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # pass "peddy" to ensure it isn't skipped
+            commands_list.append(self.add_to_depends_list("peddy"))
         # multiqc commands
         commands_list.append(self.create_multiqc_command())
         commands_list.append(self.create_upload_multiqc_command())
@@ -1518,13 +1521,14 @@ class RunfolderProcessor(object):
             [
                 self.upload_multiqc_command,
                 " -imultiqc_html=$jobid:multiqc_report",
-                " -multiqc_data_input=$jobid:multiqc",
-                " -multiqc_data_input=/QC/*" + self.runfolder_obj.runfolder_name + config.cluster_density_file_suffix,
+                " -imultiqc_data_input=$jobid:multiqc",
+                " -imultiqc_data_input=%s:/QC/*" % (self.runfolder_obj.nexus_project_name) + self.runfolder_obj.runfolder_name + config.cluster_density_file_suffix,
                 self.project,
                 self.runfolder_obj.nexus_project_id,
                 self.token,
             ]
         )
+        print dx_command
         return dx_command
 
     def run_peddy_command(self):
