@@ -1274,6 +1274,8 @@ class RunfolderProcessor(object):
             fastqs[0],
             config.mokaamp_fastq_R2_stage,
             fastqs[1],
+            config.mokaamp_bwa_rg_sample,
+            fastqs[2],
             config.mokaamp_mokapicard_bed_stage,
             bedfiles["hsmetrics"],
             config.mokaamp_mokapicard_capturetype_stage,
