@@ -1710,13 +1710,23 @@ class RunfolderProcessor(object):
             if "_R1_" in fastq:
                 # extract_Pan number
                 pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
-                # if the pan number was processed using mokapipe add the query to list of queries, capturing the DNA number from the fastq name
-                if self.panel_dictionary[pannumber]["mokapipe"]:
+
+                # if the pan number was processed using mokapipe and sapientia add the query to list of queries, capturing the DNA number from the fastq name
+                if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["sapientia_upload"]:
                     queries.append(
                         "insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"
                         + str(fastq.split("_")[2])
                         + "','"
-                        + config.mokapipe_pipeline_ID
+                        + config.mokapipe_sapientia_pipeline_ID
+                        + "')"
+                    )
+                # if the pan number was processed using mokapipe and iva add the query to list of queries, capturing the DNA number from the fastq name
+                if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["iva_upload"]:
+                    queries.append(
+                        "insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"
+                        + str(fastq.split("_")[2])
+                        + "','"
+                        + config.mokapipe_iva_pipeline_ID
                         + "')"
                     )
         if queries:

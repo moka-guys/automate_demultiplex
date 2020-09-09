@@ -102,8 +102,10 @@ upload_agent_expected_stdout = "Upload Agent Version:"
 
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
-# Current Mokapipe ID
-mokapipe_pipeline_ID = "3684"
+# audit trail ID for Mokapipe & sapientia
+mokapipe_sapientia_pipeline_ID = "4162"
+# audit trail ID for Mokapipe & sapientia
+mokapipe_iva_pipeline_ID = "4161"
 # Current MokaWES ID
 mokawes_pipeline_ID = "3650"
 
