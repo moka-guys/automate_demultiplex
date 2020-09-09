@@ -107,7 +107,7 @@ mokapipe_sapientia_pipeline_ID = "4162"
 # audit trail ID for Mokapipe & sapientia
 mokapipe_iva_pipeline_ID = "4161"
 # Current MokaWES ID
-mokawes_pipeline_ID = "3650"
+mokawes_pipeline_ID = "4160"
 
 
 # -- Moka WES test status--
