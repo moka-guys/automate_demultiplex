@@ -257,7 +257,7 @@ class RunfolderProcessor(object):
         # check if already uploaded and demultiplexing finished sucessfully
         if not self.already_uploaded() and self.has_demultiplexed():
             # calculate cluster density
-            self.calculate_cluster_density()
+            self.calculate_cluster_density(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name)
             self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                 self.runfolder_obj.fastq_folder_path
             )
@@ -380,7 +380,7 @@ class RunfolderProcessor(object):
             if not re.search(config.demultiplex_success_match, test_input):
                 return False
         if test == "cluster_density":
-            if config.cluster_density_success_statement not in test_input
+            if config.cluster_density_success_statement not in test_input:
                 return False
         return True
 
@@ -476,7 +476,7 @@ class RunfolderProcessor(object):
         # NB all output from picard tool is in stderr
         (out, err) = self.execute_subprocess_command(cmd)
         # assess stderr , looking for expected success statement
-        if self.perform_test(err,"cluster_density")
+        if self.perform_test(err,"cluster_density"):
             self.loggers.script.info("Cluster density calculation saved to {}".format(runfolder_name+config.cluster_density_file_suffix))
         # raise slack alert if success statement not present.
         else:
@@ -741,14 +741,18 @@ class RunfolderProcessor(object):
 
     def upload_fastqs(self):
         """
-        Inputs = None
+        Inputs:
+            None
         All samples to be processed were identified in find_fastqs() which also created a string of 
         filepaths for all fastqs that is required by the upload agent.
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
-        If debug mode the upload agent command is returned without calling execute_subprocess_command()
-        Returns filepath to logfile (non-debug) 
+        Returns:
+            command to upload fastqs (debug_only)
+            filepath to logfile (non-debug) 
+            file_list (space delimited string of files) 
+            stage name (string)
         """
         # build the nexus upload command
         nexus_upload_command = (
@@ -765,7 +769,7 @@ class RunfolderProcessor(object):
             + self.restart_ua_2 
         )
         if self.debug_mode:
-            return nexus_upload_command
+            return nexus_upload_command, self.fastq_string, "fastq"
 
         # Log fastq upload command to the uplaod agent logfile
         self.loggers.upload_agent.info("Fastq upload commands:\n{}".format(nexus_upload_command))
@@ -777,11 +781,12 @@ class RunfolderProcessor(object):
         # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
         out, err = self.execute_subprocess_command(nexus_upload_command)
         self.loggers.upload_agent.info("Uploading fastqs:\n{}\n{}".format(out, err))
-        return self.loggers.upload_agent.filepath , self.fastq_string, "fastq"
+        return self.loggers.upload_agent.filepath, self.fastq_string, "fastq"
 
-    def look_for_upload_errors(self, upload_agent_stdout_path, file_list, stage):
+    def look_for_upload_errors(self, upload_module_output):
         """
         Inputs :
+        A tuple containing:
             path to log file
             file_list = a string (space delimited list) or list of files to be uploaded at this stage
             stage = the stage to be included in error report.
@@ -791,6 +796,7 @@ class RunfolderProcessor(object):
         Returns: 
             strings (debug mode only).
         """
+        upload_agent_stdout_path, file_list, stage = upload_module_output
         # list to hold any files with issues
         issue_list=[]
         # for each file in the list to upload
@@ -837,8 +843,8 @@ class RunfolderProcessor(object):
         Returns filepath to logfile (non-debug) 
         """
         # build the nexus upload command
-        file_list = [os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name + config.cluster_density_file_suffix),
-            + os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name + config.phasing_metrics_file_suffix)]
+        file_list = [os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.cluster_density_file_suffix)),
+            os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.phasing_metrics_file_suffix))]
 
         nexus_upload_command = (
             self.restart_ua_1
@@ -848,7 +854,7 @@ class RunfolderProcessor(object):
             + " --project "
             + self.runfolder_obj.nexus_project_name
             + "  --folder /QC"
-            + " --do-not-compress --upload-threads 10"
+            + " --do-not-compress --upload-threads 10 "
             + " ".join(file_list)
             + self.restart_ua_2  
         )
@@ -1034,12 +1040,12 @@ class RunfolderProcessor(object):
                     if self.panel_dictionary[panel]["iva_upload"]:
                         commands_list.append(self.build_iva_input_command())
                         commands_list.append(self.run_iva_command(fastq, panel))
-                        commands_list.append(self.add_to_depends_list(fastq))
+                        #commands_list.append(self.add_to_depends_list(fastq))
                     if self.panel_dictionary[panel]["sapientia_upload"]:
                         sapientia_upload = True
                         commands_list.append(self.build_sapientia_input_command())
                         commands_list.append(self.run_sapientia_command(fastq, panel))
-                        commands_list.append(self.add_to_depends_list(fastq))
+                        #commands_list.append(self.add_to_depends_list(fastq))
                     # add panel to RPKM list 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
@@ -1072,7 +1078,8 @@ class RunfolderProcessor(object):
             # pass this list into function which takes into account panels which are to be analysed
             # together and returns a "cleaned_list"
             for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
-                commands_list.append(self.create_rpkm_command(rpkm))
+                if self.count_rpkm_samples(rpkm,list_of_processed_samples):
+                    commands_list.append(self.create_rpkm_command(rpkm))
         if peddy:
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause problems
@@ -1356,6 +1363,36 @@ class RunfolderProcessor(object):
 
         # return list to be used to build rpkm command(s).
         return cleaned_list
+    
+    def count_rpkm_samples(self,panel,list_of_processed_samples):
+        """
+        Input:
+            panel = Pan number for RPKM analysis
+            list_of_processed_sampels = list of fastq files to be assessed
+        RPKM requires a minimum of 3 samples to run so we don't want to run the app if there are < 3 samples.
+        Multiple pan numbers may be included in one analysis so we need to count samples with any pan number that can be analysed together
+        The list of samples are fastqs, so for each sample 2 files will be counted
+        Returns:
+            True if enough samples to perform the analysis (6 or more fastqs)
+            False if insufficient samples.
+        """
+        count = 0
+        # create a list for all pannumbers that should be included in this analysis
+        rpkm_analysis_list = [panel]
+        # if it is analysed with other panels append these other panels 
+        if self.panel_dictionary[panel]["RPKM_also_analyse"]:
+            rpkm_analysis_list += self.panel_dictionary[panel]["RPKM_also_analyse"]
+        # for each fastq in the list
+        for sample in list_of_processed_samples:
+            # check if it's one of the panels included in the analysis and increment count
+            for panel in rpkm_analysis_list:
+                if panel in sample:
+                    count+=1
+        # as we are counting fastqs here we need 6 or more fastqs to equate to 3 samples.
+        if count > 5:
+            return True
+        else:
+            return False
 
     def create_rpkm_command(self, pannumber):
         """
