@@ -1078,8 +1078,7 @@ class RunfolderProcessor(object):
             # pass this list into function which takes into account panels which are to be analysed
             # together and returns a "cleaned_list"
             for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
-                if self.count_rpkm_samples(rpkm,list_of_processed_samples):
-                    commands_list.append(self.create_rpkm_command(rpkm))
+                commands_list.append(self.create_rpkm_command(rpkm))
         if peddy:
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause problems
@@ -1363,36 +1362,6 @@ class RunfolderProcessor(object):
 
         # return list to be used to build rpkm command(s).
         return cleaned_list
-    
-    def count_rpkm_samples(self,panel,list_of_processed_samples):
-        """
-        Input:
-            panel = Pan number for RPKM analysis
-            list_of_processed_sampels = list of fastq files to be assessed
-        RPKM requires a minimum of 3 samples to run so we don't want to run the app if there are < 3 samples.
-        Multiple pan numbers may be included in one analysis so we need to count samples with any pan number that can be analysed together
-        The list of samples are fastqs, so for each sample 2 files will be counted
-        Returns:
-            True if enough samples to perform the analysis (6 or more fastqs)
-            False if insufficient samples.
-        """
-        count = 0
-        # create a list for all pannumbers that should be included in this analysis
-        rpkm_analysis_list = [panel]
-        # if it is analysed with other panels append these other panels 
-        if self.panel_dictionary[panel]["RPKM_also_analyse"]:
-            rpkm_analysis_list += self.panel_dictionary[panel]["RPKM_also_analyse"]
-        # for each fastq in the list
-        for sample in list_of_processed_samples:
-            # check if it's one of the panels included in the analysis and increment count
-            for panel in rpkm_analysis_list:
-                if panel in sample:
-                    count+=1
-        # as we are counting fastqs here we need 6 or more fastqs to equate to 3 samples.
-        if count > 5:
-            return True
-        else:
-            return False
 
     def create_rpkm_command(self, pannumber):
         """
