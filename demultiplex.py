@@ -200,6 +200,7 @@ class ready2start_demultiplexing():
         # Requests info
         self.headers = config.smartsheet_request_headers
         self.url = config.smartsheet_request_url
+        #print self.url
 
         # variables to hold checksums:
         self.sequencer_checksum = ""
@@ -499,10 +500,10 @@ class ready2start_demultiplexing():
 
         # Add the row using POST
         r = requests.post(url, headers=self.headers, data=payload)
-
         # capture the output of the POST statement to capture the id of the row that has been updated.
         # This can be used when updating the status to complete in function smartsheet_demultiplex_complete().
         response = r.json()
+        print response
         # capture the value of the row id from the json response
         self.rowid = response["result"]["id"]
 

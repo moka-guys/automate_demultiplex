@@ -149,8 +149,11 @@ class RunfolderProcessor(object):
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path
         self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y "
+        # self.mokaamp_command = (
+        #     "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
+        # )
         self.mokaamp_command = (
-            "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
+            "jobid=$(dx run 003_201007_mokaamp_v1.4:MokaAMP_v1.4 -y --name "
         )
         self.decision_support_preperation = "analysisid=$(python %s -a " % (
             os.path.join(
@@ -1290,6 +1293,8 @@ class RunfolderProcessor(object):
             bedfiles["mokaamp_bed_PE_input"],
             config.mokaamp_chanjo_cov_level_stage,
             self.panel_dictionary[pannumber]["clinical_coverage_depth"],
+            config.mokaamp_mpileup_cov_level_stage,
+            self.panel_dictionary[pannumber]["clinical_coverage_depth"],
             config.mokaamp_sambamba_bed_stage,
             bedfiles["sambamba"],
             config.mokaamp_vardict_bed_stage,
@@ -1536,7 +1541,6 @@ class RunfolderProcessor(object):
                 self.token,
             ]
         )
-        print dx_command
         return dx_command
 
     def run_peddy_command(self):
@@ -1723,7 +1727,7 @@ class RunfolderProcessor(object):
                 # extract_Pan number
                 pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
 
-                # if the pan number was processed using mokapipe and sapientia add the query to list of queries, capturing the DNA number from the fastq name
+                # if the pan number was processed using mokapipe and sapientia, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["sapientia_upload"]:
                     queries.append(
                         "insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"
@@ -1936,7 +1940,7 @@ class RunfolderProcessor(object):
     def upload_log_files(self):
         """
         Input = None
-            Upload the log files found in list_log_files.
+        Upload the log files found in list_log_files.
         Returns = filepath to the logfile containing output from the command, string of files to be uploaded and 
         """
         # define where files to be uploaded to
