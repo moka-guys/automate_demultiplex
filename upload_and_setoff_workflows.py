@@ -149,11 +149,8 @@ class RunfolderProcessor(object):
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path
         self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y "
-        # self.mokaamp_command = (
-        #     "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
-        # )
         self.mokaamp_command = (
-            "jobid=$(dx run 003_201007_mokaamp_v1.4:MokaAMP_v1.4 -y --name "
+            "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
         )
         self.decision_support_preperation = "analysisid=$(python %s -a " % (
             os.path.join(
