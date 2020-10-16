@@ -76,12 +76,11 @@ class SequencingRuns(list):
             new_logfile = original_logfile_path.replace(self.now, self.now + "_".join(processed_runfolders)) 
             os.rename(original_logfile_path, new_logfile)
 
-#TODO: Comments and docstrings from Line 70 onwards
+
 class RunfolderObject(object):
     """
     An object with runfolder specific properties.
     """
-
     def __init__(self, runfolder):
         # set empty variables to be defined based on the run
         self.runfolder_name = runfolder
@@ -257,6 +256,8 @@ class RunfolderProcessor(object):
 
         # check if already uploaded and demultiplexing finished sucessfully
         if not self.already_uploaded() and self.has_demultiplexed():
+            # calculate cluster density
+            self.calculate_cluster_density(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name)
             self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                 self.runfolder_obj.fastq_folder_path
             )
@@ -275,8 +276,11 @@ class RunfolderProcessor(object):
                 self.write_create_project_script()
                 self.runfolder_obj.nexus_project_id = self.run_project_creation_script().rstrip()
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
-                # pass path to function which checks fastqs were uploaded without error
-                self.look_for_upload_errors_fastq(self.upload_fastqs())
+                # pass path to function which checks files were uploaded without error
+                self.look_for_upload_errors(self.upload_fastqs())
+                
+                # upload cluster density files and check upload was successful.
+                self.look_for_upload_errors(self.upload_cluster_density())
 
                 self.write_dx_run_cmds(
                     self.start_building_dx_run_cmds(self.list_of_processed_samples)
@@ -293,8 +297,8 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
-                self.look_for_upload_errors(self.upload_rest_of_runfolder(), stage="rest_of_runfolder")
-                self.look_for_upload_errors(self.upload_log_files(), stage="Uploading_logfiles")
+                self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
+                self.look_for_upload_errors(self.upload_log_files())
                 # return true to denote that a runfolder was processed
                 return True
         else:
@@ -375,6 +379,9 @@ class RunfolderProcessor(object):
         if test == "demultiplex_success":
             if not re.search(config.demultiplex_success_match, test_input):
                 return False
+        if test == "cluster_density":
+            if config.cluster_density_success_statement not in test_input:
+                return False
         return True
 
     def test_dx_toolkit(self, test_result):
@@ -449,6 +456,33 @@ class RunfolderProcessor(object):
             # write to logfile that not yet demultiplexed
             self.loggers.script.info("Demultiplex has not been performed.")
             return False
+
+    def calculate_cluster_density(self,runfolder_path, runfolder_name):
+        """
+        Inputs = runfolder name and runfolder path
+        Uses a dockerised version of GATK to run picard CollectIlluminaLaneMetrics
+        This calculates cluster density and saves files (runfolder.illumina_phasing_metrics and runfolder.illumina_lane_metrics) to the runfolder
+        If success statement seen in stderr record in log file else raise slack alert but do not stop run.
+        Returns = None
+        """
+        # docker command for tool
+        cmd = "sudo docker run -v {}:/input_run \
+        broadinstitute/gatk:4.1.8.1 \
+        ./gatk CollectIlluminaLaneMetrics \
+        --RUN_DIRECTORY /input_run \
+        --OUTPUT_DIRECTORY /input_run \
+        --OUTPUT_PREFIX {}".format(runfolder_path,runfolder_name)
+        # capture stdout and stderr
+        # NB all output from picard tool is in stderr
+        (out, err) = self.execute_subprocess_command(cmd)
+        # assess stderr , looking for expected success statement
+        if self.perform_test(err,"cluster_density"):
+            self.loggers.script.info("Cluster density calculation saved to {}".format(runfolder_name+config.cluster_density_file_suffix))
+        # raise slack alert if success statement not present.
+        else:
+            self.loggers.script.error("UA_fail 'Cluster density calculation failed for : {}'".format(self.runfolder_obj.runfolder_name))
+            
+
 
     def find_fastqs(self, runfolder_fastq_path):
         """
@@ -707,14 +741,18 @@ class RunfolderProcessor(object):
 
     def upload_fastqs(self):
         """
-        Inputs = None
+        Inputs:
+            None
         All samples to be processed were identified in find_fastqs() which also created a string of 
         filepaths for all fastqs that is required by the upload agent.
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
-        If debug mode the upload agent command is returned without calling execute_subprocess_command()
-        Returns filepath to logfile (non-debug) 
+        Returns:
+            command to upload fastqs (debug_only)
+            filepath to logfile (non-debug) 
+            file_list (space delimited string of files) 
+            stage name (string)
         """
         # build the nexus upload command
         nexus_upload_command = (
@@ -728,10 +766,10 @@ class RunfolderProcessor(object):
             + self.runfolder_obj.nexus_path
             + " --do-not-compress --upload-threads 10"
             + self.fastq_string
-            + self.restart_ua_2 % ("fastq files")
+            + self.restart_ua_2 
         )
         if self.debug_mode:
-            return nexus_upload_command
+            return nexus_upload_command, self.fastq_string, "fastq"
 
         # Log fastq upload command to the uplaod agent logfile
         self.loggers.upload_agent.info("Fastq upload commands:\n{}".format(nexus_upload_command))
@@ -743,49 +781,99 @@ class RunfolderProcessor(object):
         # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
         out, err = self.execute_subprocess_command(nexus_upload_command)
         self.loggers.upload_agent.info("Uploading fastqs:\n{}\n{}".format(out, err))
-        return self.loggers.upload_agent.filepath
+        return self.loggers.upload_agent.filepath, self.fastq_string, "fastq"
 
-    def look_for_upload_errors_fastq(self, upload_agent_stdout_path):
+    def look_for_upload_errors(self, upload_module_output):
         """
-        Input = path to DNANexus_upload_started.txt file 
+        Inputs :
+        A tuple containing:
+            path to log file
+            file_list = a string (space delimited list) or list of files to be uploaded at this stage
+            stage = the stage to be included in error report.
         Parse the file containing standard error/standard out from the upload agent.
-        For each expected fastq file to be uploaded check the expected upload success statement is present.
+        For each expected file to be uploaded check the expected upload success statement is present.
         If the success statement is absent raise an alert but do not stop script from running
-        Returns =  strings (debug mode only).
+        Returns: 
+            strings (debug mode only).
         """
-        # list to hold any fastqs with issues
-        fq_issue_list=[]
-        # for each fastq in the list to upload
-        for fastq_file in self.fastq_string:
+        upload_agent_stdout_path, file_list, stage = upload_module_output
+        # list to hold any files with issues
+        issue_list=[]
+        # for each file in the list to upload
+        for file in file_list:
             # set flag to say upload unsuccessful
-            fastq_upload_ok=False
+            upload_ok=False
             # loop through log file - if it's a line relating to this fastq check it's uploaded successfully.
             for line in open(upload_agent_stdout_path).read():
-                if fastq_file in line and "was uploaded successfully. Closing..." in line:
-                    fastq_upload_ok = True
+                if file in line and "was uploaded successfully. Closing..." in line:
+                    upload_ok = True
             # if at the end of the file there was no success statement found
-            if not fastq_upload_ok:
-                fq_issue_list.append(fastq_file)
+            if not upload_ok:
+                issue_list.append(file)
         
         # Report back if ok, not ok with/without debug mode
-        if fq_issue_list and self.debug_mode:
+        if issue_list and self.debug_mode:
             return  "fail"
-        elif fq_issue_list:
+        elif issue_list:
             self.loggers.script.error(
-                "UA_fail 'upload of fastqs failed for run {}'".format(
-                    self.runfolder_obj.runfolder_name
+                "UA_fail 'upload of {} files failed for run {}'".format(
+                    stage, self.runfolder_obj.runfolder_name
                     )
                 )
         # if no error but debug
-        elif not fq_issue_list and self.debug_mode:
+        elif not issue_list and self.debug_mode:
             return "no error"
         # if no error and not debug write to log file check was ok
         else:
             self.loggers.script.info(
-                "UA_pass 'upload of fastq file complete for run {}'".format(
+                "UA_pass 'upload of files complete for run {}'".format(
                     self.runfolder_obj.runfolder_name
                 )
             )
+
+    def upload_cluster_density(self):
+        """
+        Inputs = None
+        All samples to be processed were identified in find_fastqs() which also created a string of 
+        filepaths for all fastqs that is required by the upload agent.
+        This command is passed to execute_subprocess_command() and all standard error/standard out
+        written to a log file. The upload command is written in a way where it is repeated until it
+        exits with an exit status of 0.
+        If debug mode the upload agent command is returned without calling execute_subprocess_command()
+        Returns filepath to logfile (non-debug) 
+        """
+        # build the nexus upload command
+        file_list = [os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.cluster_density_file_suffix)),
+            os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.phasing_metrics_file_suffix))]
+
+        nexus_upload_command = (
+            self.restart_ua_1
+            + config.upload_agent_path
+            + " --auth-token "
+            + config.Nexus_API_Key
+            + " --project "
+            + self.runfolder_obj.nexus_project_name
+            + "  --folder /QC"
+            + " --do-not-compress --upload-threads 10 "
+            + " ".join(file_list)
+            + self.restart_ua_2  
+        )
+        if self.debug_mode:
+            return nexus_upload_command
+
+        # Log fastq upload command to the uplaod agent logfile
+        self.loggers.upload_agent.info("Upload cluster density commands:\n{}".format(nexus_upload_command))
+        # write to automated script logfile
+        self.loggers.script.info(
+            "Uploading cluster density files. See commands at {}".format(self.loggers.upload_agent.filepath)
+        )
+
+        # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
+        out, err = self.execute_subprocess_command(nexus_upload_command)
+        self.loggers.upload_agent.info("Uploading cluster density files\n{}\n{}".format(out, err))
+        return self.loggers.upload_agent.filepath, file_list, "cluster density"
+
+    
 
     def nexus_fastq_paths(self, read1):
         """
@@ -952,12 +1040,12 @@ class RunfolderProcessor(object):
                     if self.panel_dictionary[panel]["iva_upload"]:
                         commands_list.append(self.build_iva_input_command())
                         commands_list.append(self.run_iva_command(fastq, panel))
-                        commands_list.append(self.add_to_depends_list(fastq))
+                        #commands_list.append(self.add_to_depends_list(fastq))
                     if self.panel_dictionary[panel]["sapientia_upload"]:
                         sapientia_upload = True
                         commands_list.append(self.build_sapientia_input_command())
                         commands_list.append(self.run_sapientia_command(fastq, panel))
-                        commands_list.append(self.add_to_depends_list(fastq))
+                        #commands_list.append(self.add_to_depends_list(fastq))
                     # add panel to RPKM list 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
@@ -995,6 +1083,10 @@ class RunfolderProcessor(object):
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause problems
             commands_list.append(self.run_peddy_command())
+            # add to depends list so multiqc doesn't start until peddy finishes
+            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # pass "peddy" to ensure it isn't skipped
+            commands_list.append(self.add_to_depends_list("peddy"))
         # multiqc commands
         commands_list.append(self.create_multiqc_command())
         commands_list.append(self.create_upload_multiqc_command())
@@ -1188,6 +1280,8 @@ class RunfolderProcessor(object):
             fastqs[0],
             config.mokaamp_fastq_R2_stage,
             fastqs[1],
+            config.mokaamp_bwa_rg_sample,
+            fastqs[2],
             config.mokaamp_mokapicard_bed_stage,
             bedfiles["hsmetrics"],
             config.mokaamp_mokapicard_capturetype_stage,
@@ -1195,6 +1289,8 @@ class RunfolderProcessor(object):
             config.mokaamp_bamclipper_BEDPE_stage,
             bedfiles["mokaamp_bed_PE_input"],
             config.mokaamp_chanjo_cov_level_stage,
+            self.panel_dictionary[pannumber]["clinical_coverage_depth"],
+            config.mokaamp_mpileup_cov_level_stage,
             self.panel_dictionary[pannumber]["clinical_coverage_depth"],
             config.mokaamp_sambamba_bed_stage,
             bedfiles["sambamba"],
@@ -1435,6 +1531,8 @@ class RunfolderProcessor(object):
             [
                 self.upload_multiqc_command,
                 " -imultiqc_html=$jobid:multiqc_report",
+                " -imultiqc_data_input=$jobid:multiqc",
+                " -imultiqc_data_input=%s:/QC/*" % (self.runfolder_obj.nexus_project_name) + self.runfolder_obj.runfolder_name + config.cluster_density_file_suffix,
                 self.project,
                 self.runfolder_obj.nexus_project_id,
                 self.token,
@@ -1625,13 +1723,23 @@ class RunfolderProcessor(object):
             if "_R1_" in fastq:
                 # extract_Pan number
                 pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
-                # if the pan number was processed using mokapipe add the query to list of queries, capturing the DNA number from the fastq name
-                if self.panel_dictionary[pannumber]["mokapipe"]:
+
+                # if the pan number was processed using mokapipe and sapientia, add the query to list of queries, capturing the DNA number from the fastq name
+                if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["sapientia_upload"]:
                     queries.append(
                         "insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"
                         + str(fastq.split("_")[2])
                         + "','"
-                        + config.mokapipe_pipeline_ID
+                        + config.mokapipe_sapientia_pipeline_ID
+                        + "')"
+                    )
+                # if the pan number was processed using mokapipe and iva add the query to list of queries, capturing the DNA number from the fastq name
+                if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["iva_upload"]:
+                    queries.append(
+                        "insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"
+                        + str(fastq.split("_")[2])
+                        + "','"
+                        + config.mokapipe_iva_pipeline_ID
                         + "')"
                     )
         if queries:
@@ -1830,7 +1938,7 @@ class RunfolderProcessor(object):
         """
         Input = None
         Upload the log files found in list_log_files.
-        Returns = filepath to the logfile containing output from the command
+        Returns = filepath to the logfile containing output from the command, string of files to be uploaded and 
         """
         # define where files to be uploaded to
         nexus_upload_folder = (
@@ -1838,6 +1946,11 @@ class RunfolderProcessor(object):
             + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "")
             + "/Logfiles/"
         )
+        
+        # create a space delimited string of files to be uploaded defined by the logger class
+        files_to_upload_string = " ".join([logger.filepath for logger in self.loggers.all if logger.filepath])
+        files_to_upload_string += " " + os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing)
+        
         # create a list which, when joined will form a single upload agent command, uploading each
         # file in logger.filepath
         command_list = [
@@ -1851,10 +1964,7 @@ class RunfolderProcessor(object):
             "--do-not-compress",
             "--upload-threads",
             "10",
-            os.path.join(
-            self.runfolder_obj.runfolderpath, 
-            config.file_demultiplexing) # include bcl2fastq stdout
-        ] + [logger.filepath for logger in self.loggers.all if logger.filepath]
+            files_to_upload_string]
         #execute the command list
         cmd = subprocess.list2cmdline(command_list)
 
@@ -1870,70 +1980,41 @@ class RunfolderProcessor(object):
         self.loggers.upload_agent.info(out)
         self.loggers.upload_agent.info(err)
 
-        return self.loggers.upload_agent.filepath
+        return self.loggers.upload_agent.filepath, files_to_upload_string, "log files"
 
-    def look_for_upload_errors(self, logfile, stage):
+    def look_for_upload_errors_backup_runfolder(self, logfile):
         """
-        Input = path to logfile(backup_runfolder.py logfile or upload agent stdout/stderr) and stage
-        (rest_of_runfolder or Uploading_logfiles)
-        Each stage has the upload error stdout in a different file/format
+        Input = path to logfile(backup_runfolder.py logfile)
         The presence of expected success/failure messages are checked and reported
         Returns = None
-        # TODO seperate out stages or combine with look_for_upload_errors_fastq
         """
         # parse the output of the backup runfolder script
         # if error statement seen report it regardless of presence of success statement
         # if success statement seen report it too.
         # set flags to avoid multiple reports
-        if stage == "rest_of_runfolder":
-            upload_ok = False
-            error_seen = []
-            with open(logfile, "r") as backup_logfile:
-                for line in backup_logfile.readlines():
-                    if config.backup_runfolder_success in line:
-                        upload_ok = True
-                    if config.backup_runfolder_error in line:
-                        error_seen.append(line)
-            if error_seen:
-                self.loggers.script.error(
-                    "UA_fail 'Error in upload of rest of runfolder: {} in runfolder {}'".format(
-                        ";".join(error_seen), self.runfolder_obj.runfolder_name
+        
+        upload_ok = False
+        error_seen = []
+        with open(logfile, "r") as backup_logfile:
+            for line in backup_logfile.readlines():
+                if config.backup_runfolder_success in line:
+                    upload_ok = True
+                if config.backup_runfolder_error in line:
+                    error_seen.append(line)
+        if error_seen:
+            self.loggers.script.error(
+                "UA_fail 'Error in upload of rest of runfolder: {} in runfolder {}'".format(
+                    ";".join(error_seen), self.runfolder_obj.runfolder_name
+                )
+            )
+        if upload_ok:
+            self.loggers.script.info(
+                "UA_pass 'Rest of runfolder {} uploaded ok'".format(
+                    self.runfolder_obj.runfolder_name
                     )
                 )
-            if upload_ok:
-                self.loggers.script.info(
-                    "UA_pass 'Rest of runfolder {} uploaded ok'".format(
-                        self.runfolder_obj.runfolder_name
-                        )
-                    )
 
-        # check the DNANexus_upload_started.txt file for the results of upload agent upload of logfiles
-        elif stage == "Uploading_logfiles":
-            # want to skip stdout from fastq upload
-            skip = True
-            ok = True
-            # open the logfile and parse line by line
-            with open(logfile, "r") as upload_agent_stdout:
-                for line in upload_agent_stdout.readlines():
-                    # loop through skipping lines until get to section of interest
-                    if skip and "Uploading logfiles" in line:
-                        skip = False
-                    # loop through lines relating to logfile upload
-                    elif not skip:
-                        # if the api error is noted report a failure
-                        if config.ua_error in line:
-                            ok = False
-                            self.loggers.script.error(
-                                "UA_fail 'Unsuccessful upload of logfile {} for run {}'".format(
-                                    line, self.runfolder_obj.runfolder_name
-                                )
-                            )
-            if ok:
-                self.loggers.script.info(
-                    "UA_pass 'Logfiles from {} uploaded ok'".format(
-                        self.runfolder_obj.runfolder_name
-                    )
-                )
+
 
     def execute_subprocess_command(self, command):
         """
