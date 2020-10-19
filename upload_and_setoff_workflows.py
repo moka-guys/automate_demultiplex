@@ -1938,7 +1938,7 @@ class RunfolderProcessor(object):
         """
         Input = None
         Upload the log files found in list_log_files.
-        Returns = filepath to the logfile containing output from the command, string of files to be uploaded and 
+        Returns = filepath to the logfile containing output from the command, string of files to be uploaded and name of the stage to test
         """
         # define where files to be uploaded to
         nexus_upload_folder = (
@@ -1946,10 +1946,16 @@ class RunfolderProcessor(object):
             + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "")
             + "/Logfiles/"
         )
-        
         # create a space delimited string of files to be uploaded defined by the logger class
-        files_to_upload_string = " ".join([logger.filepath for logger in self.loggers.all if logger.filepath])
-        files_to_upload_string += " " + os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing)
+        files_to_upload_string = " "
+        for logger in self.loggers.all:
+            if logger.filepath:
+                files_to_upload_string += "'"
+                files_to_upload_string += logger.filepath
+                files_to_upload_string += "' "
+        
+        # add the demultiplexing log file
+        files_to_upload_string += " '" + os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing) + "'"
         
         # create a list which, when joined will form a single upload agent command, uploading each
         # file in logger.filepath
@@ -1963,10 +1969,11 @@ class RunfolderProcessor(object):
             nexus_upload_folder,
             "--do-not-compress",
             "--upload-threads",
-            "10",
-            files_to_upload_string]
-        #execute the command list
+            "10"]
+        
+        # convert list to command line and append the 
         cmd = subprocess.list2cmdline(command_list)
+        cmd += files_to_upload_string
 
         # write these commands to the upload agent logfile before upload.
         self.loggers.upload_agent.info("Uploading logfiles.")
