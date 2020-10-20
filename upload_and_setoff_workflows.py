@@ -1971,7 +1971,7 @@ class RunfolderProcessor(object):
             "--upload-threads",
             "10"]
         
-        # convert list to command line and append the 
+        # convert list to command line and append the logfile list
         cmd = subprocess.list2cmdline(command_list)
         cmd += files_to_upload_string
 
