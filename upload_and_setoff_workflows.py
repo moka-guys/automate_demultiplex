@@ -1246,7 +1246,7 @@ class RunfolderProcessor(object):
     def build_sapientia_input_command(self):
         """
         Inputs = None
-        Saptientia import app is outside out of the workflow.
+        Sapientia import app is outside out of the workflow.
         Inputs to the import can be provided in the format jobid.output name.
         Each workflow has a analysis-id so further steps are required to obtain the required job-id.
         A python script is run after each dx run command, taking the analysis id, project name and

@@ -19,7 +19,7 @@ document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[
 # # path to run folders
 runfolders = "/media/data3/share"
 # when testing use a different directory
-runfolders = "/media/data3/share/testing"
+#runfolders = "/media/data3/share/testing"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -280,7 +280,8 @@ panel_list = [
     "Pan4003",
     "Pan4044",
     "Pan4042",
-    "Pan4043"
+    "Pan4043",
+    "Pan4049"
 ]
 
 default_panel_properties = {
@@ -405,14 +406,26 @@ panel_settings = {
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3614",
-        "RPKM_also_analyse": ["Pan4042"],
+        "RPKM_also_analyse": ["Pan4042","Pan4049"],
         "iva_upload": True,
     },
-    "Pan4042": {  # VCP2 STG
+    "Pan4042": {  # VCP2 STG BRCA
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3614",
-        "RPKM_also_analyse": ["4011"],
+        "RPKM_also_analyse": ["Pan4011","Pan4049"],
+        "sapientia_upload": True,
+        "sapientia_project": "1099",
+        "mokapipe_haplotype_caller_padding":1,
+        "hsmetrics_bedfile": "Pan4011data.bed",
+        "variant_calling_bedfile": "Pan4011data.bed",
+        "sambamba_bedfile": "Pan4011dataSambamba.bed",
+    },
+    "Pan4049": {  # VCP2 STG CrCa
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3614",
+        "RPKM_also_analyse": ["Pan4011","Pan4042"],
         "sapientia_upload": True,
         "sapientia_project": "4202",
         "mokapipe_haplotype_caller_padding":1,
