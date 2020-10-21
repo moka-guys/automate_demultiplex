@@ -38,12 +38,6 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
-# runfolders used for debugging/testing
-upload_test_folders = [
-    "999999_NB551068_WES_test",
-    "999999_NB551068_custom_panel_test",
-    "999999_M02353_ONC_test",
-]
 demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
@@ -283,7 +277,11 @@ panel_list = [
     "Pan2835",
     "Pan3973",
     "Pan4011",
-    "Pan4003"
+    "Pan4003",
+    "Pan4044",
+    "Pan4042",
+    "Pan4043",
+    "Pan4049"
 ]
 
 default_panel_properties = {
@@ -386,23 +384,73 @@ panel_settings = {
         "RPKM_bedfile_pan_number": "Pan1974",
         "iva_upload": True,
     },
-    "Pan4003": {  # VCP1
+    "Pan4003": {  # VCP1 viapath
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3624",
+        "RPKM_also_analyse": ["Pan4044"],
         "iva_upload": True,
     },
-    "Pan4011": {  # VCP2
+    "Pan4044": {  # VCP1 STG
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3624",
+        "RPKM_also_analyse": ["Pan4003"],
+        "sapientia_upload": True,
+        "sapientia_project": "4203",
+        "hsmetrics_bedfile": "Pan4003data.bed",
+        "variant_calling_bedfile": "Pan4003data.bed",
+        "sambamba_bedfile": "Pan4003dataSambamba.bed",
+    },
+    "Pan4011": {  # VCP2 viapath
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3614",
+        "RPKM_also_analyse": ["Pan4042","Pan4049"],
         "iva_upload": True,
     },
-    "Pan3973": {  # VCP3
+    "Pan4042": {  # VCP2 STG BRCA
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3614",
+        "RPKM_also_analyse": ["Pan4011","Pan4049"],
+        "sapientia_upload": True,
+        "sapientia_project": "1099",
+        "mokapipe_haplotype_caller_padding":1,
+        "hsmetrics_bedfile": "Pan4011data.bed",
+        "variant_calling_bedfile": "Pan4011data.bed",
+        "sambamba_bedfile": "Pan4011dataSambamba.bed",
+    },
+    "Pan4049": {  # VCP2 STG CrCa
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3614",
+        "RPKM_also_analyse": ["Pan4011","Pan4042"],
+        "sapientia_upload": True,
+        "sapientia_project": "4202",
+        "mokapipe_haplotype_caller_padding":1,
+        "hsmetrics_bedfile": "Pan4011data.bed",
+        "variant_calling_bedfile": "Pan4011data.bed",
+        "sambamba_bedfile": "Pan4011dataSambamba.bed",
+    },
+    "Pan3973": {  # VCP3 viapath
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_also_analyse": ["4043"],
         "iva_upload": True,
+    },
+    "Pan4043": {  # VCP3 STG
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_also_analyse": ["3973"],
+        "sapientia_upload": True,
+        "sapientia_project": "4201",
+        "mokapipe_haplotype_caller_padding":1,
+        "hsmetrics_bedfile": "Pan3973data.bed",
+        "variant_calling_bedfile": "Pan3973data.bed",
+        "sambamba_bedfile": "Pan3973dataSambamba.bed",
     },
     "Pan1965": {  # NGSEQ1
         "mokapipe": True,
