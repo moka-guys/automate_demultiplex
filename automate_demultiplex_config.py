@@ -16,8 +16,10 @@ debug = False
 # (2 levels up from this file)
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
-# path to run folders
+# # path to run folders
 runfolders = "/media/data3/share"
+# when testing use a different directory
+#runfolders = "/media/data3/share/testing"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -36,12 +38,6 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
-# runfolders used for debugging/testing
-upload_test_folders = [
-    "999999_NB551068_WES_test",
-    "999999_NB551068_custom_panel_test",
-    "999999_M02353_ONC_test",
-]
 demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
@@ -102,10 +98,12 @@ upload_agent_expected_stdout = "Upload Agent Version:"
 
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
-# Current Mokapipe ID
-mokapipe_pipeline_ID = "3684"
+# audit trail ID for Mokapipe & sapientia
+mokapipe_sapientia_pipeline_ID = "4165"
+# audit trail ID for Mokapipe & IVA
+mokapipe_iva_pipeline_ID = "4164"
 # Current MokaWES ID
-mokawes_pipeline_ID = "3650"
+mokawes_pipeline_ID = "4160"
 
 
 # -- Moka WES test status--
@@ -132,7 +130,7 @@ mokawes_path = "Workflows/MokaWES_v1.8"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.4"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.3"
+mokaamp_path = "Workflows/MokaAMP_v1.4"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
@@ -143,11 +141,11 @@ sapientia_app_path = "Apps/sapientia_upload_v1.0"
 iva_app_path = "app-ingenuity_variant_transfer/1.0.6"
 
 # path to app which uploads multiqc report
-upload_multiqc_path = "Apps/upload_multiqc_v1.1"
+upload_multiqc_path = "Apps/upload_multiqc_v1.2"
 # smartsheet app
 smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.2"
 # RPKM path
-RPKM_path = "Apps/RPKM_using_conifer_v1.5"
+RPKM_path = "Apps/RPKM_using_conifer_v1.6"
 # bedfile folder
 bedfile_folder = "Data/BED/"
 # DNA Nexus organisation to create the project within
@@ -196,6 +194,7 @@ mokaonc_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="
 # MokaAMP
 mokaamp_fastq_R1_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz="
 mokaamp_fastq_R2_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
+mokaamp_bwa_rg_sample = " -istage-FPzGj780jy1g3p1F4F8z4J7V.read_group_sample="
 mokaamp_mokapicard_bed_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
 mokaamp_mokapicard_capturetype_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
 mokaamp_bamclipper_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
@@ -204,6 +203,7 @@ mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
 mokaamp_vardict_bed_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
 mokaamp_varscan_bed_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
 mokaamp_varscan_strandfilter_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
+mokaamp_mpileup_cov_level_stage = " -istage-FxypXb807p1zj3g8Jv45Y54P.min_coverage="
 
 mokaamp_email_message = (
     "If both MokaAMP and MokaOnc (amplivar) have been run,"
@@ -261,7 +261,7 @@ iva_reference_inputname = " -ireference_genome_name="
 iva_reference_default = "GRCh37"
 
 
-# =====Dict linking panel numbers for +/-10 and CNVs=====
+# =====List of all panel numbers=====
 panel_list = [
     "Pan493",
     "Pan1063",
@@ -275,7 +275,15 @@ panel_list = [
     "Pan1646",
     "Pan3648",
     "Pan2835",
+    "Pan3973",
+    "Pan4011",
+    "Pan4003",
+    "Pan4044",
+    "Pan4042",
+    "Pan4043",
+    "Pan4049"
 ]
+
 default_panel_properties = {
     "UMI": False,
     "UMI_bcl2fastq": None,  # eg Y145,I8,Y9I8,Y145
@@ -376,6 +384,74 @@ panel_settings = {
         "RPKM_bedfile_pan_number": "Pan1974",
         "iva_upload": True,
     },
+    "Pan4003": {  # VCP1 viapath
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3624",
+        "RPKM_also_analyse": ["Pan4044"],
+        "iva_upload": True,
+    },
+    "Pan4044": {  # VCP1 STG
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3624",
+        "RPKM_also_analyse": ["Pan4003"],
+        "sapientia_upload": True,
+        "sapientia_project": "4203",
+        "hsmetrics_bedfile": "Pan4003data.bed",
+        "variant_calling_bedfile": "Pan4003data.bed",
+        "sambamba_bedfile": "Pan4003dataSambamba.bed",
+    },
+    "Pan4011": {  # VCP2 viapath
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3614",
+        "RPKM_also_analyse": ["Pan4042","Pan4049"],
+        "iva_upload": True,
+    },
+    "Pan4042": {  # VCP2 STG BRCA
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3614",
+        "RPKM_also_analyse": ["Pan4011","Pan4049"],
+        "sapientia_upload": True,
+        "sapientia_project": "1099",
+        "mokapipe_haplotype_caller_padding":1,
+        "hsmetrics_bedfile": "Pan4011data.bed",
+        "variant_calling_bedfile": "Pan4011data.bed",
+        "sambamba_bedfile": "Pan4011dataSambamba.bed",
+    },
+    "Pan4049": {  # VCP2 STG CrCa
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3614",
+        "RPKM_also_analyse": ["Pan4011","Pan4042"],
+        "sapientia_upload": True,
+        "sapientia_project": "4202",
+        "mokapipe_haplotype_caller_padding":1,
+        "hsmetrics_bedfile": "Pan4011data.bed",
+        "variant_calling_bedfile": "Pan4011data.bed",
+        "sambamba_bedfile": "Pan4011dataSambamba.bed",
+    },
+    "Pan3973": {  # VCP3 viapath
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_also_analyse": ["4043"],
+        "iva_upload": True,
+    },
+    "Pan4043": {  # VCP3 STG
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_also_analyse": ["3973"],
+        "sapientia_upload": True,
+        "sapientia_project": "4201",
+        "mokapipe_haplotype_caller_padding":1,
+        "hsmetrics_bedfile": "Pan3973data.bed",
+        "variant_calling_bedfile": "Pan3973data.bed",
+        "sambamba_bedfile": "Pan3973dataSambamba.bed",
+    },
     "Pan1965": {  # NGSEQ1
         "mokapipe": True,
         "multiqc_coverage_level": 30,
@@ -466,3 +542,8 @@ checksum_match = "Checksums match"
 demultiplex_success_match = r".*Processing completed with 0 errors and 0 warnings.$"
 # list of sequencers which require md5 checksums from integrity check to be assessed
 sequencers_with_integrity_check = ["NB551068", "NB552085"]
+
+# ================ cluster density calculation
+cluster_density_success_statement = "picard.illumina.CollectIlluminaLaneMetrics done"
+cluster_density_file_suffix = ".illumina_lane_metrics"
+phasing_metrics_file_suffix = ".illumina_phasing_metrics"

@@ -499,7 +499,6 @@ class ready2start_demultiplexing():
 
         # Add the row using POST
         r = requests.post(url, headers=self.headers, data=payload)
-
         # capture the output of the POST statement to capture the id of the row that has been updated.
         # This can be used when updating the status to complete in function smartsheet_demultiplex_complete().
         response = r.json()
