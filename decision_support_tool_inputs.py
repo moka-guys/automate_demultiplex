@@ -86,9 +86,9 @@ class DecisionTooler(object):
         jobid = None
         bamjobid = None
         for stage in json_ob["stages"]:
-            if stage["execution"]["stage"] == config.mokapipe_variant_annotator_stage:
+            if  stage["id"] == config.mokapipe_variant_annotator_stage:
                 jobid = stage["execution"]["id"]
-            elif stage["execution"]["stage"] == config.mokapipe_gatk_human_exome_stage:
+            elif stage["id"] == config.mokapipe_gatk_human_exome_stage:
                 bamjobid = stage["execution"]["id"]
         return jobid, bamjobid
 
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     )
 
     # Get settings for analysis panel (used to determine which workflow is running)
-    pannumber = re.search(r"Pan\d+", ajson["name"]).group()
+    pannumber = re.search(r"Pan\d+", ajson["name"]).group() 
     # using function imported from upload_and_setoff_workflow.py build the panel dict to be used to
     # determine the workflow etc
     paneldict = RunfolderProcessor.set_panel_dictionary()
