@@ -104,6 +104,10 @@ mokapipe_sapientia_pipeline_ID = "4165"
 mokapipe_iva_pipeline_ID = "4164"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4160"
+# MokaAMP ID
+mokaamp_pipeline_ID = "4236"
+# MokaONC ID
+mokaonc_pipeline_ID = "2405"
 
 
 # -- Moka WES test status--
