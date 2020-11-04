@@ -804,7 +804,7 @@ class RunfolderProcessor(object):
             # set flag to say upload unsuccessful
             upload_ok=False
             # loop through log file - if it's a line relating to this fastq check it's uploaded successfully.
-            for line in open(upload_agent_stdout_path).read():
+            for line in open(upload_agent_stdout_path).readlines():
                 if file in line and "was uploaded successfully. Closing..." in line:
                     upload_ok = True
             # if at the end of the file there was no success statement found
@@ -818,6 +818,11 @@ class RunfolderProcessor(object):
             self.loggers.script.error(
                 "UA_fail 'upload of {} files failed for run {}'".format(
                     stage, self.runfolder_obj.runfolder_name
+                    )
+                )
+            self.loggers.script.error(
+                "UA_fail 'following files were not uploaded {}'".format(
+                    issue_list
                     )
                 )
         # if no error but debug
@@ -1600,7 +1605,7 @@ class RunfolderProcessor(object):
             # If the line doesn't contain a string that should be ignored
             if not re.match(std_err_ignore_match, clean_line) and not re.search(
                 sni_warning_ignore_match, clean_line
-            ):
+            ) and len(clean_line) > 0:
                 cleaned_error.append(line)
         return cleaned_error
 
@@ -1723,25 +1728,13 @@ class RunfolderProcessor(object):
             if "_R1_" in fastq:
                 # extract_Pan number
                 pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
-
+                query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
                 # if the pan number was processed using mokapipe and sapientia, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["sapientia_upload"]:
-                    queries.append(
-                        "insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"
-                        + str(fastq.split("_")[2])
-                        + "','"
-                        + config.mokapipe_sapientia_pipeline_ID
-                        + "')"
-                    )
+                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_sapientia_pipeline_ID,self.runfolder_obj.runfolder_name))
                 # if the pan number was processed using mokapipe and iva add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["iva_upload"]:
-                    queries.append(
-                        "insert into NGSCustomRuns(DNAnumber,PipelineVersion) values ('"
-                        + str(fastq.split("_")[2])
-                        + "','"
-                        + config.mokapipe_iva_pipeline_ID
-                        + "')"
-                    )
+                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_iva_pipeline_ID,self.runfolder_obj.runfolder_name))
         if queries:
             # add workflow to sql dictionary
             return {"count": len(queries), "query": queries}
@@ -1788,38 +1781,41 @@ class RunfolderProcessor(object):
         """
         Input = list of fastqs to be processed
         Samples tested using mokaamp or mokaonc are not booked into Moka until the analysis stage so
-        queries cannot be used to record pipeline version.
-        This is recorded manually when creating the test in Moka
-        Therefore an email informing the oncology team which version of the pipeline was applied is sent.
-        If oncology samples found a dictionary is populated with a list of workflows and a message (str).
+        create a query using IDs form the samplename
+        An insert query is build for each sample, recording the IDs which are the 3rd and 4th elements in the samplename.
+        These are recorded along with the pipeline version and the name of the run.
         If not a None object is returned
         Return = dictionary
         """
-        # list of workflows used in this run
+        queries = []
         workflows = []
         # loop through fastqs to see which workflows were used
         for fastq in list_of_processed_samples:
             # take read one
+            # example fastq names: ONC20085_08_EK20826_2025029_SWIFT57_Pan2684_S8_R2_001.fastq.gz and ONC20085_06_NTCcon1_SWIFT57_Pan2684_S6_R1_001.fastq.gz
             if "_R1_" in fastq:
                 # extract_Pan number
                 pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
-                # if the pan number was processed using one of the oncology pipelines add the query to list of queries
-                # use the dnanexus workflow path, taking only the workflow name
-                if self.panel_dictionary[pannumber]["oncology"]:
-                    if self.panel_dictionary[pannumber]["mokaamp"]:
-                        workflows.append(config.mokaamp_path.split("/")[-1])
-                    if self.panel_dictionary[pannumber]["mokaonc"]:
-                        workflows.append(config.mokaonc_path.split("/")[-1])
-        # if oncology workflows were applied add email message (to dictionary to be sent)
-        if workflows:
-            return {
-                "workflows": set(workflows),
-                "query": self.runfolder_obj.runfolder_name
-                + " being processed using workflow "
-                + ",".join(set(workflows))
-                + "\n\n"
-                + config.mokaamp_email_message,
-            }
+                # record id1 and 2 by taking the second and third elements
+                id1, id2 = fastq.split("_")[2:4]
+                # negative controls only have one ID so set id2 to null
+                if "NTCcon" in fastq:
+                    id2 = "NULL"
+                # define query with placeholders
+                query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion) values ('{}','{}','{}','{}')" 
+                
+                # for mokaamp and mokaonc if relevant build the query, populating the placeholders.
+                # add the name of the workflow to the list of workflows
+                if self.panel_dictionary[pannumber]["mokaamp"]:
+                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaamp_pipeline_ID))
+                    workflows.append(config.mokaamp_path.split("/")[-1])
+                if self.panel_dictionary[pannumber]["mokaonc"]:
+                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaonc_pipeline_ID))
+                    workflows.append(config.mokaonc_path.split("/")[-1])
+        # if queries have been created return a dictionary
+        if queries:
+            # use queries list to create a count of samples, return list of queries and the set of the workflows (removing duplicates)
+            return {"count": len(queries), "query": queries, "workflows": set(workflows)}
         else:
             return None
 
@@ -1834,20 +1830,23 @@ class RunfolderProcessor(object):
         """
         # send oncology email first
         if self.sql_queries["oncology"]:
-            # email the workflow used to the oncology team
             email_subject = (
                 "MOKAPIPE ALERT : Started pipeline for " + self.runfolder_obj.runfolder_name
             )
+            email_priority = 1  # high priority
             email_message = (
                 self.runfolder_obj.runfolder_name
-                + " being processed using workflow "
+                + " being processed using workflow(s) "
                 + ",".join(self.sql_queries["oncology"]["workflows"])
-                + "\n\n"
-                + self.sql_queries["oncology"]["query"]
+                + "\n\nPlease update Moka using the below queries and ensure that "
+                + str(self.sql_queries["oncology"]["count"])
+                + " records are updated:\n\n"
+                + "\n".join(self.sql_queries["oncology"]["query"])+ "\n\n"
             )
-            # send email - pass multiple recipients in a list
-            self.send_an_email([config.oncology_you, config.you], email_subject, email_message)
+            # send email - if needed, pass multiple recipients in a list (no longer needed)
+            self.send_an_email(config.you, email_subject, email_message, email_priority)
 
+        # build rare disease emails
         # Start counters and placeholders to for email data
         workflows = []
         sql_statements = []
