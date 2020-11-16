@@ -73,7 +73,7 @@ class SequencingRuns(list):
         # Add names of any processed runfolders to logfile
         if processed_runfolders:
             original_logfile_path = config.upload_and_setoff_workflow_logfile + self.now + "_upload_and_setoff_workflow.log"
-            new_logfile = original_logfile_path.replace(self.now, self.now + "_".join(processed_runfolders)) 
+            new_logfile = original_logfile_path.replace(self.now, self.now + "_" + "_".join(processed_runfolders)) 
             os.rename(original_logfile_path, new_logfile)
 
 
