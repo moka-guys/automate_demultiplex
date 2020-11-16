@@ -168,7 +168,7 @@ class RunfolderProcessor(object):
         # string to redirect command (with variables) into file
         self.sapientia_upload_command_redirect = "' >> " + self.sapientia_upload_command_script_path
 
-        self.iva_upload_command = "jobid=$(dx run " + config.iva_app_path + " -y "
+        self.iva_upload_command = "sleep 5;jobid=$(dx run " + config.iva_app_path + " -y "
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
         self.project_bash_script_path = (
