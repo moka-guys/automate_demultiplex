@@ -1794,23 +1794,24 @@ class RunfolderProcessor(object):
             # take read one
             # example fastq names: ONC20085_08_EK20826_2025029_SWIFT57_Pan2684_S8_R2_001.fastq.gz and ONC20085_06_NTCcon1_SWIFT57_Pan2684_S6_R1_001.fastq.gz
             if "_R1_" in fastq:
-                # extract_Pan number
-                pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+                # extract_Pan number - record without "Pan" for the sql query
+                pannumber_no_pan = str(fastq.split("_Pan")[1].split("_")[0])
+                pannumber = "Pan" + pannumber_no_pan
                 # record id1 and 2 by taking the second and third elements
                 id1, id2 = fastq.split("_")[2:4]
                 # negative controls only have one ID so set id2 to null
                 if "NTCcon" in fastq:
                     id2 = "NULL"
                 # define query with placeholders
-                query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion) values ('{}','{}','{}','{}')" 
+                query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('{}','{}','{}','{}','{}')" 
                 
                 # for mokaamp and mokaonc if relevant build the query, populating the placeholders.
                 # add the name of the workflow to the list of workflows
                 if self.panel_dictionary[pannumber]["mokaamp"]:
-                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaamp_pipeline_ID))
+                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaamp_pipeline_ID, pannumber_no_pan))
                     workflows.append(config.mokaamp_path.split("/")[-1])
                 if self.panel_dictionary[pannumber]["mokaonc"]:
-                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaonc_pipeline_ID))
+                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaonc_pipeline_ID, pannumber_no_pan))
                     workflows.append(config.mokaonc_path.split("/")[-1])
         # if queries have been created return a dictionary
         if queries:
