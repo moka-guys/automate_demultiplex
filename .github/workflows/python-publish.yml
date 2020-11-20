@@ -1,0 +1,27 @@
+# This workflow will run tests for the upload_and_setoff_workflows.py whenever a push is made to the repo
+# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+
+name: pytesting for upload_and_setofff_workflows.py
+
+# when code is pushed to any branch of this repo run tests
+on: push
+
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 2.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: 2.7
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Test upload_and_setoff_workflows
+      run: |
+        pytest test/test_app.py
