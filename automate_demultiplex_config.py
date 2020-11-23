@@ -145,7 +145,7 @@ sapientia_app_path = "Apps/sapientia_upload_v1.0"
 iva_app_path = "app-ingenuity_variant_transfer/1.0.6"
 
 # path to app which uploads multiqc report
-upload_multiqc_path = "Apps/upload_multiqc_v1.2"
+upload_multiqc_path = "Apps/upload_multiqc_v1.3"
 # smartsheet app
 smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.2"
 # RPKM path
