@@ -233,7 +233,7 @@ rpkm_project_input = " -iproject_name="
 rpkm_bamfiles_to_download_input = " -ibamfile_pannumbers="
 
 # emails addresses for Ingenuity
-oncology_email = "gst-tr.oncology.interpret@nhs.net"  # general oncology email
+oncology_email = "m.neat@nhs.net"  # general oncology email
 interpretation_request_email = (
     "gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
 )
