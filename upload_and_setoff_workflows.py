@@ -1847,6 +1847,17 @@ class RunfolderProcessor(object):
             # send email - if needed, pass multiple recipients in a list (no longer needed)
             self.send_an_email(config.you, email_subject, email_message, email_priority)
 
+            # email_for_cancer_ops leads to inform the pipeline has started
+            email_message = (
+                self.runfolder_obj.runfolder_name
+                + " being processed using workflow(s) "
+                + ",".join(self.sql_queries["oncology"]["workflows"])
+                + "\n"
+                + str(self.sql_queries["oncology"]["count"])
+                + " samples are being processed."
+            )
+            self.send_an_email(config.oncology_you, email_subject, email_message, email_priority)
+
         # build rare disease emails
         # Start counters and placeholders to for email data
         workflows = []
