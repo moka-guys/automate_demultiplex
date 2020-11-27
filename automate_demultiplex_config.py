@@ -233,11 +233,15 @@ rpkm_project_input = " -iproject_name="
 rpkm_bamfiles_to_download_input = " -ibamfile_pannumbers="
 
 # emails addresses for Ingenuity
-oncology_email = "m.neat@nhs.net"  # general oncology email
+oncology_IVA_email = "gst-tr.oncology.interpret@nhs.net"  # general oncology email
 interpretation_request_email = (
     "gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
 )
 wes_email_address = "gst-tr.wesviapath@nhs.net"  # WES email
+
+# oncology email address for email alerts
+oncology_ops_email = "m.neat@nhs.net"
+
 
 # DNA Nexus authentication token
 nexus_api_key_file = "{document_root}/.dnanexus_auth_token".format(document_root=document_root)
@@ -342,7 +346,7 @@ panel_settings = {
         "oncology": True,
         "mokaonc": True,
         "capture_type": "Amplicon",
-        "ingenuity_email": oncology_email,
+        "ingenuity_email": oncology_IVA_email,
         "clinical_coverage_depth": 1000,
         "multiqc_coverage_level": 100,
         "iva_upload": True,
@@ -355,7 +359,7 @@ panel_settings = {
         "iva_upload": True,
         "clinical_coverage_depth": 600,  # only found in mokamp command
         "multiqc_coverage_level": 100,
-        "ingenuity_email": oncology_email,
+        "ingenuity_email": oncology_IVA_email,
     },
     "Pan1449": {  # germline BRCA
         "mokapipe": True,
@@ -531,7 +535,7 @@ host = "email-smtp.eu-west-1.amazonaws.com"
 port = 587
 me = "moka.alerts@gstt.nhs.uk"
 you = mokaguys_email
-oncology_you = oncology_email
+oncology_you = oncology_ops_email
 smtp_do_tls = True
 
 # ================ Integrity check
