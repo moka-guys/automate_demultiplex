@@ -1,7 +1,6 @@
 DNANexus_upload_agent_single_folder.py
 *.pyc
 *.pytest_cache
-test/data
 .vscode
 share/
 make_panel_fastqs/
