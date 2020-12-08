@@ -24,4 +24,4 @@ jobs:
         pip install -r requirements.txt
     - name: Test upload_and_setoff_workflows
       run: |
-        pytest test/test_app.py
+        pytest test/test_upload_and_set_off_workflows.py
