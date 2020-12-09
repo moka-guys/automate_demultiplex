@@ -1,4 +1,4 @@
-![Build Status](https://github.com/moka-guys/automate_demultiplex/workflows/pytesting/badge.svg
+![Build Status](https://github.com/moka-guys/automate_demultiplex/workflows/pytesting/badge.svg)
 
 # Automate Demultiplex
 
