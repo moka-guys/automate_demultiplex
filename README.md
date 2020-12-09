@@ -1,3 +1,5 @@
+![Build Status](https://github.com/moka-guys/automate_demultiplex/workflows/pytesting/badge.svg
+
 # Automate Demultiplex
 
 Scripts for routine analysis of clinical next generation sequencing (NGS) data at Viapath Genetics:
@@ -26,3 +28,7 @@ Scripts are triggered by a cronjob on the linux workstation which can be updated
 ## License
 
 TBC
+
+## Testing 
+
+When code is pushed to this repo, GitHub Actions will automatically run tests. They can be checked on the Actions tab of the repo. 
