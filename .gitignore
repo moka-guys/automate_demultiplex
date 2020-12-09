@@ -5,3 +5,5 @@ DNANexus_upload_agent_single_folder.py
 share/
 make_panel_fastqs/
 test.log
+test/data/automate_demultiplexing_logfiles/upload_agent_script_logfiles/*.log
+
