@@ -1,7 +1,7 @@
 # This workflow will run tests for the upload_and_setoff_workflows.py whenever a push is made to the repo
 # For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
 
-name: pytesting for upload_and_setofff_workflows.py
+name: pytesting
 
 # when code is pushed to any branch of this repo run tests
 on: push
