@@ -488,7 +488,7 @@ panel_settings = {
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
-        "Pan2835": {  # TWIST WES TRIO at GSTT
+        "Pan3174": {  # TWIST WES TRIO at GSTT
         "mokawes": True,
         "iva_upload": True,
         "multiqc_coverage_level": 20,
