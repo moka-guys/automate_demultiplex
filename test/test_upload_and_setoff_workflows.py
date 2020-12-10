@@ -44,7 +44,7 @@ class TestUploadandSetoffWorkflows(unittest.TestCase):
 
         # unhash to see the full diff in command line  
         #self.maxDiff = None
-
+    
     def test_start_building_dx_run_cmds(self):
             
         now = "2018-03-29 10:26:23.473031"
@@ -65,18 +65,28 @@ class TestUploadandSetoffWorkflows(unittest.TestCase):
         #print(expected_list)
         self.assertEqual (expected_list, mio.test_output_commands_list)
         #assert expected_list == mio.test_output_commands_list
-
-
-
-'''     
+        
+    
     def test_find_fastqs(self):
-        # defining variables 
         now = "2018-03-29 10:26:23.473031"
-        #create an instance of RunfolderProcessor
-        test_runfolder_instance =  RunfolderProcessor(config.runfolders, now, debug_mode=config.debug)
-        expected_list = test_runfolder_instance.find_fastqs(mio.runfolder_fastq_path)
-        # find_fastqs takes one input but returns two outputs 
-        #self.assertEqual (expected_list, mio.list_of_processed_samples)
-        self.assertEqual (expected_list, mio.expected_output_find_fastq)
-'''
+        # create an instance of RunfolderProcessor
+        # Using the testing folder run below
+        folder = '999999_NB552085_0077_AHYNCMAFXY'
+        runfolder_fastq_path = '/home/mokaguys/Documents/development_area/demultitest_erin/runfolder/2999999_NB552085_0077_AHYNCMAFXY/Data/Intensities/BaseCalls'
+        # set monkeypatch to change the pointer of RunfodlerProcessor to MockRunfolderProcessor 
+        # which is in the mocks script
+        # any methods define in MockRunfolderProcessor will be taken from there
+        # any methods not defined in there will be taken from RunfolderProcessor as 
+        # it is called in this script
+        self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
+        test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
+        # run the test input from mio
+        expected_list = test_runfolder_instance.find_fastqs(runfolder_fastq_path)
+        # check if output of method matches known true output
+        #print('this is expected list')
+        #print(expected_list)
+        #test_outputs = (mio.list_of_processed_samples, mio.test_fastq_string)
+        #print(test_outputs)
+        self.assertEqual (expected_list,(mio.list_of_processed_samples, mio.test_fastq_string))
+        #assert expected_list == mio.test_output_commands_list
 
