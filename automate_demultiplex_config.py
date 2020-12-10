@@ -488,6 +488,15 @@ panel_settings = {
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
+        "Pan2835": {  # TWIST WES TRIO at GSTT
+        "mokawes": True,
+        "iva_upload": True,
+        "multiqc_coverage_level": 20,
+        "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
+        "sambamba_bedfile": "Pan493dataSambamba.bed",
+        "ingenuity_email": wes_email_address,
+        "peddy": True,
+    },
 }
 
 # =====smartsheet API=====
