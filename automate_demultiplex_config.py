@@ -289,7 +289,8 @@ panel_list = [
     "Pan4044",
     "Pan4042",
     "Pan4043",
-    "Pan4049"
+    "Pan4049",
+    "Pan3174"
 ]
 
 default_panel_properties = {
