@@ -57,8 +57,10 @@ class TestUploadandSetoffWorkflows(unittest.TestCase):
         # run the test input from mio
         expected_list = test_runfolder_instance.start_building_dx_run_cmds(mio.list_of_processed_samples)
         # check if output of method matches known true output
-        self.assertEqual (expected_list, mio.test_output_commands_list)
-        #assert expected_list == mio.test_output_commands_list
+        # use set to check if all the elements of the list are present 
+        # but disregard the order
+        assert set(expected_list) == set(mio.test_output_commands_list)
+ 
         
     
     def test_find_fastqs(self):
@@ -70,8 +72,10 @@ class TestUploadandSetoffWorkflows(unittest.TestCase):
         self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
         test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
         # run the test input from mio
-        expected_list = test_runfolder_instance.find_fastqs(mio.runfolder_fastq_path)
+        expected_list_of_processed_samples, expected_fastq_string = test_runfolder_instance.find_fastqs(mio.runfolder_fastq_path)
         # check if output of method matches known true output
-        self.assertEqual (expected_list,(mio.list_of_processed_samples, mio.test_fastq_string))
-        #assert expected_list == mio.test_output_commands_list
+        self.assertEqual (expected_fastq_string, mio.test_fastq_string)
+        # use set to check if all the elements of the list are present 
+        # but disregard the order
+        assert set(expected_list_of_processed_samples) == set(mio.list_of_processed_samples)
 
