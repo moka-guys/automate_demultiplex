@@ -15,7 +15,7 @@ sys.path.append(
 import automate_demultiplex_config_test as config
 import mock_inputs_and_outputs as mio
 
-
+# mock classes to use for monkeypatching in tests
 from mocks import MockRunfolderProcessor, mock_rename, mock_email
 
 # This mock points all calls to automate_demultiplex_config to 
@@ -52,17 +52,11 @@ class TestUploadandSetoffWorkflows(unittest.TestCase):
         # Using the testing folder run below
         folder = '999999_NB552085_0077_AHYNCMAFXY'
         # set monkeypatch to change the pointer of RunfodlerProcessor to MockRunfolderProcessor 
-        # which is in the mocks script
-        # any methods define in MockRunfolderProcessor will be taken from there
-        # any methods not defined in there will be taken from RunfolderProcessor as 
-        # it is called in this script
         self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
         test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
         # run the test input from mio
         expected_list = test_runfolder_instance.start_building_dx_run_cmds(mio.list_of_processed_samples)
         # check if output of method matches known true output
-        #print('this is expected list')
-        #print(expected_list)
         self.assertEqual (expected_list, mio.test_output_commands_list)
         #assert expected_list == mio.test_output_commands_list
         
@@ -72,21 +66,12 @@ class TestUploadandSetoffWorkflows(unittest.TestCase):
         # create an instance of RunfolderProcessor
         # Using the testing folder run below
         folder = '999999_NB552085_0077_AHYNCMAFXY'
-        runfolder_fastq_path = '/home/mokaguys/Documents/development_area/demultitest_erin/runfolder/2999999_NB552085_0077_AHYNCMAFXY/Data/Intensities/BaseCalls'
         # set monkeypatch to change the pointer of RunfodlerProcessor to MockRunfolderProcessor 
-        # which is in the mocks script
-        # any methods define in MockRunfolderProcessor will be taken from there
-        # any methods not defined in there will be taken from RunfolderProcessor as 
-        # it is called in this script
         self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
         test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
         # run the test input from mio
-        expected_list = test_runfolder_instance.find_fastqs(runfolder_fastq_path)
+        expected_list = test_runfolder_instance.find_fastqs(mio.runfolder_fastq_path)
         # check if output of method matches known true output
-        #print('this is expected list')
-        #print(expected_list)
-        #test_outputs = (mio.list_of_processed_samples, mio.test_fastq_string)
-        #print(test_outputs)
         self.assertEqual (expected_list,(mio.list_of_processed_samples, mio.test_fastq_string))
         #assert expected_list == mio.test_output_commands_list
 
