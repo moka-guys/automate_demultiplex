@@ -74,6 +74,8 @@ class TestUploadandSetoffWorkflows(unittest.TestCase):
         # run the test input from mio
         expected_list_of_processed_samples, expected_fastq_string = test_runfolder_instance.find_fastqs(mio.runfolder_fastq_path)
         # check if output of method matches known true output
+        print('This is expected fastq string')
+        print(expected_fastq_string)
         self.assertEqual (expected_fastq_string, mio.test_fastq_string)
         # use set to check if all the elements of the list are present 
         # but disregard the order
