@@ -61,8 +61,7 @@ class TestUploadandSetoffWorkflows(unittest.TestCase):
         # but disregard the order
         assert set(expected_list) == set(mio.test_output_commands_list)
  
-        
-    
+           
     def test_find_fastqs(self):
         now = "2018-03-29 10:26:23.473031"
         # create an instance of RunfolderProcessor
@@ -76,8 +75,32 @@ class TestUploadandSetoffWorkflows(unittest.TestCase):
         # compare the characters in each string 
         # ingore the order 
         assert ''.join(sorted(expected_fastq_string)).strip() == ''.join(sorted(mio.test_fastq_string)).strip()
-        #self.assertEqual (expected_fastq_string, mio.test_fastq_string)
         # use set to check if all the elements of the list are present 
         # but disregard the order
         assert set(expected_list_of_processed_samples) == set(mio.list_of_processed_samples)
 
+    def test_build_nexus_project_name(self):
+        now = "2018-03-29 10:26:23.473031"
+        # create an instance of RunfolderProcessor
+        # Using the testing folder run below
+        folder = '999999_NB552085_0077_AHYNCMAFXY'
+        # set monkeypatch to change the pointer of RunfodlerProcessor to MockRunfolderProcessor 
+        self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
+        test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
+        # run the test input from mio
+        expected_nexus_project_name = test_runfolder_instance.build_nexus_project_name(mio.wes_number, mio.library_batch)
+        # assert outputs
+        self.assertEqual (expected_nexus_project_name, mio.nexus_project_name)
+
+    def test_capture_any_WES_batch_numbers(self):
+        now = "2018-03-29 10:26:23.473031"
+        # create an instance of RunfolderProcessor
+        # Using the testing folder run below
+        folder = '999999_NB552085_0077_AHYNCMAFXY'
+        # set monkeypatch to change the pointer of RunfodlerProcessor to MockRunfolderProcessor 
+        self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
+        test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
+        # call the method using test data 
+        expected_wes_numbers = test_runfolder_instance.capture_any_WES_batch_numbers(mio.list_of_processed_samples)
+        # assert outputs
+        self.assertEqual (expected_wes_numbers, mio.wes_number)
