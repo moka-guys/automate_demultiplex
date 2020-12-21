@@ -37,7 +37,7 @@ with mock.patch.dict('sys.modules', automate_demultiplex_config= config):
 @pytest.fixture(scope='function')
 def test_runfolder():
     ''' This function creates an mock instance of RunfolderProcessor 
-        to be used in testing '''
+        to be used in testing as a function '''
     now = "2018-03-29 10:26:23.473031"
     folder = '999999_NB552085_0077_AHYNCMAFXY'
     monkeypatch = MonkeyPatch()
@@ -45,75 +45,43 @@ def test_runfolder():
     test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
     return test_runfolder_instance
 
-@pytest.mark.usefixtures('test_runfolder')
 # Call the test_runfolder function and 
 # apply it to all the tests in this class 
+@pytest.mark.usefixtures('test_runfolder')
 class TestUploadandSetoffWorkflows():
-
-
-    # def setUp(self):
-    # # Enable usage of monkeypatched classes across all unit tests in this test class 
-    #     self.monkeypatch = MonkeyPatch()
-
-    #     # unhash to see the full diff in command line  
-    #     #self.maxDiff = None
+    # unhash to see the full diff in command line  
+    #self.maxDiff = None
     
     def test_start_building_dx_run_cmds(self, test_runfolder):
-            
-        # now = "2018-03-29 10:26:23.473031"
-        # # create an instance of RunfolderProcessor
-        # # Using the testing folder run below
-        # folder = '999999_NB552085_0077_AHYNCMAFXY'
-        # # set monkeypatch to change the pointer of RunfodlerProcessor to MockRunfolderProcessor 
-        # self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
-        # test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
-        # run the test input from mio
+        # GIVEN a mock instance of RunFolderProcessor with known input data 
+        # WHEN this method is run
+        # THEN check if the returned list is equal to the test data 
         expected_list = test_runfolder.start_building_dx_run_cmds(mio.list_of_processed_samples)
-        # check if output of method matches known true output
-        # use set to check if all the elements of the list are present 
-        # but disregard the order
         assert set(expected_list) == set(mio.test_output_commands_list)
  
            
     def test_find_fastqs(self, test_runfolder):
-        # now = "2018-03-29 10:26:23.473031"
-        # # create an instance of RunfolderProcessor
-        # # Using the testing folder run below
-        # folder = '999999_NB552085_0077_AHYNCMAFXY'
-        # # set monkeypatch to change the pointer of RunfodlerProcessor to MockRunfolderProcessor 
-        # self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
-        # test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
-        # run the test input from mio
-        expected_list_of_processed_samples, expected_fastq_string = test_runfolder.find_fastqs(mio.runfolder_fastq_path)
-        # compare the characters in each string 
-        # ingore the order 
+        # GIVEN a mock instance of RunFolderProcessor with known input data 
+        # WHEN this method is run
+        # THEN compare the characters in each string, ingore the order
+        # this step is needed for tests to function in GitHub Actions 
+        # as well as locally
+        expected_list_of_processed_samples, expected_fastq_string = test_runfolder.find_fastqs(mio.runfolder_fastq_path) 
         assert ''.join(sorted(expected_fastq_string)).strip() == ''.join(sorted(mio.test_fastq_string)).strip()
-        # use set to check if all the elements of the list are present 
-        # but disregard the order
         assert set(expected_list_of_processed_samples) == set(mio.list_of_processed_samples)
 
     def test_build_nexus_project_name(self, test_runfolder):
-        # now = "2018-03-29 10:26:23.473031"
-        # # create an instance of RunfolderProcessor
-        # # Using the testing folder run below
-        # folder = '999999_NB552085_0077_AHYNCMAFXY'
-        # # set monkeypatch to change the pointer of RunfodlerProcessor to MockRunfolderProcessor 
-        # self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
-        # test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
-        # # run the test input from mio
+        # GIVEN a mock instance of RunFolderProcessor with known input data  
+        # WHEN this method is run
+        # THEN check if the returned list is equal to the test data 
         expected_nexus_project_name = test_runfolder.build_nexus_project_name(mio.wes_number, mio.library_batch)
-        # assert outputs
         assert expected_nexus_project_name == mio.nexus_project_name
 
     def test_capture_any_WES_batch_numbers(self, test_runfolder):
-        # now = "2018-03-29 10:26:23.473031"
-        # # create an instance of RunfolderProcessor
-        # # Using the testing folder run below
-        # folder = '999999_NB552085_0077_AHYNCMAFXY'
-        # # set monkeypatch to change the pointer of RunfodlerProcessor to MockRunfolderProcessor 
-        # self.monkeypatch.setattr(__name__+  '.RunfolderProcessor', MockRunfolderProcessor)
-        # test_runfolder_instance =  RunfolderProcessor(folder, now, debug_mode=config.debug)
-        # # call the method using test data 
+        # GIVEN a mock instance of RunFolderProcessor with known input data 
+        # WHEN this method is run 
+        # THEN check if the returned list is equal to the test data 
         expected_wes_numbers = test_runfolder.capture_any_WES_batch_numbers(mio.list_of_processed_samples)
-        # assert outputs
         assert expected_wes_numbers == mio.wes_number
+
+ 
