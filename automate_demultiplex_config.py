@@ -17,9 +17,9 @@ debug = False
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
 # # path to run folders
-runfolders = "/media/data3/share"
+#runfolders = "/media/data3/share"
 # when testing use a different directory
-#runfolders = "/media/data3/share/testing"
+runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -98,16 +98,16 @@ upload_agent_expected_stdout = "Upload Agent Version:"
 
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
-# audit trail ID for Mokapipe & sapientia
-mokapipe_sapientia_pipeline_ID = "4165"
+# audit trail ID for Mokapipe & congenica
+mokapipe_congenica_pipeline_ID = "4273"
 # audit trail ID for Mokapipe & IVA
 mokapipe_iva_pipeline_ID = "4164"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4160"
 # MokaAMP ID
-mokaamp_pipeline_ID = "4236"
+mokaamp_pipeline_ID = "4274"
 # MokaONC ID
-mokaonc_pipeline_ID = "2405"
+mokaonc_pipeline_ID = "4275"
 
 
 # -- Moka WES test status--
@@ -132,15 +132,15 @@ mokapipe_path = "Workflows/GATK3.5_v2.12"
 mokawes_path = "Workflows/MokaWES_v1.8"
 
 # path to the oncology workflow in the app project
-mokaonc_path = "Workflows/Mokaonc_v1.4"
+mokaonc_path = "Workflows/Mokaonc_v1.5"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.4"
+mokaamp_path = "Workflows/MokaAMP_v1.5"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.12"
-# path to sentieon upload app
-sapientia_app_path = "Apps/sapientia_upload_v1.0"
+# path to congenica upload app
+congenica_app_path = "Apps/congenica_upload_v1.1"
 # path to iva upload app
 iva_app_path = "app-ingenuity_variant_transfer/1.0.6"
 
@@ -259,8 +259,8 @@ decision_support_tool_input_script = "decision_support_tool_inputs.py"
 mokawes_sentieon_bam_output_name = "mappings_realigned_bam"
 mokawes_sentieon_bai_output_name = "mappings_realigned_bai"
 mokawes_sentieon_vcf_output_name = "variants_vcf"
-sapientia_vcf_inputname = " -ivcf="
-sapientia_bam_inputname = " -ibam="
+congenica_vcf_inputname = " -ivcf="
+congenica_bam_inputname = " -ibam="
 iva_vcf_inputname = " -ivcfs="
 iva_bam_inputname = " -ibam_files="
 iva_bai_inputname = " -ibai_files="
@@ -305,11 +305,12 @@ default_panel_properties = {
     "capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
     "mokaonc": False,
     "mokapipe": False,
-    "mokapipe_haplotype_caller_padding": False,
+    "mokapipe_haplotype_caller_padding": 0,
     "mokaamp_varscan_strandfilter": True,
     "iva_upload": False,
-    "sapientia_upload": False,
+    "congenica_upload": False,
     "oncology": False,
+    "congenica_credentials": "Viapath", # "Viapath" OR "STG"
     "clinical_coverage_depth": None,  # only found in mokamp command
     "multiqc_coverage_level": 30,
     # Note: hsmetrics_bedfile only used when BED file name differs from Pan number
@@ -319,7 +320,7 @@ default_panel_properties = {
     # Note: sambamba_bedfile only used when BED file differs from Pan number
     "sambamba_bedfile": None,
     "ingenuity_email": interpretation_request_email,
-    "sapientia_project": None,
+    "congenica_project": None,
     "peddy": False,
 }
 
@@ -350,14 +351,14 @@ panel_settings = {
         "ingenuity_email": oncology_IVA_email,
         "clinical_coverage_depth": 1000,
         "multiqc_coverage_level": 100,
-        "iva_upload": True,
+        "iva_upload": False,
     },
     "Pan2684": {  # 57G panel
         "RPKM_bedfile_pan_number": None,
         "mokaamp": True,
         "oncology": True,
         "capture_type": "Amplicon",
-        "iva_upload": True,
+        "iva_upload": False,
         "clinical_coverage_depth": 600,  # only found in mokamp command
         "multiqc_coverage_level": 100,
         "ingenuity_email": oncology_IVA_email,
@@ -374,8 +375,9 @@ panel_settings = {
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan1450",
         "RPKM_also_analyse": ["Pan1449"],
-        "sapientia_upload": True,
-        "sapientia_project": "1099",
+        "congenica_upload": True,
+        "congenica_credentials": "STG",
+        "congenica_project": "1099",
         "hsmetrics_bedfile": "Pan1449data.bed",
         "mokapipe_haplotype_caller_padding":1,
         "variant_calling_bedfile": "Pan1449data.bed",
@@ -404,27 +406,30 @@ panel_settings = {
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3624",
-        "RPKM_also_analyse": ["Pan4003"],
-        "sapientia_upload": True,
-        "sapientia_project": "4203",
+        "RPKM_also_analyse": ["Pan4099"],
+        "congenica_upload": True,
+        "congenica_credentials": "STG",
+        "congenica_project": "4203",
         "hsmetrics_bedfile": "Pan4003data.bed",
         "variant_calling_bedfile": "Pan4003data.bed",
         "sambamba_bedfile": "Pan4003dataSambamba.bed",
+        "STG": True,
     },
     "Pan4011": {  # VCP2 viapath
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3614",
-        "RPKM_also_analyse": ["Pan4042","Pan4049"],
+        "RPKM_also_analyse": ["Pan4042", "Pan4049"],
         "iva_upload": True,
     },
     "Pan4042": {  # VCP2 STG BRCA
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3614",
-        "RPKM_also_analyse": ["Pan4011","Pan4049"],
-        "sapientia_upload": True,
-        "sapientia_project": "1099",
+        "RPKM_also_analyse": ["Pan4011", "Pan4049"],
+        "congenica_upload": True,
+        "congenica_credentials": "STG",
+        "congenica_project": "1099",
         "mokapipe_haplotype_caller_padding":1,
         "hsmetrics_bedfile": "Pan4011data.bed",
         "variant_calling_bedfile": "Pan4011data.bed",
@@ -434,9 +439,10 @@ panel_settings = {
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3614",
-        "RPKM_also_analyse": ["Pan4011","Pan4042"],
-        "sapientia_upload": True,
-        "sapientia_project": "4202",
+        "RPKM_also_analyse": ["Pan4011", "Pan4042"],
+        "congenica_upload": True,
+        "congenica_credentials": "STG",
+        "congenica_project": "4202",
         "mokapipe_haplotype_caller_padding":1,
         "hsmetrics_bedfile": "Pan4011data.bed",
         "variant_calling_bedfile": "Pan4011data.bed",
@@ -453,9 +459,10 @@ panel_settings = {
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3974",
-        "RPKM_also_analyse": ["3973"],
-        "sapientia_upload": True,
-        "sapientia_project": "4201",
+        "RPKM_also_analyse": ["4100","4098"],
+        "congenica_credentials": "STG",
+        "congenica_upload": True,
+        "congenica_project": "4201",
         "mokapipe_haplotype_caller_padding":1,
         "hsmetrics_bedfile": "Pan3973data.bed",
         "variant_calling_bedfile": "Pan3973data.bed",
@@ -466,6 +473,30 @@ panel_settings = {
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan2000",
         "iva_upload": True,
+    },
+    "Pan4098": {  # VCP3_CMD_R79 CMD_GreenV2.4_full_SNV
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan1974",
+        "congenica_upload": True,
+        "congenica_project": "4666",
+        "RPKM_also_analyse": ["4100","4043"]
+    },
+    "Pan4099": {  # VCP1_FH_R134 Full_SNV_FH_Greenv1.2
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "congenica_upload": True,
+        "congenica_project": "4664",
+        "RPKM_also_analyse": ["Pan4044"],
+        "RPKM_bedfile_pan_number": "Pan3624",
+    },
+    "Pan4100": {  # VCP3_CM_R81 Cmyo_GreenV2.10_full_SNV
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "congenica_upload": True,
+        "congenica_project": "4666",
+        "RPKM_also_analyse": ["4098","4043"],
+        "RPKM_bedfile_pan_number": "Pan1974",
     },
     "Pan1158": {  # NGSEQ2
         "mokapipe": True,
@@ -488,7 +519,7 @@ panel_settings = {
         "ingenuity_email": wes_email_address,
         "peddy": True,
     },
-        "Pan3174": {  # TWIST WES TRIO at GSTT
+    "Pan3174": {  # TWIST WES TRIO at GSTT
         "mokawes": True,
         "iva_upload": True,
         "multiqc_coverage_level": 20,
