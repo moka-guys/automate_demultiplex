@@ -100,8 +100,6 @@ upload_agent_expected_stdout = "Upload Agent Version:"
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
 mokapipe_congenica_pipeline_ID = "4273"
-# audit trail ID for Mokapipe & IVA
-mokapipe_iva_pipeline_ID = "4164"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4160"
 # MokaAMP ID
@@ -141,8 +139,6 @@ peddy_path = "Apps/peddy_v1.5"
 multiqc_path = "Apps/multiqc_v1.12"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.1"
-# path to iva upload app
-iva_app_path = "app-ingenuity_variant_transfer/1.0.6"
 
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.3"
@@ -170,7 +166,6 @@ mokapipe_sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # S
 mokapipe_mokapicard_vendorbed_input = (
     " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 )
-mokapipe_iva_email_input = " -istage-Byz9Bj80jy1k2VB9xVXBp0Fp.email="  # ingenuity email address
 mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
 mokapipe_haplotype_bedfile_input = " -i" +mokapipe_gatk_human_exome_stage + ".bedfile="
 mokapipe_vcf_output_name = "vcf"
@@ -261,12 +256,6 @@ mokawes_sentieon_bai_output_name = "mappings_realigned_bai"
 mokawes_sentieon_vcf_output_name = "variants_vcf"
 congenica_vcf_inputname = " -ivcf="
 congenica_bam_inputname = " -ibam="
-iva_vcf_inputname = " -ivcfs="
-iva_bam_inputname = " -ibam_files="
-iva_bai_inputname = " -ibai_files="
-iva_email_input_name = " -iemail="
-iva_reference_inputname = " -ireference_genome_name="
-iva_reference_default = "GRCh37"
 
 
 # =====List of all panel numbers=====
@@ -328,47 +317,38 @@ default_panel_properties = {
 panel_settings = {
     "Pan493": { # WES agilent
         "mokawes": True,
-        "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed",
         "variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
-        "ingenuity_email": wes_email_address,
         "peddy": True,
     },
     "Pan2835": {  # TWIST WES at GSTT
         "mokawes": True,
-        "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
         "sambamba_bedfile": "Pan493dataSambamba.bed",
-        "ingenuity_email": wes_email_address,
         "peddy": True,
     },
     "Pan1190": {  # EGFR SWIFT Panel
         "oncology": True,
         "mokaonc": True,
         "capture_type": "Amplicon",
-        "ingenuity_email": oncology_IVA_email,
         "clinical_coverage_depth": 1000,
-        "multiqc_coverage_level": 100,
-        "iva_upload": False,
+        "multiqc_coverage_level": 100
     },
     "Pan2684": {  # 57G panel
         "RPKM_bedfile_pan_number": None,
         "mokaamp": True,
         "oncology": True,
         "capture_type": "Amplicon",
-        "iva_upload": False,
         "clinical_coverage_depth": 600,  # only found in mokamp command
         "multiqc_coverage_level": 100,
-        "ingenuity_email": oncology_IVA_email,
     },
     "Pan1449": {  # germline BRCA
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan1450",
         "RPKM_also_analyse": ["Pan3648"],
-        "iva_upload": True,
     },
     "Pan3648": {  # STG germline BRCA
         "mokapipe": True,
@@ -387,20 +367,17 @@ panel_settings = {
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan1064",
-        "iva_upload": True,
     },
     "Pan2022": {  # CMCMD
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan1974",
-        "iva_upload": True,
     },
     "Pan4003": {  # VCP1 viapath
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3624",
         "RPKM_also_analyse": ["Pan4044"],
-        "iva_upload": True,
     },
     "Pan4044": {  # VCP1 STG
         "mokapipe": True,
@@ -420,7 +397,6 @@ panel_settings = {
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3614",
         "RPKM_also_analyse": ["Pan4042", "Pan4049"],
-        "iva_upload": True,
     },
     "Pan4042": {  # VCP2 STG BRCA
         "mokapipe": True,
@@ -453,7 +429,6 @@ panel_settings = {
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3974",
         "RPKM_also_analyse": ["4043"],
-        "iva_upload": True,
     },
     "Pan4043": {  # VCP3 STG
         "mokapipe": True,
@@ -472,7 +447,6 @@ panel_settings = {
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan2000",
-        "iva_upload": True,
     },
     "Pan4098": {  # VCP3_CMD_R79 CMD_GreenV2.4_full_SNV
         "mokapipe": True,
@@ -502,30 +476,24 @@ panel_settings = {
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan2023",
-        "iva_upload": True,
     },
     "Pan1159": {  # NGSEQ3
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan1973",
-        "iva_upload": True,
     },
     "Pan1646": {  # ICTHYOSIS - use same settings as WES and Pan1646 for coverage
         "mokawes": True,
-        "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "agilent_sureselect_human_all_exon_v5_b37_targets.bed",
         "variant_calling_bedfile": "agilent_sureselect_human_all_exon_v5_b37_padded.bed",
-        "ingenuity_email": wes_email_address,
         "peddy": True,
     },
     "Pan3174": {  # TWIST WES TRIO at GSTT
         "mokawes": True,
-        "iva_upload": True,
         "multiqc_coverage_level": 20,
         "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
         "sambamba_bedfile": "Pan493dataSambamba.bed",
-        "ingenuity_email": wes_email_address,
         "peddy": True,
     },
 }

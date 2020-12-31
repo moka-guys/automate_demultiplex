@@ -1030,10 +1030,10 @@ class RunfolderProcessor(object):
                         peddy = True
                     if self.panel_dictionary[panel]["joint_variant_calling"]:
                         joint_variant_calling = True
-                    # Add command for iva
-                    if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_input_command())
-                        commands_list.append(self.run_iva_command(fastq, panel))
+                    # # Add command for iva
+                    # if self.panel_dictionary[panel]["iva_upload"]:
+                    #     commands_list.append(self.build_iva_input_command())
+                    #     commands_list.append(self.run_iva_command(fastq, panel))
                     # TODO add congenica command  for mokawes
 
                 # If panel is to be processed using mokapipe
@@ -1041,11 +1041,11 @@ class RunfolderProcessor(object):
                     # call function to build the Mokapipe command and add to command list and depends list
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
-                    # Add command for iva or congenica
-                    if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_input_command())
-                        commands_list.append(self.run_iva_command(fastq, panel))
-                        #commands_list.append(self.add_to_depends_list(fastq))
+                    # # Add command for iva or congenica
+                    # if self.panel_dictionary[panel]["iva_upload"]:
+                    #     commands_list.append(self.build_iva_input_command())
+                    #     commands_list.append(self.run_iva_command(fastq, panel))
+                    #     #commands_list.append(self.add_to_depends_list(fastq))
                     if self.panel_dictionary[panel]["congenica_upload"]:
                         congenica_upload = True
                         commands_list.append(self.build_congenica_input_command())
@@ -1729,9 +1729,7 @@ class RunfolderProcessor(object):
                 # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["congenica_upload"]:
                     queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_congenica_pipeline_ID,self.runfolder_obj.runfolder_name))
-                # if the pan number was processed using mokapipe and iva add the query to list of queries, capturing the DNA number from the fastq name
-                if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["iva_upload"]:
-                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_iva_pipeline_ID,self.runfolder_obj.runfolder_name))
+
         if queries:
             # add workflow to sql dictionary
             return {"count": len(queries), "query": queries}
