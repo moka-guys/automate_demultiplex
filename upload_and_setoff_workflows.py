@@ -1415,7 +1415,7 @@ class RunfolderProcessor(object):
         doesn't run until the vcfs have been created.
         These inputs are created by a python script, which is called immediately before this job,
         and the output is captures into the variable $analysisid
-        The panel dictionary in the config file is used to determine the congenica project and credentials file
+        The panel dictionary in the config file is used to determine the congenica project, IR template and credentials file
         This command is appended to a file which will be run after the QC is passed.
         Returns = dx run command for congenica import app (string)
         """
@@ -1429,6 +1429,8 @@ class RunfolderProcessor(object):
             + self.panel_dictionary[pannumber]["congenica_project"]
             + " -icredentials="
             + self.panel_dictionary[pannumber]["congenica_credentials"]
+            + " -iIR_template="
+            + self.panel_dictionary[pannumber]["congenica_IR_template"]
             + " --name "
             + "congenica_"
             + fastqs[2]
