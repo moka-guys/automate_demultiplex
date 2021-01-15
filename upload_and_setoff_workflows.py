@@ -968,7 +968,7 @@ class RunfolderProcessor(object):
         else:
             bed_dict["variant_calling_bedfile"] = None
         
-        # paired end BED file used by BAMClipper
+        # paired end BED file used by primer clipping tool
         bed_dict["mokaamp_bed_PE_input"] = (
             config.app_project + config.bedfile_folder + pannumber + "_PE.bed"
         )
@@ -1376,16 +1376,9 @@ class RunfolderProcessor(object):
         # call function to return all the bedfile paths
         bedfiles = self.nexus_bedfiles(pannumber)
 
-        # Samples with different pannumbers can be included in the same RPKM analysis.
+        # Samples with different pannumbers can be included in the same RPKM analysis (defined in config).
         # The app takes these pan numbers as a string, and will seperate on commas to identify multiple pan numbers
-        # Multiple pannumbers are specified in the panel dictionary as a list under "RPKM_also_analyse"
-        string_of_pannumbers_to_analyse = pannumber
-        if self.panel_dictionary[pannumber]["RPKM_also_analyse"]:
-            string_of_pannumbers_to_analyse = (
-                string_of_pannumbers_to_analyse
-                + ","
-                + ",".join(self.panel_dictionary[pannumber]["RPKM_also_analyse"])
-            )
+        string_of_pannumbers_to_analyse = ",".join(set(self.panel_dictionary[pannumber]["RPKM_also_analyse"]))
 
         # build RPKM command
         dx_command = (
