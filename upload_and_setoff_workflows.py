@@ -795,7 +795,7 @@ class RunfolderProcessor(object):
             strings (debug mode only).
         """
         upload_agent_stdout_path, file_list, stage = upload_module_output
-        # if the stage = skip_upload_error_check
+        # This check is not always required, such as when optional files (eg the lane metrics) are not created so allow a new stage to be used to skip testing.
         if not stage == "skip_upload_error_check":
             # list to hold any files with issues
             issue_list=[]
@@ -850,7 +850,7 @@ class RunfolderProcessor(object):
         # build the nexus upload command
         file_list = [os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.cluster_density_file_suffix)),
             os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.phasing_metrics_file_suffix))]
-        # check if the cluster density files exist - if they don't the script will fail when trying to upload them.
+        # check if the cluster density files exist before trying to upload- if they don't the script will fail when trying to upload them.
         if all([os.path.isfile(f) for f in file_list]):
             nexus_upload_command = (
                 self.restart_ua_1
