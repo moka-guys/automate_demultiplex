@@ -92,8 +92,8 @@ class RunfolderObject(object):
         self.runfolder_dx_run_script = (
             config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_dx_run_commands.sh"
         )
-        self.sapientia_upload_command_script = (
-            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_sapientia_upload_commands.sh"
+        self.congenica_upload_command_script = (
+            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_congenica_upload_commands.sh"
         )
         self.nexus_project_name = ""
         self.nexus_path = ""
@@ -158,15 +158,15 @@ class RunfolderProcessor(object):
                 config.decision_support_tool_input_script,
             )
         )
-        self.sapientia_upload_command = (
-            "echo 'dx run " + config.app_project + config.sapientia_app_path + " -y "
+        self.congenica_upload_command = (
+            "echo 'dx run " + config.app_project + config.congenica_app_path + " -y "
         )
-        # create filepath for file to hold sapientia command(s)
-        self.sapientia_upload_command_script_path = (
-            config.DNA_Nexus_workflow_logfolder + self.runfolder_obj.runfolder_name + "_sapientia.sh"
+        # create filepath for file to hold congenica command(s)
+        self.congenica_upload_command_script_path = (
+            config.DNA_Nexus_workflow_logfolder + self.runfolder_obj.runfolder_name + "_congenica.sh"
         )
         # string to redirect command (with variables) into file
-        self.sapientia_upload_command_redirect = "' >> " + self.sapientia_upload_command_script_path
+        self.congenica_upload_command_redirect = "' >> " + self.congenica_upload_command_script_path
 
         self.iva_upload_command = "sleep 5;jobid=$(dx run " + config.iva_app_path + " -y "
         # project to upload run folder into
@@ -380,7 +380,7 @@ class RunfolderProcessor(object):
             if not re.search(config.demultiplex_success_match, test_input):
                 return False
         if test == "cluster_density":
-            if config.cluster_density_success_statement not in test_input:
+            if config.cluster_density_success_statement not in test_input or config.cluster_density_error_statement in test_input:
                 return False
         return True
 
@@ -471,18 +471,16 @@ class RunfolderProcessor(object):
         ./gatk CollectIlluminaLaneMetrics \
         --RUN_DIRECTORY /input_run \
         --OUTPUT_DIRECTORY /input_run \
-        --OUTPUT_PREFIX {}".format(runfolder_path,runfolder_name)
+        --OUTPUT_PREFIX {}".format(runfolder_path, runfolder_name)
         # capture stdout and stderr
         # NB all output from picard tool is in stderr
         (out, err) = self.execute_subprocess_command(cmd)
         # assess stderr , looking for expected success statement
-        if self.perform_test(err,"cluster_density"):
-            self.loggers.script.info("Cluster density calculation saved to {}".format(runfolder_name+config.cluster_density_file_suffix))
+        if self.perform_test(err, "cluster_density"):
+            self.loggers.script.info("Cluster density calculation saved to {}".format(runfolder_name + config.cluster_density_file_suffix))
         # raise slack alert if success statement not present.
         else:
             self.loggers.script.error("UA_fail 'Cluster density calculation failed for : {}'".format(self.runfolder_obj.runfolder_name))
-            
-
 
     def find_fastqs(self, runfolder_fastq_path):
         """
@@ -771,7 +769,7 @@ class RunfolderProcessor(object):
         if self.debug_mode:
             return nexus_upload_command, self.fastq_string, "fastq"
 
-        # Log fastq upload command to the uplaod agent logfile
+        # Log fastq upload command to the upload agent logfile
         self.loggers.upload_agent.info("Fastq upload commands:\n{}".format(nexus_upload_command))
         # write to automated script logfile
         self.loggers.script.info(
@@ -797,44 +795,46 @@ class RunfolderProcessor(object):
             strings (debug mode only).
         """
         upload_agent_stdout_path, file_list, stage = upload_module_output
-        # list to hold any files with issues
-        issue_list=[]
-        # for each file in the list to upload
-        for file in file_list:
-            # set flag to say upload unsuccessful
-            upload_ok=False
-            # loop through log file - if it's a line relating to this fastq check it's uploaded successfully.
-            for line in open(upload_agent_stdout_path).readlines():
-                if file in line and "was uploaded successfully. Closing..." in line:
-                    upload_ok = True
-            # if at the end of the file there was no success statement found
-            if not upload_ok:
-                issue_list.append(file)
-        
-        # Report back if ok, not ok with/without debug mode
-        if issue_list and self.debug_mode:
-            return  "fail"
-        elif issue_list:
-            self.loggers.script.error(
-                "UA_fail 'upload of {} files failed for run {}'".format(
-                    stage, self.runfolder_obj.runfolder_name
+        # This check is not always required, such as when optional files (eg the lane metrics) are not created so allow a new stage to be used to skip testing.
+        if not stage == "skip_upload_error_check":
+            # list to hold any files with issues
+            issue_list=[]
+            # for each file in the list to upload
+            for file in file_list:
+                # set flag to say upload unsuccessful
+                upload_ok=False
+                # loop through log file - if it's a line relating to this fastq check it's uploaded successfully.
+                for line in open(upload_agent_stdout_path).readlines():
+                    if file in line and "was uploaded successfully. Closing..." in line:
+                        upload_ok = True
+                # if at the end of the file there was no success statement found
+                if not upload_ok:
+                    issue_list.append(file)
+            
+            # Report back if ok, not ok with/without debug mode
+            if issue_list and self.debug_mode:
+                return  "fail"
+            elif issue_list:
+                self.loggers.script.error(
+                    "UA_fail 'upload of {} files failed for run {}'".format(
+                        stage, self.runfolder_obj.runfolder_name
+                        )
+                    )
+                self.loggers.script.error(
+                    "UA_fail 'following files were not uploaded {}'".format(
+                        issue_list
+                        )
+                    )
+            # if no error but debug
+            elif not issue_list and self.debug_mode:
+                return "no error"
+            # if no error and not debug write to log file check was ok
+            else:
+                self.loggers.script.info(
+                    "UA_pass 'upload of files complete for run {}'".format(
+                        self.runfolder_obj.runfolder_name
                     )
                 )
-            self.loggers.script.error(
-                "UA_fail 'following files were not uploaded {}'".format(
-                    issue_list
-                    )
-                )
-        # if no error but debug
-        elif not issue_list and self.debug_mode:
-            return "no error"
-        # if no error and not debug write to log file check was ok
-        else:
-            self.loggers.script.info(
-                "UA_pass 'upload of files complete for run {}'".format(
-                    self.runfolder_obj.runfolder_name
-                )
-            )
 
     def upload_cluster_density(self):
         """
@@ -850,34 +850,38 @@ class RunfolderProcessor(object):
         # build the nexus upload command
         file_list = [os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.cluster_density_file_suffix)),
             os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.phasing_metrics_file_suffix))]
+        # check if the cluster density files exist before trying to upload- if they don't the script will fail when trying to upload them.
+        if all([os.path.isfile(f) for f in file_list]):
+            nexus_upload_command = (
+                self.restart_ua_1
+                + config.upload_agent_path
+                + " --auth-token "
+                + config.Nexus_API_Key
+                + " --project "
+                + self.runfolder_obj.nexus_project_name
+                + "  --folder /QC"
+                + " --do-not-compress --upload-threads 10 "
+                + " ".join(file_list)
+                + self.restart_ua_2  
+            )
+            if self.debug_mode:
+                return nexus_upload_command
 
-        nexus_upload_command = (
-            self.restart_ua_1
-            + config.upload_agent_path
-            + " --auth-token "
-            + config.Nexus_API_Key
-            + " --project "
-            + self.runfolder_obj.nexus_project_name
-            + "  --folder /QC"
-            + " --do-not-compress --upload-threads 10 "
-            + " ".join(file_list)
-            + self.restart_ua_2  
-        )
-        if self.debug_mode:
-            return nexus_upload_command
+            # Log fastq upload command to the upload agent logfile
+            self.loggers.upload_agent.info("Upload cluster density commands:\n{}".format(nexus_upload_command))
+            # write to automated script logfile
+            self.loggers.script.info(
+                "Uploading cluster density files. See commands at {}".format(self.loggers.upload_agent.filepath)
+            )
 
-        # Log fastq upload command to the uplaod agent logfile
-        self.loggers.upload_agent.info("Upload cluster density commands:\n{}".format(nexus_upload_command))
-        # write to automated script logfile
-        self.loggers.script.info(
-            "Uploading cluster density files. See commands at {}".format(self.loggers.upload_agent.filepath)
-        )
-
-        # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
-        out, err = self.execute_subprocess_command(nexus_upload_command)
-        self.loggers.upload_agent.info("Uploading cluster density files\n{}\n{}".format(out, err))
-        return self.loggers.upload_agent.filepath, file_list, "cluster density"
-
+            # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
+            out, err = self.execute_subprocess_command(nexus_upload_command)
+            self.loggers.upload_agent.info("Uploading cluster density files\n{}\n{}".format(out, err))
+            return self.loggers.upload_agent.filepath, file_list, "cluster density"
+        # if the cluster density files do not exist skip the upload and return a string which skip the look_for_upload_errors checks.
+        else:
+            self.loggers.script.info("UA_pass 'skipping upload of cluster density files - not all files present'")
+            return None, None, "skip_upload_error_check"
     
 
     def nexus_fastq_paths(self, read1):
@@ -968,7 +972,7 @@ class RunfolderProcessor(object):
         else:
             bed_dict["variant_calling_bedfile"] = None
         
-        # paired end BED file used by BAMClipper
+        # paired end BED file used by primer clipping tool
         bed_dict["mokaamp_bed_PE_input"] = (
             config.app_project + config.bedfile_folder + pannumber + "_PE.bed"
         )
@@ -1007,7 +1011,7 @@ class RunfolderProcessor(object):
         # lists/flags for run wide commands
         mokaonc_list = [] 
         peddy = False
-        sapientia_upload = False
+        congenica_upload = False
         joint_variant_calling = False # not currently in use
         rpkm_list = [] # list for panels needing RPKM analysis
 
@@ -1030,26 +1034,26 @@ class RunfolderProcessor(object):
                         peddy = True
                     if self.panel_dictionary[panel]["joint_variant_calling"]:
                         joint_variant_calling = True
-                    # Add command for iva
-                    if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_input_command())
-                        commands_list.append(self.run_iva_command(fastq, panel))
-                    # TODO add sapientia command  for mokawes
+                    # # Add command for iva
+                    # if self.panel_dictionary[panel]["iva_upload"]:
+                    #     commands_list.append(self.build_iva_input_command())
+                    #     commands_list.append(self.run_iva_command(fastq, panel))
+                    # TODO add congenica command  for mokawes
 
                 # If panel is to be processed using mokapipe
                 if self.panel_dictionary[panel]["mokapipe"]:
                     # call function to build the Mokapipe command and add to command list and depends list
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
-                    # Add command for iva or sapientia
-                    if self.panel_dictionary[panel]["iva_upload"]:
-                        commands_list.append(self.build_iva_input_command())
-                        commands_list.append(self.run_iva_command(fastq, panel))
-                        #commands_list.append(self.add_to_depends_list(fastq))
-                    if self.panel_dictionary[panel]["sapientia_upload"]:
-                        sapientia_upload = True
-                        commands_list.append(self.build_sapientia_input_command())
-                        commands_list.append(self.run_sapientia_command(fastq, panel))
+                    # # Add command for iva or congenica
+                    # if self.panel_dictionary[panel]["iva_upload"]:
+                    #     commands_list.append(self.build_iva_input_command())
+                    #     commands_list.append(self.run_iva_command(fastq, panel))
+                    #     #commands_list.append(self.add_to_depends_list(fastq))
+                    if self.panel_dictionary[panel]["congenica_upload"]:
+                        congenica_upload = True
+                        commands_list.append(self.build_congenica_input_command())
+                        commands_list.append(self.run_congenica_command(fastq, panel))
                         #commands_list.append(self.add_to_depends_list(fastq))
                     # add panel to RPKM list 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
@@ -1064,11 +1068,11 @@ class RunfolderProcessor(object):
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
         
-        # if there is a sapientia uplaod create the file which will be run manually, once QC is passed.
-        if sapientia_upload:
-            self.build_sapientia_command_file()
-            # write to logger to create slack alert that there are some sapientia files to upload
-            self.loggers.script.info("Sapientia samples to upload in project {}".format(
+        # if there is a congenica upload create the file which will be run manually, once QC is passed.
+        if congenica_upload:
+            self.build_congenica_command_file()
+            # write to logger to create slack alert that there are some congenica files to upload
+            self.loggers.script.info("Congenica samples to upload in project {}".format(
                     self.runfolder_obj.nexus_project_name
                 )
             )
@@ -1151,14 +1155,11 @@ class RunfolderProcessor(object):
         fastqs = self.nexus_fastq_paths(fastq)
         bedfiles = self.nexus_bedfiles(pannumber)
 
-        # bedfiles aren't usually provided to mokapipe variant calling but this is required for sapientia
-        # STG require padding of +/- 11bp (bed files are padded +/-10bp) so may need to utilise the Haplotype caller padding argument.
-        
-        if self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"]:
-            mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input +\
-                str(self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"])
-        else:
-            mokapipe_padding_cmd = ""
+        # Congenica requires variant calling to be restricted in the pipeline, in some cases to prevent incidental findings
+        # The variant caller pads bed files by 100bp by default so this may need to be overruled.
+        # The panel dictionary default is to give a value of 0, which turns off this padding.
+        # An example of the use of this is for STG BrCa who require padding of +/- 11bp (bed files are padded +/-10bp) so 1bp padding is applied.
+        mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input + str(self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"])
         
         if bedfiles["variant_calling_bedfile"]:
             bedfiles_string = (
@@ -1206,11 +1207,9 @@ class RunfolderProcessor(object):
             # add each as an input
             dx_command += config.mokaonc_fq_input + fastqs[0] + config.mokaonc_fq_input + fastqs[1]
 
-        # create the dx command include email address for ingenuity - NB only one panel is supported by MokaONC hense hard coded pan number
+        # create the dx command - NB only one panel is supported by MokaONC hense hard coded pan number
         command_out = (
             dx_command
-            + config.mokaonc_ingenuity
-            + self.panel_dictionary["Pan1190"]["ingenuity_email"]
             + self.dest
             + self.dest_cmd
             + "amplivar_output"
@@ -1238,20 +1237,20 @@ class RunfolderProcessor(object):
         )
         return dx_command
     
-    def build_sapientia_command_file(self):
+    def build_congenica_command_file(self):
         """
         Inputs = None
-        Create the file which will hold sapientia commands. 
+        Create the file which will hold congenica commands. 
         Write the source command, activating the environment (the sdk).
         Returns = None
         """
-        with open(self.sapientia_upload_command_script_path, "w") as sapientia_script:
-            sapientia_script.write(self.source_command + "\n")
+        with open(self.congenica_upload_command_script_path, "w") as congenica_script:
+            congenica_script.write(self.source_command + "\n")
 
-    def build_sapientia_input_command(self):
+    def build_congenica_input_command(self):
         """
         Inputs = None
-        Sapientia import app is outside out of the workflow.
+        congenica import app is outside out of the workflow.
         Inputs to the import can be provided in the format jobid.output name.
         Each workflow has a analysis-id so further steps are required to obtain the required job-id.
         A python script is run after each dx run command, taking the analysis id, project name and
@@ -1261,7 +1260,7 @@ class RunfolderProcessor(object):
         # $jobid is a bash variable which will be populated by when run on the command line
         # The python script has three inputs - the analysisID ($jobid), -t is the DSS and -p is the
         # DNA Nexus project the analysis is running in
-        dx_command = "%s $jobid -t sapientia -p %s)" % (
+        dx_command = "%s $jobid -t congenica -p %s)" % (
             self.decision_support_preperation,
             self.runfolder_obj.nexus_project_name,
         )
@@ -1326,7 +1325,7 @@ class RunfolderProcessor(object):
     def prepare_rpkm_list(self, rpkm_list):
         """
         Input = a list of panels which requires RPKM analysis
-        Pan numbers are used to distinguish between samples analysed in sapientia or in ingenuity.
+        Pan numbers are used to distinguish between samples analysed in congenica or in ingenuity.
         These samples have the same wetlab work so can be combined for RPKM analysis 
         This function determines if it's a pan number that can be analysed alongside another
         (using config bedfile property "RPKM_also_analyse")
@@ -1381,16 +1380,9 @@ class RunfolderProcessor(object):
         # call function to return all the bedfile paths
         bedfiles = self.nexus_bedfiles(pannumber)
 
-        # Samples with different pannumbers can be included in the same RPKM analysis.
+        # Samples with different pannumbers can be included in the same RPKM analysis (defined in config).
         # The app takes these pan numbers as a string, and will seperate on commas to identify multiple pan numbers
-        # Multiple pannumbers are specified in the panel dictionary as a list under "RPKM_also_analyse"
-        string_of_pannumbers_to_analyse = pannumber
-        if self.panel_dictionary[pannumber]["RPKM_also_analyse"]:
-            string_of_pannumbers_to_analyse = (
-                string_of_pannumbers_to_analyse
-                + ","
-                + ",".join(self.panel_dictionary[pannumber]["RPKM_also_analyse"])
-            )
+        string_of_pannumbers_to_analyse = ",".join(set(self.panel_dictionary[pannumber]["RPKM_also_analyse"]))
 
         # build RPKM command
         dx_command = (
@@ -1413,31 +1405,35 @@ class RunfolderProcessor(object):
         # TODO: Implement joint-variant calling command for peddy
         raise NotImplementedError
 
-    def run_sapientia_command(self, fastq, pannumber):
+    def run_congenica_command(self, fastq, pannumber):
         """
         Input = R1 fastq file name and pan number for a single sample
         The import saptientia app takes inputs in the format jobid.outputname which ensures the job
         doesn't run until the vcfs have been created.
         These inputs are created by a python script, which is called immediately before this job,
         and the output is captures into the variable $analysisid
-        The panel dictionary in the config file is used to determine the sapientia project
+        The panel dictionary in the config file is used to determine the congenica project, IR template and credentials file
         This command is appended to a file which will be run after the QC is passed.
-        Returns = dx run command for sapientia import app (string)
+        Returns = dx run command for congenica import app (string)
         """
         # the nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name 
         # The samplename (fastqs[2]) is used to name the job
         fastqs = self.nexus_fastq_paths(fastq)
 
         dx_command = (
-            self.sapientia_upload_command
-            + "' $analysisid ' -isapientia_project="
-            + self.panel_dictionary[pannumber]["sapientia_project"]
+            self.congenica_upload_command
+            + "' $analysisid ' -icongenica_project="
+            + self.panel_dictionary[pannumber]["congenica_project"]
+            + " -icredentials="
+            + self.panel_dictionary[pannumber]["congenica_credentials"]
+            + " -iIR_template="
+            + self.panel_dictionary[pannumber]["congenica_IR_template"]
             + " --name "
-            + "SAPIENTIA_"
+            + "congenica_"
             + fastqs[2]
             + self.dest
             + self.dest_cmd
-            + self.token.replace(")", self.sapientia_upload_command_redirect)
+            + self.token.replace(")", self.congenica_upload_command_redirect)
         )
         return dx_command
 
@@ -1729,12 +1725,10 @@ class RunfolderProcessor(object):
                 # extract_Pan number
                 pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
                 query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
-                # if the pan number was processed using mokapipe and sapientia, add the query to list of queries, capturing the DNA number from the fastq name
-                if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["sapientia_upload"]:
-                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_sapientia_pipeline_ID,self.runfolder_obj.runfolder_name))
-                # if the pan number was processed using mokapipe and iva add the query to list of queries, capturing the DNA number from the fastq name
-                if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["iva_upload"]:
-                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_iva_pipeline_ID,self.runfolder_obj.runfolder_name))
+                # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
+                if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["congenica_upload"]:
+                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_congenica_pipeline_ID,self.runfolder_obj.runfolder_name))
+
         if queries:
             # add workflow to sql dictionary
             return {"count": len(queries), "query": queries}

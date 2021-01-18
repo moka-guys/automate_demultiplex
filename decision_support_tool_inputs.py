@@ -35,9 +35,9 @@ def get_arguments():
     parser.add_argument(
         "-t",
         "--tool",
-        choices=["iva", "sapientia"],
+        choices=["iva", "congenica"],
         required=True,
-        help="decision support tool (iva or sapientia)",
+        help="decision support tool (iva or congenica)",
     )
     parser.add_argument(
         "-p",
@@ -163,15 +163,15 @@ class DecisionTooler(object):
         if tool == "iva":
             # IVA is simply passed the VCF
             print(" %s%s:%s" % (config.iva_vcf_inputname, jobid, workflow.vcf_out))
-        if tool == "sapientia":
+        if tool == "congenica":
             if workflow.name == "mokawes":
                 print(
                     " %s%s:%s%s%s:%s"
                     % (
-                        config.sapientia_vcf_inputname,
+                        config.congenica_vcf_inputname,
                         jobid,
                         workflow.vcf_out,
-                        config.sapientia_bam_inputname,
+                        config.congenica_bam_inputname,
                         jobid,
                         workflow.bam_out,
                     )
@@ -180,10 +180,10 @@ class DecisionTooler(object):
                 print(
                     " %s%s:%s%s%s:%s"
                     % (
-                        config.sapientia_vcf_inputname,
+                        config.congenica_vcf_inputname,
                         jobid,
                         workflow.vcf_out,
-                        config.sapientia_bam_inputname,
+                        config.congenica_bam_inputname,
                         pipe_bam_jobid,
                         workflow.bam_out,
                     )
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     )
 
     # Get settings for analysis panel (used to determine which workflow is running)
-    pannumber = re.search(r"Pan\d+", ajson["name"]).group() 
+    pannumber = re.search(r"Pan\d+", ajson["name"]).group()
     # using function imported from upload_and_setoff_workflow.py build the panel dict to be used to
     # determine the workflow etc
     paneldict = RunfolderProcessor.set_panel_dictionary()
