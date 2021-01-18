@@ -380,7 +380,7 @@ class RunfolderProcessor(object):
             if not re.search(config.demultiplex_success_match, test_input):
                 return False
         if test == "cluster_density":
-            if config.cluster_density_success_statement not in test_input:
+            if config.cluster_density_success_statement not in test_input or config.cluster_density_error_statement in test_input:
                 return False
         return True
 
@@ -471,18 +471,16 @@ class RunfolderProcessor(object):
         ./gatk CollectIlluminaLaneMetrics \
         --RUN_DIRECTORY /input_run \
         --OUTPUT_DIRECTORY /input_run \
-        --OUTPUT_PREFIX {}".format(runfolder_path,runfolder_name)
+        --OUTPUT_PREFIX {}".format(runfolder_path, runfolder_name)
         # capture stdout and stderr
         # NB all output from picard tool is in stderr
         (out, err) = self.execute_subprocess_command(cmd)
         # assess stderr , looking for expected success statement
-        if self.perform_test(err,"cluster_density"):
-            self.loggers.script.info("Cluster density calculation saved to {}".format(runfolder_name+config.cluster_density_file_suffix))
+        if self.perform_test(err, "cluster_density"):
+            self.loggers.script.info("Cluster density calculation saved to {}".format(runfolder_name + config.cluster_density_file_suffix))
         # raise slack alert if success statement not present.
         else:
             self.loggers.script.error("UA_fail 'Cluster density calculation failed for : {}'".format(self.runfolder_obj.runfolder_name))
-            
-
 
     def find_fastqs(self, runfolder_fastq_path):
         """
@@ -771,7 +769,7 @@ class RunfolderProcessor(object):
         if self.debug_mode:
             return nexus_upload_command, self.fastq_string, "fastq"
 
-        # Log fastq upload command to the uplaod agent logfile
+        # Log fastq upload command to the upload agent logfile
         self.loggers.upload_agent.info("Fastq upload commands:\n{}".format(nexus_upload_command))
         # write to automated script logfile
         self.loggers.script.info(
@@ -797,44 +795,46 @@ class RunfolderProcessor(object):
             strings (debug mode only).
         """
         upload_agent_stdout_path, file_list, stage = upload_module_output
-        # list to hold any files with issues
-        issue_list=[]
-        # for each file in the list to upload
-        for file in file_list:
-            # set flag to say upload unsuccessful
-            upload_ok=False
-            # loop through log file - if it's a line relating to this fastq check it's uploaded successfully.
-            for line in open(upload_agent_stdout_path).readlines():
-                if file in line and "was uploaded successfully. Closing..." in line:
-                    upload_ok = True
-            # if at the end of the file there was no success statement found
-            if not upload_ok:
-                issue_list.append(file)
-        
-        # Report back if ok, not ok with/without debug mode
-        if issue_list and self.debug_mode:
-            return  "fail"
-        elif issue_list:
-            self.loggers.script.error(
-                "UA_fail 'upload of {} files failed for run {}'".format(
-                    stage, self.runfolder_obj.runfolder_name
+        # if the stage = skip_upload_error_check
+        if not stage == "skip_upload_error_check":
+            # list to hold any files with issues
+            issue_list=[]
+            # for each file in the list to upload
+            for file in file_list:
+                # set flag to say upload unsuccessful
+                upload_ok=False
+                # loop through log file - if it's a line relating to this fastq check it's uploaded successfully.
+                for line in open(upload_agent_stdout_path).readlines():
+                    if file in line and "was uploaded successfully. Closing..." in line:
+                        upload_ok = True
+                # if at the end of the file there was no success statement found
+                if not upload_ok:
+                    issue_list.append(file)
+            
+            # Report back if ok, not ok with/without debug mode
+            if issue_list and self.debug_mode:
+                return  "fail"
+            elif issue_list:
+                self.loggers.script.error(
+                    "UA_fail 'upload of {} files failed for run {}'".format(
+                        stage, self.runfolder_obj.runfolder_name
+                        )
+                    )
+                self.loggers.script.error(
+                    "UA_fail 'following files were not uploaded {}'".format(
+                        issue_list
+                        )
+                    )
+            # if no error but debug
+            elif not issue_list and self.debug_mode:
+                return "no error"
+            # if no error and not debug write to log file check was ok
+            else:
+                self.loggers.script.info(
+                    "UA_pass 'upload of files complete for run {}'".format(
+                        self.runfolder_obj.runfolder_name
                     )
                 )
-            self.loggers.script.error(
-                "UA_fail 'following files were not uploaded {}'".format(
-                    issue_list
-                    )
-                )
-        # if no error but debug
-        elif not issue_list and self.debug_mode:
-            return "no error"
-        # if no error and not debug write to log file check was ok
-        else:
-            self.loggers.script.info(
-                "UA_pass 'upload of files complete for run {}'".format(
-                    self.runfolder_obj.runfolder_name
-                )
-            )
 
     def upload_cluster_density(self):
         """
@@ -850,34 +850,38 @@ class RunfolderProcessor(object):
         # build the nexus upload command
         file_list = [os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.cluster_density_file_suffix)),
             os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.phasing_metrics_file_suffix))]
+        # check if the cluster density files exist - if they don't the script will fail when trying to upload them.
+        if all([os.path.isfile(f) for f in file_list]):
+            nexus_upload_command = (
+                self.restart_ua_1
+                + config.upload_agent_path
+                + " --auth-token "
+                + config.Nexus_API_Key
+                + " --project "
+                + self.runfolder_obj.nexus_project_name
+                + "  --folder /QC"
+                + " --do-not-compress --upload-threads 10 "
+                + " ".join(file_list)
+                + self.restart_ua_2  
+            )
+            if self.debug_mode:
+                return nexus_upload_command
 
-        nexus_upload_command = (
-            self.restart_ua_1
-            + config.upload_agent_path
-            + " --auth-token "
-            + config.Nexus_API_Key
-            + " --project "
-            + self.runfolder_obj.nexus_project_name
-            + "  --folder /QC"
-            + " --do-not-compress --upload-threads 10 "
-            + " ".join(file_list)
-            + self.restart_ua_2  
-        )
-        if self.debug_mode:
-            return nexus_upload_command
+            # Log fastq upload command to the upload agent logfile
+            self.loggers.upload_agent.info("Upload cluster density commands:\n{}".format(nexus_upload_command))
+            # write to automated script logfile
+            self.loggers.script.info(
+                "Uploading cluster density files. See commands at {}".format(self.loggers.upload_agent.filepath)
+            )
 
-        # Log fastq upload command to the uplaod agent logfile
-        self.loggers.upload_agent.info("Upload cluster density commands:\n{}".format(nexus_upload_command))
-        # write to automated script logfile
-        self.loggers.script.info(
-            "Uploading cluster density files. See commands at {}".format(self.loggers.upload_agent.filepath)
-        )
-
-        # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
-        out, err = self.execute_subprocess_command(nexus_upload_command)
-        self.loggers.upload_agent.info("Uploading cluster density files\n{}\n{}".format(out, err))
-        return self.loggers.upload_agent.filepath, file_list, "cluster density"
-
+            # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
+            out, err = self.execute_subprocess_command(nexus_upload_command)
+            self.loggers.upload_agent.info("Uploading cluster density files\n{}\n{}".format(out, err))
+            return self.loggers.upload_agent.filepath, file_list, "cluster density"
+        # if the cluster density files do not exist skip the upload and return a string which skip the look_for_upload_errors checks.
+        else:
+            self.loggers.script.info("UA_pass 'skipping upload of cluster density files - not all files present'")
+            return None, None, "skip_upload_error_check"
     
 
     def nexus_fastq_paths(self, read1):
