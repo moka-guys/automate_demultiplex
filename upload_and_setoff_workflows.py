@@ -465,13 +465,20 @@ class RunfolderProcessor(object):
         If success statement seen in stderr record in log file else raise slack alert but do not stop run.
         Returns = None
         """
+		# if novaseq need to give an extra flag to CollectIlluminaLaneMetrics
+        if config.novaseq_id in runfolder_name:
+            novaseq_flag = " --IS_NOVASEQ"
+        else:
+            novaseq_flag = ""
+
         # docker command for tool
         cmd = "sudo docker run -v {}:/input_run \
         broadinstitute/gatk:4.1.8.1 \
         ./gatk CollectIlluminaLaneMetrics \
         --RUN_DIRECTORY /input_run \
         --OUTPUT_DIRECTORY /input_run \
-        --OUTPUT_PREFIX {}".format(runfolder_path, runfolder_name)
+        --OUTPUT_PREFIX {} {}".format(runfolder_path, runfolder_name, novaseq_flag)
+
         # capture stdout and stderr
         # NB all output from picard tool is in stderr
         (out, err) = self.execute_subprocess_command(cmd)
@@ -1739,11 +1746,12 @@ class RunfolderProcessor(object):
         """
         Input = list of fastqs to be processed
         All samples processed using MokaWES are recorded in moka using a single update query.
-        If MokaWES samples - Function populates a dictionary of sample counts, and a query (str) to
+        If MokaWES samples - Function populates a dictionary of sample counts, query (str) and list of samplenames to
         be added to global dictionary.
         Returns = dictionary or None 
         """
         dnanumbers = []
+		samplenames = []
         # add workflow to sql dictionary
         for fastq in list_of_processed_samples:
             # take read one
@@ -1754,6 +1762,8 @@ class RunfolderProcessor(object):
                 # capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
+					# call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+					samplenames.append(self.nexus_fastq_paths(fastq)[2])
         if dnanumbers:
             return {
                 "count": len(dnanumbers),
@@ -1767,6 +1777,7 @@ class RunfolderProcessor(object):
                     + "') and StatusID = "
                     + config.mokastat_nextsq_ID
                 ],
+				"samplename_email": samplenames
             }
         else:
             return None
@@ -1887,6 +1898,21 @@ class RunfolderProcessor(object):
             )
             # send email
             self.send_an_email(config.you, email_subject, email_message, email_priority)
+
+		# send email to WES team to help IR upload
+		# email_for_cancer_ops leads to inform the pipeline has started
+		email_subject = (
+                "MOKA ALERT : Started pipeline for " + self.runfolder_obj.runfolder_name
+            )
+		email_message = (
+			self.runfolder_obj.runfolder_name
+			+ " being processed using "
+			+ config.mokawes_path.split("/")[-1]
+			+ "\nThe following samples are being processed:\n"
+			+ "\n".join(self.sql_queries["mokawes"]["samplename_email"])
+		)
+		self.send_an_email("aledjones@nhs.net", email_subject, email_message, email_priority)
+		# self.send_an_email(config.wes_email_address, email_subject, email_message, email_priority)
 
     def upload_rest_of_runfolder(self):
         """
