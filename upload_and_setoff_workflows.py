@@ -244,6 +244,18 @@ class RunfolderProcessor(object):
         ):
             raise Exception, "dx toolkit not installed"
 
+		# test agilent connextor is running
+		if not self.test_upload_agent(
+            self.perform_test(
+                self.execute_subprocess_command(
+                   config.agilent_connector_cmd 
+                )[0],
+                "agilent_connector",
+            )
+        ):
+            # don't raise exception - just raise a warning.
+			self.loggers.script.error("UA_fail 'Agilent connector not running - please restart'")
+
     def quarterback(self):
         """
         Input = None
@@ -382,7 +394,11 @@ class RunfolderProcessor(object):
         if test == "cluster_density":
             if config.cluster_density_success_statement not in test_input or config.cluster_density_error_statement in test_input:
                 return False
-        return True
+        if test == "agilent_connector":
+			if config.agilent_connector_output not in test_input:
+				return False
+		return True
+		
 
     def test_dx_toolkit(self, test_result):
         """
@@ -1074,6 +1090,10 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
+				
+				# if onePGT
+				if self.panel_dictionary[panel]["onePGT"]:
+					self.move_onePGT_fastqs(fastq)
         
         # if there is a congenica upload create the file which will be run manually, once QC is passed.
         if congenica_upload:
@@ -1412,7 +1432,56 @@ class RunfolderProcessor(object):
         # TODO: Implement joint-variant calling command for peddy
         raise NotImplementedError
 
-    def run_congenica_command(self, fastq, pannumber):
+    def move_onePGT_fastqs(self, fastq):
+        """
+		Input:
+			R1 fastq file name
+        This function checks for the filesize of a fastq file - a warning is sent is >10GB and no further processing occurs
+		A rsync command is then issued to copy the fastq to the desired agilent upload folder 
+		The stderr is sent to check_for_rsync_errors() to check for an expected word and a further alert is sent if "fail" or "error" are in stderr
+        Returns:
+			None
+		"""
+        self.loggers.script.info(
+                    "UA_pass 'assessing OnePGT fastq file {}'".format(fastq)
+                    )
+		# test size of fastq
+		filesize = os.path.getsize(os.path.join(self.runfolder_obj.fastq_folder_path,fastq))
+		if int(filesize) > config.max_filesize_in_bytes:
+			self.loggers.script.error(
+                    "UA_fail 'fastq filesize check fail. {} is greater than 10GB'".format(
+                        fastq
+                    )
+		else:
+			self.loggers.script.info("UA_pass 'fastq filesize check pass'")
+			# write rsync command to move fastq to agilent folder -v outputs in verbose mode
+			# use tee to write to file and stdout
+			cmd = "rsync -v {} {} | tee -a {}".format(os.path.join(self.runfolder_obj.fastq_folder_path,fastq), config.agilent_upload_folder, os.path.join(self.runfolder_obj.runfolderpath,self.runfolder_obj.runfolder_name,config.rsync_logfile))
+			# run the command
+			out, err = self.execute_subprocess_command(cmd)
+			# pass stderr to function to look for errors 
+			if not self.check_for_rsync_errors(err):
+				self.loggers.script.error(
+						"UA_fail 'onePGT fastq move via rsync failed for {}'".format(
+							fastq
+						)
+	
+	def check_for_rsync_errors(self,stderr):
+		"""
+		Input:
+			stderr
+		rsync errors will be reported to stderr, not stdout
+		example error:
+		rsync: link_stat "/media/data3/share/testing/999999_NB552085_0077_AHYNCMAFXY/Data/Intensities/BaseCalls/NGS999999_01_242050_JB_U_VCP2R207StG_Pan4042_S1_R1_001.fastdxcq.gz" failed: No such file or directory (2)
+		rsync error: some files/attrs were not transferred (see previous errors) (code 23) at main.c(1183) [sender=3.1.0])
+		Returns:
+			Boolean True, unless the strings "fail" or "error" are seen.
+		"""
+		if "error" in stderr or "fail" in stderr:
+			return False
+		return True
+
+	def run_congenica_command(self, fastq, pannumber):
         """
         Input = R1 fastq file name and pan number for a single sample
         The import saptientia app takes inputs in the format jobid.outputname which ensures the job

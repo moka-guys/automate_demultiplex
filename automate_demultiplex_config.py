@@ -94,6 +94,11 @@ dx_sdk_test = "source ~/dx-toolkit/environment;dx --version"
 # expected result from testing
 dx_sdk_test_expected_stdout = "dx v0.2"
 
+# command and output to test agilent connector
+agilent_connector_cmd = "/opt/agilent/agilentserviceconnector status"
+agilent_connector_output = "agilentserviceconnector is running"
+
+# upload agent test response
 upload_agent_expected_stdout = "Upload Agent Version:"
 
 # =====Moka settings=====
@@ -282,14 +287,15 @@ panel_list = [
     #"Pan4127", # VCP2 Viapath colorectal
     #"Pan4129", # VCP2 Viapath lynch
     #"Pan4130", # VCP2 Viapath polyposis
-    #"Pan4132", # VCP3 Viapath R56
-    #"Pan4134", # VCP3 Viapath R57
-    #"Pan4136", # VCP3 Viapath R58
-    #"Pan4137", # VCP3 Viapath R60
-    #"Pan4138", # VCP3 Viapath R62
-    #"Pan4143", # VCP3 Viapath R66
-    #"Pan4144", # VCP3 Viapath R78
-    #"Pan4151" # VCP3 Viapath R82
+    "Pan4132", # VCP3 Viapath R56
+    "Pan4134", # VCP3 Viapath R57
+    "Pan4136", # VCP3 Viapath R58
+    "Pan4137", # VCP3 Viapath R60
+    "Pan4138", # VCP3 Viapath R62
+    "Pan4143", # VCP3 Viapath R66
+    "Pan4144", # VCP3 Viapath R78
+    "Pan4151", # VCP3 Viapath R82
+	"Pan2764" # OnePGT
 ]
 
 
@@ -614,6 +620,10 @@ panel_settings = {
         "sambamba_bedfile": "Pan4278dataSambamba.bed",
         "variant_calling_bedfile": "Pan4278data.bed",
     },
+	"Pan2764": { # OnePGT
+		"onePGT": True,
+		"congenica_upload": False
+	}
 }
 
 # =====smartsheet API=====
@@ -685,3 +695,8 @@ cluster_density_file_suffix = ".illumina_lane_metrics"
 phasing_metrics_file_suffix = ".illumina_phasing_metrics"
 
 novaseq_id = "A01229"
+
+# ================ onePGT
+agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
+max_filesize_in_bytes = 10737418240
+rsync_logfile = "rsync_output.txt"
