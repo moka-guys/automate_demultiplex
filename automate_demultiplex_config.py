@@ -42,7 +42,7 @@ demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
-    "{document_root}/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
+	"{document_root}/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
 ).format(document_root=document_root)
 
 # name of log file which records the output of the upload agent
@@ -53,23 +53,23 @@ runfolder_upload_cmds = "add_runfolder_to_nexus_cmds.txt"
 
 # Path to DNA Nexus run command log file
 DNA_Nexus_workflow_logfolder = (
-    "{document_root}/automate_demultiplexing_logfiles/dx_run_commands/"
+	"{document_root}/automate_demultiplexing_logfiles/dx_run_commands/"
 ).format(document_root=document_root)
 
 # log folder containing project creation logs
 DNA_Nexus_project_creation_logfolder = (
-    "{document_root}/automate_demultiplexing_logfiles/nexus_project_creation_scripts"
-    "/create_nexus_project_"
+	"{document_root}/automate_demultiplexing_logfiles/nexus_project_creation_scripts"
+	"/create_nexus_project_"
 ).format(document_root=document_root)
 
 # folder containing demultiplex logs
 demultiplex_logfiles = (
-    "{document_root}/automate_demultiplexing_logfiles/Demultiplexing_log_files/"
+	"{document_root}/automate_demultiplexing_logfiles/Demultiplexing_log_files/"
 ).format(document_root=document_root)
 
 # path to upload agent
 upload_agent_path = ("{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua").format(
-    document_root=document_root
+	document_root=document_root
 )
 
 upload_agent_test_command = " --version"
@@ -77,13 +77,13 @@ ua_error = "Error Message: 'Could not resolve: api.dnanexus.com"
 
 # path to backup_runfolder script
 backup_runfolder_script = (
-    "/usr/local/src/mokaguys/apps/workstation_housekeeping/backup_runfolder.py"
+	"/usr/local/src/mokaguys/apps/workstation_housekeeping/backup_runfolder.py"
 )
 
 # backup runfolder folder
 backup_runfolder_logfile = (
-    "{document_root}/automate_demultiplexing_logfiles"
-    "/backup_runfolder_logfiles"
+	"{document_root}/automate_demultiplexing_logfiles"
+	"/backup_runfolder_logfiles"
 ).format(document_root=document_root)
 
 backup_runfolder_success = "backup_runfolder INFO - END"
@@ -171,7 +171,7 @@ mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
 mokapipe_sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
 mokapipe_mokapicard_vendorbed_input = (
-    " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
+	" -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 )
 mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
 mokapipe_haplotype_bedfile_input = " -i" +mokapipe_gatk_human_exome_stage + ".bedfile="
@@ -212,8 +212,8 @@ mokaamp_varscan_strandfilter_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_f
 mokaamp_mpileup_cov_level_stage = " -istage-FxypXb807p1zj3g8Jv45Y54P.min_coverage="
 
 mokaamp_email_message = (
-    "If both MokaAMP and MokaOnc (amplivar) have been run,"
-    "please record the version of MokaOnc used."
+	"If both MokaAMP and MokaOnc (amplivar) have been run,"
+	"please record the version of MokaOnc used."
 )
 
 # Peddy
@@ -237,7 +237,7 @@ rpkm_bamfiles_to_download_input = " -ibamfile_pannumbers="
 # emails addresses for Ingenuity
 oncology_IVA_email = "gst-tr.oncology.interpret@nhs.net"  # general oncology email
 interpretation_request_email = (
-    "gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
+	"gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
 )
 wes_email_address = "gst-tr.wesviapath@nhs.net"  # WES email
 
@@ -248,7 +248,7 @@ oncology_ops_email = "m.neat@nhs.net"
 # DNA Nexus authentication token
 nexus_api_key_file = "{document_root}/.dnanexus_auth_token".format(document_root=document_root)
 with open(nexus_api_key_file, "r") as nexus_api:
-    Nexus_API_Key = nexus_api.readline().rstrip()
+	Nexus_API_Key = nexus_api.readline().rstrip()
 
 # list of DNA Nexus users with view access to project
 view_users = ["org-viapath_prod", "InterpretationRequest"]
@@ -267,34 +267,34 @@ congenica_bam_inputname = " -ibam="
 
 # =====List of all panel numbers=====
 panel_list = [
-    "Pan1190", # swift EGFR
-    "Pan2684", # swift 57
-    "Pan2835", # twist WES
-    "Pan4042", # STG VCP2 BRCA
-    "Pan4043", # STG VCP3
-    "Pan4044", # STG VCP1
-    "Pan4049", # STG VCP2 CrCa
-    "Pan3174", # WES trio
-    #"Pan4119", # VCP1 Viapath FH
-    #"Pan4121", # VCP1 Viapath CF
-    #"Pan4122", # VCP1 Viapath FGFR
-    #"Pan4125", # VCP1 Viapath DMD
-    #"Pan4126", # VCP1 Viapath CADASIL
-    "Pan4145", # VCP3 Viapath CMD
-    "Pan4146", # VCP3 Viapath CM
-    "Pan4149", # VCP2 Viapath BRCA
-    #"Pan4150", # VCP2 Viapath ovarian
-    #"Pan4127", # VCP2 Viapath colorectal
-    #"Pan4129", # VCP2 Viapath lynch
-    #"Pan4130", # VCP2 Viapath polyposis
-    "Pan4132", # VCP3 Viapath R56
-    "Pan4134", # VCP3 Viapath R57
-    "Pan4136", # VCP3 Viapath R58
-    "Pan4137", # VCP3 Viapath R60
-    "Pan4138", # VCP3 Viapath R62
-    "Pan4143", # VCP3 Viapath R66
-    "Pan4144", # VCP3 Viapath R78
-    "Pan4151", # VCP3 Viapath R82
+	"Pan1190", # swift EGFR
+	"Pan2684", # swift 57
+	"Pan2835", # twist WES
+	"Pan4042", # STG VCP2 BRCA
+	"Pan4043", # STG VCP3
+	"Pan4044", # STG VCP1
+	"Pan4049", # STG VCP2 CrCa
+	"Pan3174", # WES trio
+	#"Pan4119", # VCP1 Viapath FH
+	#"Pan4121", # VCP1 Viapath CF
+	#"Pan4122", # VCP1 Viapath FGFR
+	#"Pan4125", # VCP1 Viapath DMD
+	#"Pan4126", # VCP1 Viapath CADASIL
+	"Pan4145", # VCP3 Viapath CMD
+	"Pan4146", # VCP3 Viapath CM
+	"Pan4149", # VCP2 Viapath BRCA
+	#"Pan4150", # VCP2 Viapath ovarian
+	#"Pan4127", # VCP2 Viapath colorectal
+	#"Pan4129", # VCP2 Viapath lynch
+	#"Pan4130", # VCP2 Viapath polyposis
+	"Pan4132", # VCP3 Viapath R56
+	"Pan4134", # VCP3 Viapath R57
+	"Pan4136", # VCP3 Viapath R58
+	"Pan4137", # VCP3 Viapath R60
+	"Pan4138", # VCP3 Viapath R62
+	"Pan4143", # VCP3 Viapath R66
+	"Pan4144", # VCP3 Viapath R78
+	"Pan4151", # VCP3 Viapath R82
 	"Pan2764" # OnePGT
 ]
 
@@ -305,321 +305,321 @@ vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","
 vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043"]
 
 default_panel_properties = {
-    "UMI": False,
-    "UMI_bcl2fastq": None,  # eg Y145,I8,Y9I8,Y145
-    "RPKM_bedfile_pan_number": None,
-    "RPKM_also_analyse": None,  # List of Pan Numbers indicating which BAM files to download
-    "onePGT": False,
-    "mokawes": False,
-    "joint_variant_calling": False,
-    "mokaamp": False,
-    "capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
-    "mokaonc": False,
-    "mokapipe": False,
-    "mokapipe_haplotype_caller_padding": 0,
-    "mokaamp_varscan_strandfilter": True,
-    "iva_upload": False,
-    "congenica_upload": True,
-    "STG": False,
-    "oncology": False,
-    "congenica_credentials": "Viapath", # "Viapath" OR "STG"
-    "congenica_IR_template": "priority", # 'priority' or 'non-priority'
-    "clinical_coverage_depth": None,  # only found in mokamp command
-    "multiqc_coverage_level": 30,
-    # Note: hsmetrics_bedfile only used when BED file name differs from Pan number
-    "hsmetrics_bedfile": None,
-    # Note: variant_calling_bedfile only used when BED file differs from Pan number
-    "variant_calling_bedfile": None,
-    # Note: sambamba_bedfile only used when BED file differs from Pan number
-    "sambamba_bedfile": None,
-    "ingenuity_email": interpretation_request_email,
-    "congenica_project": None,
-    "peddy": False,
+	"UMI": False,
+	"UMI_bcl2fastq": None,  # eg Y145,I8,Y9I8,Y145
+	"RPKM_bedfile_pan_number": None,
+	"RPKM_also_analyse": None,  # List of Pan Numbers indicating which BAM files to download
+	"onePGT": False,
+	"mokawes": False,
+	"joint_variant_calling": False,
+	"mokaamp": False,
+	"capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
+	"mokaonc": False,
+	"mokapipe": False,
+	"mokapipe_haplotype_caller_padding": 0,
+	"mokaamp_varscan_strandfilter": True,
+	"iva_upload": False,
+	"congenica_upload": True,
+	"STG": False,
+	"oncology": False,
+	"congenica_credentials": "Viapath", # "Viapath" OR "STG"
+	"congenica_IR_template": "priority", # 'priority' or 'non-priority'
+	"clinical_coverage_depth": None,  # only found in mokamp command
+	"multiqc_coverage_level": 30,
+	# Note: hsmetrics_bedfile only used when BED file name differs from Pan number
+	"hsmetrics_bedfile": None,
+	# Note: variant_calling_bedfile only used when BED file differs from Pan number
+	"variant_calling_bedfile": None,
+	# Note: sambamba_bedfile only used when BED file differs from Pan number
+	"sambamba_bedfile": None,
+	"ingenuity_email": interpretation_request_email,
+	"congenica_project": None,
+	"peddy": False,
 }
 
 # override default panel settings
 panel_settings = {
-    "Pan2835": {  # TWIST WES at GSTT
-        "mokawes": True,
-        "multiqc_coverage_level": 20,
-        "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
-        "sambamba_bedfile": "Pan493dataSambamba.bed",
-        "peddy": True,
-    },
-    "Pan3174": {  # TWIST WES TRIO at GSTT
-        "mokawes": True,
-        "multiqc_coverage_level": 20,
-        "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
-        "sambamba_bedfile": "Pan493dataSambamba.bed",
-        "peddy": True,
-    },
-    "Pan1190": {  # EGFR SWIFT Panel
-        "oncology": True,
-        "mokaonc": True,
-        "capture_type": "Amplicon",
-        "clinical_coverage_depth": 1000,
-        "multiqc_coverage_level": 100
-    },
-    "Pan2684": {  # 57G SWIFT panel
-        "RPKM_bedfile_pan_number": None,
-        "mokaamp": True,
-        "oncology": True,
-        "capture_type": "Amplicon",
-        "clinical_coverage_depth": 600,  # only found in mokamp command
-        "multiqc_coverage_level": 100,
-    },
-    "Pan4044": {  # VCP1 STG
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3624",
-        "RPKM_also_analyse": vcp1_panel_list,
-        "congenica_credentials": "STG",
-        "congenica_IR_template":"non-priority",
-        "congenica_project": "4203",
-        "hsmetrics_bedfile": "Pan4003data.bed",
-        "variant_calling_bedfile": "Pan4003data.bed",
-        "sambamba_bedfile": "Pan4003dataSambamba.bed",
-        "STG": True,
-    },
-    "Pan4042": {  # VCP2 STG BRCA
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3614",
-        "RPKM_also_analyse": vcp2_panel_list,
-        "congenica_credentials": "STG",
-        "congenica_IR_template":"non-priority",
-        "congenica_project": "1099",
-        "mokapipe_haplotype_caller_padding":1,
-        "hsmetrics_bedfile": "Pan4011data.bed",
-        "variant_calling_bedfile": "Pan4011data.bed",
-        "sambamba_bedfile": "Pan4011dataSambamba.bed",
-    },
-    "Pan4049": {  # VCP2 STG CrCa
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3614",
-        "RPKM_also_analyse": vcp2_panel_list,
-        "congenica_credentials": "STG",
-        "congenica_IR_template":"non-priority",
-        "congenica_project": "4202",
-        "mokapipe_haplotype_caller_padding":1,
-        "hsmetrics_bedfile": "Pan4011data.bed",
-        "variant_calling_bedfile": "Pan4011data.bed",
-        "sambamba_bedfile": "Pan4011dataSambamba.bed",
-    },
-    "Pan4043": {  # VCP3 STG
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "congenica_credentials": "STG",
-        "congenica_IR_template":"non-priority",
-        "congenica_project": "4201",
-        "mokapipe_haplotype_caller_padding":1,
-        "hsmetrics_bedfile": "Pan4114data.bed",
-        "variant_calling_bedfile": "Pan4114data.bed",
-        "sambamba_bedfile": "Pan4114dataSambamba.bed",
-    },
-    # "Pan4119": {  #VCP1 R134_Familial hypercholesterolaemia-Familial hypercholesterolaemia Small panel (Viapath)
-    #     "mokapipe": True,
-    #     "multiqc_coverage_level": 30,
-    #     "RPKM_bedfile_pan_number": "Pan3624",
-    #     "congenica_project": "4666",
-    #     "RPKM_also_analyse": vcp1_panel_list,
-    #     "hsmetrics_bedfile": "Pan4003data.bed",
-    #     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-    #     "variant_calling_bedfile": "Pan4118data.bed",
-    # },
-    # "Pan4121": {  #VCP1 R184 CF (Viapath)
-    #     "mokapipe": True,
-    #     "multiqc_coverage_level": 30,
-    #     "RPKM_bedfile_pan_number": "Pan3624",
-    #     "congenica_project": "4862",
-    #     "RPKM_also_analyse": vcp1_panel_list,
-    #     "hsmetrics_bedfile": "Pan4003data.bed",
-    #     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-    #     "variant_calling_bedfile": "Pan4118data.bed",
-    # },
-    # "Pan4122": {  #VCP1 R25 FGFR Viapath
-    #     "mokapipe": True,
-    #     "multiqc_coverage_level": 30,
-    #     "RPKM_bedfile_pan_number": "Pan3624",
-    #     "congenica_project": "4863",
-    #     "RPKM_also_analyse": vcp1_panel_list,
-    #     "hsmetrics_bedfile": "Pan4003data.bed",
-    #     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-    #     "variant_calling_bedfile": "Pan4118data.bed",
-    # },
-    # "Pan4125": {  #VCP1 R73 DMD (Viapath)
-    #     "mokapipe": True,
-    #     "multiqc_coverage_level": 30,
-    #     "RPKM_bedfile_pan_number": "Pan3624",
-    #     "congenica_project": "4861",
-    #     "RPKM_also_analyse": vcp1_panel_list,
-    #     "hsmetrics_bedfile": "Pan4003data.bed",
-    #     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-    #     "variant_calling_bedfile": "Pan4118data.bed",
-    # },
-    # "Pan4126": {  #VCP1 R337_CADASIL Viapath
-    #     "mokapipe": True,
-    #     "multiqc_coverage_level": 30,
-    #     "RPKM_bedfile_pan_number": "Pan3624",
-    #     "congenica_project": "TBC",
-    #     "RPKM_also_analyse": vcp1_panel_list,
-    #     "hsmetrics_bedfile": "Pan4003data.bed",
-    #     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-    #     "variant_calling_bedfile": "Pan4118data.bed",
-    # },
-    "Pan4149": {  #VCP2 BRCA (Viapath)
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3614",
-        "congenica_project": "4665",
-        "RPKM_also_analyse": vcp2_panel_list,
-        "hsmetrics_bedfile": "Pan4011data.bed",
-        "sambamba_bedfile": "Pan4148dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4090data.bed",
-    },
-    # "Pan4150": {  #VCP2 R207 ovarian cancer (Viapath)
-    #     "mokapipe": True,
-    #     "multiqc_coverage_level": 30,
-    #     "RPKM_bedfile_pan_number": "Pan3614",
-    #     "congenica_project": "4864",
-    #     "RPKM_also_analyse": vcp2_panel_list,
-    #     "hsmetrics_bedfile": "Pan4011data.bed",
-    #     "sambamba_bedfile": "PanXXXdataSambamba.bed",
-    #     "variant_calling_bedfile": "PanXXXdata.bed",
-    # },
-    # "Pan4127": {  #VCP2 R209 colorectal cancer (Viapath)
-    #     "mokapipe": True,
-    #     "multiqc_coverage_level": 30,
-    #     "RPKM_bedfile_pan_number": "Pan3614",
-    #     "congenica_project": "TBC",
-    #     "RPKM_also_analyse": vcp2_panel_list,
-    #     "hsmetrics_bedfile": "Pan4011data.bed",
-    #     "sambamba_bedfile": "PanXXXdataSambamba.bed",
-    #     "variant_calling_bedfile": "PanXXXdata.bed",
-    # },
-    # "Pan4129": {  #VCP2 R210 Lynch syndrome (Viapath)
-    #     "mokapipe": True,
-    #     "multiqc_coverage_level": 30,
-    #     "RPKM_bedfile_pan_number": "Pan3614",
-    #     "congenica_project": "TBC",
-    #     "RPKM_also_analyse": vcp2_panel_list,
-    #     "hsmetrics_bedfile": "Pan4011data.bed",
-    #     "sambamba_bedfile": "PanXXXdataSambamba.bed",
-    #     "variant_calling_bedfile": "PanXXXdata.bed",
-    # },
-    # "Pan4130": {  #VCP2 R211 polyposis (Viapath)
-    #     "mokapipe": True,
-    #     "multiqc_coverage_level": 30,
-    #     "RPKM_bedfile_pan_number": "Pan3614",
-    #     "congenica_project": "TBC",
-    #     "RPKM_also_analyse": vcp2_panel_list,
-    #     "hsmetrics_bedfile": "Pan4011data.bed",
-    #     "sambamba_bedfile": "PanXXXdataSambamba.bed",
-    #     "variant_calling_bedfile": "PanXXXdata.bed",
-    # },
-    "Pan4132": {  #VCP3 R56 (Viapath)
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "5092",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4278data.bed",
-        "sambamba_bedfile": "Pan4278dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4278data.bed",
-    },
-    "Pan4134": {  #VCP3 R57 (Viapath)
+	"Pan2835": {  # TWIST WES at GSTT
+		"mokawes": True,
+		"multiqc_coverage_level": 20,
+		"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
+		"sambamba_bedfile": "Pan493dataSambamba.bed",
+		"peddy": True,
+	},
+	"Pan3174": {  # TWIST WES TRIO at GSTT
+		"mokawes": True,
+		"multiqc_coverage_level": 20,
+		"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
+		"sambamba_bedfile": "Pan493dataSambamba.bed",
+		"peddy": True,
+	},
+	"Pan1190": {  # EGFR SWIFT Panel
+		"oncology": True,
+		"mokaonc": True,
+		"capture_type": "Amplicon",
+		"clinical_coverage_depth": 1000,
+		"multiqc_coverage_level": 100
+	},
+	"Pan2684": {  # 57G SWIFT panel
+		"RPKM_bedfile_pan_number": None,
+		"mokaamp": True,
+		"oncology": True,
+		"capture_type": "Amplicon",
+		"clinical_coverage_depth": 600,  # only found in mokamp command
+		"multiqc_coverage_level": 100,
+	},
+	"Pan4044": {  # VCP1 STG
 		"mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "5092",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4278data.bed",
-        "sambamba_bedfile": "Pan4278dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4278data.bed",
-    },
-    "Pan4136": {  #VCP3 R58 (Viapath)
-    	"mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "5092",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4278data.bed",
-        "sambamba_bedfile": "Pan4278dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4278data.bed",
-    },
-    "Pan4137": {  #VCP3 R60 (Viapath)
-    	"mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "5092",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4278data.bed",
-        "sambamba_bedfile": "Pan4278dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4278data.bed",
-    },
-    "Pan4138": {  #VCP3 R62 (Viapath)
-    	"mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "5092",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4278data.bed",
-        "sambamba_bedfile": "Pan4278dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4278data.bed",
-    },
-    "Pan4143": {  #VCP3 R66 (Viapath)
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3624",
+		"RPKM_also_analyse": vcp1_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4203",
+		"hsmetrics_bedfile": "Pan4003data.bed",
+		"variant_calling_bedfile": "Pan4003data.bed",
+		"sambamba_bedfile": "Pan4003dataSambamba.bed",
+		"STG": True,
+	},
+	"Pan4042": {  # VCP2 STG BRCA
 		"mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "5092",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4278data.bed",
-        "sambamba_bedfile": "Pan4278dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4278data.bed",
-    },
-    "Pan4144": {  #VCP3 R78 (Viapath)
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3614",
+		"RPKM_also_analyse": vcp2_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "1099",
+		"mokapipe_haplotype_caller_padding":1,
+		"hsmetrics_bedfile": "Pan4011data.bed",
+		"variant_calling_bedfile": "Pan4011data.bed",
+		"sambamba_bedfile": "Pan4011dataSambamba.bed",
+	},
+	"Pan4049": {  # VCP2 STG CrCa
 		"mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "5092",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4278data.bed",
-        "sambamba_bedfile": "Pan4278dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4278data.bed",
-    },
-    "Pan4145": {  #VCP3 R79 - CMD (Viapath)
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "4666",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4114data.bed",
-        "sambamba_bedfile": "Pan4114dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4114data.bed",
-    },
-    "Pan4146": {  #VCP3 R81 CM (Viapath)
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "4666",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4114data.bed",
-        "sambamba_bedfile": "Pan4114dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4114data.bed",
-    },
-    "Pan4151": {  #VCP3 R82 limb girdle (Viapath)
-      	"mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "congenica_project": "5092",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "hsmetrics_bedfile": "Pan4278data.bed",
-        "sambamba_bedfile": "Pan4278dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4278data.bed",
-    },
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3614",
+		"RPKM_also_analyse": vcp2_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4202",
+		"mokapipe_haplotype_caller_padding":1,
+		"hsmetrics_bedfile": "Pan4011data.bed",
+		"variant_calling_bedfile": "Pan4011data.bed",
+		"sambamba_bedfile": "Pan4011dataSambamba.bed",
+	},
+	"Pan4043": {  # VCP3 STG
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"mokapipe_haplotype_caller_padding":1,
+		"hsmetrics_bedfile": "Pan4114data.bed",
+		"variant_calling_bedfile": "Pan4114data.bed",
+		"sambamba_bedfile": "Pan4114dataSambamba.bed",
+	},
+	# "Pan4119": {  #VCP1 R134_Familial hypercholesterolaemia-Familial hypercholesterolaemia Small panel (Viapath)
+	#     "mokapipe": True,
+	#     "multiqc_coverage_level": 30,
+	#     "RPKM_bedfile_pan_number": "Pan3624",
+	#     "congenica_project": "4666",
+	#     "RPKM_also_analyse": vcp1_panel_list,
+	#     "hsmetrics_bedfile": "Pan4003data.bed",
+	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
+	#     "variant_calling_bedfile": "Pan4118data.bed",
+	# },
+	# "Pan4121": {  #VCP1 R184 CF (Viapath)
+	#     "mokapipe": True,
+	#     "multiqc_coverage_level": 30,
+	#     "RPKM_bedfile_pan_number": "Pan3624",
+	#     "congenica_project": "4862",
+	#     "RPKM_also_analyse": vcp1_panel_list,
+	#     "hsmetrics_bedfile": "Pan4003data.bed",
+	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
+	#     "variant_calling_bedfile": "Pan4118data.bed",
+	# },
+	# "Pan4122": {  #VCP1 R25 FGFR Viapath
+	#     "mokapipe": True,
+	#     "multiqc_coverage_level": 30,
+	#     "RPKM_bedfile_pan_number": "Pan3624",
+	#     "congenica_project": "4863",
+	#     "RPKM_also_analyse": vcp1_panel_list,
+	#     "hsmetrics_bedfile": "Pan4003data.bed",
+	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
+	#     "variant_calling_bedfile": "Pan4118data.bed",
+	# },
+	# "Pan4125": {  #VCP1 R73 DMD (Viapath)
+	#     "mokapipe": True,
+	#     "multiqc_coverage_level": 30,
+	#     "RPKM_bedfile_pan_number": "Pan3624",
+	#     "congenica_project": "4861",
+	#     "RPKM_also_analyse": vcp1_panel_list,
+	#     "hsmetrics_bedfile": "Pan4003data.bed",
+	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
+	#     "variant_calling_bedfile": "Pan4118data.bed",
+	# },
+	# "Pan4126": {  #VCP1 R337_CADASIL Viapath
+	#     "mokapipe": True,
+	#     "multiqc_coverage_level": 30,
+	#     "RPKM_bedfile_pan_number": "Pan3624",
+	#     "congenica_project": "TBC",
+	#     "RPKM_also_analyse": vcp1_panel_list,
+	#     "hsmetrics_bedfile": "Pan4003data.bed",
+	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
+	#     "variant_calling_bedfile": "Pan4118data.bed",
+	# },
+	"Pan4149": {  #VCP2 BRCA (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3614",
+		"congenica_project": "4665",
+		"RPKM_also_analyse": vcp2_panel_list,
+		"hsmetrics_bedfile": "Pan4011data.bed",
+		"sambamba_bedfile": "Pan4148dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4090data.bed",
+	},
+	# "Pan4150": {  #VCP2 R207 ovarian cancer (Viapath)
+	#     "mokapipe": True,
+	#     "multiqc_coverage_level": 30,
+	#     "RPKM_bedfile_pan_number": "Pan3614",
+	#     "congenica_project": "4864",
+	#     "RPKM_also_analyse": vcp2_panel_list,
+	#     "hsmetrics_bedfile": "Pan4011data.bed",
+	#     "sambamba_bedfile": "PanXXXdataSambamba.bed",
+	#     "variant_calling_bedfile": "PanXXXdata.bed",
+	# },
+	# "Pan4127": {  #VCP2 R209 colorectal cancer (Viapath)
+	#     "mokapipe": True,
+	#     "multiqc_coverage_level": 30,
+	#     "RPKM_bedfile_pan_number": "Pan3614",
+	#     "congenica_project": "TBC",
+	#     "RPKM_also_analyse": vcp2_panel_list,
+	#     "hsmetrics_bedfile": "Pan4011data.bed",
+	#     "sambamba_bedfile": "PanXXXdataSambamba.bed",
+	#     "variant_calling_bedfile": "PanXXXdata.bed",
+	# },
+	# "Pan4129": {  #VCP2 R210 Lynch syndrome (Viapath)
+	#     "mokapipe": True,
+	#     "multiqc_coverage_level": 30,
+	#     "RPKM_bedfile_pan_number": "Pan3614",
+	#     "congenica_project": "TBC",
+	#     "RPKM_also_analyse": vcp2_panel_list,
+	#     "hsmetrics_bedfile": "Pan4011data.bed",
+	#     "sambamba_bedfile": "PanXXXdataSambamba.bed",
+	#     "variant_calling_bedfile": "PanXXXdata.bed",
+	# },
+	# "Pan4130": {  #VCP2 R211 polyposis (Viapath)
+	#     "mokapipe": True,
+	#     "multiqc_coverage_level": 30,
+	#     "RPKM_bedfile_pan_number": "Pan3614",
+	#     "congenica_project": "TBC",
+	#     "RPKM_also_analyse": vcp2_panel_list,
+	#     "hsmetrics_bedfile": "Pan4011data.bed",
+	#     "sambamba_bedfile": "PanXXXdataSambamba.bed",
+	#     "variant_calling_bedfile": "PanXXXdata.bed",
+	# },
+	"Pan4132": {  #VCP3 R56 (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "5092",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4278data.bed",
+	},
+	"Pan4134": {  #VCP3 R57 (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "5092",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4278data.bed",
+	},
+	"Pan4136": {  #VCP3 R58 (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "5092",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4278data.bed",
+	},
+	"Pan4137": {  #VCP3 R60 (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "5092",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4278data.bed",
+	},
+	"Pan4138": {  #VCP3 R62 (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "5092",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4278data.bed",
+	},
+	"Pan4143": {  #VCP3 R66 (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "5092",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4278data.bed",
+	},
+	"Pan4144": {  #VCP3 R78 (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "5092",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4278data.bed",
+	},
+	"Pan4145": {  #VCP3 R79 - CMD (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "4666",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4114data.bed",
+		"sambamba_bedfile": "Pan4114dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4114data.bed",
+	},
+	"Pan4146": {  #VCP3 R81 CM (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "4666",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4114data.bed",
+		"sambamba_bedfile": "Pan4114dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4114data.bed",
+	},
+	"Pan4151": {  #VCP3 R82 limb girdle (Viapath)
+	  	"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"congenica_project": "5092",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4278data.bed",
+	},
 	"Pan2764": { # OnePGT
 		"onePGT": True,
 		"congenica_upload": False
@@ -632,10 +632,10 @@ smartsheet_sheetid = 2798264106936196
 
 # API key
 smartsheet_api_key_file = "{document_root}/.smartsheet_auth_token".format(
-    document_root=document_root
+	document_root=document_root
 )
 with open(smartsheet_api_key_file, "r") as ss_api:
-    smartsheet_api_key = ss_api.readline().rstrip()
+	smartsheet_api_key = ss_api.readline().rstrip()
 
 # columnIds
 ss_title = 6197963270711172
@@ -651,8 +651,8 @@ ss_metTAT = 4267975390848900
 
 # ================ Requests info
 smartsheet_request_headers = {
-    "Authorization": "Bearer " + smartsheet_api_key,
-    "Content-Type": "application/json",
+	"Authorization": "Bearer " + smartsheet_api_key,
+	"Content-Type": "application/json",
 }
 smartsheet_request_url = "https://api.smartsheet.com/2.0/sheets/" + str(smartsheet_sheetid)
 
@@ -664,10 +664,10 @@ allowed_time_for_tasks = 4
 mokaguys_email = "gst-tr.mokaguys@nhs.net"
 username_file_path = "{document_root}/.amazon_email_username".format(document_root=document_root)
 with open(username_file_path, "r") as username_file:
-    user = username_file.readline().rstrip()
+	user = username_file.readline().rstrip()
 pw_file = "{document_root}/.amazon_email_pw".format(document_root=document_root)
 with open(pw_file, "r") as email_password_file:
-    pw = email_password_file.readline().rstrip()
+	pw = email_password_file.readline().rstrip()
 host = "email-smtp.eu-west-1.amazonaws.com"
 port = 587
 me = "moka.alerts@gstt.nhs.uk"
