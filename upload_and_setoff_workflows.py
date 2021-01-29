@@ -465,13 +465,18 @@ class RunfolderProcessor(object):
         If success statement seen in stderr record in log file else raise slack alert but do not stop run.
         Returns = None
         """
+        # if novaseq need to give an extra flag to CollectIlluminaLaneMetrics
+        if config.novaseq_id in runfolder_name:
+            novaseq_flag = " --IS_NOVASEQ"
+        else:
+            novaseq_flag = ""
         # docker command for tool
         cmd = "sudo docker run -v {}:/input_run \
         broadinstitute/gatk:4.1.8.1 \
         ./gatk CollectIlluminaLaneMetrics \
         --RUN_DIRECTORY /input_run \
         --OUTPUT_DIRECTORY /input_run \
-        --OUTPUT_PREFIX {}".format(runfolder_path,runfolder_name)
+        --OUTPUT_PREFIX {} {}".format(runfolder_path,runfolder_name, novaseq_flag)
         # capture stdout and stderr
         # NB all output from picard tool is in stderr
         (out, err) = self.execute_subprocess_command(cmd)
