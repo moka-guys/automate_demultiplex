@@ -243,7 +243,7 @@ class RunfolderProcessor(object):
         ):
             raise Exception, "dx toolkit not installed"
 
-		# test agilent connextor is running
+        # test agilent connextor is running
         if not self.test_upload_agent(
             self.perform_test(
                 self.execute_subprocess_command(
@@ -397,7 +397,7 @@ class RunfolderProcessor(object):
             if config.agilent_connector_output not in test_input:
                 return False
         return True
-		
+        
 
     def test_dx_toolkit(self, test_result):
         """
@@ -480,7 +480,7 @@ class RunfolderProcessor(object):
         If success statement seen in stderr record in log file else raise slack alert but do not stop run.
         Returns = None
         """
-		# if novaseq need to give an extra flag to CollectIlluminaLaneMetrics
+        # if novaseq need to give an extra flag to CollectIlluminaLaneMetrics
         if config.novaseq_id in runfolder_name:
             novaseq_flag = " --IS_NOVASEQ"
         else:
@@ -1089,8 +1089,8 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
-				
-				# if onePGT
+                
+                # if onePGT
                 if self.panel_dictionary[panel]["onePGT"]:
                     self.move_onePGT_fastqs(fastq)
 
@@ -1446,11 +1446,11 @@ class RunfolderProcessor(object):
                     )
         # test size of fastq
         filesize = os.path.getsize(os.path.join(self.runfolder_obj.fastq_folder_path,fastq))
-            if int(filesize) > config.max_filesize_in_bytes:
-                self.loggers.script.error(
-                    "UA_fail 'fastq filesize check fail. {} is greater than 10GB'".format(
-                        fastq
-                    )
+        if int(filesize) > config.max_filesize_in_bytes:
+            self.loggers.script.error(
+                "UA_fail 'fastq filesize check fail. {} is greater than 10GB'".format(
+                    fastq
+                ))
         else:
             self.loggers.script.info("UA_pass 'fastq filesize check pass'")
             # write rsync command to move fastq to agilent folder -v outputs in verbose mode
@@ -1462,7 +1462,8 @@ class RunfolderProcessor(object):
             if not self.check_for_rsync_errors(err):
                 self.loggers.script.error(
                     "UA_fail 'onePGT fastq move via rsync failed for {}'".format(fastq)
-	
+                )
+    
     def check_for_rsync_errors(self,stderr):
         """
         Input:
@@ -1817,7 +1818,7 @@ class RunfolderProcessor(object):
         Returns = dictionary or None 
         """
         dnanumbers = []
-		samplenames = []
+        samplenames = []
         # add workflow to sql dictionary
         for fastq in list_of_processed_samples:
             # take read one
@@ -1828,8 +1829,9 @@ class RunfolderProcessor(object):
                 # capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
-					# call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
-					samplenames.append(self.nexus_fastq_paths(fastq)[2])
+                    # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+                    print self.nexus_fastq_paths(fastq)[2]
+                    samplenames.append(self.nexus_fastq_paths(fastq)[2])
         if dnanumbers:
             return {
                 "count": len(dnanumbers),
@@ -1843,7 +1845,7 @@ class RunfolderProcessor(object):
                     + "') and StatusID = "
                     + config.mokastat_nextsq_ID
                 ],
-				"samplename_email": samplenames
+                "samplename_email": samplenames
             }
         else:
             return None
@@ -1965,20 +1967,20 @@ class RunfolderProcessor(object):
             # send email
             self.send_an_email(config.you, email_subject, email_message, email_priority)
 
-		# send email to WES team to help IR upload
-		# email_for_cancer_ops leads to inform the pipeline has started
-		email_subject = (
-                "MOKA ALERT : Started pipeline for " + self.runfolder_obj.runfolder_name
+        if self.sql_queries["mokawes"]:
+            # send email to WES team to help IR upload
+            email_subject = (
+                    "MOKA ALERT : Started pipeline for " + self.runfolder_obj.runfolder_name
+                )
+            email_message = (
+                self.runfolder_obj.runfolder_name
+                + " being processed using "
+                + config.mokawes_path.split("/")[-1]
+                + "\nThe following samples are being processed:\n"
+                + "\n".join(self.sql_queries["mokawes"]["samplename_email"])
             )
-		email_message = (
-			self.runfolder_obj.runfolder_name
-			+ " being processed using "
-			+ config.mokawes_path.split("/")[-1]
-			+ "\nThe following samples are being processed:\n"
-			+ "\n".join(self.sql_queries["mokawes"]["samplename_email"])
-		)
-		self.send_an_email("aledjones@nhs.net", email_subject, email_message, email_priority)
-		# self.send_an_email(config.wes_email_address, email_subject, email_message, email_priority)
+            self.send_an_email("aledjones@nhs.net", email_subject, email_message, email_priority)
+            # self.send_an_email(config.wes_email_address, email_subject, email_message, email_priority)
 
     def upload_rest_of_runfolder(self):
         """

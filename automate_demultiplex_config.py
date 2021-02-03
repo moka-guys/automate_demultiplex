@@ -17,9 +17,9 @@ debug = False
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
 # # path to run folders
-runfolders = "/media/data3/share"
+#runfolders = "/media/data3/share"
 # when testing use a different directory
-#runfolders = "/media/data3/share/testing/"
+runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -127,7 +127,8 @@ NexusProjectPrefix = "002_"
 project_success = 'Created new project called "%s"'
 
 # The project containing the app and data
-app_project = "001_ToolsReferenceData:/"
+#app_project = "001_ToolsReferenceData:/"
+app_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"
 # path to the workflow in the app project
 
 mokapipe_path = "Workflows/GATK3.5_v2.12"
@@ -698,5 +699,5 @@ novaseq_id = "A01229"
 
 # ================ onePGT
 agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
-max_filesize_in_bytes = 10737418240
+max_filesize_in_bytes = 5368709120 # 5GB (max size is 10GB per pair of fastq)
 rsync_logfile = "rsync_output.txt"
