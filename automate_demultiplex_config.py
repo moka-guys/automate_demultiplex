@@ -684,18 +684,17 @@ checksum_complete_flag = "Checksum result reported"
 # statement to write when checksums match
 checksum_match = "Checksums match"
 
-# ================ demultiplexing
-demultiplex_success_match = r".*Processing completed with 0 errors and 0 warnings.$"
-# list of sequencers which require md5 checksums from integrity check to be assessed
-sequencers_with_integrity_check = ["NB551068", "NB552085"]
-
 # ================ cluster density calculation
 cluster_density_success_statement = "picard.illumina.CollectIlluminaLaneMetrics done"
 cluster_density_error_statement = "PicardException"
 cluster_density_file_suffix = ".illumina_lane_metrics"
 phasing_metrics_file_suffix = ".illumina_phasing_metrics"
-
 novaseq_id = "A01229"
+
+# ================ demultiplexing
+demultiplex_success_match = r".*Processing completed with 0 errors and 0 warnings.$"
+# list of sequencers which require md5 checksums from integrity check to be assessed
+sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 
 # ================ onePGT
 agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"

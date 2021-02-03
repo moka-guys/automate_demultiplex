@@ -472,7 +472,7 @@ class RunfolderProcessor(object):
             self.loggers.script.info("Demultiplex has not been performed.")
             return False
 
-    def calculate_cluster_density(self,runfolder_path, runfolder_name):
+    def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
         Inputs = runfolder name and runfolder path
         Uses a dockerised version of GATK to run picard CollectIlluminaLaneMetrics
@@ -1036,6 +1036,7 @@ class RunfolderProcessor(object):
         congenica_upload = False
         joint_variant_calling = False # not currently in use
         rpkm_list = [] # list for panels needing RPKM analysis
+        onePGT_run = False # flag to skip processes not required for PGT runs
 
         # loop through samples
         for fastq in list_of_processed_samples:
@@ -1092,6 +1093,7 @@ class RunfolderProcessor(object):
                 
                 # if onePGT
                 if self.panel_dictionary[panel]["onePGT"]:
+                    onePGT_run = True
                     self.move_onePGT_fastqs(fastq)
 
         # if there is a congenica upload create the file which will be run manually, once QC is passed.
@@ -1104,29 +1106,30 @@ class RunfolderProcessor(object):
             )
 
         # build run wide commands 
-        if mokaonc_list:
-            commands_list.append(self.create_mokaonc_command(mokaonc_list))
-        if joint_variant_calling:
-            commands_list.append(self.create_joint_variant_calling_command())
-        if rpkm_list:
-            # Create a set of RPKM numbers for one command per panel
-            # pass this list into function which takes into account panels which are to be analysed
-            # together and returns a "cleaned_list"
-            for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
-                commands_list.append(self.create_rpkm_command(rpkm))
-        if peddy:
-            # TODO if custom panels and WES done together currently no way
-            # to stop custom panels being analysed by peddy - may cause problems
-            commands_list.append(self.run_peddy_command())
-            # add to depends list so multiqc doesn't start until peddy finishes
-            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
-            # pass "peddy" to ensure it isn't skipped
-            commands_list.append(self.add_to_depends_list("peddy"))
-        # multiqc commands
-        commands_list.append(self.create_multiqc_command())
-        commands_list.append(self.create_upload_multiqc_command())
-        # smartsheet
-        commands_list.append(self.create_smartsheet_command())
+        if not onePGT_run:
+            if mokaonc_list:
+                commands_list.append(self.create_mokaonc_command(mokaonc_list))
+            if joint_variant_calling:
+                commands_list.append(self.create_joint_variant_calling_command())
+            if rpkm_list:
+                # Create a set of RPKM numbers for one command per panel
+                # pass this list into function which takes into account panels which are to be analysed
+                # together and returns a "cleaned_list"
+                for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
+                    commands_list.append(self.create_rpkm_command(rpkm))
+            if peddy:
+                # TODO if custom panels and WES done together currently no way
+                # to stop custom panels being analysed by peddy - may cause problems
+                commands_list.append(self.run_peddy_command())
+                # add to depends list so multiqc doesn't start until peddy finishes
+                # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+                # pass "peddy" to ensure it isn't skipped
+                commands_list.append(self.add_to_depends_list("peddy"))
+            # multiqc commands
+            commands_list.append(self.create_multiqc_command())
+            commands_list.append(self.create_upload_multiqc_command())
+            # smartsheet
+            commands_list.append(self.create_smartsheet_command())
         return commands_list
 
     def create_mokawes_command(self, fastq, pannumber):
@@ -1441,27 +1444,30 @@ class RunfolderProcessor(object):
         Returns:
             None
         """
-        self.loggers.script.info(
-                    "UA_pass 'assessing OnePGT fastq file {}'".format(fastq)
-                    )
-        # test size of fastq
-        filesize = os.path.getsize(os.path.join(self.runfolder_obj.fastq_folder_path,fastq))
-        if int(filesize) > config.max_filesize_in_bytes:
-            self.loggers.script.error(
-                "UA_fail 'fastq filesize check fail. {} is greater than 10GB'".format(
-                    fastq
-                ))
-        else:
-            self.loggers.script.info("UA_pass 'fastq filesize check pass'")
-            # write rsync command to move fastq to agilent folder -v outputs in verbose mode
-            # use tee to write to file and stdout
-            cmd = "rsync -v {} {} | tee -a {}".format(os.path.join(self.runfolder_obj.fastq_folder_path,fastq), config.agilent_upload_folder, os.path.join(self.runfolder_obj.runfolderpath,self.runfolder_obj.runfolder_name,config.rsync_logfile))
-            # run the command
-            out, err = self.execute_subprocess_command(cmd)
-            # pass stderr to function to look for errors 
-            if not self.check_for_rsync_errors(err):
+        # create a list of read1 and read2 fastqs
+        fastq_list=[fastq, fastq.replace("_R1_", "_R2_")]
+        for fastq_file in fastq_list:
+            self.loggers.script.info(
+                        "UA_pass 'assessing OnePGT fastq file {}'".format(fastq_file)
+                        )
+            # test size of fastq
+            filesize = os.path.getsize(os.path.join(self.runfolder_obj.fastq_folder_path,fastq_file))
+            if int(filesize) > config.max_filesize_in_bytes:
                 self.loggers.script.error(
-                    "UA_fail 'onePGT fastq move via rsync failed for {}'".format(fastq)
+                    "UA_fail 'fastq filesize check fail. {} is greater than 10GB'".format(
+                        fastq_file
+                    ))
+            else:
+                self.loggers.script.info("UA_pass 'fastq filesize check pass'")
+                # write rsync command to move fastq to agilent folder -v outputs in verbose mode
+                # use tee to write to file and stdout
+                cmd = "rsync -v {} {} | tee -a {}".format(os.path.join(self.runfolder_obj.fastq_folder_path,fastq_file), config.agilent_upload_folder, os.path.join(self.runfolder_obj.runfolderpath,self.runfolder_obj.runfolder_name+"_"+config.rsync_logfile))
+                # run the command
+                out, err = self.execute_subprocess_command(cmd)
+                # pass stderr to function to look for errors 
+                if not self.check_for_rsync_errors(err):
+                    self.loggers.script.error(
+                        "UA_fail 'onePGT fastq move via rsync failed for {}'".format(fastq_file)
                 )
     
     def check_for_rsync_errors(self,stderr):
@@ -1876,8 +1882,8 @@ class RunfolderProcessor(object):
                 if "NTCcon" in fastq:
                     id2 = "NULL"
                 # define query with placeholders
-                query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('{}','{}','{}','{}','{}')" 
-                
+                query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('{}','{}','{}','{}','{}')"
+
                 # for mokaamp and mokaonc if relevant build the query, populating the placeholders.
                 # add the name of the workflow to the list of workflows
                 if self.panel_dictionary[pannumber]["mokaamp"]:
