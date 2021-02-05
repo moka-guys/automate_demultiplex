@@ -276,18 +276,18 @@ panel_list = [
 	"Pan4044", # STG VCP1
 	"Pan4049", # STG VCP2 CrCa
 	"Pan3174", # WES trio
-	#"Pan4119", # VCP1 Viapath FH
-	#"Pan4121", # VCP1 Viapath CF
-	#"Pan4122", # VCP1 Viapath FGFR
-	#"Pan4125", # VCP1 Viapath DMD
-	#"Pan4126", # VCP1 Viapath CADASIL
+	"Pan4119", # VCP1 Viapath FH
+	"Pan4121", # VCP1 Viapath CF
+	"Pan4122", # VCP1 Viapath FGFR
+	"Pan4125", # VCP1 Viapath DMD
+	"Pan4126", # VCP1 Viapath CADASIL
 	"Pan4145", # VCP3 Viapath CMD
 	"Pan4146", # VCP3 Viapath CM
 	"Pan4149", # VCP2 Viapath BRCA
-	#"Pan4150", # VCP2 Viapath ovarian
-	#"Pan4127", # VCP2 Viapath colorectal
-	#"Pan4129", # VCP2 Viapath lynch
-	#"Pan4130", # VCP2 Viapath polyposis
+	"Pan4150", # VCP2 Viapath ovarian
+	"Pan4127", # VCP2 Viapath colorectal
+	"Pan4129", # VCP2 Viapath lynch
+	"Pan4130", # VCP2 Viapath polyposis
 	"Pan4132", # VCP3 Viapath R56
 	"Pan4134", # VCP3 Viapath R57
 	"Pan4136", # VCP3 Viapath R58
@@ -417,110 +417,110 @@ panel_settings = {
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "4201",
 		"mokapipe_haplotype_caller_padding":1,
-		"hsmetrics_bedfile": "Pan4114data.bed",
-		"variant_calling_bedfile": "Pan4114data.bed",
-		"sambamba_bedfile": "Pan4114dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4278data.bed",
+		"variant_calling_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
 	},
-	# "Pan4119": {  #VCP1 R134_Familial hypercholesterolaemia-Familial hypercholesterolaemia Small panel (Viapath)
-	#     "mokapipe": True,
-	#     "multiqc_coverage_level": 30,
-	#     "RPKM_bedfile_pan_number": "Pan3624",
-	#     "congenica_project": "4666",
-	#     "RPKM_also_analyse": vcp1_panel_list,
-	#     "hsmetrics_bedfile": "Pan4003data.bed",
-	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-	#     "variant_calling_bedfile": "Pan4118data.bed",
-	# },
-	# "Pan4121": {  #VCP1 R184 CF (Viapath)
-	#     "mokapipe": True,
-	#     "multiqc_coverage_level": 30,
-	#     "RPKM_bedfile_pan_number": "Pan3624",
-	#     "congenica_project": "4862",
-	#     "RPKM_also_analyse": vcp1_panel_list,
-	#     "hsmetrics_bedfile": "Pan4003data.bed",
-	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-	#     "variant_calling_bedfile": "Pan4118data.bed",
-	# },
-	# "Pan4122": {  #VCP1 R25 FGFR Viapath
-	#     "mokapipe": True,
-	#     "multiqc_coverage_level": 30,
-	#     "RPKM_bedfile_pan_number": "Pan3624",
-	#     "congenica_project": "4863",
-	#     "RPKM_also_analyse": vcp1_panel_list,
-	#     "hsmetrics_bedfile": "Pan4003data.bed",
-	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-	#     "variant_calling_bedfile": "Pan4118data.bed",
-	# },
-	# "Pan4125": {  #VCP1 R73 DMD (Viapath)
-	#     "mokapipe": True,
-	#     "multiqc_coverage_level": 30,
-	#     "RPKM_bedfile_pan_number": "Pan3624",
-	#     "congenica_project": "4861",
-	#     "RPKM_also_analyse": vcp1_panel_list,
-	#     "hsmetrics_bedfile": "Pan4003data.bed",
-	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-	#     "variant_calling_bedfile": "Pan4118data.bed",
-	# },
-	# "Pan4126": {  #VCP1 R337_CADASIL Viapath
-	#     "mokapipe": True,
-	#     "multiqc_coverage_level": 30,
-	#     "RPKM_bedfile_pan_number": "Pan3624",
-	#     "congenica_project": "TBC",
-	#     "RPKM_also_analyse": vcp1_panel_list,
-	#     "hsmetrics_bedfile": "Pan4003data.bed",
-	#     "sambamba_bedfile": "Pan4003dataSambamba.bed",
-	#     "variant_calling_bedfile": "Pan4118data.bed",
-	# },
+	"Pan4119": {  #VCP1 R134_Familial hypercholesterolaemia-Familial hypercholesterolaemia Small panel (Viapath)
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "congenica_project": "4664",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4287data.bed",
+	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4302data.bed",
+	},
+	"Pan4121": {  #VCP1 R184 CF (Viapath)
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "congenica_project": "4862",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4287ata.bed",
+	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4302data.bed",
+	},
+	"Pan4122": {  #VCP1 R25 FGFR Viapath
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "congenica_project": "4863",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4287data.bed",
+	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4302data.bed",
+	},
+	"Pan4125": {  #VCP1 R73 DMD (Viapath)
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "congenica_project": "4861",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4287data.bed",
+	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4302data.bed",
+	},
+	"Pan4126": {  #VCP1 R337_CADASIL Viapath
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "congenica_project": "4865",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4287data.bed",
+	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4302data.bed",
+	},
 	"Pan4149": {  #VCP2 BRCA (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"RPKM_bedfile_pan_number": "Pan3614",
 		"congenica_project": "4665",
 		"RPKM_also_analyse": vcp2_panel_list,
-		"hsmetrics_bedfile": "Pan4011data.bed",
-		"sambamba_bedfile": "Pan4148dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4090data.bed",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4301data.bed",
 	},
-	# "Pan4150": {  #VCP2 R207 ovarian cancer (Viapath)
-	#     "mokapipe": True,
-	#     "multiqc_coverage_level": 30,
-	#     "RPKM_bedfile_pan_number": "Pan3614",
-	#     "congenica_project": "4864",
-	#     "RPKM_also_analyse": vcp2_panel_list,
-	#     "hsmetrics_bedfile": "Pan4011data.bed",
-	#     "sambamba_bedfile": "PanXXXdataSambamba.bed",
-	#     "variant_calling_bedfile": "PanXXXdata.bed",
-	# },
-	# "Pan4127": {  #VCP2 R209 colorectal cancer (Viapath)
-	#     "mokapipe": True,
-	#     "multiqc_coverage_level": 30,
-	#     "RPKM_bedfile_pan_number": "Pan3614",
-	#     "congenica_project": "TBC",
-	#     "RPKM_also_analyse": vcp2_panel_list,
-	#     "hsmetrics_bedfile": "Pan4011data.bed",
-	#     "sambamba_bedfile": "PanXXXdataSambamba.bed",
-	#     "variant_calling_bedfile": "PanXXXdata.bed",
-	# },
-	# "Pan4129": {  #VCP2 R210 Lynch syndrome (Viapath)
-	#     "mokapipe": True,
-	#     "multiqc_coverage_level": 30,
-	#     "RPKM_bedfile_pan_number": "Pan3614",
-	#     "congenica_project": "TBC",
-	#     "RPKM_also_analyse": vcp2_panel_list,
-	#     "hsmetrics_bedfile": "Pan4011data.bed",
-	#     "sambamba_bedfile": "PanXXXdataSambamba.bed",
-	#     "variant_calling_bedfile": "PanXXXdata.bed",
-	# },
-	# "Pan4130": {  #VCP2 R211 polyposis (Viapath)
-	#     "mokapipe": True,
-	#     "multiqc_coverage_level": 30,
-	#     "RPKM_bedfile_pan_number": "Pan3614",
-	#     "congenica_project": "TBC",
-	#     "RPKM_also_analyse": vcp2_panel_list,
-	#     "hsmetrics_bedfile": "Pan4011data.bed",
-	#     "sambamba_bedfile": "PanXXXdataSambamba.bed",
-	#     "variant_calling_bedfile": "PanXXXdata.bed",
-	# },
+	"Pan4150": {  #VCP2 R207 ovarian cancer (Viapath)
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3614",
+	    "congenica_project": "4864",
+	    "RPKM_also_analyse": vcp2_panel_list,
+	    "hsmetrics_bedfile": "Pan4310data.bed",
+	    "sambamba_bedfile": "Pan4310dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4301data.bed",
+	},
+	"Pan4127": {  #VCP2 R209 colorectal cancer (Viapath)
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3614",
+	    "congenica_project": "5093",
+	    "RPKM_also_analyse": vcp2_panel_list,
+	    "hsmetrics_bedfile": "Pan4310data.bed",
+	    "sambamba_bedfile": "Pan4310dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4301data.bed",
+	},
+	"Pan4129": {  #VCP2 R210 Lynch syndrome (Viapath)
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3614",
+	    "congenica_project": "5094",
+	    "RPKM_also_analyse": vcp2_panel_list,
+	    "hsmetrics_bedfile": "Pan4310data.bed",
+	    "sambamba_bedfile": "Pan4310dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4301data.bed",
+	},
+	"Pan4130": {  #VCP2 R211 polyposis (Viapath)
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3614",
+	    "congenica_project": "5095",
+	    "RPKM_also_analyse": vcp2_panel_list,
+	    "hsmetrics_bedfile": "Pan4310data.bed",
+	    "sambamba_bedfile": "Pan4310dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4301data.bed",
+	},
 	"Pan4132": {  #VCP3 R56 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
@@ -674,6 +674,7 @@ port = 587
 me = "moka.alerts@gstt.nhs.uk"
 you = mokaguys_email
 oncology_you = oncology_ops_email
+WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk",mokaguys_email]
 smtp_do_tls = True
 
 # ================ Integrity check

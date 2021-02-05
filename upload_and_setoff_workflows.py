@@ -1985,7 +1985,7 @@ class RunfolderProcessor(object):
                 + "\nThe following samples are being processed:\n"
                 + "\n".join(self.sql_queries["mokawes"]["samplename_email"])
             )
-            self.send_an_email("aledjones@nhs.net", email_subject, email_message, email_priority)
+            self.send_an_email(config.WES_sample_name_email_list, email_subject, email_message, email_priority)
             # self.send_an_email(config.wes_email_address, email_subject, email_message, email_priority)
 
     def upload_rest_of_runfolder(self):
