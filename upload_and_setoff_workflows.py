@@ -215,7 +215,6 @@ class RunfolderProcessor(object):
         # pass the dictionary created above into ADloggers class - ** unpacks this dictionary  
         # to populate inputs. This is used as an object where various logs can be written 
         self.loggers = adlogger.ADLoggers(**self.log_config)
-        
 
     def run_tests(self):
         """
@@ -243,6 +242,18 @@ class RunfolderProcessor(object):
             self.perform_test(self.execute_subprocess_command(config.dx_sdk_test)[0], "dx_toolkit")
         ):
             raise Exception, "dx toolkit not installed"
+
+        # test agilent connextor is running
+        if not self.test_upload_agent(
+            self.perform_test(
+                self.execute_subprocess_command(
+                   config.agilent_connector_cmd 
+                )[0],
+                "agilent_connector",
+            )
+        ):
+            # don't raise exception - just raise a warning.
+            self.loggers.script.error("UA_fail 'Agilent connector not running - please restart'")
 
     def quarterback(self):
         """
@@ -382,7 +393,11 @@ class RunfolderProcessor(object):
         if test == "cluster_density":
             if config.cluster_density_success_statement not in test_input or config.cluster_density_error_statement in test_input:
                 return False
+        if test == "agilent_connector":
+            if config.agilent_connector_output not in test_input:
+                return False
         return True
+        
 
     def test_dx_toolkit(self, test_result):
         """
@@ -457,7 +472,7 @@ class RunfolderProcessor(object):
             self.loggers.script.info("Demultiplex has not been performed.")
             return False
 
-    def calculate_cluster_density(self,runfolder_path, runfolder_name):
+    def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
         Inputs = runfolder name and runfolder path
         Uses a dockerised version of GATK to run picard CollectIlluminaLaneMetrics
@@ -465,13 +480,20 @@ class RunfolderProcessor(object):
         If success statement seen in stderr record in log file else raise slack alert but do not stop run.
         Returns = None
         """
+        # if novaseq need to give an extra flag to CollectIlluminaLaneMetrics
+        if config.novaseq_id in runfolder_name:
+            novaseq_flag = " --IS_NOVASEQ"
+        else:
+            novaseq_flag = ""
+
         # docker command for tool
         cmd = "sudo docker run -v {}:/input_run \
         broadinstitute/gatk:4.1.8.1 \
         ./gatk CollectIlluminaLaneMetrics \
         --RUN_DIRECTORY /input_run \
         --OUTPUT_DIRECTORY /input_run \
-        --OUTPUT_PREFIX {}".format(runfolder_path, runfolder_name)
+        --OUTPUT_PREFIX {} {}".format(runfolder_path, runfolder_name, novaseq_flag)
+
         # capture stdout and stderr
         # NB all output from picard tool is in stderr
         (out, err) = self.execute_subprocess_command(cmd)
@@ -1014,6 +1036,7 @@ class RunfolderProcessor(object):
         congenica_upload = False
         joint_variant_calling = False # not currently in use
         rpkm_list = [] # list for panels needing RPKM analysis
+        onePGT_run = False # flag to skip processes not required for PGT runs
 
         # loop through samples
         for fastq in list_of_processed_samples:
@@ -1067,7 +1090,12 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
-        
+                
+                # if onePGT
+                if self.panel_dictionary[panel]["onePGT"]:
+                    onePGT_run = True
+                    self.move_onePGT_fastqs(fastq)
+
         # if there is a congenica upload create the file which will be run manually, once QC is passed.
         if congenica_upload:
             self.build_congenica_command_file()
@@ -1078,29 +1106,30 @@ class RunfolderProcessor(object):
             )
 
         # build run wide commands 
-        if mokaonc_list:
-            commands_list.append(self.create_mokaonc_command(mokaonc_list))
-        if joint_variant_calling:
-            commands_list.append(self.create_joint_variant_calling_command())
-        if rpkm_list:
-            # Create a set of RPKM numbers for one command per panel
-            # pass this list into function which takes into account panels which are to be analysed
-            # together and returns a "cleaned_list"
-            for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
-                commands_list.append(self.create_rpkm_command(rpkm))
-        if peddy:
-            # TODO if custom panels and WES done together currently no way
-            # to stop custom panels being analysed by peddy - may cause problems
-            commands_list.append(self.run_peddy_command())
-            # add to depends list so multiqc doesn't start until peddy finishes
-            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
-            # pass "peddy" to ensure it isn't skipped
-            commands_list.append(self.add_to_depends_list("peddy"))
-        # multiqc commands
-        commands_list.append(self.create_multiqc_command())
-        commands_list.append(self.create_upload_multiqc_command())
-        # smartsheet
-        commands_list.append(self.create_smartsheet_command())
+        if not onePGT_run:
+            if mokaonc_list:
+                commands_list.append(self.create_mokaonc_command(mokaonc_list))
+            if joint_variant_calling:
+                commands_list.append(self.create_joint_variant_calling_command())
+            if rpkm_list:
+                # Create a set of RPKM numbers for one command per panel
+                # pass this list into function which takes into account panels which are to be analysed
+                # together and returns a "cleaned_list"
+                for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
+                    commands_list.append(self.create_rpkm_command(rpkm))
+            if peddy:
+                # TODO if custom panels and WES done together currently no way
+                # to stop custom panels being analysed by peddy - may cause problems
+                commands_list.append(self.run_peddy_command())
+                # add to depends list so multiqc doesn't start until peddy finishes
+                # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+                # pass "peddy" to ensure it isn't skipped
+                commands_list.append(self.add_to_depends_list("peddy"))
+            # multiqc commands
+            commands_list.append(self.create_multiqc_command())
+            commands_list.append(self.create_upload_multiqc_command())
+            # smartsheet
+            commands_list.append(self.create_smartsheet_command())
         return commands_list
 
     def create_mokawes_command(self, fastq, pannumber):
@@ -1404,6 +1433,57 @@ class RunfolderProcessor(object):
         """-"""
         # TODO: Implement joint-variant calling command for peddy
         raise NotImplementedError
+
+    def move_onePGT_fastqs(self, fastq):
+        """
+        Input:
+            R1 fastq file name
+        This function checks for the filesize of a fastq file - a warning is sent if greater than size defined in config (currently 5GB) and the file is not moved
+        A rsync command is then issued to copy the fastq to the desired agilent upload folder 
+        The stderr is sent to check_for_rsync_errors() to check for an expected word and a further alert is sent if "fail" or "error" are in stderr
+        Returns:
+            None
+        """
+        # create a list of read1 and read2 fastqs
+        fastq_list=[fastq, fastq.replace("_R1_", "_R2_")]
+        for fastq_file in fastq_list:
+            self.loggers.script.info(
+                        "UA_pass 'assessing OnePGT fastq file {}'".format(fastq_file)
+                        )
+            # test size of fastq
+            filesize = os.path.getsize(os.path.join(self.runfolder_obj.fastq_folder_path,fastq_file))
+            if int(filesize) > config.max_filesize_in_bytes:
+                self.loggers.script.error(
+                    "UA_fail 'fastq filesize check fail. {} is greater than {}. File has not been moved'".format(
+                        fastq_file, config.max_filesize_in_GB
+                    ))
+            else:
+                self.loggers.script.info("UA_pass 'fastq filesize check pass'")
+                # write rsync command to move fastq to agilent folder -v outputs in verbose mode
+                # use tee to write to file and stdout
+                cmd = "rsync -v {} {} | tee -a {}".format(os.path.join(self.runfolder_obj.fastq_folder_path,fastq_file), config.agilent_upload_folder, os.path.join(self.runfolder_obj.runfolderpath,self.runfolder_obj.runfolder_name+"_"+config.rsync_logfile))
+                # run the command
+                out, err = self.execute_subprocess_command(cmd)
+                # pass stderr to function to look for errors 
+                if not self.check_for_rsync_errors(err):
+                    self.loggers.script.error(
+                        "UA_fail 'onePGT fastq move via rsync failed for {}'".format(fastq_file)
+                )
+    
+    def check_for_rsync_errors(self,stderr):
+        """
+        Input:
+            stderr
+        rsync errors will be reported to stderr, not stdout
+        example error:
+        rsync: link_stat "/media/data3/share/testing/999999_NB552085_0077_AHYNCMAFXY/Data/Intensities/BaseCalls/NGS999999_01_242050_JB_U_VCP2R207StG_Pan4042_S1_R1_001.fastdxcq.gz" failed: No such file or directory (2)
+        rsync error: some files/attrs were not transferred (see previous errors) (code 23) at main.c(1183) [sender=3.1.0])
+        Returns:
+            Boolean True, unless the strings "fail" or "error" are seen.
+        """
+        if "error" in stderr or "fail" in stderr:
+            return False
+        return True
 
     def run_congenica_command(self, fastq, pannumber):
         """
@@ -1727,7 +1807,7 @@ class RunfolderProcessor(object):
                 query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
                 # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["congenica_upload"]:
-                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_congenica_pipeline_ID,self.runfolder_obj.runfolder_name))
+                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_congenica_pipeline_ID, self.runfolder_obj.runfolder_name))
 
         if queries:
             # add workflow to sql dictionary
@@ -1739,11 +1819,12 @@ class RunfolderProcessor(object):
         """
         Input = list of fastqs to be processed
         All samples processed using MokaWES are recorded in moka using a single update query.
-        If MokaWES samples - Function populates a dictionary of sample counts, and a query (str) to
+        If MokaWES samples - Function populates a dictionary of sample counts, query (str) and list of samplenames to
         be added to global dictionary.
-        Returns = dictionary or None 
+        Returns = dictionary or None
         """
         dnanumbers = []
+        samplenames = []
         # add workflow to sql dictionary
         for fastq in list_of_processed_samples:
             # take read one
@@ -1754,6 +1835,8 @@ class RunfolderProcessor(object):
                 # capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
+                    # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+                    samplenames.append(self.nexus_fastq_paths(fastq)[2])
         if dnanumbers:
             return {
                 "count": len(dnanumbers),
@@ -1767,6 +1850,7 @@ class RunfolderProcessor(object):
                     + "') and StatusID = "
                     + config.mokastat_nextsq_ID
                 ],
+                "samplename_email": samplenames
             }
         else:
             return None
@@ -1797,8 +1881,8 @@ class RunfolderProcessor(object):
                 if "NTCcon" in fastq:
                     id2 = "NULL"
                 # define query with placeholders
-                query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('{}','{}','{}','{}','{}')" 
-                
+                query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('{}','{}','{}','{}','{}')"
+
                 # for mokaamp and mokaonc if relevant build the query, populating the placeholders.
                 # add the name of the workflow to the list of workflows
                 if self.panel_dictionary[pannumber]["mokaamp"]:
@@ -1887,6 +1971,21 @@ class RunfolderProcessor(object):
             )
             # send email
             self.send_an_email(config.you, email_subject, email_message, email_priority)
+
+        if self.sql_queries["mokawes"]:
+            # send email to WES team to help IR upload
+            email_subject = (
+                    "MOKA ALERT : Started pipeline for " + self.runfolder_obj.runfolder_name
+                )
+            email_message = (
+                self.runfolder_obj.runfolder_name
+                + " being processed using "
+                + config.mokawes_path.split("/")[-1]
+                + "\nThe following samples are being processed:\n"
+                + "\n".join(self.sql_queries["mokawes"]["samplename_email"])
+            )
+            self.send_an_email(config.WES_sample_name_email_list, email_subject, email_message, email_priority)
+            # self.send_an_email(config.wes_email_address, email_subject, email_message, email_priority)
 
     def upload_rest_of_runfolder(self):
         """
