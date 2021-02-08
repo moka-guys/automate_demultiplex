@@ -17,9 +17,9 @@ debug = False
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
 # # path to run folders
-#runfolders = "/media/data3/share"
+runfolders = "/media/data3/share"
 # when testing use a different directory
-runfolders = "/media/data3/share/testing/"
+#runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -674,7 +674,7 @@ port = 587
 me = "moka.alerts@gstt.nhs.uk"
 you = mokaguys_email
 oncology_you = oncology_ops_email
-WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk",mokaguys_email]
+WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email]
 smtp_do_tls = True
 
 # ================ Integrity check

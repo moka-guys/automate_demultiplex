@@ -1807,7 +1807,7 @@ class RunfolderProcessor(object):
                 query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
                 # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["congenica_upload"]:
-                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_congenica_pipeline_ID,self.runfolder_obj.runfolder_name))
+                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_congenica_pipeline_ID, self.runfolder_obj.runfolder_name))
 
         if queries:
             # add workflow to sql dictionary
@@ -1821,7 +1821,7 @@ class RunfolderProcessor(object):
         All samples processed using MokaWES are recorded in moka using a single update query.
         If MokaWES samples - Function populates a dictionary of sample counts, query (str) and list of samplenames to
         be added to global dictionary.
-        Returns = dictionary or None 
+        Returns = dictionary or None
         """
         dnanumbers = []
         samplenames = []
@@ -1836,7 +1836,6 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
                     # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
-                    print self.nexus_fastq_paths(fastq)[2]
                     samplenames.append(self.nexus_fastq_paths(fastq)[2])
         if dnanumbers:
             return {
