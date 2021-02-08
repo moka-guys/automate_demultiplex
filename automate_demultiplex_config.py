@@ -612,7 +612,7 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4278data.bed",
 	},
 	"Pan4151": {  #VCP3 R82 limb girdle (Viapath)
-	  	"mokapipe": True,
+		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"RPKM_bedfile_pan_number": "Pan3974",
 		"congenica_project": "5092",
