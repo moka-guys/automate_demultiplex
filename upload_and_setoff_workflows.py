@@ -1438,7 +1438,7 @@ class RunfolderProcessor(object):
         """
         Input:
             R1 fastq file name
-        This function checks for the filesize of a fastq file - a warning is sent is >10GB and no further processing occurs
+        This function checks for the filesize of a fastq file - a warning is sent if greater than size defined in config (currently 5GB) and the file is not moved
         A rsync command is then issued to copy the fastq to the desired agilent upload folder 
         The stderr is sent to check_for_rsync_errors() to check for an expected word and a further alert is sent if "fail" or "error" are in stderr
         Returns:
@@ -1454,8 +1454,8 @@ class RunfolderProcessor(object):
             filesize = os.path.getsize(os.path.join(self.runfolder_obj.fastq_folder_path,fastq_file))
             if int(filesize) > config.max_filesize_in_bytes:
                 self.loggers.script.error(
-                    "UA_fail 'fastq filesize check fail. {} is greater than 10GB'".format(
-                        fastq_file
+                    "UA_fail 'fastq filesize check fail. {} is greater than {}. File has not been moved'".format(
+                        fastq_file, config.max_filesize_in_GB
                     ))
             else:
                 self.loggers.script.info("UA_pass 'fastq filesize check pass'")

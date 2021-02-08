@@ -700,4 +700,5 @@ sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 # ================ onePGT
 agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
 max_filesize_in_bytes = 5368709120 # 5GB (max size is 10GB per pair of fastq)
+max_filesize_in_GB = "5GB"
 rsync_logfile = "rsync_output.txt"
