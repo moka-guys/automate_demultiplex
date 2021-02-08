@@ -598,7 +598,7 @@ panel_settings = {
 		"congenica_project": "4666",
 		"RPKM_also_analyse": vcp3_panel_list,
 		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
 		"variant_calling_bedfile": "Pan4278data.bed",
 	},
 	"Pan4146": {  #VCP3 R81 CM (Viapath)
@@ -608,7 +608,7 @@ panel_settings = {
 		"congenica_project": "4666",
 		"RPKM_also_analyse": vcp3_panel_list,
 		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278data.bed",
+		"sambamba_bedfile": "Pan4278dataSambamba.bed",
 		"variant_calling_bedfile": "Pan4278data.bed",
 	},
 	"Pan4151": {  #VCP3 R82 limb girdle (Viapath)
