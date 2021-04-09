@@ -141,13 +141,16 @@ class RunfolderProcessor(object):
         self.wes_command = (
             "jobid=$(dx run " + config.app_project + config.mokawes_path + " -y --name "
         )
+        self.snp_command = (
+            "jobid=$(dx run " + config.app_project + config.snp_genotyping_path + " -y --name "
+        )
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = (
             "jobid=$(dx run " + config.app_project + config.upload_multiqc_path + " -y "
         )
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
-        self.RPKM_command = "dx run " + config.app_project + config.RPKM_path
+        self.RPKM_command = "dx run " + config.app_project + config.RPKM_path + " --instance-type mem1_ssd1_x8"
         self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y "
         self.mokaamp_command = (
             "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
@@ -305,6 +308,9 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(
+                    self.list_of_processed_samples
+                )
+                self.sql_queries["snp_genotyping"] = self.write_opms_queries_snp_genotyping(
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
@@ -995,13 +1001,29 @@ class RunfolderProcessor(object):
             bed_dict["variant_calling_bedfile"] = None
         
         # paired end BED file used by primer clipping tool
-        bed_dict["mokaamp_bed_PE_input"] = (
+        if self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]:
+            bed_dict["mokaamp_bed_PE_input"] = (
+                config.app_project
+                + config.bedfile_folder
+                + self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]
+            )
+        else:
+            bed_dict["mokaamp_bed_PE_input"] = (
             config.app_project + config.bedfile_folder + pannumber + "_PE.bed"
         )
-        # oncologt variant callers need the flat file
-        bed_dict["mokaamp_variant_calling_bed"] = (
+        
+        #  oncology variant callers need the flat file
+        if self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]:
+            bed_dict["mokaamp_variant_calling_bed"] = (
+                config.app_project
+                + config.bedfile_folder
+                + self.panel_dictionary[pannumber]["mokaamp_variant_calling_bed"]
+            )
+        else:
+            bed_dict["mokaamp_variant_calling_bed"] = (
             config.app_project + config.bedfile_folder + pannumber + "_flat.bed"
         )
+
         # RPKM bedfile has a different Pan number - defined in the config dictionary
         if self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]:
             bed_dict["rpkm_bedfile"] = (
@@ -1096,6 +1118,11 @@ class RunfolderProcessor(object):
                     onePGT_run = True
                     self.move_onePGT_fastqs(fastq)
 
+                #if panel is to be processed using SNP_genotyping
+                if self.panel_dictionary[panel]["snp_genotyping"]:
+                    commands_list.append(self.create_snp_genotyping_command(fastq, panel))
+                    commands_list.append(self.add_to_depends_list(fastq))
+
         # if there is a congenica upload create the file which will be run manually, once QC is passed.
         if congenica_upload:
             self.build_congenica_command_file()
@@ -1175,6 +1202,44 @@ class RunfolderProcessor(object):
 
         return dx_command
 
+    def create_snp_genotyping_command(self, fastq, pannumber):
+        """
+        Input = R1 fastq filename and Pan number for a single sample 
+        Returns = dx run command for SNP Genotyping workflow (string)
+        """
+        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+        fastqs = self.nexus_fastq_paths(fastq)
+        # build dictionary of pan number specific/relevant bedfile to be used in command
+        bedfiles = self.nexus_bedfiles(pannumber)
+
+        # A bedfile to restrict variant calling should be defined in the config file, otherwise it's None
+        # In the future we may not restrict variant calling using a bed file so support this possible use case.
+        if bedfiles["variant_calling_bedfile"]:
+            bedfiles_string = (
+                config.snp_sentieon_targets_bed + bedfiles["variant_calling_bedfile"] 
+            )
+        else:
+            bedfiles_string = ""
+
+        # create the SNP Genotyping dx command
+        dx_command_list = [
+            self.snp_command,
+            fastqs[2],
+            config.snp_fastqc1,
+            fastqs[0],
+            config.snp_fastqc2,
+            fastqs[1],
+            config.snp_sentieon_samplename,
+            fastqs[2],
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
+
+        dx_command = "".join(map(str, dx_command_list))
+
+        return dx_command
+
     def create_mokapipe_command(self, fastq, pannumber):
         """
         Input = R1 fastq filename and Pan number for a single sample 
@@ -1242,6 +1307,8 @@ class RunfolderProcessor(object):
             + self.dest
             + self.dest_cmd
             + "amplivar_output"
+			+ " --stage-output-folder stage-G0KYx8Q0GfYvbVg49bYf9p9g "
+			+ self.dest_cmd
             + self.token
         )
 
@@ -1304,6 +1371,12 @@ class RunfolderProcessor(object):
         # build nexus fastq paths - returns tuple for read1 and read2 and dictionary for bed files
         fastqs = self.nexus_fastq_paths(fastq)
         bedfiles = self.nexus_bedfiles(pannumber)
+        
+        # we may want to run this pipeline along side mokaONC (which should be used to analyse). 
+        # To avoid confusion we need to change the destination to ensure files produced by this pipeline are not used for analysis
+        dest_cmd = self.dest_cmd
+        if self.panel_dictionary[pannumber]["destination_command"]:
+            dest_cmd += self.panel_dictionary[pannumber]["destination_command"]
 
         # create the MokaAMP dx command
         dx_command_list = [
@@ -1333,8 +1406,12 @@ class RunfolderProcessor(object):
             bedfiles["mokaamp_variant_calling_bed"],
             config.mokaamp_varscan_strandfilter_stage,
             self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"],
+			config.mokaamp_bwa_reference_stage,
+			config.mokaamp_mokapicard_reference_stage,
+			config.mokaamp_vardict_reference_stage,
+			config.mokaamp_varscan_reference_stage,
             self.dest,
-            self.dest_cmd,
+            dest_cmd,
             self.token,
         ]
 
@@ -1855,6 +1932,32 @@ class RunfolderProcessor(object):
         else:
             return None
 
+    def write_opms_queries_snp_genotyping(self, list_of_processed_samples):
+        """
+        Input = list of fastqs to be processed
+        Samples processed using SNP_Genotyping are recorded in Moka using an insert query.
+        This function will create an insert query for each sample processed through snp_genotyping.
+        If snp_genotyping samples are found this function will return a dictionary of sample counts, and a
+        list of queries to be added to global dictionary.
+        Returns = dictionary or None 
+        """
+        queries = []
+        for fastq in list_of_processed_samples:
+            # take read one
+            if "_R1_" in fastq:
+                # extract_Pan number
+                pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+                query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
+                # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
+                if self.panel_dictionary[pannumber]["snp_genotyping"]:
+                    queries.append(query.format(str(fastq.split("_")[2]), config.snp_genotyping_pipeline_ID, self.runfolder_obj.runfolder_name))
+
+        if queries:
+            # add workflow to sql dictionary
+            return {"count": len(queries), "query": queries}
+        else:
+            return None
+
     def write_opms_queries_oncology(self, list_of_processed_samples):
         """
         Input = list of fastqs to be processed
@@ -1951,6 +2054,10 @@ class RunfolderProcessor(object):
             workflows.append(config.mokawes_path.split("/")[-1])
             sql_statements += self.sql_queries["mokawes"]["query"]
             count += self.sql_queries["mokawes"]["count"]
+        if self.sql_queries["snp_genotyping"]:
+            workflows.append(config.snp_genotyping_path.split("/")[-1])
+            sql_statements += self.sql_queries["snp_genotyping"]["query"]
+            count += self.sql_queries["snp_genotyping"]["count"]
         
         # send email
         if workflows and sql_statements:

@@ -17,9 +17,9 @@ debug = False
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
 # # path to run folders
-runfolders = "/media/data3/share"
+#runfolders = "/media/data3/share"
 # when testing use a different directory
-#runfolders = "/media/data3/share/testing/"
+runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -110,7 +110,9 @@ mokawes_pipeline_ID = "4318"
 # MokaAMP ID
 mokaamp_pipeline_ID = "4274"
 # MokaONC ID
-mokaonc_pipeline_ID = "4275"
+mokaonc_pipeline_ID = "4532"
+# SNP Genotyping ID
+snp_genotyping_pipeline_ID = "4480"
 
 
 # -- Moka WES test status--
@@ -136,9 +138,11 @@ mokapipe_path = "Workflows/GATK3.5_v2.12"
 mokawes_path = "Workflows/MokaWES_v1.8"
 
 # path to the oncology workflow in the app project
-mokaonc_path = "Workflows/Mokaonc_v1.5"
+mokaonc_path = "Workflows/Mokaonc_v1.6"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.5"
+mokaamp_path = "Workflows/MokaAMP_v1.6"
+#path to snp_genotyping
+snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
@@ -192,13 +196,23 @@ wes_sentieon_samplename = " -i%s.sample=" % sentieon_stage_id
 # BED file used to restrict Senteion variant calling
 wes_sentieon_targets_bed = " -i%s.targets_bed=" % sentieon_stage_id
 
+#SNPGenotyping workflow inputs
+snp_fastqc1 = " -istage-FgPp4V00YkVJVjKF4kYkBF8v.reads=" # FastQC Read 1
+snp_fastqc2 = " -stage-FgPp4V00YkVJVjKF4kYkBF90.reads=" # FastQC Read 2
+snp_sentieon_stage_id = "stage-FgPp4XQ0YkV48jZG4Py6F55k"
+# BED file used to restrict Senteion variant calling
+snp_sentieon_targets_bed = " -i%s.targets_bed=" % snp_sentieon_stage_id
+# sample name for sentieon app - prevents sample being incorrectly parsed from fastq filename
+snp_sentieon_samplename = " -i%s.sample=" % snp_sentieon_stage_id
+#bcftools input
+snp_bcftools_input = " -istage-FvGkxzj02Bk06Y687Xk8jJp0.in"
 
 # MokaOnc amplivar fastq input
 mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
 # ingenuity app input for amplivar workflow
 mokaonc_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="
 
-# MokaAMP
+# MokaAMP - stages that may change between samples/panels
 mokaamp_fastq_R1_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz="
 mokaamp_fastq_R2_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
 mokaamp_bwa_rg_sample = " -istage-FPzGj780jy1g3p1F4F8z4J7V.read_group_sample="
@@ -207,10 +221,16 @@ mokaamp_mokapicard_capturetype_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.Captur
 mokaamp_bamclipper_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
 mokaamp_chanjo_cov_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
 mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
-mokaamp_vardict_bed_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
+mokaamp_vardict_bed_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.bedfile="
 mokaamp_varscan_bed_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
 mokaamp_varscan_strandfilter_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
 mokaamp_mpileup_cov_level_stage = " -istage-FxypXb807p1zj3g8Jv45Y54P.min_coverage="
+
+# MokaAMP - stages that SHOULDN'@'T may change between samples/panels - these are used to ensure any input files are taken from 001
+mokaamp_bwa_reference_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.genomeindex_targz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY4942J35xX095VZyQBk0v"
+mokaamp_mokapicard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+mokaamp_vardict_reference_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+mokaamp_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 
 mokaamp_email_message = (
 	"If both MokaAMP and MokaOnc (amplivar) have been run,"
@@ -296,14 +316,18 @@ panel_list = [
 	"Pan4143", # VCP3 Viapath R66
 	"Pan4144", # VCP3 Viapath R78
 	"Pan4151", # VCP3 Viapath R82
-	"Pan2764" # OnePGT
+	"Pan4314", # VCP3 Viapath R266
+	"Pan4351", # VCP3 Viapath R227
+	"Pan2764", # OnePGT
+	"Pan4009" # SNP Genotyping
 ]
 
 
 # create lists of pan numbers for each capture panel for use with RPKM
+#IMPORTANT: Lists below are used by the trend analysis scripts, if changed the trend analysis script will need to be updated
 vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044"]
 vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049"]
-vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043"]
+vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314" "Pan4351"]
 
 default_panel_properties = {
 	"UMI": False,
@@ -316,6 +340,7 @@ default_panel_properties = {
 	"mokaamp": False,
 	"capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
 	"mokaonc": False,
+	"snp_genotyping": False,
 	"mokapipe": False,
 	"mokapipe_haplotype_caller_padding": 0,
 	"mokaamp_varscan_strandfilter": True,
@@ -323,6 +348,7 @@ default_panel_properties = {
 	"congenica_upload": True,
 	"STG": False,
 	"oncology": False,
+	"destination_command":None,
 	"congenica_credentials": "Viapath", # "Viapath" OR "STG"
 	"congenica_IR_template": "priority", # 'priority' or 'non-priority'
 	"clinical_coverage_depth": None,  # only found in mokamp command
@@ -333,6 +359,10 @@ default_panel_properties = {
 	"variant_calling_bedfile": None,
 	# Note: sambamba_bedfile only used when BED file differs from Pan number
 	"sambamba_bedfile": None,
+	# Note: mokaamp_bed_PE_input only used when BED file differs from Pan number
+	"mokaamp_bed_PE_input": None,
+	# Note: mokaamp_variant_calling_bed only used when BED file differs from Pan number
+	"mokaamp_variant_calling_bed":None,
 	"ingenuity_email": interpretation_request_email,
 	"congenica_project": None,
 	"peddy": False,
@@ -357,9 +387,15 @@ panel_settings = {
 	"Pan1190": {  # EGFR SWIFT Panel
 		"oncology": True,
 		"mokaonc": True,
+		"mokaamp": True,
 		"capture_type": "Amplicon",
-		"clinical_coverage_depth": 1000,
-		"multiqc_coverage_level": 100
+		"clinical_coverage_depth": 600,
+		"multiqc_coverage_level": 100,
+		"mokaamp_bed_PE_input":"Pan3638_PE.bed",
+		"mokaamp_variant_calling_bed":"Pan3638_flat.bed",
+		"hsmetrics_bedfile": "Pan3638.bed",
+		"sambamba_bedfile": "Pan3638Sambamba.bed",
+		"destination_command": "MokaAMP_EGFR_trial"
 	},
 	"Pan2684": {  # 57G SWIFT panel
 		"RPKM_bedfile_pan_number": None,
@@ -394,6 +430,11 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4011data.bed",
 		"variant_calling_bedfile": "Pan4011data.bed",
 		"sambamba_bedfile": "Pan4011dataSambamba.bed",
+	},
+	"Pan4009": {  # SNP Genotyping
+		"snp_genotyping": True,
+		"multiqc_coverage_level": 30,
+		"variant_calling_bedfile": "Pan4009.bed",
 	},
 	"Pan4049": {  # VCP2 STG CrCa
 		"mokapipe": True,
@@ -437,7 +478,7 @@ panel_settings = {
 	    "RPKM_bedfile_pan_number": "Pan3624",
 	    "congenica_project": "4862",
 	    "RPKM_also_analyse": vcp1_panel_list,
-	    "hsmetrics_bedfile": "Pan4287ata.bed",
+	    "hsmetrics_bedfile": "Pan4287data.bed",
 	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4302data.bed",
 	},
@@ -524,107 +565,127 @@ panel_settings = {
 	"Pan4132": {  #VCP3 R56 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan4134": {  #VCP3 R57 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan4136": {  #VCP3 R58 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan4137": {  #VCP3 R60 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan4138": {  #VCP3 R62 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan4143": {  #VCP3 R66 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan4144": {  #VCP3 R78 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan4145": {  #VCP3 R79 - CMD (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4666",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan4146": {  #VCP3 R81 CM (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4666",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan4151": {  #VCP3 R82 limb girdle (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4278data.bed",
-		"sambamba_bedfile": "Pan4278dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4278data.bed",
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
 	},
 	"Pan2764": { # OnePGT
 		"onePGT": True,
 		"congenica_upload": False
-	}
+	},
+	"Pan4351": { #VCP3 R227 (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan4362",
+		"congenica_project": "5522",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
+	},
+	"Pan4314": { #VCP3 R266 (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan4362",
+		"congenica_project": "5290",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
+	}	
 }
 
 # =====smartsheet API=====
