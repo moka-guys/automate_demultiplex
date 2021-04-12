@@ -198,7 +198,7 @@ wes_sentieon_targets_bed = " -i%s.targets_bed=" % sentieon_stage_id
 
 #SNPGenotyping workflow inputs
 snp_fastqc1 = " -istage-FgPp4V00YkVJVjKF4kYkBF8v.reads=" # FastQC Read 1
-snp_fastqc2 = " -stage-FgPp4V00YkVJVjKF4kYkBF90.reads=" # FastQC Read 2
+snp_fastqc2 = " -istage-FgPp4V00YkVJVjKF4kYkBF90.reads=" # FastQC Read 2
 snp_sentieon_stage_id = "stage-FgPp4XQ0YkV48jZG4Py6F55k"
 # BED file used to restrict Senteion variant calling
 snp_sentieon_targets_bed = " -i%s.targets_bed=" % snp_sentieon_stage_id
