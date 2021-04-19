@@ -486,7 +486,7 @@ panel_settings = {
 	    "mokapipe": True,
 	    "multiqc_coverage_level": 30,
 	    "RPKM_bedfile_pan_number": "Pan3624",
-	    "congenica_project": "4863",
+	    "congenica_project": "5291",
 	    "RPKM_also_analyse": vcp1_panel_list,
 	    "hsmetrics_bedfile": "Pan4287data.bed",
 	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
