@@ -144,6 +144,9 @@ class RunfolderProcessor(object):
         self.snp_command = (
             "jobid=$(dx run " + config.app_project + config.snp_genotyping_path + " -y --name "
         )
+        self.archer_dx_command = (
+            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
+        )
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = (
@@ -1059,6 +1062,7 @@ class RunfolderProcessor(object):
         joint_variant_calling = False # not currently in use
         rpkm_list = [] # list for panels needing RPKM analysis
         onePGT_run = False # flag to skip processes not required for PGT runs
+        archer_dx = False
 
         # loop through samples
         for fastq in list_of_processed_samples:
@@ -1121,6 +1125,12 @@ class RunfolderProcessor(object):
                 #if panel is to be processed using SNP_genotyping
                 if self.panel_dictionary[panel]["snp_genotyping"]:
                     commands_list.append(self.create_snp_genotyping_command(fastq, panel))
+                    commands_list.append(self.add_to_depends_list(fastq))
+                
+                if self.panel_dictionary[panel]["archerdx"]:
+                    commands_list.append(self.create_archerdx_command(fastq, panel, "R1"))
+                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.create_archerdx_command(fastq, panel, "R2"))
                     commands_list.append(self.add_to_depends_list(fastq))
 
         # if there is a congenica upload create the file which will be run manually, once QC is passed.
@@ -1198,6 +1208,26 @@ class RunfolderProcessor(object):
             self.token,
         ]
 
+        dx_command = "".join(map(str, dx_command_list))
+
+        return dx_command
+
+    def create_archerdx_command(self, fastq, pannumber, read):
+        """
+        Input = R1 fastq filename and Pan number for a single sample 
+        Returns = dx run command for fastq (string)
+        """
+        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+        fastqs = self.nexus_fastq_paths(fastq)
+        dx_command_list = [
+            self.archer_dx_command,
+            fastqs[2],
+            " -ireads=",
+            fastqs[0].replace("_R1_","_%s_" % (read)),
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
         dx_command = "".join(map(str, dx_command_list))
 
         return dx_command
@@ -1307,8 +1337,8 @@ class RunfolderProcessor(object):
             + self.dest
             + self.dest_cmd
             + "amplivar_output"
-			+ " --stage-output-folder stage-G0KYx8Q0GfYvbVg49bYf9p9g "
-			+ self.dest_cmd
+            + " --stage-output-folder stage-G0KYx8Q0GfYvbVg49bYf9p9g "
+            + self.dest_cmd
             + self.token
         )
 
@@ -1406,10 +1436,10 @@ class RunfolderProcessor(object):
             bedfiles["mokaamp_variant_calling_bed"],
             config.mokaamp_varscan_strandfilter_stage,
             self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"],
-			config.mokaamp_bwa_reference_stage,
-			config.mokaamp_mokapicard_reference_stage,
-			config.mokaamp_vardict_reference_stage,
-			config.mokaamp_varscan_reference_stage,
+            config.mokaamp_bwa_reference_stage,
+            config.mokaamp_mokapicard_reference_stage,
+            config.mokaamp_vardict_reference_stage,
+            config.mokaamp_varscan_reference_stage,
             self.dest,
             dest_cmd,
             self.token,

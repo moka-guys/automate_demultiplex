@@ -19,7 +19,7 @@ document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[
 # # path to run folders
 runfolders = "/media/data3/share"
 # when testing use a different directory
-#runfolders = "/media/data3/share/testing/"
+runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -158,6 +158,8 @@ upload_multiqc_path = "Apps/upload_multiqc_v1.3"
 smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.2"
 # RPKM path
 RPKM_path = "Apps/RPKM_using_conifer_v1.6"
+# FastQC app
+fastqc_app = "Apps/fastqc_v1.3"
 # bedfile folder
 bedfile_folder = "Data/BED/"
 # DNA Nexus organisation to create the project within
@@ -319,7 +321,8 @@ panel_list = [
 	"Pan4314", # VCP3 Viapath R266
 	"Pan4351", # VCP3 Viapath R227
 	"Pan2764", # OnePGT
-	"Pan4009" # SNP Genotyping
+	"Pan4009", # SNP Genotyping
+	"Pan4396" # ArcherDx
 ]
 
 
@@ -366,6 +369,7 @@ default_panel_properties = {
 	"ingenuity_email": interpretation_request_email,
 	"congenica_project": None,
 	"peddy": False,
+	"archerdx": False,
 }
 
 # override default panel settings
@@ -408,7 +412,7 @@ panel_settings = {
 	"Pan4044": {  # VCP1 STG
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3624",
+		"RPKM_bedfile_pan_number": "Pan4399",
 		"RPKM_also_analyse": vcp1_panel_list,
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
@@ -465,52 +469,52 @@ panel_settings = {
 	"Pan4119": {  #VCP1 R134_Familial hypercholesterolaemia-Familial hypercholesterolaemia Small panel (Viapath)
 	    "mokapipe": True,
 	    "multiqc_coverage_level": 30,
-	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "RPKM_bedfile_pan_number": "Pan4399",
 	    "congenica_project": "4664",
 	    "RPKM_also_analyse": vcp1_panel_list,
-	    "hsmetrics_bedfile": "Pan4287data.bed",
-	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4302data.bed",
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
 	},
 	"Pan4121": {  #VCP1 R184 CF (Viapath)
 	    "mokapipe": True,
 	    "multiqc_coverage_level": 30,
-	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "RPKM_bedfile_pan_number": "Pan4399",
 	    "congenica_project": "4862",
 	    "RPKM_also_analyse": vcp1_panel_list,
-	    "hsmetrics_bedfile": "Pan4287data.bed",
-	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4302data.bed",
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
 	},
 	"Pan4122": {  #VCP1 R25 FGFR Viapath
 	    "mokapipe": True,
 	    "multiqc_coverage_level": 30,
-	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "RPKM_bedfile_pan_number": "Pan4399",
 	    "congenica_project": "5291",
 	    "RPKM_also_analyse": vcp1_panel_list,
-	    "hsmetrics_bedfile": "Pan4287data.bed",
-	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4302data.bed",
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
 	},
 	"Pan4125": {  #VCP1 R73 DMD (Viapath)
 	    "mokapipe": True,
 	    "multiqc_coverage_level": 30,
-	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "RPKM_bedfile_pan_number": "Pan4399",
 	    "congenica_project": "4861",
 	    "RPKM_also_analyse": vcp1_panel_list,
-	    "hsmetrics_bedfile": "Pan4287data.bed",
-	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4302data.bed",
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
 	},
 	"Pan4126": {  #VCP1 R337_CADASIL Viapath
 	    "mokapipe": True,
 	    "multiqc_coverage_level": 30,
-	    "RPKM_bedfile_pan_number": "Pan3624",
+	    "RPKM_bedfile_pan_number": "Pan4399",
 	    "congenica_project": "4865",
 	    "RPKM_also_analyse": vcp1_panel_list,
-	    "hsmetrics_bedfile": "Pan4287data.bed",
-	    "sambamba_bedfile": "Pan4287dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4302data.bed",
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
 	},
 	"Pan4149": {  #VCP2 BRCA (Viapath)
 		"mokapipe": True,
@@ -685,7 +689,11 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4361data.bed",
 		"sambamba_bedfile": "Pan4361dataSambamba.bed",
 		"variant_calling_bedfile": "Pan4361data.bed",
-	}	
+	},
+	"Pan4396": { #ArcherDx
+		"archerdx": True,
+		"congenica_upload": False,
+	}
 }
 
 # =====smartsheet API=====
