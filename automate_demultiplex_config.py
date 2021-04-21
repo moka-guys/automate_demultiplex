@@ -111,6 +111,8 @@ mokawes_pipeline_ID = "4318"
 mokaamp_pipeline_ID = "4274"
 # MokaONC ID
 mokaonc_pipeline_ID = "4532"
+# MokaONC ID
+archerDx_pipeline_ID = "4562"
 # SNP Genotyping ID
 snp_genotyping_pipeline_ID = "4480"
 
@@ -320,6 +322,8 @@ panel_list = [
 	"Pan4151", # VCP3 Viapath R82
 	"Pan4314", # VCP3 Viapath R266
 	"Pan4351", # VCP3 Viapath R227
+	"Pan4387", # VCP3 Viapath R90
+	"Pan4390", # VCP3 Viapath R97
 	"Pan2764", # OnePGT
 	"Pan4009", # SNP Genotyping
 	"Pan4396" # ArcherDx
@@ -330,7 +334,7 @@ panel_list = [
 #IMPORTANT: Lists below are used by the trend analysis scripts, if changed the trend analysis script will need to be updated
 vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044"]
 vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049"]
-vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314" "Pan4351"]
+vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314" "Pan4351","Pan4387","Pan4390"]
 
 default_panel_properties = {
 	"UMI": False,
@@ -680,6 +684,26 @@ panel_settings = {
 		"sambamba_bedfile": "Pan4361dataSambamba.bed",
 		"variant_calling_bedfile": "Pan4361data.bed",
 	},
+	"Pan4387": { #VCP3 R90 Bleeding and platelet disorders (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan4362",
+		"congenica_project": "4699",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
+	},
+	"Pan4390": { #VCP3 R97 Thrombophilia with a likely monogenic cause (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan4362",
+		"congenica_project": "4699",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"hsmetrics_bedfile": "Pan4361data.bed",
+		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4361data.bed",
+	},
 	"Pan4314": { #VCP3 R266 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
@@ -765,6 +789,8 @@ novaseq_id = "A01229"
 demultiplex_success_match = r".*Processing completed with 0 errors and 0 warnings.$"
 # list of sequencers which require md5 checksums from integrity check to be assessed
 sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
+bcl2fastq_stats_filename = "Stats.json"
+bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 
 # ================ onePGT
 agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
