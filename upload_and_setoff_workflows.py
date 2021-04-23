@@ -144,6 +144,9 @@ class RunfolderProcessor(object):
         self.snp_command = (
             "jobid=$(dx run " + config.app_project + config.snp_genotyping_path + " -y --name "
         )
+        self.archer_dx_command = (
+            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
+        )
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = (
@@ -294,7 +297,9 @@ class RunfolderProcessor(object):
                 self.look_for_upload_errors(self.upload_fastqs())
                 
                 # upload cluster density files and check upload was successful.
-                self.look_for_upload_errors(self.upload_cluster_density())
+                self.look_for_upload_errors(self.upload_cluster_density_files_for_multiQC())
+                # upload bcl2fastq stats files and check upload was successful.
+                self.look_for_upload_errors(self.upload_bcl2fastq_QC_files_for_multiQC())
 
                 self.write_dx_run_cmds(
                     self.start_building_dx_run_cmds(self.list_of_processed_samples)
@@ -864,11 +869,11 @@ class RunfolderProcessor(object):
                     )
                 )
 
-    def upload_cluster_density(self):
+    def upload_cluster_density_files_for_multiQC(self):
         """
         Inputs = None
-        All samples to be processed were identified in find_fastqs() which also created a string of 
-        filepaths for all fastqs that is required by the upload agent.
+        Some QC metrics files that are used by multiqc may need to be uploaded before the rest of the runfolder to ensure they are included in the report
+        This function build an upload agent command for the cluster density files.
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
@@ -876,8 +881,10 @@ class RunfolderProcessor(object):
         Returns filepath to logfile (non-debug) 
         """
         # build the nexus upload command
-        file_list = [os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.cluster_density_file_suffix)),
-            os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.phasing_metrics_file_suffix))]
+        file_list = [
+            os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.cluster_density_file_suffix)),
+            os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.phasing_metrics_file_suffix))
+            ]
         # check if the cluster density files exist before trying to upload- if they don't the script will fail when trying to upload them.
         if all([os.path.isfile(f) for f in file_list]):
             nexus_upload_command = (
@@ -888,7 +895,7 @@ class RunfolderProcessor(object):
                 + " --project "
                 + self.runfolder_obj.nexus_project_name
                 + "  --folder /QC"
-                + " --do-not-compress --upload-threads 10 "
+                + " --do-not-compress --upload-threads 1 "
                 + " ".join(file_list)
                 + self.restart_ua_2  
             )
@@ -911,6 +918,54 @@ class RunfolderProcessor(object):
             self.loggers.script.info("UA_pass 'skipping upload of cluster density files - not all files present'")
             return None, None, "skip_upload_error_check"
     
+    def upload_bcl2fastq_QC_files_for_multiQC(self):
+        """
+        Inputs = None
+        Some QC metrics files that are used by multiqc may need to be uploaded before the rest of the runfolder to ensure they are included in the report
+        This function build an upload agent command for the bcl2fastq stats.json.
+        This command is passed to execute_subprocess_command() and all standard error/standard out
+        written to a log file. The upload command is written in a way where it is repeated until it
+        exits with an exit status of 0.
+        If debug mode the upload agent command is returned without calling execute_subprocess_command()
+        Returns filepath to logfile (non-debug) 
+        """
+        # build the nexus upload command
+        file_list = [
+            str(self.runfolder_obj.runfolderpath) + os.path.join(str(config.bcl2fastq_stats_path), str(config.bcl2fastq_stats_filename))
+            ]
+        # check if the files exist before trying to upload- if they don't the script will fail when trying to upload them.
+        if all([os.path.isfile(f) for f in file_list]):
+            nexus_upload_command = (
+                self.restart_ua_1
+                + config.upload_agent_path
+                + " --auth-token "
+                + config.Nexus_API_Key
+                + " --project "
+                + self.runfolder_obj.nexus_project_name
+                + "  --folder /"
+                + self.runfolder_obj.nexus_path + "/Stats"
+                + " --do-not-compress --upload-threads 1 "
+                + " ".join(file_list)
+                + self.restart_ua_2  
+            )
+            if self.debug_mode:
+                return nexus_upload_command
+
+            # Log fastq upload command to the upload agent logfile
+            self.loggers.upload_agent.info("Upload bcl2fastq stats file commands:\n{}".format(nexus_upload_command))
+            # write to automated script logfile
+            self.loggers.script.info(
+                "Uploading bcl2fastq stats files. See commands at {}".format(self.loggers.upload_agent.filepath)
+            )
+
+            # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
+            out, err = self.execute_subprocess_command(nexus_upload_command)
+            self.loggers.upload_agent.info("Uploading bcl2fastq stats files\n{}\n{}".format(out, err))
+            return self.loggers.upload_agent.filepath, file_list, "bcl2fastq_stats"
+        # if the cluster density files do not exist skip the upload and return a string which skip the look_for_upload_errors checks.
+        else:
+            self.loggers.script.info("UA_pass 'skipping upload of bcl2fastq stats files - not all files present'")
+            return None, None, "skip_upload_error_check"
 
     def nexus_fastq_paths(self, read1):
         """
@@ -1122,6 +1177,12 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["snp_genotyping"]:
                     commands_list.append(self.create_snp_genotyping_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
+                
+                if self.panel_dictionary[panel]["archerdx"]:
+                    commands_list.append(self.create_archerdx_command(fastq, panel, "R1"))
+                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.create_archerdx_command(fastq, panel, "R2"))
+                    commands_list.append(self.add_to_depends_list(fastq))
 
         # if there is a congenica upload create the file which will be run manually, once QC is passed.
         if congenica_upload:
@@ -1198,6 +1259,26 @@ class RunfolderProcessor(object):
             self.token,
         ]
 
+        dx_command = "".join(map(str, dx_command_list))
+
+        return dx_command
+
+    def create_archerdx_command(self, fastq, pannumber, read):
+        """
+        Input = R1 fastq filename and Pan number for a single sample 
+        Returns = dx run command for fastq (string)
+        """
+        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+        fastqs = self.nexus_fastq_paths(fastq)
+        dx_command_list = [
+            self.archer_dx_command,
+            fastqs[2],
+            " -ireads=",
+            fastqs[0].replace("_R1_","_%s_" % (read)),
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
         dx_command = "".join(map(str, dx_command_list))
 
         return dx_command
@@ -1307,8 +1388,8 @@ class RunfolderProcessor(object):
             + self.dest
             + self.dest_cmd
             + "amplivar_output"
-			+ " --stage-output-folder stage-G0KYx8Q0GfYvbVg49bYf9p9g "
-			+ self.dest_cmd
+            + " --stage-output-folder stage-G0KYx8Q0GfYvbVg49bYf9p9g "
+            + self.dest_cmd
             + self.token
         )
 
@@ -1406,10 +1487,10 @@ class RunfolderProcessor(object):
             bedfiles["mokaamp_variant_calling_bed"],
             config.mokaamp_varscan_strandfilter_stage,
             self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"],
-			config.mokaamp_bwa_reference_stage,
-			config.mokaamp_mokapicard_reference_stage,
-			config.mokaamp_vardict_reference_stage,
-			config.mokaamp_varscan_reference_stage,
+            config.mokaamp_bwa_reference_stage,
+            config.mokaamp_mokapicard_reference_stage,
+            config.mokaamp_vardict_reference_stage,
+            config.mokaamp_varscan_reference_stage,
             self.dest,
             dest_cmd,
             self.token,
@@ -1994,6 +2075,9 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[pannumber]["mokaonc"]:
                     queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaonc_pipeline_ID, pannumber_no_pan))
                     workflows.append(config.mokaonc_path.split("/")[-1])
+                if self.panel_dictionary[pannumber]["archerdx"]:
+                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.archerDx_pipeline_ID, pannumber_no_pan))
+                    workflows.append(config.fastqc_app.split("/")[-1])
         # if queries have been created return a dictionary
         if queries:
             # use queries list to create a count of samples, return list of queries and the set of the workflows (removing duplicates)
