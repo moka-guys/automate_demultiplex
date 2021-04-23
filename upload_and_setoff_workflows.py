@@ -948,7 +948,6 @@ class RunfolderProcessor(object):
                 + " ".join(file_list)
                 + self.restart_ua_2  
             )
-            print nexus_upload_command
             if self.debug_mode:
                 return nexus_upload_command
 
