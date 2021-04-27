@@ -334,7 +334,7 @@ panel_list = [
 #IMPORTANT: Lists below are used by the trend analysis scripts, if changed the trend analysis script will need to be updated
 vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044"]
 vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049"]
-vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314" "Pan4351","Pan4387","Pan4390"]
+vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390"]
 
 default_panel_properties = {
 	"UMI": False,
