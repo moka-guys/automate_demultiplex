@@ -335,6 +335,11 @@ panel_list = [
 vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044"]
 vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049"]
 vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390"]
+WES_panel_lists = ["Pan2835","Pan3174"]
+SNP_panel_lists = ["Pan4009"]
+archer_panel_list = ["Pan4396"]
+swift_57G_panel_list = ["Pan2684"]
+swift_egfr_panel_list = ["Pan1190"]
 
 default_panel_properties = {
 	"UMI": False,
