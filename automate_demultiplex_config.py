@@ -155,7 +155,7 @@ congenica_app_path = "Apps/congenica_upload_v1.2"
 iva_app_path = ""
 
 # path to app which uploads multiqc report
-upload_multiqc_path = "Apps/upload_multiqc_v1.3"
+upload_multiqc_path = "Apps/upload_multiqc_v1.4.0"
 # smartsheet app
 smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.2"
 # RPKM path
