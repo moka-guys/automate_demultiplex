@@ -17,9 +17,9 @@ debug = False
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
 # # path to run folders
-runfolders = "/media/data3/share"
+#runfolders = "/media/data3/share"
 # when testing use a different directory
-#runfolders = "/media/data3/share/testing/"
+runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -468,9 +468,9 @@ panel_settings = {
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "4201",
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
 	},
 	"Pan4119": {  #VCP1 R134_Familial hypercholesterolaemia-Familial hypercholesterolaemia Small panel (Viapath)
 	    "mokapipe": True,
@@ -578,9 +578,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4134": {  #VCP3 R57 (Viapath)
 		"mokapipe": True,
@@ -588,9 +588,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4136": {  #VCP3 R58 (Viapath)
 		"mokapipe": True,
@@ -598,9 +598,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4137": {  #VCP3 R60 (Viapath)
 		"mokapipe": True,
@@ -608,9 +608,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4138": {  #VCP3 R62 (Viapath)
 		"mokapipe": True,
@@ -618,9 +618,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4143": {  #VCP3 R66 (Viapath)
 		"mokapipe": True,
@@ -628,9 +628,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4144": {  #VCP3 R78 (Viapath)
 		"mokapipe": True,
@@ -638,9 +638,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4145": {  #VCP3 R79 - CMD (Viapath)
 		"mokapipe": True,
@@ -648,9 +648,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4666",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4146": {  #VCP3 R81 CM (Viapath)
 		"mokapipe": True,
@@ -658,9 +658,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4666",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4151": {  #VCP3 R82 limb girdle (Viapath)
 		"mokapipe": True,
@@ -668,9 +668,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan2764": { # OnePGT
 		"onePGT": True,
@@ -682,9 +682,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5522",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4387": { #VCP3 R90 Bleeding and platelet disorders (Viapath)
 		"mokapipe": True,
@@ -692,9 +692,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4699",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4390": { #VCP3 R97 Thrombophilia with a likely monogenic cause (Viapath)
 		"mokapipe": True,
@@ -702,9 +702,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4699",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4314": { #VCP3 R266 (Viapath)
 		"mokapipe": True,
@@ -712,9 +712,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5290",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4396": { #ArcherDx
 		"archerdx": True,
