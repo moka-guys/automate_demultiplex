@@ -267,8 +267,8 @@ class ready2start_demultiplexing():
         for samplesheet in all_runfolders:
             self.list_of_samplesheets.append(samplesheet.upper())
 
-        # Set the expected samplesheet name in uppercase
-        expected_samplesheet = self.runfolder.upper() + "_SAMPLESHEET.CSV"
+        # Set the expected samplesheet name
+        expected_samplesheet = self.runfolder.upper() + "_SampleSheet.csv"
         # Check that the expected samplesheet exists
         if expected_samplesheet in self.list_of_samplesheets:
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " + self.samplesheet + "\n")
