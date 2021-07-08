@@ -262,15 +262,15 @@ class ready2start_demultiplexing():
         self.samplesheet = self.samplesheets + self.runfolder + "_SampleSheet.csv"
 
         # Get a list of samplesheets in the samplesheets folder
-        all_runfolders = os.listdir(self.samplesheets)
+        #all_runfolders = os.listdir(self.samplesheets)
         # In case samplesheets have a mix of capitalisation, convert all names to uppercase
-        for samplesheet in all_runfolders:
-            self.list_of_samplesheets.append(samplesheet.upper())
+        #for samplesheet in os.listdir(self.samplesheets)
+            #self.list_of_samplesheets.append(samplesheet.upper())
 
         # Set the expected samplesheet name
-        expected_samplesheet = self.runfolder.upper() + "_SampleSheet.csv"
+        expected_samplesheet = self.runfolder + "_SampleSheet.csv"
         # Check that the expected samplesheet exists
-        if expected_samplesheet in self.list_of_samplesheets:
+        if expected_samplesheet in os.listdir(self.samplesheets):
             self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " + self.samplesheet + "\n")
             # Test if the samplesheet contains valid characters using self.check_valid_samplsheet().
             # Returns true if the sample sheet does not contain illegal characters
