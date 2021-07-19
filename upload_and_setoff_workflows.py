@@ -1697,6 +1697,9 @@ class RunfolderProcessor(object):
         # check if any reference ids (flanked by underscores) are present in the fastq name and if so skip this step
         for id in config.reference_sample_ids:
             if "_%s_" % (id) in fastq:
+                self.loggers.script.info(
+                        "UA_pass 'NA12878 sample detected, not building congenica upload command for {}'".format(fastq_file)
+                        )
                 return None
 
         # the nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name 
@@ -2146,7 +2149,8 @@ class RunfolderProcessor(object):
             )
             email_priority = 1  # high priority
             email_message = (
-                self.runfolder_obj.runfolder_name
+                config.test_email_header
+                + self.runfolder_obj.runfolder_name
                 + " being processed using workflow(s) "
                 + ",".join(self.sql_queries["oncology"]["workflows"])
                 + "\n\nPlease update Moka using the below queries and ensure that "
@@ -2159,7 +2163,8 @@ class RunfolderProcessor(object):
 
             # email_for_cancer_ops leads to inform the pipeline has started
             email_message = (
-                self.runfolder_obj.runfolder_name
+                config.test_email_header
+                + self.runfolder_obj.runfolder_name
                 + " being processed using workflow(s) "
                 + ",".join(self.sql_queries["oncology"]["workflows"])
                 + "\n"
@@ -2197,7 +2202,8 @@ class RunfolderProcessor(object):
             )
             email_priority = 1  # high priority
             email_message = (
-                self.runfolder_obj.runfolder_name
+                config.test_email_header
+                + self.runfolder_obj.runfolder_name
                 + " being processed using workflow "
                 + ",".join(set(workflows))
                 + "\n\nPlease update Moka using the below query and ensure that "
@@ -2214,7 +2220,8 @@ class RunfolderProcessor(object):
                     "MOKA ALERT : Started pipeline for " + self.runfolder_obj.runfolder_name
                 )
             email_message = (
-                self.runfolder_obj.runfolder_name
+                config.test_email_header
+                + self.runfolder_obj.runfolder_name
                 + " being processed using "
                 + config.mokawes_path.split("/")[-1]
                 + "\nThe following samples are being processed:\n"

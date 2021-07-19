@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 import os
 
 # Set debug mode
-debug = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -16,11 +16,13 @@ debug = False
 # (2 levels up from this file)
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
-# # path to run folders
-runfolders = "/media/data3/share"
-# when testing use a different directory
-## NOTE WHEN TESTING ALSO CONSIDER agilent_upload_folder (in OnePGT section)
-runfolders = "/media/data3/share/testing/"
+# path to run folders - use testing flag to determine folders.
+if not testing:
+	runfolders = "/media/data3/share"
+else:
+	# when testing use a different directory
+	## NOTE WHEN TESTING ALSO CONSIDER agilent_upload_folder (in OnePGT section)
+	runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
 samplesheets = runfolders + "/samplesheets/"
@@ -38,8 +40,6 @@ file_demultiplexing_old = "demultiplexlog.txt"
 
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
-
-demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
@@ -777,6 +777,11 @@ you = mokaguys_email
 oncology_you = oncology_ops_email
 WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email]
 smtp_do_tls = True
+if testing:
+	test_email_header = "AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL\n\n"
+else:
+	test_email_header = ""
+
 
 # ================ Integrity check
 # the filename which holds the checksum results
@@ -801,9 +806,11 @@ bcl2fastq_stats_filename = "Stats.json"
 bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 
 # ================ onePGT
-#agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
-# for testing
-agilent_upload_folder = "/media/data1/share/test_agilent_OnePGT_uploads/"
+if testing:
+	# for testing
+	agilent_upload_folder = "/media/data1/share/test_agilent_OnePGT_uploads/"
+else:
+	agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
 max_filesize_in_bytes = 5368709120 # 5GB (max size is 10GB per pair of fastq)
 max_filesize_in_GB = "5GB"
 rsync_logfile = "rsync_output.txt"
