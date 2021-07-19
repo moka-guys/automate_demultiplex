@@ -265,15 +265,16 @@ rpkm_bedfile_input = " -ibedfile="
 rpkm_project_input = " -iproject_name="
 rpkm_bamfiles_to_download_input = " -ibamfile_pannumbers="
 
-# emails addresses for Ingenuity
-oncology_IVA_email = "gst-tr.oncology.interpret@nhs.net"  # general oncology email
-interpretation_request_email = (
-	"gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
-)
-wes_email_address = "gst-tr.wesviapath@nhs.net"  # WES email
-
-# oncology email address for email alerts
-oncology_ops_email = "m.neat@nhs.net"
+# email addresses
+mokaguys_email = "gst-tr.mokaguys@nhs.net"
+if testing:
+	# oncology email address for email alerts
+	oncology_ops_email = mokaguys_email
+	WES_sample_name_email_list = [mokaguys_email]
+else:
+	# oncology email address for email alerts
+	oncology_ops_email = "m.neat@nhs.net"
+	WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email]
 
 
 # DNA Nexus authentication token
@@ -763,7 +764,6 @@ smartsheet_request_url = "https://api.smartsheet.com/2.0/sheets/" + str(smartshe
 allowed_time_for_tasks = 4
 
 # =================== Email server settings
-mokaguys_email = "gst-tr.mokaguys@nhs.net"
 username_file_path = "{document_root}/.amazon_email_username".format(document_root=document_root)
 with open(username_file_path, "r") as username_file:
 	user = username_file.readline().rstrip()
@@ -775,7 +775,6 @@ port = 587
 me = "moka.alerts@gstt.nhs.uk"
 you = mokaguys_email
 oncology_you = oncology_ops_email
-WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email]
 smtp_do_tls = True
 if testing:
 	test_email_header = "AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL\n\n"
