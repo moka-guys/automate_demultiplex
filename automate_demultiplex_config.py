@@ -17,8 +17,9 @@ debug = False
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
 # # path to run folders
-#runfolders = "/media/data3/share"
+runfolders = "/media/data3/share"
 # when testing use a different directory
+## NOTE WHEN TESTING ALSO CONSIDER agilent_upload_folder (in OnePGT section)
 runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
@@ -101,6 +102,9 @@ agilent_connector_output = "agilentserviceconnector is running"
 # upload agent test response
 upload_agent_expected_stdout = "Upload Agent Version:"
 
+# NA12878 identifiers to exclude from congenica upload
+reference_sample_ids = ["NA12878", "136819"]
+
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
@@ -108,7 +112,7 @@ mokapipe_congenica_pipeline_ID = "4316"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4318"
 # MokaAMP ID
-mokaamp_pipeline_ID = "4274"
+mokaamp_pipeline_ID = "4725"
 # MokaONC ID
 mokaonc_pipeline_ID = "4532"
 # MokaONC ID
@@ -142,7 +146,7 @@ mokawes_path = "Workflows/MokaWES_v1.8"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.6"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.6"
+mokaamp_path = "Workflows/MokaAMP_v1.7"
 #path to snp_genotyping
 snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
 # path to paddy app
@@ -226,7 +230,9 @@ mokaamp_bamclipper_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
 mokaamp_chanjo_cov_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
 mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
 mokaamp_vardict_bed_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.bedfile="
+mokaamp_vardict_samplename_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.sample_name=vardict_"
 mokaamp_varscan_bed_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
+mokaamp_varscan_samplename_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.samplename=varscan_"
 mokaamp_varscan_strandfilter_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
 mokaamp_mpileup_cov_level_stage = " -istage-FxypXb807p1zj3g8Jv45Y54P.min_coverage="
 
@@ -320,7 +326,7 @@ panel_list = [
 	"Pan4143", # VCP3 Viapath R66
 	"Pan4144", # VCP3 Viapath R78
 	"Pan4151", # VCP3 Viapath R82
-	"Pan4314", # VCP3 Viapath R266
+	"Pan4314", # VCP3 Viapath R229
 	"Pan4351", # VCP3 Viapath R227
 	"Pan4387", # VCP3 Viapath R90
 	"Pan4390", # VCP3 Viapath R97
@@ -706,7 +712,7 @@ panel_settings = {
 		"sambamba_bedfile": "Pan4535dataSambamba.bed",
 		"variant_calling_bedfile": "Pan4535data.bed",
 	},
-	"Pan4314": { #VCP3 R266 (Viapath)
+	"Pan4314": { #VCP3 R229 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"RPKM_bedfile_pan_number": "Pan4362",
@@ -795,7 +801,9 @@ bcl2fastq_stats_filename = "Stats.json"
 bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 
 # ================ onePGT
-agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
+#agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
+# for testing
+agilent_upload_folder = "/media/data1/share/test_agilent_OnePGT_uploads/"
 max_filesize_in_bytes = 5368709120 # 5GB (max size is 10GB per pair of fastq)
 max_filesize_in_GB = "5GB"
 rsync_logfile = "rsync_output.txt"

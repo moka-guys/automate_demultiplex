@@ -147,6 +147,9 @@ class RunfolderProcessor(object):
         self.archer_dx_command = (
             "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
         )
+        self.onePGT_dx_command = (
+            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
+        )
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = (
@@ -1170,8 +1173,12 @@ class RunfolderProcessor(object):
                 
                 # if onePGT
                 if self.panel_dictionary[panel]["onePGT"]:
-                    onePGT_run = True
-                    self.move_onePGT_fastqs(fastq)
+                    #onePGT_run = True
+                    commands_list.append(self.create_onePGT_command(fastq, panel, "R1"))
+                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.create_onePGT_command(fastq, panel, "R2"))
+                    commands_list.append(self.add_to_depends_list(fastq))
+                    self.copy_onePGT_fastqs(fastq)
 
                 #if panel is to be processed using SNP_genotyping
                 if self.panel_dictionary[panel]["snp_genotyping"]:
@@ -1194,30 +1201,29 @@ class RunfolderProcessor(object):
             )
 
         # build run wide commands 
-        if not onePGT_run:
-            if mokaonc_list:
-                commands_list.append(self.create_mokaonc_command(mokaonc_list))
-            if joint_variant_calling:
-                commands_list.append(self.create_joint_variant_calling_command())
-            if rpkm_list:
-                # Create a set of RPKM numbers for one command per panel
-                # pass this list into function which takes into account panels which are to be analysed
-                # together and returns a "cleaned_list"
-                for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
-                    commands_list.append(self.create_rpkm_command(rpkm))
-            if peddy:
-                # TODO if custom panels and WES done together currently no way
-                # to stop custom panels being analysed by peddy - may cause problems
-                commands_list.append(self.run_peddy_command())
-                # add to depends list so multiqc doesn't start until peddy finishes
-                # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
-                # pass "peddy" to ensure it isn't skipped
-                commands_list.append(self.add_to_depends_list("peddy"))
-            # multiqc commands
-            commands_list.append(self.create_multiqc_command())
-            commands_list.append(self.create_upload_multiqc_command())
-            # smartsheet
-            commands_list.append(self.create_smartsheet_command())
+        if mokaonc_list:
+            commands_list.append(self.create_mokaonc_command(mokaonc_list))
+        if joint_variant_calling:
+            commands_list.append(self.create_joint_variant_calling_command())
+        if rpkm_list:
+            # Create a set of RPKM numbers for one command per panel
+            # pass this list into function which takes into account panels which are to be analysed
+            # together and returns a "cleaned_list"
+            for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
+                commands_list.append(self.create_rpkm_command(rpkm))
+        if peddy:
+            # TODO if custom panels and WES done together currently no way
+            # to stop custom panels being analysed by peddy - may cause problems
+            commands_list.append(self.run_peddy_command())
+            # add to depends list so multiqc doesn't start until peddy finishes
+            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # pass "peddy" to ensure it isn't skipped
+            commands_list.append(self.add_to_depends_list("peddy"))
+        # multiqc commands
+        commands_list.append(self.create_multiqc_command())
+        commands_list.append(self.create_upload_multiqc_command())
+        # smartsheet
+        commands_list.append(self.create_smartsheet_command())
         return commands_list
 
     def create_mokawes_command(self, fastq, pannumber):
@@ -1272,6 +1278,26 @@ class RunfolderProcessor(object):
         fastqs = self.nexus_fastq_paths(fastq)
         dx_command_list = [
             self.archer_dx_command,
+            fastqs[2],
+            " -ireads=",
+            fastqs[0].replace("_R1_","_%s_" % (read)),
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
+        dx_command = "".join(map(str, dx_command_list))
+
+        return dx_command
+
+    def create_onePGT_command(self, fastq, pannumber, read):
+        """
+        Input = R1 fastq filename and Pan number for a single sample 
+        Returns = dx run command for fastqc (string)
+        """
+        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+        fastqs = self.nexus_fastq_paths(fastq)
+        dx_command_list = [
+            self.onePGT_dx_command,
             fastqs[2],
             " -ireads=",
             fastqs[0].replace("_R1_","_%s_" % (read)),
@@ -1488,6 +1514,10 @@ class RunfolderProcessor(object):
             config.mokaamp_varscan_strandfilter_stage,
             self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"],
             config.mokaamp_bwa_reference_stage,
+            config.mokaamp_vardict_samplename_stage,
+            fastqs[2],
+            config.mokaamp_varscan_samplename_stage,
+            fastqs[2],
             config.mokaamp_mokapicard_reference_stage,
             config.mokaamp_vardict_reference_stage,
             config.mokaamp_varscan_reference_stage,
@@ -1592,7 +1622,7 @@ class RunfolderProcessor(object):
         # TODO: Implement joint-variant calling command for peddy
         raise NotImplementedError
 
-    def move_onePGT_fastqs(self, fastq):
+    def copy_onePGT_fastqs(self, fastq):
         """
         Input:
             R1 fastq file name
@@ -1617,7 +1647,7 @@ class RunfolderProcessor(object):
                     ))
             else:
                 self.loggers.script.info("UA_pass 'fastq filesize check pass'")
-                # write rsync command to move fastq to agilent folder -v outputs in verbose mode
+                # write rsync command to copy fastq to agilent folder -v outputs in verbose mode
                 # use tee to write to file and stdout
                 cmd = "rsync -v {} {} | tee -a {}".format(os.path.join(self.runfolder_obj.fastq_folder_path,fastq_file), config.agilent_upload_folder, os.path.join(self.runfolder_obj.runfolderpath,self.runfolder_obj.runfolder_name+"_"+config.rsync_logfile))
                 # run the command
@@ -1654,6 +1684,11 @@ class RunfolderProcessor(object):
         This command is appended to a file which will be run after the QC is passed.
         Returns = dx run command for congenica import app (string)
         """
+        # check if any reference ids (flanked by underscores) are present in the fastq name and if so skip this step
+        for id in config.reference_sample_ids:
+            if "_%s_" % (id) in fastq:
+                return None
+
         # the nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name 
         # The samplename (fastqs[2]) is used to name the job
         fastqs = self.nexus_fastq_paths(fastq)
