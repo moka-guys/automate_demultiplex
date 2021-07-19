@@ -308,8 +308,11 @@ class ready2start_demultiplexing():
                 # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
                 for line in reversed(samplesheet_stream.readlines()):
                     # If the line contains table headers, stop looping through the file
-                    if line.startswith("Sample_ID"):
+                    if line.startswith("Sample_ID") or "[Data]" in line:
                         break
+                    # skip empty lines (check first element of the line, after splitting on comma)
+                    elif len(line.split(",")[0]) <2:
+                        pass
                     # if it's a line detailing a sample
                     else:
                         # Split the current line of the csv, with commas as the delimiter
@@ -335,7 +338,6 @@ class ready2start_demultiplexing():
             self.script_logfile.write("Unable to open the samplesheet. check naming of samplesheet\n")
             self.logger("Unable to open samplesheet found for run " + self.runfolder + ". Check naming of samplesheet", "demultiplex_fail_samplesheet")
             return False
-
         # if haven't already returned false after parsing samplestrings return True to say all is ok.
         return True
 
