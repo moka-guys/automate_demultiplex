@@ -1271,8 +1271,13 @@ class RunfolderProcessor(object):
 
     def create_archerdx_command(self, fastq, pannumber, read):
         """
-        Input = R1 fastq filename and Pan number for a single sample 
-        Returns = dx run command for fastq (string)
+        Build dx run command, in this case to run fastqc on a single fastq file
+        Inputs:
+            R1 fastq filename
+            Pan number
+            read (R1 or R2)
+        Returns:
+            dx run command for fastqc (string)
         """
         # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
         fastqs = self.nexus_fastq_paths(fastq)
@@ -1291,8 +1296,13 @@ class RunfolderProcessor(object):
 
     def create_onePGT_command(self, fastq, pannumber, read):
         """
-        Input = R1 fastq filename and Pan number for a single sample 
-        Returns = dx run command for fastqc (string)
+        Build dx run command, in this case to run fastqc on a single fastq file
+        Inputs:
+            R1 fastq filename
+            Pan number
+            read (R1 or R2)
+        Returns:
+            dx run command for fastqc (string)
         """
         # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
         fastqs = self.nexus_fastq_paths(fastq)
