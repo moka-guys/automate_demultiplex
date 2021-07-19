@@ -62,7 +62,7 @@ class SequencingRuns(list):
 
         # Process any runfolders added to class instance with self.set_runfolders()
         for folder in self:
-            runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.debug)
+            runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.testing)
             # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
                 processed_runfolders.append(folder)
@@ -361,21 +361,16 @@ class RunfolderProcessor(object):
         """
         Input = boolean value (True/False)
         This function receives the value from the function which assesses the output of calling the 
-        upload agent with --version. If not debug mode the result is logged.
+        upload agent with --version.
         Returns = boolean value
         """
         if not test_result:
-            if not self.debug_mode:
-                self.loggers.script.error("UA_fail 'Upload Agent Test Failed'")
-                return False
-            else:
-                return False
+            self.loggers.script.error("UA_fail 'Upload Agent Test Failed'")
+            return False
         else:
-            if not self.debug_mode:
-                self.loggers.script.info("UA_pass 'Upload Agent function test passed'")
-                return True
-            else:
-                return True
+            self.loggers.script.info("UA_pass 'Upload Agent function test passed'")
+            return True
+
 
     def perform_test(self, test_input, test):
         """
@@ -418,21 +413,14 @@ class RunfolderProcessor(object):
         Input = Boolean
         This function receives a True/False value from the function which assesses the output of the
         dx toolkit test command
-        If not debug mode the result is logged.
         Returns = boolean value
         """
         if not test_result:
-            if not self.debug_mode:
-                self.loggers.script.error("UA_fail 'dx toolkit function test failed'")
-                return False
-            else:
-                return False
+            self.loggers.script.error("UA_fail 'dx toolkit function test failed'")
+            return False
+            
         else:
-            if not self.debug_mode:
-                self.loggers.script.info("UA_pass 'dx toolkit function test passed'")
-                return True
-            else:
-                return True
+            return True
 
     def already_uploaded(self):
         """
@@ -635,11 +623,9 @@ class RunfolderProcessor(object):
                     "Check for underscores in the samplenames."
                 ).format(self.runfolder_obj.runfolder_name)
             )
-            if not self.debug_mode:
-                # raise exception to stop script
-                raise Exception, "Unable to identify library batch numbers"
-            else:
-                return False
+            # raise exception to stop script
+            raise Exception, "Unable to identify library batch numbers"
+
 
     def build_nexus_project_name(self, wes_number, library_batch):
         """
@@ -734,11 +720,6 @@ class RunfolderProcessor(object):
         # run a command to execute the bash script made above
         cmd = "bash " + self.project_bash_script_path
         (out, _) = self.execute_subprocess_command(cmd)
-        # if debug mode subprocess output is not useful to test this function
-        # therefore the input to this function can be the expected subprocess stdout
-        # assign this input to the out variable
-        if self.debug_mode:
-            out = self.project_bash_script_path
 
         # if start of project id is in out capture the id and write to logfiles and return
         if "project-" in out:
@@ -764,11 +745,7 @@ class RunfolderProcessor(object):
             self.loggers.script.info("Projectid={}".format(projectid))
             # return projectid
             return projectid
-        # return false if debug mode otherwise raise an exception.
         else:
-            if self.debug_mode:
-                return False
-            else:
                 self.loggers.script.error("UA_fail 'failed to create project in dna nexus'")
                 # raise exception to stop script
                 raise Exception, "Unable to create DNA Nexus project"
@@ -783,8 +760,7 @@ class RunfolderProcessor(object):
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
         Returns:
-            command to upload fastqs (debug_only)
-            filepath to logfile (non-debug) 
+            filepath to logfile
             file_list (space delimited string of files) 
             stage name (string)
         """
@@ -802,8 +778,7 @@ class RunfolderProcessor(object):
             + self.fastq_string
             + self.restart_ua_2 
         )
-        if self.debug_mode:
-            return nexus_upload_command, self.fastq_string, "fastq"
+
 
         # Log fastq upload command to the upload agent logfile
         self.loggers.upload_agent.info("Fastq upload commands:\n{}".format(nexus_upload_command))
@@ -847,10 +822,8 @@ class RunfolderProcessor(object):
                 if not upload_ok:
                     issue_list.append(file)
             
-            # Report back if ok, not ok with/without debug mode
-            if issue_list and self.debug_mode:
-                return  "fail"
-            elif issue_list:
+            # Report back if ok
+            if issue_list:
                 self.loggers.script.error(
                     "UA_fail 'upload of {} files failed for run {}'".format(
                         stage, self.runfolder_obj.runfolder_name
@@ -861,10 +834,7 @@ class RunfolderProcessor(object):
                         issue_list
                         )
                     )
-            # if no error but debug
-            elif not issue_list and self.debug_mode:
-                return "no error"
-            # if no error and not debug write to log file check was ok
+            # if no error 
             else:
                 self.loggers.script.info(
                     "UA_pass 'upload of files complete for run {}'".format(
@@ -902,8 +872,6 @@ class RunfolderProcessor(object):
                 + " ".join(file_list)
                 + self.restart_ua_2  
             )
-            if self.debug_mode:
-                return nexus_upload_command
 
             # Log fastq upload command to the upload agent logfile
             self.loggers.upload_agent.info("Upload cluster density commands:\n{}".format(nexus_upload_command))
@@ -929,7 +897,6 @@ class RunfolderProcessor(object):
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
-        If debug mode the upload agent command is returned without calling execute_subprocess_command()
         Returns filepath to logfile (non-debug) 
         """
         # build the nexus upload command
@@ -951,8 +918,7 @@ class RunfolderProcessor(object):
                 + " ".join(file_list)
                 + self.restart_ua_2  
             )
-            if self.debug_mode:
-                return nexus_upload_command
+
 
             # Log fastq upload command to the upload agent logfile
             self.loggers.upload_agent.info("Upload bcl2fastq stats file commands:\n{}".format(nexus_upload_command))
@@ -1723,35 +1689,6 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def run_iva_command(self, fastq, pannumber):
-        """
-        Input = R1 fastq file name and pan number for a single sample
-        The Ingenuity import app takes inputs in the format jobid.outputname which ensures the job
-        doesn't run until the vcfs have been created.
-        These inputs are created by a python script, which is called immediately before this job,
-        and the output is captures into the variable $analysisid
-        The panel dictionary in the config file is used to determine the email account to upload samples into.
-        Returns = dx run command for Ingenuity import app (string)
-        """
-        # the nexus_fastq_paths function returns paths to the fastq files in NExus and the sample name 
-        # The samplename (fastqs[2]) is used to name the job
-        fastqs = self.nexus_fastq_paths(fastq)
-
-        dx_command = (
-            self.iva_upload_command
-            + " $analysisid"
-            + " --name "
-            + "QIAGEN_IVA_"
-            + fastqs[2]
-            + config.iva_email_input_name
-            + self.panel_dictionary[pannumber]["ingenuity_email"]
-            + self.project
-            + self.runfolder_obj.nexus_project_id
-            + config.iva_reference_inputname
-            + config.iva_reference_default
-            + self.token
-        )
-        return dx_command
 
     def add_to_depends_list(self, fastq):
         """
@@ -2373,11 +2310,10 @@ class RunfolderProcessor(object):
         """
         Input = command (string)
         Takes a command, executes using subprocess.Popen
-        If debug will return some predefined statements
         Returns =  (stdout,stderr) (tuple)
         """
-        if not self.debug_mode:
-            proc = subprocess.Popen(
+        
+        proc = subprocess.Popen(
                 [command],
                 stderr=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -2385,20 +2321,9 @@ class RunfolderProcessor(object):
                 executable="/bin/bash",
             )
 
-            # capture the streams
-            return proc.communicate()
-        else:
-            return (
-                " ".join(
-                    [
-                        config.upload_agent_expected_stdout,
-                        config.dx_sdk_test_expected_stdout,
-                        config.demultiplex_success_match,
-                    ]
-                ),
-                "err",
-            )
-
+        # capture the streams
+        return proc.communicate()
+        
     def send_an_email(self, to, email_subject, email_message, email_priority=3):
         """
         Input = email address, email_subject, email_message, email_priority (optional, default = standard priority)

@@ -41,6 +41,8 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
+demultiplex_test_folder = ["999999_M02353_0496_000000000-D8M36_demultiplex_test"]
+
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
 	"{document_root}/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
@@ -382,7 +384,6 @@ default_panel_properties = {
 	"mokaamp_bed_PE_input": None,
 	# Note: mokaamp_variant_calling_bed only used when BED file differs from Pan number
 	"mokaamp_variant_calling_bed":None,
-	"ingenuity_email": interpretation_request_email,
 	"congenica_project": None,
 	"peddy": False,
 	"archerdx": False,
