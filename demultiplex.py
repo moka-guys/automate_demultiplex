@@ -334,6 +334,7 @@ class ready2start_demultiplexing():
             # Write progress/status to script log file
             self.script_logfile.write("Unable to open the samplesheet. check naming of samplesheet\n")
             self.logger("Unable to open samplesheet found for run " + self.runfolder + ". Check naming of samplesheet", "demultiplex_fail_samplesheet")
+            return False
 
         # if haven't already returned false after parsing samplestrings return True to say all is ok.
         return True

@@ -1664,7 +1664,7 @@ class RunfolderProcessor(object):
         for id in config.reference_sample_ids:
             if "_%s_" % (id) in fastq:
                 self.loggers.script.info(
-                        "UA_pass 'NA12878 sample detected, not building congenica upload command for {}'".format(fastq_file)
+                        "UA_pass 'NA12878 sample detected, not building congenica upload command for {}'".format(fastq)
                         )
                 return None
 
