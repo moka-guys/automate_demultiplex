@@ -160,9 +160,6 @@ class DecisionTooler(object):
         prints to stdout the required input for the decision support tool app in form
         decision_suport_tool_input=jobid.outputname
         """
-        if tool == "iva":
-            # IVA is simply passed the VCF
-            print(" %s%s:%s" % (config.iva_vcf_inputname, jobid, workflow.vcf_out))
         if tool == "congenica":
             if workflow.name == "mokawes":
                 print(
