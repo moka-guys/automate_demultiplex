@@ -41,7 +41,7 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
-demultiplex_test_folder = ["999999_M02353_0496_000000000-D8M36_demultiplex_test"]
+demultiplex_test_folder = ["999999_NB552085_0136_AHWFNKBGXH_demultiplex_test","999999_M02353_0496_000000000-D8M36_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
@@ -121,6 +121,8 @@ mokaonc_pipeline_ID = "4532"
 archerDx_pipeline_ID = "4562"
 # SNP Genotyping ID
 snp_genotyping_pipeline_ID = "4480"
+# mokacan pipeline ID
+mokacan_pipeline_ID = "4728"
 
 
 # -- Moka WES test status--
@@ -149,6 +151,8 @@ mokawes_path = "Workflows/MokaWES_v1.8"
 mokaonc_path = "Workflows/Mokaonc_v1.6"
 # path to mokaamp
 mokaamp_path = "Workflows/MokaAMP_v1.7"
+# path to mokacan
+mokacan_path = "Workflows/MokaAMP_v1.0"
 #path to snp_genotyping
 snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
 # path to paddy app
@@ -244,6 +248,25 @@ mokaamp_mokapicard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_in
 mokaamp_vardict_reference_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 mokaamp_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 
+#MokaCAN - stages which may change between samples
+mokacan_fastqc_r1_stage = " -istage-FPzGj6Q0jy1fF6505zFP6zz5.reads="
+mokacan_fastqc_r2_stage = " -istage-FPzGj5j0jy1x97jg607Fg229.reads="
+mokacan_picard_bedfile_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
+mokacan_picard_capturetype_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
+mokacan_sambamba_bedfile_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
+mokacan_vardict_bedfile_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
+mokacan_sentieon_sample_name_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.sample="
+mokacan_sambamba_coverage_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
+mokacan_vardict_sample_name_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.sample_name=vardict_"
+mokacan_varscan_bedfile_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
+
+# mokacan stages with inputs that shouldn't change - these are specified to ensure any input files are taken from 001
+mokacan_senteion_bwa_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genomebwaindex_targz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY4942J35xX095VZyQBk0v"
+mokacan_senteion_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genome_fastagz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY7VG2J35Vfvpkj8y0KZ01"
+mokacan_picard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index=ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+mokacan_vardict_reference_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.ref_genome=ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+mokacan_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+
 mokaamp_email_message = (
 	"If both MokaAMP and MokaOnc (amplivar) have been run,"
 	"please record the version of MokaOnc used."
@@ -335,7 +358,9 @@ panel_list = [
 	"Pan4390", # VCP3 Viapath R97
 	"Pan2764", # OnePGT
 	"Pan4009", # SNP Genotyping
-	"Pan4396" # ArcherDx
+	"Pan4396", # ArcherDx
+	"Pan4579", # VCP2 somatic M1.1
+	"Pan4574" # VCP2 somatic M1.2
 ]
 
 
@@ -349,6 +374,7 @@ SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan2684"]
 swift_egfr_panel_list = ["Pan1190"]
+mokacan_panel_list = ["Pan4573","Pan4574"]
 
 default_panel_properties = {
 	"UMI": False,
@@ -361,6 +387,7 @@ default_panel_properties = {
 	"mokaamp": False,
 	"capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
 	"mokaonc": False,
+	"mokacan": False,
 	"snp_genotyping": False,
 	"mokapipe": False,
 	"mokapipe_haplotype_caller_padding": 0,
@@ -727,6 +754,20 @@ panel_settings = {
 	"Pan4396": { #ArcherDx
 		"archerdx": True,
 		"congenica_upload": False,
+	},
+	"Pan4574" :{ # somatic VCP2 M1.2
+		"mokacan": True,
+		"congenica_upload": False,
+		"variant_calling_bedfile": "Pan4577data.bed",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"clinical_coverage_depth" : 200,
+	},
+	"Pan4579" :{ # somatic VCP2 M1.1
+		"mokacan": True,
+		"congenica_upload": False,
+		"variant_calling_bedfile": "Pan4579data.bed",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"clinical_coverage_depth" : 200,
 	}
 }
 
