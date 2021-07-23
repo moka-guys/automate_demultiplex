@@ -62,7 +62,7 @@ class SequencingRuns(list):
 
         # Process any runfolders added to class instance with self.set_runfolders()
         for folder in self:
-            runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.debug)
+            runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.testing)
             # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
                 processed_runfolders.append(folder)
@@ -147,6 +147,9 @@ class RunfolderProcessor(object):
         self.archer_dx_command = (
             "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
         )
+        self.onePGT_dx_command = (
+            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
+        )
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = (
@@ -157,6 +160,9 @@ class RunfolderProcessor(object):
         self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y "
         self.mokaamp_command = (
             "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
+        )
+        self.mokacan_command = (
+            "jobid=$(dx run " + config.app_project + config.mokacan_path + " -y --name "
         )
         self.decision_support_preperation = "analysisid=$(python %s -a " % (
             os.path.join(
@@ -312,7 +318,7 @@ class RunfolderProcessor(object):
                 self.sql_queries["oncology"] = self.write_opms_queries_oncology(
                     self.list_of_processed_samples
                 )
-                self.sql_queries["mokapipe"] = self.write_opms_queries_mokapipe(
+                self.sql_queries["custom_panel"] = self.write_opms_queries_custom_panel(
                     self.list_of_processed_samples
                 )
                 self.sql_queries["snp_genotyping"] = self.write_opms_queries_snp_genotyping(
@@ -358,21 +364,16 @@ class RunfolderProcessor(object):
         """
         Input = boolean value (True/False)
         This function receives the value from the function which assesses the output of calling the 
-        upload agent with --version. If not debug mode the result is logged.
+        upload agent with --version.
         Returns = boolean value
         """
         if not test_result:
-            if not self.debug_mode:
-                self.loggers.script.error("UA_fail 'Upload Agent Test Failed'")
-                return False
-            else:
-                return False
+            self.loggers.script.error("UA_fail 'Upload Agent Test Failed'")
+            return False
         else:
-            if not self.debug_mode:
-                self.loggers.script.info("UA_pass 'Upload Agent function test passed'")
-                return True
-            else:
-                return True
+            self.loggers.script.info("UA_pass 'Upload Agent function test passed'")
+            return True
+
 
     def perform_test(self, test_input, test):
         """
@@ -415,21 +416,14 @@ class RunfolderProcessor(object):
         Input = Boolean
         This function receives a True/False value from the function which assesses the output of the
         dx toolkit test command
-        If not debug mode the result is logged.
         Returns = boolean value
         """
         if not test_result:
-            if not self.debug_mode:
-                self.loggers.script.error("UA_fail 'dx toolkit function test failed'")
-                return False
-            else:
-                return False
+            self.loggers.script.error("UA_fail 'dx toolkit function test failed'")
+            return False
+            
         else:
-            if not self.debug_mode:
-                self.loggers.script.info("UA_pass 'dx toolkit function test passed'")
-                return True
-            else:
-                return True
+            return True
 
     def already_uploaded(self):
         """
@@ -632,11 +626,9 @@ class RunfolderProcessor(object):
                     "Check for underscores in the samplenames."
                 ).format(self.runfolder_obj.runfolder_name)
             )
-            if not self.debug_mode:
-                # raise exception to stop script
-                raise Exception, "Unable to identify library batch numbers"
-            else:
-                return False
+            # raise exception to stop script
+            raise Exception, "Unable to identify library batch numbers"
+
 
     def build_nexus_project_name(self, wes_number, library_batch):
         """
@@ -731,11 +723,6 @@ class RunfolderProcessor(object):
         # run a command to execute the bash script made above
         cmd = "bash " + self.project_bash_script_path
         (out, _) = self.execute_subprocess_command(cmd)
-        # if debug mode subprocess output is not useful to test this function
-        # therefore the input to this function can be the expected subprocess stdout
-        # assign this input to the out variable
-        if self.debug_mode:
-            out = self.project_bash_script_path
 
         # if start of project id is in out capture the id and write to logfiles and return
         if "project-" in out:
@@ -761,11 +748,7 @@ class RunfolderProcessor(object):
             self.loggers.script.info("Projectid={}".format(projectid))
             # return projectid
             return projectid
-        # return false if debug mode otherwise raise an exception.
         else:
-            if self.debug_mode:
-                return False
-            else:
                 self.loggers.script.error("UA_fail 'failed to create project in dna nexus'")
                 # raise exception to stop script
                 raise Exception, "Unable to create DNA Nexus project"
@@ -780,8 +763,7 @@ class RunfolderProcessor(object):
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
         Returns:
-            command to upload fastqs (debug_only)
-            filepath to logfile (non-debug) 
+            filepath to logfile
             file_list (space delimited string of files) 
             stage name (string)
         """
@@ -799,8 +781,7 @@ class RunfolderProcessor(object):
             + self.fastq_string
             + self.restart_ua_2 
         )
-        if self.debug_mode:
-            return nexus_upload_command, self.fastq_string, "fastq"
+
 
         # Log fastq upload command to the upload agent logfile
         self.loggers.upload_agent.info("Fastq upload commands:\n{}".format(nexus_upload_command))
@@ -844,10 +825,8 @@ class RunfolderProcessor(object):
                 if not upload_ok:
                     issue_list.append(file)
             
-            # Report back if ok, not ok with/without debug mode
-            if issue_list and self.debug_mode:
-                return  "fail"
-            elif issue_list:
+            # Report back if ok
+            if issue_list:
                 self.loggers.script.error(
                     "UA_fail 'upload of {} files failed for run {}'".format(
                         stage, self.runfolder_obj.runfolder_name
@@ -858,10 +837,7 @@ class RunfolderProcessor(object):
                         issue_list
                         )
                     )
-            # if no error but debug
-            elif not issue_list and self.debug_mode:
-                return "no error"
-            # if no error and not debug write to log file check was ok
+            # if no error 
             else:
                 self.loggers.script.info(
                     "UA_pass 'upload of files complete for run {}'".format(
@@ -899,8 +875,6 @@ class RunfolderProcessor(object):
                 + " ".join(file_list)
                 + self.restart_ua_2  
             )
-            if self.debug_mode:
-                return nexus_upload_command
 
             # Log fastq upload command to the upload agent logfile
             self.loggers.upload_agent.info("Upload cluster density commands:\n{}".format(nexus_upload_command))
@@ -926,7 +900,6 @@ class RunfolderProcessor(object):
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
-        If debug mode the upload agent command is returned without calling execute_subprocess_command()
         Returns filepath to logfile (non-debug) 
         """
         # build the nexus upload command
@@ -948,8 +921,7 @@ class RunfolderProcessor(object):
                 + " ".join(file_list)
                 + self.restart_ua_2  
             )
-            if self.debug_mode:
-                return nexus_upload_command
+
 
             # Log fastq upload command to the upload agent logfile
             self.loggers.upload_agent.info("Upload bcl2fastq stats file commands:\n{}".format(nexus_upload_command))
@@ -1168,10 +1140,18 @@ class RunfolderProcessor(object):
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
                 
+                if self.panel_dictionary[panel]["mokacan"]:
+                    commands_list.append(self.create_mokacan_command(fastq, panel))
+                    commands_list.append(self.add_to_depends_list(fastq))
+                
                 # if onePGT
                 if self.panel_dictionary[panel]["onePGT"]:
-                    onePGT_run = True
-                    self.move_onePGT_fastqs(fastq)
+                    #onePGT_run = True
+                    commands_list.append(self.create_onePGT_command(fastq, panel, "R1"))
+                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.create_onePGT_command(fastq, panel, "R2"))
+                    commands_list.append(self.add_to_depends_list(fastq))
+                    self.copy_onePGT_fastqs(fastq)
 
                 #if panel is to be processed using SNP_genotyping
                 if self.panel_dictionary[panel]["snp_genotyping"]:
@@ -1194,30 +1174,29 @@ class RunfolderProcessor(object):
             )
 
         # build run wide commands 
-        if not onePGT_run:
-            if mokaonc_list:
-                commands_list.append(self.create_mokaonc_command(mokaonc_list))
-            if joint_variant_calling:
-                commands_list.append(self.create_joint_variant_calling_command())
-            if rpkm_list:
-                # Create a set of RPKM numbers for one command per panel
-                # pass this list into function which takes into account panels which are to be analysed
-                # together and returns a "cleaned_list"
-                for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
-                    commands_list.append(self.create_rpkm_command(rpkm))
-            if peddy:
-                # TODO if custom panels and WES done together currently no way
-                # to stop custom panels being analysed by peddy - may cause problems
-                commands_list.append(self.run_peddy_command())
-                # add to depends list so multiqc doesn't start until peddy finishes
-                # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
-                # pass "peddy" to ensure it isn't skipped
-                commands_list.append(self.add_to_depends_list("peddy"))
-            # multiqc commands
-            commands_list.append(self.create_multiqc_command())
-            commands_list.append(self.create_upload_multiqc_command())
-            # smartsheet
-            commands_list.append(self.create_smartsheet_command())
+        if mokaonc_list:
+            commands_list.append(self.create_mokaonc_command(mokaonc_list))
+        if joint_variant_calling:
+            commands_list.append(self.create_joint_variant_calling_command())
+        if rpkm_list:
+            # Create a set of RPKM numbers for one command per panel
+            # pass this list into function which takes into account panels which are to be analysed
+            # together and returns a "cleaned_list"
+            for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
+                commands_list.append(self.create_rpkm_command(rpkm))
+        if peddy:
+            # TODO if custom panels and WES done together currently no way
+            # to stop custom panels being analysed by peddy - may cause problems
+            commands_list.append(self.run_peddy_command())
+            # add to depends list so multiqc doesn't start until peddy finishes
+            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # pass "peddy" to ensure it isn't skipped
+            commands_list.append(self.add_to_depends_list("peddy"))
+        # multiqc commands
+        commands_list.append(self.create_multiqc_command())
+        commands_list.append(self.create_upload_multiqc_command())
+        # smartsheet
+        commands_list.append(self.create_smartsheet_command())
         return commands_list
 
     def create_mokawes_command(self, fastq, pannumber):
@@ -1265,13 +1244,43 @@ class RunfolderProcessor(object):
 
     def create_archerdx_command(self, fastq, pannumber, read):
         """
-        Input = R1 fastq filename and Pan number for a single sample 
-        Returns = dx run command for fastq (string)
+        Build dx run command, in this case to run fastqc on a single fastq file
+        Inputs:
+            R1 fastq filename
+            Pan number
+            read (R1 or R2)
+        Returns:
+            dx run command for fastqc (string)
         """
         # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
         fastqs = self.nexus_fastq_paths(fastq)
         dx_command_list = [
             self.archer_dx_command,
+            fastqs[2],
+            " -ireads=",
+            fastqs[0].replace("_R1_","_%s_" % (read)),
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
+        dx_command = "".join(map(str, dx_command_list))
+
+        return dx_command
+
+    def create_onePGT_command(self, fastq, pannumber, read):
+        """
+        Build dx run command, in this case to run fastqc on a single fastq file
+        Inputs:
+            R1 fastq filename
+            Pan number
+            read (R1 or R2)
+        Returns:
+            dx run command for fastqc (string)
+        """
+        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+        fastqs = self.nexus_fastq_paths(fastq)
+        dx_command_list = [
+            self.onePGT_dx_command,
             fastqs[2],
             " -ireads=",
             fastqs[0].replace("_R1_","_%s_" % (read)),
@@ -1488,6 +1497,10 @@ class RunfolderProcessor(object):
             config.mokaamp_varscan_strandfilter_stage,
             self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"],
             config.mokaamp_bwa_reference_stage,
+            config.mokaamp_vardict_samplename_stage,
+            fastqs[2],
+            config.mokaamp_varscan_samplename_stage,
+            fastqs[2],
             config.mokaamp_mokapicard_reference_stage,
             config.mokaamp_vardict_reference_stage,
             config.mokaamp_varscan_reference_stage,
@@ -1502,6 +1515,63 @@ class RunfolderProcessor(object):
 
         # remove the bit that adds the job to the depends on list for the negative control as varscan
         # fails on nearempty/-empty BAM files 
+        # and this will stop multiqc etc running
+        if "NTCcon" in fastqs[0]:
+            dx_command = dx_command.replace("jobid=$(", "").replace(
+                config.Nexus_API_Key + ")", config.Nexus_API_Key
+            )
+        return dx_command
+
+    def create_mokacan_command(self, fastq, pannumber):
+        """
+        Input = R1 fastq file name and pan number for a single sample        
+        Returns = dx run command for MokaCAN (string)
+        """
+        print "Mokacan sample found"
+        # build nexus fastq paths - returns tuple for read1 and read2 and dictionary for bed files
+        fastqs = self.nexus_fastq_paths(fastq)
+        bedfiles = self.nexus_bedfiles(pannumber)
+        
+        # create the MokaCAN dx command
+        dx_command_list = [
+            self.mokacan_command,
+            fastqs[2],
+            config.mokacan_fastqc_r1_stage,
+            fastqs[0],
+            config.mokacan_fastqc_r2_stage,
+            fastqs[1],
+            config.mokacan_sentieon_sample_name_stage,
+            fastqs[2],
+            config.mokacan_picard_bedfile_stage,
+            bedfiles["hsmetrics"],
+            config.mokacan_picard_capturetype_stage,
+            self.panel_dictionary[pannumber]["capture_type"],
+            config.mokacan_sambamba_coverage_level_stage,
+            self.panel_dictionary[pannumber]["clinical_coverage_depth"],
+            config.mokacan_sambamba_bedfile_stage,
+            bedfiles["sambamba"],
+            config.mokacan_vardict_bedfile_stage,
+            bedfiles["variant_calling_bedfile"],
+            config.mokacan_varscan_bedfile_stage,
+            bedfiles["variant_calling_bedfile"],
+            config.mokacan_vardict_sample_name_stage,
+            fastqs[2],
+            config.mokacan_senteion_bwa_reference_stage,
+            config.mokacan_senteion_reference_stage,
+            config.mokacan_picard_reference_stage,
+            config.mokacan_vardict_reference_stage,
+            config.mokacan_varscan_reference_stage,
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
+
+        # Variables from dx_command_list are read from config file as various atomic types. Convert
+        # to string and join to create dx_command.
+        dx_command = "".join(map(str, dx_command_list))
+        print dx_command
+        # remove the bit that adds the job to the depends on list for the negative control as varscan
+        # fails on near empty/-empty BAM files 
         # and this will stop multiqc etc running
         if "NTCcon" in fastqs[0]:
             dx_command = dx_command.replace("jobid=$(", "").replace(
@@ -1592,7 +1662,7 @@ class RunfolderProcessor(object):
         # TODO: Implement joint-variant calling command for peddy
         raise NotImplementedError
 
-    def move_onePGT_fastqs(self, fastq):
+    def copy_onePGT_fastqs(self, fastq):
         """
         Input:
             R1 fastq file name
@@ -1617,7 +1687,7 @@ class RunfolderProcessor(object):
                     ))
             else:
                 self.loggers.script.info("UA_pass 'fastq filesize check pass'")
-                # write rsync command to move fastq to agilent folder -v outputs in verbose mode
+                # write rsync command to copy fastq to agilent folder -v outputs in verbose mode
                 # use tee to write to file and stdout
                 cmd = "rsync -v {} {} | tee -a {}".format(os.path.join(self.runfolder_obj.fastq_folder_path,fastq_file), config.agilent_upload_folder, os.path.join(self.runfolder_obj.runfolderpath,self.runfolder_obj.runfolder_name+"_"+config.rsync_logfile))
                 # run the command
@@ -1654,6 +1724,14 @@ class RunfolderProcessor(object):
         This command is appended to a file which will be run after the QC is passed.
         Returns = dx run command for congenica import app (string)
         """
+        # check if any reference ids (flanked by underscores) are present in the fastq name and if so skip this step
+        for id in config.reference_sample_ids:
+            if "_%s_" % (id) in fastq:
+                self.loggers.script.info(
+                        "UA_pass 'NA12878 sample detected, not building congenica upload command for {}'".format(fastq)
+                        )
+                return None
+
         # the nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name 
         # The samplename (fastqs[2]) is used to name the job
         fastqs = self.nexus_fastq_paths(fastq)
@@ -1675,35 +1753,6 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def run_iva_command(self, fastq, pannumber):
-        """
-        Input = R1 fastq file name and pan number for a single sample
-        The Ingenuity import app takes inputs in the format jobid.outputname which ensures the job
-        doesn't run until the vcfs have been created.
-        These inputs are created by a python script, which is called immediately before this job,
-        and the output is captures into the variable $analysisid
-        The panel dictionary in the config file is used to determine the email account to upload samples into.
-        Returns = dx run command for Ingenuity import app (string)
-        """
-        # the nexus_fastq_paths function returns paths to the fastq files in NExus and the sample name 
-        # The samplename (fastqs[2]) is used to name the job
-        fastqs = self.nexus_fastq_paths(fastq)
-
-        dx_command = (
-            self.iva_upload_command
-            + " $analysisid"
-            + " --name "
-            + "QIAGEN_IVA_"
-            + fastqs[2]
-            + config.iva_email_input_name
-            + self.panel_dictionary[pannumber]["ingenuity_email"]
-            + self.project
-            + self.runfolder_obj.nexus_project_id
-            + config.iva_reference_inputname
-            + config.iva_reference_default
-            + self.token
-        )
-        return dx_command
 
     def add_to_depends_list(self, fastq):
         """
@@ -1947,7 +1996,7 @@ class RunfolderProcessor(object):
                         )
                     )
 
-    def write_opms_queries_mokapipe(self, list_of_processed_samples):
+    def write_opms_queries_custom_panel(self, list_of_processed_samples):
         """
         Input = list of fastqs to be processed
         Samples processed using Mokapipe are recorded in Moka using an insert query.
@@ -1966,6 +2015,8 @@ class RunfolderProcessor(object):
                 # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["congenica_upload"]:
                     queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_congenica_pipeline_ID, self.runfolder_obj.runfolder_name))
+                elif self.panel_dictionary[pannumber]["mokacan"]:
+                    queries.append(query.format(str(fastq.split("_")[2]), config.mokacan_pipeline_ID, self.runfolder_obj.runfolder_name))
 
         if queries:
             # add workflow to sql dictionary
@@ -2013,6 +2064,7 @@ class RunfolderProcessor(object):
         else:
             return None
 
+    
     def write_opms_queries_snp_genotyping(self, list_of_processed_samples):
         """
         Input = list of fastqs to be processed
@@ -2101,7 +2153,8 @@ class RunfolderProcessor(object):
             )
             email_priority = 1  # high priority
             email_message = (
-                self.runfolder_obj.runfolder_name
+                config.test_email_header
+                + self.runfolder_obj.runfolder_name
                 + " being processed using workflow(s) "
                 + ",".join(self.sql_queries["oncology"]["workflows"])
                 + "\n\nPlease update Moka using the below queries and ensure that "
@@ -2114,7 +2167,8 @@ class RunfolderProcessor(object):
 
             # email_for_cancer_ops leads to inform the pipeline has started
             email_message = (
-                self.runfolder_obj.runfolder_name
+                config.test_email_header
+                + self.runfolder_obj.runfolder_name
                 + " being processed using workflow(s) "
                 + ",".join(self.sql_queries["oncology"]["workflows"])
                 + "\n"
@@ -2130,10 +2184,10 @@ class RunfolderProcessor(object):
         count = 0
 
         # for each pipeline take queries, sample count and workflow name
-        if self.sql_queries["mokapipe"]:
+        if self.sql_queries["custom_panel"]:
             workflows.append(config.mokapipe_path.split("/")[-1])
-            sql_statements += self.sql_queries["mokapipe"]["query"]
-            count += self.sql_queries["mokapipe"]["count"]
+            sql_statements += self.sql_queries["custom_panel"]["query"]
+            count += self.sql_queries["custom_panel"]["count"]
         if self.sql_queries["mokawes"]:
             workflows.append(config.mokawes_path.split("/")[-1])
             sql_statements += self.sql_queries["mokawes"]["query"]
@@ -2152,7 +2206,8 @@ class RunfolderProcessor(object):
             )
             email_priority = 1  # high priority
             email_message = (
-                self.runfolder_obj.runfolder_name
+                config.test_email_header
+                + self.runfolder_obj.runfolder_name
                 + " being processed using workflow "
                 + ",".join(set(workflows))
                 + "\n\nPlease update Moka using the below query and ensure that "
@@ -2169,14 +2224,14 @@ class RunfolderProcessor(object):
                     "MOKA ALERT : Started pipeline for " + self.runfolder_obj.runfolder_name
                 )
             email_message = (
-                self.runfolder_obj.runfolder_name
+                config.test_email_header
+                + self.runfolder_obj.runfolder_name
                 + " being processed using "
                 + config.mokawes_path.split("/")[-1]
                 + "\nThe following samples are being processed:\n"
                 + "\n".join(self.sql_queries["mokawes"]["samplename_email"])
             )
             self.send_an_email(config.WES_sample_name_email_list, email_subject, email_message, email_priority)
-            # self.send_an_email(config.wes_email_address, email_subject, email_message, email_priority)
 
     def upload_rest_of_runfolder(self):
         """
@@ -2322,11 +2377,10 @@ class RunfolderProcessor(object):
         """
         Input = command (string)
         Takes a command, executes using subprocess.Popen
-        If debug will return some predefined statements
         Returns =  (stdout,stderr) (tuple)
         """
-        if not self.debug_mode:
-            proc = subprocess.Popen(
+        
+        proc = subprocess.Popen(
                 [command],
                 stderr=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -2334,20 +2388,9 @@ class RunfolderProcessor(object):
                 executable="/bin/bash",
             )
 
-            # capture the streams
-            return proc.communicate()
-        else:
-            return (
-                " ".join(
-                    [
-                        config.upload_agent_expected_stdout,
-                        config.dx_sdk_test_expected_stdout,
-                        config.demultiplex_success_match,
-                    ]
-                ),
-                "err",
-            )
-
+        # capture the streams
+        return proc.communicate()
+        
     def send_an_email(self, to, email_subject, email_message, email_priority=3):
         """
         Input = email address, email_subject, email_message, email_priority (optional, default = standard priority)
