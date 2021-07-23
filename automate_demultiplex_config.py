@@ -152,7 +152,7 @@ mokaonc_path = "Workflows/Mokaonc_v1.6"
 # path to mokaamp
 mokaamp_path = "Workflows/MokaAMP_v1.7"
 # path to mokacan
-mokacan_path = "Workflows/MokaAMP_v1.0"
+mokacan_path = "Workflows/MokaCAN_v1.0"
 #path to snp_genotyping
 snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
 # path to paddy app
@@ -263,8 +263,8 @@ mokacan_varscan_bedfile_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
 # mokacan stages with inputs that shouldn't change - these are specified to ensure any input files are taken from 001
 mokacan_senteion_bwa_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genomebwaindex_targz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY4942J35xX095VZyQBk0v"
 mokacan_senteion_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genome_fastagz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY7VG2J35Vfvpkj8y0KZ01"
-mokacan_picard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index=ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-mokacan_vardict_reference_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.ref_genome=ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+mokacan_picard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+mokacan_vardict_reference_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 mokacan_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 
 mokaamp_email_message = (
@@ -765,7 +765,7 @@ panel_settings = {
 	"Pan4579" :{ # somatic VCP2 M1.1
 		"mokacan": True,
 		"congenica_upload": False,
-		"variant_calling_bedfile": "Pan4579data.bed",
+		"variant_calling_bedfile": "Pan4578data.bed",
 		"hsmetrics_bedfile": "Pan4310data.bed",
 		"clinical_coverage_depth" : 200,
 	}
