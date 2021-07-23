@@ -1527,7 +1527,7 @@ class RunfolderProcessor(object):
         Input = R1 fastq file name and pan number for a single sample        
         Returns = dx run command for MokaCAN (string)
         """
-
+        print "Mokacan sample found"
         # build nexus fastq paths - returns tuple for read1 and read2 and dictionary for bed files
         fastqs = self.nexus_fastq_paths(fastq)
         bedfiles = self.nexus_bedfiles(pannumber)
@@ -1569,7 +1569,7 @@ class RunfolderProcessor(object):
         # Variables from dx_command_list are read from config file as various atomic types. Convert
         # to string and join to create dx_command.
         dx_command = "".join(map(str, dx_command_list))
-
+        print dx_command
         # remove the bit that adds the job to the depends on list for the negative control as varscan
         # fails on near empty/-empty BAM files 
         # and this will stop multiqc etc running
