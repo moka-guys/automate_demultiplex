@@ -25,7 +25,7 @@ else:
 	runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
-samplesheets = runfolders + "/samplesheets/"
+samplesheets_dir = os.path.join(runfolders,"samplesheets")
 
 # path to fastq files
 fastq_folder = "/Data/Intensities/BaseCalls"

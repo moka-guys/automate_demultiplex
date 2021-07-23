@@ -137,8 +137,6 @@ class ready2start_demultiplexing():
         # Assign timestamp from get_list_of_runs() to self.variable
         self.now = now
 
-        # Samplesheet folder
-        self.samplesheets = config.samplesheets
         # File which denotes the end of a sequencing run
         self.complete_run = config.file_complete_run
         # File which denotes demultiplexing is under way or complete
@@ -148,6 +146,7 @@ class ready2start_demultiplexing():
         self.runfolder = ""
         self.runfolderpath = ""
         self.samplesheet = ""
+        self.samplesheet_path = ""
         self.list_of_samplesheets = []
         self.processed_runfolders = []
 
@@ -258,20 +257,13 @@ class ready2start_demultiplexing():
 
     def look_for_sample_sheet(self):
         """Check that the sample sheet for the current runfolder is present."""
-        # Set the name and path of the sample sheet to find
-        self.samplesheet = self.samplesheets + self.runfolder + "_SampleSheet.csv"
-
-        # Get a list of samplesheets in the samplesheets folder
-        #all_runfolders = os.listdir(self.samplesheets)
-        # In case samplesheets have a mix of capitalisation, convert all names to uppercase
-        #for samplesheet in os.listdir(self.samplesheets)
-            #self.list_of_samplesheets.append(samplesheet.upper())
-
-        # Set the expected samplesheet name
-        expected_samplesheet = self.runfolder + "_SampleSheet.csv"
+        # Set the filepath of the sample sheet (with expected naming convention)
+        self.samplesheet = self.runfolder + "_SampleSheet.csv"
+        self.samplesheet_path = os.path.join(config.samplesheets_dir,self.samplesheet)
+        self.script_logfile.write("expected samplesheet name: %s. Looking in %s\n" % (self.samplesheet,config.samplesheets_dir))
         # Check that the expected samplesheet exists
-        if expected_samplesheet in os.listdir(self.samplesheets):
-            self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " + self.samplesheet + "\n")
+        if self.samplesheet in os.listdir(config.samplesheets_dir):
+            self.script_logfile.write("samplesheet found: " + self.samplesheet_path + "\n")
             # Test if the samplesheet contains valid characters using self.check_valid_samplsheet().
             # Returns true if the sample sheet does not contain illegal characters
             if self.check_valid_samplesheet():
@@ -287,7 +279,7 @@ class ready2start_demultiplexing():
                 self.logger("Invalid characters found in samplesheet for run " + self.runfolder, "demultiplex_fail_samplesheet")
         else:
             # No samplesheet found. Stop and log message.
-            self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
+            self.script_logfile.write("Samplesheet not found--- STOP ---\n")
             self.logger("No samplesheet found for run " + self.runfolder, "demultiplex_fail_samplesheet")
 
     def check_valid_samplesheet(self):
@@ -303,7 +295,7 @@ class ready2start_demultiplexing():
 
         # Open samplesheet as read only.
         try:
-            with open(self.samplesheet, 'r') as samplesheet_stream:
+            with open(self.samplesheet_path, 'r') as samplesheet_stream:
                 # read the file into a list and loop through the list in reverse (bottom to top).
                 # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
                 for line in reversed(samplesheet_stream.readlines()):
@@ -371,7 +363,7 @@ class ready2start_demultiplexing():
             #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/bcl2fastq2_output.log 2&>1"
             # where --no-lane-splitting creates a single fastq for a sample, not into one fastq per lane
             command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder +
-                      " --sample-sheet " + self.samplesheet + " --no-lane-splitting >> " +
+                      " --sample-sheet " + self.samplesheet_path + " --no-lane-splitting >> " +
                       demultiplex_log + " 2>&1")
 
             # Write progress/status to script log file
