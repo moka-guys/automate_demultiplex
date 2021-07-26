@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py" and
 import os
 
 # Set debug mode
-debug = False
+testing = False
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -16,13 +16,16 @@ debug = False
 # (2 levels up from this file)
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
-# # path to run folders
-runfolders = "/media/data3/share"
-# when testing use a different directory
-#runfolders = "/media/data3/share/testing/"
+# path to run folders - use testing flag to determine folders.
+if not testing:
+	runfolders = "/media/data3/share"
+else:
+	# when testing use a different directory
+	## NOTE WHEN TESTING ALSO CONSIDER agilent_upload_folder (in OnePGT section)
+	runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
-samplesheets = runfolders + "/samplesheets/"
+samplesheets_dir = os.path.join(runfolders,"samplesheets")
 
 # path to fastq files
 fastq_folder = "/Data/Intensities/BaseCalls"
@@ -38,7 +41,7 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
-demultiplex_test_folder = ["999999_M02353_0288_demultiplex_test"]
+demultiplex_test_folder = ["999999_NB552085_0136_AHWFNKBGXH_demultiplex_test","999999_M02353_0496_000000000-D8M36_demultiplex_test"]
 
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
@@ -101,6 +104,9 @@ agilent_connector_output = "agilentserviceconnector is running"
 # upload agent test response
 upload_agent_expected_stdout = "Upload Agent Version:"
 
+# NA12878 identifiers to exclude from congenica upload
+reference_sample_ids = ["NA12878", "136819"]
+
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
@@ -108,13 +114,15 @@ mokapipe_congenica_pipeline_ID = "4316"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4318"
 # MokaAMP ID
-mokaamp_pipeline_ID = "4274"
+mokaamp_pipeline_ID = "4725"
 # MokaONC ID
 mokaonc_pipeline_ID = "4532"
 # MokaONC ID
 archerDx_pipeline_ID = "4562"
 # SNP Genotyping ID
 snp_genotyping_pipeline_ID = "4480"
+# mokacan pipeline ID
+mokacan_pipeline_ID = "4728"
 
 
 # -- Moka WES test status--
@@ -142,7 +150,9 @@ mokawes_path = "Workflows/MokaWES_v1.8"
 # path to the oncology workflow in the app project
 mokaonc_path = "Workflows/Mokaonc_v1.6"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.6"
+mokaamp_path = "Workflows/MokaAMP_v1.7"
+# path to mokacan
+mokacan_path = "Workflows/MokaCAN_v1.0"
 #path to snp_genotyping
 snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
 # path to paddy app
@@ -226,7 +236,9 @@ mokaamp_bamclipper_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
 mokaamp_chanjo_cov_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
 mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
 mokaamp_vardict_bed_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.bedfile="
+mokaamp_vardict_samplename_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.sample_name=vardict_"
 mokaamp_varscan_bed_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
+mokaamp_varscan_samplename_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.samplename=varscan_"
 mokaamp_varscan_strandfilter_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
 mokaamp_mpileup_cov_level_stage = " -istage-FxypXb807p1zj3g8Jv45Y54P.min_coverage="
 
@@ -235,6 +247,25 @@ mokaamp_bwa_reference_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.genomeindex_tar
 mokaamp_mokapicard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 mokaamp_vardict_reference_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 mokaamp_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+
+#MokaCAN - stages which may change between samples
+mokacan_fastqc_r1_stage = " -istage-FPzGj6Q0jy1fF6505zFP6zz5.reads="
+mokacan_fastqc_r2_stage = " -istage-FPzGj5j0jy1x97jg607Fg229.reads="
+mokacan_picard_bedfile_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
+mokacan_picard_capturetype_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
+mokacan_sambamba_bedfile_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
+mokacan_vardict_bedfile_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
+mokacan_sentieon_sample_name_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.sample="
+mokacan_sambamba_coverage_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
+mokacan_vardict_sample_name_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.sample_name=vardict_"
+mokacan_varscan_bedfile_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
+
+# mokacan stages with inputs that shouldn't change - these are specified to ensure any input files are taken from 001
+mokacan_senteion_bwa_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genomebwaindex_targz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY4942J35xX095VZyQBk0v"
+mokacan_senteion_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genome_fastagz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY7VG2J35Vfvpkj8y0KZ01"
+mokacan_picard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+mokacan_vardict_reference_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
+mokacan_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 
 mokaamp_email_message = (
 	"If both MokaAMP and MokaOnc (amplivar) have been run,"
@@ -259,15 +290,16 @@ rpkm_bedfile_input = " -ibedfile="
 rpkm_project_input = " -iproject_name="
 rpkm_bamfiles_to_download_input = " -ibamfile_pannumbers="
 
-# emails addresses for Ingenuity
-oncology_IVA_email = "gst-tr.oncology.interpret@nhs.net"  # general oncology email
-interpretation_request_email = (
-	"gst-tr.interpretation.request@nhs.net"  # email for Interpretation_requests
-)
-wes_email_address = "gst-tr.wesviapath@nhs.net"  # WES email
-
-# oncology email address for email alerts
-oncology_ops_email = "m.neat@nhs.net"
+# email addresses
+mokaguys_email = "gst-tr.mokaguys@nhs.net"
+if testing:
+	# oncology email address for email alerts
+	oncology_ops_email = mokaguys_email
+	WES_sample_name_email_list = [mokaguys_email]
+else:
+	# oncology email address for email alerts
+	oncology_ops_email = "m.neat@nhs.net"
+	WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email]
 
 
 # DNA Nexus authentication token
@@ -320,13 +352,15 @@ panel_list = [
 	"Pan4143", # VCP3 Viapath R66
 	"Pan4144", # VCP3 Viapath R78
 	"Pan4151", # VCP3 Viapath R82
-	"Pan4314", # VCP3 Viapath R266
+	"Pan4314", # VCP3 Viapath R229
 	"Pan4351", # VCP3 Viapath R227
 	"Pan4387", # VCP3 Viapath R90
 	"Pan4390", # VCP3 Viapath R97
 	"Pan2764", # OnePGT
 	"Pan4009", # SNP Genotyping
-	"Pan4396" # ArcherDx
+	"Pan4396", # ArcherDx
+	"Pan4579", # VCP2 somatic M1.1
+	"Pan4574" # VCP2 somatic M1.2
 ]
 
 
@@ -340,6 +374,7 @@ SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan2684"]
 swift_egfr_panel_list = ["Pan1190"]
+mokacan_panel_list = ["Pan4573","Pan4574"]
 
 default_panel_properties = {
 	"UMI": False,
@@ -352,6 +387,7 @@ default_panel_properties = {
 	"mokaamp": False,
 	"capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
 	"mokaonc": False,
+	"mokacan": False,
 	"snp_genotyping": False,
 	"mokapipe": False,
 	"mokapipe_haplotype_caller_padding": 0,
@@ -375,7 +411,6 @@ default_panel_properties = {
 	"mokaamp_bed_PE_input": None,
 	# Note: mokaamp_variant_calling_bed only used when BED file differs from Pan number
 	"mokaamp_variant_calling_bed":None,
-	"ingenuity_email": interpretation_request_email,
 	"congenica_project": None,
 	"peddy": False,
 	"archerdx": False,
@@ -468,9 +503,9 @@ panel_settings = {
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "4201",
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
 	},
 	"Pan4119": {  #VCP1 R134_Familial hypercholesterolaemia-Familial hypercholesterolaemia Small panel (Viapath)
 	    "mokapipe": True,
@@ -578,9 +613,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4134": {  #VCP3 R57 (Viapath)
 		"mokapipe": True,
@@ -588,9 +623,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4136": {  #VCP3 R58 (Viapath)
 		"mokapipe": True,
@@ -598,9 +633,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4137": {  #VCP3 R60 (Viapath)
 		"mokapipe": True,
@@ -608,9 +643,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4138": {  #VCP3 R62 (Viapath)
 		"mokapipe": True,
@@ -618,9 +653,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4143": {  #VCP3 R66 (Viapath)
 		"mokapipe": True,
@@ -628,9 +663,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4144": {  #VCP3 R78 (Viapath)
 		"mokapipe": True,
@@ -638,9 +673,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4145": {  #VCP3 R79 - CMD (Viapath)
 		"mokapipe": True,
@@ -648,9 +683,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4666",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4146": {  #VCP3 R81 CM (Viapath)
 		"mokapipe": True,
@@ -658,9 +693,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4666",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4151": {  #VCP3 R82 limb girdle (Viapath)
 		"mokapipe": True,
@@ -668,9 +703,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5092",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan2764": { # OnePGT
 		"onePGT": True,
@@ -682,9 +717,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5522",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4387": { #VCP3 R90 Bleeding and platelet disorders (Viapath)
 		"mokapipe": True,
@@ -692,9 +727,9 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4699",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4390": { #VCP3 R97 Thrombophilia with a likely monogenic cause (Viapath)
 		"mokapipe": True,
@@ -702,23 +737,37 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "4699",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
-	"Pan4314": { #VCP3 R266 (Viapath)
+	"Pan4314": { #VCP3 R229 (Viapath)
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"RPKM_bedfile_pan_number": "Pan4362",
 		"congenica_project": "5290",
 		"RPKM_also_analyse": vcp3_panel_list,
-		"hsmetrics_bedfile": "Pan4361data.bed",
-		"sambamba_bedfile": "Pan4361dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4361data.bed",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
 	},
 	"Pan4396": { #ArcherDx
 		"archerdx": True,
 		"congenica_upload": False,
+	},
+	"Pan4574" :{ # somatic VCP2 M1.2
+		"mokacan": True,
+		"congenica_upload": False,
+		"variant_calling_bedfile": "Pan4577data.bed",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"clinical_coverage_depth" : 200,
+	},
+	"Pan4579" :{ # somatic VCP2 M1.1
+		"mokacan": True,
+		"congenica_upload": False,
+		"variant_calling_bedfile": "Pan4578data.bed",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"clinical_coverage_depth" : 200,
 	}
 }
 
@@ -757,7 +806,6 @@ smartsheet_request_url = "https://api.smartsheet.com/2.0/sheets/" + str(smartshe
 allowed_time_for_tasks = 4
 
 # =================== Email server settings
-mokaguys_email = "gst-tr.mokaguys@nhs.net"
 username_file_path = "{document_root}/.amazon_email_username".format(document_root=document_root)
 with open(username_file_path, "r") as username_file:
 	user = username_file.readline().rstrip()
@@ -769,8 +817,12 @@ port = 587
 me = "moka.alerts@gstt.nhs.uk"
 you = mokaguys_email
 oncology_you = oncology_ops_email
-WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email]
 smtp_do_tls = True
+if testing:
+	test_email_header = "AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL\n\n"
+else:
+	test_email_header = ""
+
 
 # ================ Integrity check
 # the filename which holds the checksum results
@@ -795,7 +847,11 @@ bcl2fastq_stats_filename = "Stats.json"
 bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 
 # ================ onePGT
-agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
+if testing:
+	# for testing
+	agilent_upload_folder = "/media/data1/share/test_agilent_OnePGT_uploads/"
+else:
+	agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
 max_filesize_in_bytes = 5368709120 # 5GB (max size is 10GB per pair of fastq)
 max_filesize_in_GB = "5GB"
 rsync_logfile = "rsync_output.txt"
