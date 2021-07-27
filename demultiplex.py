@@ -56,7 +56,7 @@ class get_list_of_runs():
         self.now = str('{:%Y%m%d_%H%M%S}'.format(datetime.datetime.now()))
 
         # List all files and folders in the runfolder directory
-        if config.debug:
+        if config.testing:
             all_runfolders = config.demultiplex_test_folder
         else:
             all_runfolders = os.listdir(self.runfolders)
@@ -137,8 +137,6 @@ class ready2start_demultiplexing():
         # Assign timestamp from get_list_of_runs() to self.variable
         self.now = now
 
-        # Samplesheet folder
-        self.samplesheets = config.samplesheets
         # File which denotes the end of a sequencing run
         self.complete_run = config.file_complete_run
         # File which denotes demultiplexing is under way or complete
@@ -148,6 +146,7 @@ class ready2start_demultiplexing():
         self.runfolder = ""
         self.runfolderpath = ""
         self.samplesheet = ""
+        self.samplesheet_path = ""
         self.list_of_samplesheets = []
         self.processed_runfolders = []
 
@@ -258,20 +257,13 @@ class ready2start_demultiplexing():
 
     def look_for_sample_sheet(self):
         """Check that the sample sheet for the current runfolder is present."""
-        # Set the name and path of the sample sheet to find
-        self.samplesheet = self.samplesheets + self.runfolder + "_SampleSheet.csv"
-
-        # Get a list of samplesheets in the samplesheets folder
-        all_runfolders = os.listdir(self.samplesheets)
-        # In case samplesheets have a mix of capitalisation, convert all names to uppercase
-        for samplesheet in all_runfolders:
-            self.list_of_samplesheets.append(samplesheet.upper())
-
-        # Set the expected samplesheet name in uppercase
-        expected_samplesheet = self.runfolder.upper() + "_SAMPLESHEET.CSV"
+        # Set the filepath of the sample sheet (with expected naming convention)
+        self.samplesheet = self.runfolder + "_SampleSheet.csv"
+        self.samplesheet_path = os.path.join(config.samplesheets_dir,self.samplesheet)
+        self.script_logfile.write("expected samplesheet name: %s. Looking in %s\n" % (self.samplesheet,config.samplesheets_dir))
         # Check that the expected samplesheet exists
-        if expected_samplesheet in self.list_of_samplesheets:
-            self.script_logfile.write("Looking for a samplesheet .........samplesheet found @ " + self.samplesheet + "\n")
+        if self.samplesheet in os.listdir(config.samplesheets_dir):
+            self.script_logfile.write("samplesheet found: " + self.samplesheet_path + "\n")
             # Test if the samplesheet contains valid characters using self.check_valid_samplsheet().
             # Returns true if the sample sheet does not contain illegal characters
             if self.check_valid_samplesheet():
@@ -287,7 +279,7 @@ class ready2start_demultiplexing():
                 self.logger("Invalid characters found in samplesheet for run " + self.runfolder, "demultiplex_fail_samplesheet")
         else:
             # No samplesheet found. Stop and log message.
-            self.script_logfile.write("Looking for a samplesheet ......... no samplesheet present \n--- STOP ---\n")
+            self.script_logfile.write("Samplesheet not found--- STOP ---\n")
             self.logger("No samplesheet found for run " + self.runfolder, "demultiplex_fail_samplesheet")
 
     def check_valid_samplesheet(self):
@@ -303,13 +295,16 @@ class ready2start_demultiplexing():
 
         # Open samplesheet as read only.
         try:
-            with open(self.samplesheet, 'r') as samplesheet_stream:
+            with open(self.samplesheet_path, 'r') as samplesheet_stream:
                 # read the file into a list and loop through the list in reverse (bottom to top).
                 # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
                 for line in reversed(samplesheet_stream.readlines()):
                     # If the line contains table headers, stop looping through the file
-                    if line.startswith("Sample_ID"):
+                    if line.startswith("Sample_ID") or "[Data]" in line:
                         break
+                    # skip empty lines (check first element of the line, after splitting on comma)
+                    elif len(line.split(",")[0]) <2:
+                        pass
                     # if it's a line detailing a sample
                     else:
                         # Split the current line of the csv, with commas as the delimiter
@@ -323,18 +318,18 @@ class ready2start_demultiplexing():
 
                         # increase sample count to record in smartsheet how many samples have been processed
                         self.sample_count += 1
+
+            # Loop through the characters of each sample string
+            for sample_string in sample_strings:
+                for char in sample_string:
+                    # Check that each character in the string is valid, returning True if valid and False if not
+                    if char not in valid_chars:
+                        return False
         except:
             # Write progress/status to script log file
             self.script_logfile.write("Unable to open the samplesheet. check naming of samplesheet\n")
             self.logger("Unable to open samplesheet found for run " + self.runfolder + ". Check naming of samplesheet", "demultiplex_fail_samplesheet")
-
-        # Loop through the characters of each sample string
-        for sample_string in sample_strings:
-            for char in sample_string:
-                # Check that each character in the string is valid, returning True if valid and False if not
-                if char not in valid_chars:
-                    return False
-
+            return False
         # if haven't already returned false after parsing samplestrings return True to say all is ok.
         return True
 
@@ -368,7 +363,7 @@ class ready2start_demultiplexing():
             #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/bcl2fastq2_output.log 2&>1"
             # where --no-lane-splitting creates a single fastq for a sample, not into one fastq per lane
             command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder +
-                      " --sample-sheet " + self.samplesheet + " --no-lane-splitting >> " +
+                      " --sample-sheet " + self.samplesheet_path + " --no-lane-splitting >> " +
                       demultiplex_log + " 2>&1")
 
             # Write progress/status to script log file
@@ -378,18 +373,16 @@ class ready2start_demultiplexing():
 
             # Run the bcl2fastq command to start demultiplexing. the script won't continue until this
             # process finishes. Stderr and stdout streams are redirected to the log file by the command
-            if not config.debug:
-                subprocess.call([command], shell=True)
+            
+            subprocess.call([command], shell=True)
 
-                # Add runfolder name to self.processed_runfolders. Runfolder names in this list are appended
-                # to the script log file at the end of the script cycle.
-                self.processed_runfolders.append(self.runfolder)
+            # Add runfolder name to self.processed_runfolders. Runfolder names in this list are appended
+            # to the script log file at the end of the script cycle.
+            self.processed_runfolders.append(self.runfolder)
 
-                # Call method to check the success of demultiplexing
-                self.check_demultiplexlog_file()
+            # Call method to check the success of demultiplexing
+            self.check_demultiplexlog_file()
 
-            else:
-                print "would have demultipexed but debug mode is on"
 
     def check_demultiplexlog_file(self):
         """Check demultiplexing completed successfully. Read the stderr and stdout from bcl2fastq in
@@ -640,13 +633,11 @@ class ready2start_demultiplexing():
                     return True
                 # if integrity check failed...
                 else:
-                    # if it's not a debug run
-                    if not config.debug:
-                        # send an email
-                        self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
-                        self.email_priority = 1
-                        self.email_message = "run:\t" + self.runfolder + "\nPlease follow the protocol for when integrity checks fail"
-                        self.send_an_email()
+                    # send an email
+                    self.email_subject = "MOKAPIPE ALERT: INTEGRITY CHECK FAILED"
+                    self.email_priority = 1
+                    self.email_message = "run:\t" + self.runfolder + "\nPlease follow the protocol for when integrity checks fail"
+                    self.send_an_email()
                     # record test failed in sys log
                     self.logger("Integrity check fail. checksums do not match for " + self.runfolder + "see " + checksum_file_path, "demultiplex_fail")
                     # return false to stop the script, saying integrity checking has not been completed
