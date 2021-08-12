@@ -2244,9 +2244,9 @@ class RunfolderProcessor(object):
         samplesheet_name = self.runfolder_obj.runfolder_name + "_SampleSheet.csv"
 
         # try to copy samplesheet into project
-        if os.path.exists(config.samplesheets + samplesheet_name):
+        if os.path.exists(config.samplesheets_dir + samplesheet_name):
             copyfile(
-                config.samplesheets + samplesheet_name,
+                config.samplesheets_dir + samplesheet_name,
                 os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name),
             )
             self.loggers.script.info("Samplesheet copied to runfolder: {}".format(samplesheet_name))
