@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = True
+testing = False
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
