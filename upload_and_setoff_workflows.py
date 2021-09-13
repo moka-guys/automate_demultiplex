@@ -157,7 +157,6 @@ class RunfolderProcessor(object):
         )
         self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path + " --instance-type mem1_ssd1_x8"
-        self.mokaonc_command = "jobid=$(dx run " + config.app_project + config.mokaonc_path + " -y "
         self.mokaamp_command = (
             "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
         )
@@ -1026,7 +1025,7 @@ class RunfolderProcessor(object):
         else:
             bed_dict["variant_calling_bedfile"] = None
         
-        # paired end BED file used by primer clipping tool
+        # paired end BED file used by primer clipping tool 
         if self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]:
             bed_dict["mokaamp_bed_PE_input"] = (
                 config.app_project
@@ -1079,7 +1078,6 @@ class RunfolderProcessor(object):
         commands_list.append(self.source_command)
         
         # lists/flags for run wide commands
-        mokaonc_list = [] 
         peddy = False
         congenica_upload = False
         joint_variant_calling = False # not currently in use
@@ -1129,10 +1127,6 @@ class RunfolderProcessor(object):
                     # add panel to RPKM list 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
-                
-                # If panel is to be processed using MokaONC
-                if self.panel_dictionary[panel]["mokaonc"]:
-                    mokaonc_list.append(fastq)
 
                 # If panel is to be processed using MokaAMP
                 if self.panel_dictionary[panel]["mokaamp"]:
@@ -1173,8 +1167,6 @@ class RunfolderProcessor(object):
             )
 
         # build run wide commands 
-        if mokaonc_list:
-            commands_list.append(self.create_mokaonc_command(mokaonc_list))
         if joint_variant_calling:
             commands_list.append(self.create_joint_variant_calling_command())
         if rpkm_list:
@@ -1374,35 +1366,6 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_mokaonc_command(self, mokaonc_list):
-        """
-        Input = List of read1 fastqs.
-        MokaONC only supports one panel (Pan1190) so some values are hard coded here
-        This pipeline is soon to be discontinued
-        Returns = one dx run command for all samples (string)
-        """
-        # start dx run command capturing job id etc
-        dx_command = self.mokaonc_command
-        # loop through the list of read 1 fastqs
-        for sample_fq in mokaonc_list:
-            # call function to build nexus fastq paths - returns tuple for read1 and read2
-            fastqs = self.nexus_fastq_paths(sample_fq)
-            # add each as an input
-            dx_command += config.mokaonc_fq_input + fastqs[0] + config.mokaonc_fq_input + fastqs[1]
-
-        # create the dx command - NB only one panel is supported by MokaONC hense hard coded pan number
-        command_out = (
-            dx_command
-            + self.dest
-            + self.dest_cmd
-            + "amplivar_output"
-            + " --stage-output-folder stage-G0KYx8Q0GfYvbVg49bYf9p9g "
-            + self.dest_cmd
-            + self.token
-        )
-
-        return command_out
-
     def build_iva_input_command(self):
         """
         Inputs = None
@@ -1460,12 +1423,6 @@ class RunfolderProcessor(object):
         # build nexus fastq paths - returns tuple for read1 and read2 and dictionary for bed files
         fastqs = self.nexus_fastq_paths(fastq)
         bedfiles = self.nexus_bedfiles(pannumber)
-        
-        # we may want to run this pipeline along side mokaONC (which should be used to analyse). 
-        # To avoid confusion we need to change the destination to ensure files produced by this pipeline are not used for analysis
-        dest_cmd = self.dest_cmd
-        if self.panel_dictionary[pannumber]["destination_command"]:
-            dest_cmd += self.panel_dictionary[pannumber]["destination_command"]
 
         # create the MokaAMP dx command
         dx_command_list = [
@@ -1481,7 +1438,7 @@ class RunfolderProcessor(object):
             bedfiles["hsmetrics"],
             config.mokaamp_mokapicard_capturetype_stage,
             self.panel_dictionary[pannumber]["capture_type"],
-            config.mokaamp_bamclipper_BEDPE_stage,
+            config.mokaamp_ampliconfilter_BEDPE_stage,
             bedfiles["mokaamp_bed_PE_input"],
             config.mokaamp_chanjo_cov_level_stage,
             self.panel_dictionary[pannumber]["clinical_coverage_depth"],
@@ -1504,7 +1461,7 @@ class RunfolderProcessor(object):
             config.mokaamp_vardict_reference_stage,
             config.mokaamp_varscan_reference_stage,
             self.dest,
-            dest_cmd,
+            self.dest_cmd,
             self.token,
         ]
 
@@ -2121,9 +2078,6 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[pannumber]["mokaamp"]:
                     queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaamp_pipeline_ID, pannumber_no_pan))
                     workflows.append(config.mokaamp_path.split("/")[-1])
-                if self.panel_dictionary[pannumber]["mokaonc"]:
-                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaonc_pipeline_ID, pannumber_no_pan))
-                    workflows.append(config.mokaonc_path.split("/")[-1])
                 if self.panel_dictionary[pannumber]["archerdx"]:
                     queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.archerDx_pipeline_ID, pannumber_no_pan))
                     workflows.append(config.fastqc_app.split("/")[-1])
