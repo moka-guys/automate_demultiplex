@@ -114,8 +114,8 @@ mokapipe_congenica_pipeline_ID = "4316"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4318"
 # MokaAMP ID
-mokaamp_pipeline_ID = "4725"
-# MokaONC ID
+mokaamp_pipeline_ID = "4816"
+# Archer ID
 archerDx_pipeline_ID = "4562"
 # SNP Genotyping ID
 snp_genotyping_pipeline_ID = "4480"
