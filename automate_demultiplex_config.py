@@ -1,8 +1,8 @@
 """
 Automate demultiplex configuration.
 
-The variables defined in this module are required by the "demultiplex.py" and
-"DNANexus_upload_agent.py" scripts.
+The variables defined in this module are required by the "demultiplex.py",
+"upload_and_setoff_workflows.py" and "decision_support_tool_inputs.py" scripts. 
 """
 
 import os
@@ -114,10 +114,8 @@ mokapipe_congenica_pipeline_ID = "4316"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4318"
 # MokaAMP ID
-mokaamp_pipeline_ID = "4725"
-# MokaONC ID
-mokaonc_pipeline_ID = "4532"
-# MokaONC ID
+mokaamp_pipeline_ID = "4816"
+# Archer ID
 archerDx_pipeline_ID = "4562"
 # SNP Genotyping ID
 snp_genotyping_pipeline_ID = "4480"
@@ -147,10 +145,8 @@ mokapipe_path = "Workflows/GATK3.5_v2.12"
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 
-# path to the oncology workflow in the app project
-mokaonc_path = "Workflows/Mokaonc_v1.6"
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v1.7"
+mokaamp_path = "Workflows/MokaAMP_v2.1"
 # path to mokacan
 mokacan_path = "Workflows/MokaCAN_v1.0"
 #path to snp_genotyping
@@ -221,18 +217,13 @@ snp_sentieon_samplename = " -i%s.sample=" % snp_sentieon_stage_id
 #bcftools input
 snp_bcftools_input = " -istage-FvGkxzj02Bk06Y687Xk8jJp0.in"
 
-# MokaOnc amplivar fastq input
-mokaonc_fq_input = " -istage-F7kPz6Q0vpxb0YpjBgQx5f8v.fastqs="
-# ingenuity app input for amplivar workflow
-mokaonc_ingenuity = " -istage-F5k1Qyj0jy1VKJb2KYqq7fxG.email="
-
-# MokaAMP - stages that may change between samples/panels
+# MokaAMP - stages that may change between samples/panels 
 mokaamp_fastq_R1_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz="
 mokaamp_fastq_R2_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
 mokaamp_bwa_rg_sample = " -istage-FPzGj780jy1g3p1F4F8z4J7V.read_group_sample="
 mokaamp_mokapicard_bed_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
 mokaamp_mokapicard_capturetype_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
-mokaamp_bamclipper_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.primers="
+mokaamp_ampliconfilter_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.BEDPE="
 mokaamp_chanjo_cov_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
 mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
 mokaamp_vardict_bed_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.bedfile="
@@ -324,8 +315,8 @@ congenica_bam_inputname = " -ibam="
 
 # =====List of all panel numbers=====
 panel_list = [
-	"Pan1190", # swift EGFR
-	"Pan2684", # swift 57
+	"Pan4081", # swift EGFR 
+	"Pan4082", # swift 57 
 	"Pan2835", # twist WES
 	"Pan4042", # STG VCP2 BRCA
 	"Pan4043", # STG VCP3
@@ -372,8 +363,8 @@ vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","
 WES_panel_lists = ["Pan2835","Pan3174"]
 SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396"]
-swift_57G_panel_list = ["Pan2684"]
-swift_egfr_panel_list = ["Pan1190"]
+swift_57G_panel_list = ["Pan4082"]
+swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4573","Pan4574"]
 
 default_panel_properties = {
@@ -386,7 +377,6 @@ default_panel_properties = {
 	"joint_variant_calling": False,
 	"mokaamp": False,
 	"capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
-	"mokaonc": False,
 	"mokacan": False,
 	"snp_genotyping": False,
 	"mokapipe": False,
@@ -432,26 +422,23 @@ panel_settings = {
 		"sambamba_bedfile": "Pan493dataSambamba.bed",
 		"peddy": True,
 	},
-	"Pan1190": {  # EGFR SWIFT Panel
-		"oncology": True,
-		"mokaonc": True,
-		"mokaamp": True,
-		"capture_type": "Amplicon",
-		"clinical_coverage_depth": 600,
-		"multiqc_coverage_level": 100,
-		"mokaamp_bed_PE_input":"Pan3638_PE.bed",
-		"mokaamp_variant_calling_bed":"Pan3638_flat.bed",
-		"hsmetrics_bedfile": "Pan3638.bed",
-		"sambamba_bedfile": "Pan3638Sambamba.bed",
-		"destination_command": "MokaAMP_EGFR_trial"
-	},
-	"Pan2684": {  # 57G SWIFT panel
-		"RPKM_bedfile_pan_number": None,
+	"Pan4081": {  # EGFR SWIFT Panel
 		"mokaamp": True,
 		"oncology": True,
 		"capture_type": "Amplicon",
 		"clinical_coverage_depth": 600,  # only found in mokamp command
 		"multiqc_coverage_level": 100,
+        "hsmetrics_bedfile": "Pan4081.bed",
+		"sambamba_bedfile": "Pan4081Sambamba.bed",
+	},
+	"Pan4082": {  # 57G SWIFT panel
+		"mokaamp": True,
+		"oncology": True,
+		"capture_type": "Amplicon",
+		"clinical_coverage_depth": 600,  # only found in mokamp command
+		"multiqc_coverage_level": 100,
+        "hsmetrics_bedfile": "Pan4082.bed",
+		"sambamba_bedfile": "Pan4082Sambamba.bed",
 	},
 	"Pan4044": {  # VCP1 STG
 		"mokapipe": True,
