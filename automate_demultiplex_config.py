@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -114,7 +114,7 @@ mokapipe_congenica_pipeline_ID = "4316"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4318"
 # MokaAMP ID
-mokaamp_pipeline_ID = "4816"
+mokaamp_pipeline_ID = "4851"
 # Archer ID
 archerDx_pipeline_ID = "4562"
 # SNP Genotyping ID
@@ -146,7 +146,7 @@ mokapipe_path = "Workflows/GATK3.5_v2.12"
 mokawes_path = "Workflows/MokaWES_v1.8"
 
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v2.1"
+mokaamp_path = "Workflows/MokaAMP_v2.2"
 # path to mokacan
 mokacan_path = "Workflows/MokaCAN_v1.0"
 #path to snp_genotyping
