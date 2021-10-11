@@ -110,7 +110,7 @@ reference_sample_ids = ["NA12878", "136819"]
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
-mokapipe_congenica_pipeline_ID = "4316"
+mokapipe_congenica_pipeline_ID = "4854"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4318"
 # MokaAMP ID
