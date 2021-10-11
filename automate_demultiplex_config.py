@@ -154,7 +154,7 @@ snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.13.0"
+multiqc_path = "Apps/multiqc_v1.14.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.2"
 # placeholder for IVA - will be changed to QCI when available
