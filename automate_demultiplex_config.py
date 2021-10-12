@@ -110,11 +110,11 @@ reference_sample_ids = ["NA12878", "136819"]
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
-mokapipe_congenica_pipeline_ID = "4316"
+mokapipe_congenica_pipeline_ID = "4854"
 # Current MokaWES ID
 mokawes_pipeline_ID = "4318"
 # MokaAMP ID
-mokaamp_pipeline_ID = "4816"
+mokaamp_pipeline_ID = "4851"
 # Archer ID
 archerDx_pipeline_ID = "4562"
 # SNP Genotyping ID
@@ -141,12 +141,12 @@ project_success = 'Created new project called "%s"'
 app_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"
 # path to the workflow in the app project
 
-mokapipe_path = "Workflows/GATK3.5_v2.12"
+mokapipe_path = "Workflows/GATK3.5_v2.13"
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 
 # path to mokaamp
-mokaamp_path = "Workflows/MokaAMP_v2.1"
+mokaamp_path = "Workflows/MokaAMP_v2.2"
 # path to mokacan
 mokacan_path = "Workflows/MokaCAN_v1.0"
 #path to snp_genotyping
@@ -154,7 +154,7 @@ snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.13.0"
+multiqc_path = "Apps/multiqc_v1.14.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.2"
 # placeholder for IVA - will be changed to QCI when available
@@ -178,7 +178,7 @@ dev_organisation = "org-viapath_dev"
 live_tag = "live"
 
 # =====istages=====
-mokapipe_variant_annotator_stage = "stage-F2gPqFQ025p601qgGq0QVvX2"
+mokapipe_filter_vcf_with_bedfile_stage = "stage-G5Kpgv80zB02Q64zFf94G05F"
 mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 # Mokapipe workflow inputs
 mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
@@ -189,8 +189,8 @@ mokapipe_mokapicard_vendorbed_input = (
 	" -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 )
 mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
-mokapipe_haplotype_bedfile_input = " -i" +mokapipe_gatk_human_exome_stage + ".bedfile="
-mokapipe_vcf_output_name = "vcf"
+mokapipe_filter_vcf_with_bedfile_bed_input = " -i" +mokapipe_filter_vcf_with_bedfile_stage + ".bedfile="
+mokapipe_vcf_output_name = "filtered_vcf"
 mokapipe_bam_output_name = "bam"
 
 

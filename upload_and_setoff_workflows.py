@@ -1338,7 +1338,7 @@ class RunfolderProcessor(object):
         
         if bedfiles["variant_calling_bedfile"]:
             bedfiles_string = (
-                config.mokapipe_haplotype_bedfile_input + bedfiles["variant_calling_bedfile"]
+                config.mokapipe_filter_vcf_with_bedfile_bed_input + bedfiles["variant_calling_bedfile"]
             )
         else:
             bedfiles_string = ""
