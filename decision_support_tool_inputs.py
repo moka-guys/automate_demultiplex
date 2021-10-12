@@ -80,13 +80,13 @@ class DecisionTooler(object):
         """
         Parse the dx describe output from the mokapipe analysis id
         use the stage id to identify the job id of the required stage (see config file)
-        return the job id for the variant annotator app for vcf and return the gatk human exome
+        return the job id for the bed filtering app for vcf and return the gatk human exome
         pipeline for BAM
         """
         jobid = None
         bamjobid = None
         for stage in json_ob["stages"]:
-            if  stage["id"] == config.mokapipe_variant_annotator_stage:
+            if  stage["id"] == config.mokapipe_filter_vcf_with_bedfile_stage:
                 jobid = stage["execution"]["id"]
             elif stage["id"] == config.mokapipe_gatk_human_exome_stage:
                 bamjobid = stage["execution"]["id"]
