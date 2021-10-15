@@ -98,6 +98,7 @@ class RunfolderObject(object):
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
+        self.runfolder_tarball_path = "%s.tar" % self.runfolderpath
 
 
 class RunfolderProcessor(object):
@@ -280,9 +281,20 @@ class RunfolderProcessor(object):
         if not self.already_uploaded() and self.has_demultiplexed():
             # calculate cluster density
             self.calculate_cluster_density(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name)
-            self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
-                self.runfolder_obj.fastq_folder_path
-            )
+            # check for TSO500 run - this is not demultiplexed locally but the entire runfolder is uploaded as a tarball
+            # read samplesheet to create a list of samples
+            TSO500_sample_list = self.check_for_TSO500()
+            # if not TSO500 will return None
+            if TSO500_sample_list:
+                # tar runfolder
+                self.tar_runfolder()
+                # set list of samplenames as list of processed samples - this will allow the project to be named properly.
+                # set tar folder path in place of the list of fastqs to upload
+                self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path
+            else:
+                self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
+                    self.runfolder_obj.fastq_folder_path
+                )
             if self.list_of_processed_samples:
                 # build the project name using the WES batch and NGS run numbers
                 (
@@ -373,6 +385,21 @@ class RunfolderProcessor(object):
             self.loggers.script.info("UA_pass 'Upload Agent function test passed'")
             return True
 
+    def tar_runfolder(self):
+        """
+        Input: runfolder path
+        Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
+        """
+        cmd = "tar -cf %s %s; echo $?" % (self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolder_path)
+        (out, err) = self.execute_subprocess_command(cmd)
+        # assess stderr , looking for expected success statement
+        if self.perform_test(out, "tar_runfolder"):
+            self.loggers.script.info("tar runfolder created at {}".format(self.runfolder_obj.runfolder_tarball_path))
+            return True
+        # raise slack alert if success statement not present.
+        else:
+            self.loggers.script.error("UA_fail 'runfolder tarball creation failed for {}'".format(self.runfolder_obj.runfolder_name))
+
 
     def perform_test(self, test_input, test):
         """
@@ -393,6 +420,9 @@ class RunfolderProcessor(object):
         if test == "demultiplex_started":
             if not os.path.isfile(test_input):
                 return False
+        if test =="TSO500":
+            if not re.search(config.demultiplexing_log_file_TSO500_message, test_input):
+                return False
         # False if the upload file does not exist or does not contain data
         if test == "already_uploaded":
             if not os.path.isfile(test_input):
@@ -406,6 +436,9 @@ class RunfolderProcessor(object):
                 return False
         if test == "agilent_connector":
             if config.agilent_connector_output not in test_input:
+                return False
+        if test == "tar_runfolder":
+            if config.tso500_success_tarball == test_input:
                 return False
         return True
         
@@ -467,6 +500,9 @@ class RunfolderProcessor(object):
                 if self.perform_test(logfile.readlines()[-1], "demultiplex_success"):
                     self.loggers.script.info("Demultiplex completed succesfully.")
                     return True
+                elif self.perform_test(logfile.readlines()[-1], "TSO500"):
+                    self.loggers.script.info("TSO500 run detected.")
+                    return True
                 else:
                     # write to logfile that demultplex was not successful
                     self.loggers.script.info("Demultiplex failed.")
@@ -475,6 +511,30 @@ class RunfolderProcessor(object):
             # write to logfile that not yet demultiplexed
             self.loggers.script.info("Demultiplex has not been performed.")
             return False
+
+    def check_for_TSO500(self):
+        """
+        Read samplesheet looking for TSO500 pan number.
+        If TSO500 pannumber present add samplename to list
+        return sample_list (will return False if empty)
+        """
+        sample_list=[]
+        samplesheet_path = os.path.join(config.samplesheets_dir,self.runfolder_obj.runfolder_name + "_SampleSheet.csv")
+        with open(self.samplesheet_path, 'r') as samplesheet_stream:
+                # read the file into a list and loop through the list in reverse (bottom to top).
+                # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
+                for line in reversed(samplesheet_stream.readlines()):
+                    if line.startswith("Sample_ID") or "[Data]" in line:
+                        break
+                    # skip empty lines (check first element of the line, after splitting on comma)
+                    elif len(line.split(",")[0]) <2:
+                        pass
+                    # if it's a line detailing a sample
+                    else:
+                        for pannum in config.tso500_panel_list:
+                            if pannum in line:
+                                sample_list.append(line.split(",")[0])
+        return sample_list
 
     def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
@@ -765,6 +825,7 @@ class RunfolderProcessor(object):
             file_list (space delimited string of files) 
             stage name (string)
         """
+        
         # build the nexus upload command
         nexus_upload_command = (
             self.restart_ua_1
@@ -792,6 +853,7 @@ class RunfolderProcessor(object):
         out, err = self.execute_subprocess_command(nexus_upload_command)
         self.loggers.upload_agent.info("Uploading fastqs:\n{}\n{}".format(out, err))
         return self.loggers.upload_agent.filepath, self.fastq_string, "fastq"
+
 
     def look_for_upload_errors(self, upload_module_output):
         """
@@ -1083,6 +1145,7 @@ class RunfolderProcessor(object):
         joint_variant_calling = False # not currently in use
         rpkm_list = [] # list for panels needing RPKM analysis
         onePGT_run = False # flag to skip processes not required for PGT runs
+        TSO500 = False
 
         # loop through samples
         for fastq in list_of_processed_samples:
@@ -1103,11 +1166,7 @@ class RunfolderProcessor(object):
                         peddy = True
                     if self.panel_dictionary[panel]["joint_variant_calling"]:
                         joint_variant_calling = True
-                    # # Add command for iva
-                    # if self.panel_dictionary[panel]["iva_upload"]:
-                    #     commands_list.append(self.build_iva_input_command())
-                    #     commands_list.append(self.run_iva_command(fastq, panel))
-                    # TODO add congenica command  for mokawes
+                    
 
                 # If panel is to be processed using mokapipe
                 if self.panel_dictionary[panel]["mokapipe"]:
@@ -1156,6 +1215,9 @@ class RunfolderProcessor(object):
                     commands_list.append(self.add_to_depends_list(fastq))
                     commands_list.append(self.create_archerdx_command(fastq, panel, "R2"))
                     commands_list.append(self.add_to_depends_list(fastq))
+            
+                if self.panel_dictionary[panel]["TSO500"]:
+                    TSO500 = True
 
         # if there is a congenica upload create the file which will be run manually, once QC is passed.
         if congenica_upload:
@@ -1183,6 +1245,9 @@ class RunfolderProcessor(object):
             # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
             # pass "peddy" to ensure it isn't skipped
             commands_list.append(self.add_to_depends_list("peddy"))
+        if TSO500:
+            commands_list.append(self.create_tso500_command())
+
         # multiqc commands
         commands_list.append(self.create_multiqc_command())
         commands_list.append(self.create_upload_multiqc_command())
@@ -1614,6 +1679,11 @@ class RunfolderProcessor(object):
     def create_joint_variant_calling_command(self):
         """-"""
         # TODO: Implement joint-variant calling command for peddy
+        raise NotImplementedError
+
+    def create_tso500_command(self):
+        """-"""
+        #TODO: 
         raise NotImplementedError
 
     def copy_onePGT_fastqs(self, fastq):

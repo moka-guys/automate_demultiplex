@@ -114,6 +114,8 @@ class ready2start_demultiplexing():
         Check expected samplesheet exists in runfolder.
     check_valid_samplesheet()
         Return True if no invalid characters are found in the samplesheet.
+    check_for_TSO500()
+        Return True if TSO500 Pan number is present in samplelist
     run_demultiplexing()
         Run bcl2fastq with runfolder as input.
     check_demultiplexlog_file()
@@ -333,6 +335,28 @@ class ready2start_demultiplexing():
         # if haven't already returned false after parsing samplestrings return True to say all is ok.
         return True
 
+    def check_for_TSO500(self):
+        """
+        Read samplesheet looking for TSO500 pan number.
+        If TSO500 run return True
+        """
+        with open(self.samplesheet_path, 'r') as samplesheet_stream:
+                # read the file into a list and loop through the list in reverse (bottom to top).
+                # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
+                for line in reversed(samplesheet_stream.readlines()):
+                    if line.startswith("Sample_ID") or "[Data]" in line:
+                        break
+                    # skip empty lines (check first element of the line, after splitting on comma)
+                    elif len(line.split(",")[0]) <2:
+                        pass
+                    # if it's a line detailing a sample
+                    else:
+                        for pannum in config.tso500_panel_list:
+                            if pannum in line:
+                                return True
+        return False
+                        
+
     def run_demultiplexing(self):
         """Run bcl2fastq using runfolder as input. Create demultiplex log file in runfolder."""
 
@@ -343,46 +367,48 @@ class ready2start_demultiplexing():
         # before demultiplexing starts check the integrity of the runfolder against that on the sequencer.
         # If the checks pass the funcion will return true. if it fails errors are reported within the function
         if self.prepare_integrity_check():
-
-            # Call function to add the run to smartsheet, with status set to 'in progress' - only do this after integrity check passed otherwise smartsheet updated multiple times
-            self.smartsheet_demultiplex_in_progress()
-
             # Set demultiplex log file name for this runfolder.
             demultiplex_log = (self.runfolders + "/" + self.runfolder + "/" + self.demultiplexed)
             # create this file to ensure demultiplexing doesn't start again - bcl2fastq2 v2.20 doesn't produce any standard out for a while after starting so create this here and append later
             create_file = open(demultiplex_log, 'w')
             # close file immediately
             create_file.close()
+            # check if it's a TSO500 run
+            if self.check_for_TSO500():
+                # if so log this and write a message into the bcl2fastq2.log so the next script can process without looking for the expected bcl2fastq success statement
+                self.logger("TSO500 run detected. Demultiplexing does not need to be performed on " + self.runfolder, "demultiplex_success")
+                with open(demultiplex_log,'w') as bcl2fastq2_log:
+                    bcl2fastq2_log.write(config.demultiplexing_log_file_TSO500_message)
+            else:
+                # Call function to add the run to smartsheet, with status set to 'in progress' - only do this after integrity check passed otherwise smartsheet updated multiple times
+                self.smartsheet_demultiplex_in_progress()
+                # Set a string with the shell command to run demultiplexing.
+                # The command appends bcl2fastq stdout and stderr to the demultiplex_log file.
+                # Example: "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq
+                #           -R 160822_NB551068_0006_AHGYM7BGXY/
+                #           --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv
+                #           --no-lane-splitting >>
+                #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/bcl2fastq2_output.log 2&>1"
+                # where --no-lane-splitting creates a single fastq for a sample, not into one fastq per lane
+                command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder +
+                        " --sample-sheet " + self.samplesheet_path + " --no-lane-splitting >> " +
+                        demultiplex_log + " 2>&1")
 
-            # Set a string with the shell command to run demultiplexing.
-            # The command appends bcl2fastq stdout and stderr to the demultiplex_log file.
-            # Example: "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq
-            #           -R 160822_NB551068_0006_AHGYM7BGXY/
-            #           --sample-sheet samplesheets/160822_NB551068_0006_AHGYM7BGXY_SampleSheet.csv
-            #           --no-lane-splitting >>
-            #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/bcl2fastq2_output.log 2&>1"
-            # where --no-lane-splitting creates a single fastq for a sample, not into one fastq per lane
-            command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder +
-                      " --sample-sheet " + self.samplesheet_path + " --no-lane-splitting >> " +
-                      demultiplex_log + " 2>&1")
+                # Write progress/status to script log file
+                self.script_logfile.write("running bcl2fastq. command = " + command + "\n")
+                # Add entry to system log
+                self.logger("Demultiplexing started for run " + self.runfolder, "demultiplex_success")
 
-            # Write progress/status to script log file
-            self.script_logfile.write("running bcl2fastq. command = " + command + "\n")
-            # Add entry to system log
-            self.logger("Demultiplexing started for run " + self.runfolder, "demultiplex_success")
-
-            # Run the bcl2fastq command to start demultiplexing. the script won't continue until this
-            # process finishes. Stderr and stdout streams are redirected to the log file by the command
+                # Run the bcl2fastq command to start demultiplexing. the script won't continue until this
+                # process finishes. Stderr and stdout streams are redirected to the log file by the command
+                
+                subprocess.call([command], shell=True)
+                # Call method to check the success of demultiplexing
+                self.check_demultiplexlog_file()
             
-            subprocess.call([command], shell=True)
-
             # Add runfolder name to self.processed_runfolders. Runfolder names in this list are appended
             # to the script log file at the end of the script cycle.
             self.processed_runfolders.append(self.runfolder)
-
-            # Call method to check the success of demultiplexing
-            self.check_demultiplexlog_file()
-
 
     def check_demultiplexlog_file(self):
         """Check demultiplexing completed successfully. Read the stderr and stdout from bcl2fastq in
