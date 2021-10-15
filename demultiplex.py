@@ -376,7 +376,7 @@ class ready2start_demultiplexing():
             # check if it's a TSO500 run
             if self.check_for_TSO500():
                 # if so log this and write a message into the bcl2fastq2.log so the next script can process without looking for the expected bcl2fastq success statement
-                self.logger("TSO500 run detected. Demultiplexing does not need to be performed on " + self.runfolder, "demultiplex_success")
+                self.logger("%s is a %s" % (self.runfolder, config.demultiplexing_log_file_TSO500_message) ," demultiplex_success") 
                 with open(demultiplex_log,'w') as bcl2fastq2_log:
                     bcl2fastq2_log.write(config.demultiplexing_log_file_TSO500_message)
             else:

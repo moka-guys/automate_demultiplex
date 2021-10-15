@@ -852,5 +852,5 @@ max_filesize_in_GB = "5GB"
 rsync_logfile = "rsync_output.txt"
 
 # ================ TSO500
-#TODO probably not required
-TSO500_fastq_list_string = "TSO500_run"
+tso500_success_tarball = "0"
+
