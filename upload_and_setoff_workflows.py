@@ -390,7 +390,8 @@ class RunfolderProcessor(object):
         Input: runfolder path
         Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
         """
-        cmd = "tar -cf %s %s; echo $?" % (self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolder_path)
+        #TODO -t argument? or maybe checksum before tar, unzip tar and checksum after? (will use a lot of space)
+        cmd = "tar -cf %s %s; echo $?" % (self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolderpath)
         (out, err) = self.execute_subprocess_command(cmd)
         # assess stderr , looking for expected success statement
         if self.perform_test(out, "tar_runfolder"):
@@ -496,12 +497,13 @@ class RunfolderProcessor(object):
         # check demultiplexing has been done using perform_test - returns true if file present
         if self.perform_test(demultiplex_file_path, "demultiplex_started"):
             with open(demultiplex_file_path, "r") as logfile:
-                # check if successful demuliplex statement in last line of log
-                if self.perform_test(logfile.readlines()[-1], "demultiplex_success"):
-                    self.loggers.script.info("Demultiplex completed succesfully.")
-                    return True
-                elif self.perform_test(logfile.readlines()[-1], "TSO500"):
+                # check if the 
+                if self.perform_test(logfile.readlines()[-1], "TSO500"):
                     self.loggers.script.info("TSO500 run detected.")
+                    return True
+                # check if successful demuliplex statement in last line of log
+                elif self.perform_test(logfile.readlines()[-1], "demultiplex_success"):
+                    self.loggers.script.info("Demultiplex completed succesfully.")
                     return True
                 else:
                     # write to logfile that demultplex was not successful
@@ -520,7 +522,7 @@ class RunfolderProcessor(object):
         """
         sample_list=[]
         samplesheet_path = os.path.join(config.samplesheets_dir,self.runfolder_obj.runfolder_name + "_SampleSheet.csv")
-        with open(self.samplesheet_path, 'r') as samplesheet_stream:
+        with open(samplesheet_path, 'r') as samplesheet_stream:
                 # read the file into a list and loop through the list in reverse (bottom to top).
                 # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
                 for line in reversed(samplesheet_stream.readlines()):
@@ -817,6 +819,7 @@ class RunfolderProcessor(object):
             None
         All samples to be processed were identified in find_fastqs() which also created a string of 
         filepaths for all fastqs that is required by the upload agent.
+        This function can upload fastqs or a tar'd runfolder (TSO500) - If fastq's are being uploaded upload to subfolder, else upload to root of project
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
@@ -825,7 +828,11 @@ class RunfolderProcessor(object):
             file_list (space delimited string of files) 
             stage name (string)
         """
-        
+        # test if fastqs are being uploaded - if so, set folder to the expected fastq location.
+        upload_folder = ""
+        if "fastq.gz" in self.fastq_string:
+            upload_folder = self.runfolder_obj.nexus_path
+
         # build the nexus upload command
         nexus_upload_command = (
             self.restart_ua_1
@@ -835,8 +842,8 @@ class RunfolderProcessor(object):
             + " --project "
             + self.runfolder_obj.nexus_project_name
             + "  --folder /"
-            + self.runfolder_obj.nexus_path
-            + " --do-not-compress --upload-threads 10"
+            + upload_folder
+            + " --do-not-compress --upload-threads 10 "
             + self.fastq_string
             + self.restart_ua_2 
         )

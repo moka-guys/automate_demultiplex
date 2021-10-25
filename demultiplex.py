@@ -218,7 +218,6 @@ class ready2start_demultiplexing():
         runfolder (str)
             The runfolder name
         """
-
         # Capture the runfolder and its path
         self.runfolder = str(runfolder)
         self.runfolderpath = self.runfolders + "/" + self.runfolder
@@ -344,6 +343,7 @@ class ready2start_demultiplexing():
                 # read the file into a list and loop through the list in reverse (bottom to top).
                 # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
                 for line in reversed(samplesheet_stream.readlines()):
+                    print line
                     if line.startswith("Sample_ID") or "[Data]" in line:
                         break
                     # skip empty lines (check first element of the line, after splitting on comma)
@@ -378,7 +378,7 @@ class ready2start_demultiplexing():
                 # if so log this and write a message into the bcl2fastq2.log so the next script can process without looking for the expected bcl2fastq success statement
                 self.logger("%s is a %s" % (self.runfolder, config.demultiplexing_log_file_TSO500_message) ," demultiplex_success") 
                 with open(demultiplex_log,'w') as bcl2fastq2_log:
-                    bcl2fastq2_log.write(config.demultiplexing_log_file_TSO500_message)
+                    bcl2fastq2_log.write("\n"+config.demultiplexing_log_file_TSO500_message)
             else:
                 # Call function to add the run to smartsheet, with status set to 'in progress' - only do this after integrity check passed otherwise smartsheet updated multiple times
                 self.smartsheet_demultiplex_in_progress()
