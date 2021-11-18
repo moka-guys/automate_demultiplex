@@ -336,7 +336,9 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
-                self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
+                # don't back up TSO500 runfolder again (uploaded as a tar)
+                if not TSO500_sample_list:
+                    self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
                 # return true to denote that a runfolder was processed
                 return True
@@ -390,16 +392,20 @@ class RunfolderProcessor(object):
         Input: runfolder path
         Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
         """
-        #TODO -t argument? or maybe checksum before tar, unzip tar and checksum after? (will use a lot of space)
-        cmd = "tar -cf %s %s; echo $?" % (self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolderpath)
+        # tar argument uses :
+		# W (which verifies the archive as it's made)
+		# P uses absolute paths (required for -W step)
+		# c (creates an archive) 
+		# f (specify the filename of the archive)
+        cmd = "tar -PWcf %s %s" % (self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolderpath)
         (out, err) = self.execute_subprocess_command(cmd)
         # assess stderr , looking for expected success statement
         if self.perform_test(out, "tar_runfolder"):
-            self.loggers.script.info("tar runfolder created at {}".format(self.runfolder_obj.runfolder_tarball_path))
+            self.loggers.script.info("tar runfolder created at {} without any errors".format(self.runfolder_obj.runfolder_tarball_path))
             return True
         # raise slack alert if success statement not present.
         else:
-            self.loggers.script.error("UA_fail 'runfolder tarball creation failed for {}'".format(self.runfolder_obj.runfolder_name))
+            self.loggers.script.error("UA_fail 'runfolder tarball creation failed for {}. tar verify output = {}'".format(self.runfolder_obj.runfolder_name,out))
 
 
     def perform_test(self, test_input, test):
@@ -439,7 +445,7 @@ class RunfolderProcessor(object):
             if config.agilent_connector_output not in test_input:
                 return False
         if test == "tar_runfolder":
-            if config.tso500_success_tarball == test_input:
+            if len(test_input) > 1:
                 return False
         return True
         
@@ -553,7 +559,7 @@ class RunfolderProcessor(object):
             novaseq_flag = ""
 
         # docker command for tool
-        cmd = "sudo docker run -v {}:/input_run \
+        cmd = "sudo docker run --rm -v {}:/input_run \
         broadinstitute/gatk:4.1.8.1 \
         ./gatk CollectIlluminaLaneMetrics \
         --RUN_DIRECTORY /input_run \
