@@ -503,12 +503,14 @@ class RunfolderProcessor(object):
         # check demultiplexing has been done using perform_test - returns true if file present
         if self.perform_test(demultiplex_file_path, "demultiplex_started"):
             with open(demultiplex_file_path, "r") as logfile:
-                # check if the 
-                if self.perform_test(logfile.readlines()[-1], "TSO500"):
+                # capture logfile into list (not doing this caused an issue with the if loop below)
+                logfile_list=logfile.readlines()
+                # check if it's a TSO500 run
+                if self.perform_test(logfile_list[-1], "TSO500"):
                     self.loggers.script.info("TSO500 run detected.")
                     return True
                 # check if successful demuliplex statement in last line of log
-                elif self.perform_test(logfile.readlines()[-1], "demultiplex_success"):
+                elif self.perform_test(logfile_list[-1], "demultiplex_success"):
                     self.loggers.script.info("Demultiplex completed succesfully.")
                     return True
                 else:
@@ -542,6 +544,9 @@ class RunfolderProcessor(object):
                         for pannum in config.tso500_panel_list:
                             if pannum in line:
                                 sample_list.append(line.split(",")[0])
+        # as it takes a long time before the upload create the file to stop further processing
+        if sample_list:
+            open(self.loggers.upload_agent.filepath, 'w').close()
         return sample_list
 
     def calculate_cluster_density(self, runfolder_path, runfolder_name):

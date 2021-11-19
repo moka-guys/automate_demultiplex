@@ -343,7 +343,6 @@ class ready2start_demultiplexing():
                 # read the file into a list and loop through the list in reverse (bottom to top).
                 # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
                 for line in reversed(samplesheet_stream.readlines()):
-                    print line
                     if line.startswith("Sample_ID") or "[Data]" in line:
                         break
                     # skip empty lines (check first element of the line, after splitting on comma)
@@ -359,11 +358,9 @@ class ready2start_demultiplexing():
 
     def run_demultiplexing(self):
         """Run bcl2fastq using runfolder as input. Create demultiplex log file in runfolder."""
-
         # Call function to test if bcl2fastq is installed and working as expected
         # if it fails an exception is raised.
         self.test_bcl2fastq()
-
         # before demultiplexing starts check the integrity of the runfolder against that on the sequencer.
         # If the checks pass the funcion will return true. if it fails errors are reported within the function
         if self.prepare_integrity_check():
