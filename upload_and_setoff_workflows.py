@@ -340,6 +340,7 @@ class RunfolderProcessor(object):
                 if not TSO500_sample_list:
                     self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
+                #TODO remove the TSO500 tar?
                 # return true to denote that a runfolder was processed
                 return True
         else:
@@ -397,9 +398,11 @@ class RunfolderProcessor(object):
 		# P uses absolute paths (required for -W step)
 		# c (creates an archive) 
 		# f (specify the filename of the archive)
-        cmd = "tar -PWcf %s %s" % (self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolderpath)
+        # redirect stderr to stdout so we can test for errors
+        cmd = "tar -PWcf %s %s 2>&1" % (self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolderpath)
         (out, err) = self.execute_subprocess_command(cmd)
-        # assess stderr , looking for expected success statement
+
+        # assess stdout+stderr - if successful tar does not return any output
         if self.perform_test(out, "tar_runfolder"):
             self.loggers.script.info("tar runfolder created at {} without any errors".format(self.runfolder_obj.runfolder_tarball_path))
             return True
@@ -444,6 +447,7 @@ class RunfolderProcessor(object):
         if test == "agilent_connector":
             if config.agilent_connector_output not in test_input:
                 return False
+        # if tar completes expect no stdout or stderr.
         if test == "tar_runfolder":
             if len(test_input) > 1:
                 return False
