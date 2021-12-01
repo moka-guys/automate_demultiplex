@@ -1,5 +1,10 @@
 """
-Script for checking sample sheet naming and contents. Script is run in 2 scenarios:
+Script for checking sample sheet naming and contents.
+Can be run as standalone script.
+Also called by demultiplex.py (checks all runs not yet demultiplexed).
+Also used in samplesheet upload webapp.
+
+Script is run in 2 scenarios:
 
 1) Early warning as soon as the samplesheet is uploaded (to be run in a webapp which the scientists will use to upload
     the samplesheet)
@@ -23,12 +28,11 @@ Script for checking sample sheet naming and contents. Script is run in 2 scenari
 import argparse
 import os
 import re
-import pandas as pd
 from collections import OrderedDict
 import tempfile
-import git
 import shutil
 import logging
+import automate_demultiplex_config as config
 
 def arg_parse():
     """
@@ -38,272 +42,277 @@ def arg_parse():
     created argument parser.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--runfolder', type=str, required=True, dest='runfolder',
-                        help="directory containing runfolders")
-    parser.add_argument('-s', '--samplesheet', type=str, required=True, dest = 'samplesheet',
-                        help="samplesheet")
+    parser.add_argument('-s', '--samplesheet', type=str, required=True, dest = 'samplesheet', help="samplesheet")
+    parser.add_argument('-t', '--type', type=str, required=True, dest = 'type',
+                        help="script mode type (runfolder, or ss_upload")
     args = parser.parse_args()
     return args
 
-
-def run_checks(samplesheet_path):
+class ValidSamplesheet:
     """
-    Runs the checks
+    Runs the checks. Called by webapp for uploaded samplesheets (uses name of file being uploaded), and called for runs
+    not yet demultiplexed (uses path of expected samplesheet from demultiplex script)
     """
-    # if samplesheet present, record this and continue with other checks
-    if check_uploaded(samplesheet_path):
-        print("Samplesheet successfully uploaded\n")
-        check_naming(samplesheet_path)
-        if check_not_empty(samplesheet_path):
-            check_header(samplesheet_path)
-            check_reads(samplesheet_path)
-            check_settings(samplesheet_path)
-            check_data(samplesheet_path)
-    else:
-        print("ERROR: Samplesheet was not uploaded\n")
+    def __init__(self, samplesheet_path):
+        self.samplesheet_path = samplesheet_path
+        self.results = OrderedDict()
+        self.sequencer_ids = ["NB551068", "NB552085", "M02353", "M02631", "A01229"]
 
-def check_uploaded(samplesheet_path):
-    """
-    Check samplesheet for run is present. Can be run within webapp.
-    :return:
-    """
-    if os.path.isfile(samplesheet_path):
-        return True
+        # Split samplename on "_" delimiter
+        self.samplesheet_elements = self.samplesheet_path.split("/")[-1].split("_")
+        # samplesheet name flowcell ID element expected string patterns. pattern 1 is 9 zero's followed by 5
+        # alphanumeric characters. Pattern 2 is 10 alphanumeric characters
+        self.flowcell_id_patterns = [re.compile("^([0]){9}-([A-Z0-9]){5}$"), re.compile("^([A-Z0-9]){10}$")]
+        # list of expected headers from '[Data]' section of samplesheet
+        self.expected_data_headers =["Sample_ID", "Sample_Name", "index"]
+        # to be populated with list of sample IDs from samplesheet
+        self.sample_id_list = []
+        # to be populated with list of sample names from samplesheet
+        self.sample_name_list = []
+        # to be populated with headers from data section
+        self.data_headers = []
+        self.runtype_list = ["WES", "NGS", "ADX", "ONC", "SNP", "PGT", "TSO"]
+        self.valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+        # to append any sample names or IDs to with invalid characters/runtypes/pannos
+        self.invalid_characters = ""
+        self.invalid_runtypes = ""
+        self.invalid_pan_nos = ""
 
-def check_naming(samplesheet_path):
-    """
-    Check the saved sample sheet is named correctly so that metadata can be extracted by the pipeline
-    Element 1: 6 digits
-    Element 2: Sequencer name that matches list of allowed names
-    Element 3: 4 digits
-    Element 4: All alphanumeric, or numbers followed by a dash and then alphanumeric. (no lower case)
-    Element 5: "SampleSheet.csv"
-    """
-    error = ""
-    sequencer_ids = ["NB551068", "NB552085", "M02353", "M02631", "A01229"]
-    # pattern 1 is 9 zero's followed by - followed by 5 alphanumeric characters
-    # pattern 2 is 10 alphanumeric characters
-    flowcell_ids = ["^([0]){9}-([A-Z0-9]){5}$", "^([A-Z0-9]){10}$"]
-    # Split samplename on "_" delimiter
-    samplesheet_elements = samplesheet_path.split("/")[-1].split("_")
+    def run_checks(self):
+        """
+        Calls the checks for each type of use of the script (runfolders in demultiplex script, and samplesheet upload
+        app.
+        If check is for demultiplex script, check the samplesheet is present then continue with rest of checks. If
+        check is for samplesheet upload, no need to check whether ss present. If samplesheet contains expected number
+        of elements, run rest of samplsheet name checks (performs check for each element of samplesheet name). If
+        samplesheet is present and isn't empty, perform samplesheet contents checks
+        """
+        if self.check_ss_present():
+            if self.check_ss_elements():
+                self.check_first_ss_element()
+                self.check_second_ss_element()
+                self.check_third_ss_element()
+                self.check_fourth_ss_element()
+                self.check_fifth_ss_element()
+            if self.check_ss_not_empty():
+                self.check_unexpected_contents()
+        return self.results
 
-    # if samplesheet name contains expected number of elements, carry out rest of checks
-    if not len(samplesheet_elements)==4:
-        # checking element 1
-        if not samplesheet_elements[0].isnumeric() and not len(samplesheet_elements[0])==6:
-            error += "First element of samplesheet incorrect. "
+    def check_ss_present(self):
+        """
+        Checks for upload error (i.e. samplesheet for run not present). Appends info to dict. If samplesheet present
+        returns true, else returns false.
+        """
+        if os.path.isfile(self.samplesheet_path):
+            self.results["ss_present"] = True, "Samplesheet present. "
+            return True
+        else:
+            self.results["ss_present"] = False, "SAMPLESHEET WITH SUPPLIED NAME NOT PRESENT. "
+            return False
 
-        # checking sequence identifier
-        if samplesheet_elements[1] not in sequencer_ids:
-            error += "Sequencer identifier incorrect. "
+    def check_ss_elements(self):
+        """
+        If the samplesheet path exists, check that samplesheet name contains the expected number of elements. Return
+        true if yes, return false if not, and append info to dict.
+        """
+        if len(self.samplesheet_elements) == 5:
+            self.results["ss_elements"] = True, "Samplesheet name contains expected number of elements. "
+            return True
+        else:
+            self.results["ss_elements"] = False, "SAMPLESHEET NAME DOES NOT CONTAIN EXPECTED NUMBER OF ELEMENTS. "
+            return False
 
-        # checking autoincrementing number
-        if not samplesheet_elements[2].isnumeric() and not len(samplesheet_elements[2])==4:
-            error += "Autoincrementing number not as expected. "
+    def check_first_ss_element(self):
+        """
+        Checking element 1 of samplesheet (expected 6 digits present).
+        """
+        if self.samplesheet_elements[0].isdigit() and len(self.samplesheet_elements[0]) == 6:
+            self.results["naming_element_1"] = True, "First element (date) of samplesheet name as expected. "
+        else:
+            self.results["naming_element_1"] = False, "FIRST ELEMENT (date) OF SAMPLESHEET NAME NOT AS EXPECTED. "
 
-        # checking flowcell ID
-        pattern_1 = re.compile(flowcell_ids[0])
-        pattern_2 = re.compile(flowcell_ids[1])
-        if not (pattern_1.match(samplesheet_elements[3]) or pattern_2.match(samplesheet_elements[3])):
-            error += "Flowcell ID not as expected. "
+    def check_second_ss_element(self):
+        """
+        Checking element 2 of samplesheet (expected sequencer name matches list of allowed names in self.sequencer_ids)
+        """
+        if self.samplesheet_elements[1] in self.sequencer_ids:
+            self.results["naming_element_2"] = True, "Second element (sequencer identifier) of samplesheet name as " \
+                                                     "expected. "
+        else:
+            self.results["naming_element_2"] = False, "SECOND ELEMENT (sequencer identifier) OF SAMPLESHEET NAME NOT " \
+                                                      "AS EXPECTED. "
 
-        # Checking 5th element
-        if not samplesheet_elements[4] == "SampleSheet.csv":
-            error += "End of samplesheet does not match 'SampleSheet.csv'. "
-    else:
-        error = "Samplesheet name does not contain the expected number of elements."
+    def check_third_ss_element(self):
+        """
+        Checking element 3 of sampleseheet (autoincrementing number - expected 4 digits)
+        """
+        if self.samplesheet_elements[2].isdigit() and len(self.samplesheet_elements[2]) == 4:
+            self.results["naming_element_3"] = True, "Third element (autoincrementing number) of samplesheet name as " \
+                                                     "expected. "
+        else:
+            self.results["naming_element_3"] = False, "THIRD ELEMENT (autoincrementing number) OF SAMPLESHEET NAME " \
+                                                      "NOT AS EXPECTED. "
 
-    # create message depending on results of the above checks:
-    if not error:
-        print("Samplesheet named according to naming conventions\n")
-    else:
-        print("ERROR - SAMPLESHEET NOT NAMED ACCORDING TO NAMING CONVENTIONS: {}\n".format(error))
+    def check_fourth_ss_element(self):
+        """
+        Checking element 4 of sampleseheet (flowcell ID - expected all alphanumeric, or numbers followed by dash
+        then alphanumeric (no lower case))
+        """
+        if any(re.match(pattern, self.samplesheet_elements[3]) for pattern in self.flowcell_id_patterns):
+            self.results["naming_element_4"] = True, "Fourth element (flowcell ID) of samplesheet name as expected. "
+        else:
+            self.results["naming_element_4"] = False, "FOURTH ELEMENT (flowcell ID) OF SAMPLESHEET NAME NOT AS " \
+                                                      "EXPECTED. "
 
-def check_not_empty(samplesheet_path):
-    """
-    Check the samplesheet is not empty. Can be run within webapp.
-    :return:
-    """
-    # check file is larger than 10kbytes
-    if os.stat(samplesheet_path).st_size > 10:
-        print("Samplesheet contains data as expected\n")
-        return True
-    else:
-        print("ERROR: Samplesheet is empty\n")
+    def check_fifth_ss_element(self):
+        """
+        Checking element 5 of sampleseheet (matches string "Samplesheet.csv")
+        """
+        if self.samplesheet_elements[4] == "SampleSheet.csv":
+            self.results["naming_element_5"] = True, "Fifth element ('SampleSheet.csv') of samplesheet name as " \
+                                                     "expected. "
+        else:
+            self.results["naming_element_5"] = False, "FIFTH ELEMENT ('SampleSheet.csv') OF SAMPLESHEET NAME NOT AS " \
+                                                      "EXPECTED. "
 
-def extract_column(samplesheet_path):
-    # extract elements from first column in file to list
-    with open(samplesheet_path) as infile:
-        samplesheet_columns = []
-        for line in infile:
-            samplesheet_columns.append((line.split(",")[0]))
-    return samplesheet_columns
+    def check_ss_not_empty(self):
+        """
+        Check if samplesheet is empty. Can be run within webapp.
+        :return:
+        """
+        # check file is larger than 10kbytes
+        if os.stat(self.samplesheet_path).st_size > 10:
+            self.results["ss_not_empty"] = True, "Samplesheet not empty. "
+            return True
+        else:
+            self.results["ss_not_empty"] = False, "SAMPLESHEET EMPTY (<10 bytes). "
+            return False
 
-def check_header(samplesheet_path):
-    """
-    Checks the header section of the samplesheet is present as expected.
-    """
-    expected_header_rows = ["[Header]", "IEMFileVersion", "Investigator Name", "Experiment Name", "Date",
-                            "Workflow", "Application", "Assay", "Description", "Chemistry"]
-    samplesheet_column = extract_column(samplesheet_path)
-
-    if all(row_element in samplesheet_column for row_element in expected_header_rows):
-        print("Samplesheet section '[Header]' present as expected, containing expected sections\n")
-    else:
-        print("UNEXPECTED SAMPLESHEET CONTENTS: '[Header]' section not as expected - expected rows missing\n")
-
-def check_reads(samplesheet_path):
-    """
-    Checks the reads section of the samplesheet is present as expected.
-    """
-    samplesheet_column = extract_column(samplesheet_path)
-
-    # get index of reads element in list, and use this to access the two elements after (these should be numeric
-    # reads values)
-    if "[Reads]" in samplesheet_column:
-        index = samplesheet_column.index("[Reads]")
-        sub_list = [samplesheet_column[index + 1], samplesheet_column[index + 2]]
-        # this regex specifies a number between 1-999
-        numeric_pattern = re.compile("^([0-9]){1,3}$")
-        # check if reads is a row, and the two rows after match the numeric pattern specified
-        if ("[Reads]" in samplesheet_column, numeric_pattern.match(sub_list[1]) == True,
-            numeric_pattern.match(sub_list[1]) == True):
-            print("Samplesheet section '[Reads]' present as expected, and reads lengths within expected range\n")
-    else:
-        print("UNEXPECTED SAMPLESHEET CONTENTS: '[Reads]' section not as expected - expected rows missing\n")
-
-def check_settings(samplesheet_path):
-    """
-    Checks the settings section of the samplesheet is present as expected.
-    """
-    samplesheet_column = extract_column(samplesheet_path)
-
-    if "[Settings]" in samplesheet_column:
-        print("Samplesheet section '[Settings]' present as expected\n")
-    else:
-        print("UNEXPECTED SAMPLESHEET CONTENTS: '[Settings]' section not as expected - expected rows missing\n")
-
-def check_data(samplesheet_path):
-    """
-    Checks data section of samplesheet - data headers are as expected, samples named using allowed characters.
-    Check sample names contain allowed pan numbers from pan number list.
-    """
-    expected_data_headers =["Sample_ID", "Sample_Name", "I7_Index_ID", "index", "I5_Index_ID", "index2"]
-    sample_id_list = []
-    sample_name_list = []
-
-    # reads samplesheet in reverse order and collects sample ID and sample name
-    with open(samplesheet_path, 'r') as samplesheet_stream:
-        for line in reversed(samplesheet_stream.readlines()):
-            # If line contains table headers, stop looping through the file
-            if any(header in line for header in expected_data_headers):
-                # check [Data] section has expected headers
-                columns = line.split(",")
-                if all(header in columns for header in expected_data_headers):
-                    print("Samplesheet section '[Data]' contains expected column headers\n")
+    def get_data_section(self):
+        """
+        Parse data section of samplesheet from file
+        """
+        # reads samplesheet in reverse order and collects sample ID and sample name
+        with open(self.samplesheet_path, 'r') as samplesheet_stream:
+            for line in reversed(samplesheet_stream.readlines()):
+                # If line contains table headers, stop looping through the file
+                if any(header in line for header in self.expected_data_headers):
+                    # check [Data] section has expected headers
+                    self.data_headers = line.split(",")
+                    self.check_data_headers()
+                    break
+                # skip empty lines (check first element of the line, after splitting on comma)
+                elif len(line.split(",")[0]) < 2:
+                    pass
+                # If its a line containing a sample:
                 else:
-                    print("UNEXPECTED SAMPLESHEET CONTENTS: '[Data]' section not as expected - headers "
-                          "missing\n".format(columns))
-                break
+                    # Split line by columns
+                    sample_details = line.split(",")
+                    # Remove leading & trailing whitespace from sampleID and sampleName
+                    # (bcl2fastq tolerates leading & trailing whitespace)
+                    sample_id, sample_name = sample_details[0].strip(" "), sample_details[1].strip(" ")
+                    # Append sample id and sample name to sampleStrings for testing
+                    self.sample_id_list.append(sample_id)
+                    self.sample_name_list.append(sample_name)
 
-            # skip empty lines (check first element of the line, after splitting on comma)
-            elif len(line.split(",")[0]) < 2:
-                pass
-            # If its a line containing a sample:
-            else:
-                # Split line by columns
-                columns = line.split(",")
-                # Remove leading & trailing whitespace from sampleID and sampleName
-                # (bcl2fastq tolerates leading & trailing whitespace)
-                sample_id, sample_name = columns[0].strip(" "), columns[1].strip(" ")
-                # Append sample id and sample name to sampleStrings for testing
-                sample_id_list.append(sample_id)
-                sample_name_list.append(sample_name)
-
-        # run more in detail checks on each Sample_ID and Sample_Name and return results
-        invalid_runtypes, invalid_pan_nos, invalid_characters = check_sample_naming(sample_name_list, sample_id_list)
-
-
-        if invalid_characters:
-            print("ERROR - SAMPLES CONTAIN INVALID CHARACTERS: {}\n".format(invalid_characters))
+    def check_data_headers(self):
+        """
+        Checks [Data] section has expected headers, against self.expected_data_headers list.
+        """
+        if not all(header in self.data_headers for header in self.expected_data_headers):
+            self.results["data_headers_present"] = False, "HEADERS MISSING FROM '[Data]' SECTION. "
         else:
-            print("Samples within samplesheet named using valid characters\n")
+            self.results["data_headers_present"] = True, "'[Data]' section headers as expected. "
 
-        if invalid_pan_nos:
-            print("ERROR - SAMPLES CONTAIN INVALID PAN NOS: {}\n".format(invalid_pan_nos))
+    def check_unexpected_contents(self):
+        """
+        Extracts data section from samplesheet, and runs checks (check_data_headers, check_samplenames_match,
+        check_samplenames_characters, check_samplenames_pannos, check_samplenames_runtypes). Checks are run on both
+        Sample_Name and Sample_ID because Sample_Name is used by bcl2fastq but Sample_ID is used if Sample_Name is not
+        present.
+        """
+        self.get_data_section()
+        # run checks to see if samplename and sampleID match
+        self.check_samplenames_match()
+
+        for list in (self.sample_name_list, self.sample_id_list):
+            if list == self.sample_name_list:
+                type = "Sample_Name"
+            elif list == self.sample_id_list:
+                type = "Sample_ID"
+
+            # run more in detail checks on each Sample_ID and Sample_Name
+            self.check_samplenames_characters(list, type)
+            self.check_samplenames_runtypes(list, type)
+            self.check_samplenames_pannos(list, type)
+
+        if self.invalid_characters:
+            self.results["valid_characters"] = False, "SAMPLES CONTAIN INVALID CHARACTERS: " \
+                                                      "{} ".format(self.invalid_characters)
         else:
-            print("Samples within samplesheet named using valid pan numbers\n")
+            self.results["valid_characters"] = True, "Sample names and Sample IDs all contain valid characters. "
 
-        if invalid_runtypes:
-            print("ERROR - SAMPLES CONTAIN INVALID RUNTYPES: {}\n".format(invalid_pan_nos))
+        if self.invalid_pan_nos:
+            self.results["valid_pan_nos"] = False, "SAMPLES CONTAIN INVALID PAN NUMBERS: " \
+                                                   "{} ".format(self.invalid_pan_nos)
         else:
-            print("Samples within samplesheet named using valid run types\n")
+            self.results["valid_pan_nos"] = True, "Sample names and Sample IDs all contain valid pan nos. "
 
+        if self.invalid_runtypes:
+            self.results["valid_runtypes"] = False, "SAMPLES CONTAIN INVALID RUNTYPES: " \
+                                                    "{} ".format(self.invalid_runtypes)
+        else:
+            self.results["valid_runtypes"] = True, "Sample names and Sample IDs all contain valid runtypes. "
 
-def check_sample_naming(sample_name_list, sample_id_list):
-    """
-    Takes sample name as input and performs checks
-    """
-    config = import_config(github_repo="https://github.com/moka-guys/automate_demultiplex",
-                                   github_file="automate_demultiplex_config.py")
-    runtype_list = ["WES", "NGS", "ADX", "ONC", "SNP", "ONEPGT"]
-    valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+    def check_samplenames_match(self):
+        """
+        Check whether the names match between Sample_ID and Sample_Name in data section of samplesheet
+        """
+        if self.sample_id_list != self.sample_name_list:
+            differences = "".join(map(str, (list(set(self.sample_id_list) - set(self.sample_name_list)))))
+            self.results["ss_names_match"] = \
+                False, "SAMPLES INCORRECTLY NAMED: One or more sample names and sample IDs do not match: Sample ID " \
+                       "{} doesn't match corresponding sample name. ".format(differences)
+        else:
+            self.results["ss_names_match"] = True, "Sample names and Sample IDs all match. "
 
-    invalid_characters = []
-    invalid_runtypes = []
-    invalid_pan_nos = []
-
-    # Check whether the names match between Sample_ID and Sample_Name
-    if sample_name_list != sample_id_list:
-        print("ERROR - SAMPLES INCORRECTLY NAMED: One or more sample names and sample IDs do not match\n")
-    else:
-        print("Sample ID and name match for all samples, as expected\n")
-
-    # loop through each list in turn and perform further checks
-    for list in (sample_name_list, sample_id_list):
-        if list == sample_name_list:
-            type = "Sample_Name"
-        elif list == sample_id_list:
-            type = "Sample_ID"
-
+    def check_samplenames_characters(self, list, type):
+        """
+        Check sample names contain allowed characters from self.valid_chars
+        """
         # loop through the characters of each sample string to check whether they use valid characters
         for sample in list:
             for char in sample:
-                if not char in valid_chars:
-                    invalid_characters.append("{}: {}".format(type, sample))
+                if not char in self.valid_chars:
+                    self.invalid_characters += "{}: {}. ".format(type, sample)
 
-        # extract pan no (last element) and runtype (first element), strip numbers from runtype string, check
-        # against config.panel list and runtype_list
-        pan_no = sample.split("_")[-1]
-        # strip numbers from runtype string
-        runtype = sample.split("_")[0]
-        # if runtype contains digits, split to remove digits and anything after
-        if any(chr.isdigit() for chr in runtype):
-            runtype = re.split('(\d+)', runtype)[0]
+    def check_samplenames_pannos(self, list, type):
+        """
+        Check sample names contain allowed pan numbers from config.panel_list number list.
+        """
+        for sample in list:
+            # extract pan no (last element), check against config.panel list
+            pan_no = re.sub(r'.*Pan', 'Pan', sample).split("_")[0]
+            if pan_no not in config.panel_list:
+                self.invalid_pan_nos += "{} ({}: {}). ".format(pan_no, type, sample)
 
-        if runtype not in runtype_list:
-            invalid_runtypes.append("{}: {}".format(type, sample))
-        if pan_no not in config.panel_list:
-            invalid_pan_nos.append("{} - {}: {}".format(type, sample, pan_no))
+    def check_samplenames_runtypes(self, list, type):
+        """
+        Check sample names contain allowed runtypes from self.runtype_list
+        """
+        for sample in list:
+            # extract runtype (first element), strip numbers from string, check against self.runtype_list
+            runtype = sample.split("_")[0]
+            # if runtype contains digits, split to remove digits and anything after
+            if any(chr.isdigit() for chr in runtype):
+                runtype = re.split('(\d+)', runtype)[0]
+            if runtype not in self.runtype_list:
+                self.invalid_runtypes += "{}: {}. ".format(type, sample)
 
-    return invalid_runtypes, invalid_pan_nos, invalid_characters
 
-
-def import_config(github_repo, github_file):
-    """
-    Clones the config file from automate_demultiplex and imports the file as a module. Makes the panel list accessible
-        :param github_repo:     (str) Https link to github repository
-        :param github_file:     (str) Name of file of interest
-    Creates a temporary dir, clones into that dir, copies the desired file from that dir, and removes the temporary
-    dir.
-    """
-    tempdirpath = tempfile.mkdtemp()
-    git.Repo.clone_from(github_repo, tempdirpath, branch='Production', depth=1)
-    shutil.move(os.path.join(tempdirpath, github_file), os.path.join(os.getcwd(), github_file))
-    shutil.rmtree(tempdirpath)
-    import automate_demultiplex_config as config
-    return config
-
+def run_ss_checks(samplesheet_path):
+    SampleSheet = ValidSamplesheet(samplesheet_path)
+    return SampleSheet.run_checks()
 
 def main():
     # get arguments
@@ -311,10 +320,9 @@ def main():
 
     # RUN SAMPLESHEET CHECKS
     samplesheet_path = args.samplesheet
-    run_checks(samplesheet_path)
-
-    # RUN RUNFOLDER CHECKS
-
+    SampleSheet = ValidSamplesheet(samplesheet_path)
+    ss_check_results = SampleSheet.run_checks()
+    print(ss_check_results)
 
 if __name__ == '__main__':
     main()
