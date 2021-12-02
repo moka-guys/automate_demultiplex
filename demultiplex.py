@@ -244,16 +244,21 @@ class ready2start_demultiplexing():
             self.samplesheet_path = os.path.join(config.samplesheets_dir, self.samplesheet)
             # run samplesheet checks (uses try to ensure that should an error occur this doesn't affect the other
             # script functionality
-            ss_verification_results = samplesheet_verifier.run_demultiplex_ss_checks(self.samplesheet_path)
+            ss_verification_results = samplesheet_verifier.run_ss_checks(self.samplesheet_path)
             ss_fail = ""
             ss_pass = ""
+            print(self.samplesheet_path)
+            # If the value is True (i.e. check has passed), append to pass list, else append to fail list
             for key in ss_verification_results:
                 if ss_verification_results[key][0]:
-                    ss_fail += ss_verification_results[key][1]
+                    ss_pass += "PASS - " + ss_verification_results[key][1]
                 else:
-                    ss_pass += ss_verification_results[key][1]
-            self.logger("SAMPLESHEET ERROR: " + ss_fail, "samplesheet_warning")
-            self.logger("PASS SAMPLESHEET CHECK: " + ss_pass, "demultiplex_success")
+                    ss_fail += "ERROR - " + ss_verification_results[key][1]
+            if ss_pass:
+                self.logger("PASS SAMPLESHEET CHECKS for {}: {}".format(self.samplesheet, ss_pass),
+                            "demultiplex_success")
+            if ss_fail:
+                self.logger("SAMPLESHEET ERROR for {}: {}".format(self.samplesheet, ss_fail), "samplesheet_warning")
             self.has_run_finished()
 
     def has_run_finished(self):

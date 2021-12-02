@@ -63,7 +63,7 @@ class ValidSamplesheet:
         # samplesheet name flowcell ID element expected string patterns. pattern 1 is 9 zero's followed by 5
         # alphanumeric characters. Pattern 2 is 10 alphanumeric characters
         self.flowcell_id_patterns = [re.compile("^([0]){9}-([A-Z0-9]){5}$"), re.compile("^([A-Z0-9]){10}$")]
-        # list of expected headers from '[Data]' section of samplesheet
+        # list of minimum required headers from [Data] section of samplesheet
         self.expected_data_headers =["Sample_ID", "Sample_Name", "index"]
         # to be populated with list of sample IDs from samplesheet
         self.sample_id_list = []
@@ -71,7 +71,7 @@ class ValidSamplesheet:
         self.sample_name_list = []
         # to be populated with headers from data section
         self.data_headers = []
-        self.runtype_list = ["WES", "NGS", "ADX", "ONC", "SNP", "PGT", "TSO"]
+        self.runtype_list = ["NGS", "ADX", "ONC", "SNP", "PGT", "TSO"]
         self.valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
         # to append any sample names or IDs to with invalid characters/runtypes/pannos
         self.invalid_characters = ""
@@ -169,10 +169,10 @@ class ValidSamplesheet:
         Checking element 5 of sampleseheet (matches string "Samplesheet.csv")
         """
         if self.samplesheet_elements[4] == "SampleSheet.csv":
-            self.results["naming_element_5"] = True, "Fifth element ('SampleSheet.csv') of samplesheet name as " \
+            self.results["naming_element_5"] = True, "Fifth element (SampleSheet.csv) of samplesheet name as " \
                                                      "expected. "
         else:
-            self.results["naming_element_5"] = False, "FIFTH ELEMENT ('SampleSheet.csv') OF SAMPLESHEET NAME NOT AS " \
+            self.results["naming_element_5"] = False, "FIFTH ELEMENT (SampleSheet.csv) OF SAMPLESHEET NAME NOT AS " \
                                                       "EXPECTED. "
 
     def check_ss_not_empty(self):
@@ -220,9 +220,9 @@ class ValidSamplesheet:
         Checks [Data] section has expected headers, against self.expected_data_headers list.
         """
         if not all(header in self.data_headers for header in self.expected_data_headers):
-            self.results["data_headers_present"] = False, "HEADERS MISSING FROM '[Data]' SECTION. "
+            self.results["data_headers_present"] = False, "HEADERS MISSING FROM [Data] SECTION. "
         else:
-            self.results["data_headers_present"] = True, "'[Data]' section headers as expected. "
+            self.results["data_headers_present"] = True, "[Data] section headers as expected. "
 
     def check_unexpected_contents(self):
         """
@@ -235,7 +235,7 @@ class ValidSamplesheet:
         # run checks to see if samplename and sampleID match
         self.check_samplenames_match()
 
-        for list in (self.sample_name_list, self.sample_id_list):
+        for list in (self.sample_id_list, self.sample_name_list):
             if list == self.sample_name_list:
                 type = "Sample_Name"
             elif list == self.sample_id_list:
@@ -269,10 +269,10 @@ class ValidSamplesheet:
         Check whether the names match between Sample_ID and Sample_Name in data section of samplesheet
         """
         if self.sample_id_list != self.sample_name_list:
-            differences = "".join(map(str, (list(set(self.sample_id_list) - set(self.sample_name_list)))))
+            differences = ", ".join(map(str, (list(set(self.sample_id_list) - set(self.sample_name_list)))))
             self.results["ss_names_match"] = \
                 False, "SAMPLES INCORRECTLY NAMED: One or more sample names and sample IDs do not match: Sample ID " \
-                       "{} doesn't match corresponding sample name. ".format(differences)
+                       "{} does not match corresponding sample name. ".format(differences)
         else:
             self.results["ss_names_match"] = True, "Sample names and Sample IDs all match. "
 
@@ -311,8 +311,8 @@ class ValidSamplesheet:
 
 
 def run_ss_checks(samplesheet_path):
-    SampleSheet = ValidSamplesheet(samplesheet_path)
-    return SampleSheet.run_checks()
+    sample_sheet = ValidSamplesheet(samplesheet_path)
+    return sample_sheet.run_checks()
 
 def main():
     # get arguments
@@ -320,8 +320,8 @@ def main():
 
     # RUN SAMPLESHEET CHECKS
     samplesheet_path = args.samplesheet
-    SampleSheet = ValidSamplesheet(samplesheet_path)
-    ss_check_results = SampleSheet.run_checks()
+    samplesheet = ValidSamplesheet(samplesheet_path)
+    ss_check_results = samplesheet.run_checks()
     print(ss_check_results)
 
 if __name__ == '__main__':
