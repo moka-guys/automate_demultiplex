@@ -247,7 +247,6 @@ class ready2start_demultiplexing():
             ss_verification_results = samplesheet_verifier.run_ss_checks(self.samplesheet_path)
             ss_fail = ""
             ss_pass = ""
-            print(self.samplesheet_path)
             # If the value is True (i.e. check has passed), append to pass list, else append to fail list
             for key in ss_verification_results:
                 if ss_verification_results[key][0]:
