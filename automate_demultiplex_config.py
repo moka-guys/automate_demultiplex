@@ -41,7 +41,7 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
-demultiplex_test_folder = ["999999_A01229_0010_AHY5TWDRXX_demux_integrity","999999_M02353_0496_000000000-D8M36_demux_nointegrity"]
+demultiplex_test_folder = ["999999_M02353_0496_000000000-D8M36_demux_nointegrity","999999_A01229_0010_AHY5TWDRXX_demux_integrity","999999_A01229_0038_AH5MG7DRXY_TSO500"]
 
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
@@ -223,7 +223,7 @@ mokaamp_fastq_R2_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
 mokaamp_bwa_rg_sample = " -istage-FPzGj780jy1g3p1F4F8z4J7V.read_group_sample="
 mokaamp_mokapicard_bed_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
 mokaamp_mokapicard_capturetype_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
-mokaamp_ampliconfilter_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.BEDPE="
+mokaamp_ampliconfilter_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.PE_BED="
 mokaamp_chanjo_cov_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
 mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
 mokaamp_vardict_bed_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.bedfile="
@@ -351,7 +351,8 @@ panel_list = [
 	"Pan4009", # SNP Genotyping
 	"Pan4396", # ArcherDx
 	"Pan4579", # VCP2 somatic M1.1
-	"Pan4574" # VCP2 somatic M1.2
+	"Pan4574", # VCP2 somatic M1.2
+	"Pan4709" # TSO500
 ]
 
 
@@ -366,6 +367,8 @@ archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4573","Pan4574"]
+tso500_panel_list = ["Pan4709"]
+
 
 default_panel_properties = {
 	"UMI": False,
@@ -404,6 +407,7 @@ default_panel_properties = {
 	"congenica_project": None,
 	"peddy": False,
 	"archerdx": False,
+	"TSO500": False,
 }
 
 # override default panel settings
@@ -755,6 +759,9 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4578data.bed",
 		"hsmetrics_bedfile": "Pan4310data.bed",
 		"clinical_coverage_depth" : 200,
+	},
+	"Pan4709" : { # TSO500
+		"TSO500": True
 	}
 }
 
@@ -828,6 +835,7 @@ novaseq_id = "A01229"
 
 # ================ demultiplexing
 demultiplex_success_match = r".*Processing completed with 0 errors and 0 warnings.$"
+demultiplexing_log_file_TSO500_message = "TSO500 run. Does not need demultiplexing locally"
 # list of sequencers which require md5 checksums from integrity check to be assessed
 sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 bcl2fastq_stats_filename = "Stats.json"
@@ -842,3 +850,7 @@ else:
 max_filesize_in_bytes = 5368709120 # 5GB (max size is 10GB per pair of fastq)
 max_filesize_in_GB = "5GB"
 rsync_logfile = "rsync_output.txt"
+
+# ================ TSO500
+tso500_success_tarball = "0"
+
