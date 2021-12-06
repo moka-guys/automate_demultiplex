@@ -336,9 +336,8 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
-                # don't back up TSO500 runfolder again (uploaded as a tar)
-                if not TSO500_sample_list:
-                    self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
+                
+                self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
                 #TODO remove the TSO500 tar?
                 # return true to denote that a runfolder was processed
