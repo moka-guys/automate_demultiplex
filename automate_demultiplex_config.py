@@ -171,7 +171,7 @@ coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1Yk
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
 multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G54z260028qBZ90b3kpyVgBq" 
 upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
-TSO500_output_parser_coverage_commands = " -imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s"
+TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
 
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.4.0"

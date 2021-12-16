@@ -99,7 +99,9 @@ class RunfolderObject(object):
         self.nexus_path = ""
         self.nexus_project_id = ""
         self.runfolder_tarball_path = "%s.tar" % self.runfolderpath
+        self.runfolder_tarball_name = "%s.tar" % self.runfolder_name
         self.runfolder_samplesheet_path = os.path.join(config.samplesheets_dir,self.runfolder_name + "_SampleSheet.csv")
+        self.runfolder_samplesheet_name = self.runfolder_name + "_SampleSheet.csv"
 
 
 class RunfolderProcessor(object):
@@ -153,7 +155,7 @@ class RunfolderProcessor(object):
             "jobid=$(dx run " + config.app_project + config.tso500_app + " -y --name "
         )
         self.tso500_output_parser_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.tso500_output_parser_app + " -y --name "
+            "dx run " + config.app_project + config.tso500_output_parser_app + " -y --name "
         )
         self.onePGT_dx_command = (
             "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
@@ -294,10 +296,11 @@ class RunfolderProcessor(object):
             # if not TSO500 will return None
             if TSO500_sample_list:
                 # tar runfolder
-                self.tar_runfolder()
+                #TODO TURNBACKON
+                #self.tar_runfolder()
                 # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                 # set tar folder path in place of the list of fastqs to upload
-                self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path
+                self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
@@ -349,6 +352,7 @@ class RunfolderProcessor(object):
                 if TSO500_sample_list:
                     self.runfolder_obj.runfolder_tarball_path
                 #TODO remove the TSO500 tar?
+                self.remove_TSO500_tar()
                 # return true to denote that a runfolder was processed
                 return True
         else:
@@ -578,7 +582,7 @@ class RunfolderProcessor(object):
         (out, err) = self.execute_subprocess_command(cmd)
         # assess stderr , looking for expected success statement
         if self.perform_test(err, "delete_tso500_tar"):
-            self.loggers.script.info("TSO500 tarball sucessfully removed")
+            self.loggers.script.info("TSO500 tarball sucessfully removed - {}".format(cmd))
         else:
             self.loggers.script.error("UA_fail 'TSO500 tar not deleted : {}'".format(self.runfolder_obj.runfolder_tarball_path))
 
@@ -935,7 +939,7 @@ class RunfolderProcessor(object):
                 # if at the end of the file there was no success statement found
                 if not upload_ok:
                     issue_list.append(file)
-            
+            print issue_list
             # Report back if ok
             if issue_list:
                 self.loggers.script.error(
@@ -1200,7 +1204,8 @@ class RunfolderProcessor(object):
 
         # loop through samples
         for fastq in list_of_processed_samples:
-            # take read one
+    
+            # take read one - note TSO500 sample list are not fastqs so are treated differently (elif below)
             if re.search(r"_R1_", fastq):
                 # extract Pan number and use this to determine which dx run commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
@@ -1267,6 +1272,9 @@ class RunfolderProcessor(object):
                     commands_list.append(self.create_archerdx_command(fastq, panel, "R2"))
                     commands_list.append(self.add_to_depends_list(fastq))
             
+            elif not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
+                # extract Pan number and use this to determine which dx run commands are needed for the sample
+                panel = re.search(r"Pan\d+", fastq).group()
                 if self.panel_dictionary[panel]["TSO500"]:
                     TSO500 = True
 
@@ -1296,13 +1304,15 @@ class RunfolderProcessor(object):
             # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
             # pass "peddy" to ensure it isn't skipped
             commands_list.append(self.add_to_depends_list("peddy"))
+        
         if TSO500:
+            print "building tso500 commands"
             commands_list.append(self.create_tso500_command())
             commands_list.append(self.create_tso500_output_parser_command())
-
-        # multiqc commands
-        commands_list.append(self.create_multiqc_command())
-        commands_list.append(self.create_upload_multiqc_command())
+        else:
+            # don't need to do multiqc commands for TSO500
+            commands_list.append(self.create_multiqc_command())
+            commands_list.append(self.create_upload_multiqc_command())
         # smartsheet
         commands_list.append(self.create_smartsheet_command())
         return commands_list
@@ -1385,7 +1395,7 @@ class RunfolderProcessor(object):
         """
         # Is it a novaseq run?
         if config.novaseq_id in self.runfolder_obj.runfolder_name:
-            TSO500_analysis_options = " --isNovaSeq"
+            TSO500_analysis_options = "--isNovaSeq"
         else:
             TSO500_analysis_options = ""
         # build dx run command - inputs are:
@@ -1398,9 +1408,9 @@ class RunfolderProcessor(object):
             config.TSO500_docker_image_stage,
             config.tso500_docker_image,
             config.TSO500_runfolder_tar_stage,
-            self.runfolder_obj.runfolder_tarball_path,
+            self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_tarball_name,
             config.TSO500_samplesheet_stage,
-            self.runfolder_obj.runfolder_samplesheet_path,
+            self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_samplesheet_name,
             config.TSO500_analysis_options_stage,
             TSO500_analysis_options,
             self.dest,
@@ -1408,7 +1418,7 @@ class RunfolderProcessor(object):
             self.token,
         ]
         dx_command = "".join(map(str, dx_command_list))
-
+        print dx_command
         return dx_command
 
     def create_tso500_output_parser_command(self):
@@ -1448,12 +1458,13 @@ class RunfolderProcessor(object):
             self.panel_dictionary["Pan4709"]["clinical_coverage_depth"],
             config.TSO500_output_parser_multiqc_coverage_level_stage,
             self.panel_dictionary["Pan4709"]["multiqc_coverage_level"],
+            " -d $jobid ",
             self.dest,
             self.dest_cmd,
-            self.token,
+            self.token.rstrip(")"),
         ]
         dx_command = "".join(map(str, dx_command_list))
-
+        print dx_command
         return dx_command
 
     def create_onePGT_command(self, fastq, pannumber, read):
@@ -2391,20 +2402,16 @@ class RunfolderProcessor(object):
         This function copies the samplesheet from into the runfolder and then builds and executes
         the backup_runfolder.py command
         Returns = filepath to backup script.
-        """
-
-        # create the samplesheet name to copy
-        samplesheet_name = self.runfolder_obj.runfolder_name + "_SampleSheet.csv"
-
+        """       
         # try to copy samplesheet into project
-        if os.path.exists(config.samplesheets_dir + samplesheet_name):
+        if os.path.exists(self.runfolder_obj.runfolder_samplesheet_path):
             copyfile(
-                config.samplesheets_dir + samplesheet_name,
-                os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name),
+                self.runfolder_obj.runfolder_samplesheet_path,
+                os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name),
             )
-            self.loggers.script.info("Samplesheet copied to runfolder: {}".format(samplesheet_name))
+            self.loggers.script.info("Samplesheet copied to runfolder: {}".format(self.runfolder_obj.runfolder_samplesheet_name))
         else:
-            self.loggers.script.info("Samplesheet not copied to runfolder - already existed in runfolder")
+            self.loggers.script.info("Samplesheet not copied to runfolder")
         # build backup_runfolder.py command ignore some files
         cmd = (
             "python3 "
