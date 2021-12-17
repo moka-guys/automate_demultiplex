@@ -160,6 +160,19 @@ congenica_app_path = "Apps/congenica_upload_v1.2"
 # placeholder for IVA - will be changed to QCI when available
 iva_app_path = ""
 
+# TSO500 app
+tso500_app = "Apps/TSO500_v1.2"
+tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
+
+# TSO500_output_parser app
+tso500_output_parser_app = "Apps/tso500_output_parser_v1.1"
+# inputs for tso500_output_parser_app
+coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
+fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
+multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G54z260028qBZ90b3kpyVgBq" 
+upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
+TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
+
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.4.0"
 # smartsheet app
@@ -272,6 +285,23 @@ multiqc_coverage_level_input = " -icoverage_level="
 multiqc_html_output = "multiqc_report"
 upload_multiqc_input = " -imultiqc_html="
 
+# TSO500 stage ids
+TSO500_docker_image_stage = " -iTSO500_ruo="
+TSO500_runfolder_tar_stage = " -irun_folder="
+TSO500_samplesheet_stage = " -isamplesheet="
+TSO500_analysis_options_stage = " -ianalysis_options="
+# TSO500 output parser stage ids
+TSO500_output_parser_project_name_stage = " -iproject_name="
+TSO500_output_parser_project_id_stage = " -iproject_id="
+TSO500_output_parser_job_id_stage = " -itso500_jobid="
+TSO500_output_parser_coverage_bedfile_id_stage = " -icoverage_bedfile_id="
+TSO500_output_parser_coverage_app_id_stage = " -icoverage_app_id="
+TSO500_output_parser_fastqc_app_id_stage = " -ifastqc_app_id="
+TSO500_output_parser_multiqc_app_id_stage = " -imultiqc_app_id="
+TSO500_output_parser_upload_multiqc_app_id_stage = " -iupload_multiqc_app_id="
+TSO500_output_parser_coverage_commands_stage = " -icoverage_commands="
+TSO500_output_parser_coverage_level_stage = " -icoverage_level="
+TSO500_output_parser_multiqc_coverage_level_stage = " -imultiqc_coverage_level="
 
 # Smartsheet
 smartsheet_mokapipe_complete = " -iNGS_run="
@@ -352,15 +382,40 @@ panel_list = [
 	"Pan4396", # ArcherDx
 	"Pan4579", # VCP2 somatic M1.1
 	"Pan4574", # VCP2 somatic M1.2
-	"Pan4709" # TSO500
+	"Pan4709", # TSO500
+	"Pan4821", # VCP1 STG R134_FH
+	"Pan4822", # VCP1 STG R184_CF
+	"Pan4823", # VCP1 STG R25_FGFR
+	"Pan4824", # VCP1 STG R73_DMD
+	"Pan4825", # VCP1 STG R337_CADASIL
+	"Pan4816", # VCP2 STG R208 BRCA
+	"Pan4817", # VCP2 STG R207 ovarian
+	"Pan4818", # VCP2 STG R209 colorectal
+	"Pan4819", # VCP2 STG R210 lynch
+	"Pan4820", # VCP2 STG R211 polyposis
+	"Pan4826", # VCP3 STG R56
+	"Pan4827", # VCP3 STG R57
+	"Pan4828", # VCP3 STG R58
+	"Pan4829", # VCP3 STG R60
+	"Pan4830", # VCP3 STG R62
+	"Pan4831", # VCP3 STG R66
+	"Pan4832", # VCP3 STG R78
+	"Pan4833", # VCP3 STG R79 CMD
+	"Pan4834", # VCP3 STG R81 CM
+	"Pan4835", # VCP3 STG R82 limb girdle
+	"Pan4836", # VCP3 STG R229
+	"Pan4837", # VCP3 STG R227
+	"Pan4838", # VCP3 STG R90
+	"Pan4839", # VCP3 STG R226
+	"Pan4840", # VCP3 STG R97
 ]
 
 
 # create lists of pan numbers for each capture panel for use with RPKM
 #IMPORTANT: Lists below are used by the trend analysis scripts, if changed the trend analysis script will need to be updated
-vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044"]
-vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049"]
-vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390"]
+vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044","Pan4821","Pan4822","Pan4823","Pan4824","Pan4825"]
+vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049","Pan4816","Pan4817","Pan4818","Pan4819","Pan4820"]
+vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390","Pan4826","Pan4827","Pan4828","Pan4829","Pan4830","Pan4831","Pan4832","Pan4833","Pan4834","Pan4835","Pan4836","Pan4837","Pan4838","Pan4839","Pan4840"]
 WES_panel_lists = ["Pan2835","Pan3174"]
 SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396"]
@@ -408,6 +463,8 @@ default_panel_properties = {
 	"peddy": False,
 	"archerdx": False,
 	"TSO500": False,
+	"coverage_min_basecall_qual":None,
+	"coverage_min_mapping_qual":None,
 }
 
 # override default panel settings
@@ -761,8 +818,318 @@ panel_settings = {
 		"clinical_coverage_depth" : 200,
 	},
 	"Pan4709" : { # TSO500
-		"TSO500": True
-	}
+		"TSO500": True,
+		"sambamba_bedfile": "Pan4709dataSambamba.bed",
+		"clinical_coverage_depth" : 100,
+		"multiqc_coverage_level": 100,
+		"coverage_min_basecall_qual":25,
+		"coverage_min_mapping_qual":30,
+	},
+	"Pan4821": {  # VCP1 STG R134_FH
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan4399",
+		"RPKM_also_analyse": vcp1_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4203",
+		"hsmetrics_bedfile": "Pan4397data.bed",
+		"variant_calling_bedfile": "Pan4398data.bed",
+		"sambamba_bedfile": "Pan4397dataSambamba.bed",
+		"STG": True,
+	},
+	"Pan4822": {  # VCP1 STG R184_CF
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan4399",
+		"RPKM_also_analyse": vcp1_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4203",
+		"hsmetrics_bedfile": "Pan4397data.bed",
+		"variant_calling_bedfile": "Pan4398data.bed",
+		"sambamba_bedfile": "Pan4397dataSambamba.bed",
+		"STG": True,
+	},
+	"Pan4823": {  # VCP1 STG R25_FGFR
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan4399",
+		"RPKM_also_analyse": vcp1_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4203",
+		"hsmetrics_bedfile": "Pan4397data.bed",
+		"variant_calling_bedfile": "Pan4398data.bed",
+		"sambamba_bedfile": "Pan4397dataSambamba.bed",
+		"STG": True,
+	},
+	"Pan4824": {  # VCP1 STG R73_DMD
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan4399",
+		"RPKM_also_analyse": vcp1_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4203",
+		"hsmetrics_bedfile": "Pan4397data.bed",
+		"variant_calling_bedfile": "Pan4398data.bed",
+		"sambamba_bedfile": "Pan4397dataSambamba.bed",
+		"STG": True,
+	},
+	"Pan4825": {  # VCP1 STG R337_cadasil
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan4399",
+		"RPKM_also_analyse": vcp1_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4203",
+		"hsmetrics_bedfile": "Pan4397data.bed",
+		"variant_calling_bedfile": "Pan4398data.bed",
+		"sambamba_bedfile": "Pan4397dataSambamba.bed",
+		"STG": True,
+	},
+	"Pan4826": {  # VCP3 STG R56
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4827": {  # VCP3 STG R57
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4828": {  # VCP3 STG R58
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4829": {  # VCP3 STG R60
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4830": {  # VCP3 STG R62
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4831": {  # VCP3 STG R66
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4832": {  # VCP3 STG R78
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4833": {  # VCP3 STG R79
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4834": {  # VCP3 STG R81
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4835": {  # VCP3 STG R82
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4836": {  # VCP3 STG R229
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4837": {  # VCP3 STG R227
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4838": {  # VCP3 STG R90
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4839": {  # VCP3 STG R226
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4840": {  # VCP3 STG R97
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3974",
+		"RPKM_also_analyse": vcp3_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4201",
+		"hsmetrics_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed",
+		"sambamba_bedfile": "Pan4535dataSambamba.bed",
+	},
+	"Pan4818": {  # VCP2 STG R209
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3614",
+		"RPKM_also_analyse": vcp2_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4202",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"variant_calling_bedfile": "Pan4301data.bed",
+		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+	},
+	"Pan4819": {  # VCP2 STG R210
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3614",
+		"RPKM_also_analyse": vcp2_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4202",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"variant_calling_bedfile": "Pan4301data.bed",
+		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+	},
+	"Pan4820": {  # VCP2 STG R211
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3614",
+		"RPKM_also_analyse": vcp2_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "4202",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"variant_calling_bedfile": "Pan4301data.bed",
+		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+	},
+	"Pan4816": {  # VCP2 STG R208
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3614",
+		"RPKM_also_analyse": vcp2_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "1099",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"variant_calling_bedfile": "Pan4301data.bed",
+		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+	},
+	"Pan4817": {  # VCP2 STG R207
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3614",
+		"RPKM_also_analyse": vcp2_panel_list,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "1099",
+		"hsmetrics_bedfile": "Pan4310data.bed",
+		"variant_calling_bedfile": "Pan4301data.bed",
+		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+	},
 }
 
 # =====smartsheet API=====

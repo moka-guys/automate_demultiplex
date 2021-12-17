@@ -99,6 +99,10 @@ class RunfolderObject(object):
         self.nexus_path = ""
         self.nexus_project_id = ""
         self.runfolder_tarball_path = "%s.tar" % self.runfolderpath
+        self.runfolder_tarball_name = "%s.tar" % self.runfolder_name
+        self.runfolder_samplesheet_path = os.path.join(config.samplesheets_dir,self.runfolder_name + "_SampleSheet.csv")
+        self.runfolder_samplesheet_name = self.runfolder_name + "_SampleSheet.csv"
+
 
 
 class RunfolderProcessor(object):
@@ -147,6 +151,12 @@ class RunfolderProcessor(object):
         )
         self.archer_dx_command = (
             "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
+        )
+        self.tso500_dx_command = (
+            "jobid=$(dx run " + config.app_project + config.tso500_app + " -y --name "
+        )
+        self.tso500_output_parser_dx_command = (
+            "dx run " + config.app_project + config.tso500_output_parser_app + " -y --name "
         )
         self.onePGT_dx_command = (
             "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
@@ -290,7 +300,7 @@ class RunfolderProcessor(object):
                 self.tar_runfolder()
                 # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                 # set tar folder path in place of the list of fastqs to upload
-                self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path
+                self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
@@ -336,11 +346,12 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
-                # don't back up TSO500 runfolder again (uploaded as a tar)
-                if not TSO500_sample_list:
-                    self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
+
+                self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
-                #TODO remove the TSO500 tar?
+                if TSO500_sample_list:
+                    self.remove_TSO500_tar()
+
                 # return true to denote that a runfolder was processed
                 return True
         else:
@@ -451,6 +462,12 @@ class RunfolderProcessor(object):
         if test == "tar_runfolder":
             if len(test_input) > 1:
                 return False
+
+        # if tar completes expect no stdout or stderr.
+        if test == "delete_tso500_tar":
+            if len(test_input) > 1:
+                return False
+
         return True
         
 
@@ -533,8 +550,8 @@ class RunfolderProcessor(object):
         return sample_list (will return False if empty)
         """
         sample_list=[]
-        samplesheet_path = os.path.join(config.samplesheets_dir,self.runfolder_obj.runfolder_name + "_SampleSheet.csv")
-        with open(samplesheet_path, 'r') as samplesheet_stream:
+        with open(self.runfolder_obj.runfolder_samplesheet_path, 'r') as samplesheet_stream:
+
                 # read the file into a list and loop through the list in reverse (bottom to top).
                 # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
                 for line in reversed(samplesheet_stream.readlines()):
@@ -552,6 +569,25 @@ class RunfolderProcessor(object):
         if sample_list:
             open(self.loggers.upload_agent.filepath, 'w').close()
         return sample_list
+
+
+    def remove_TSO500_tar(self):
+        """
+        Inputs = None
+        Last step of processing runfolder. If relevant deletes the TSO500 tarball.
+        If there is an error (len(stderr)>0) send a slack alert
+        Returns = None
+        """
+        cmd = "rm %s " % (self.runfolder_obj.runfolder_tarball_path)
+        # capture stdout and stderr
+        # NB all output from picard tool is in stderr
+        (out, err) = self.execute_subprocess_command(cmd)
+        # assess stderr , looking for expected success statement
+        if self.perform_test(err, "delete_tso500_tar"):
+            self.loggers.script.info("TSO500 tarball sucessfully removed - {}".format(cmd))
+        else:
+            self.loggers.script.error("UA_fail 'TSO500 tar not deleted : {}'".format(self.runfolder_obj.runfolder_tarball_path))
+
 
     def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
@@ -906,7 +942,6 @@ class RunfolderProcessor(object):
                 # if at the end of the file there was no success statement found
                 if not upload_ok:
                     issue_list.append(file)
-            
             # Report back if ok
             if issue_list:
                 self.loggers.script.error(
@@ -1171,7 +1206,8 @@ class RunfolderProcessor(object):
 
         # loop through samples
         for fastq in list_of_processed_samples:
-            # take read one
+    
+            # take read one - note TSO500 sample list are not fastqs so are treated differently (elif below)
             if re.search(r"_R1_", fastq):
                 # extract Pan number and use this to determine which dx run commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
@@ -1238,6 +1274,10 @@ class RunfolderProcessor(object):
                     commands_list.append(self.create_archerdx_command(fastq, panel, "R2"))
                     commands_list.append(self.add_to_depends_list(fastq))
             
+            elif not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
+                # extract Pan number and use this to determine which dx run commands are needed for the sample
+                panel = re.search(r"Pan\d+", fastq).group()
+
                 if self.panel_dictionary[panel]["TSO500"]:
                     TSO500 = True
 
@@ -1267,12 +1307,15 @@ class RunfolderProcessor(object):
             # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
             # pass "peddy" to ensure it isn't skipped
             commands_list.append(self.add_to_depends_list("peddy"))
+        
         if TSO500:
             commands_list.append(self.create_tso500_command())
+            commands_list.append(self.create_tso500_output_parser_command())
+        else:
+            # don't need to do multiqc commands for TSO500
+            commands_list.append(self.create_multiqc_command())
+            commands_list.append(self.create_upload_multiqc_command())
 
-        # multiqc commands
-        commands_list.append(self.create_multiqc_command())
-        commands_list.append(self.create_upload_multiqc_command())
         # smartsheet
         commands_list.append(self.create_smartsheet_command())
         return commands_list
@@ -1343,6 +1386,86 @@ class RunfolderProcessor(object):
         ]
         dx_command = "".join(map(str, dx_command_list))
 
+        return dx_command
+
+    def create_tso500_command(self):
+        """
+        Build dx run command for tso500 docker app
+        Inputs:
+            None
+        Returns:
+            dx run command for tso500 app (string)
+        """
+        # Is it a novaseq run?
+        if config.novaseq_id in self.runfolder_obj.runfolder_name:
+            TSO500_analysis_options = "--isNovaSeq"
+        else:
+            TSO500_analysis_options = ""
+        # build dx run command - inputs are:
+        ## docker image (from config)
+        ## runfolder_tar and samplesheet paths (from runfolder_obj class)
+        ## analysis options eg --isNovaSeq flag
+        dx_command_list = [
+            self.tso500_dx_command, # ends with --name so supply the runfolder name to name the job
+            self.runfolder_obj.runfolder_name,
+            config.TSO500_docker_image_stage,
+            config.tso500_docker_image,
+            config.TSO500_runfolder_tar_stage,
+            self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_tarball_name,
+            config.TSO500_samplesheet_stage,
+            self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_samplesheet_name,
+            config.TSO500_analysis_options_stage,
+            TSO500_analysis_options,
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
+        dx_command = "".join(map(str, dx_command_list))
+        return dx_command
+
+    def create_tso500_output_parser_command(self):
+        """
+        Build dx run command for tso500_output_parser app
+        Inputs:
+            None
+        Returns:
+            dx run command for tso500_output_parser app (string)
+        """
+        # get the TSO500_runfolder_tar path
+        # get the samplesheet nexus path
+        # build dictionary of pan number specific/relevant bedfile to be used in command
+        bedfiles = self.nexus_bedfiles("Pan4709")
+        dx_command_list = [
+            self.tso500_output_parser_dx_command,
+            self.runfolder_obj.runfolder_name,
+            config.TSO500_output_parser_project_name_stage,
+            self.runfolder_obj.nexus_project_name,
+            config.TSO500_output_parser_project_id_stage,
+            self.runfolder_obj.nexus_project_id,
+            config.TSO500_output_parser_job_id_stage,
+            "$jobid",
+            config.TSO500_output_parser_coverage_bedfile_id_stage,
+            bedfiles["sambamba"],
+            config.TSO500_output_parser_coverage_app_id_stage,
+            config.coverage_app_id,
+            config.TSO500_output_parser_fastqc_app_id_stage,
+            config.fastqc_app_id,
+            config.TSO500_output_parser_multiqc_app_id_stage,
+            config.multiqc_app_id,
+            config.TSO500_output_parser_upload_multiqc_app_id_stage,
+            config.upload_multiqc_app_id,
+            config.TSO500_output_parser_coverage_commands_stage,
+            config.TSO500_output_parser_coverage_commands % (self.panel_dictionary["Pan4709"]["coverage_min_basecall_qual"],self.panel_dictionary["Pan4709"]["coverage_min_mapping_qual"]),
+            config.TSO500_output_parser_coverage_level_stage,
+            self.panel_dictionary["Pan4709"]["clinical_coverage_depth"],
+            config.TSO500_output_parser_multiqc_coverage_level_stage,
+            self.panel_dictionary["Pan4709"]["multiqc_coverage_level"],
+            " -d $jobid ",
+            self.dest,
+            self.dest_cmd,
+            self.token.rstrip(")"),
+        ]
+        dx_command = "".join(map(str, dx_command_list))
         return dx_command
 
     def create_onePGT_command(self, fastq, pannumber, read):
@@ -1703,10 +1826,6 @@ class RunfolderProcessor(object):
         # TODO: Implement joint-variant calling command for peddy
         raise NotImplementedError
 
-    def create_tso500_command(self):
-        """-"""
-        #TODO: 
-        raise NotImplementedError
 
     def copy_onePGT_fastqs(self, fastq):
         """
@@ -2284,20 +2403,16 @@ class RunfolderProcessor(object):
         This function copies the samplesheet from into the runfolder and then builds and executes
         the backup_runfolder.py command
         Returns = filepath to backup script.
-        """
-
-        # create the samplesheet name to copy
-        samplesheet_name = self.runfolder_obj.runfolder_name + "_SampleSheet.csv"
-
+        """       
         # try to copy samplesheet into project
-        if os.path.exists(config.samplesheets_dir + samplesheet_name):
+        if os.path.exists(self.runfolder_obj.runfolder_samplesheet_path):
             copyfile(
-                config.samplesheets_dir + samplesheet_name,
-                os.path.join(self.runfolder_obj.runfolderpath, samplesheet_name),
+                self.runfolder_obj.runfolder_samplesheet_path,
+                os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name),
             )
-            self.loggers.script.info("Samplesheet copied to runfolder: {}".format(samplesheet_name))
+            self.loggers.script.info("Samplesheet copied to runfolder: {}".format(self.runfolder_obj.runfolder_samplesheet_name))
         else:
-            self.loggers.script.info("Samplesheet not copied to runfolder - already existed in runfolder")
+            self.loggers.script.info("Samplesheet not copied to runfolder")
         # build backup_runfolder.py command ignore some files
         cmd = (
             "python3 "
@@ -2339,17 +2454,21 @@ class RunfolderProcessor(object):
             + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "")
             + "/Logfiles/"
         )
+        # create a list of files to be used to check outputs
+        files_to_upload_list = []
         # create a space delimited string of files to be uploaded defined by the logger class
-        files_to_upload_string = " "
+        files_to_upload_string = ""
         for logger in self.loggers.all:
             if logger.filepath:
                 files_to_upload_string += "'"
                 files_to_upload_string += logger.filepath
                 files_to_upload_string += "' "
+                # add to the list
+                files_to_upload_list.append(logger.filepath)
         
         # add the demultiplexing log file
         files_to_upload_string += " '" + os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing) + "'"
-        
+        files_to_upload_list.append(os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing))
         # create a list which, when joined will form a single upload agent command, uploading each
         # file in logger.filepath
         command_list = [
@@ -2360,27 +2479,27 @@ class RunfolderProcessor(object):
             self.runfolder_obj.nexus_project_name,
             "--folder",
             nexus_upload_folder,
-            "--do-not-compress",
-            "--upload-threads",
-            "10"]
-        
+            " --do-not-compress ",
+            files_to_upload_string
+        ]
         # convert list to command line and append the logfile list
-        cmd = subprocess.list2cmdline(command_list)
-        cmd += files_to_upload_string
+        cmd = " ".join(command_list)
 
         # write these commands to the upload agent logfile before upload.
-        self.loggers.upload_agent.info("Uploading logfiles.")
-        self.loggers.upload_agent.info(cmd)
+        self.loggers.script.info("Uploading logfiles.")
+        self.loggers.script.info(cmd)
 
         # execute ua command
         out, err = self.execute_subprocess_command(cmd)
 
-        # capture stdout to upload agent log file
-        self.loggers.upload_agent.info("Uploading logfiles (this will not be included in DNANexus)")
+        # capture stdout to upload agent log file AND the script logfile
+        self.loggers.script.info("Uploading logfiles (this will not be included in DNANexus)")
+        self.loggers.script.info(out)
+        self.loggers.script.info(err)
         self.loggers.upload_agent.info(out)
         self.loggers.upload_agent.info(err)
-
-        return self.loggers.upload_agent.filepath, files_to_upload_string, "log files"
+        #TODO check correct logfile is being checked
+        return self.loggers.upload_agent.filepath, files_to_upload_list, "log files"
 
     def look_for_upload_errors_backup_runfolder(self, logfile):
         """

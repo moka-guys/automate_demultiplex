@@ -27,6 +27,7 @@ import requests
 import automate_demultiplex_config as config
 # import function which reads the git tag
 import git_tag as git_tag
+import samplesheet_verifier
 
 
 class get_list_of_runs():
@@ -237,8 +238,27 @@ class ready2start_demultiplexing():
             self.script_logfile.write("Checking if already demultiplexed .........Demultiplexing has already been completed " + \
                 "-  demultiplex log found @ " + self.runfolderpath + "/" + config.file_demultiplexing_old + " \n--- STOP ---\n")
         else:
-            # Else proceed by calling the function which checks if sequencing has finished
+            # Else call samplesheet checking script
+            # Then proceed by calling the function which checks if sequencing has finished
             self.script_logfile.write("Checking if already demultiplexed .........Run has not yet been demultiplexed\n")
+            self.samplesheet = self.runfolder + "_SampleSheet.csv"
+            self.samplesheet_path = os.path.join(config.samplesheets_dir, self.samplesheet)
+            # run samplesheet checks (uses try to ensure that should an error occur this doesn't affect the other
+            # script functionality
+            ss_verification_results = samplesheet_verifier.run_ss_checks(self.samplesheet_path)
+            ss_fail = ""
+            ss_pass = ""
+            # If the value is True (i.e. check has passed), append to pass list, else append to fail list
+            for key in ss_verification_results:
+                if ss_verification_results[key][0]:
+                    ss_pass += "PASS - " + ss_verification_results[key][1]
+                else:
+                    ss_fail += "ERROR - " + ss_verification_results[key][1]
+            if ss_pass:
+                self.logger("PASS SAMPLESHEET CHECKS for {}: {}".format(self.samplesheet, ss_pass),
+                            "demultiplex_success")
+            if ss_fail:
+                self.logger("SAMPLESHEET ERROR for {}: {}".format(self.samplesheet, ss_fail), "samplesheet_warning")
             self.has_run_finished()
 
     def has_run_finished(self):
@@ -259,8 +279,6 @@ class ready2start_demultiplexing():
     def look_for_sample_sheet(self):
         """Check that the sample sheet for the current runfolder is present."""
         # Set the filepath of the sample sheet (with expected naming convention)
-        self.samplesheet = self.runfolder + "_SampleSheet.csv"
-        self.samplesheet_path = os.path.join(config.samplesheets_dir,self.samplesheet)
         self.script_logfile.write("expected samplesheet name: %s. Looking in %s\n" % (self.samplesheet,config.samplesheets_dir))
         # Check that the expected samplesheet exists
         if self.samplesheet in os.listdir(config.samplesheets_dir):
@@ -428,7 +446,7 @@ class ready2start_demultiplexing():
         # If demultiplexing did not complete without errors
         else:
             # Write to log file and report last few lines of the failed runfolder's demultiplex log.
-            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFULL - please see " +
+            self.script_logfile.write("ERROR - DEMULTIPLEXING UNSUCCESFUL - please see " +
                                       run_logfile_path + "\n" + bcl2fastq_log_tail)
             # Write to system log
             self.logger("BCL2FastQ ERROR. Demultiplexing failed for run " + self.runfolder, "demultiplex_fail")
