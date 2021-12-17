@@ -296,8 +296,7 @@ class RunfolderProcessor(object):
             # if not TSO500 will return None
             if TSO500_sample_list:
                 # tar runfolder
-                #TODO TURNBACKON
-                #self.tar_runfolder()
+                self.tar_runfolder()
                 # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                 # set tar folder path in place of the list of fastqs to upload
                 self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
@@ -350,9 +349,7 @@ class RunfolderProcessor(object):
                 self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
                 if TSO500_sample_list:
-                    self.runfolder_obj.runfolder_tarball_path
-                #TODO remove the TSO500 tar?
-                self.remove_TSO500_tar()
+                    self.remove_TSO500_tar()
                 # return true to denote that a runfolder was processed
                 return True
         else:
@@ -939,7 +936,6 @@ class RunfolderProcessor(object):
                 # if at the end of the file there was no success statement found
                 if not upload_ok:
                     issue_list.append(file)
-            print issue_list
             # Report back if ok
             if issue_list:
                 self.loggers.script.error(
@@ -1306,7 +1302,6 @@ class RunfolderProcessor(object):
             commands_list.append(self.add_to_depends_list("peddy"))
         
         if TSO500:
-            print "building tso500 commands"
             commands_list.append(self.create_tso500_command())
             commands_list.append(self.create_tso500_output_parser_command())
         else:
@@ -1418,7 +1413,6 @@ class RunfolderProcessor(object):
             self.token,
         ]
         dx_command = "".join(map(str, dx_command_list))
-        print dx_command
         return dx_command
 
     def create_tso500_output_parser_command(self):
@@ -1464,7 +1458,6 @@ class RunfolderProcessor(object):
             self.token.rstrip(")"),
         ]
         dx_command = "".join(map(str, dx_command_list))
-        print dx_command
         return dx_command
 
     def create_onePGT_command(self, fastq, pannumber, read):
@@ -2453,17 +2446,21 @@ class RunfolderProcessor(object):
             + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "")
             + "/Logfiles/"
         )
+        # create a list of files to be used to check outputs
+        files_to_upload_list = []
         # create a space delimited string of files to be uploaded defined by the logger class
-        files_to_upload_string = " "
+        files_to_upload_string = ""
         for logger in self.loggers.all:
             if logger.filepath:
                 files_to_upload_string += "'"
                 files_to_upload_string += logger.filepath
                 files_to_upload_string += "' "
+                # add to the list
+                files_to_upload_list.append(logger.filepath)
         
         # add the demultiplexing log file
         files_to_upload_string += " '" + os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing) + "'"
-        
+        files_to_upload_list.append(os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing))
         # create a list which, when joined will form a single upload agent command, uploading each
         # file in logger.filepath
         command_list = [
@@ -2474,13 +2471,11 @@ class RunfolderProcessor(object):
             self.runfolder_obj.nexus_project_name,
             "--folder",
             nexus_upload_folder,
-            "--do-not-compress",
-            "--upload-threads",
-            "10"]
-        
+            " --do-not-compress ",
+            files_to_upload_string
+        ]
         # convert list to command line and append the logfile list
-        cmd = subprocess.list2cmdline(command_list)
-        cmd += files_to_upload_string
+        cmd = " ".join(command_list)
 
         # write these commands to the upload agent logfile before upload.
         self.loggers.script.info("Uploading logfiles.")
@@ -2489,12 +2484,14 @@ class RunfolderProcessor(object):
         # execute ua command
         out, err = self.execute_subprocess_command(cmd)
 
-        # capture stdout to upload agent log file
+        # capture stdout to upload agent log file AND the script logfile
         self.loggers.script.info("Uploading logfiles (this will not be included in DNANexus)")
         self.loggers.script.info(out)
         self.loggers.script.info(err)
-
-        return self.loggers.upload_agent.filepath, files_to_upload_string, "log files"
+        self.loggers.upload_agent.info(out)
+        self.loggers.upload_agent.info(err)
+        #TODO check correct logfile is being checked
+        return self.loggers.upload_agent.filepath, files_to_upload_list, "log files"
 
     def look_for_upload_errors_backup_runfolder(self, logfile):
         """
