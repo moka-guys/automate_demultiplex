@@ -402,13 +402,13 @@ class RunfolderProcessor(object):
         Input: runfolder path
         Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
         """
-        # tar argument uses :
+        # cd to runfolder and then run tar argument with:
 		# W (which verifies the archive as it's made)
 		# P uses absolute paths (required for -W step)
 		# c (creates an archive) 
 		# f (specify the filename of the archive)
         # redirect stderr to stdout so we can test for errors
-        cmd = "tar -PWcf %s %s 2>&1" % (self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolderpath)
+        cmd = "cd %s; tar -WPcf %s %s 2>&1" % (config.runfolders, self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolder_name)
         (out, err) = self.execute_subprocess_command(cmd)
 
         # assess stdout+stderr - if successful tar does not return any output
