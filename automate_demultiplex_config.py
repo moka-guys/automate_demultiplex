@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = True
+testing = False
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -401,7 +401,7 @@ panel_list = [
 	"Pan4831", # VCP3 STG R66
 	"Pan4832", # VCP3 STG R78
 	"Pan4833", # VCP3 STG R79 CMD
-	"Pan4834", # VCP3 VCP3 STG R81 CM
+	"Pan4834", # VCP3 STG R81 CM
 	"Pan4835", # VCP3 STG R82 limb girdle
 	"Pan4836", # VCP3 STG R229
 	"Pan4837", # VCP3 STG R227
