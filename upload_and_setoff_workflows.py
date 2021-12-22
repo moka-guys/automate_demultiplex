@@ -156,7 +156,7 @@ class RunfolderProcessor(object):
             "jobid=$(dx run " + config.app_project + config.tso500_app + " -y --name "
         )
         self.tso500_output_parser_dx_command = (
-            "dx run " + config.app_project + config.tso500_output_parser_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.tso500_output_parser_app + " -y --name "
         )
         self.onePGT_dx_command = (
             "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
@@ -404,10 +404,11 @@ class RunfolderProcessor(object):
         Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
         """
         # cd to runfolder and then run tar argument with:
-		# W (which verifies the archive as it's made)
-		# P uses absolute paths (required for -W step)
-		# c (creates an archive) 
-		# f (specify the filename of the archive)
+        # W (which verifies the archive as it's made)
+        # P uses absolute paths (required for -W step)
+        # c (creates an archive) 
+        # f (specify the filename of the archive)
+        # provide the folder name, not the full filepath to ensure the tar doesn't contain the full path from root
         # redirect stderr to stdout so we can test for errors
         cmd = "cd %s; tar -WPcf %s %s 2>&1" % (config.runfolders, self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolder_name)
         (out, err) = self.execute_subprocess_command(cmd)
@@ -1302,8 +1303,16 @@ class RunfolderProcessor(object):
             commands_list.append(self.add_to_depends_list("peddy"))
         
         if TSO500:
+            # build command for the TSO500 app
             commands_list.append(self.create_tso500_command())
+            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # pass "TSO" to ensure it isn't skipped
+            commands_list.append(self.add_to_depends_list("TSO"))
+            # build command for the TSO500 output parser
             commands_list.append(self.create_tso500_output_parser_command())
+            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # pass "TSO" to ensure it isn't skipped
+            commands_list.append(self.add_to_depends_list("TSO"))
         else:
             # don't need to do multiqc commands for TSO500
             commands_list.append(self.create_multiqc_command())
@@ -1455,7 +1464,7 @@ class RunfolderProcessor(object):
             " -d $jobid ",
             self.dest,
             self.dest_cmd,
-            self.token.rstrip(")"),
+            self.token
         ]
         dx_command = "".join(map(str, dx_command_list))
         return dx_command
