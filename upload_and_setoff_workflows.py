@@ -1435,6 +1435,7 @@ class RunfolderProcessor(object):
         # get the TSO500_runfolder_tar path
         # get the samplesheet nexus path
         # build dictionary of pan number specific/relevant bedfile to be used in command
+        #TODO what happens if we have multiple Pan numbers?
         bedfiles = self.nexus_bedfiles("Pan4709")
         dx_command_list = [
             self.tso500_output_parser_dx_command,
