@@ -71,8 +71,8 @@ class get_list_of_runs():
         # Loop through directory listing and pass runfolders to demultiplex.already_demultiplexed()
         # This function determines if the runfolder is ready to be demultiplexed and triggers demultiplexing
         for folder in all_runfolders:
-            # Ignore folders in the list config.ignore_directories and test that it is a directory (ignoring files)
-            if folder not in config.ignore_directories and os.path.isdir(self.runfolders + "/" + folder):
+            # Ignore folders in the list config.ignore_directories and test that it is a directory (ignoring files) and ensure it starts with 6 digits
+            if folder not in config.ignore_directories and os.path.isdir(self.runfolders + "/" + folder) and re.compile(config.runfolder_pattern).match(folder):
                 demultiplex.already_demultiplexed(folder)
 
         # Get number of runfolders processed by bcl2fastq during this cycle
@@ -251,14 +251,14 @@ class ready2start_demultiplexing():
             # If the value is True (i.e. check has passed), append to pass list, else append to fail list
             for key in ss_verification_results:
                 if ss_verification_results[key][0]:
-                    ss_pass += "PASS - " + ss_verification_results[key][1]
+                    ss_pass += ss_verification_results[key][1]
                 else:
-                    ss_fail += "ERROR - " + ss_verification_results[key][1]
+                    ss_fail += ss_verification_results[key][1]
             if ss_pass:
-                self.logger("PASS SAMPLESHEET CHECKS for {}: {}".format(self.samplesheet, ss_pass),
+                self.logger("Following samplesheet checked were passed by {}: {}".format(self.samplesheet, ss_pass),
                             "demultiplex_success")
             if ss_fail:
-                self.logger("SAMPLESHEET ERROR for {}: {}".format(self.samplesheet, ss_fail), "samplesheet_warning")
+                self.logger("SAMPLESHEET CHECKS FAILED {}: {}".format(self.samplesheet, ss_fail), "samplesheet_warning")
             self.has_run_finished()
 
     def has_run_finished(self):

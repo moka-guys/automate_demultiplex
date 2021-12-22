@@ -16,6 +16,8 @@ testing = True
 # (2 levels up from this file)
 document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
+# define the runfolder pattern - only check folders startiing with 6 digits.
+runfolder_pattern = "^[0-9]{6}.*$"
 # path to run folders - use testing flag to determine folders.
 if not testing:
 	runfolders = "/media/data3/share"
@@ -41,7 +43,7 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
-demultiplex_test_folder = ["999999_M02353_0496_000000000-D8M36_demux_nointegrity","999999_A01229_0010_AHY5TWDRXX_demux_integrity","999999_A01229_0038_AH5MG7DRXY_TSO500"]
+demultiplex_test_folder = ["999999_M02353_0496_000000000-D8M36_demux_nointegrity","999999_A01229_0010_AHY5TWDRXX_demux_integrity","999999_A01229_0038_AH5MG7DRXY_TSO500","folder123","123_folder","999999_A01229_0049_AHMKGHDRXY_TSO500"]
 
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
@@ -161,7 +163,7 @@ congenica_app_path = "Apps/congenica_upload_v1.2"
 iva_app_path = ""
 
 # TSO500 app
-tso500_app = "Apps/TSO500_v1.2"
+tso500_app = "Apps/TSO500_v1.3"
 tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 
 # TSO500_output_parser app
@@ -185,7 +187,6 @@ fastqc_app = "Apps/fastqc_v1.3"
 bedfile_folder = "Data/BED/"
 # DNA Nexus organisation to create the project within
 prod_organisation = "org-viapath_prod"
-dev_organisation = "org-viapath_dev"
 
 # project tags to denote live cases
 live_tag = "live"
@@ -382,7 +383,8 @@ panel_list = [
 	"Pan4396", # ArcherDx
 	"Pan4579", # VCP2 somatic M1.1
 	"Pan4574", # VCP2 somatic M1.2
-	"Pan4709", # TSO500
+	"Pan4709", # TSO500 - with UTRS
+	"Pan4841", # TSO500 - no UTRS
 	"Pan4821", # VCP1 STG R134_FH
 	"Pan4822", # VCP1 STG R184_CF
 	"Pan4823", # VCP1 STG R25_FGFR
@@ -422,7 +424,7 @@ archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4573","Pan4574"]
-tso500_panel_list = ["Pan4709"]
+tso500_panel_list = ["Pan4709","Pan4841"]
 
 
 default_panel_properties = {
@@ -817,9 +819,17 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4310data.bed",
 		"clinical_coverage_depth" : 200,
 	},
-	"Pan4709" : { # TSO500
+	"Pan4709" : { # TSO500 - with UTRS
 		"TSO500": True,
 		"sambamba_bedfile": "Pan4709dataSambamba.bed",
+		"clinical_coverage_depth" : 100,
+		"multiqc_coverage_level": 100,
+		"coverage_min_basecall_qual":25,
+		"coverage_min_mapping_qual":30,
+	},
+	"Pan4841" : { # TSO500 no UTRs
+		"TSO500": True,
+		"sambamba_bedfile": "Pan4841dataSambamba.bed",
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,

@@ -32,6 +32,7 @@ class SequencingRuns(list):
         super(SequencingRuns, self).__init__()
         # Timestamp for each instance is used to name logfiles.
         self.now = str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
+        self.runfolders = []
 
     def set_runfolders(self):
         """
@@ -47,8 +48,8 @@ class SequencingRuns(list):
         all_runfolders = os.listdir(config.runfolders)
         for folder in all_runfolders:
             folder_exists = os.path.isdir(os.path.join(config.runfolders, folder))
-            if folder not in config.ignore_directories and folder_exists:
-                self.append(folder)
+            if folder not in config.ignore_directories and folder_exists and re.compile(config.runfolder_pattern).match(folder):
+                self.runfolders.append(folder)
 
     def loop_through_runs(self):
         """
@@ -61,7 +62,7 @@ class SequencingRuns(list):
         processed_runfolders = []
 
         # Process any runfolders added to class instance with self.set_runfolders()
-        for folder in self:
+        for folder in self.runfolders:
             runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.testing)
             # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
@@ -410,7 +411,6 @@ class RunfolderProcessor(object):
         # redirect stderr to stdout so we can test for errors
         cmd = "cd %s; tar -WPcf %s %s 2>&1" % (config.runfolders, self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolder_name)
         (out, err) = self.execute_subprocess_command(cmd)
-
         # assess stdout+stderr - if successful tar does not return any output
         if self.perform_test(out, "tar_runfolder"):
             self.loggers.script.info("tar runfolder created at {} without any errors".format(self.runfolder_obj.runfolder_tarball_path))
