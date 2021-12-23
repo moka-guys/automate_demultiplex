@@ -77,6 +77,10 @@ class ValidSamplesheet:
         self.invalid_characters = ""
         self.invalid_runtypes = ""
         self.invalid_pan_nos = ""
+        self.samplename_length = ""
+        # look for double underscores in TSO500
+        self.tso_runtype = "TSO"
+        self.max_samplename_length=40
 
     def run_checks(self):
         """
@@ -235,16 +239,14 @@ class ValidSamplesheet:
         # run checks to see if samplename and sampleID match
         self.check_samplenames_match()
 
-        for list in (self.sample_id_list, self.sample_name_list):
-            if list == self.sample_name_list:
-                type = "Sample_Name"
-            elif list == self.sample_id_list:
-                type = "Sample_ID"
-
+        # to help report which column the issue is in create a dictionary of column names and list of contents
+        column_dictionary = {"Sample_ID" : self.sample_id_list, "Sample_Name" : self.sample_name_list}
+        for column in column_dictionary:
             # run more in detail checks on each Sample_ID and Sample_Name
-            self.check_samplenames_characters(list, type)
-            self.check_samplenames_runtypes(list, type)
-            self.check_samplenames_pannos(list, type)
+            self.check_samplenames_characters(column_dictionary[column], column)
+            self.check_samplenames_runtypes(column_dictionary[column], column)
+            self.check_samplenames_pannos(column_dictionary[column], column)
+            self.check_tso_samplesheet(column_dictionary[column], column)
 
         if self.invalid_characters:
             self.results["valid_characters"] = False, "SAMPLES CONTAIN INVALID CHARACTERS: " \
@@ -263,6 +265,12 @@ class ValidSamplesheet:
                                                     "{} ".format(self.invalid_runtypes)
         else:
             self.results["valid_runtypes"] = True, "Sample names and Sample IDs all contain valid runtypes. "
+
+        if self.samplename_length:
+            self.results["samplename_length"] = False, "SAMPLEID/SAMPLENAME LENGTH LONGER THAN 40 CHARACTERS: " \
+                                                      "{} ".format(self.samplename_length)
+        else:
+            self.results["samplename_length"] = True, "All Sample names and Sample IDs are 40 characters or less. "
 
     def check_samplenames_match(self):
         """
@@ -295,6 +303,19 @@ class ValidSamplesheet:
             pan_no = re.sub(r'.*Pan', 'Pan', sample).split("_")[0]
             if pan_no not in config.panel_list:
                 self.invalid_pan_nos += "{} ({}: {}). ".format(pan_no, type, sample)
+
+    def check_tso_samplesheet(self, list, type):
+        """
+        TSO500 has some extra requirements, namely the samplename must be < 40 characters and cannot have consecutive underscores.
+        """
+        for sample in list:
+            if sample.startswith(self.tso_runtype):
+                # check for double underscores in TSO samples
+                if "__" in sample:
+                    self.invalid_characters += "{} double underscore: {}. ".format(type, sample)
+                # check samplenames are longer than 40 characters
+                if len(sample) > 40:
+                    self.samplename_length += "{}: {}. ".format(type, sample)
 
     def check_samplenames_runtypes(self, list, type):
         """
