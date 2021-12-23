@@ -1400,7 +1400,7 @@ class RunfolderProcessor(object):
         """
         # Is it a novaseq run?
         if config.novaseq_id in self.runfolder_obj.runfolder_name:
-            TSO500_analysis_options = "--isNovaSeq"
+            TSO500_analysis_options = " --isNovaSeq "
         else:
             TSO500_analysis_options = ""
         # build dx run command - inputs are:
@@ -1433,11 +1433,11 @@ class RunfolderProcessor(object):
         Returns:
             dx run command for tso500_output_parser app (string)
         """
-        # get the TSO500_runfolder_tar path
-        # get the samplesheet nexus path
-        # build dictionary of pan number specific/relevant bedfile to be used in command
         #TODO what happens if we have Pan numbers wth different settings?
+        # take the first item in the list of TSO500 pan numbers as the default/primary settings - this will 
+        # primarily affect the BED file used for coverage
         tso_pan_num = config.tso500_panel_list[0]
+        # build dictionary of pan number specific/relevant bedfile to be used in command
         bedfiles = self.nexus_bedfiles(tso_pan_num)
         dx_command_list = [
             self.tso500_output_parser_dx_command,
