@@ -32,6 +32,7 @@ class SequencingRuns(list):
         super(SequencingRuns, self).__init__()
         # Timestamp for each instance is used to name logfiles.
         self.now = str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
+        self.runfolders = []
 
     def set_runfolders(self):
         """
@@ -47,8 +48,8 @@ class SequencingRuns(list):
         all_runfolders = os.listdir(config.runfolders)
         for folder in all_runfolders:
             folder_exists = os.path.isdir(os.path.join(config.runfolders, folder))
-            if folder not in config.ignore_directories and folder_exists:
-                self.append(folder)
+            if folder not in config.ignore_directories and folder_exists and re.compile(config.runfolder_pattern).match(folder):
+                self.runfolders.append(folder)
 
     def loop_through_runs(self):
         """
@@ -61,7 +62,7 @@ class SequencingRuns(list):
         processed_runfolders = []
 
         # Process any runfolders added to class instance with self.set_runfolders()
-        for folder in self:
+        for folder in self.runfolders:
             runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.testing)
             # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
@@ -155,7 +156,7 @@ class RunfolderProcessor(object):
             "jobid=$(dx run " + config.app_project + config.tso500_app + " -y --name "
         )
         self.tso500_output_parser_dx_command = (
-            "dx run " + config.app_project + config.tso500_output_parser_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.tso500_output_parser_app + " -y --name "
         )
         self.onePGT_dx_command = (
             "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
@@ -332,6 +333,7 @@ class RunfolderProcessor(object):
                 )
                 self.run_dx_run_commands()
                 self.smartsheet_workflows_commands_sent()
+                #TODO write TSO OPMS queries
                 self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(
                     self.list_of_processed_samples
                 )
@@ -402,15 +404,15 @@ class RunfolderProcessor(object):
         Input: runfolder path
         Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
         """
-        # tar argument uses :
-		# W (which verifies the archive as it's made)
-		# P uses absolute paths (required for -W step)
-		# c (creates an archive) 
-		# f (specify the filename of the archive)
+        # cd to runfolder and then run tar argument with:
+        # W (which verifies the archive as it's made)
+        # P uses absolute paths (required for -W step)
+        # c (creates an archive) 
+        # f (specify the filename of the archive)
+        # provide the folder name, not the full filepath to ensure the tar doesn't contain the full path from root
         # redirect stderr to stdout so we can test for errors
-        cmd = "tar -PWcf %s %s 2>&1" % (self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolderpath)
+        cmd = "cd %s; tar -WPcf %s %s 2>&1" % (config.runfolders, self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolder_name)
         (out, err) = self.execute_subprocess_command(cmd)
-
         # assess stdout+stderr - if successful tar does not return any output
         if self.perform_test(out, "tar_runfolder"):
             self.loggers.script.info("tar runfolder created at {} without any errors".format(self.runfolder_obj.runfolder_tarball_path))
@@ -1302,8 +1304,16 @@ class RunfolderProcessor(object):
             commands_list.append(self.add_to_depends_list("peddy"))
         
         if TSO500:
+            # build command for the TSO500 app
             commands_list.append(self.create_tso500_command())
+            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # pass "TSO" to ensure it isn't skipped
+            commands_list.append(self.add_to_depends_list("TSO"))
+            # build command for the TSO500 output parser
             commands_list.append(self.create_tso500_output_parser_command())
+            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # pass "TSO" to ensure it isn't skipped
+            commands_list.append(self.add_to_depends_list("TSO"))
         else:
             # don't need to do multiqc commands for TSO500
             commands_list.append(self.create_multiqc_command())
@@ -1390,7 +1400,7 @@ class RunfolderProcessor(object):
         """
         # Is it a novaseq run?
         if config.novaseq_id in self.runfolder_obj.runfolder_name:
-            TSO500_analysis_options = "--isNovaSeq"
+            TSO500_analysis_options = " --isNovaSeq "
         else:
             TSO500_analysis_options = ""
         # build dx run command - inputs are:
@@ -1423,10 +1433,12 @@ class RunfolderProcessor(object):
         Returns:
             dx run command for tso500_output_parser app (string)
         """
-        # get the TSO500_runfolder_tar path
-        # get the samplesheet nexus path
+        #TODO what happens if we have Pan numbers wth different settings?
+        # take the first item in the list of TSO500 pan numbers as the default/primary settings - this will 
+        # primarily affect the BED file used for coverage
+        tso_pan_num = config.tso500_panel_list[0]
         # build dictionary of pan number specific/relevant bedfile to be used in command
-        bedfiles = self.nexus_bedfiles("Pan4709")
+        bedfiles = self.nexus_bedfiles(tso_pan_num)
         dx_command_list = [
             self.tso500_output_parser_dx_command,
             self.runfolder_obj.runfolder_name,
@@ -1447,15 +1459,15 @@ class RunfolderProcessor(object):
             config.TSO500_output_parser_upload_multiqc_app_id_stage,
             config.upload_multiqc_app_id,
             config.TSO500_output_parser_coverage_commands_stage,
-            config.TSO500_output_parser_coverage_commands % (self.panel_dictionary["Pan4709"]["coverage_min_basecall_qual"],self.panel_dictionary["Pan4709"]["coverage_min_mapping_qual"]),
+            config.TSO500_output_parser_coverage_commands % (self.panel_dictionary[tso_pan_num]["coverage_min_basecall_qual"],self.panel_dictionary[tso_pan_num]["coverage_min_mapping_qual"]),
             config.TSO500_output_parser_coverage_level_stage,
-            self.panel_dictionary["Pan4709"]["clinical_coverage_depth"],
+            self.panel_dictionary[tso_pan_num]["clinical_coverage_depth"],
             config.TSO500_output_parser_multiqc_coverage_level_stage,
-            self.panel_dictionary["Pan4709"]["multiqc_coverage_level"],
+            self.panel_dictionary[tso_pan_num]["multiqc_coverage_level"],
             " -d $jobid ",
             self.dest,
             self.dest_cmd,
-            self.token.rstrip(")"),
+            self.token
         ]
         dx_command = "".join(map(str, dx_command_list))
         return dx_command
