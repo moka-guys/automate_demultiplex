@@ -424,7 +424,7 @@ archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4573","Pan4574"]
-tso500_panel_list = ["Pan4709","Pan4841"]
+tso500_panel_list = ["Pan4841","Pan4709"]
 
 
 default_panel_properties = {

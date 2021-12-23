@@ -1436,8 +1436,9 @@ class RunfolderProcessor(object):
         # get the TSO500_runfolder_tar path
         # get the samplesheet nexus path
         # build dictionary of pan number specific/relevant bedfile to be used in command
-        #TODO what happens if we have multiple Pan numbers?
-        bedfiles = self.nexus_bedfiles("Pan4709")
+        #TODO what happens if we have Pan numbers wth different settings?
+        tso_pan_num = config.tso500_panel_list[0]
+        bedfiles = self.nexus_bedfiles(tso_pan_num)
         dx_command_list = [
             self.tso500_output_parser_dx_command,
             self.runfolder_obj.runfolder_name,
@@ -1458,11 +1459,11 @@ class RunfolderProcessor(object):
             config.TSO500_output_parser_upload_multiqc_app_id_stage,
             config.upload_multiqc_app_id,
             config.TSO500_output_parser_coverage_commands_stage,
-            config.TSO500_output_parser_coverage_commands % (self.panel_dictionary["Pan4709"]["coverage_min_basecall_qual"],self.panel_dictionary["Pan4709"]["coverage_min_mapping_qual"]),
+            config.TSO500_output_parser_coverage_commands % (self.panel_dictionary[tso_pan_num]["coverage_min_basecall_qual"],self.panel_dictionary[tso_pan_num]["coverage_min_mapping_qual"]),
             config.TSO500_output_parser_coverage_level_stage,
-            self.panel_dictionary["Pan4709"]["clinical_coverage_depth"],
+            self.panel_dictionary[tso_pan_num]["clinical_coverage_depth"],
             config.TSO500_output_parser_multiqc_coverage_level_stage,
-            self.panel_dictionary["Pan4709"]["multiqc_coverage_level"],
+            self.panel_dictionary[tso_pan_num]["multiqc_coverage_level"],
             " -d $jobid ",
             self.dest,
             self.dest_cmd,
