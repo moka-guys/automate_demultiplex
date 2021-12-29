@@ -123,7 +123,8 @@ archerDx_pipeline_ID = "4562"
 snp_genotyping_pipeline_ID = "4480"
 # mokacan pipeline ID
 mokacan_pipeline_ID = "4728"
-
+# TSO500 pipeline ID
+TSO_pipeline_ID = "4991"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
