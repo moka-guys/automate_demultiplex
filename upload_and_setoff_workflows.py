@@ -333,7 +333,6 @@ class RunfolderProcessor(object):
                 )
                 self.run_dx_run_commands()
                 self.smartsheet_workflows_commands_sent()
-                #TODO write TSO OPMS queries
                 self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(
                     self.list_of_processed_samples
                 )
