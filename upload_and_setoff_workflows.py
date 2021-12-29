@@ -1400,7 +1400,7 @@ class RunfolderProcessor(object):
         """
         # Is it a novaseq run?
         if config.novaseq_id in self.runfolder_obj.runfolder_name:
-            TSO500_analysis_options = " --isNovaSeq "
+            TSO500_analysis_options = "--isNovaSeq "
         else:
             TSO500_analysis_options = ""
         # build dx run command - inputs are:
