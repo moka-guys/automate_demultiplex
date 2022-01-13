@@ -157,7 +157,7 @@ snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.14.0"
+multiqc_path = "Apps/multiqc_v1.15.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.2"
 # placeholder for IVA - will be changed to QCI when available
@@ -172,7 +172,7 @@ tso500_output_parser_app = "Apps/tso500_output_parser_v1.1"
 # inputs for tso500_output_parser_app
 coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
-multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G54z260028qBZ90b3kpyVgBq" 
+multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G7QB6zj0jy1z1ZV1P5VZBj9p" 
 upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
 TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
 
