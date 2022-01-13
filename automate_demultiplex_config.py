@@ -322,7 +322,7 @@ if testing:
 else:
 	# oncology email address for email alerts
 	oncology_ops_email = "m.neat@nhs.net"
-	WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email]
+	WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email, "eblab@gstt.nhs.uk", "lu.liu@viapath.co.uk"]
 
 
 # DNA Nexus authentication token
