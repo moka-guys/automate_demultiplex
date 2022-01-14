@@ -314,6 +314,7 @@ rpkm_project_input = " -iproject_name="
 rpkm_bamfiles_to_download_input = " -ibamfile_pannumbers="
 
 # email addresses
+# if sending to multiple addresses provide in a list
 mokaguys_email = "gst-tr.mokaguys@nhs.net"
 if testing:
 	# oncology email address for email alerts

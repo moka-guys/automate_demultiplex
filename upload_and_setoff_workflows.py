@@ -2344,54 +2344,45 @@ class RunfolderProcessor(object):
         Oncology and rare disease emails are sent seperately and independantly of each other.
         Returns = None
         """
+        # email body template - has the following requires following format:
+        # {config.test_email_header} {self.runfolder_obj.runfolder_name} being processed using workflow(s) {",".join(self.sql_queries["oncology"]["workflows"])}\n\n{sql_string}\n{"\n".join(self.sql_queries["oncology"]["query"])}\n
+        #
+        #  eg 
+        #   AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL (config.test_email_header - can be empty string)
+        #   999999_M02353_0496_000000000-D8M36_SWIFT being processed using workflow(s) MokaAMP_v2.2 (self.runfolder_obj.runfolder_name ... ",".join(self.sql_queries["oncology"]["workflows"]) )
+        #   Please update Moka using the below queries and ensure that 10 records are updated: (sql string - This can change - is different for the email to users who don't need the sql queries)
+        #   insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('NTCcon','NULL','999999_M02353_0496_000000000-D8M36_SWIFT','4851','4081') (sql queries - can be empty string for users who don't need these)
+    
+        sql_email_message = ("{} {} being processed using workflow(s) {}\n\n{}\n{}\n") 
+        
         # send oncology email first
         if self.sql_queries["oncology"]:
             email_subject = (
-                "MOKA ALERT: Started pipeline for " + self.runfolder_obj.runfolder_name
+                "MOKA ALERT: Started pipeline for {}".format(self.runfolder_obj.runfolder_name)
             )
             email_priority = 1  # high priority
-            email_message = (
-                config.test_email_header
-                + self.runfolder_obj.runfolder_name
-                + " being processed using workflow(s) "
-                + ",".join(self.sql_queries["oncology"]["workflows"])
-                + "\n\nPlease update Moka using the below queries and ensure that "
-                + str(self.sql_queries["oncology"]["count"])
-                + " records are updated:\n\n"
-                + "\n".join(self.sql_queries["oncology"]["query"])+ "\n\n"
-            )
+            # populate the sql_string needed to fill the email_message
+            sql_string = "Please update Moka using the below queries and ensure that {} records are updated:\n\n".format(str(self.sql_queries["oncology"]["count"]))
+            email_message = sql_email_message.format(config.test_email_header, self.runfolder_obj.runfolder_name,",".join(self.sql_queries["oncology"]["workflows"]),sql_string,"\n".join(self.sql_queries["oncology"]["query"]))
             # send email - if needed, pass multiple recipients in a list (no longer needed)
             self.send_an_email(config.you, email_subject, email_message, email_priority)
 
             # email_for_cancer_ops leads to inform the pipeline has started
-            email_message = (
-                config.test_email_header
-                + self.runfolder_obj.runfolder_name
-                + " being processed using workflow(s) "
-                + ",".join(self.sql_queries["oncology"]["workflows"])
-                + "\n"
-                + str(self.sql_queries["oncology"]["count"])
-                + " samples are being processed."
-            )
+            # set sql_string for the email message
+            sql_string="{} samples are being processed".format(str(self.sql_queries["oncology"]["count"]))
+            # fill template using empty string in place of sql queries
+            email_message = sql_email_message.format(config.test_email_header,self.runfolder_obj.runfolder_name,",".join(self.sql_queries["oncology"]["workflows"]),sql_string,"")
             self.send_an_email(config.oncology_you, email_subject, email_message, email_priority)
         
         # Send TSO500 queries
         if self.sql_queries["TSO500"]:
             email_subject = (
-                "MOKA ALERT: Started pipeline for " + self.runfolder_obj.runfolder_name
+                "MOKA ALERT: Started pipeline for {}".format(self.runfolder_obj.runfolder_name)
             )
             email_priority = 1  # high priority
-            email_message = (
-                config.test_email_header
-                + self.runfolder_obj.runfolder_name
-                + " being processed using workflow(s) "
-                + ",".join(self.sql_queries["TSO500"]["workflows"])
-                + "\n\nPlease update Moka using the below queries and ensure that "
-                + str(self.sql_queries["TSO500"]["count"])
-                + " records are updated:\n\n"
-                + "\n".join(self.sql_queries["TSO500"]["query"])+ "\n\n"
-            )
-            # send email - if needed, pass multiple recipients in a list (no longer needed)
+            sql_string = "Please update Moka using the below queries and ensure that {} records are updated:\n\n".format(str(self.sql_queries["TSO500"]["count"]))
+            email_message = sql_email_message.format(config.test_email_header, self.runfolder_obj.runfolder_name,",".join(self.sql_queries["TSO500"]["workflows"]),sql_string,"\n".join(self.sql_queries["TSO500"]["query"]))
+            # send email
             self.send_an_email(config.you, email_subject, email_message, email_priority)
 
         # build rare disease emails
@@ -2418,35 +2409,21 @@ class RunfolderProcessor(object):
         if workflows and sql_statements:
             # email this query
             email_subject = (
-                "MOKA ALERT: Started pipeline for " + self.runfolder_obj.runfolder_name
+                "MOKA ALERT: Started pipeline for {}".format(self.runfolder_obj.runfolder_name)
             )
             email_priority = 1  # high priority
-            email_message = (
-                config.test_email_header
-                + self.runfolder_obj.runfolder_name
-                + " being processed using workflow "
-                + ",".join(set(workflows))
-                + "\n\nPlease update Moka using the below query and ensure that "
-                + str(count)
-                + " records are updated:\n\n"
-                + "\n".join(sql_statements)
-            )
+            sql_string = "Please update Moka using the below queries and ensure that {} records are updated:\n\n".format((str(count)))
+            email_message = sql_email_message.format(config.test_email_header, self.runfolder_obj.runfolder_name,",".join(set(workflows)),sql_string,"\n".join(sql_statements))
             # send email
             self.send_an_email(config.you, email_subject, email_message, email_priority)
 
         if self.sql_queries["mokawes"]:
             # send email to WES team to help IR upload
             email_subject = (
-                    "MOKA ALERT: Started pipeline for " + self.runfolder_obj.runfolder_name
+                    "MOKA ALERT: Started pipeline for {}".format(self.runfolder_obj.runfolder_name)
                 )
-            email_message = (
-                config.test_email_header
-                + self.runfolder_obj.runfolder_name
-                + " being processed using "
-                + config.mokawes_path.split("/")[-1]
-                + "\nThe following samples are being processed:\n"
-                + "\n".join(self.sql_queries["mokawes"]["samplename_email"])
-            )
+            sql_string = "The following samples are being processed:\n"
+            email_message = sql_email_message.format(config.test_email_header, self.runfolder_obj.runfolder_name,config.mokawes_path.split("/")[-1],sql_string,"\n".join(self.sql_queries["mokawes"]["samplename_email"]))
             self.send_an_email(config.WES_sample_name_email_list, email_subject, email_message, email_priority)
 
     def upload_rest_of_runfolder(self):
