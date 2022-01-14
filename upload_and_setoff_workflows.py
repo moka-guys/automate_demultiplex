@@ -2412,7 +2412,7 @@ class RunfolderProcessor(object):
                 "MOKA ALERT: Started pipeline for {}".format(self.runfolder_obj.runfolder_name)
             )
             email_priority = 1  # high priority
-            sql_string = "Please update Moka using the below queries and ensure that {} records are updated:\n\n".format((str(count)))
+            sql_string = "Please update Moka using the below queries and ensure that {} records are updated:\n\n".format(str(count))
             email_message = sql_email_message.format(config.test_email_header, self.runfolder_obj.runfolder_name,",".join(set(workflows)),sql_string,"\n".join(sql_statements))
             # send email
             self.send_an_email(config.you, email_subject, email_message, email_priority)
