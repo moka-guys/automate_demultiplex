@@ -123,7 +123,8 @@ archerDx_pipeline_ID = "4562"
 snp_genotyping_pipeline_ID = "4480"
 # mokacan pipeline ID
 mokacan_pipeline_ID = "4728"
-
+# TSO500 pipeline ID
+TSO_pipeline_ID = "4991"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -156,7 +157,7 @@ snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.14.0"
+multiqc_path = "Apps/multiqc_v1.15.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.2"
 # placeholder for IVA - will be changed to QCI when available
@@ -171,7 +172,7 @@ tso500_output_parser_app = "Apps/tso500_output_parser_v1.1"
 # inputs for tso500_output_parser_app
 coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
-multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G54z260028qBZ90b3kpyVgBq" 
+multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G7QB6zj0jy1z1ZV1P5VZBj9p" 
 upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
 TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
 
@@ -313,6 +314,7 @@ rpkm_project_input = " -iproject_name="
 rpkm_bamfiles_to_download_input = " -ibamfile_pannumbers="
 
 # email addresses
+# if sending to multiple addresses provide in a list
 mokaguys_email = "gst-tr.mokaguys@nhs.net"
 if testing:
 	# oncology email address for email alerts
@@ -321,7 +323,7 @@ if testing:
 else:
 	# oncology email address for email alerts
 	oncology_ops_email = "m.neat@nhs.net"
-	WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email]
+	WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk", mokaguys_email, "eblab@gstt.nhs.uk", "lu.liu@viapath.co.uk"]
 
 
 # DNA Nexus authentication token
