@@ -225,7 +225,7 @@ class RunfolderProcessor(object):
             "Authorization": "Bearer " + config.smartsheet_api_key,
             "Content-Type": "application/json",
         }
-        self.smartsheet_url = "https://app.smartsheet.com/2.0/sheets/" + str(
+        self.smartsheet_url = "https://api.smartsheet.com/2.0/sheets/" + str(
             config.smartsheet_sheetid
         )
 
@@ -2146,26 +2146,29 @@ class RunfolderProcessor(object):
 
         # create url for uploading a new row
         url = self.smartsheet_url + "/rows"
-
-        # add the row using POST
-        r = requests.post(url, headers=self.headers, data=payload)
-
-        # capture the row id
-        response = r.json()
-
+        try:
+            # add the row using POST
+            r = requests.post(url, headers=self.headers, data=payload)
+            # capture the row id
+            response = r.json()
+        except:
+            self.script_logfile.write("Unable to connect to API. Check payload and URL\n")
+            self.logger("Unable to connect to smartsheet API for run " + self.runfolder + ". Check payload and url")
+            return False
+        else:
         # check the result of the update attempt
-        for line_key in response:
-            if line_key == "message":
-                if response[line_key] == "SUCCESS":
-                    self.loggers.script.info(
-                        "smartsheet_pass 'smartsheet updated to say in progress'"
-                    )
-                else:
-                    self.loggers.script.error(
-                        "smartsheet_fail 'run started NOT added to smartsheet for run {}'".format(
-                            self.runfolder_obj.runfolder_name
+            for line_key in response:
+                if line_key == "message":
+                    if response[line_key] == "SUCCESS":
+                        self.loggers.script.info(
+                            "smartsheet_pass 'smartsheet updated to say in progress'"
                         )
-                    )
+                    else:
+                        self.loggers.script.error(
+                            "smartsheet_fail 'run started NOT added to smartsheet for run {}'".format(
+                                self.runfolder_obj.runfolder_name
+                            )
+                        )
 
     def write_opms_queries_custom_panel(self, list_of_processed_samples):
         """
