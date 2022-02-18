@@ -225,7 +225,7 @@ class RunfolderProcessor(object):
             "Authorization": "Bearer " + config.smartsheet_api_key,
             "Content-Type": "application/json",
         }
-        self.smartsheet_url = "https://api.smartsheet.com/2.0/sheets/" + str(
+        self.smartsheet_url = "https://app.smartsheet.com/2.0/sheets/" + str(
             config.smartsheet_sheetid
         )
 
@@ -297,7 +297,7 @@ class RunfolderProcessor(object):
             # if not TSO500 will return None
             if TSO500_sample_list:
                 # tar runfolder
-                self.tar_runfolder()
+                #self.tar_runfolder()
                 # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                 # set tar folder path in place of the list of fastqs to upload
                 self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
