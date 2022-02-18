@@ -537,20 +537,17 @@ class ready2start_demultiplexing():
             # capture the output of the POST statement to capture the id of the row that has been updated.
             # This can be used when updating the status to complete in function smartsheet_demultiplex_complete().
             response = r.json()
-            # capture the value of the row id from the json response
-            self.rowid = response["result"]["id"]
         except:
-            self.script_logfile.write("Unable to connect to API. Check payload and URL\n")
-            #self.logger("Unable to connect to smartsheet API for run " + self.runfolder + ". Check " + payload + "and" + self.url)
-            #self.logger("Unable to connect to smartsheet API for run " + self.runfolder + ". Check " + payload + "and" + self.url)
+            self.script_logfile.write("Unable to connect to SmartSheet API. Check payload and URL\n")
+            self.logger("Unable to connect to SmartSheet API for run " + self.runfolder, "Check payload and URL")
             return False
         else:
-            
+            # capture the value of the row id from the json response
+            self.rowid = response["result"]["id"]
             # Use response.get("") instead of response[""] to avoid KeyError if "message" missing.
             if response.get("message") == "SUCCESS":
                 # Report to system log file
                 self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_pass")
-                self.logger("Unable to connect to smartsheet API for run " + self.runfolder + ". Check payload and url")
             else:
                 # Record error message to script log file
                 self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
@@ -565,8 +562,8 @@ class ready2start_demultiplexing():
         try:
             assert self.rowid
         except AssertionError:
-            self.script_logfile.write("Unable to connect to API. Check payload and URL\n")
-            self.logger("Unable to connect to smartsheet API for run " + self.runfolder + ". Check payload and url")
+            self.script_logfile.write("No rowid available to update API. RowID not added\n")
+            self.logger("No rowid available to update API " + self.runfolder, "RowID not added")
             return
 
         # assign current timestamp to self.smartsheet_complete
