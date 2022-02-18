@@ -2152,8 +2152,8 @@ class RunfolderProcessor(object):
             # capture the row id
             response = r.json()
         except:
-            self.script_logfile.write("Unable to connect to API. Check payload and URL\n")
-            self.logger("Unable to connect to smartsheet API for run " + self.runfolder + ". Check payload and url")
+            self.loggers.script.error("Unable to connect to API. Check payload and URL\n")
+            self.loggers.script.error("Unable to connect to smartsheet API for run " + self.runfolder + ". Check payload and url")
             return False
         else:
         # check the result of the update attempt
