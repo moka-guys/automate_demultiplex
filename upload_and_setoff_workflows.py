@@ -298,7 +298,7 @@ class RunfolderProcessor(object):
             # if not TSO500 will return None
             if TSO500_sample_list:
                 # tar runfolder
-                self.tar_runfolder()
+                #self.tar_runfolder()
                 # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                 # set tar folder path in place of the list of fastqs to upload
                 self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
@@ -2154,26 +2154,29 @@ class RunfolderProcessor(object):
 
         # create url for uploading a new row
         url = self.smartsheet_url + "/rows"
-
-        # add the row using POST
-        r = requests.post(url, headers=self.headers, data=payload)
-
-        # capture the row id
-        response = r.json()
-
+        try:
+            # add the row using POST
+            r = requests.post(url, headers=self.headers, data=payload)
+            # capture the row id
+            response = r.json()
+        except:
+            self.loggers.script.error("Unable to connect to API. Check payload and URL\n")
+            self.loggers.script.error("Unable to connect to smartsheet API for run " + self.runfolder + ". Check payload and url")
+            return False
+        else:
         # check the result of the update attempt
-        for line_key in response:
-            if line_key == "message":
-                if response[line_key] == "SUCCESS":
-                    self.loggers.script.info(
-                        "smartsheet_pass 'smartsheet updated to say in progress'"
-                    )
-                else:
-                    self.loggers.script.error(
-                        "smartsheet_fail 'run started NOT added to smartsheet for run {}'".format(
-                            self.runfolder_obj.runfolder_name
+            for line_key in response:
+                if line_key == "message":
+                    if response[line_key] == "SUCCESS":
+                        self.loggers.script.info(
+                            "smartsheet_pass 'smartsheet updated to say in progress'"
                         )
-                    )
+                    else:
+                        self.loggers.script.error(
+                            "smartsheet_fail 'run started NOT added to smartsheet for run {}'".format(
+                                self.runfolder_obj.runfolder_name
+                            )
+                        )
 
     def write_opms_queries_custom_panel(self, list_of_processed_samples):
         """

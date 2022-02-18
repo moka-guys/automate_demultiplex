@@ -202,7 +202,7 @@ class ready2start_demultiplexing():
         # Requests info
         self.headers = config.smartsheet_request_headers
         self.url = config.smartsheet_request_url
-
+        
         # variables to hold checksums:
         self.sequencer_checksum = ""
         self.workstation_checksum = ""
@@ -527,33 +527,45 @@ class ready2start_demultiplexing():
         ', "value": "Demultiplex"}, {"columnId": ' + self.ss_samples + ', "value": ' + str(self.sample_count) + '},{"columnId": ' + self.ss_status + \
         ', "value": "In Progress"},{"columnId": ' + self.ss_priority + ', "value": "Medium"},{"columnId": ' + self.ss_assigned + \
         ', "value": "aledjones@nhs.net"},{"columnId": ' + self.ss_received + ', "value": "' + str(self.smartsheet_started) + '"}],"toBottom":true}'
-
         # Create url for uploading a new row
         url = self.url + "/rows"
 
         # Add the row using POST
-        r = requests.post(url, headers=self.headers, data=payload)
-        # capture the output of the POST statement to capture the id of the row that has been updated.
-        # This can be used when updating the status to complete in function smartsheet_demultiplex_complete().
-        response = r.json()
-        # capture the value of the row id from the json response
-        self.rowid = response["result"]["id"]
-
-        # Use response.get("") instead of response[""] to avoid KeyError if "message" missing.
-        if response.get("message") == "SUCCESS":
-            # Report to system log file
-            self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_pass")
+        #Add try statement to stop script from failing
+        try:
+            r = requests.post(url, headers=self.headers, data=payload)
+            # capture the output of the POST statement to capture the id of the row that has been updated.
+            # This can be used when updating the status to complete in function smartsheet_demultiplex_complete().
+            response = r.json()
+        except:
+            self.script_logfile.write("Unable to connect to SmartSheet API. Check payload and URL\n")
+            self.logger("Unable to connect to SmartSheet API for run " + self.runfolder, "Check payload and URL")
+            return False
         else:
-            # Record error message to script log file
-            self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
-            # Record failure in system logs so that an error can be reported via slack.
-            # Failure to update smartsheet is not critical as it does not stop the run being processed.
-            self.logger("Smartsheet was NOT updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_fail")
+            # capture the value of the row id from the json response
+            self.rowid = response["result"]["id"]
+            # Use response.get("") instead of response[""] to avoid KeyError if "message" missing.
+            if response.get("message") == "SUCCESS":
+                # Report to system log file
+                self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_pass")
+            else:
+                # Record error message to script log file
+                self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
+                # Record failure in system logs so that an error can be reported via slack.
+                # Failure to update smartsheet is not critical as it does not stop the run being processed.
+                self.logger("Smartsheet was NOT updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_fail")
 
     def smartsheet_demultiplex_complete(self):
         """Update smartsheet to say demultiplexing is complete.
         Add the completed date and calculate the duration (in days) and if met TAT.
         """
+        try:
+            assert self.rowid
+        except AssertionError:
+            self.script_logfile.write("No rowid available to update API. RowID not added\n")
+            self.logger("No rowid available to update API " + self.runfolder, "RowID not added")
+            return
+
         # assign current timestamp to self.smartsheet_complete
         self.smartsheet_complete = '{:%Y-%m-%d}'.format(datetime.datetime.now())
 
