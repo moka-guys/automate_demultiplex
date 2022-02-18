@@ -43,7 +43,7 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
-demultiplex_test_folder = ["999999_M02353_0496_000000000-D8M36_demux_nointegrity","999999_A01229_0010_AHY5TWDRXX_demux_integrity","999999_A01229_0038_AH5MG7DRXY_TSO500","folder123","123_folder","999999_A01229_0049_AHMKGHDRXY_TSO500", "999999_NB552085_0077_AHYNCMAFXY_MOKAWES_MOKAPIPE_MOKACAN"]
+demultiplex_test_folder = ["999999_M02353_0496_000000000-D8M36_demux_nointegrity","999999_A01229_0010_AHY5TWDRXX_demux_integrity","999999_A01229_0038_AH5MG7DRXY_TSO500","folder123","123_folder","999999_A01229_0049_AHMKGHDRXY_TSO500"]
 
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
