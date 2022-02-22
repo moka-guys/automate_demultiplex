@@ -167,7 +167,7 @@ class RunfolderProcessor(object):
         self.upload_multiqc_command = (
             "jobid=$(dx run " + config.app_project + config.upload_multiqc_path + " -y "
         )
-        self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
+        #self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
         self.RPKM_command = "dx run " + config.app_project + config.RPKM_path + " --instance-type mem1_ssd1_x8"
         self.mokaamp_command = (
             "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
@@ -333,7 +333,7 @@ class RunfolderProcessor(object):
                     self.start_building_dx_run_cmds(self.list_of_processed_samples)
                 )
                 self.run_dx_run_commands()
-                self.smartsheet_workflows_commands_sent()
+                #self.smartsheet_workflows_commands_sent()
                 self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(
                     self.list_of_processed_samples
                 )
@@ -1329,7 +1329,7 @@ class RunfolderProcessor(object):
             commands_list.append(self.create_upload_multiqc_command())
 
         # smartsheet
-        commands_list.append(self.create_smartsheet_command())
+        #commands_list.append(self.create_smartsheet_command())
         return commands_list
 
     def create_mokawes_command(self, fastq, pannumber):
@@ -2160,9 +2160,8 @@ class RunfolderProcessor(object):
             # capture the row id
             response = r.json()
         except:
-            self.loggers.script.error("Unable to connect to API. Check payload and URL\n")
-            self.loggers.script.error("Unable to connect to smartsheet API for run " + self.runfolder + ". Check payload and url")
-            return False
+            self.loggers.script.error("Unable to connect to smartsheet API for run " +  self.runfolder_obj.runfolder_name + ". Check" + payload + "and" + self.smartsheet_url)
+            return
         else:
         # check the result of the update attempt
             for line_key in response:
