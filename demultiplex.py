@@ -540,7 +540,7 @@ class ready2start_demultiplexing():
         except:
             self.script_logfile.write("Unable to connect to SmartSheet API. Check payload and URL\n")
             self.logger("Unable to connect to SmartSheet API for run " + self.runfolder, "Check payload and URL")
-            return False
+            return
         else:
             # capture the value of the row id from the json response
             self.rowid = response["result"]["id"]
