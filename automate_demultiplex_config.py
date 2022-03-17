@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True #TODO change to False
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -112,9 +112,9 @@ reference_sample_ids = ["NA12878", "136819"]
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
-mokapipe_congenica_pipeline_ID = "4854"
+mokapipe_congenica_pipeline_ID = "5080" #TODO DONE make new pipeline version in moka (item table)
 # Current MokaWES ID
-mokawes_pipeline_ID = "4318"
+mokawes_pipeline_ID = "5078"
 # MokaAMP ID
 mokaamp_pipeline_ID = "4851"
 # Archer ID
@@ -144,7 +144,7 @@ project_success = 'Created new project called "%s"'
 app_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"
 # path to the workflow in the app project
 
-mokapipe_path = "Workflows/GATK3.5_v2.13"
+mokapipe_path = "Workflows/GATK3.5_v2.14" #TODO DONE - make new workflow
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 
@@ -159,9 +159,7 @@ peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
 multiqc_path = "Apps/multiqc_v1.15.0"
 # path to congenica upload app
-congenica_app_path = "Apps/congenica_upload_v1.2"
-# placeholder for IVA - will be changed to QCI when available
-iva_app_path = ""
+congenica_app_path = "Apps/congenica_upload_v1.3.2"
 
 # TSO500 app
 tso500_app = "Apps/TSO500_v1.3"
@@ -178,8 +176,6 @@ TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -
 
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.4.0"
-# smartsheet app
-smartsheet_path = "Apps/smartsheet_mokapipe_complete_v1.2"
 # RPKM path
 RPKM_path = "Apps/RPKM_using_conifer_v1.6"
 # FastQC app
@@ -195,18 +191,28 @@ live_tag = "live"
 # =====istages=====
 mokapipe_filter_vcf_with_bedfile_stage = "stage-G5Kpgv80zB02Q64zFf94G05F"
 mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
+
 # Mokapipe workflow inputs
 mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
-mokapipe_sambamba_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
+mokapipe_sambamba_bed_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
+mokapipe_sambamba_additional_filter_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.additional_filter_commands=" 
+mokapipe_sambamba_min_base_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_base_qual=" 
+mokapipe_sambamba_min_mapping_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_mapping_qual=" 
+mokapipe_sambamba_coverage_level = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.coverage_level=" 
 mokapipe_mokapicard_vendorbed_input = (
 	" -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 )
 mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
+mokapipe_haplotype_vcf_output_format = " -i" +mokapipe_gatk_human_exome_stage + ".output_format="
 mokapipe_filter_vcf_with_bedfile_bed_input = " -i" +mokapipe_filter_vcf_with_bedfile_stage + ".bedfile="
 mokapipe_vcf_output_name = "filtered_vcf"
 mokapipe_bam_output_name = "bam"
+mokapipe_happy_skip = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.skip=%s" 
+mokapipe_happy_prefix = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.prefix=%s" 
+
+#TODO add mokapipe_fhPRS_skip_stage - see mokapipe_bwa_rg_sample as example
 
 
 # MokaWES workflow_inputs
@@ -224,7 +230,7 @@ wes_sentieon_targets_bed = " -i%s.targets_bed=" % sentieon_stage_id
 #SNPGenotyping workflow inputs
 snp_fastqc1 = " -istage-FgPp4V00YkVJVjKF4kYkBF8v.reads=" # FastQC Read 1
 snp_fastqc2 = " -istage-FgPp4V00YkVJVjKF4kYkBF90.reads=" # FastQC Read 2
-snp_sentieon_stage_id = "stage-FgPp4XQ0YkV48jZG4Py6F55k"
+snp_sentieon_stage_id = "stage-FgPp4XQ0YkV48jZG4Py6F55k=="
 # BED file used to restrict Senteion variant calling
 snp_sentieon_targets_bed = " -i%s.targets_bed=" % snp_sentieon_stage_id
 # sample name for sentieon app - prevents sample being incorrectly parsed from fastq filename
@@ -305,9 +311,6 @@ TSO500_output_parser_coverage_commands_stage = " -icoverage_commands="
 TSO500_output_parser_coverage_level_stage = " -icoverage_level="
 TSO500_output_parser_multiqc_coverage_level_stage = " -imultiqc_coverage_level="
 
-# Smartsheet
-smartsheet_mokapipe_complete = " -iNGS_run="
-
 # RPKM inputs
 rpkm_bedfile_input = " -ibedfile="
 rpkm_project_input = " -iproject_name="
@@ -339,11 +342,12 @@ admin_users = ["mokaguys"]
 # =====Decision support script
 # takes an analysis id and builds inputs for the decision support upload.
 decision_support_tool_input_script = "decision_support_tool_inputs.py"
-mokawes_sentieon_bam_output_name = "mappings_realigned_bam"
-mokawes_sentieon_bai_output_name = "mappings_realigned_bai"
+mokawes_sentieon_bam_output_name = "mappings_bam"
+mokawes_sentieon_bai_output_name = "mappings_bam_bai"
 mokawes_sentieon_vcf_output_name = "variants_vcf"
 congenica_vcf_inputname = " -ivcf="
 congenica_bam_inputname = " -ibam="
+congenica_samplename = " -ianalysis_name="
 
 
 # =====List of all panel numbers=====
@@ -351,6 +355,7 @@ panel_list = [
 	"Pan4081", # swift EGFR 
 	"Pan4082", # swift 57 
 	"Pan2835", # twist WES
+	"Pan4940", # Twist WES for EB lab
 	"Pan4042", # STG VCP2 BRCA
 	"Pan4043", # STG VCP3
 	"Pan4044", # STG VCP1
@@ -420,7 +425,7 @@ panel_list = [
 vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044","Pan4821","Pan4822","Pan4823","Pan4824","Pan4825"]
 vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049","Pan4816","Pan4817","Pan4818","Pan4819","Pan4820"]
 vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390","Pan4826","Pan4827","Pan4828","Pan4829","Pan4830","Pan4831","Pan4832","Pan4833","Pan4834","Pan4835","Pan4836","Pan4837","Pan4838","Pan4839","Pan4840"]
-WES_panel_lists = ["Pan2835","Pan3174"]
+WES_panel_lists = ["Pan2835","Pan3174","Pan4940"]
 SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
@@ -469,6 +474,8 @@ default_panel_properties = {
 	"TSO500": False,
 	"coverage_min_basecall_qual":None,
 	"coverage_min_mapping_qual":None,
+	#TODO add PRS skip default = True,
+	#TODO add all sambamba defaults here - will have to make sure these are adjusted accordingly for each pan number below.
 }
 
 # override default panel settings
@@ -479,6 +486,15 @@ panel_settings = {
 		"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
 		"sambamba_bedfile": "Pan493dataSambamba.bed",
 		"peddy": True,
+		"congenica_upload": False
+	},
+	"Pan4940": {  # TWIST WES for EB lab
+		"mokawes": True,
+		"multiqc_coverage_level": 20,
+		"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
+		"sambamba_bedfile": "Pan493dataSambamba.bed",
+		"peddy": True,
+		"congenica_project": "5026",#TODO change from validation project
 	},
 	"Pan3174": {  # TWIST WES TRIO at GSTT
 		"mokawes": True,
@@ -486,6 +502,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
 		"sambamba_bedfile": "Pan493dataSambamba.bed",
 		"peddy": True,
+		"congenica_upload": False
 	},
 	"Pan4081": {  # EGFR SWIFT Panel
 		"mokaamp": True,
@@ -517,6 +534,7 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4398data.bed",
 		"sambamba_bedfile": "Pan4397dataSambamba.bed",
 		"STG": True,
+		#TODO add FH_skip=false
 	},
 	"Pan4042": {  # VCP2 STG BRCA
 		"mokapipe": True,
@@ -568,6 +586,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4397data.bed",
 	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4398data.bed",
+		#TODO set FH PRS skip to False (any other panels where we should do this??)
 	},
 	"Pan4121": {  #VCP1 R184 CF (Viapath)
 	    "mokapipe": True,
@@ -849,6 +868,7 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4398data.bed",
 		"sambamba_bedfile": "Pan4397dataSambamba.bed",
 		"STG": True,
+		#TODO set PRS skip = True
 	},
 	"Pan4822": {  # VCP1 STG R184_CF
 		"mokapipe": True,
@@ -1144,35 +1164,6 @@ panel_settings = {
 	},
 }
 
-# =====smartsheet API=====
-# smartsheet sheet ID
-smartsheet_sheetid = 2798264106936196
-
-# API key
-smartsheet_api_key_file = "{document_root}/.smartsheet_auth_token".format(
-	document_root=document_root
-)
-with open(smartsheet_api_key_file, "r") as ss_api:
-	smartsheet_api_key = ss_api.readline().rstrip()
-
-# columnIds
-ss_title = 6197963270711172
-ss_description = 3946163457025924
-ss_samples = 957524288530308
-ss_status = 8449763084396420
-ss_priority = 4790588387157892
-ss_assigned = 2538788573472644
-ss_received = 6723667267741572
-ss_completed = 4471867454056324
-ss_duration = 6519775204534148
-ss_metTAT = 4267975390848900
-
-# ================ Requests info
-smartsheet_request_headers = {
-	"Authorization": "Bearer " + smartsheet_api_key,
-	"Content-Type": "application/json",
-}
-smartsheet_request_url = "https://api.smartsheet.com/2.0/sheets/" + str(smartsheet_sheetid)
 
 # =================turnaround time
 # if a task takes more than this amount of time it is out of TAT

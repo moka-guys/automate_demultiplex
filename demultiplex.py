@@ -125,10 +125,6 @@ class ready2start_demultiplexing():
         Send progress messages via email.
     test_bcl2fastq()
         Raise exception if bcl2fastq is not installed.
-    smartsheet_demultiplex_in_progress()
-        Update smartsheet to say that demultiplexing is in progress.
-    smartsheet_demultiplex_complete()
-        Update smartsheet to say that demultiplexing is complete.
     logger(message, tool)
         Write log messages to the system log.
     """
@@ -178,37 +174,9 @@ class ready2start_demultiplexing():
         self.email_priority = 1
         self.email_message = ""
 
-        # Smartsheet config
-        # API key
-        self.api_key = config.smartsheet_api_key
-        # Smartsheet id
-        self.sheetid = config.smartsheet_sheetid
-        # New row variable
-        self.rowid = ""
-        # Time stamp for when run started
-        self.smartsheet_started = ""
-        self.smartsheet_complete = ""
-        # Column ids
-        self.ss_title = str(config.ss_title)
-        self.ss_description = str(config.ss_description)
-        self.ss_samples = str(config.ss_samples)
-        self.ss_status = str(config.ss_status)
-        self.ss_priority = str(config.ss_priority)
-        self.ss_assigned = str(config.ss_assigned)
-        self.ss_received = str(config.ss_received)
-        self.ss_completed = str(config.ss_completed)
-        self.ss_duration = str(config.ss_duration)
-        self.ss_metTAT = str(config.ss_metTAT)
-        # Requests info
-        self.headers = config.smartsheet_request_headers
-        self.url = config.smartsheet_request_url
-        
         # variables to hold checksums:
         self.sequencer_checksum = ""
         self.workstation_checksum = ""
-
-        # variable to count # samples on a run - used to update smartsheet
-        self.sample_count = 0
 
     def already_demultiplexed(self, runfolder):
         """Check if the runfolder has been demultiplexed. This is denoted by the presence of the
@@ -335,9 +303,6 @@ class ready2start_demultiplexing():
                         sample_strings.append(sample_id)
                         sample_strings.append(sample_name)
 
-                        # increase sample count to record in smartsheet how many samples have been processed
-                        self.sample_count += 1
-
             # Loop through the characters of each sample string
             for sample_string in sample_strings:
                 for char in sample_string:
@@ -395,8 +360,6 @@ class ready2start_demultiplexing():
                 with open(demultiplex_log,'w') as bcl2fastq2_log:
                     bcl2fastq2_log.write("\n"+config.demultiplexing_log_file_TSO500_message)
             else:
-                # Call function to add the run to smartsheet, with status set to 'in progress' - only do this after integrity check passed otherwise smartsheet updated multiple times
-                self.smartsheet_demultiplex_in_progress()
                 # Set a string with the shell command to run demultiplexing.
                 # The command appends bcl2fastq stdout and stderr to the demultiplex_log file.
                 # Example: "/usr/local/bcl2fastq2-v2.17.1.14/bin/bcl2fastq
@@ -440,8 +403,6 @@ class ready2start_demultiplexing():
         if re.search(config.demultiplex_success_match, bcl2fastq_log_tail):
             # Write to system log
             self.logger("Demultiplexing complete without error for run " + self.runfolder, "demultiplex_success")
-            # Call function which updates smartsheet, changing status for this run from in progress to complete, where task = demultiplex.
-            self.smartsheet_demultiplex_complete()
 
         # If demultiplexing did not complete without errors
         else:
@@ -503,104 +464,6 @@ class ready2start_demultiplexing():
         else:
             # Write test success message to system log
             self.logger("BCL2FastQ installation test passed.", "demultiplex_success")
-
-    def smartsheet_demultiplex_in_progress(self):
-        """Update smartsheet to say that demultiplexing is in progress."""
-
-        # Take current time stamp
-        self.smartsheet_started = '{:%Y-%m-%d}'.format(datetime.datetime.now())
-
-        # Uncomment this block to get the column ids for a new sheet
-        ########################################################################
-        # # Get all columns.
-        # url=self.url+"/columns"
-        # r = requests.get(url, headers=self.headers)
-        # response= r.json()
-        #
-        # # get the column ids
-        # for i in response['data']:
-        #     print i['title'], i['id']
-        ########################################################################
-
-        # create a json object that is used to inserted row into  into smartsheet
-        payload = '{"cells": [{"columnId": ' + self.ss_title + ', "value": "' + self.runfolder + '"}, {"columnId": ' + self.ss_description + \
-        ', "value": "Demultiplex"}, {"columnId": ' + self.ss_samples + ', "value": ' + str(self.sample_count) + '},{"columnId": ' + self.ss_status + \
-        ', "value": "In Progress"},{"columnId": ' + self.ss_priority + ', "value": "Medium"},{"columnId": ' + self.ss_assigned + \
-        ', "value": "aledjones@nhs.net"},{"columnId": ' + self.ss_received + ', "value": "' + str(self.smartsheet_started) + '"}],"toBottom":true}'
-        # Create url for uploading a new row
-        url = self.url + "/rows"
-
-        # Add the row using POST
-        #Add try statement to stop script from failing
-        try:
-            r = requests.post(url, headers=self.headers, data=payload)
-            # capture the output of the POST statement to capture the id of the row that has been updated.
-            # This can be used when updating the status to complete in function smartsheet_demultiplex_complete().
-            response = r.json()
-        except:
-            self.script_logfile.write("Unable to connect to SmartSheet API. Check payload and URL\n")
-            self.logger("Unable to connect to SmartSheet API for run " + self.runfolder, "Check payload and URL")
-            return
-        else:
-            # capture the value of the row id from the json response
-            self.rowid = response["result"]["id"]
-            # Use response.get("") instead of response[""] to avoid KeyError if "message" missing.
-            if response.get("message") == "SUCCESS":
-                # Report to system log file
-                self.logger("Smartsheet updated with initiation of demultiplexing for run " + self.runfolder, "smartsheet_pass")
-            else:
-                # Record error message to script log file
-                self.script_logfile.write("smartsheet NOT updated at in progress step\n" + str(response))
-                # Record failure in system logs so that an error can be reported via slack.
-                # Failure to update smartsheet is not critical as it does not stop the run being processed.
-                self.logger("Smartsheet was NOT updated to say demultiplexing is in progress for run " + self.runfolder, "smartsheet_fail")
-
-    def smartsheet_demultiplex_complete(self):
-        """Update smartsheet to say demultiplexing is complete.
-        Add the completed date and calculate the duration (in days) and if met TAT.
-        """
-        try:
-            assert self.rowid
-        except AssertionError:
-            self.script_logfile.write("No rowid available to update API. RowID not added\n")
-            self.logger("No rowid available to update API " + self.runfolder, "RowID not added")
-            return
-
-        # assign current timestamp to self.smartsheet_complete
-        self.smartsheet_complete = '{:%Y-%m-%d}'.format(datetime.datetime.now())
-
-        # Calculate the number of days taken (add one so if same day this counts as 1 day not 0).
-        # This is the difference between now and the date received (recorded in smartsheet).
-        # need to convert self.smartsheet_complete and self.smartsheet_started from string to datetime object
-        duration = (datetime.datetime.strptime(self.smartsheet_complete, "%Y-%m-%d") - datetime.datetime.strptime(self.smartsheet_started, "%Y-%m-%d")).days + 1
-
-        # Set flag to show if TAT was met. Give default value of 1, which can be changed to 0
-        # if the duration exceeds the expected turnaround time.
-        TAT = "1"
-        # If duration is greater than 4, change TAT to 0 as this is outside the target TAT.
-        if duration > config.allowed_time_for_tasks:
-            TAT = "0"
-
-        # Build payload used to update the row
-        payload = '{"id":"' + str(self.rowid) + '", "cells": [{"columnId":"' + str(self.ss_duration) + '","value":"' + str(duration) + '"},{"columnId":"' \
-        + str(self.ss_metTAT) + '","value":"' + TAT + '"},{"columnId":"' + str(self.ss_status) + '","value":"Complete"},{"columnId": ' + self.ss_completed + \
-        ', "value": "' + str(self.smartsheet_complete) + '"}]}'
-
-        # Build url to update row
-        url = self.url + "/rows"
-        update_OPMS = requests.request("PUT", url, data=payload, headers=self.headers)
-
-        # Check the result of the update attempt
-        response = update_OPMS.json()
-        if response.get("message") == "SUCCESS":
-            # Write to system log
-            self.logger("Smartsheet updated at end of demultiplexing", "smartsheet_pass")
-        else:
-            # Record error message in script log file
-            self.script_logfile.write("smartsheet NOT updated at complete step\n" + str(response))
-            # Write to system log to enable alert via slack.
-            # Failure to update smartsheet is not critical as it does not stop the run being processed.
-            self.logger("Smartsheet NOT updated at end of demultiplexing for run " + self.runfolder, "smartsheet_fail")
 
     def logger(self, message, tool):
         """Write log messages to the system log.
