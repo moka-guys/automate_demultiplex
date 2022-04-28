@@ -283,6 +283,7 @@ class RunfolderProcessor(object):
                     # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                     # set tar folder path in place of the list of fastqs to upload
                     self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
+
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
