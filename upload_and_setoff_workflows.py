@@ -1553,17 +1553,17 @@ class RunfolderProcessor(object):
             bedfiles_string = ""
         
         # if sample is not NA12878 we want to skip the vcfeval stage (the app default is skip=false).
-        # assume it's not a NA12878 sample, and set skip = true and prefix=skip
+        # assume it's not a NA12878 sample, and set skip = true 
         vcf_eval_skip_string = config.mokapipe_happy_skip % ("true")
-        vcf_eval_prefix_string = config.mokapipe_happy_prefix % ("skip")
+        # set the prefix as the samplename
+        vcf_eval_prefix_string = config.mokapipe_happy_prefix % (fastqs[2])
         
         # identify NA12878 samples by checking if any reference ids (flanked by underscores) are present in the fastq name 
         # if so, set skip = false
-        # set the prefix as the samplename
         for id in config.reference_sample_ids:
             if "_%s_" % (id) in fastq:
                 vcf_eval_skip_string = config.mokapipe_happy_skip % ("false")
-                vcf_eval_prefix_string = config.mokapipe_happy_prefix % (fastqs[2])
+                
 
         #Set parameters specific to FH_PRS app. 
         #Set skip flag to false, specify instance type for human exome app and specify output as both vcf and gvcf.
@@ -1572,7 +1572,7 @@ class RunfolderProcessor(object):
 
         if self.panel_dictionary[pannumber]["FH"]:
             FH_prs_cmd_string+=config.mokapipe_fhPRS_skip
-            FH_prs_cmd_string+= " --instance-type %s=%s" % (config.mokapipe_gatk_human_exome_stage, config.mokapipe_humanexome_instance_type)
+            FH_prs_cmd_string+= " --instance-type %s=%s" % (config.mokapipe_gatk_human_exome_stage, config.mokapipe_FH_humanexome_instance_type)
             FH_prs_cmd_string+= config.mokapipe_haplotype_vcf_output_format
             
              

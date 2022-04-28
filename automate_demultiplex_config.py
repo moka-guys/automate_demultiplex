@@ -113,7 +113,7 @@ reference_sample_ids = ["NA12878", "136819"]
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
-mokapipe_congenica_pipeline_ID = "5080" #TODO DONE make new pipeline version in moka (item table)
+mokapipe_congenica_pipeline_ID = "5080" 
 # Current MokaWES ID
 mokawes_pipeline_ID = "5078"
 # MokaAMP ID
@@ -145,7 +145,7 @@ project_success = 'Created new project called "%s"'
 app_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"
 # path to the workflow in the app project
 
-mokapipe_path = "Workflows/GATK3.5_v2.14" #TODO DONE - make new workflow
+mokapipe_path = "Workflows/GATK3.5_v2.14" 
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 
@@ -215,7 +215,7 @@ mokapipe_sambamba_exclude_failed_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclu
 mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.merge_overlapping_mate_reads=true"
 mokapipe_fhPRS_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
 mokapipe_fhPRS_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
-mokapipe_humanexome_instance_type= "mem3_ssd1_v2_x8"
+mokapipe_FH_humanexome_instance_type= "mem3_ssd1_v2_x8" # required when creating gVCFs
 
 #Mokapipe FH_PRS BED file
 FH_PRS_bedfile_name = "Pan4909.bed"
@@ -498,7 +498,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
 		"sambamba_bedfile": "Pan493dataSambamba.bed",
 		"peddy": True,
-		"congenica_project": "5026",#TODO change from validation project
+		"congenica_project": "4697",
 	},
 	"Pan3174": {  # TWIST WES TRIO at GSTT
 		"mokawes": True,
@@ -589,7 +589,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4397data.bed",
 	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4398data.bed",
-		"FH": True,
+	    "FH": True,
 	},
 	"Pan4121": {  #VCP1 R184 CF (Viapath)
 	    "mokapipe": True,
@@ -632,24 +632,24 @@ panel_settings = {
 	    "variant_calling_bedfile": "Pan4398data.bed",
 	},
 	"Pan4149": {  #VCP2 BRCA (Viapath)
-		"mokapipe": True,
-		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3614",
-		"congenica_project": "4665",
-		"RPKM_also_analyse": vcp2_panel_list,
-		"hsmetrics_bedfile": "Pan4949data.bed",
-		"sambamba_bedfile": "Pan4949dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4948data.bed",
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3614",
+	    "congenica_project": "4665",
+	    "RPKM_also_analyse": vcp2_panel_list,
+	    "hsmetrics_bedfile": "Pan4949data.bed",
+	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4948data.bed",
 	},
 	"Pan4964": {  #VCP2 R259 nijmegen breakage (Viapath)
-		"mokapipe": True,
-		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3614",
-		"congenica_project": "9118",
-		"RPKM_also_analyse": vcp2_panel_list,
-		"hsmetrics_bedfile": "Pan4949data.bed",
-		"sambamba_bedfile": "Pan4949dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4948data.bed",
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan3614",
+	    "congenica_project": "9118",
+	    "RPKM_also_analyse": vcp2_panel_list,
+	    "hsmetrics_bedfile": "Pan4949data.bed",
+	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4948data.bed",
 	},
 	"Pan4150": {  #VCP2 R207 ovarian cancer (Viapath)
 	    "mokapipe": True,
