@@ -102,9 +102,9 @@ class DecisionTooler(object):
         """
         # obtain json for dx describe on the given analysis id
         cmd = (
-            "source /etc/profile.d/dnanexus.environment.sh; dx describe"
+            "source {}; dx describe"
             " {}:{} --json --auth-token {}"
-        ).format(project, analysis_id, config.Nexus_API_Key)
+        ).format(config.sdk_source_cmd,project, analysis_id, config.Nexus_API_Key)
         # jobid comes from the sentieon sub-job, which takes a few moments to initiate after
         # calling the sentieon app. Running this script immediately after running the sentieon
         # workflow raises an IndexError. We retry in the while loop until the jobid is available.

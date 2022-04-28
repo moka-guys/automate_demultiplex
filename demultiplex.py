@@ -422,7 +422,7 @@ class ready2start_demultiplexing():
             Subject line of email to be sent (str)
         """
         # Write to script log file
-        self.script_logfile.write("Sending an email to..... " + self.me)
+        self.script_logfile.write("Sending an email. Recipient: %s. Subject:%s. Body:\n%s" % (self.me,self.email_subject,self.email_message))
 
         # Create email.Message() object. Set e-mail headers for X-Priority and Subject
         m = Message()
@@ -430,21 +430,25 @@ class ready2start_demultiplexing():
         m['Subject'] = self.email_subject
         # Add error messages to e-mail body using email.Message.set_payload()
         m.set_payload(self.email_message)
+        try:
+            # Configure SMTP server connection for sending log messages via e-mail
+            server = smtplib.SMTP(host=self.host, port=self.port, timeout=10)
+            # Output connection debug messages
+            server.set_debuglevel(1)
+            # Encrypt SMTP commands using Transport Layer Security mode$
+            server.starttls()
+            # Identify client to ESMTP server using EHLO commands
+            server.ehlo()
+            # Login to server with user credentials
+            server.login("abc", self.pw)
+            # Send email to server. Message is a call to email.Message.as_string()
+            server.sendmail(self.me, [self.you], m.as_string())
+            # Write to script log file
+            self.script_logfile.write("email sent without error\n")
+        except:
+            self.script_logfile.write("Error when sending email\n")
+            self.logger("email not sent.", "demultiplex_fail")
 
-        # Configure SMTP server connection for sending log messages via e-mail
-        server = smtplib.SMTP(host=self.host, port=self.port, timeout=10)
-        # Output connection debug messages
-        server.set_debuglevel(1)
-        # Encrypt SMTP commands using Transport Layer Security mode$
-        server.starttls()
-        # Identify client to ESMTP server using EHLO commands
-        server.ehlo()
-        # Login to server with user credentials
-        server.login(self.user, self.pw)
-        # Send email to server. Message is a call to email.Message.as_string()
-        server.sendmail(self.me, [self.you], m.as_string())
-        # Write to script log file
-        self.script_logfile.write("................email sent\n")
 
     def test_bcl2fastq(self):
         """Raise exception if bcl2fastq is not installed."""
@@ -494,8 +498,6 @@ class ready2start_demultiplexing():
         This is recorded in the system log so an alert can be made if the checksums are not present after a number of hours
         If the checksums are present these are read into a list and compared. If they match the function returns True and the script will proceed, else the script will return False and stop
         Records are written to the logfile and to the sys.log
-
-        test runs (starting with 999999) will not exist on the sequencer so this step is skipped.
         """
 
         # write to log file to say integrity checking is being performed

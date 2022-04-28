@@ -132,8 +132,8 @@ class RunfolderProcessor(object):
 
         # DNA Nexus commands to be built on later
         self.source_command = (
-            "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''"
-        )
+            "#!/bin/bash\n. %s\ndepends_list=''"
+        ) % (config.sdk_source_cmd)
         self.createprojectcommand = (
             'project_id="$(dx new project --bill-to %s "%s" --brief --auth-token '
             + config.Nexus_API_Key
@@ -278,11 +278,11 @@ class RunfolderProcessor(object):
             TSO500_sample_list = self.check_for_TSO500()
             # if not TSO500 will return None
             if TSO500_sample_list:
-                # tar runfolder
-                #self.tar_runfolder()
-                # set list of samplenames as list of processed samples - this will allow the project to be named properly.
-                # set tar folder path in place of the list of fastqs to upload
-                self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
+                # tar runfolder - returns True if tar created sucessfully
+                if self.tar_runfolder():
+                    # set list of samplenames as list of processed samples - this will allow the project to be named properly.
+                    # set tar folder path in place of the list of fastqs to upload
+                    self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
@@ -404,6 +404,7 @@ class RunfolderProcessor(object):
         # raise slack alert if success statement not present.
         else:
             self.loggers.script.error("UA_fail 'runfolder tarball creation failed for {}. tar verify output = {}'".format(self.runfolder_obj.runfolder_name,out))
+            return False
 
 
     def perform_test(self, test_input, test):
@@ -1101,7 +1102,17 @@ class RunfolderProcessor(object):
             bed_dict["hsmetrics"] = (
                 config.app_project + config.bedfile_folder + pannumber + "data.bed"
             )
-
+        #FH
+        if self.panel_dictionary[pannumber]["FH_PRS_bedfile"]:
+            bed_dict["fh_prs"] = (
+                config.app_project
+                + config.bedfile_folder
+                + self.panel_dictionary[pannumber]["FH_PRS_bedfile"]
+            )
+        else:
+            bed_dict["fh_prs"] = (
+                config.app_project + config.bedfile_folder + pannumber + "data.bed"
+            )
         # BED file used for variant calling
         # Given bed file could have same pan number, different pan number, the name of a capture kit or None
         # BED file may not be provided for variant calling
@@ -1551,14 +1562,21 @@ class RunfolderProcessor(object):
         for id in config.reference_sample_ids:
             if "_%s_" % (id) in fastq:
                 vcf_eval_skip_string = config.mokapipe_happy_skip % ("false")
-                vcf_eval_prefix_string = config.mokapipe_happy_skip % (fastqs[2])
+                vcf_eval_prefix_string = config.mokapipe_happy_prefix % (fastqs[2])
 
-        #TODO all sambamba arguments
-        config.mokapipe_sambamba_additional_filter_input 
-        config.mokapipe_sambamba_min_base_qual
-        config.mokapipe_sambamba_min_mapping_qual
-        config.mokapipe_sambamba_coverage_level 
-        
+        #Set parameters specific to FH_PRS app. 
+        #Set skip flag to false, specify instance type for human exome app and specify output as both vcf and gvcf.
+        FH_prs_bedfile_cmd = config.mokapipe_fhPRS_bedfile_input + bedfiles["fh_prs"]
+        FH_prs_cmd_string=""
+
+        if self.panel_dictionary[pannumber]["FH"]:
+            FH_prs_cmd_string+=config.mokapipe_fhPRS_skip
+            FH_prs_cmd_string+= " --instance-type %s=%s" % (config.mokapipe_gatk_human_exome_stage, config.mokapipe_humanexome_instance_type)
+            FH_prs_cmd_string+= config.mokapipe_haplotype_vcf_output_format
+            
+             
+        #If sample is not R134 we want skip to be set to true (app default is skip=true)
+        #Assume all sample are not R134 and set skip to true
         # create the dx command
         dx_command = (
             self.mokapipe_command
@@ -1571,10 +1589,17 @@ class RunfolderProcessor(object):
             + fastqs[2]
             + config.mokapipe_sambamba_bed_input
             + bedfiles["sambamba"]
+            + config.mokapipe_sambamba_min_base_qual
+            + config.mokapipe_sambamba_min_mapping_qual
+            + config.mokapipe_sambamba_coverage_level
+            + config.mokapipe_sambamba_filter_cmds
+            + config.mokapipe_sambamba_exclude_duplicates
+            + config.mokapipe_sambamba_exclude_failed_qual
+            + config.mokapipe_sambamba_count_overlapping_mates
             + vcf_eval_skip_string
             + vcf_eval_prefix_string
-            #TODO add FH_PRS input stage 
-            #TODO then then true/false using self.panel_dictionary[pannumber][fh_PRS_skip_dictionary entry - amend as required]
+            + FH_prs_cmd_string
+            + FH_prs_bedfile_cmd
             + config.mokapipe_mokapicard_vendorbed_input
             + bedfiles["hsmetrics"]
             + mokapipe_padding_cmd
@@ -1811,11 +1836,6 @@ class RunfolderProcessor(object):
             + self.token.rstrip(")")
         )
         return dx_command
-
-    def create_joint_variant_calling_command(self):
-        """-"""
-        # TODO: Implement joint-variant calling command for peddy
-        raise NotImplementedError
 
 
     def copy_onePGT_fastqs(self, fastq):
@@ -2492,6 +2512,13 @@ class RunfolderProcessor(object):
         Uses smtplib to send an email. 
         Returns = None
         """
+        # write to logfile
+        self.loggers.script.info(
+            "UA_pass Email being composed: Recipient: {}. Subject: {}. Body:\n{}".format(
+                str(to), email_subject, email_message
+            )
+        )
+        
         # create message object
         m = Message()
         # set priority
@@ -2501,21 +2528,24 @@ class RunfolderProcessor(object):
         # set body
         m.set_payload(email_message)
 
-        # server details
-        server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
-        server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
-        server.starttls()
-        server.ehlo()
-        server.login(config.user, config.pw)
-        server.sendmail(config.me, to, m.as_string())
+        try:
+            # server details
+            server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
+            server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
+            server.starttls()
+            server.ehlo()
+            server.login(config.user, config.pw)
+            server.sendmail(config.me, to, m.as_string())
 
-        # write to logfile
-        self.loggers.script.info(
-            "UA_pass Email sent to {}. Subject {}. Body:\n{}".format(
-                str(to), email_subject, email_message
+            # write to logfile
+            self.loggers.script.info(
+                "UA_pass Email sent without error"
             )
-        )
-
+        except:
+            # write to logfile
+            self.loggers.script.info(
+                "UA_fail Error when attempting to send email"
+            )
 
 if __name__ == "__main__":
     # Create a custom list object to hold sequencing runs

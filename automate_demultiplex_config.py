@@ -94,8 +94,9 @@ backup_runfolder_logfile = (
 backup_runfolder_success = "backup_runfolder INFO - END"
 backup_runfolder_error = "backup_runfolder.UAcaller ERROR"
 
+sdk_source_cmd = "/etc/profile.d/dnanexus.environment.sh"
 # command to test dx toolkit
-dx_sdk_test = "source ~/dx-toolkit/environment;dx --version"
+dx_sdk_test = "source %s;dx --version" % (sdk_source_cmd)
 # expected result from testing
 dx_sdk_test_expected_stdout = "dx v0.2"
 
@@ -196,24 +197,28 @@ mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
-mokapipe_sambamba_bed_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="  # Sambamba Bed file
-mokapipe_sambamba_additional_filter_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.additional_filter_commands=" 
-mokapipe_sambamba_min_base_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_base_qual=" 
-mokapipe_sambamba_min_mapping_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_mapping_qual=" 
-mokapipe_sambamba_coverage_level = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.coverage_level=" 
-mokapipe_mokapicard_vendorbed_input = (
-	" -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
-)
+mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
-mokapipe_haplotype_vcf_output_format = " -i" +mokapipe_gatk_human_exome_stage + ".output_format="
+mokapipe_haplotype_vcf_output_format = " -i" +mokapipe_gatk_human_exome_stage + ".output_format=both"
 mokapipe_filter_vcf_with_bedfile_bed_input = " -i" +mokapipe_filter_vcf_with_bedfile_stage + ".bedfile="
 mokapipe_vcf_output_name = "filtered_vcf"
 mokapipe_bam_output_name = "bam"
 mokapipe_happy_skip = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.skip=%s" 
 mokapipe_happy_prefix = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.prefix=%s" 
+mokapipe_sambamba_bed_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed=" 
+mokapipe_sambamba_min_base_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_base_qual=10" 
+mokapipe_sambamba_min_mapping_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_mapping_qual=20" 
+mokapipe_sambamba_coverage_level = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.coverage_level=30" 
+mokapipe_sambamba_filter_cmds = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.additional_filter_commands='not (unmapped or secondary_alignment)'"
+mokapipe_sambamba_exclude_duplicates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclude_duplicate_reads=true"
+mokapipe_sambamba_exclude_failed_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclude_failed_quality_control=true"
+mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.merge_overlapping_mate_reads=true"
+mokapipe_fhPRS_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
+mokapipe_fhPRS_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
+mokapipe_humanexome_instance_type= "mem3_ssd1_v2_x8"
 
-#TODO add mokapipe_fhPRS_skip_stage - see mokapipe_bwa_rg_sample as example
-
+#Mokapipe FH_PRS BED file
+FH_PRS_bedfile_name = "Pan4909.bed"
 
 # MokaWES workflow_inputs
 wes_fastqc1 = " -istage-Ff0P5Jj0GYKY717pKX3vX8Z3.reads="  # FastQC Read 1
@@ -230,7 +235,7 @@ wes_sentieon_targets_bed = " -i%s.targets_bed=" % sentieon_stage_id
 #SNPGenotyping workflow inputs
 snp_fastqc1 = " -istage-FgPp4V00YkVJVjKF4kYkBF8v.reads=" # FastQC Read 1
 snp_fastqc2 = " -istage-FgPp4V00YkVJVjKF4kYkBF90.reads=" # FastQC Read 2
-snp_sentieon_stage_id = "stage-FgPp4XQ0YkV48jZG4Py6F55k=="
+snp_sentieon_stage_id = "stage-FgPp4XQ0YkV48jZG4Py6F55k"
 # BED file used to restrict Senteion variant calling
 snp_sentieon_targets_bed = " -i%s.targets_bed=" % snp_sentieon_stage_id
 # sample name for sentieon app - prevents sample being incorrectly parsed from fastq filename
@@ -448,6 +453,8 @@ default_panel_properties = {
 	"snp_genotyping": False,
 	"mokapipe": False,
 	"mokapipe_haplotype_caller_padding": 0,
+	"FH": False,
+	"FH_PRS_bedfile": FH_PRS_bedfile_name,
 	"mokaamp_varscan_strandfilter": True,
 	"iva_upload": False,
 	"congenica_upload": True,
@@ -471,11 +478,7 @@ default_panel_properties = {
 	"congenica_project": None,
 	"peddy": False,
 	"archerdx": False,
-	"TSO500": False,
-	"coverage_min_basecall_qual":None,
-	"coverage_min_mapping_qual":None,
-	#TODO add PRS skip default = True,
-	#TODO add all sambamba defaults here - will have to make sure these are adjusted accordingly for each pan number below.
+	"TSO500": False
 }
 
 # override default panel settings
@@ -534,7 +537,6 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4398data.bed",
 		"sambamba_bedfile": "Pan4397dataSambamba.bed",
 		"STG": True,
-		#TODO add FH_skip=false
 	},
 	"Pan4042": {  # VCP2 STG BRCA
 		"mokapipe": True,
@@ -586,7 +588,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4397data.bed",
 	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4398data.bed",
-		#TODO set FH PRS skip to False (any other panels where we should do this??)
+		"FH": True,
 	},
 	"Pan4121": {  #VCP1 R184 CF (Viapath)
 	    "mokapipe": True,
@@ -596,7 +598,7 @@ panel_settings = {
 	    "RPKM_also_analyse": vcp1_panel_list,
 	    "hsmetrics_bedfile": "Pan4397data.bed",
 	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4398data.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",		
 	},
 	"Pan4122": {  #VCP1 R25 FGFR Viapath
 	    "mokapipe": True,
@@ -696,7 +698,7 @@ panel_settings = {
 		"RPKM_also_analyse": vcp3_panel_list,
 		"hsmetrics_bedfile": "Pan4535data.bed",
 		"sambamba_bedfile": "Pan4535dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4535data.bed",
+		"variant_calling_bedfile": "Pan4535data.bed"
 	},
 	"Pan4136": {  #VCP3 R58 (Viapath)
 		"mokapipe": True,
@@ -868,7 +870,7 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4398data.bed",
 		"sambamba_bedfile": "Pan4397dataSambamba.bed",
 		"STG": True,
-		#TODO set PRS skip = True
+		"FH": True,
 	},
 	"Pan4822": {  # VCP1 STG R184_CF
 		"mokapipe": True,
