@@ -278,7 +278,7 @@ class RunfolderProcessor(object):
             TSO500_sample_list = self.check_for_TSO500()
             # if not TSO500 will return None
             if TSO500_sample_list:
-                # tar runfolder - returns True if tar created sucessfully
+                # tar runfolder - returns True if tar created sucessfully. If not created properly self.list_of_processed_samples won't be populated and run won't progress
                 if self.tar_runfolder():
                     # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                     # set tar folder path in place of the list of fastqs to upload
@@ -387,6 +387,7 @@ class RunfolderProcessor(object):
         """
         Input: runfolder path
         Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
+        Returns: True/False depending on test if tar folder created without error
         """
         # cd to runfolder and then run tar argument with:
         # W (which verifies the archive as it's made)

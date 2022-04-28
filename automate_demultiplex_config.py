@@ -422,13 +422,14 @@ panel_list = [
 	"Pan4838", # VCP3 STG R90
 	"Pan4839", # VCP3 STG R226
 	"Pan4840", # VCP3 STG R97
+	"Pan4964", # VCP2 Viapath R259 nijmegen
 ]
 
 
 # create lists of pan numbers for each capture panel for use with RPKM
 #IMPORTANT: Lists below are used by the trend analysis scripts, if changed the trend analysis script will need to be updated
 vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044","Pan4821","Pan4822","Pan4823","Pan4824","Pan4825"]
-vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049","Pan4816","Pan4817","Pan4818","Pan4819","Pan4820"]
+vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049","Pan4816","Pan4817","Pan4818","Pan4819","Pan4820","Pan4964"]
 vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390","Pan4826","Pan4827","Pan4828","Pan4829","Pan4830","Pan4831","Pan4832","Pan4833","Pan4834","Pan4835","Pan4836","Pan4837","Pan4838","Pan4839","Pan4840"]
 WES_panel_lists = ["Pan2835","Pan3174","Pan4940"]
 SNP_panel_lists = ["Pan4009"]
@@ -546,9 +547,9 @@ panel_settings = {
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "1099",
-		"hsmetrics_bedfile": "Pan4310data.bed",
-		"variant_calling_bedfile": "Pan4301data.bed",
-		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
+		"variant_calling_bedfile": "Pan4948data.bed",
+		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
 	"Pan4009": {  # SNP Genotyping
 		"snp_genotyping": True,
@@ -563,9 +564,9 @@ panel_settings = {
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "4202",
-		"hsmetrics_bedfile": "Pan4310data.bed",
-		"variant_calling_bedfile": "Pan4301data.bed",
-		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
+		"variant_calling_bedfile": "Pan4948data.bed",
+		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
 	"Pan4043": {  # VCP3 STG
 		"mokapipe": True,
@@ -598,7 +599,7 @@ panel_settings = {
 	    "RPKM_also_analyse": vcp1_panel_list,
 	    "hsmetrics_bedfile": "Pan4397data.bed",
 	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4398data.bed",		
+	    "variant_calling_bedfile": "Pan4398data.bed",
 	},
 	"Pan4122": {  #VCP1 R25 FGFR Viapath
 	    "mokapipe": True,
@@ -636,9 +637,19 @@ panel_settings = {
 		"RPKM_bedfile_pan_number": "Pan3614",
 		"congenica_project": "4665",
 		"RPKM_also_analyse": vcp2_panel_list,
-		"hsmetrics_bedfile": "Pan4310data.bed",
-		"sambamba_bedfile": "Pan4310dataSambamba.bed",
-		"variant_calling_bedfile": "Pan4301data.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
+		"sambamba_bedfile": "Pan4949dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4948data.bed",
+	},
+	"Pan4964": {  #VCP2 R259 nijmegen breakage (Viapath)
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"RPKM_bedfile_pan_number": "Pan3614",
+		"congenica_project": "9118",
+		"RPKM_also_analyse": vcp2_panel_list,
+		"hsmetrics_bedfile": "Pan4949data.bed",
+		"sambamba_bedfile": "Pan4949dataSambamba.bed",
+		"variant_calling_bedfile": "Pan4948data.bed",
 	},
 	"Pan4150": {  #VCP2 R207 ovarian cancer (Viapath)
 	    "mokapipe": True,
@@ -646,9 +657,9 @@ panel_settings = {
 	    "RPKM_bedfile_pan_number": "Pan3614",
 	    "congenica_project": "4864",
 	    "RPKM_also_analyse": vcp2_panel_list,
-	    "hsmetrics_bedfile": "Pan4310data.bed",
-	    "sambamba_bedfile": "Pan4310dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4301data.bed",
+	    "hsmetrics_bedfile": "Pan4949data.bed",
+	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4948data.bed",
 	},
 	"Pan4127": {  #VCP2 R209 colorectal cancer (Viapath)
 	    "mokapipe": True,
@@ -656,9 +667,9 @@ panel_settings = {
 	    "RPKM_bedfile_pan_number": "Pan3614",
 	    "congenica_project": "5093",
 	    "RPKM_also_analyse": vcp2_panel_list,
-	    "hsmetrics_bedfile": "Pan4310data.bed",
-	    "sambamba_bedfile": "Pan4310dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4301data.bed",
+	    "hsmetrics_bedfile": "Pan4949data.bed",
+	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4948data.bed",
 	},
 	"Pan4129": {  #VCP2 R210 Lynch syndrome (Viapath)
 	    "mokapipe": True,
@@ -666,9 +677,9 @@ panel_settings = {
 	    "RPKM_bedfile_pan_number": "Pan3614",
 	    "congenica_project": "5094",
 	    "RPKM_also_analyse": vcp2_panel_list,
-	    "hsmetrics_bedfile": "Pan4310data.bed",
-	    "sambamba_bedfile": "Pan4310dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4301data.bed",
+	    "hsmetrics_bedfile": "Pan4949data.bed",
+	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4948data.bed",
 	},
 	"Pan4130": {  #VCP2 R211 polyposis (Viapath)
 	    "mokapipe": True,
@@ -676,9 +687,9 @@ panel_settings = {
 	    "RPKM_bedfile_pan_number": "Pan3614",
 	    "congenica_project": "5095",
 	    "RPKM_also_analyse": vcp2_panel_list,
-	    "hsmetrics_bedfile": "Pan4310data.bed",
-	    "sambamba_bedfile": "Pan4310dataSambamba.bed",
-	    "variant_calling_bedfile": "Pan4301data.bed",
+	    "hsmetrics_bedfile": "Pan4949data.bed",
+	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4948data.bed",
 	},
 	"Pan4132": {  #VCP3 R56 (Viapath)
 		"mokapipe": True,
@@ -832,14 +843,14 @@ panel_settings = {
 		"mokacan": True,
 		"congenica_upload": False,
 		"variant_calling_bedfile": "Pan4577data.bed",
-		"hsmetrics_bedfile": "Pan4310data.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
 		"clinical_coverage_depth" : 200,
 	},
 	"Pan4579" :{ # somatic VCP2 M1.1
 		"mokacan": True,
 		"congenica_upload": False,
 		"variant_calling_bedfile": "Pan4578data.bed",
-		"hsmetrics_bedfile": "Pan4310data.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
 		"clinical_coverage_depth" : 200,
 	},
 	"Pan4709" : { # TSO500 - with UTRS
@@ -1112,9 +1123,9 @@ panel_settings = {
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "4202",
-		"hsmetrics_bedfile": "Pan4310data.bed",
-		"variant_calling_bedfile": "Pan4301data.bed",
-		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
+		"variant_calling_bedfile": "Pan4948data.bed",
+		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
 	"Pan4819": {  # VCP2 STG R210
 		"mokapipe": True,
@@ -1124,9 +1135,9 @@ panel_settings = {
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "4202",
-		"hsmetrics_bedfile": "Pan4310data.bed",
-		"variant_calling_bedfile": "Pan4301data.bed",
-		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
+		"variant_calling_bedfile": "Pan4948data.bed",
+		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
 	"Pan4820": {  # VCP2 STG R211
 		"mokapipe": True,
@@ -1136,9 +1147,9 @@ panel_settings = {
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "4202",
-		"hsmetrics_bedfile": "Pan4310data.bed",
-		"variant_calling_bedfile": "Pan4301data.bed",
-		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
+		"variant_calling_bedfile": "Pan4948data.bed",
+		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
 	"Pan4816": {  # VCP2 STG R208
 		"mokapipe": True,
@@ -1148,9 +1159,9 @@ panel_settings = {
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "1099",
-		"hsmetrics_bedfile": "Pan4310data.bed",
-		"variant_calling_bedfile": "Pan4301data.bed",
-		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
+		"variant_calling_bedfile": "Pan4948data.bed",
+		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
 	"Pan4817": {  # VCP2 STG R207
 		"mokapipe": True,
@@ -1160,9 +1171,9 @@ panel_settings = {
 		"congenica_credentials": "STG",
 		"congenica_IR_template":"non-priority",
 		"congenica_project": "1099",
-		"hsmetrics_bedfile": "Pan4310data.bed",
-		"variant_calling_bedfile": "Pan4301data.bed",
-		"sambamba_bedfile": "Pan4310dataSambamba.bed",
+		"hsmetrics_bedfile": "Pan4949data.bed",
+		"variant_calling_bedfile": "Pan4948data.bed",
+		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
 }
 
