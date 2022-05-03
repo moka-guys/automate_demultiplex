@@ -141,37 +141,37 @@ class RunfolderProcessor(object):
         )
 
         self.mokapipe_command = (
-            "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.mokapipe_path + " --priority high -y --name "
         )
         self.wes_command = (
-            "jobid=$(dx run " + config.app_project + config.mokawes_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.mokawes_path + " --priority high -y --name "
         )
         self.snp_command = (
-            "jobid=$(dx run " + config.app_project + config.snp_genotyping_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.snp_genotyping_path + " --priority high -y --name "
         )
         self.archer_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --priority high --name "
         )
         self.tso500_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.tso500_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.tso500_app + " --priority high -y --name "
         )
         self.tso500_output_parser_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.tso500_output_parser_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.tso500_output_parser_app + " --priority high -y --name "
         )
         self.onePGT_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.fastqc_app + " --priority high -y --name "
         )
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = (
             "jobid=$(dx run " + config.app_project + config.upload_multiqc_path + " -y "
         )
-        self.RPKM_command = "dx run " + config.app_project + config.RPKM_path + " --instance-type mem1_ssd1_x8"
+        self.RPKM_command = "dx run " + config.app_project + config.RPKM_path + " --priority high --instance-type mem1_ssd1_x8"
         self.mokaamp_command = (
-            "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.mokaamp_path + " --priority high -y --name "
         )
         self.mokacan_command = (
-            "jobid=$(dx run " + config.app_project + config.mokacan_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.mokacan_path + " --priority high -y --name "
         )
         self.decision_support_preperation = "analysisid=$(python %s -a " % (
             os.path.join(

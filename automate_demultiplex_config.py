@@ -113,7 +113,7 @@ reference_sample_ids = ["NA12878", "136819"]
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
-mokapipe_congenica_pipeline_ID = "5080" 
+mokapipe_congenica_pipeline_ID = "5089" 
 # Current MokaWES ID
 mokawes_pipeline_ID = "5078"
 # MokaAMP ID
@@ -145,7 +145,7 @@ project_success = 'Created new project called "%s"'
 app_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"
 # path to the workflow in the app project
 
-mokapipe_path = "Workflows/GATK3.5_v2.14" 
+mokapipe_path = "Workflows/GATK3.5_v2.15" 
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 
@@ -397,6 +397,7 @@ panel_list = [
 	"Pan4574", # VCP2 somatic M1.2
 	"Pan4709", # TSO500 - with UTRS
 	"Pan4841", # TSO500 - no UTRS
+	"Pan4963", # TSO500 - no UTRS TERT promotor
 	"Pan4821", # VCP1 STG R134_FH
 	"Pan4822", # VCP1 STG R184_CF
 	"Pan4823", # VCP1 STG R25_FGFR
@@ -437,7 +438,7 @@ archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4573","Pan4574"]
-tso500_panel_list = ["Pan4841","Pan4709"] # note the settings from the first item in this list are used when setting off the dx run commands.
+tso500_panel_list = ["Pan4841","Pan4963","Pan4709"] # note the settings from the first item in this list are used when setting off the dx run commands.
 
 
 default_panel_properties = {
@@ -864,6 +865,14 @@ panel_settings = {
 	"Pan4841" : { # TSO500 no UTRs
 		"TSO500": True,
 		"sambamba_bedfile": "Pan4841dataSambamba.bed",
+		"clinical_coverage_depth" : 100,
+		"multiqc_coverage_level": 100,
+		"coverage_min_basecall_qual":25,
+		"coverage_min_mapping_qual":30,
+	},
+	"Pan4963" : { # TSO500 no UTRs. TERT promotor
+		"TSO500": True,
+		"sambamba_bedfile": "Pan4963dataSambamba.bed",
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
