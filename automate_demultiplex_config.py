@@ -395,8 +395,6 @@ panel_list = [
 	"Pan4396", # ArcherDx
 	"Pan4579", # VCP2 somatic M1.1
 	"Pan4574", # VCP2 somatic M1.2
-	"Pan4709", # TSO500 - with UTRS
-	"Pan4841", # TSO500 - no UTRS
 	"Pan4963", # TSO500 - no UTRS TERT promotor
 	"Pan4821", # VCP1 STG R134_FH
 	"Pan4822", # VCP1 STG R184_CF
@@ -438,7 +436,7 @@ archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4573","Pan4574"]
-tso500_panel_list = ["Pan4841","Pan4963","Pan4709"] # note the settings from the first item in this list are used when setting off the dx run commands.
+tso500_panel_list = ["Pan4963"] # note the settings from the first item in this list are used when setting off the dx run commands.
 
 
 default_panel_properties = {
@@ -853,22 +851,6 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4578data.bed",
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"clinical_coverage_depth" : 200,
-	},
-	"Pan4709" : { # TSO500 - with UTRS
-		"TSO500": True,
-		"sambamba_bedfile": "Pan4709dataSambamba.bed",
-		"clinical_coverage_depth" : 100,
-		"multiqc_coverage_level": 100,
-		"coverage_min_basecall_qual":25,
-		"coverage_min_mapping_qual":30,
-	},
-	"Pan4841" : { # TSO500 no UTRs
-		"TSO500": True,
-		"sambamba_bedfile": "Pan4841dataSambamba.bed",
-		"clinical_coverage_depth" : 100,
-		"multiqc_coverage_level": 100,
-		"coverage_min_basecall_qual":25,
-		"coverage_min_mapping_qual":30,
 	},
 	"Pan4963" : { # TSO500 no UTRs. TERT promotor
 		"TSO500": True,
