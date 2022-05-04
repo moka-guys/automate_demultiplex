@@ -132,8 +132,8 @@ class RunfolderProcessor(object):
 
         # DNA Nexus commands to be built on later
         self.source_command = (
-            "#!/bin/bash\n. /etc/profile.d/dnanexus.environment.sh\ndepends_list=''"
-        )
+            "#!/bin/bash\n. %s\ndepends_list=''"
+        ) % (config.sdk_source_cmd)
         self.createprojectcommand = (
             'project_id="$(dx new project --bill-to %s "%s" --brief --auth-token '
             + config.Nexus_API_Key
@@ -141,38 +141,37 @@ class RunfolderProcessor(object):
         )
 
         self.mokapipe_command = (
-            "jobid=$(dx run " + config.app_project + config.mokapipe_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.mokapipe_path + " --priority high -y --name "
         )
         self.wes_command = (
-            "jobid=$(dx run " + config.app_project + config.mokawes_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.mokawes_path + " --priority high -y --name "
         )
         self.snp_command = (
-            "jobid=$(dx run " + config.app_project + config.snp_genotyping_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.snp_genotyping_path + " --priority high -y --name "
         )
         self.archer_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --priority high --name "
         )
         self.tso500_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.tso500_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.tso500_app + " --priority high -y --name "
         )
         self.tso500_output_parser_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.tso500_output_parser_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.tso500_output_parser_app + " --priority high -y --name "
         )
         self.onePGT_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.fastqc_app + " --priority high -y --name "
         )
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = (
             "jobid=$(dx run " + config.app_project + config.upload_multiqc_path + " -y "
         )
-        #self.smartsheet_update_command = "dx run " + config.app_project + config.smartsheet_path
-        self.RPKM_command = "dx run " + config.app_project + config.RPKM_path + " --instance-type mem1_ssd1_x8"
+        self.RPKM_command = "dx run " + config.app_project + config.RPKM_path + " --priority high --instance-type mem1_ssd1_x8"
         self.mokaamp_command = (
-            "jobid=$(dx run " + config.app_project + config.mokaamp_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.mokaamp_path + " --priority high -y --name "
         )
         self.mokacan_command = (
-            "jobid=$(dx run " + config.app_project + config.mokacan_path + " -y --name "
+            "jobid=$(dx run " + config.app_project + config.mokacan_path + " --priority high -y --name "
         )
         self.decision_support_preperation = "analysisid=$(python %s -a " % (
             os.path.join(
@@ -190,7 +189,6 @@ class RunfolderProcessor(object):
         # string to redirect command (with variables) into file
         self.congenica_upload_command_redirect = "' >> " + self.congenica_upload_command_script_path
 
-        self.iva_upload_command = "sleep 5;jobid=$(dx run " + config.iva_app_path + " -y "
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
         self.project_bash_script_path = (
@@ -211,22 +209,6 @@ class RunfolderProcessor(object):
         self.restart_ua_2 = (
             "; ua_status=$?; if [[ $ua_status -ne 0 ]]; then echo "
             '"temporary issue when uploading file %s"; fi ; done'
-        )
-
-        # smartsheet API
-        # newly inserted row
-        self.rowid = ""
-
-        # time stamp
-        self.smartsheet_now = str("{:%Y-%m-%d}".format(datetime.datetime.utcnow()))
-
-        # requests info
-        self.headers = {
-            "Authorization": "Bearer " + config.smartsheet_api_key,
-            "Content-Type": "application/json",
-        }
-        self.smartsheet_url = "https://api.smartsheet.com/2.0/sheets/" + str(
-            config.smartsheet_sheetid
         )
 
         self.panel_dictionary = self.set_panel_dictionary()
@@ -296,11 +278,11 @@ class RunfolderProcessor(object):
             TSO500_sample_list = self.check_for_TSO500()
             # if not TSO500 will return None
             if TSO500_sample_list:
-                # tar runfolder
-                self.tar_runfolder()
-                # set list of samplenames as list of processed samples - this will allow the project to be named properly.
-                # set tar folder path in place of the list of fastqs to upload
-                self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
+                # tar runfolder - returns True if tar created sucessfully. If not created properly self.list_of_processed_samples won't be populated and run won't progress
+                if self.tar_runfolder():
+                    # set list of samplenames as list of processed samples - this will allow the project to be named properly.
+                    # set tar folder path in place of the list of fastqs to upload
+                    self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
@@ -332,7 +314,7 @@ class RunfolderProcessor(object):
                     self.start_building_dx_run_cmds(self.list_of_processed_samples)
                 )
                 self.run_dx_run_commands()
-                #self.smartsheet_workflows_commands_sent()
+
                 self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(
                     self.list_of_processed_samples
                 )
@@ -405,6 +387,7 @@ class RunfolderProcessor(object):
         """
         Input: runfolder path
         Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
+        Returns: True/False depending on test if tar folder created without error
         """
         # cd to runfolder and then run tar argument with:
         # W (which verifies the archive as it's made)
@@ -422,6 +405,7 @@ class RunfolderProcessor(object):
         # raise slack alert if success statement not present.
         else:
             self.loggers.script.error("UA_fail 'runfolder tarball creation failed for {}. tar verify output = {}'".format(self.runfolder_obj.runfolder_name,out))
+            return False
 
 
     def perform_test(self, test_input, test):
@@ -1119,7 +1103,17 @@ class RunfolderProcessor(object):
             bed_dict["hsmetrics"] = (
                 config.app_project + config.bedfile_folder + pannumber + "data.bed"
             )
-
+        #FH
+        if self.panel_dictionary[pannumber]["FH_PRS_bedfile"]:
+            bed_dict["fh_prs"] = (
+                config.app_project
+                + config.bedfile_folder
+                + self.panel_dictionary[pannumber]["FH_PRS_bedfile"]
+            )
+        else:
+            bed_dict["fh_prs"] = (
+                config.app_project + config.bedfile_folder + pannumber + "data.bed"
+            )
         # BED file used for variant calling
         # Given bed file could have same pan number, different pan number, the name of a capture kit or None
         # BED file may not be provided for variant calling
@@ -1217,11 +1211,15 @@ class RunfolderProcessor(object):
                     # call function to build the MokaWES command and add to command list and depends list
                     commands_list.append(self.create_mokawes_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
+                    # EB samples will be 
+                    if self.panel_dictionary[panel]["congenica_upload"]:
+                        congenica_upload = True
+                        commands_list.append(self.build_congenica_input_command())
+                        commands_list.append(self.run_congenica_command(fastq, panel))
                     # Set run-wide flags for Peddy and joint variant calling
                     if self.panel_dictionary[panel]["peddy"]:
                         peddy = True
-                    if self.panel_dictionary[panel]["joint_variant_calling"]:
-                        joint_variant_calling = True
+
                     
 
                 # If panel is to be processed using mokapipe
@@ -1229,11 +1227,7 @@ class RunfolderProcessor(object):
                     # call function to build the Mokapipe command and add to command list and depends list
                     commands_list.append(self.create_mokapipe_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
-                    # # Add command for iva or congenica
-                    # if self.panel_dictionary[panel]["iva_upload"]:
-                    #     commands_list.append(self.build_iva_input_command())
-                    #     commands_list.append(self.run_iva_command(fastq, panel))
-                    #     #commands_list.append(self.add_to_depends_list(fastq))
+                    # # Add command for congenica
                     if self.panel_dictionary[panel]["congenica_upload"]:
                         congenica_upload = True
                         commands_list.append(self.build_congenica_input_command())
@@ -1320,8 +1314,7 @@ class RunfolderProcessor(object):
             # don't need to do multiqc commands for TSO500
             commands_list.append(self.create_multiqc_command())
             commands_list.append(self.create_upload_multiqc_command())
-        # smartsheet
-        #commands_list.append(self.create_smartsheet_command())
+
         return commands_list
 
     def create_mokawes_command(self, fastq, pannumber):
@@ -1558,7 +1551,33 @@ class RunfolderProcessor(object):
             )
         else:
             bedfiles_string = ""
+        
+        # if sample is not NA12878 we want to skip the vcfeval stage (the app default is skip=false).
+        # assume it's not a NA12878 sample, and set skip = true 
+        vcf_eval_skip_string = config.mokapipe_happy_skip % ("true")
+        # set the prefix as the samplename
+        vcf_eval_prefix_string = config.mokapipe_happy_prefix % (fastqs[2])
+        
+        # identify NA12878 samples by checking if any reference ids (flanked by underscores) are present in the fastq name 
+        # if so, set skip = false
+        for id in config.reference_sample_ids:
+            if "_%s_" % (id) in fastq:
+                vcf_eval_skip_string = config.mokapipe_happy_skip % ("false")
+                
 
+        #Set parameters specific to FH_PRS app. 
+        #Set skip flag to false, specify instance type for human exome app and specify output as both vcf and gvcf.
+        FH_prs_bedfile_cmd = config.mokapipe_fhPRS_bedfile_input + bedfiles["fh_prs"]
+        FH_prs_cmd_string=""
+
+        if self.panel_dictionary[pannumber]["FH"]:
+            FH_prs_cmd_string+=config.mokapipe_fhPRS_skip
+            FH_prs_cmd_string+= " --instance-type %s=%s" % (config.mokapipe_gatk_human_exome_stage, config.mokapipe_FH_humanexome_instance_type)
+            FH_prs_cmd_string+= config.mokapipe_haplotype_vcf_output_format
+            
+             
+        #If sample is not R134 we want skip to be set to true (app default is skip=true)
+        #Assume all sample are not R134 and set skip to true
         # create the dx command
         dx_command = (
             self.mokapipe_command
@@ -1569,8 +1588,19 @@ class RunfolderProcessor(object):
             + fastqs[1]
             + config.mokapipe_bwa_rg_sample
             + fastqs[2]
-            + config.mokapipe_sambamba_input
+            + config.mokapipe_sambamba_bed_input
             + bedfiles["sambamba"]
+            + config.mokapipe_sambamba_min_base_qual
+            + config.mokapipe_sambamba_min_mapping_qual
+            + config.mokapipe_sambamba_coverage_level
+            + config.mokapipe_sambamba_filter_cmds
+            + config.mokapipe_sambamba_exclude_duplicates
+            + config.mokapipe_sambamba_exclude_failed_qual
+            + config.mokapipe_sambamba_count_overlapping_mates
+            + vcf_eval_skip_string
+            + vcf_eval_prefix_string
+            + FH_prs_cmd_string
+            + FH_prs_bedfile_cmd
             + config.mokapipe_mokapicard_vendorbed_input
             + bedfiles["hsmetrics"]
             + mokapipe_padding_cmd
@@ -1580,25 +1610,6 @@ class RunfolderProcessor(object):
             + self.token
         )
 
-        return dx_command
-
-    def build_iva_input_command(self):
-        """
-        Inputs = None
-        Ingenuity import app has been moved out of the workflow.
-        The input to the app are in the format jobid.output name.
-        Each workflow has a analysis-id so further steps are required to obtain the required job-id.
-        A python script is run after each dx run command, taking the analysis id, project name and
-        decision support tool and prints the required input to command line
-        Returns = command for this python program (string)
-        """
-        # $jobid is a bash variable which will be populated by when run on the command line
-        # The python script has three inputs - the analysisID ($jobid), -t is the DSS and -p is the
-        # DNA Nexus project the analysis is running in
-        dx_command = "%s $jobid -t iva -p %s)" % (
-            self.decision_support_preperation,
-            self.runfolder_obj.nexus_project_name,
-        )
         return dx_command
     
     def build_congenica_command_file(self):
@@ -1827,11 +1838,6 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def create_joint_variant_calling_command(self):
-        """-"""
-        # TODO: Implement joint-variant calling command for peddy
-        raise NotImplementedError
-
 
     def copy_onePGT_fastqs(self, fastq):
         """
@@ -1887,7 +1893,7 @@ class RunfolderProcessor(object):
     def run_congenica_command(self, fastq, pannumber):
         """
         Input = R1 fastq file name and pan number for a single sample
-        The import saptientia app takes inputs in the format jobid.outputname which ensures the job
+        The import congenica app takes inputs in the format jobid.outputname which ensures the job
         doesn't run until the vcfs have been created.
         These inputs are created by a python script, which is called immediately before this job,
         and the output is captures into the variable $analysisid
@@ -1917,6 +1923,8 @@ class RunfolderProcessor(object):
             + self.panel_dictionary[pannumber]["congenica_IR_template"]
             + " --name "
             + "congenica_"
+            + fastqs[2]
+            + config.congenica_samplename
             + fastqs[2]
             + self.dest
             + self.dest_cmd
@@ -2016,23 +2024,6 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def create_smartsheet_command(self):
-        """
-        Input = None
-        Once all workflows have completed smartsheet can be updated to record OPMS.
-        Returns = dx run command (string)
-        """
-        dx_command = (
-            self.smartsheet_update_command
-            + config.smartsheet_mokapipe_complete
-            + self.runfolder_obj.runfolder_name
-            + self.project
-            + self.runfolder_obj.nexus_project_id
-            + self.depends
-            + self.token.rstrip(")")
-        )
-        return dx_command
-
     def write_dx_run_cmds(self, command_list):
         """
         Input = list of commands
@@ -2097,77 +2088,7 @@ class RunfolderProcessor(object):
                 )
             )
 
-    def smartsheet_workflows_commands_sent(self):
-        """
-        Input = None
-        This function updates smartsheet to say that the runfolder has started to be processed
-        A payload is created, including a count of samples, timestamp and runfolder
-        This is posted using the requests module to a given url
-        The response is parsed to check the status was "success" otherwise an error is raised via (sys.log).
-        Returns = None
-        """
 
-        # #uncomment this block if want to get the column ids for a new sheet
-        ########################################################################
-        # # Get all columns.
-        # url=self.smartsheet_url+"/columns"
-        # r = requests.get(url, headers=self.headers)
-        # response= r.json()
-        #
-        # # get the column ids
-        # for i in response['data']:
-        #     print i['title'], i['id']
-        ########################################################################
-
-        # set all values to be inserted
-        payload = (
-            '{"cells": [{"columnId": '
-            + str(config.ss_title)
-            + ', "value": "'
-            + self.runfolder_obj.runfolder_name
-            + '"}, {"columnId": '
-            + str(config.ss_description)
-            + ', "value": "MokaPipe"},{"columnId": '
-            + str(config.ss_samples)
-            + ', "value": '
-            + str(len(self.list_of_processed_samples) / 2)
-            + '},{"columnId": '
-            + str(config.ss_status)
-            + ', "value": "In Progress"},{"columnId": '
-            + str(config.ss_priority)
-            + ', "value": "Medium"},{"columnId": '
-            + str(config.ss_assigned)
-            + ', "value": "aledjones@nhs.net"},{"columnId": '
-            + str(config.ss_received)
-            + ', "value": "'
-            + str(self.smartsheet_now)
-            + '"}], "toBottom":true}'
-        )
-
-        # create url for uploading a new row
-        url = self.smartsheet_url + "/rows"
-        try:
-            # add the row using POST
-            r = requests.post(url, headers=self.headers, data=payload)
-            # capture the row id
-            response = r.json()
-        except:
-            self.loggers.script.error("Unable to connect to smartsheet API for run " +  self.runfolder_obj.runfolder_name + ". Check" + payload + "and" + self.smartsheet_url)
-            return
-        else:
-        # check the result of the update attempt
-            for line_key in response:
-                if line_key == "message":
-                    if response[line_key] == "SUCCESS":
-                        self.loggers.script.info(
-                            "smartsheet_pass 'smartsheet updated to say in progress'"
-                        )
-                    else:
-                        self.loggers.script.error(
-                            "smartsheet_fail 'run started NOT added to smartsheet for run {}'".format(
-                                self.runfolder_obj.runfolder_name
-                            )
-                        )
 
     def write_opms_queries_custom_panel(self, list_of_processed_samples):
         """
@@ -2471,7 +2392,7 @@ class RunfolderProcessor(object):
 
         # run the command
         _out, _err = self.execute_subprocess_command(cmd)
-        # TODO add some tests for stderr?
+        #TODO add some tests for stderr?
 
         return self.loggers.backup.filepath
 
@@ -2592,6 +2513,13 @@ class RunfolderProcessor(object):
         Uses smtplib to send an email. 
         Returns = None
         """
+        # write to logfile
+        self.loggers.script.info(
+            "UA_pass Email being composed: Recipient: {}. Subject: {}. Body:\n{}".format(
+                str(to), email_subject, email_message
+            )
+        )
+        
         # create message object
         m = Message()
         # set priority
@@ -2601,21 +2529,24 @@ class RunfolderProcessor(object):
         # set body
         m.set_payload(email_message)
 
-        # server details
-        server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
-        server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
-        server.starttls()
-        server.ehlo()
-        server.login(config.user, config.pw)
-        server.sendmail(config.me, to, m.as_string())
+        try:
+            # server details
+            server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
+            server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
+            server.starttls()
+            server.ehlo()
+            server.login(config.user, config.pw)
+            server.sendmail(config.me, to, m.as_string())
 
-        # write to logfile
-        self.loggers.script.info(
-            "UA_pass Email sent to {}. Subject {}. Body:\n{}".format(
-                str(to), email_subject, email_message
+            # write to logfile
+            self.loggers.script.info(
+                "UA_pass Email sent without error"
             )
-        )
-
+        except:
+            # write to logfile
+            self.loggers.script.info(
+                "UA_fail Error when attempting to send email"
+            )
 
 if __name__ == "__main__":
     # Create a custom list object to hold sequencing runs
