@@ -105,6 +105,7 @@ class RunfolderObject(object):
         self.runfolder_samplesheet_name = self.runfolder_name + "_SampleSheet.csv"
 
 
+
 class RunfolderProcessor(object):
     """
     This class assesses a runfolder to check if it required processing. If the runfolder meets the
@@ -331,11 +332,12 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
-                
+
                 self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
                 if TSO500_sample_list:
                     self.remove_TSO500_tar()
+
                 # return true to denote that a runfolder was processed
                 return True
         else:
@@ -448,6 +450,7 @@ class RunfolderProcessor(object):
         if test == "tar_runfolder":
             if len(test_input) > 1:
                 return False
+
         # if tar completes expect no stdout or stderr.
         if test == "delete_tso500_tar":
             if len(test_input) > 1:
@@ -536,6 +539,7 @@ class RunfolderProcessor(object):
         """
         sample_list=[]
         with open(self.runfolder_obj.runfolder_samplesheet_path, 'r') as samplesheet_stream:
+
                 # read the file into a list and loop through the list in reverse (bottom to top).
                 # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
                 for line in reversed(samplesheet_stream.readlines()):
@@ -554,6 +558,7 @@ class RunfolderProcessor(object):
             open(self.loggers.upload_agent.filepath, 'w').close()
         return sample_list
 
+
     def remove_TSO500_tar(self):
         """
         Inputs = None
@@ -570,6 +575,7 @@ class RunfolderProcessor(object):
             self.loggers.script.info("TSO500 tarball sucessfully removed - {}".format(cmd))
         else:
             self.loggers.script.error("UA_fail 'TSO500 tar not deleted : {}'".format(self.runfolder_obj.runfolder_tarball_path))
+
 
     def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
@@ -1269,6 +1275,7 @@ class RunfolderProcessor(object):
             elif not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
                 # extract Pan number and use this to determine which dx run commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
+
                 if self.panel_dictionary[panel]["TSO500"]:
                     TSO500 = True
 
