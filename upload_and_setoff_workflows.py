@@ -147,8 +147,8 @@ class RunfolderProcessor(object):
         self.wes_command = (
             "jobid=$(dx run " + config.app_project + config.mokawes_path + " --priority high -y --name "
         )
-        self.snp_command = (
-            "jobid=$(dx run " + config.app_project + config.snp_genotyping_path + " --priority high -y --name "
+        self.mokasnp_command = (
+            "jobid=$(dx run " + config.app_project + config.mokasnp_path + " --priority high -y --name "
         )
         self.archer_dx_command = (
             "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --priority high --name "
@@ -328,7 +328,7 @@ class RunfolderProcessor(object):
                 self.sql_queries["custom_panel"] = self.write_opms_queries_custom_panel(
                     self.list_of_processed_samples
                 )
-                self.sql_queries["snp_genotyping"] = self.write_opms_queries_snp_genotyping(
+                self.sql_queries["mokasnp"] = self.write_opms_queries_mokasnp(
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
@@ -1261,9 +1261,9 @@ class RunfolderProcessor(object):
                     commands_list.append(self.add_to_depends_list(fastq))
                     self.copy_onePGT_fastqs(fastq)
 
-                #if panel is to be processed using SNP_genotyping
-                if self.panel_dictionary[panel]["snp_genotyping"]:
-                    commands_list.append(self.create_snp_genotyping_command(fastq, panel))
+                #if panel is to be processed using mokasnp
+                if self.panel_dictionary[panel]["mokasnp"]:
+                    commands_list.append(self.create_mokasnp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
                 
                 if self.panel_dictionary[panel]["archerdx"]:
@@ -1499,10 +1499,10 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_snp_genotyping_command(self, fastq, pannumber):
+    def create_mokasnp_command(self, fastq, pannumber):
         """
         Input = R1 fastq filename and Pan number for a single sample 
-        Returns = dx run command for SNP Genotyping workflow (string)
+        Returns = dx run command for MokaSNP workflow (string)
         """
         # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
         fastqs = self.nexus_fastq_paths(fastq)
@@ -1518,9 +1518,9 @@ class RunfolderProcessor(object):
         else:
             bedfiles_string = ""
 
-        # create the SNP Genotyping dx command
+        # create the MokaSNP dx command
         dx_command_list = [
-            self.snp_command,
+            self.mokasnp_command,
             fastqs[2],
             config.snp_fastqc1,
             fastqs[0],
@@ -2166,12 +2166,12 @@ class RunfolderProcessor(object):
             return None
 
     
-    def write_opms_queries_snp_genotyping(self, list_of_processed_samples):
+    def write_opms_queries_mokasnp(self, list_of_processed_samples):
         """
         Input = list of fastqs to be processed
-        Samples processed using SNP_Genotyping are recorded in Moka using an insert query.
-        This function will create an insert query for each sample processed through snp_genotyping.
-        If snp_genotyping samples are found this function will return a dictionary of sample counts, and a
+        Samples processed using MokaSNP are recorded in Moka using an insert query.
+        This function will create an insert query for each sample processed through MokaSNP.
+        If SNP genotyping samples are found this function will return a dictionary of sample counts, and a
         list of queries to be added to global dictionary.
         Returns = dictionary or None 
         """
@@ -2183,8 +2183,8 @@ class RunfolderProcessor(object):
                 pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
                 query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
                 # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
-                if self.panel_dictionary[pannumber]["snp_genotyping"]:
-                    queries.append(query.format(str(fastq.split("_")[2]), config.snp_genotyping_pipeline_ID, self.runfolder_obj.runfolder_name))
+                if self.panel_dictionary[pannumber]["mokasnp"]:
+                    queries.append(query.format(str(fastq.split("_")[2]), config.mokasnp_pipeline_ID, self.runfolder_obj.runfolder_name))
 
         if queries:
             # add workflow to sql dictionary
@@ -2330,10 +2330,10 @@ class RunfolderProcessor(object):
             workflows.append(config.mokawes_path.split("/")[-1])
             sql_statements += self.sql_queries["mokawes"]["query"]
             count += self.sql_queries["mokawes"]["count"]
-        if self.sql_queries["snp_genotyping"]:
-            workflows.append(config.snp_genotyping_path.split("/")[-1])
-            sql_statements += self.sql_queries["snp_genotyping"]["query"]
-            count += self.sql_queries["snp_genotyping"]["count"]
+        if self.sql_queries["mokasnp"]:
+            workflows.append(config.mokasnp_path.split("/")[-1])
+            sql_statements += self.sql_queries["mokasnp"]["query"]
+            count += self.sql_queries["mokasnp"]["count"]
         
         # send email
         if workflows and sql_statements:

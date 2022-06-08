@@ -120,8 +120,8 @@ mokawes_pipeline_ID = "5078"
 mokaamp_pipeline_ID = "4851"
 # Archer ID
 archerDx_pipeline_ID = "4562"
-# SNP Genotyping ID
-snp_genotyping_pipeline_ID = "4480"
+# MokaSNP ID
+mokasnp_pipeline_ID = "5091"
 # mokacan pipeline ID
 mokacan_pipeline_ID = "4728"
 # TSO500 pipeline ID
@@ -153,8 +153,8 @@ mokawes_path = "Workflows/MokaWES_v1.8"
 mokaamp_path = "Workflows/MokaAMP_v2.2"
 # path to mokacan
 mokacan_path = "Workflows/MokaCAN_v1.0"
-#path to snp_genotyping
-snp_genotyping_path = "Workflows/SNP_Genotyping_v1.0.0"
+#path to mokasnp
+mokasnp_path = "Workflows/MokaSNP_v1.2.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
@@ -232,7 +232,7 @@ wes_sentieon_samplename = " -i%s.sample=" % sentieon_stage_id
 # BED file used to restrict Senteion variant calling
 wes_sentieon_targets_bed = " -i%s.targets_bed=" % sentieon_stage_id
 
-#SNPGenotyping workflow inputs
+#mokasnp workflow inputs
 snp_fastqc1 = " -istage-FgPp4V00YkVJVjKF4kYkBF8v.reads=" # FastQC Read 1
 snp_fastqc2 = " -istage-FgPp4V00YkVJVjKF4kYkBF90.reads=" # FastQC Read 2
 snp_sentieon_stage_id = "stage-FgPp4XQ0YkV48jZG4Py6F55k"
@@ -240,8 +240,7 @@ snp_sentieon_stage_id = "stage-FgPp4XQ0YkV48jZG4Py6F55k"
 snp_sentieon_targets_bed = " -i%s.targets_bed=" % snp_sentieon_stage_id
 # sample name for sentieon app - prevents sample being incorrectly parsed from fastq filename
 snp_sentieon_samplename = " -i%s.sample=" % snp_sentieon_stage_id
-#bcftools input
-snp_bcftools_input = " -istage-FvGkxzj02Bk06Y687Xk8jJp0.in"
+
 
 # MokaAMP - stages that may change between samples/panels 
 mokaamp_fastq_R1_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz="
@@ -391,7 +390,7 @@ panel_list = [
 	"Pan4387", # VCP3 Viapath R90
 	"Pan4390", # VCP3 Viapath R97
 	"Pan2764", # OnePGT
-	"Pan4009", # SNP Genotyping
+	"Pan4009", # MokaSNP 
 	"Pan4396", # ArcherDx
 	"Pan4579", # VCP2 somatic M1.1
 	"Pan4574", # VCP2 somatic M1.2
@@ -450,7 +449,7 @@ default_panel_properties = {
 	"mokaamp": False,
 	"capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
 	"mokacan": False,
-	"snp_genotyping": False,
+	"mokasnp": False,
 	"mokapipe": False,
 	"mokapipe_haplotype_caller_padding": 0,
 	"FH": False,
@@ -550,8 +549,8 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
-	"Pan4009": {  # SNP Genotyping
-		"snp_genotyping": True,
+	"Pan4009": {  # MokaSNP
+		"mokasnp": True,
 		"multiqc_coverage_level": 30,
 		"variant_calling_bedfile": "Pan4009.bed",
 	},
