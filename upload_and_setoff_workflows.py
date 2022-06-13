@@ -1456,6 +1456,8 @@ class RunfolderProcessor(object):
             config.coverage_app_id,
             config.TSO500_output_parser_fastqc_app_id_stage,
             config.fastqc_app_id,
+            config.TSO500_output_parser_sompy_app_id_stage,
+            config.sompy_app_id,
             config.TSO500_output_parser_multiqc_app_id_stage,
             config.multiqc_app_id,
             config.TSO500_output_parser_upload_multiqc_app_id_stage,
