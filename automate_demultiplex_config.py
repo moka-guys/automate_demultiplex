@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -125,7 +125,7 @@ mokasnp_pipeline_ID = "5091"
 # mokacan pipeline ID
 mokacan_pipeline_ID = "4728"
 # TSO500 pipeline ID
-TSO_pipeline_ID = "4991"
+TSO_pipeline_ID = "5095"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -163,14 +163,15 @@ multiqc_path = "Apps/multiqc_v1.15.0"
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
 
 # TSO500 app
-tso500_app = "Apps/TSO500_v1.3"
+tso500_app = "applet-GBKvYFQ0jy1Vx4zJ126gX4xp" # Apps/TSO500_v1.4.0
 tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 
 # TSO500_output_parser app
-tso500_output_parser_app = "Apps/tso500_output_parser_v1.1"
+tso500_output_parser_app = "applet-GBKvX5j0jy1kK8jj9F7jjVY7" # Apps/tso500_output_parser_v1.2.0
 # inputs for tso500_output_parser_app
 coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
+sompy_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G9yPb780jy1p660k6yBvQg07"
 multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G7QB6zj0jy1z1ZV1P5VZBj9p" 
 upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
 TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
@@ -309,6 +310,7 @@ TSO500_output_parser_job_id_stage = " -itso500_jobid="
 TSO500_output_parser_coverage_bedfile_id_stage = " -icoverage_bedfile_id="
 TSO500_output_parser_coverage_app_id_stage = " -icoverage_app_id="
 TSO500_output_parser_fastqc_app_id_stage = " -ifastqc_app_id="
+TSO500_output_parser_sompy_app_id_stage = " -isompy_app_id="
 TSO500_output_parser_multiqc_app_id_stage = " -imultiqc_app_id="
 TSO500_output_parser_upload_multiqc_app_id_stage = " -iupload_multiqc_app_id="
 TSO500_output_parser_coverage_commands_stage = " -icoverage_commands="
@@ -394,7 +396,7 @@ panel_list = [
 	"Pan4396", # ArcherDx
 	"Pan4579", # VCP2 somatic M1.1
 	"Pan4574", # VCP2 somatic M1.2
-	"Pan4963", # TSO500 - no UTRS TERT promotor
+	"Pan4969", # TSO500 - no UTRS TERT promotor
 	"Pan4821", # VCP1 STG R134_FH
 	"Pan4822", # VCP1 STG R184_CF
 	"Pan4823", # VCP1 STG R25_FGFR
@@ -435,7 +437,7 @@ archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4573","Pan4574"]
-tso500_panel_list = ["Pan4963"] # note the settings from the first item in this list are used when setting off the dx run commands.
+tso500_panel_list = ["Pan4969"] # note the settings from the first item in this list are used when setting off the dx run commands.
 
 
 default_panel_properties = {
@@ -851,9 +853,9 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"clinical_coverage_depth" : 200,
 	},
-	"Pan4963" : { # TSO500 no UTRs. TERT promotor
+	"Pan4969" : { # TSO500 no UTRs. TERT promotor
 		"TSO500": True,
-		"sambamba_bedfile": "Pan4963dataSambamba.bed",
+		"sambamba_bedfile": "Pan4969dataSambamba.bed",
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
