@@ -159,9 +159,7 @@ class RunfolderProcessor(object):
         self.tso500_output_parser_dx_command = (
             "jobid=$(dx run " + config.app_project + config.tso500_output_parser_app + " --priority high -y --name "
         )
-        self.onePGT_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.fastqc_app + " --priority high -y --name "
-        )
+
         self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
         self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
         self.upload_multiqc_command = (
@@ -248,17 +246,6 @@ class RunfolderProcessor(object):
         ):
             raise Exception, "dx toolkit not installed"
 
-        # test agilent connextor is running
-        if not self.test_upload_agent(
-            self.perform_test(
-                self.execute_subprocess_command(
-                   config.agilent_connector_cmd 
-                )[0],
-                "agilent_connector",
-            )
-        ):
-            # don't raise exception - just raise a warning.
-            self.loggers.script.error("UA_fail 'Agilent connector not running - please restart'")
 
     def quarterback(self):
         """
@@ -442,9 +429,6 @@ class RunfolderProcessor(object):
                 return False
         if test == "cluster_density":
             if config.cluster_density_success_statement not in test_input or config.cluster_density_error_statement in test_input:
-                return False
-        if test == "agilent_connector":
-            if config.agilent_connector_output not in test_input:
                 return False
         # if tar completes expect no stdout or stderr.
         if test == "tar_runfolder":
@@ -1199,7 +1183,6 @@ class RunfolderProcessor(object):
         congenica_upload = False
         joint_variant_calling = False # not currently in use
         rpkm_list = [] # list for panels needing RPKM analysis
-        onePGT_run = False # flag to skip processes not required for PGT runs
         TSO500 = False
 
         # loop through samples
@@ -1251,15 +1234,6 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokacan"]:
                     commands_list.append(self.create_mokacan_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
-                
-                # if onePGT
-                if self.panel_dictionary[panel]["onePGT"]:
-                    #onePGT_run = True
-                    commands_list.append(self.create_onePGT_command(fastq, panel, "R1"))
-                    commands_list.append(self.add_to_depends_list(fastq))
-                    commands_list.append(self.create_onePGT_command(fastq, panel, "R2"))
-                    commands_list.append(self.add_to_depends_list(fastq))
-                    self.copy_onePGT_fastqs(fastq)
 
                 #if panel is to be processed using mokasnp
                 if self.panel_dictionary[panel]["mokasnp"]:
@@ -1476,30 +1450,6 @@ class RunfolderProcessor(object):
         dx_command = "".join(map(str, dx_command_list))
         return dx_command
 
-    def create_onePGT_command(self, fastq, pannumber, read):
-        """
-        Build dx run command, in this case to run fastqc on a single fastq file
-        Inputs:
-            R1 fastq filename
-            Pan number
-            read (R1 or R2)
-        Returns:
-            dx run command for fastqc (string)
-        """
-        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
-        fastqs = self.nexus_fastq_paths(fastq)
-        dx_command_list = [
-            self.onePGT_dx_command,
-            fastqs[2],
-            " -ireads=",
-            fastqs[0].replace("_R1_","_%s_" % (read)),
-            self.dest,
-            self.dest_cmd,
-            self.token,
-        ]
-        dx_command = "".join(map(str, dx_command_list))
-
-        return dx_command
 
     def create_mokasnp_command(self, fastq, pannumber):
         """
@@ -1584,7 +1534,9 @@ class RunfolderProcessor(object):
             FH_prs_cmd_string+= " --instance-type %s=%s" % (config.mokapipe_gatk_human_exome_stage, config.mokapipe_FH_humanexome_instance_type)
             FH_prs_cmd_string+= config.mokapipe_haplotype_vcf_output_format
             
-             
+        masked_reference_command=""
+        if self.panel_dictionary[pannumber]["masked_reference"]:
+            masked_reference_command+=config.mokapipe_bwa_ref_genome % (self.panel_dictionary[pannumber]["masked_reference"])
         #If sample is not R134 we want skip to be set to true (app default is skip=true)
         #Assume all sample are not R134 and set skip to true
         # create the dx command
@@ -1610,6 +1562,7 @@ class RunfolderProcessor(object):
             + vcf_eval_prefix_string
             + FH_prs_cmd_string
             + FH_prs_bedfile_cmd
+            + masked_reference_command
             + config.mokapipe_mokapicard_vendorbed_input
             + bedfiles["hsmetrics"]
             + mokapipe_padding_cmd
@@ -1847,57 +1800,6 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-
-    def copy_onePGT_fastqs(self, fastq):
-        """
-        Input:
-            R1 fastq file name
-        This function checks for the filesize of a fastq file - a warning is sent if greater than size defined in config (currently 5GB) and the file is not moved
-        A rsync command is then issued to copy the fastq to the desired agilent upload folder 
-        The stderr is sent to check_for_rsync_errors() to check for an expected word and a further alert is sent if "fail" or "error" are in stderr
-        Returns:
-            None
-        """
-        # create a list of read1 and read2 fastqs
-        fastq_list=[fastq, fastq.replace("_R1_", "_R2_")]
-        for fastq_file in fastq_list:
-            self.loggers.script.info(
-                        "UA_pass 'assessing OnePGT fastq file {}'".format(fastq_file)
-                        )
-            # test size of fastq
-            filesize = os.path.getsize(os.path.join(self.runfolder_obj.fastq_folder_path,fastq_file))
-            if int(filesize) > config.max_filesize_in_bytes:
-                self.loggers.script.error(
-                    "UA_fail 'fastq filesize check fail. {} is greater than {}. File has not been moved'".format(
-                        fastq_file, config.max_filesize_in_GB
-                    ))
-            else:
-                self.loggers.script.info("UA_pass 'fastq filesize check pass'")
-                # write rsync command to copy fastq to agilent folder -v outputs in verbose mode
-                # use tee to write to file and stdout
-                cmd = "rsync -v {} {} | tee -a {}".format(os.path.join(self.runfolder_obj.fastq_folder_path,fastq_file), config.agilent_upload_folder, os.path.join(self.runfolder_obj.runfolderpath,self.runfolder_obj.runfolder_name+"_"+config.rsync_logfile))
-                # run the command
-                out, err = self.execute_subprocess_command(cmd)
-                # pass stderr to function to look for errors 
-                if not self.check_for_rsync_errors(err):
-                    self.loggers.script.error(
-                        "UA_fail 'onePGT fastq move via rsync failed for {}'".format(fastq_file)
-                )
-    
-    def check_for_rsync_errors(self,stderr):
-        """
-        Input:
-            stderr
-        rsync errors will be reported to stderr, not stdout
-        example error:
-        rsync: link_stat "/media/data3/share/testing/999999_NB552085_0077_AHYNCMAFXY/Data/Intensities/BaseCalls/NGS999999_01_242050_JB_U_VCP2R207StG_Pan4042_S1_R1_001.fastdxcq.gz" failed: No such file or directory (2)
-        rsync error: some files/attrs were not transferred (see previous errors) (code 23) at main.c(1183) [sender=3.1.0])
-        Returns:
-            Boolean True, unless the strings "fail" or "error" are seen.
-        """
-        if "error" in stderr or "fail" in stderr:
-            return False
-        return True
 
     def run_congenica_command(self, fastq, pannumber):
         """

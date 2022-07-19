@@ -23,7 +23,6 @@ if not testing:
 	runfolders = "/media/data3/share"
 else:
 	# when testing use a different directory
-	## NOTE WHEN TESTING ALSO CONSIDER agilent_upload_folder (in OnePGT section)
 	runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
@@ -198,6 +197,7 @@ mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
+mokapipe_bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=%s"  # bwa reference genome
 mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
 mokapipe_haplotype_vcf_output_format = " -i" +mokapipe_gatk_human_exome_stage + ".output_format=both"
@@ -220,6 +220,7 @@ mokapipe_FH_humanexome_instance_type= "mem3_ssd1_v2_x8" # required when creating
 
 #Mokapipe FH_PRS BED file
 FH_PRS_bedfile_name = "Pan4909.bed"
+"project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q"
 
 # MokaWES workflow_inputs
 wes_fastqc1 = " -istage-Ff0P5Jj0GYKY717pKX3vX8Z3.reads="  # FastQC Read 1
@@ -391,7 +392,6 @@ panel_list = [
 	"Pan4351", # VCP3 Viapath R227
 	"Pan4387", # VCP3 Viapath R90
 	"Pan4390", # VCP3 Viapath R97
-	"Pan2764", # OnePGT
 	"Pan4009", # MokaSNP 
 	"Pan4396", # ArcherDx
 	"Pan4579", # VCP2 somatic M1.1
@@ -445,7 +445,6 @@ default_panel_properties = {
 	"UMI_bcl2fastq": None,  # eg Y145,I8,Y9I8,Y145
 	"RPKM_bedfile_pan_number": None,
 	"RPKM_also_analyse": None,  # List of Pan Numbers indicating which BAM files to download
-	"onePGT": False,
 	"mokawes": False,
 	"joint_variant_calling": False,
 	"mokaamp": False,
@@ -479,7 +478,8 @@ default_panel_properties = {
 	"congenica_project": None,
 	"peddy": False,
 	"archerdx": False,
-	"TSO500": False
+	"TSO500": False,
+	"masked_reference":False
 }
 
 # override default panel settings
@@ -790,10 +790,6 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4535data.bed",
 		"sambamba_bedfile": "Pan4535dataSambamba.bed",
 		"variant_calling_bedfile": "Pan4535data.bed",
-	},
-	"Pan2764": { # OnePGT
-		"onePGT": True,
-		"congenica_upload": False
 	},
 	"Pan4351": { #VCP3 R227 (Viapath)
 		"mokapipe": True,
@@ -1167,6 +1163,17 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
+	"Panxxxx": {  # LRPCR STG R207 GENE
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"congenica_credentials": "STG",
+		"congenica_IR_template":"TODO",
+		"congenica_project": "TODO",
+		"hsmetrics_bedfile": "GENE SPECIFICdata.bed",
+		"variant_calling_bedfile": "GENE SPECIFICdata.beddata.bed",
+		"sambamba_bedfile": "GENE SPECIFICdata.beddataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q"
+	},
 }
 
 
@@ -1215,16 +1222,6 @@ demultiplexing_log_file_TSO500_message = "TSO500 run. Does not need demultiplexi
 sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 bcl2fastq_stats_filename = "Stats.json"
 bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
-
-# ================ onePGT
-if testing:
-	# for testing
-	agilent_upload_folder = "/media/data1/share/test_agilent_OnePGT_uploads/"
-else:
-	agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
-max_filesize_in_bytes = 5368709120 # 5GB (max size is 10GB per pair of fastq)
-max_filesize_in_GB = "5GB"
-rsync_logfile = "rsync_output.txt"
 
 # ================ TSO500
 tso500_success_tarball = "0"
