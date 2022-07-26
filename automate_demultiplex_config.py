@@ -359,43 +359,44 @@ congenica_samplename = " -ianalysis_name="
 
 # =====List of all panel numbers=====
 panel_list = [
-	"Pan4081", # swift EGFR 
-	"Pan4082", # swift 57 
-	"Pan2835", # twist WES
+	"Pan4081", # Swift EGFR 
+	"Pan4082", # Swift 57 
+	"Pan2835", # Twist WES
 	"Pan4940", # Twist WES for EB lab
 	"Pan4042", # STG VCP2 BRCA
 	"Pan4043", # STG VCP3
 	"Pan4044", # STG VCP1
 	"Pan4049", # STG VCP2 CrCa
 	"Pan3174", # WES trio
-	"Pan4119", # VCP1 Viapath FH
-	"Pan4121", # VCP1 Viapath CF
-	"Pan4122", # VCP1 Viapath FGFR
-	"Pan4125", # VCP1 Viapath DMD
-	"Pan4126", # VCP1 Viapath CADASIL
-	"Pan4145", # VCP3 Viapath CMD
-	"Pan4146", # VCP3 Viapath CM
-	"Pan4149", # VCP2 Viapath BRCA
-	"Pan4150", # VCP2 Viapath ovarian
-	"Pan4127", # VCP2 Viapath colorectal
-	"Pan4129", # VCP2 Viapath lynch
-	"Pan4130", # VCP2 Viapath polyposis
-	"Pan4132", # VCP3 Viapath R56
-	"Pan4134", # VCP3 Viapath R57
-	"Pan4136", # VCP3 Viapath R58
-	"Pan4137", # VCP3 Viapath R60
-	"Pan4138", # VCP3 Viapath R62
-	"Pan4143", # VCP3 Viapath R66
-	"Pan4144", # VCP3 Viapath R78
-	"Pan4151", # VCP3 Viapath R82
-	"Pan4314", # VCP3 Viapath R229
-	"Pan4351", # VCP3 Viapath R227
-	"Pan4387", # VCP3 Viapath R90
-	"Pan4390", # VCP3 Viapath R97
+	"Pan4119", # VCP1 Viapath_R134(FH)
+	"Pan4121", # VCP1 Viapath_R184(CF)
+	"Pan4122", # VCP1 Viapath_R25(FGFR)
+	"Pan4125", # VCP1 Viapath_R73(DMD)
+	"Pan4126", # VCP1 Viapath_R337(CADASIL)
+	"Pan4145", # VCP3 Viapath_R79(CMD)
+	"Pan4146", # VCP3 Viapath_R81(CM)
+	"Pan4149", # VCP2 Viapath_R208(BRCA)
+	"Pan4150", # VCP2 Viapath_R207(ovarian)
+	"Pan4127", # VCP2 Viapath_R209(colorectal)
+	"Pan4129", # VCP2 Viapath_R210(lynch)
+	"Pan4964", # VCP2 Viapath_R259(nijmegen)
+	"Pan4130", # VCP2 Viapath_R211(polyposis)
+	"Pan4132", # VCP3 Viapath_R56
+	"Pan4134", # VCP3 Viapath_R57
+	"Pan4136", # VCP3 Viapath_R58
+	"Pan4137", # VCP3 Viapath_R60
+	"Pan4138", # VCP3 Viapath_R62
+	"Pan4143", # VCP3 Viapath_R66
+	"Pan4144", # VCP3 Viapath_R78
+	"Pan4151", # VCP3 Viapath_R82
+	"Pan4314", # VCP3 Viapath_R229
+	"Pan4351", # VCP3 Viapath_R227
+	"Pan4387", # VCP3 Viapath_R90
+	"Pan4390", # VCP3 Viapath_R97
 	"Pan4009", # MokaSNP 
 	"Pan4396", # ArcherDx
-	"Pan4579", # VCP2 somatic M1.1
-	"Pan4574", # VCP2 somatic M1.2
+	"Pan4579", # VCP2_M1.1(somatic)
+	"Pan4574", # VCP2_M1.2(somatic)
 	"Pan4969", # TSO500 - no UTRS TERT promotor
 	"Pan4821", # VCP1 STG R134_FH
 	"Pan4822", # VCP1 STG R184_CF
@@ -422,7 +423,6 @@ panel_list = [
 	"Pan4838", # VCP3 STG R90
 	"Pan4839", # VCP3 STG R226
 	"Pan4840", # VCP3 STG R97
-	"Pan4964", # VCP2 Viapath R259 nijmegen
 ]
 
 
