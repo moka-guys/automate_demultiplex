@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -217,10 +217,10 @@ mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.m
 mokapipe_fhPRS_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
 mokapipe_fhPRS_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
 mokapipe_FH_humanexome_instance_type= "mem3_ssd1_v2_x8" # required when creating gVCFs
-
+mokapipe_GATK_human_exome_appletID = "applet-FYZ097j0jy1ZZPx30GykP63J"
+mokapipe_FH_GATK_timeout_args = " --extra-args '{\"timeoutPolicyByExecutable\": {\"%s\": {\"*\":{\"hours\": 6}}}, \"executionPolicy\": {\"restartOn\": {\"JobTimeoutExceeded\":1,\"JMInternalError\": 1, \"UnresponsiveWorker\": 2, \"ExecutionError\":1}}}'" % (mokapipe_GATK_human_exome_appletID) # set timeout policy of 6 hours to gatk app and add the jobtimeoutexceeded reason to the auto restart list
 #Mokapipe FH_PRS BED file
 FH_PRS_bedfile_name = "Pan4909.bed"
-"project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q"
 
 # MokaWES workflow_inputs
 wes_fastqc1 = " -istage-Ff0P5Jj0GYKY717pKX3vX8Z3.reads="  # FastQC Read 1
@@ -423,6 +423,16 @@ panel_list = [
 	"Pan4838", # VCP3 STG R90
 	"Pan4839", # VCP3 STG R226
 	"Pan4840", # VCP3 STG R97
+	"Pan5007", # LRPCR Via R207 PMS2
+	"Pan5008", # LRPCR STG R207 PMS2
+	"Pan5009", # LRPCR Via R208 CHEK2
+	"Pan5010", # LRPCR STG R208 CHEK2
+	"Pan5011", # LRPCR Via R210 PMS2
+	"Pan5012", # LRPCR STG R210 PMS2
+	"Pan5013", # LRPCR Via R211 PMS2
+	"Pan5014", # LRPCR STG R211 PMS2
+	"Pan5015", # LRPCR Via R71 SMN1
+	"Pan5016", # LRPCR Via R239	IKBKG
 ]
 
 
@@ -437,6 +447,7 @@ archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4573","Pan4574"]
+LRPCR_panel_list = ["Pan5007","Pan5008","Pan5009","Pan5010","Pan5011","Pan5012","Pan5013","Pan5014","Pan5015","Pan5016"]
 tso500_panel_list = ["Pan4969"] # note the settings from the first item in this list are used when setting off the dx run commands.
 
 
@@ -1163,18 +1174,122 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
-	"Panxxxx": {  # LRPCR STG R207 GENE
+	"Pan5007": {  # LRPCR Via R207 PMS2
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority", #TODO
+		"congenica_project": "9986", #TODO
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5008": {  # LRPCR STG R207 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"non-priority", #TODO
+		"congenica_project": "0000", #TODO
 		"congenica_credentials": "STG",
-		"congenica_IR_template":"TODO",
-		"congenica_project": "TODO",
-		"hsmetrics_bedfile": "GENE SPECIFICdata.bed",
-		"variant_calling_bedfile": "GENE SPECIFICdata.beddata.bed",
-		"sambamba_bedfile": "GENE SPECIFICdata.beddataSambamba.bed",
-		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q"
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5011": {  # LRPCR Via R210 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority", #TODO
+		"congenica_project": "9981", 
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5012": {  # LRPCR STG R210 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"non-priority", #TODO
+		"congenica_project": "0000", #TODO
+		"congenica_credentials": "STG",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5013": {  # LRPCR Via R211 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority", #TODO
+		"congenica_project": "9982",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5014": {  # LRPCR STG R211 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"non-priority", #TODO
+		"congenica_project": "0000", #TODO
+		"congenica_credentials": "STG",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5009": {  # LRPCR Via R208 CHEK2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority", #TODO
+		"congenica_project": "9984",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5010": {  # LRPCR STG R208 CHEK2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"non-priority", #TODO
+		"congenica_project": "0000", #TODO
+		"congenica_credentials": "STG",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4766data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5015": {  # LRPCR Via R71 SMN1
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority", #TODO
+		"congenica_project": "0000", #TODO
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4971data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5016": {  # LRPCR Via R239 IKBKG
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority", #TODO
+		"congenica_project": "9985",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4768data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
 	},
 }
+
 
 
 # =================turnaround time

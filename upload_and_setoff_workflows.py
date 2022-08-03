@@ -266,11 +266,20 @@ class RunfolderProcessor(object):
             TSO500_sample_list = self.check_for_TSO500()
             # if not TSO500 will return None
             if TSO500_sample_list:
-                # tar runfolder - returns True if tar created sucessfully. If not created properly self.list_of_processed_samples won't be populated and run won't progress
-                if self.tar_runfolder():
-                    # set list of samplenames as list of processed samples - this will allow the project to be named properly.
-                    # set tar folder path in place of the list of fastqs to upload
-                    self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
+                # set up a count and while loop so it will attempt to tar the runfolder twice
+                tar_attempt_count = 0
+                while tar_attempt_count < 2:
+                    # tar runfolder - returns True if tar created sucessfully. 
+                    # If tar_runfolder is unsuccessful after 2 attempts self.list_of_processed_samples won't be populated and run won't progress
+                    if self.tar_runfolder():
+                        # set list of samplenames as list of processed samples - this will allow the project to be named properly.
+                        # set tar folder path in place of the list of fastqs to upload
+                        self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
+                        # complete successfully so break out of while loop
+                        break
+                    # increase tar count
+                    tar_attempt_count += 1
+                
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
@@ -1533,6 +1542,7 @@ class RunfolderProcessor(object):
             FH_prs_cmd_string+=config.mokapipe_fhPRS_skip
             FH_prs_cmd_string+= " --instance-type %s=%s" % (config.mokapipe_gatk_human_exome_stage, config.mokapipe_FH_humanexome_instance_type)
             FH_prs_cmd_string+= config.mokapipe_haplotype_vcf_output_format
+            FH_prs_cmd_string+= config.mokapipe_FH_GATK_timeout_args
             
         masked_reference_command=""
         if self.panel_dictionary[pannumber]["masked_reference"]:
