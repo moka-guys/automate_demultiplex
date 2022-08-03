@@ -1179,7 +1179,7 @@ panel_settings = {
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
 		"congenica_IR_template":"priority", #TODO
-		"congenica_project": "9986", #TODO
+		"congenica_project": "9986",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
@@ -1201,7 +1201,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"priority", #TODO
+		"congenica_IR_template":"priority",
 		"congenica_project": "9981", 
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
@@ -1224,7 +1224,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"priority", #TODO
+		"congenica_IR_template":"priority", 
 		"congenica_project": "9982",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
@@ -1247,7 +1247,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"priority", #TODO
+		"congenica_IR_template":"priority",
 		"congenica_project": "9984",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
@@ -1281,7 +1281,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"priority", #TODO
+		"congenica_IR_template":"priority", 
 		"congenica_project": "9985",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4768data.bed",

@@ -267,8 +267,9 @@ class RunfolderProcessor(object):
             # if not TSO500 will return None
             if TSO500_sample_list:
                 # set up a count and while loop so it will attempt to tar the runfolder twice
-                tar_attempt_count = 0
-                while tar_attempt_count < 2:
+                tar_attempt_count = 1
+                while tar_attempt_count < 3:
+                    self.loggers.script.info("Attempting tar TSO runfolder. attempt {}".format(tar_attempt_count))
                     # tar runfolder - returns True if tar created sucessfully. 
                     # If tar_runfolder is unsuccessful after 2 attempts self.list_of_processed_samples won't be populated and run won't progress
                     if self.tar_runfolder():
