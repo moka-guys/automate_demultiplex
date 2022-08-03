@@ -446,7 +446,7 @@ SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
-mokacan_panel_list = ["Pan4573","Pan4574"]
+mokacan_panel_list = ["Pan4579","Pan4574"]
 LRPCR_panel_list = ["Pan5007","Pan5008","Pan5009","Pan5010","Pan5011","Pan5012","Pan5013","Pan5014","Pan5015","Pan5016"]
 tso500_panel_list = ["Pan4969"] # note the settings from the first item in this list are used when setting off the dx run commands.
 
