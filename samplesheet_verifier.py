@@ -71,7 +71,7 @@ class ValidSamplesheet:
         self.sample_name_list = []
         # to be populated with headers from data section
         self.data_headers = []
-        self.runtype_list = ["NGS", "ADX", "ONC", "SNP", "PGT", "TSO"]
+        self.runtype_list = ["NGS", "ADX", "ONC", "SNP", "PGT", "TSO","LRPCR"]
         self.valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
         # to append any sample names or IDs to with invalid characters/runtypes/pannos
         self.invalid_characters = ""
