@@ -23,7 +23,6 @@ if not testing:
 	runfolders = "/media/data3/share"
 else:
 	# when testing use a different directory
-	## NOTE WHEN TESTING ALSO CONSIDER agilent_upload_folder (in OnePGT section)
 	runfolders = "/media/data3/share/testing/"
 
 # samplesheet folder
@@ -198,6 +197,7 @@ mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
 mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
+mokapipe_bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=%s"  # bwa reference genome
 mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
 mokapipe_haplotype_vcf_output_format = " -i" +mokapipe_gatk_human_exome_stage + ".output_format=both"
@@ -217,7 +217,8 @@ mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.m
 mokapipe_fhPRS_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
 mokapipe_fhPRS_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
 mokapipe_FH_humanexome_instance_type= "mem3_ssd1_v2_x8" # required when creating gVCFs
-
+mokapipe_GATK_human_exome_appletID = "applet-FYZ097j0jy1ZZPx30GykP63J"
+mokapipe_FH_GATK_timeout_args = " --extra-args '{\"timeoutPolicyByExecutable\": {\"%s\": {\"*\":{\"hours\": 6}}}, \"executionPolicy\": {\"restartOn\": {\"JobTimeoutExceeded\":1,\"JMInternalError\": 1, \"UnresponsiveWorker\": 2, \"ExecutionError\":1}}}'" % (mokapipe_GATK_human_exome_appletID) # set timeout policy of 6 hours to gatk app and add the jobtimeoutexceeded reason to the auto restart list
 #Mokapipe FH_PRS BED file
 FH_PRS_bedfile_name = "Pan4909.bed"
 
@@ -358,44 +359,44 @@ congenica_samplename = " -ianalysis_name="
 
 # =====List of all panel numbers=====
 panel_list = [
-	"Pan4081", # swift EGFR 
-	"Pan4082", # swift 57 
-	"Pan2835", # twist WES
+	"Pan4081", # Swift EGFR 
+	"Pan4082", # Swift 57 
+	"Pan2835", # Twist WES
 	"Pan4940", # Twist WES for EB lab
 	"Pan4042", # STG VCP2 BRCA
 	"Pan4043", # STG VCP3
 	"Pan4044", # STG VCP1
 	"Pan4049", # STG VCP2 CrCa
 	"Pan3174", # WES trio
-	"Pan4119", # VCP1 Viapath FH
-	"Pan4121", # VCP1 Viapath CF
-	"Pan4122", # VCP1 Viapath FGFR
-	"Pan4125", # VCP1 Viapath DMD
-	"Pan4126", # VCP1 Viapath CADASIL
-	"Pan4145", # VCP3 Viapath CMD
-	"Pan4146", # VCP3 Viapath CM
-	"Pan4149", # VCP2 Viapath BRCA
-	"Pan4150", # VCP2 Viapath ovarian
-	"Pan4127", # VCP2 Viapath colorectal
-	"Pan4129", # VCP2 Viapath lynch
-	"Pan4130", # VCP2 Viapath polyposis
-	"Pan4132", # VCP3 Viapath R56
-	"Pan4134", # VCP3 Viapath R57
-	"Pan4136", # VCP3 Viapath R58
-	"Pan4137", # VCP3 Viapath R60
-	"Pan4138", # VCP3 Viapath R62
-	"Pan4143", # VCP3 Viapath R66
-	"Pan4144", # VCP3 Viapath R78
-	"Pan4151", # VCP3 Viapath R82
-	"Pan4314", # VCP3 Viapath R229
-	"Pan4351", # VCP3 Viapath R227
-	"Pan4387", # VCP3 Viapath R90
-	"Pan4390", # VCP3 Viapath R97
-	"Pan2764", # OnePGT
+	"Pan4119", # VCP1 Viapath_R134(FH)
+	"Pan4121", # VCP1 Viapath_R184(CF)
+	"Pan4122", # VCP1 Viapath_R25(FGFR)
+	"Pan4125", # VCP1 Viapath_R73(DMD)
+	"Pan4126", # VCP1 Viapath_R337(CADASIL)
+	"Pan4145", # VCP3 Viapath_R79(CMD)
+	"Pan4146", # VCP3 Viapath_R81(CM)
+	"Pan4149", # VCP2 Viapath_R208(BRCA)
+	"Pan4150", # VCP2 Viapath_R207(ovarian)
+	"Pan4127", # VCP2 Viapath_R209(colorectal)
+	"Pan4129", # VCP2 Viapath_R210(lynch)
+	"Pan4964", # VCP2 Viapath_R259(nijmegen)
+	"Pan4130", # VCP2 Viapath_R211(polyposis)
+	"Pan4132", # VCP3 Viapath_R56
+	"Pan4134", # VCP3 Viapath_R57
+	"Pan4136", # VCP3 Viapath_R58
+	"Pan4137", # VCP3 Viapath_R60
+	"Pan4138", # VCP3 Viapath_R62
+	"Pan4143", # VCP3 Viapath_R66
+	"Pan4144", # VCP3 Viapath_R78
+	"Pan4151", # VCP3 Viapath_R82
+	"Pan4314", # VCP3 Viapath_R229
+	"Pan4351", # VCP3 Viapath_R227
+	"Pan4387", # VCP3 Viapath_R90
+	"Pan4390", # VCP3 Viapath_R97
 	"Pan4009", # MokaSNP 
 	"Pan4396", # ArcherDx
-	"Pan4579", # VCP2 somatic M1.1
-	"Pan4574", # VCP2 somatic M1.2
+	"Pan4579", # VCP2_M1.1(somatic)
+	"Pan4574", # VCP2_M1.2(somatic)
 	"Pan4969", # TSO500 - no UTRS TERT promotor
 	"Pan4821", # VCP1 STG R134_FH
 	"Pan4822", # VCP1 STG R184_CF
@@ -422,7 +423,16 @@ panel_list = [
 	"Pan4838", # VCP3 STG R90
 	"Pan4839", # VCP3 STG R226
 	"Pan4840", # VCP3 STG R97
-	"Pan4964", # VCP2 Viapath R259 nijmegen
+	"Pan5007", # LRPCR Via R207 PMS2
+	"Pan5008", # LRPCR STG R207 PMS2
+	"Pan5009", # LRPCR Via R208 CHEK2
+	"Pan5010", # LRPCR STG R208 CHEK2
+	"Pan5011", # LRPCR Via R210 PMS2
+	"Pan5012", # LRPCR STG R210 PMS2
+	"Pan5013", # LRPCR Via R211 PMS2
+	"Pan5014", # LRPCR STG R211 PMS2
+	"Pan5015", # LRPCR Via R71 SMN1
+	"Pan5016", # LRPCR Via R239	IKBKG
 ]
 
 
@@ -436,7 +446,8 @@ SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
-mokacan_panel_list = ["Pan4573","Pan4574"]
+mokacan_panel_list = ["Pan4579","Pan4574"]
+LRPCR_panel_list = ["Pan5007","Pan5008","Pan5009","Pan5010","Pan5011","Pan5012","Pan5013","Pan5014","Pan5015","Pan5016"]
 tso500_panel_list = ["Pan4969"] # note the settings from the first item in this list are used when setting off the dx run commands.
 
 
@@ -445,7 +456,6 @@ default_panel_properties = {
 	"UMI_bcl2fastq": None,  # eg Y145,I8,Y9I8,Y145
 	"RPKM_bedfile_pan_number": None,
 	"RPKM_also_analyse": None,  # List of Pan Numbers indicating which BAM files to download
-	"onePGT": False,
 	"mokawes": False,
 	"joint_variant_calling": False,
 	"mokaamp": False,
@@ -479,7 +489,8 @@ default_panel_properties = {
 	"congenica_project": None,
 	"peddy": False,
 	"archerdx": False,
-	"TSO500": False
+	"TSO500": False,
+	"masked_reference":False
 }
 
 # override default panel settings
@@ -790,10 +801,6 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4535data.bed",
 		"sambamba_bedfile": "Pan4535dataSambamba.bed",
 		"variant_calling_bedfile": "Pan4535data.bed",
-	},
-	"Pan2764": { # OnePGT
-		"onePGT": True,
-		"congenica_upload": False
 	},
 	"Pan4351": { #VCP3 R227 (Viapath)
 		"mokapipe": True,
@@ -1167,7 +1174,122 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
 	},
+	"Pan5007": {  # LRPCR Via R207 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority",
+		"congenica_project": "9986",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5008": {  # LRPCR STG R207 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"non-priority", 
+		"congenica_project": "10010",
+		"congenica_credentials": "STG",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5011": {  # LRPCR Via R210 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority",
+		"congenica_project": "9981", 
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5012": {  # LRPCR STG R210 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"non-priority", 
+		"congenica_project": "10042",
+		"congenica_credentials": "STG",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5013": {  # LRPCR Via R211 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority", 
+		"congenica_project": "9982",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5014": {  # LRPCR STG R211 PMS2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"non-priority", 
+		"congenica_project": "10042"
+		"congenica_credentials": "STG",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5009": {  # LRPCR Via R208 CHEK2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority",
+		"congenica_project": "9984",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4767data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5010": {  # LRPCR STG R208 CHEK2
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"non-priority", 
+		"congenica_project": "10009", 
+		"congenica_credentials": "STG",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4766data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5015": {  # LRPCR Via R71 SMN1
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority", #TODO
+		"congenica_project": "0000", #TODO
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4971data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
+	"Pan5016": {  # LRPCR Via R239 IKBKG
+		"mokapipe": True,
+		"multiqc_coverage_level": 30,
+		"capture_type": "Amplicon",
+		"congenica_IR_template":"priority", 
+		"congenica_project": "9985",
+		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
+		"variant_calling_bedfile": "Pan4768data.bed",
+		"sambamba_bedfile": "Pan5018dataSambamba.bed",
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+	},
 }
+
 
 
 # =================turnaround time
@@ -1215,16 +1337,6 @@ demultiplexing_log_file_TSO500_message = "TSO500 run. Does not need demultiplexi
 sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 bcl2fastq_stats_filename = "Stats.json"
 bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
-
-# ================ onePGT
-if testing:
-	# for testing
-	agilent_upload_folder = "/media/data1/share/test_agilent_OnePGT_uploads/"
-else:
-	agilent_upload_folder = "/media/data1/share/agilent_OnePGT_uploads/"
-max_filesize_in_bytes = 5368709120 # 5GB (max size is 10GB per pair of fastq)
-max_filesize_in_GB = "5GB"
-rsync_logfile = "rsync_output.txt"
 
 # ================ TSO500
 tso500_success_tarball = "0"
