@@ -1178,7 +1178,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"priority", #TODO
+		"congenica_IR_template":"priority",
 		"congenica_project": "9986",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
@@ -1189,8 +1189,8 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"non-priority", #TODO
-		"congenica_project": "0000", #TODO
+		"congenica_IR_template":"non-priority", 
+		"congenica_project": "10010",
 		"congenica_credentials": "STG",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
@@ -1212,8 +1212,8 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"non-priority", #TODO
-		"congenica_project": "0000", #TODO
+		"congenica_IR_template":"non-priority", 
+		"congenica_project": "10042",
 		"congenica_credentials": "STG",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
@@ -1235,8 +1235,8 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"non-priority", #TODO
-		"congenica_project": "0000", #TODO
+		"congenica_IR_template":"non-priority", 
+		"congenica_project": "10042"
 		"congenica_credentials": "STG",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
@@ -1258,8 +1258,8 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"non-priority", #TODO
-		"congenica_project": "0000", #TODO
+		"congenica_IR_template":"non-priority", 
+		"congenica_project": "10009", 
 		"congenica_credentials": "STG",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4766data.bed",
