@@ -238,13 +238,13 @@ class RunfolderProcessor(object):
                 "ua",
             )
         ):
-            raise Exception, "Upload agent not installed"
+            raise Exception("Upload agent not installed")
 
         # test dx toolkit installation
         if not self.test_dx_toolkit(
             self.perform_test(self.execute_subprocess_command(config.dx_sdk_test)[0], "dx_toolkit")
         ):
-            raise Exception, "dx toolkit not installed"
+            raise Exception("dx toolkit not installed")
 
 
     def quarterback(self):
@@ -720,7 +720,7 @@ class RunfolderProcessor(object):
                 ).format(self.runfolder_obj.runfolder_name)
             )
             # raise exception to stop script
-            raise Exception, "Unable to identify library batch numbers"
+            raise Exception("Unable to identify library batch numbers")
 
 
     def build_nexus_project_name(self, wes_number, library_batch):
@@ -844,7 +844,7 @@ class RunfolderProcessor(object):
         else:
                 self.loggers.script.error("UA_fail 'failed to create project in dna nexus'")
                 # raise exception to stop script
-                raise Exception, "Unable to create DNA Nexus project"
+                raise Exception("Unable to create DNA Nexus project")
 
     def upload_fastqs(self):
         """
