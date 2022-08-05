@@ -1236,7 +1236,7 @@ panel_settings = {
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
 		"congenica_IR_template":"non-priority", 
-		"congenica_project": "10042"
+		"congenica_project": "10042",
 		"congenica_credentials": "STG",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
