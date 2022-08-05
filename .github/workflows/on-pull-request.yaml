@@ -1,4 +1,4 @@
-name: SEGLH-naming python package
+name: Automated scripts
 
 on:
   push:
