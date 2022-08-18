@@ -123,7 +123,7 @@ class RunfolderProcessor(object):
         self.now = now
         
         # define logfile path for this execution of this script.
-        self.upload_agent_logfile_path = config.upload_and_setoff_workflow_logfile + self.now + "_.txt"
+        self.upload_agent_logfile_path = "%s%s_.txt" % (config.upload_and_setoff_workflow_logfile, self.now )
 
         # string of fastqs for upload agent
         self.fastq_string = ""
@@ -132,62 +132,32 @@ class RunfolderProcessor(object):
         self.list_of_processed_samples = []
 
         # DNA Nexus commands to be built on later
-        self.source_command = (
-            "#!/bin/bash\n. %s\ndepends_list=''"
-        ) % (config.sdk_source_cmd)
-        self.createprojectcommand = (
-            'project_id="$(dx new project --bill-to %s "%s" --brief --auth-token '
-            + config.Nexus_API_Key
-            + ')"\n'
-        )
-
-        self.mokapipe_command = (
-            "jobid=$(dx run " + config.app_project + config.mokapipe_path + " --priority high -y --name "
-        )
-        self.wes_command = (
-            "jobid=$(dx run " + config.app_project + config.mokawes_path + " --priority high -y --name "
-        )
-        self.mokasnp_command = (
-            "jobid=$(dx run " + config.app_project + config.mokasnp_path + " --priority high -y --name "
-        )
-        self.archer_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.fastqc_app + " -y --priority high --name "
-        )
-        self.tso500_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.tso500_app + " --priority high -y --name "
-        )
-        self.tso500_output_parser_dx_command = (
-            "jobid=$(dx run " + config.app_project + config.tso500_output_parser_app + " --priority high -y --name "
-        )
-
-        self.peddy_command = "jobid=$(dx run " + config.app_project + config.peddy_path
-        self.multiqc_command = "jobid=$(dx run " + config.app_project + config.multiqc_path
-        self.upload_multiqc_command = (
-            "jobid=$(dx run " + config.app_project + config.upload_multiqc_path + " -y "
-        )
-        self.RPKM_command = "dx run " + config.app_project + config.RPKM_path + " --priority high --instance-type mem1_ssd1_x8"
-        self.mokaamp_command = (
-            "jobid=$(dx run " + config.app_project + config.mokaamp_path + " --priority high -y --name "
-        )
-        self.mokacan_command = (
-            "jobid=$(dx run " + config.app_project + config.mokacan_path + " --priority high -y --name "
-        )
+        self.source_command = "#!/bin/bash\n. %s\ndepends_list=''" % (config.sdk_source_cmd)
+        self.createprojectcommand = 'project_id="$(dx new project --bill-to %s "%s" --brief --auth-token %s)"\n'
+        self.mokapipe_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokapipe_path)
+        self.wes_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokawes_path)
+        self.mokasnp_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokasnp_path)
+        self.archer_dx_command = "jobid=$(dx run %s%s -y --priority high --name " % (config.app_project, config.fastqc_app)
+        self.tso500_dx_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.tso500_app)
+        self.tso500_output_parser_dx_command = "jobid=$(dx run %s%s --priority high -y --name " %(config.app_project, config.tso500_output_parser_app)
+        self.peddy_command = "jobid=$(dx run %s%s" % (config.app_project, config.peddy_path)
+        self.multiqc_command = "jobid=$(dx run %s%s" % (config.app_project, config.multiqc_path)
+        self.upload_multiqc_command = "jobid=$(dx run %s%s -y" % (config.app_project, config.upload_multiqc_path)
+        self.RPKM_command = "dx run %s%s --priority high --instance-type mem1_ssd1_x8" % (config.app_project, config.RPKM_path)
+        self.mokaamp_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokaamp_path)
+        self.mokacan_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokacan_path) 
         self.decision_support_preperation = "analysisid=$(python %s -a " % (
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 config.decision_support_tool_input_script,
             )
         )
-        self.congenica_upload_command = (
-            "echo 'dx run " + config.app_project + config.congenica_app_path + " -y "
-        )
+        self.congenica_upload_command = "echo 'dx run %s%s -y" % (config.app_project, config.congenica_app_path)
+        self.congenica_sftp_upload_command = "echo 'dx run %s%s -y" % (config.app_project, config.congenica_SFTP_upload_app)
         # create filepath for file to hold congenica command(s)
-        self.congenica_upload_command_script_path = (
-            config.DNA_Nexus_workflow_logfolder + self.runfolder_obj.runfolder_name + "_congenica.sh"
-        )
+        self.congenica_upload_command_script_path = "%s%s_congenica.sh" % (config.DNA_Nexus_workflow_logfolder, self.runfolder_obj.runfolder_name)
         # string to redirect command (with variables) into file
-        self.congenica_upload_command_redirect = "' >> " + self.congenica_upload_command_script_path
-
+        self.congenica_upload_command_redirect = "' >> %s" % (self.congenica_upload_command_script_path)
         # project to upload run folder into
         self.nexusproject = config.NexusProjectPrefix
         self.project_bash_script_path = (
@@ -197,7 +167,7 @@ class RunfolderProcessor(object):
         self.dest = " --dest="
         self.dest_cmd = ""
         self.project = " --project="
-        self.token = " --brief --auth-token " + config.Nexus_API_Key + ")"
+        self.token = " --brief --auth-token %s)" % (config.Nexus_API_Key)
         self.depends = " -y $depends_list"
 
         # argument to capture jobids
@@ -785,7 +755,7 @@ class RunfolderProcessor(object):
             project_script.write(self.source_command + "\n")
             project_script.write(
                 self.createprojectcommand
-                % (config.prod_organisation, self.runfolder_obj.nexus_project_name)
+                % (config.prod_organisation, self.runfolder_obj.nexus_project_name, config.Nexus_API_Key)
             )
 
             # Share the project with the nexus usernames in the list in config file
@@ -1210,11 +1180,19 @@ class RunfolderProcessor(object):
                     # call function to build the MokaWES command and add to command list and depends list
                     commands_list.append(self.create_mokawes_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
-                    # EB samples will be 
+                    # if sample to be uploaded to congenica there are 2 methods.
+                    # if a project id is specified in the config it means it can eb uploaded as if it were a custom panel sample
+                    # eg IR does not need patient specific info and can be uplaoded using the upload agent
+                    # otherwise if the congenica project is not set it should be uploaded via the SFTP
                     if self.panel_dictionary[panel]["congenica_upload"]:
                         congenica_upload = True
                         commands_list.append(self.build_congenica_input_command())
-                        commands_list.append(self.run_congenica_command(fastq, panel))
+                        #if project is specified then upload via upload agent
+                        if self.panel_dictionary[panel]["congenica_project"]:
+                            commands_list.append(self.run_congenica_command(fastq, panel))
+                        #if project is not specified upload via SFTP
+                        else:
+                            commands_list.append(self.run_congenica_SFTP_upload_command(fastq))
                     # Set run-wide flags for Peddy and joint variant calling
                     if self.panel_dictionary[panel]["peddy"]:
                         peddy = True
@@ -1231,7 +1209,6 @@ class RunfolderProcessor(object):
                         congenica_upload = True
                         commands_list.append(self.build_congenica_input_command())
                         commands_list.append(self.run_congenica_command(fastq, panel))
-                        #commands_list.append(self.add_to_depends_list(fastq))
                     # add panel to RPKM list 
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
@@ -1576,6 +1553,7 @@ class RunfolderProcessor(object):
             + masked_reference_command
             + config.mokapipe_mokapicard_vendorbed_input
             + bedfiles["hsmetrics"]
+            + config.mokapipe_mokapicard_capturetype_stage % (self.panel_dictionary[pannumber]["capture_type"])
             + mokapipe_padding_cmd
             + bedfiles_string
             + self.dest
@@ -1854,6 +1832,40 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
+    def run_congenica_SFTP_upload_command(self, fastq):
+        """
+        Input = R1 fastq file name
+        The import congenica SFTP app takes inputs in the format jobid.outputname which ensures the job
+        doesn't run until the vcfs have been created.
+        These inputs are created by a python script, which is called immediately before this job,
+        and the output is captures into the variable $analysisid
+        Upload via SFTP only required the bam and vcf inputs, and does not need projectids, IR templates or names 
+        This command is appended to a file which will be run after the QC is passed.
+        Returns = dx run command for congenica import app (string)
+        """
+        # check if any reference ids (flanked by underscores) are present in the fastq name and if so skip this step
+        for id in config.reference_sample_ids:
+            if "_%s_" % (id) in fastq:
+                self.loggers.script.info(
+                        "UA_pass 'NA12878 sample detected, not building congenica upload command for {}'".format(fastq)
+                        )
+                return None
+
+        # the nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name 
+        # The samplename (fastqs[2]) is used to name the job
+        fastqs = self.nexus_fastq_paths(fastq)
+
+        dx_command = (
+            self.congenica_sftp_upload_command
+            + "' $analysisid '"
+            + " --name "
+            + "congenica_SFTP_upload_"
+            + fastqs[2]
+            + self.dest
+            + self.dest_cmd
+            + self.token.replace(")", self.congenica_upload_command_redirect)
+        )
+        return dx_command
 
     def add_to_depends_list(self, fastq):
         """
@@ -2173,7 +2185,7 @@ class RunfolderProcessor(object):
                 id1, id2 = sample.split("_")[2:4]
                 # define query with placeholders
                 queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.TSO_pipeline_ID, pannumber_no_pan))
-                workflows.append(config.tso500_app.split("/")[-1])
+                workflows.append(config.tso500_app_name)
         # if queries have been created return a dictionary
         if queries:
             # use queries list to create a count of samples, return list of queries and the set of the workflows (removing duplicates)

@@ -35,9 +35,9 @@ def get_arguments():
     parser.add_argument(
         "-t",
         "--tool",
-        choices=["iva", "congenica"],
+        choices=["congenica"],
         required=True,
-        help="decision support tool (iva or congenica)",
+        help="decision support tool (currently only supports congenica)",
     )
     parser.add_argument(
         "-p",
