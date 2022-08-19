@@ -112,7 +112,7 @@ reference_sample_ids = ["NA12878", "136819"]
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
-mokapipe_congenica_pipeline_ID = "5089" 
+mokapipe_congenica_pipeline_ID = "5137" 
 # Current MokaWES ID
 mokawes_pipeline_ID = "5078"
 # MokaAMP ID
@@ -144,7 +144,7 @@ project_success = 'Created new project called "%s"'
 app_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"
 # path to the workflow in the app project
 
-mokapipe_path = "Workflows/GATK3.5_v2.15" 
+mokapipe_path = "Workflows/GATK3.5_v2.16" 
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 
@@ -160,9 +160,11 @@ peddy_path = "Apps/peddy_v1.5"
 multiqc_path = "Apps/multiqc_v1.15.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
+congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
 
 # TSO500 app
 tso500_app = "applet-GBKvYFQ0jy1Vx4zJ126gX4xp" # Apps/TSO500_v1.4.0
+tso500_app_name = "TSO500_v1.4.0"
 tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 
 # TSO500_output_parser app
@@ -199,6 +201,7 @@ mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
 mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
 mokapipe_bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=%s"  # bwa reference genome
 mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
+mokapipe_mokapicard_capturetype_stage = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.Capture_panel=%s"
 mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
 mokapipe_haplotype_vcf_output_format = " -i" +mokapipe_gatk_human_exome_stage + ".output_format=both"
 mokapipe_filter_vcf_with_bedfile_bed_input = " -i" +mokapipe_filter_vcf_with_bedfile_stage + ".bedfile="
@@ -419,10 +422,6 @@ panel_list = [
 	"Pan4834", # VCP3 STG R81 CM
 	"Pan4835", # VCP3 STG R82 limb girdle
 	"Pan4836", # VCP3 STG R229
-	"Pan4837", # VCP3 STG R227
-	"Pan4838", # VCP3 STG R90
-	"Pan4839", # VCP3 STG R226
-	"Pan4840", # VCP3 STG R97
 	"Pan5007", # LRPCR Via R207 PMS2
 	"Pan5008", # LRPCR STG R207 PMS2
 	"Pan5009", # LRPCR Via R208 CHEK2
@@ -440,7 +439,7 @@ panel_list = [
 #IMPORTANT: Lists below are used by the trend analysis scripts, if changed the trend analysis script will need to be updated
 vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044","Pan4821","Pan4822","Pan4823","Pan4824","Pan4825"]
 vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049","Pan4816","Pan4817","Pan4818","Pan4819","Pan4820","Pan4964"]
-vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390","Pan4826","Pan4827","Pan4828","Pan4829","Pan4830","Pan4831","Pan4832","Pan4833","Pan4834","Pan4835","Pan4836","Pan4837","Pan4838","Pan4839","Pan4840"]
+vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390","Pan4826","Pan4827","Pan4828","Pan4829","Pan4830","Pan4831","Pan4832","Pan4833","Pan4834","Pan4835","Pan4836"]
 WES_panel_lists = ["Pan2835","Pan3174","Pan4940"]
 SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396"]
@@ -500,8 +499,7 @@ panel_settings = {
 		"multiqc_coverage_level": 20,
 		"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
 		"sambamba_bedfile": "Pan493dataSambamba.bed",
-		"peddy": True,
-		"congenica_upload": False
+		"peddy": True
 	},
 	"Pan4940": {  # TWIST WES for EB lab
 		"mokawes": True,
@@ -517,7 +515,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
 		"sambamba_bedfile": "Pan493dataSambamba.bed",
 		"peddy": True,
-		"congenica_upload": False
+		"congenica_upload": True
 	},
 	"Pan4081": {  # EGFR SWIFT Panel
 		"mokaamp": True,
@@ -1055,54 +1053,6 @@ panel_settings = {
 		"sambamba_bedfile": "Pan4535dataSambamba.bed",
 	},
 	"Pan4836": {  # VCP3 STG R229
-		"mokapipe": True,
-		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
-		"RPKM_also_analyse": vcp3_panel_list,
-		"congenica_credentials": "STG",
-		"congenica_IR_template":"non-priority",
-		"congenica_project": "4201",
-		"hsmetrics_bedfile": "Pan4535data.bed",
-		"variant_calling_bedfile": "Pan4535data.bed",
-		"sambamba_bedfile": "Pan4535dataSambamba.bed",
-	},
-	"Pan4837": {  # VCP3 STG R227
-		"mokapipe": True,
-		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
-		"RPKM_also_analyse": vcp3_panel_list,
-		"congenica_credentials": "STG",
-		"congenica_IR_template":"non-priority",
-		"congenica_project": "4201",
-		"hsmetrics_bedfile": "Pan4535data.bed",
-		"variant_calling_bedfile": "Pan4535data.bed",
-		"sambamba_bedfile": "Pan4535dataSambamba.bed",
-	},
-	"Pan4838": {  # VCP3 STG R90
-		"mokapipe": True,
-		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
-		"RPKM_also_analyse": vcp3_panel_list,
-		"congenica_credentials": "STG",
-		"congenica_IR_template":"non-priority",
-		"congenica_project": "4201",
-		"hsmetrics_bedfile": "Pan4535data.bed",
-		"variant_calling_bedfile": "Pan4535data.bed",
-		"sambamba_bedfile": "Pan4535dataSambamba.bed",
-	},
-	"Pan4839": {  # VCP3 STG R226
-		"mokapipe": True,
-		"multiqc_coverage_level": 30,
-		"RPKM_bedfile_pan_number": "Pan3974",
-		"RPKM_also_analyse": vcp3_panel_list,
-		"congenica_credentials": "STG",
-		"congenica_IR_template":"non-priority",
-		"congenica_project": "4201",
-		"hsmetrics_bedfile": "Pan4535data.bed",
-		"variant_calling_bedfile": "Pan4535data.bed",
-		"sambamba_bedfile": "Pan4535dataSambamba.bed",
-	},
-	"Pan4840": {  # VCP3 STG R97
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"RPKM_bedfile_pan_number": "Pan3974",
