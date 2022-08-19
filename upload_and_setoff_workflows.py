@@ -122,9 +122,6 @@ class RunfolderProcessor(object):
         self.runfolder_obj = RunfolderObject(runfolder)
         self.now = now
         
-        # define logfile path for this execution of this script.
-        self.upload_agent_logfile_path = "%s%s_.txt" % (config.upload_and_setoff_workflow_logfile, self.now )
-
         # string of fastqs for upload agent
         self.fastq_string = ""
 
@@ -1182,7 +1179,7 @@ class RunfolderProcessor(object):
                     commands_list.append(self.add_to_depends_list(fastq))
                     # if sample to be uploaded to congenica there are 2 methods.
                     # if a project id is specified in the config it means it can eb uploaded as if it were a custom panel sample
-                    # eg IR does not need patient specific info and can be uplaoded using the upload agent
+                    # eg IR does not need patient specific info and can be uploaded using the upload agent
                     # otherwise if the congenica project is not set it should be uploaded via the SFTP
                     if self.panel_dictionary[panel]["congenica_upload"]:
                         congenica_upload = True
