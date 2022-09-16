@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -376,6 +376,17 @@ panel_list = [
 	"Pan4122", # VCP1 Viapath_R25(FGFR)
 	"Pan4125", # VCP1 Viapath_R73(DMD)
 	"Pan4126", # VCP1 Viapath_R337(CADASIL)
+	"Pan4974", # VCP1 Viapath (Molecular Haemostasis) R112
+	"Pan4975", # VCP1 Viapath (Molecular Haemostasis) R115
+	"Pan4976", # VCP1 Viapath (Molecular Haemostasis) R116
+	"Pan4977", # VCP1 Viapath (Molecular Haemostasis) R117
+	"Pan4978", # VCP1 Viapath (Molecular Haemostasis) R118
+	"Pan4979", # VCP1 Viapath (Molecular Haemostasis) R119
+	"Pan4980", # VCP1 Viapath (Molecular Haemostasis) R120
+	"Pan4981", # VCP1 Viapath (Molecular Haemostasis) R121
+	"Pan4982", # VCP1 Viapath (Molecular Haemostasis) R122
+	"Pan4983", # VCP1 Viapath (Molecular Haemostasis) R123
+	"Pan4984", # VCP1 Viapath (Molecular Haemostasis) R124
 	"Pan4145", # VCP3 Viapath_R79(CMD)
 	"Pan4146", # VCP3 Viapath_R81(CM)
 	"Pan4149", # VCP2 Viapath_R208(BRCA)
@@ -437,7 +448,7 @@ panel_list = [
 
 # create lists of pan numbers for each capture panel for use with RPKM
 #IMPORTANT: Lists below are used by the trend analysis scripts, if changed the trend analysis script will need to be updated
-vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044","Pan4821","Pan4822","Pan4823","Pan4824","Pan4825"]
+vcp1_panel_list = ["Pan4119","Pan4121","Pan4122","Pan4125","Pan4126","Pan4044","Pan4821","Pan4822","Pan4823","Pan4824","Pan4825","Pan4974","Pan4975","Pan4976","Pan4977","Pan4978","Pan4979","Pan4980","Pan4981","Pan4982","Pan4983","Pan4984"]
 vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","Pan4049","Pan4816","Pan4817","Pan4818","Pan4819","Pan4820","Pan4964"]
 vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390","Pan4826","Pan4827","Pan4828","Pan4829","Pan4830","Pan4831","Pan4832","Pan4833","Pan4834","Pan4835","Pan4836"]
 WES_panel_lists = ["Pan2835","Pan3174","Pan4940"]
@@ -635,6 +646,116 @@ panel_settings = {
 	    "multiqc_coverage_level": 30,
 	    "RPKM_bedfile_pan_number": "Pan4399",
 	    "congenica_project": "4865",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4974": {  #VCP1 Viapath (Molecular Haemostasis) R112
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4975": {  #VCP1 Viapath (Molecular Haemostasis) R115
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4976": {  #VCP1 Viapath (Molecular Haemostasis) R116
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4977": {  #VCP1 Viapath (Molecular Haemostasis) R117
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4978": {  #VCP1 Viapath (Molecular Haemostasis) R118
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4979": {  #VCP1 Viapath (Molecular Haemostasis) R119
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4980": {  #VCP1 Viapath (Molecular Haemostasis) R120
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4981": {  #VCP1 Viapath (Molecular Haemostasis) R121
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4982": {  #VCP1 Viapath (Molecular Haemostasis) R122
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4983": {  #VCP1 Viapath (Molecular Haemostasis) R123
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
+	    "RPKM_also_analyse": vcp1_panel_list,
+	    "hsmetrics_bedfile": "Pan4397data.bed",
+	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
+	    "variant_calling_bedfile": "Pan4398data.bed",
+	},
+	"Pan4984": {  #VCP1 Viapath (Molecular Haemostasis) R124
+	    "mokapipe": True,
+	    "multiqc_coverage_level": 30,
+	    "RPKM_bedfile_pan_number": "Pan4399",
+	    "congenica_project": "4699",
 	    "RPKM_also_analyse": vcp1_panel_list,
 	    "hsmetrics_bedfile": "Pan4397data.bed",
 	    "sambamba_bedfile": "Pan4397dataSambamba.bed",
@@ -1220,8 +1341,8 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"priority", #TODO
-		"congenica_project": "0000", #TODO
+		"congenica_IR_template":"non-priority", #TODO
+		"congenica_project": "9547", #TODO
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4971data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
