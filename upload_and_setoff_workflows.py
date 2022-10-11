@@ -1266,7 +1266,7 @@ class RunfolderProcessor(object):
         
         if TSO500:
             # build command for the TSO500 app
-            commands_list.append(self.create_tso500_command())
+            commands_list.append(self.create_tso500_command(list_of_processed_samples))
             # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
             # pass "TSO" to ensure it isn't skipped
             commands_list.append(self.add_to_depends_list("TSO"))
@@ -1350,7 +1350,7 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_tso500_command(self):
+    def create_tso500_command(self,list_of_processed_samples):
         """
         Build dx run command for tso500 docker app
         Inputs:
@@ -1363,6 +1363,18 @@ class RunfolderProcessor(object):
             TSO500_analysis_options = "--isNovaSeq "
         else:
             TSO500_analysis_options = ""
+        high_throughput = False
+        # loop through list of TSO samples in samplesheet
+        for sample in list_of_processed_samples:
+            #extract pan number
+            pannumber = re.search(r"Pan\d+", sample).group()
+            if self.panel_dictionary[pannumber]["TSO500_HT"]:
+                high_throughput = True
+        if high_throughput:
+            instance_type = "--instance-type %s " % config.TSO500_analysis_instance_high_throughput
+        else:
+            instance_type = "--instance-type %s " % config.TSO500_analysis_instance_low_throughput
+
         # build dx run command - inputs are:
         ## docker image (from config)
         ## runfolder_tar and samplesheet paths (from runfolder_obj class)
@@ -1378,6 +1390,7 @@ class RunfolderProcessor(object):
             self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_samplesheet_name,
             config.TSO500_analysis_options_stage,
             TSO500_analysis_options,
+            instance_type,
             self.dest,
             self.dest_cmd,
             self.token,

@@ -320,6 +320,9 @@ TSO500_output_parser_upload_multiqc_app_id_stage = " -iupload_multiqc_app_id="
 TSO500_output_parser_coverage_commands_stage = " -icoverage_commands="
 TSO500_output_parser_coverage_level_stage = " -icoverage_level="
 TSO500_output_parser_multiqc_coverage_level_stage = " -imultiqc_coverage_level="
+# app instance types
+TSO500_analysis_instance_high_throughput = "mem1_ssd1_v2_x72"
+TSO500_analysis_instance_low_throughput = "mem1_ssd1_v2_x36"
 
 # RPKM inputs
 rpkm_bedfile_input = " -ibedfile="
@@ -412,6 +415,8 @@ panel_list = [
 	"Pan4579", # VCP2_M1.1(somatic)
 	"Pan4574", # VCP2_M1.2(somatic)
 	"Pan4969", # TSO500 - no UTRS TERT promotor
+	"Pan5085", # TSO500 High throughput Synnovis. no UTRS TERT promotor
+	"Pan5086", # TSO500 High throughput BSPS. no UTRS TERT promotor
 	"Pan4821", # VCP1 STG R134_FH
 	"Pan4822", # VCP1 STG R184_CF
 	"Pan4823", # VCP1 STG R25_FGFR
@@ -458,7 +463,7 @@ swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4579","Pan4574"]
 LRPCR_panel_list = ["Pan5007","Pan5008","Pan5009","Pan5010","Pan5011","Pan5012","Pan5013","Pan5014","Pan5015","Pan5016"]
-tso500_panel_list = ["Pan4969"] # note the settings from the first item in this list are used when setting off the dx run commands.
+tso500_panel_list = ["Pan4969","Pan5085","Pan5086"] # note the settings from the first item in this list are used when setting off the dx run commands.
 
 
 default_panel_properties = {
@@ -500,6 +505,7 @@ default_panel_properties = {
 	"peddy": False,
 	"archerdx": False,
 	"TSO500": False,
+	"TSO500_HT": False,
 	"masked_reference":False
 }
 
@@ -981,6 +987,24 @@ panel_settings = {
 	},
 	"Pan4969" : { # TSO500 no UTRs. TERT promotor
 		"TSO500": True,
+		"sambamba_bedfile": "Pan4969dataSambamba.bed",
+		"clinical_coverage_depth" : 100,
+		"multiqc_coverage_level": 100,
+		"coverage_min_basecall_qual":25,
+		"coverage_min_mapping_qual":30,
+	},
+	"Pan5085" : { # TSO500 High throughput Synnovis. no UTRs. TERT promotor
+		"TSO500": True,
+		"TSO500_HT": True,
+		"sambamba_bedfile": "Pan4969dataSambamba.bed",
+		"clinical_coverage_depth" : 100,
+		"multiqc_coverage_level": 100,
+		"coverage_min_basecall_qual":25,
+		"coverage_min_mapping_qual":30,
+	},
+	"Pan5086" : { # TSO500 High throughput BSPS. no UTRs. TERT promotor
+		"TSO500": True,
+		"TSO500_HT": True,
 		"sambamba_bedfile": "Pan4969dataSambamba.bed",
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
