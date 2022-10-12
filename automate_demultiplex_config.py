@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -505,7 +505,8 @@ default_panel_properties = {
 	"peddy": False,
 	"archerdx": False,
 	"TSO500": False,
-	"TSO500_HT": False,
+	"TSO500_high_throughput": False,
+	"drylab_dnanexus_id": None,
 	"masked_reference":False
 }
 
@@ -987,7 +988,7 @@ panel_settings = {
 	},
 	"Pan4969" : { # TSO500 no UTRs. TERT promotor
 		"TSO500": True,
-		"sambamba_bedfile": "Pan4969dataSambamba.bed",
+		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE ALL TSO500 app settings are currently taken from the first pan number listed in tso500_panel_list
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
@@ -995,8 +996,8 @@ panel_settings = {
 	},
 	"Pan5085" : { # TSO500 High throughput Synnovis. no UTRs. TERT promotor
 		"TSO500": True,
-		"TSO500_HT": True,
-		"sambamba_bedfile": "Pan4969dataSambamba.bed",
+		"TSO500_high_throughput": True,
+		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE ALL TSO500 app settings are currently taken from the first pan number listed in tso500_panel_list
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
@@ -1004,12 +1005,13 @@ panel_settings = {
 	},
 	"Pan5086" : { # TSO500 High throughput BSPS. no UTRs. TERT promotor
 		"TSO500": True,
-		"TSO500_HT": True,
-		"sambamba_bedfile": "Pan4969dataSambamba.bed",
+		"TSO500_high_throughput": True,
+		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE ALL TSO500 app settings are currently taken from the first pan number listed in tso500_panel_list
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
 		"coverage_min_mapping_qual":30,
+		"drylab_dnanexus_id": "aledjones"
 	},
 	"Pan4821": {  # VCP1 STG R134_FH
 		"mokapipe": True,

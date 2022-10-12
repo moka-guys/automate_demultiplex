@@ -264,7 +264,7 @@ class RunfolderProcessor(object):
                 )
                 # create bash script to create and share nexus project -return filepath
                 # pass filepath into module which runs project creation script - capturing projectid
-                self.write_create_project_script()
+                self.write_create_project_script(self.list_of_processed_samples)
                 self.runfolder_obj.nexus_project_id = self.run_project_creation_script().rstrip()
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks files were uploaded without error
@@ -737,12 +737,14 @@ class RunfolderProcessor(object):
         # return tuple of string for self.dest
         return (nexus_project_name + ":/", nexus_path, nexus_project_name)
 
-    def write_create_project_script(self):
+    def write_create_project_script(self, list_of_processed_samples):
         """
-        Input = None
+        Input = list of processed samples
         Once the project name has been defined the project can be created using the DNANexus sdk
         Commands are written to a bash script and executed using subprocess. The project is created
         and shared with users, with varying degrees of access as defined in the config file.
+        The list of processed samples is passed, extracting Pan numbers and assessing if the project should also be shared with any
+        additional dry lab DNANexus accounts.
         This function writes a bash script containing the project creation command
         Return = None
         """
@@ -768,8 +770,17 @@ class RunfolderProcessor(object):
                     "dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n"
                     % (user, config.Nexus_API_Key)
                 )
-
-
+            # Some samples are analysed at dry labs. Access to projects should only be given when there is a sample for that dry lab on the run.
+            # create a list of Pan numbers in the run
+            pannumber_list=set([re.search(r"Pan\d+", sample).group() for sample in list_of_processed_samples])
+            # Pull out the drylab_dnanexus_ids for pan numbers where this is not None (default is None)
+            dry_lab_list = [self.panel_dictionary[pannumber]["drylab_dnanexus_id"] for pannumber in pannumber_list if self.panel_dictionary[pannumber]["drylab_dnanexus_id"]]
+            # loop through dry_lab_list sharing project with user with readonly access
+            for user in dry_lab_list:
+                project_script.write(
+                    "dx invite %s $project_id VIEW --no-email --auth-token %s\n"
+                    % (user, config.Nexus_API_Key)
+                )
             # echo the project id so it can be captured below
             project_script.write("echo $project_id")
 
@@ -1365,15 +1376,12 @@ class RunfolderProcessor(object):
             TSO500_analysis_options = ""
         high_throughput = False
         # loop through list of TSO samples in samplesheet
-        for sample in list_of_processed_samples:
-            #extract pan number
-            pannumber = re.search(r"Pan\d+", sample).group()
-            if self.panel_dictionary[pannumber]["TSO500_HT"]:
-                high_throughput = True
-        if high_throughput:
-            instance_type = "--instance-type %s " % config.TSO500_analysis_instance_high_throughput
+        pannumber_list=set([re.search(r"Pan\d+", sample).group() for sample in list_of_processed_samples])
+        high_throughput_list = [pannumber for pannumber in pannumber_list if self.panel_dictionary[pannumber]["TSO500_high_throughput"]]
+        if high_throughput_list:
+            instance_type = " --instance-type %s " % config.TSO500_analysis_instance_high_throughput
         else:
-            instance_type = "--instance-type %s " % config.TSO500_analysis_instance_low_throughput
+            instance_type = " --instance-type %s " % config.TSO500_analysis_instance_low_throughput
 
         # build dx run command - inputs are:
         ## docker image (from config)
