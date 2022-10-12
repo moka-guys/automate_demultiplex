@@ -988,7 +988,7 @@ panel_settings = {
 	},
 	"Pan4969" : { # TSO500 no UTRs. TERT promotor
 		"TSO500": True,
-		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE ALL TSO500 app settings are currently taken from the first pan number listed in tso500_panel_list
+		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
@@ -997,7 +997,7 @@ panel_settings = {
 	"Pan5085" : { # TSO500 High throughput Synnovis. no UTRs. TERT promotor
 		"TSO500": True,
 		"TSO500_high_throughput": True,
-		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE ALL TSO500 app settings are currently taken from the first pan number listed in tso500_panel_list
+		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
@@ -1006,12 +1006,12 @@ panel_settings = {
 	"Pan5086" : { # TSO500 High throughput BSPS. no UTRs. TERT promotor
 		"TSO500": True,
 		"TSO500_high_throughput": True,
-		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE ALL TSO500 app settings are currently taken from the first pan number listed in tso500_panel_list
+		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
 		"clinical_coverage_depth" : 100,
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
 		"coverage_min_mapping_qual":30,
-		"drylab_dnanexus_id": "aledjones"
+		"drylab_dnanexus_id": None # can state this when we know it.
 	},
 	"Pan4821": {  # VCP1 STG R134_FH
 		"mokapipe": True,
