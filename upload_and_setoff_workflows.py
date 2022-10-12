@@ -1363,9 +1363,10 @@ class RunfolderProcessor(object):
 
     def create_tso500_command(self,list_of_processed_samples):
         """
-        Build dx run command for tso500 docker app
+        Build dx run command for tso500 docker app.
+        Will assess if it's a novaseq or not from the runfoldername and if it's a highthroughput TSO run (needing a larger instance type)
         Inputs:
-            None
+            List of samplenames to be processed
         Returns:
             dx run command for tso500 app (string)
         """
@@ -1375,9 +1376,11 @@ class RunfolderProcessor(object):
         else:
             TSO500_analysis_options = ""
         high_throughput = False
-        # loop through list of TSO samples in samplesheet
+        # get a list of unique pan numbers from samplenames
         pannumber_list=set([re.search(r"Pan\d+", sample).group() for sample in list_of_processed_samples])
+        # capture any pan numbers that are a highthroughput assay
         high_throughput_list = [pannumber for pannumber in pannumber_list if self.panel_dictionary[pannumber]["TSO500_high_throughput"]]
+        # if this list is not empty apply high throughput instance type, otherwise use low throughput instance type
         if high_throughput_list:
             instance_type = " --instance-type %s " % config.TSO500_analysis_instance_high_throughput
         else:
@@ -1414,9 +1417,9 @@ class RunfolderProcessor(object):
         Returns:
             dx run command for tso500_output_parser app (string)
         """
-        #TODO what happens if we have Pan numbers wth different settings?
-        # take the first item in the list of TSO500 pan numbers as the default/primary settings - this will 
-        # primarily affect the BED file used for coverage
+        #TODO LIMITATION = Pan numbers that require different settings to be applied in downstream tasks will need to be set off in different jobs.
+        # This function will need to adapt to this (currently takes settings from the first item in the list of TSO500 pan numbers in config.
+        # This primarily affects coverage
         tso_pan_num = config.tso500_panel_list[0]
         # build dictionary of pan number specific/relevant bedfile to be used in command
         bedfiles = self.nexus_bedfiles(tso_pan_num)
