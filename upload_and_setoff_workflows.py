@@ -235,10 +235,10 @@ class RunfolderProcessor(object):
             if TSO500_sample_list:
                 # set up a count and while loop so it will attempt to tar the runfolder twice
                 tar_attempt_count = 1
-                while tar_attempt_count < 3:
+                while tar_attempt_count < 5:
                     self.loggers.script.info("Attempting tar TSO runfolder. attempt {}".format(tar_attempt_count))
                     # tar runfolder - returns True if tar created sucessfully. 
-                    # If tar_runfolder is unsuccessful after 2 attempts self.list_of_processed_samples won't be populated and run won't progress
+                    # If tar_runfolder is unsuccessful after 4 attempts self.list_of_processed_samples won't be populated and run won't progress
                     if self.tar_runfolder():
                         # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                         # set tar folder path in place of the list of fastqs to upload
@@ -247,7 +247,6 @@ class RunfolderProcessor(object):
                         break
                     # increase tar count
                     tar_attempt_count += 1
-                
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
@@ -264,8 +263,8 @@ class RunfolderProcessor(object):
                 )
                 # create bash script to create and share nexus project -return filepath
                 # pass filepath into module which runs project creation script - capturing projectid
-                self.write_create_project_script()
-                self.runfolder_obj.nexus_project_id = self.run_project_creation_script().rstrip()
+                view_users_list, admin_users_list = self.write_create_project_script(self.list_of_processed_samples)
+                self.runfolder_obj.nexus_project_id = self.run_project_creation_script(view_users_list, admin_users_list).rstrip()
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks files were uploaded without error
                 self.look_for_upload_errors(self.upload_fastqs())
@@ -631,7 +630,6 @@ class RunfolderProcessor(object):
         Input = list of samples to be processed
         DNANexus projects are named after the runfolder suffixed with identifiers.
         This function parses samplenames and identifies any WES batch numbers from the samplenames
-        (identified as anything between "_WES" and "_Pan").
         If WES batch number(s) are identified, Returns a string to be included in the project name
         If no batch numbers returns None
         Returns = string or None
@@ -643,12 +641,10 @@ class RunfolderProcessor(object):
         for fastq in list_of_processed_samples:
             # if the run has any WES samples
             if "WES" in fastq:
-                # split on _WES to split the fastq name into two,
-                # take the second half of it and split on "_Pan"
-                # this will capture 5 or _5 depending if was WES5 or WES_5
-                # remove any underscores and suffix to WES to make WES5
-                wesbatch = "WES" + fastq.split("_WES")[1].split("_Pan")[0].replace("_", "")
-                wes_numbers.append(wesbatch)
+                # capture the WES batch (WES followed by digits)
+                # optional underscore ensures this will capture WES5 or WES_5 
+                wesbatch = re.search(r"WES_?\d+", fastq).group()
+                wes_numbers.append(wesbatch.replace("_",""))
         # if no wes numbers are found return None rather than an empty string
         if wes_numbers:
             return "_".join(set(wes_numbers))
@@ -737,16 +733,19 @@ class RunfolderProcessor(object):
         # return tuple of string for self.dest
         return (nexus_project_name + ":/", nexus_path, nexus_project_name)
 
-    def write_create_project_script(self):
+    def write_create_project_script(self, list_of_processed_samples):
         """
-        Input = None
+        Input = list of processed samples
         Once the project name has been defined the project can be created using the DNANexus sdk
         Commands are written to a bash script and executed using subprocess. The project is created
         and shared with users, with varying degrees of access as defined in the config file.
+        The list of processed samples is passed, extracting Pan numbers and assessing if the project should also be shared with any
+        additional dry lab DNANexus accounts.
         This function writes a bash script containing the project creation command
-        Return = None
+        Return = two lists, one of users shared with view permissions, one with admin
         """
-
+        view_users_list=[]
+        admin_users_list=[]
         # open bash script
         with open(self.project_bash_script_path, "w") as project_script:
             project_script.write(self.source_command + "\n")
@@ -762,20 +761,33 @@ class RunfolderProcessor(object):
                     "dx invite %s $project_id VIEW --no-email --auth-token %s\n"
                     % (user, config.Nexus_API_Key)
                 )
+                view_users_list.append(user)
             # then give admin permissions - required incase some users are in both lists.
             for user in config.admin_users:
                 project_script.write(
                     "dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n"
                     % (user, config.Nexus_API_Key)
                 )
-
-
+                admin_users_list.append(user)
+            # Some samples are analysed at dry labs. Access to projects should only be given when there is a sample for that dry lab on the run.
+            # create a list of Pan numbers in the run
+            pannumber_list=set([re.search(r"Pan\d+", sample).group() for sample in list_of_processed_samples])
+            # Pull out the drylab_dnanexus_ids for pan numbers where this is not None (default is None)
+            dry_lab_list = [self.panel_dictionary[pannumber]["drylab_dnanexus_id"] for pannumber in pannumber_list if self.panel_dictionary[pannumber]["drylab_dnanexus_id"]]
+            # loop through dry_lab_list sharing project with user with readonly access
+            for user in dry_lab_list:
+                project_script.write(
+                    "dx invite %s $project_id VIEW --no-email --auth-token %s\n"
+                    % (user, config.Nexus_API_Key)
+                )
+                view_users_list.append(user)
             # echo the project id so it can be captured below
             project_script.write("echo $project_id")
+            return view_users_list, admin_users_list
 
-    def run_project_creation_script(self):
+    def run_project_creation_script(self,view_users_list,admin_users_list):
         """
-        Inputs = None
+        Inputs = two lists, one with view permissions, one with admin permissions
         Calls subprocess command executing project creation bash script.
         Output of this command is tested to see if it meets the expected pattern.
         Returns - projectid (if created) , False (if debug) or an exception (non-debug)
@@ -789,19 +801,17 @@ class RunfolderProcessor(object):
             # split std_out on "project" and get the last item to capture the project ID
             projectid = "project" + out.split("project")[-1].rstrip()
 
-            string_viewuser_list = ",".join(config.view_users)
             # record in log file who project was shared with (VIEW)
             self.loggers.script.info(
                 "DNA Nexus project {} created and shared (VIEW) to {}".format(
-                    self.runfolder_obj.nexus_project_name, string_viewuser_list
+                    self.runfolder_obj.nexus_project_name, ",".join(view_users_list)
                 )
             )
 
             # record in log file who project was shared with (ADMIN)
-            string_adminuser_list = ",".join(config.admin_users)
             self.loggers.script.info(
                 "DNA Nexus project {} created and shared (ADMIN) to {}".format(
-                    self.runfolder_obj.nexus_project_name, string_adminuser_list
+                    self.runfolder_obj.nexus_project_name, ",".join(admin_users_list)
                 )
             )
 
@@ -1266,7 +1276,7 @@ class RunfolderProcessor(object):
         
         if TSO500:
             # build command for the TSO500 app
-            commands_list.append(self.create_tso500_command())
+            commands_list.append(self.create_tso500_command(list_of_processed_samples))
             # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
             # pass "TSO" to ensure it isn't skipped
             commands_list.append(self.add_to_depends_list("TSO"))
@@ -1350,11 +1360,12 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_tso500_command(self):
+    def create_tso500_command(self,list_of_processed_samples):
         """
-        Build dx run command for tso500 docker app
+        Build dx run command for tso500 docker app.
+        Will assess if it's a novaseq or not from the runfoldername and if it's a highthroughput TSO run (needing a larger instance type)
         Inputs:
-            None
+            List of samplenames to be processed
         Returns:
             dx run command for tso500 app (string)
         """
@@ -1363,6 +1374,17 @@ class RunfolderProcessor(object):
             TSO500_analysis_options = "--isNovaSeq "
         else:
             TSO500_analysis_options = ""
+
+        # get a list of unique pan numbers from samplenames
+        pannumber_list=set([re.search(r"Pan\d+", sample).group() for sample in list_of_processed_samples])
+        # capture any pan numbers that are a highthroughput assay
+        high_throughput_list = [pannumber for pannumber in pannumber_list if self.panel_dictionary[pannumber]["TSO500_high_throughput"]]
+        # if this list is not empty apply high throughput instance type, otherwise use low throughput instance type
+        if high_throughput_list:
+            instance_type = " --instance-type %s " % config.TSO500_analysis_instance_high_throughput
+        else:
+            instance_type = " --instance-type %s " % config.TSO500_analysis_instance_low_throughput
+
         # build dx run command - inputs are:
         ## docker image (from config)
         ## runfolder_tar and samplesheet paths (from runfolder_obj class)
@@ -1378,6 +1400,7 @@ class RunfolderProcessor(object):
             self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_samplesheet_name,
             config.TSO500_analysis_options_stage,
             TSO500_analysis_options,
+            instance_type,
             self.dest,
             self.dest_cmd,
             self.token,
@@ -1393,9 +1416,9 @@ class RunfolderProcessor(object):
         Returns:
             dx run command for tso500_output_parser app (string)
         """
-        #TODO what happens if we have Pan numbers wth different settings?
-        # take the first item in the list of TSO500 pan numbers as the default/primary settings - this will 
-        # primarily affect the BED file used for coverage
+        #TODO LIMITATION = Pan numbers that require different settings to be applied in downstream tasks will need to be set off in different jobs.
+        # This function will need to adapt to this (currently takes settings from the first item in the list of TSO500 pan numbers in config.
+        # This primarily affects coverage
         tso_pan_num = config.tso500_panel_list[0]
         # build dictionary of pan number specific/relevant bedfile to be used in command
         bedfiles = self.nexus_bedfiles(tso_pan_num)
@@ -2035,7 +2058,7 @@ class RunfolderProcessor(object):
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
-                pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+                pannumber = re.search(r"Pan\d+", fastq).group()
                 query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
                 # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["congenica_upload"]:
@@ -2064,7 +2087,7 @@ class RunfolderProcessor(object):
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
-                pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+                pannumber = re.search(r"Pan\d+", fastq).group()
                 # if the pan number was processed using mokawes add the query to list of queries,
                 # capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokawes"]:
@@ -2104,7 +2127,7 @@ class RunfolderProcessor(object):
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
-                pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+                pannumber = re.search(r"Pan\d+", fastq).group()
                 query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
                 # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokasnp"]:
@@ -2133,9 +2156,8 @@ class RunfolderProcessor(object):
             # take read one
             # example fastq names: ONC20085_08_EK20826_2025029_SWIFT57_Pan2684_S8_R2_001.fastq.gz and ONC20085_06_NTCcon1_SWIFT57_Pan2684_S6_R1_001.fastq.gz
             if "_R1_" in fastq:
-                # extract_Pan number - record without "Pan" for the sql query
-                pannumber_no_pan = str(fastq.split("_Pan")[1].split("_")[0])
-                pannumber = "Pan" + pannumber_no_pan
+                # extract_Pan number 
+                pannumber = re.search(r"Pan\d+", fastq).group()
                 # record id1 and 2 by taking the second and third elements
                 id1, id2 = fastq.split("_")[2:4]
                 # negative controls only have one ID so set id2 to null
@@ -2147,10 +2169,10 @@ class RunfolderProcessor(object):
                 # for mokaamp and mokaonc if relevant build the query, populating the placeholders.
                 # add the name of the workflow to the list of workflows
                 if self.panel_dictionary[pannumber]["mokaamp"]:
-                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaamp_pipeline_ID, pannumber_no_pan))
+                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaamp_pipeline_ID, pannumber.replace("Pan","")))
                     workflows.append(config.mokaamp_path.split("/")[-1])
                 if self.panel_dictionary[pannumber]["archerdx"]:
-                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.archerDx_pipeline_ID, pannumber_no_pan))
+                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.archerDx_pipeline_ID, pannumber.replace("Pan","")))
                     workflows.append(config.fastqc_app.split("/")[-1])
         # if queries have been created return a dictionary
         if queries:
@@ -2174,14 +2196,13 @@ class RunfolderProcessor(object):
 
         # loop through fastqs to see which workflows were used
         for sample in list_of_processed_samples:
-            # extract_Pan number - record without "Pan" for the sql query
-            pannumber_no_pan = str(sample.split("_Pan")[1].split("_")[0])
-            pannumber = "Pan" + pannumber_no_pan
+            # extract_Pan number 
+            pannumber = re.search(r"Pan\d+", sample).group()
             if self.panel_dictionary[pannumber]["TSO500"]:
                 # record id1 and 2 by taking the second and third elements
                 id1, id2 = sample.split("_")[2:4]
                 # define query with placeholders
-                queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.TSO_pipeline_ID, pannumber_no_pan))
+                queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.TSO_pipeline_ID, pannumber.replace("Pan","")))
                 workflows.append(config.tso500_app_name)
         # if queries have been created return a dictionary
         if queries:
