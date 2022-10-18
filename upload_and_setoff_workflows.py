@@ -235,10 +235,10 @@ class RunfolderProcessor(object):
             if TSO500_sample_list:
                 # set up a count and while loop so it will attempt to tar the runfolder twice
                 tar_attempt_count = 1
-                while tar_attempt_count < 3:
+                while tar_attempt_count < 5:
                     self.loggers.script.info("Attempting tar TSO runfolder. attempt {}".format(tar_attempt_count))
                     # tar runfolder - returns True if tar created sucessfully. 
-                    # If tar_runfolder is unsuccessful after 2 attempts self.list_of_processed_samples won't be populated and run won't progress
+                    # If tar_runfolder is unsuccessful after 4 attempts self.list_of_processed_samples won't be populated and run won't progress
                     if self.tar_runfolder():
                         # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                         # set tar folder path in place of the list of fastqs to upload
@@ -247,7 +247,6 @@ class RunfolderProcessor(object):
                         break
                     # increase tar count
                     tar_attempt_count += 1
-                
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
@@ -264,8 +263,8 @@ class RunfolderProcessor(object):
                 )
                 # create bash script to create and share nexus project -return filepath
                 # pass filepath into module which runs project creation script - capturing projectid
-                self.write_create_project_script(self.list_of_processed_samples)
-                self.runfolder_obj.nexus_project_id = self.run_project_creation_script().rstrip()
+                view_users_list, admin_users_list = self.write_create_project_script(self.list_of_processed_samples)
+                self.runfolder_obj.nexus_project_id = self.run_project_creation_script(view_users_list, admin_users_list).rstrip()
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks files were uploaded without error
                 self.look_for_upload_errors(self.upload_fastqs())
@@ -743,9 +742,10 @@ class RunfolderProcessor(object):
         The list of processed samples is passed, extracting Pan numbers and assessing if the project should also be shared with any
         additional dry lab DNANexus accounts.
         This function writes a bash script containing the project creation command
-        Return = None
+        Return = two lists, one of users shared with view permissions, one with admin
         """
-
+        view_users_list=[]
+        admin_users_list=[]
         # open bash script
         with open(self.project_bash_script_path, "w") as project_script:
             project_script.write(self.source_command + "\n")
@@ -761,12 +761,14 @@ class RunfolderProcessor(object):
                     "dx invite %s $project_id VIEW --no-email --auth-token %s\n"
                     % (user, config.Nexus_API_Key)
                 )
+                view_users_list.append(user)
             # then give admin permissions - required incase some users are in both lists.
             for user in config.admin_users:
                 project_script.write(
                     "dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n"
                     % (user, config.Nexus_API_Key)
                 )
+                admin_users_list.append(user)
             # Some samples are analysed at dry labs. Access to projects should only be given when there is a sample for that dry lab on the run.
             # create a list of Pan numbers in the run
             pannumber_list=set([re.search(r"Pan\d+", sample).group() for sample in list_of_processed_samples])
@@ -778,12 +780,14 @@ class RunfolderProcessor(object):
                     "dx invite %s $project_id VIEW --no-email --auth-token %s\n"
                     % (user, config.Nexus_API_Key)
                 )
+                view_users_list.append(user)
             # echo the project id so it can be captured below
             project_script.write("echo $project_id")
+            return view_users_list, admin_users_list
 
-    def run_project_creation_script(self):
+    def run_project_creation_script(self,view_users_list,admin_users_list):
         """
-        Inputs = None
+        Inputs = two lists, one with view permissions, one with admin permissions
         Calls subprocess command executing project creation bash script.
         Output of this command is tested to see if it meets the expected pattern.
         Returns - projectid (if created) , False (if debug) or an exception (non-debug)
@@ -797,19 +801,17 @@ class RunfolderProcessor(object):
             # split std_out on "project" and get the last item to capture the project ID
             projectid = "project" + out.split("project")[-1].rstrip()
 
-            string_viewuser_list = ",".join(config.view_users)
             # record in log file who project was shared with (VIEW)
             self.loggers.script.info(
                 "DNA Nexus project {} created and shared (VIEW) to {}".format(
-                    self.runfolder_obj.nexus_project_name, string_viewuser_list
+                    self.runfolder_obj.nexus_project_name, ",".join(view_users_list)
                 )
             )
 
             # record in log file who project was shared with (ADMIN)
-            string_adminuser_list = ",".join(config.admin_users)
             self.loggers.script.info(
                 "DNA Nexus project {} created and shared (ADMIN) to {}".format(
-                    self.runfolder_obj.nexus_project_name, string_adminuser_list
+                    self.runfolder_obj.nexus_project_name, ",".join(admin_users_list)
                 )
             )
 
