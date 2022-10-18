@@ -15,7 +15,7 @@ import automate_demultiplex_config as config
 import git_tag
 import requests
 import adlogger #import ADLoggers, get_runfolder_log_config
-
+import samplesheet_verifier
 
 class SequencingRuns(list):
     """A container for NGS runfolders with methods to initiate runfolder processing.
@@ -631,7 +631,6 @@ class RunfolderProcessor(object):
         Input = list of samples to be processed
         DNANexus projects are named after the runfolder suffixed with identifiers.
         This function parses samplenames and identifies any WES batch numbers from the samplenames
-        (identified as anything between "_WES" and "_Pan").
         If WES batch number(s) are identified, Returns a string to be included in the project name
         If no batch numbers returns None
         Returns = string or None
@@ -643,12 +642,10 @@ class RunfolderProcessor(object):
         for fastq in list_of_processed_samples:
             # if the run has any WES samples
             if "WES" in fastq:
-                # split on _WES to split the fastq name into two,
-                # take the second half of it and split on "_Pan"
-                # this will capture 5 or _5 depending if was WES5 or WES_5
-                # remove any underscores and suffix to WES to make WES5
-                wesbatch = "WES" + fastq.split("_WES")[1].split("_Pan")[0].replace("_", "")
-                wes_numbers.append(wesbatch)
+                # capture the WES batch (WES followed by digits)
+                # optional underscore ensures this will capture WES5 or WES_5 
+                wesbatch = re.search(r"WES_?\d+", fastq).group()
+                wes_numbers.append(wesbatch.replace("_",""))
         # if no wes numbers are found return None rather than an empty string
         if wes_numbers:
             return "_".join(set(wes_numbers))
@@ -2059,7 +2056,7 @@ class RunfolderProcessor(object):
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
-                pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+                pannumber = re.search(r"Pan\d+", fastq).group()
                 query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
                 # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["congenica_upload"]:
@@ -2088,7 +2085,7 @@ class RunfolderProcessor(object):
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
-                pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+                pannumber = re.search(r"Pan\d+", fastq).group()
                 # if the pan number was processed using mokawes add the query to list of queries,
                 # capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokawes"]:
@@ -2128,7 +2125,7 @@ class RunfolderProcessor(object):
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
-                pannumber = "Pan" + str(fastq.split("_Pan")[1].split("_")[0])
+                pannumber = re.search(r"Pan\d+", fastq).group()
                 query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
                 # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokasnp"]:
@@ -2157,9 +2154,8 @@ class RunfolderProcessor(object):
             # take read one
             # example fastq names: ONC20085_08_EK20826_2025029_SWIFT57_Pan2684_S8_R2_001.fastq.gz and ONC20085_06_NTCcon1_SWIFT57_Pan2684_S6_R1_001.fastq.gz
             if "_R1_" in fastq:
-                # extract_Pan number - record without "Pan" for the sql query
-                pannumber_no_pan = str(fastq.split("_Pan")[1].split("_")[0])
-                pannumber = "Pan" + pannumber_no_pan
+                # extract_Pan number 
+                pannumber = re.search(r"Pan\d+", fastq).group()
                 # record id1 and 2 by taking the second and third elements
                 id1, id2 = fastq.split("_")[2:4]
                 # negative controls only have one ID so set id2 to null
@@ -2171,10 +2167,10 @@ class RunfolderProcessor(object):
                 # for mokaamp and mokaonc if relevant build the query, populating the placeholders.
                 # add the name of the workflow to the list of workflows
                 if self.panel_dictionary[pannumber]["mokaamp"]:
-                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaamp_pipeline_ID, pannumber_no_pan))
+                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaamp_pipeline_ID, pannumber.replace("Pan","")))
                     workflows.append(config.mokaamp_path.split("/")[-1])
                 if self.panel_dictionary[pannumber]["archerdx"]:
-                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.archerDx_pipeline_ID, pannumber_no_pan))
+                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.archerDx_pipeline_ID, pannumber.replace("Pan","")))
                     workflows.append(config.fastqc_app.split("/")[-1])
         # if queries have been created return a dictionary
         if queries:
@@ -2198,14 +2194,13 @@ class RunfolderProcessor(object):
 
         # loop through fastqs to see which workflows were used
         for sample in list_of_processed_samples:
-            # extract_Pan number - record without "Pan" for the sql query
-            pannumber_no_pan = str(sample.split("_Pan")[1].split("_")[0])
-            pannumber = "Pan" + pannumber_no_pan
+            # extract_Pan number 
+            pannumber = re.search(r"Pan\d+", sample).group()
             if self.panel_dictionary[pannumber]["TSO500"]:
                 # record id1 and 2 by taking the second and third elements
                 id1, id2 = sample.split("_")[2:4]
                 # define query with placeholders
-                queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.TSO_pipeline_ID, pannumber_no_pan))
+                queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.TSO_pipeline_ID, pannumber.replace("Pan","")))
                 workflows.append(config.tso500_app_name)
         # if queries have been created return a dictionary
         if queries:
