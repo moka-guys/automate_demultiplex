@@ -15,12 +15,12 @@ import automate_demultiplex_config as config
 import git_tag
 import requests
 import adlogger #import ADLoggers, get_runfolder_log_config
-import samplesheet_verifier
+
 
 class SequencingRuns(list):
     """A container for NGS runfolders with methods to initiate runfolder processing.
     
-    Args:
+    Args:/usr/local/src/mokaguys/development_area/automate_demultiplex/automate_demultiplex_config.py
         None
     Methods:
         set_runfolders(): Update list to contain NGS runfolders on the system
@@ -1372,7 +1372,7 @@ class RunfolderProcessor(object):
             TSO500_analysis_options = "--isNovaSeq "
         else:
             TSO500_analysis_options = ""
-        high_throughput = False
+
         # get a list of unique pan numbers from samplenames
         pannumber_list=set([re.search(r"Pan\d+", sample).group() for sample in list_of_processed_samples])
         # capture any pan numbers that are a highthroughput assay
