@@ -20,7 +20,7 @@ import adlogger #import ADLoggers, get_runfolder_log_config
 class SequencingRuns(list):
     """A container for NGS runfolders with methods to initiate runfolder processing.
     
-    Args:/usr/local/src/mokaguys/development_area/automate_demultiplex/automate_demultiplex_config.py
+    Args:
         None
     Methods:
         set_runfolders(): Update list to contain NGS runfolders on the system
