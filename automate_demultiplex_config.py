@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -1437,4 +1437,8 @@ bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 
 # ================ TSO500
 tso500_success_tarball = "0"
+
+# ================ Samplesheet Verification
+sequencer_ids = ["NB551068", "NB552085", "M02353", "M02631", "A01229"]
+runtype_list = ["NGS", "ADX", "ONC", "SNP", "PGT", "TSO", "LRPCR"]
 

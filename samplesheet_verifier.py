@@ -56,8 +56,6 @@ class ValidSamplesheet:
     def __init__(self, samplesheet_path):
         self.samplesheet_path = samplesheet_path
         self.results = OrderedDict()
-        self.sequencer_ids = ["NB551068", "NB552085", "M02353", "M02631", "A01229"]
-
         # Split samplename on "_" delimiter
         self.samplesheet_elements = self.samplesheet_path.split("/")[-1].split("_")
         # samplesheet name flowcell ID element expected string patterns. pattern 1 is 9 zero's followed by 5
@@ -71,7 +69,7 @@ class ValidSamplesheet:
         self.sample_name_list = []
         # to be populated with headers from data section
         self.data_headers = []
-        self.runtype_list = ["NGS", "ADX", "ONC", "SNP", "PGT", "TSO","LRPCR"]
+
         self.valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
         # to append any sample names or IDs to with invalid characters/runtypes/pannos
         self.invalid_characters = ""
@@ -137,9 +135,9 @@ class ValidSamplesheet:
 
     def check_second_ss_element(self):
         """
-        Checking element 2 of samplesheet (expected sequencer name matches list of allowed names in self.sequencer_ids)
+        Checking element 2 of samplesheet (expected sequencer name matches list of allowed names in config.sequencer_ids)
         """
-        if self.samplesheet_elements[1] in self.sequencer_ids:
+        if self.samplesheet_elements[1] in config.sequencer_ids:
             self.results["naming_element_2"] = True, "Second element (sequencer identifier) of samplesheet name as " \
                                                      "expected. "
         else:
@@ -319,15 +317,15 @@ class ValidSamplesheet:
 
     def check_samplenames_runtypes(self, list, type):
         """
-        Check sample names contain allowed runtypes from self.runtype_list
+        Check sample names contain allowed runtypes from config.runtype_list
         """
         for sample in list:
-            # extract runtype (first element), strip numbers from string, check against self.runtype_list
+            # extract runtype (first element), strip numbers from string, check against config.runtype_list
             runtype = sample.split("_")[0]
             # if runtype contains digits, split to remove digits and anything after
             if any(chr.isdigit() for chr in runtype):
                 runtype = re.split('(\d+)', runtype)[0]
-            if runtype not in self.runtype_list:
+            if runtype not in config.runtype_list:
                 self.invalid_runtypes += "{}: {}. ".format(type, sample)
 
 
