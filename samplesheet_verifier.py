@@ -1,42 +1,26 @@
+# coding=utf-8
+""" Script for checking sample sheet naming and contents.
+
+Uses the seglh-naming library. And adds further lab-specific checks e.g. whether sequencer IDs and runtypes match
+those in allowed list from the config file. Collects all errors in an errors list (ValidSamplesheet.errors)
 """
-Script for checking sample sheet naming and contents.
-Can be run as standalone script.
-Also called by demultiplex.py (checks all runs not yet demultiplexed).
-Also used in samplesheet upload webapp.
-
-Script is run in 2 scenarios:
-
-1) Early warning as soon as the samplesheet is uploaded (to be run in a webapp which the scientists will use to upload
-    the samplesheet)
-
-    After already_demultiplexed() has been called - call from the loop_through_runs function - check all runfolders
-    that have not yet been demultiplexed for a matching samplesheet without errors and throw any necessary error
-    messages.
-
-2) Pre-demultiplex check
-
-    The idea is that the script will be called in place of the look_for_sample_sheet (/check_valid_samplesheet)
-    function in the automate_demultiplex script (called on line 253). If it passes the checks in the script,
-    run_demultiplexing() will be called, if not the run will be skipped over (error messages would be sent in
-    samplesheet_checker.py saying that ready to demultiplex but it can't begin because ___)
-"""
-
-# Naming checking functions are only useable by the webapp
-# The demultiplex.py uses the runfolder name to create the expected samplesheet name - so the check exists function
-# is useful for this but the other checking functions are not
 
 import argparse
 import os
 import re
-from collections import OrderedDict
+from collections import defaultdict
 import tempfile
 import shutil
 import logging
 import automate_demultiplex_config as config
+import adlogger #import ADLoggers, get_runfolder_log_config
+from seglh_naming.sample import Sample
+from seglh_naming.samplesheet import Samplesheet
+import string
+
 
 def arg_parse():
-    """
-    Parses arguments supplied by the command line.
+    """ Parses arguments supplied by the command line.
         :return: (Namespace object) parsed command line attributes
     Creates argument parser, defines command line arguments, then parses supplied command line arguments using the
     created argument parser.
@@ -48,300 +32,170 @@ def arg_parse():
     args = parser.parse_args()
     return args
 
-class ValidSamplesheet:
-    """
-    Runs the checks. Called by webapp for uploaded samplesheets (uses name of file being uploaded), and called for runs
-    not yet demultiplexed (uses path of expected samplesheet from demultiplex script)
-    """
-    def __init__(self, samplesheet_path):
-        self.samplesheet_path = samplesheet_path
-        self.results = OrderedDict()
-        # Split samplename on "_" delimiter
-        self.samplesheet_elements = self.samplesheet_path.split("/")[-1].split("_")
-        # samplesheet name flowcell ID element expected string patterns. pattern 1 is 9 zero's followed by 5
-        # alphanumeric characters. Pattern 2 is 10 alphanumeric characters
-        self.flowcell_id_patterns = [re.compile("^([0]){9}-([A-Z0-9]){5}$"), re.compile("^([A-Z0-9]){10}$")]
-        # list of minimum required headers from [Data] section of samplesheet
-        self.expected_data_headers =["Sample_ID", "Sample_Name", "index"]
-        # to be populated with list of sample IDs from samplesheet
-        self.sample_id_list = []
-        # to be populated with list of sample names from samplesheet
-        self.sample_name_list = []
-        # to be populated with headers from data section
-        self.data_headers = []
 
-        self.valid_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-        # to append any sample names or IDs to with invalid characters/runtypes/pannos
-        self.invalid_characters = ""
-        self.invalid_runtypes = ""
-        self.invalid_pan_nos = ""
-        self.samplename_length = ""
-        # look for double underscores in TSO500
-        self.tso_runtype = "TSO"
-        self.max_samplename_length=40
+class ValidSamplesheet(object):
+    """ Runs the checks. Called by webapp for uploaded samplesheets (uses name of file being uploaded),
+    and called for runs not yet demultiplexed (uses path of expected samplesheet from demultiplex script)
+    """
+    def __init__(self, ss_path):
+        self.ss_path = ss_path
+        self.ss_obj = ''
+        self.pannumbers = []
+        self.tso = ''
+        self.samples = defaultdict(str) # store sample IDs and sample names from samplesheet
+        self.errors = defaultdict(list) # store errors
+        self.data_headers = [] # populate with headers from data section
+        self.missing_headers = [] # populate with missing headers
+        self.expected_data_headers = ["Sample_ID", "Sample_Name", "index"]
+        self.ss_checks()
 
-    def run_checks(self):
-        """
-        Calls the checks for each type of use of the script (runfolders in demultiplex script, and samplesheet upload
-        app.
-        If check is for demultiplex script, check the samplesheet is present then continue with rest of checks. If
-        check is for samplesheet upload, no need to check whether ss present. If samplesheet contains expected number
-        of elements, run rest of samplsheet name checks (performs check for each element of samplesheet name). If
-        samplesheet is present and isn't empty, perform samplesheet contents checks
+
+    def ss_checks(self):
+        """ Run checks at samplesheet and sample level.
+        Performs required extra checks for checks not included in seglh-naming
         """
         if self.check_ss_present():
-            if self.check_ss_elements():
-                self.check_first_ss_element()
-                self.check_second_ss_element()
-                self.check_third_ss_element()
-                self.check_fourth_ss_element()
-                self.check_fifth_ss_element()
-            if self.check_ss_not_empty():
-                self.check_unexpected_contents()
-        return self.results
+            self.ss_obj = self.check_ss_name()
+            if self.ss_obj:
+                self.check_sequencer_id()
+            if self.check_ss_contents():
+                self.get_data_section()
+                self.check_expected_headers()
+                # check sample id or sample name columns are not missing before doing sample validation
+                self.comp_samplenameid()
+                for key in self.samples.keys(): # run checks at the sample level
+                    for sample in self.samples[key]:
+                        sample_obj = self.check_sample(sample, key)
+                        if sample_obj:
+                            self.check_pannos(sample, key, sample_obj)
+                            self.check_runtypes(sample, key, sample_obj)
+                self.check_tso()
+
 
     def check_ss_present(self):
+        """ Checks for upload error (i.e. samplesheet for run not present). Appends info to dict.
+        If samplesheet present returns true, else returns false.
         """
-        Checks for upload error (i.e. samplesheet for run not present). Appends info to dict. If samplesheet present
-        returns true, else returns false.
-        """
-        if os.path.isfile(self.samplesheet_path):
-            self.results["ss_present"] = True, "Samplesheet present. "
+        if os.path.isfile(self.ss_path):
             return True
         else:
-            self.results["ss_present"] = False, "SAMPLESHEET WITH SUPPLIED NAME NOT PRESENT. "
-            return False
+            self.errors["sspresent_err"].append("Samplesheet with supplied name not present ({})".format(self.ss_path))
 
-    def check_ss_elements(self):
+
+    def check_ss_name(self):
+        """ Validate samplesheet names using seglh-naming Samplesheet module.
         """
-        If the samplesheet path exists, check that samplesheet name contains the expected number of elements. Return
-        true if yes, return false if not, and append info to dict.
+        try:
+            self.ss_obj = Samplesheet.from_string(self.ss_path)
+        except Exception as e:
+            self.errors["ssname_err"].append(str(e))
+        return self.ss_obj
+
+
+    def check_sequencer_id(self):
+        """ Check element 2 of samplesheet
+        (expected sequencer name matches list of allowed names in config.sequencer_ids)
         """
-        if len(self.samplesheet_elements) == 5:
-            self.results["ss_elements"] = True, "Samplesheet name contains expected number of elements. "
+        if self.ss_obj.sequencerid not in config.sequencer_ids:
+            self.errors["sequencerid_err"].append("Sequencer id not in allowed list "
+                                                  "({}, {})".format(self.ss_obj, self.ss_obj.sequencerid))
+
+
+    def check_ss_contents(self):
+        """ Check if samplesheet is empty (<10kbytes)
+        """
+        if os.stat(self.ss_path).st_size > 10:
             return True
         else:
-            self.results["ss_elements"] = False, "SAMPLESHEET NAME DOES NOT CONTAIN EXPECTED NUMBER OF ELEMENTS. "
-            return False
+            self.errors["sscontents_err"].append("Samplesheet empty (<10 bytes)")
 
-    def check_first_ss_element(self):
-        """
-        Checking element 1 of samplesheet (expected 6 digits present).
-        """
-        if self.samplesheet_elements[0].isdigit() and len(self.samplesheet_elements[0]) == 6:
-            self.results["naming_element_1"] = True, "First element (date) of samplesheet name as expected. "
-        else:
-            self.results["naming_element_1"] = False, "FIRST ELEMENT (date) OF SAMPLESHEET NAME NOT AS EXPECTED. "
-
-    def check_second_ss_element(self):
-        """
-        Checking element 2 of samplesheet (expected sequencer name matches list of allowed names in config.sequencer_ids)
-        """
-        if self.samplesheet_elements[1] in config.sequencer_ids:
-            self.results["naming_element_2"] = True, "Second element (sequencer identifier) of samplesheet name as " \
-                                                     "expected. "
-        else:
-            self.results["naming_element_2"] = False, "SECOND ELEMENT (sequencer identifier) OF SAMPLESHEET NAME NOT " \
-                                                      "AS EXPECTED. "
-
-    def check_third_ss_element(self):
-        """
-        Checking element 3 of sampleseheet (autoincrementing number - expected 4 digits)
-        """
-        if self.samplesheet_elements[2].isdigit() and len(self.samplesheet_elements[2]) == 4:
-            self.results["naming_element_3"] = True, "Third element (autoincrementing number) of samplesheet name as " \
-                                                     "expected. "
-        else:
-            self.results["naming_element_3"] = False, "THIRD ELEMENT (autoincrementing number) OF SAMPLESHEET NAME " \
-                                                      "NOT AS EXPECTED. "
-
-    def check_fourth_ss_element(self):
-        """
-        Checking element 4 of sampleseheet (flowcell ID - expected all alphanumeric, or numbers followed by dash
-        then alphanumeric (no lower case))
-        """
-        if any(re.match(pattern, self.samplesheet_elements[3]) for pattern in self.flowcell_id_patterns):
-            self.results["naming_element_4"] = True, "Fourth element (flowcell ID) of samplesheet name as expected. "
-        else:
-            self.results["naming_element_4"] = False, "FOURTH ELEMENT (flowcell ID) OF SAMPLESHEET NAME NOT AS " \
-                                                      "EXPECTED. "
-
-    def check_fifth_ss_element(self):
-        """
-        Checking element 5 of sampleseheet (matches string "Samplesheet.csv")
-        """
-        if self.samplesheet_elements[4] == "SampleSheet.csv":
-            self.results["naming_element_5"] = True, "Fifth element (SampleSheet.csv) of samplesheet name as " \
-                                                     "expected. "
-        else:
-            self.results["naming_element_5"] = False, "FIFTH ELEMENT (SampleSheet.csv) OF SAMPLESHEET NAME NOT AS " \
-                                                      "EXPECTED. "
-
-    def check_ss_not_empty(self):
-        """
-        Check if samplesheet is empty. Can be run within webapp.
-        :return:
-        """
-        # check file is larger than 10kbytes
-        if os.stat(self.samplesheet_path).st_size > 10:
-            self.results["ss_not_empty"] = True, "Samplesheet not empty. "
-            return True
-        else:
-            self.results["ss_not_empty"] = False, "SAMPLESHEET EMPTY (<10 bytes). "
-            return False
 
     def get_data_section(self):
+        """ Parse data section of samplesheet from file
+        Reads samplesheet in reverse order and collects sample ID and sample name
         """
-        Parse data section of samplesheet from file
-        """
-        # reads samplesheet in reverse order and collects sample ID and sample name
-        with open(self.samplesheet_path, 'r') as samplesheet_stream:
+        sample_ids = []
+        sample_names = []
+        with open(self.ss_path, 'r') as samplesheet_stream:
             for line in reversed(samplesheet_stream.readlines()):
                 # If line contains table headers, stop looping through the file
                 if any(header in line for header in self.expected_data_headers):
-                    # check [Data] section has expected headers
                     self.data_headers = line.split(",")
-                    self.check_data_headers()
                     break
-                # skip empty lines (check first element of the line, after splitting on comma)
-                elif len(line.split(",")[0]) < 2:
+                elif len(line.split(",")[0]) < 2: # skip empty lines
                     pass
-                # If its a line containing a sample:
-                else:
-                    # Split line by columns
+                else: # contains sample
                     sample_details = line.split(",")
-                    # Remove leading & trailing whitespace from sampleID and sampleName
-                    # (bcl2fastq tolerates leading & trailing whitespace)
-                    sample_id, sample_name = sample_details[0].strip(" "), sample_details[1].strip(" ")
+                    sample_id, sample_name = sample_details[0], sample_details[1]
                     # Append sample id and sample name to sampleStrings for testing
-                    self.sample_id_list.append(sample_id)
-                    self.sample_name_list.append(sample_name)
+                    sample_ids.append(sample_id)
+                    sample_names.append(sample_name)
+        self.samples["Sample_ID"] = sample_ids
+        self.samples["Sample_Name"] = sample_names
 
-    def check_data_headers(self):
-        """
-        Checks [Data] section has expected headers, against self.expected_data_headers list.
+
+    def check_expected_headers(self):
+        """ Checks [Data] section has expected headers, against self.expected_data_headers list.
         """
         if not all(header in self.data_headers for header in self.expected_data_headers):
-            self.results["data_headers_present"] = False, "HEADERS MISSING FROM [Data] SECTION. "
-        else:
-            self.results["data_headers_present"] = True, "[Data] section headers as expected. "
+            self.missing_headers = list(set(self.expected_data_headers).difference(self.data_headers))
+            self.errors["headers_err"].append("Header(/s) missing from [Data] "
+                                              "section: '{}'".format(','.join(self.missing_headers)))
 
-    def check_unexpected_contents(self):
+
+    def comp_samplenameid(self):
+        """ Check whether the names match between Sample_ID and Sample_Name in data section of samplesheet
         """
-        Extracts data section from samplesheet, and runs checks (check_data_headers, check_samplenames_match,
-        check_samplenames_characters, check_samplenames_pannos, check_samplenames_runtypes). Checks are run on both
-        Sample_Name and Sample_ID because Sample_Name is used by bcl2fastq but Sample_ID is used if Sample_Name is not
-        present.
+        if self.samples["Sample_ID"] != self.samples["Sample_Name"]:
+            differences = ", ".join(map(str, (list(set(self.samples["Sample_ID"]) - set(self.samples["Sample_Name"])))))
+            self.errors["samplenameid_err"].append("Sample ID, Sample Name do not match: ({})".format(differences))
+
+
+    def check_sample(self, sample, key):
+        """ Validate sample names using seglh-naming Sample module.
+        Checks run on Sample_Name and Sample_ID; Sample_Name is used by bcl2fastq and Sample_ID is used if
+        Sample_Name is not present.
         """
-        self.get_data_section()
-        # run checks to see if samplename and sampleID match
-        self.check_samplenames_match()
+        try:
+            sample_obj = Sample.from_string(sample)
+            return sample_obj
+        except Exception as e:
+            self.errors["sample_err"].append("{}: {}".format(key, str(e)))
 
-        # to help report which column the issue is in create a dictionary of column names and list of contents
-        column_dictionary = {"Sample_ID" : self.sample_id_list, "Sample_Name" : self.sample_name_list}
-        for column in column_dictionary:
-            # run more in detail checks on each Sample_ID and Sample_Name
-            self.check_samplenames_characters(column_dictionary[column], column)
-            self.check_samplenames_runtypes(column_dictionary[column], column)
-            self.check_samplenames_pannos(column_dictionary[column], column)
-            self.check_tso_samplesheet(column_dictionary[column], column)
 
-        if self.invalid_characters:
-            self.results["valid_characters"] = False, "SAMPLES CONTAIN INVALID CHARACTERS: " \
-                                                      "{} ".format(self.invalid_characters)
-        else:
-            self.results["valid_characters"] = True, "Sample names and Sample IDs all contain valid characters. "
-
-        if self.invalid_pan_nos:
-            self.results["valid_pan_nos"] = False, "SAMPLES CONTAIN INVALID PAN NUMBERS: " \
-                                                   "{} ".format(self.invalid_pan_nos)
-        else:
-            self.results["valid_pan_nos"] = True, "Sample names and Sample IDs all contain valid pan nos. "
-
-        if self.invalid_runtypes:
-            self.results["valid_runtypes"] = False, "SAMPLES CONTAIN INVALID RUNTYPES: " \
-                                                    "{} ".format(self.invalid_runtypes)
-        else:
-            self.results["valid_runtypes"] = True, "Sample names and Sample IDs all contain valid runtypes. "
-
-        if self.samplename_length:
-            self.results["samplename_length"] = False, "SAMPLEID/SAMPLENAME LENGTH LONGER THAN 40 CHARACTERS: " \
-                                                      "{} ".format(self.samplename_length)
-        else:
-            self.results["samplename_length"] = True, "All Sample names and Sample IDs are 40 characters or less. "
-
-    def check_samplenames_match(self):
+    def check_pannos(self, sample, key, sample_obj):
+        """ Check sample names contain allowed pan numbers from config.panel_list number list.
         """
-        Check whether the names match between Sample_ID and Sample_Name in data section of samplesheet
-        """
-        if self.sample_id_list != self.sample_name_list:
-            differences = ", ".join(map(str, (list(set(self.sample_id_list) - set(self.sample_name_list)))))
-            self.results["ss_names_match"] = \
-                False, "SAMPLES INCORRECTLY NAMED: One or more sample names and sample IDs do not match: Sample ID " \
-                       "{} does not match corresponding sample name. ".format(differences)
-        else:
-            self.results["ss_names_match"] = True, "Sample names and Sample IDs all match. "
-
-    def check_samplenames_characters(self, list, type):
-        """
-        Check sample names contain allowed characters from self.valid_chars
-        """
-        # loop through the characters of each sample string to check whether they use valid characters
-        for sample in list:
-            for char in sample:
-                if not char in self.valid_chars:
-                    self.invalid_characters += "{}: {}. ".format(type, sample)
-
-    def check_samplenames_pannos(self, list, type):
-        """
-        Check sample names contain allowed pan numbers from config.panel_list number list.
-        """
-        for sample in list:
-            # extract pan no (last element), check against config.panel list
-            pan_no = re.sub(r'.*Pan', 'Pan', sample).split("_")[0]
-            if pan_no not in config.panel_list:
-                self.invalid_pan_nos += "{} ({}: {}). ".format(pan_no, type, sample)
-
-    def check_tso_samplesheet(self, list, type):
-        """
-        TSO500 has some extra requirements, namely the samplename must be < 40 characters and cannot have consecutive underscores.
-        """
-        for sample in list:
-            if sample.startswith(self.tso_runtype):
-                # check for double underscores in TSO samples
-                if "__" in sample:
-                    self.invalid_characters += "{} double underscore: {}. ".format(type, sample)
-                # check samplenames are longer than 40 characters
-                if len(sample) > 40:
-                    self.samplename_length += "{}: {}. ".format(type, sample)
-
-    def check_samplenames_runtypes(self, list, type):
-        """
-        Check sample names contain allowed runtypes from config.runtype_list
-        """
-        for sample in list:
-            # extract runtype (first element), strip numbers from string, check against config.runtype_list
-            runtype = sample.split("_")[0]
-            # if runtype contains digits, split to remove digits and anything after
-            if any(chr.isdigit() for chr in runtype):
-                runtype = re.split('(\d+)', runtype)[0]
-            if runtype not in config.runtype_list:
-                self.invalid_runtypes += "{}: {}. ".format(type, sample)
+        # extract pan no (last element), check against config.panel list
+        self.pannumbers.append(sample_obj.panelnumber)
+        if sample_obj.panelnumber not in config.panel_list:
+            self.errors["panno_err"].append("Pan number not in allowed list: "
+                                            "{} ({}: {})".format(sample_obj.panelnumber, key, sample))
 
 
-def run_ss_checks(samplesheet_path):
-    sample_sheet = ValidSamplesheet(samplesheet_path)
-    return sample_sheet.run_checks()
+    def check_runtypes(self, sample, key, sample_obj):
+        """ Check sample names contain allowed runtypes from config.runtype_list
+        """
+        runtype = re.match("^[A-Z]*", sample_obj.libraryprep) # extract first group of capitalised characters
+        if runtype.group(0) not in config.runtype_list:
+             self.errors["runtypes_err"].append("Runtype not in allowed list ({}, {})".format(sample, key))
+
+
+    def check_tso(self):
+        """ Returns True if TSO sample
+        """
+        if any(item in self.pannumbers for item in config.tso500_panel_list):
+            self.tso = True
+
+
 
 def main():
-    # get arguments
     args = arg_parse()
+    ss = ValidSamplesheet(args.samplesheet)
+    for key in ss.errors.keys():
+        print(', '.join(ss.errors[key]))
 
-    # RUN SAMPLESHEET CHECKS
-    samplesheet_path = args.samplesheet
-    samplesheet = ValidSamplesheet(samplesheet_path)
-    ss_check_results = samplesheet.run_checks()
-    print(ss_check_results)
+    print(ss.tso)
 
 if __name__ == '__main__':
     main()
