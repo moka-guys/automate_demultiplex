@@ -33,7 +33,7 @@ def arg_parse():
     return args
 
 
-class ValidSamplesheet(object):
+class SamplesheetCheck(object):
     """ Runs the checks. Called by webapp for uploaded samplesheets (uses name of file being uploaded),
     and called for runs not yet demultiplexed (uses path of expected samplesheet from demultiplex script)
     """
@@ -191,7 +191,7 @@ class ValidSamplesheet(object):
 
 def main():
     args = arg_parse()
-    ss = ValidSamplesheet(args.samplesheet)
+    ss = SamplesheetCheck(args.samplesheet)
     for key in ss.errors.keys():
         print(', '.join(ss.errors[key]))
 

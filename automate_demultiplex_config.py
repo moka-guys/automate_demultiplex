@@ -35,7 +35,7 @@ novaseq_id = "A01229"
 
 fastq_folder = "/Data/Intensities/BaseCalls" # Path to fastq files
 
-# ================ Samplesheet Verification (samplesheet_verifier.py) ===================================
+# ================ Samplesheet Verification (samplesheet_validator.py) ===================================
 
 sequencer_ids = ["NB551068", "NB552085", "M02353", "M02631", "A01229"]
 runtype_list = ["NGS", "ADX", "ONC", "SNP", "PGT", "TSO", "LRPCR"]
