@@ -2,9 +2,9 @@
 
 Scripts for routine analysis of clinical next generation sequencing (NGS) data at Viapath Genetics:
 
-1. [demultiplex.py](demultiplex.py) - Demultiplex Illumina NGS data using `bcl2fastq2` [(guide)](docs/demultiplexing.md)
+1. [demultiplex.py](demultiplex.py) - Demultiplex Illumina NGS data using `bcl2fastq2` [(guide)](docs/demultiplex.md)
 2. [upload_and_setoff_workflows.py](upload_and_setoff_workflows.py) - Upload NGS data to DNANexus and trigger in-house 
-workflows [(guide)](docs/upload_and_setoff.md)
+workflows [(guide)](docs/upload_and_setoff_workflows.md)
 
 The following modules are core dependencies:
 
