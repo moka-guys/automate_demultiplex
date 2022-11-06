@@ -217,7 +217,7 @@ if testing:
 else:
 	# Oncology email address for email alerts
 	oncology_ops_email = "m.neat@nhs.net"
-	WES_sample_name_email_list = ["DNAdutyscientist@viapath.co.uk", "Suzanne.lillis@viapath.co.uk",
+	WES_sample_name_email_list = ["gst-tr.ViapathGeneticsAdmin@nhs.net", "Suzanne.lillis@viapath.co.uk",
 								  mokaguys_email, "eblab@gstt.nhs.uk", "lu.liu@viapath.co.uk"]
 
 # ----- MokaPIPE workflow inputs -----------------------------------------------------------------------
@@ -229,9 +229,9 @@ mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample=" 
 mokapipe_bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=%s"  # BWA reference genome
 mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
 mokapipe_mokapicard_capturetype_stage = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.Capture_panel=%s"
-mokapipe_haplotype_padding_input = " -i" +mokapipe_gatk_human_exome_stage + ".padding="
-mokapipe_haplotype_vcf_output_format = " -i" +mokapipe_gatk_human_exome_stage + ".output_format=both"
-mokapipe_filter_vcf_with_bedfile_bed_input = " -i" +mokapipe_filter_vcf_with_bedfile_stage + ".bedfile="
+mokapipe_haplotype_padding_input = " -i{}.padding=".format(mokapipe_gatk_human_exome_stage)
+mokapipe_haplotype_vcf_output_format = " -i{}.output_format=both".format(mokapipe_gatk_human_exome_stage)
+mokapipe_filter_vcf_with_bedfile_bed_input = " -i.bedfile=".format(mokapipe_filter_vcf_with_bedfile_stage)
 mokapipe_vcf_output_name = "filtered_vcf"
 mokapipe_bam_output_name = "bam"
 mokapipe_happy_skip = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.skip=%s" 
