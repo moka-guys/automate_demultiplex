@@ -6,3 +6,5 @@ test/data
 share/
 make_panel_fastqs/
 test.log
+seglh-naming/
+seglh_naming.egg-info/
