@@ -105,10 +105,10 @@ class ReadyToStartDemultiplexing(object):
     Methods:
         is_run_demultiplexed(runfolder)
             Check if the runfolder has been demultiplexed.
-        check_bcl2fastq_log():
+        check_bcl2fastq_log()
             Check presence of demultiplex logfile
-        valid_samplesheet():
-            Check samplesheet is present and naming and contents are valid. Returns boolean
+        valid_samplesheet()
+            Check samplesheet is present and naming and contents are valid. Returns error string and boolean
         has_run_finished()
             Check if sequencing run has completed.
         setup_demultiplexing()
@@ -199,7 +199,7 @@ class ReadyToStartDemultiplexing(object):
             self.logger("Run has not yet been demultiplexed", "demultiplex_info")
             self.samplesheet = "{}_SampleSheet.csv".format(self.runfolder)
             self.samplesheet_path = os.path.join(config.samplesheets_dir, self.samplesheet)
-            self.valid_samplesheet(halt_on_err=False)  # does not stop the scripts at this point if there is an error
+            self.valid_samplesheet()  # does not stop the scripts at this point if there is an error
             self.has_run_finished()
 
     def check_bcl2fastq_log(self):
@@ -222,20 +222,20 @@ class ReadyToStartDemultiplexing(object):
                         "\n--- CONTINUE ---".format(self.runfolderpath,
                                                     config.file_demultiplexing_old), "demultiplex_info")
 
-    def valid_samplesheet(self, halt_on_err):
-        """Run samplesheet check for formatting errors. Write resulting messages to logfiles.
+    def valid_samplesheet(self):
+        """ Check samplesheet is present and naming and contents are valid. Returns error string and boolean.
         """
-        err_str = ", ".join([item for sublist in SamplesheetCheck(self.samplesheet_path).errors.values()
-                             for item in sublist])
+        ss = SamplesheetCheck(self.samplesheet_path)
+        err_str = ", ".join([item for sublist in ss.errors.values() for item in sublist])
         if err_str:
-            if halt_on_err:
-                self.logger("Demultiplexing halted due to samplesheet errors {}: {}".format(self.samplesheet, err_str),
-                            "demultiplex_fail_samplesheet")
-            else:
-                self.logger("Samplesheet checks failed {}: {}".format(self.samplesheet, err_str), "samplesheet_warning")
+            self.logger("Samplesheet checks failed {}: "
+                        "{}".format(self.samplesheet, err_str), "samplesheet_warning")
+            success = False
         else:
             self.logger("Samplesheet passed all checks {}".format(self.samplesheet), "demultiplex_success")
-            return True
+            success = True
+        return ss.errors, success
+
 
     def has_run_finished(self):
         """Check if sequencing has completed for the current runfolder - presence of "RTAComplete.txt".
@@ -244,9 +244,17 @@ class ReadyToStartDemultiplexing(object):
         if os.path.isfile("{}/{}".format(self.runfolderpath, self.run_complete)):  # Is RTAcomplete.txt present
             self.logger("Run finished  -  RTAcomplete.txt found @ "
                         "{}/{}\n".format(self.runfolderpath, self.run_complete), "demultiplex_info")
-
-            if self.valid_samplesheet(halt_on_err=True):  # If samplesheet valid setup_demultiplexing(), else throw error
+            errors, success = self.valid_samplesheet()
+            if success:
                 self.setup_demultiplexing()
+            else:
+                disallowed_errs = ["sspresent_err", "ssname_err", "sequencerid_err",
+                                   "ssempty_err", "headers_err", "validchars_err"]
+
+                if any(errors[key] for key in disallowed_errs):
+                    err_str = ", ".join([item for sublist in errors.values() for item in sublist])
+                    self.logger("Demultiplexing halted due to samplesheet errors {}: "
+                                "{}".format(self.samplesheet, err_str), "demultiplex_fail_samplesheet")
         else:
             self.logger("Run not yet complete \n--- STOP ---\n", "demultiplex_info")
 
