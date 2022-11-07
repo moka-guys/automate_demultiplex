@@ -146,9 +146,10 @@ class SamplesheetCheck(object):
     def comp_samplenameid(self):
         """ Check whether the names match between Sample_ID and Sample_Name in data section of samplesheet
         """
-        if self.samples["Sample_ID"] != self.samples["Sample_Name"]:
-            differences = ", ".join(map(str, (list(set(self.samples["Sample_ID"]) - set(self.samples["Sample_Name"])))))
-            self.errors["samplenameid_err"].append("Sample ID, Sample Name do not match: ({})".format(differences))
+        differences =", ".join(map(str, (list(set(self.samples["Sample_ID"]) - set(self.samples["Sample_Name"])))))
+        if differences:
+            self.errors["samplenameid_err"].append("The following Sample IDs do not match the "
+                                                   "corresponding Sample Name: ({})".format(differences))
 
 
     def check_sample(self, sample, key):
@@ -188,14 +189,12 @@ class SamplesheetCheck(object):
             self.tso = True
 
 
-
 def main():
     args = arg_parse()
     ss = SamplesheetCheck(args.samplesheet)
     for key in ss.errors.keys():
         print(', '.join(ss.errors[key]))
 
-    print(ss.tso)
 
 if __name__ == '__main__':
     main()

@@ -132,7 +132,7 @@ def test_compare_samplenames_valid(valid_samplesheets):
 
 def test_compare_samplenames_invalid(invalid_contents):
     for samplesheet in invalid_contents:
-        msg = 'Sample ID, Sample Name do not match'
+        msg = 'The following Sample IDs do not match the corresponding Sample Name'
         assert msg in str(SamplesheetCheck(samplesheet).errors["samplenameid_err"])
 
 
@@ -174,7 +174,8 @@ def test_multiple_errors(invalid_contents):
     non-matching samplenames, invalid panel number, invalid runtype
     '''
     msgs = ['Sequencer id not in allowed list', 'Header(/s) missing from [Data] section',
-            'Sample ID, Sample Name do not match', 'Pan number not in allowed list', 'Runtype not in allowed list']
+            'The following Sample IDs do not match the corresponding Sample Name',
+            'Pan number not in allowed list', 'Runtype not in allowed list']
     for samplesheet in invalid_contents:
         for msg in msgs:
             flatlist = [item for sublist in SamplesheetCheck(samplesheet).errors.values() for item in sublist]
