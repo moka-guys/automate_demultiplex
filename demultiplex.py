@@ -92,7 +92,7 @@ class GetListOfRuns(object):
         Take current script logfile name, remove .txt and append processed_run_string
         Rename log file with this new name
         """
-        processed_run_string = "_{}_demultiplex_script_log.txt".format("_".join(demultiplex.processed_runfolders))
+        processed_run_string = "_{}_demultiplex_script_log.txt".format("_".join(self.demultiplex.processed_runfolders))
         new_scriptlog_name = "{}{}".format(os.path.splitext(self.logfile_name)[0], processed_run_string)
         os.rename(self.logfile_name, new_scriptlog_name)
 
