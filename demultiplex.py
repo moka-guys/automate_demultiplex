@@ -23,7 +23,7 @@ import re
 import requests
 import automate_demultiplex_config as config # import config file
 import git_tag as git_tag # import function which reads the git tag
-from samplesheet_verifier import ValidSamplesheet
+from samplesheet_validator import SamplesheetCheck
 
 
 class GetListOfRuns(object):
@@ -123,13 +123,15 @@ class ReadyToStartDemultiplexing(object):
         sequencer_requiring_integritycheck()
             Determines whether the run requires integrity checking (not possible on all sequencers).
         checksum_file_present()
-            checks if checksums generated for the run (i.e. integrity checking scripts have completed for the run).
+            Checks if checksums generated for the run (i.e. integrity checking scripts have completed for the run).
         prior_integritycheck_failed()
-            check if run previously failed integrity check (needs manual intervention before further processing).
+            Check if run previously failed integrity check (needs manual intervention before further processing).
         checksums_match()
             Checks whether checksums match in checksum file.
         send_email()
             Send progress messages via email.
+        tso500_run()
+            Determine whether runfolder is from a TSO500 run.
         run_bcl2fastq()
             Run bcl2fastq with runfolder as input.
         check_demultiplex_logfile()
@@ -195,13 +197,13 @@ class ReadyToStartDemultiplexing(object):
                                 self.runfolderpath), "demultiplex_info")
 
         # If bcl2fastq logfile not present, perform samplesheet checks
-        if self.check_bcl2fastq_log:
+        if self.check_bcl2fastq_log():
             return True
         else:
             self.logger("Run has not yet been demultiplexed", "demultiplex_info")
             self.samplesheet = "{}_SampleSheet.csv".format(self.runfolder)
             self.samplesheet_path = os.path.join(config.samplesheets_dir, self.samplesheet)
-            self.valid_samplesheet() # does not stop the scripts at this point if there is an error
+            self.valid_samplesheet(halt_on_err = False) # does not stop the scripts at this point if there is an error
             self.has_run_finished()
 
 
@@ -213,25 +215,30 @@ class ReadyToStartDemultiplexing(object):
         bcl2fastq_txt = os.path.isfile(os.path.join(self.runfolderpath, config.file_demultiplexing_old))
 
         if bcl2fastq_log:
-            self.logger("Checking if already demultiplexed .........Demultiplexing has already been completed - "
-                        "demultiplex log found @ {}/{} \n--- STOP ---".format(self.runfolderpath, self.demultiplexed),
-                        "demultiplex_info")
-            return True
+            self.logger("Demultiplexing has already been completed - demultiplex log found @ {}/{} "
+                        "\n--- STOP ---".format(self.runfolderpath, self.demultiplexed), "demultiplex_info")
 
         elif bcl2fastq_txt:
-            self.logger("Checking if already demultiplexed .........Demultiplexing has already been completed - "
-                        "demultiplex log found @ {}/{} \n--- STOP ---".format(self.runfolderpath,
-                                                                              config.file_demultiplexing_old),
-                        "demultiplex_info")
-            return True
+            self.logger("Demultiplexing has already been completed - demultiplex log found @ {}/{} "
+                        "\n--- STOP ---".format(self.runfolderpath, config.file_demultiplexing_old), "demultiplex_info")
+
+        else:
+            self.logger("Demultiplexing not yet completed - no demultiplex log found @ {}/{} "
+                        "\n--- CONTINUE ---".format(self.runfolderpath,
+                                                    config.file_demultiplexing_old), "demultiplex_info")
 
 
-    def valid_samplesheet(self):
+    def valid_samplesheet(self, halt_on_err):
         """Run samplesheet check for formatting errors. Write resulting messages to logfiles.
         """
-        if ValidSamplesheet(self.samplesheet_path).errors:
-            err_str = ", ".join([item for sublist in ss_verification_results.values() for item in sublist])
-            self.logger("Samplesheet checks failed {}: {}".format(self.samplesheet, err_str), "samplesheet_warning")
+        err_str = ", ".join([item for sublist in SamplesheetCheck(self.samplesheet_path).errors.values()
+                             for item in sublist])
+        if err_str:
+            if halt_on_err:
+                self.logger("Demultiplexing halted due to samplesheet errors {}: {}".format(self.samplesheet, err_str),
+                            "demultiplex_fail_samplesheet")
+            else:
+                self.logger("Samplesheet checks failed {}: {}".format(self.samplesheet, err_str), "samplesheet_warning")
         else:
             self.logger("Samplesheet passed all checks {}".format(self.samplesheet), "demultiplex_success")
             return True
@@ -245,11 +252,8 @@ class ReadyToStartDemultiplexing(object):
             self.logger("Run finished  -  RTAcomplete.txt found @ "
                         "{}/{}\n".format(self.runfolderpath, self.run_complete), "demultiplex_info")
 
-            if self.valid_samplesheet(): # If samplesheet valid setup_demultiplexing(), else error thrown
+            if self.valid_samplesheet(halt=True): # If samplesheet valid setup_demultiplexing(), else error thrown
                 self.setup_demultiplexing()
-            else:
-                self.logger("Demultiplexing halted due to samplesheet errors: {}".format(self.runfolder),
-                            "demultiplex_fail_samplesheet")
         else:
             self.logger("Run not yet complete \n--- STOP ---\n", "demultiplex_info")
 
@@ -279,10 +283,11 @@ class ReadyToStartDemultiplexing(object):
 
     # UNSURE AS TO WHETHER THIS FUNCTION ACTUALLY WORKS CORRECTLY
     def tso500_run(self):
-        """TSO500 runs do not require demultiplexing: If runfolder is from TSO500 run, writes to bcl2fastq2.log file
+        """Determine whether runfolder is from a TSO500 run
+        TSO500 runs do not require demultiplexing: If runfolder is from TSO500 run, writes to bcl2fastq2.log file
         which allows script to process runfolder in future without looking for bcl2fastq success statement
         """
-        if ValidSamplesheet(self.samplesheet_path).tso:  # check if TSO500 run
+        if SamplesheetCheck(self.samplesheet_path).tso:  # check if TSO500 run
             self.logger("{} is a {}".format(self.runfolder, config.demultiplexing_log_file_TSO500_message),
                         "demultiplex_success")
             with open(self.demultiplex_log, 'w') as bcl2fastq2_log:
@@ -315,7 +320,7 @@ class ReadyToStartDemultiplexing(object):
         NB. this integrity check is not possible on all sequencers (ie miseq).
         """
         self.checksum_file_path = os.path.join(self.runfolderpath, self.checksum_file)
-        if sequencer_requiring_integritycheck() and checksum_file_present():
+        if self.sequencer_requiring_integritycheck() and self.checksum_file_present():
             if not self.prior_integritycheck_failed():
                 if self.checksums_match(): # If false, script stops here but will reach this point every hour
                     return True  # integrity checking passed
@@ -334,7 +339,7 @@ class ReadyToStartDemultiplexing(object):
         """Check whether checksum check needed. Only runs from sequencers that can have checksums generated require
         this - not all sequencers can have checksums generated by the integrity check script.
         """
-        if any(sequencer in config.sequencers_with_integrity_check in self.runfolder):
+        if any(item in self.runfolder for item in config.sequencers_with_integrity_check):
             return True
         else:
             self.logger("Data integrity check not required. Continuing...", "demultiplex_info")
@@ -346,6 +351,7 @@ class ReadyToStartDemultiplexing(object):
         if os.path.isfile(self.checksum_file_path): # checksums have been written to file by integrity check scripts
             self.logger("Checksums file present", "demultiplex_info")
             return True
+
         else: # integrity check not been performed
             self.logger("Integrity check not yet performed on sequencer. Stopping...", "demultiplex_info")
 
