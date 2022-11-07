@@ -38,4 +38,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
+	  echo "dummytoken" > /home/runner/work/.dnanexus_auth_token
+	  echo "dummypw" > /home/runner/work/.amazon_email_pw
+	  echo "dummyuser" > /home/runner/work/.amazon_email_username
           pytest -v
