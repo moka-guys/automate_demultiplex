@@ -47,7 +47,6 @@ def invalid_names(base_path):
         ('{}2110915_M02353_0632_000000000-K242J_SampleSheet.csv'.format(base_path)),
     ]
 
-
 @pytest.fixture
 def empty_file(base_path):
     '''
@@ -56,7 +55,6 @@ def empty_file(base_path):
     return[
         ('{}220413_A01229_0032_AHGKBIEKFR_SampleSheet.csv'.format(base_path)),
     ]
-
 
 @pytest.fixture
 def invalid_contents(base_path):
@@ -70,103 +68,93 @@ def invalid_contents(base_path):
         ('{}200817_NB068_0009_AH3YERAFX3_SampleSheet.csv'.format(base_path)),
     ]
 
-
 def test_check_paths_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert not SamplesheetCheck(samplesheet).errors.has_key("sspresent_err")
-
 
 def test_check_paths_invalid(invalid_paths):
     for samplesheet in invalid_paths:
         msg = 'Samplesheet with supplied name not present'
         assert msg in str(SamplesheetCheck(samplesheet).errors["sspresent_err"])
 
-
 def test_check_ss_name_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert not SamplesheetCheck(samplesheet).errors.has_key("ssname_err")
-
 
 def test_check_ss_name_invalid(invalid_names):
     for samplesheet in invalid_names:
        assert SamplesheetCheck(samplesheet).errors.has_key("ssname_err")
 
-
 def test_check_sequencer_id_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert not SamplesheetCheck(samplesheet).errors.has_key("sequencerid_err")
-
 
 def test_check_sequencer_id_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         msg = 'Sequencer id not in allowed list'
         assert msg in str(SamplesheetCheck(samplesheet).errors["sequencerid_err"])
 
-
 def test_check_ss_contents_populated(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet).errors.has_key("sscontents_err")
-
+        assert not SamplesheetCheck(samplesheet).errors.has_key("ssempty_err")
 
 def test_check_ss_contents_empty(empty_file):
     for samplesheet in empty_file:
         msg = 'Samplesheet empty (<10 bytes)'
-        assert msg in str(SamplesheetCheck(samplesheet).errors["sscontents_err"])
-
+        assert msg in str(SamplesheetCheck(samplesheet).errors["ssempty_err"])
 
 def test_expected_headers_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert not SamplesheetCheck(samplesheet).errors.has_key("headers_err")
-
 
 def test_expected_headers_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         msg = 'Header(/s) missing from [Data] section'
         assert msg in str(SamplesheetCheck(samplesheet).errors["headers_err"])
 
-
-def test_compare_samplenames_valid(valid_samplesheets):
+def test_comp_samplenameid_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert not SamplesheetCheck(samplesheet).errors.has_key("samplenameid_err")
 
-
-def test_compare_samplenames_invalid(invalid_contents):
+def test_comp_samplenameid_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         msg = 'The following Sample IDs do not match the corresponding Sample Name'
         assert msg in str(SamplesheetCheck(samplesheet).errors["samplenameid_err"])
 
+def test_check_illegal_chars_valid(valid_samplesheets):
+    for samplesheet in valid_samplesheets:
+        assert not SamplesheetCheck(samplesheet).errors.has_key("validchars_err")
+
+def check_illegal_chars_invalid(invalid_contents):
+    msg = 'Sample name contains invalid characters'
+    for samplesheet in invalid_contents:
+        assert msg in str(SamplesheetCheck(samplesheet).errors["validchars_err"])
 
 def test_check_sample_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert not SamplesheetCheck(samplesheet).errors.has_key("sample_err")
 
-
 def test_check_sample_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         assert SamplesheetCheck(samplesheet).errors.has_key("sample_err")
 
-
 def test_check_pannos_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert not SamplesheetCheck(samplesheet).errors.has_key("panno_err")
-
 
 def test_check_pannos_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         msg = 'Pan number not in allowed list'
         assert msg in str(SamplesheetCheck(samplesheet).errors["panno_err"])
 
-
 def test_check_runtypes_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert not SamplesheetCheck(samplesheet).errors.has_key("runtypes_err")
-
 
 def test_check_runtypes_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         msg = 'Runtype not in allowed list'
         assert msg in str(SamplesheetCheck(samplesheet).errors["runtypes_err"])
-
 
 def test_multiple_errors(invalid_contents):
     '''
