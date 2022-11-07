@@ -252,7 +252,7 @@ class ReadyToStartDemultiplexing(object):
             self.logger("Run finished  -  RTAcomplete.txt found @ "
                         "{}/{}\n".format(self.runfolderpath, self.run_complete), "demultiplex_info")
 
-            if self.valid_samplesheet(halt=True): # If samplesheet valid setup_demultiplexing(), else error thrown
+            if self.valid_samplesheet(halt_on_err=True): # If samplesheet valid setup_demultiplexing(), else throw error
                 self.setup_demultiplexing()
         else:
             self.logger("Run not yet complete \n--- STOP ---\n", "demultiplex_info")
@@ -272,7 +272,7 @@ class ReadyToStartDemultiplexing(object):
             # for a while after starting so create file here and append stdout later
             open(self.demultiplex_log, 'w').close() # close file immediately
 
-            if not tso500_run(): # TSO500 runs do not require demultiplexing
+            if not self.tso500_run(): # TSO500 runs do not require demultiplexing
                 self.run_bcl2fastq()  # Script won't continue until process finishes
                 self.check_demultiplex_logfile()  # check demultiplex success
 
