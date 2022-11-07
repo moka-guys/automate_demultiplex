@@ -51,11 +51,8 @@ checksum_match = "Checksums match" # Statement to write when checksums match
 sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 
 # Demultiplex
-demultiplex_test_folder = ["999999_M02353_0496_000000000-D8M36_demux_nointegrity",
-						   "999999_A01229_0010_AHY5TWDRXX_demux_integrity",
-						   "999999_A01229_0038_AH5MG7DRXY_TSO500", "folder123", "123_folder",
-						   "999999_A01229_0049_AHMKGHDRXY_TSO500"]
-
+demultiplex_test_folder = ["999999_M02353_0496_000000000-D8ICF", "999999_NB552085_0077_WESPIPECAN",
+						   "999999_A01229_0010_AHY5TWDICP"]
 # files for checking NGS runfolders before demultiplexing
 file_complete_run = "RTAComplete.txt"
 file_demultiplexing = "bcl2fastq2_output.log"
@@ -81,8 +78,6 @@ upload_and_setoff_workflow_logfile = \
 
 
 upload_started_file = "DNANexus_upload_started.txt" # Name of log file which records the output of the upload agent
-
-# runfolder_upload_cmds = "add_runfolder_to_nexus_cmds.txt" # runfolder backup files
 
 # Path to DNAnexus run command log file
 DNA_Nexus_workflow_logfolder = \
@@ -118,10 +113,6 @@ backup_runfolder_success = "backup_runfolder INFO - END"
 backup_runfolder_error = "backup_runfolder.UAcaller ERROR"
 dx_sdk_test_expected_stdout = "dx v0.2" # Expected result from testing
 upload_agent_expected_stdout = "Upload Agent Version:" # Upload agent test response
-
-# Command and output to test agilent connector
-# agilent_connector_cmd = "/opt/agilent/agilentserviceconnector status"
-# agilent_connector_output = "agilentserviceconnector is running"
 
 # ---- Cluster density strings -------------------------------------------------------------------------
 cluster_density_success_statement = "picard.illumina.CollectIlluminaLaneMetrics done"
@@ -174,7 +165,7 @@ tso500_output_parser_app = "applet-GBKvX5j0jy1kK8jj9F7jjVY7" # Apps/tso500_outpu
 coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
 sompy_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G9yPb780jy1p660k6yBvQg07"
-multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G7QB6zj0jy1z1ZV1P5VZBj9p" 
+multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G7QB6zj0jy1z1ZV1P5VZBj9p"
 upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
 TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true " \
 										 "-iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
@@ -185,9 +176,6 @@ RPKM_path = "Apps/RPKM_using_conifer_v1.6"
 fastqc_app = "Apps/fastqc_v1.3"
 bedfile_folder = "Data/BED/"
 prod_organisation = "org-viapath_prod" # DNAnexus organisation to create the project within
-
-# live_tag = "live" # Project tags to denote live cases
-
 
 # ===== istages : DNANEXUS WORKFLOW INPUTS =============================================================
 
@@ -234,12 +222,12 @@ mokapipe_haplotype_vcf_output_format = " -i{}.output_format=both".format(mokapip
 mokapipe_filter_vcf_with_bedfile_bed_input = " -i.bedfile=".format(mokapipe_filter_vcf_with_bedfile_stage)
 mokapipe_vcf_output_name = "filtered_vcf"
 mokapipe_bam_output_name = "bam"
-mokapipe_happy_skip = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.skip=%s" 
-mokapipe_happy_prefix = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.prefix=%s" 
-mokapipe_sambamba_bed_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed=" 
-mokapipe_sambamba_min_base_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_base_qual=10" 
-mokapipe_sambamba_min_mapping_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_mapping_qual=20" 
-mokapipe_sambamba_coverage_level = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.coverage_level=30" 
+mokapipe_happy_skip = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.skip=%s"
+mokapipe_happy_prefix = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.prefix=%s"
+mokapipe_sambamba_bed_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="
+mokapipe_sambamba_min_base_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_base_qual=10"
+mokapipe_sambamba_min_mapping_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_mapping_qual=20"
+mokapipe_sambamba_coverage_level = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.coverage_level=30"
 mokapipe_sambamba_filter_cmds = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.additional_filter_commands='not " \
 								"(unmapped or secondary_alignment)'"
 mokapipe_sambamba_exclude_duplicates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclude_duplicate_reads=true"
@@ -375,8 +363,8 @@ congenica_samplename = " -ianalysis_name="
 
 # ----- List of all panel numbers ----
 panel_list = [
-	"Pan4081", # Swift EGFR 
-	"Pan4082", # Swift 57 
+	"Pan4081", # Swift EGFR
+	"Pan4082", # Swift 57
 	"Pan2835", # Twist WES
 	"Pan4940", # Twist WES for EB lab
 	"Pan4042", # STG VCP2 BRCA
@@ -420,7 +408,7 @@ panel_list = [
 	"Pan4351", # VCP3 Viapath_R227
 	"Pan4387", # VCP3 Viapath_R90
 	"Pan4390", # VCP3 Viapath_R97
-	"Pan4009", # MokaSNP 
+	"Pan4009", # MokaSNP
 	"Pan4396", # ArcherDx
 	"Pan4579", # VCP2_M1.1(somatic)
 	"Pan4574", # VCP2_M1.2(somatic)
@@ -1299,7 +1287,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"non-priority", 
+		"congenica_IR_template":"non-priority",
 		"congenica_project": "10010",
 		"congenica_credentials": "STG",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
@@ -1313,7 +1301,7 @@ panel_settings = {
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
 		"congenica_IR_template":"priority",
-		"congenica_project": "9981", 
+		"congenica_project": "9981",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
@@ -1323,7 +1311,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"non-priority", 
+		"congenica_IR_template":"non-priority",
 		"congenica_project": "10042",
 		"congenica_credentials": "STG",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
@@ -1336,7 +1324,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"priority", 
+		"congenica_IR_template":"priority",
 		"congenica_project": "9982",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
@@ -1348,7 +1336,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"non-priority", 
+		"congenica_IR_template":"non-priority",
 		"congenica_project": "10042",
 		"congenica_credentials": "STG",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
@@ -1373,8 +1361,8 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"non-priority", 
-		"congenica_project": "10009", 
+		"congenica_IR_template":"non-priority",
+		"congenica_project": "10009",
 		"congenica_credentials": "STG",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4766data.bed",
@@ -1398,7 +1386,7 @@ panel_settings = {
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
 		"capture_type": "Amplicon",
-		"congenica_IR_template":"priority", 
+		"congenica_IR_template":"priority",
 		"congenica_project": "9985",
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4768data.bed",
@@ -1437,5 +1425,3 @@ with open(username_file_path, "r") as username_file:
 with open(pw_file, "r") as email_password_file:
 	pw = email_password_file.readline().rstrip()
 
-# ================ TSO500 ===============================================================================
-# tso500_success_tarball = "0"
