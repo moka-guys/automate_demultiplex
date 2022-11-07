@@ -29,6 +29,11 @@ jobs:
           echo "dummytoken" > /home/runner/work/.dnanexus_auth_token
           echo "dummypw" > /home/runner/work/.amazon_email_pw
           echo "dummyuser" > /home/runner/work/.amazon_email_username
+          git clone https://github.com/moka-guys/seglh-naming.git
+          cd seglh-naming
+          git checkout f65c2c14fc90ff3a7373c157079626a9ec971a4a
+          cd ..
+          python seglh-naming/setup.py install
       - name: Lint with flake8
         run: |
           # stop the build if there are:
