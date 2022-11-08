@@ -1,17 +1,32 @@
 # coding=utf-8
-"""
-Demultiplex NGS Run Folders
+""" Demultiplex NGS Run Folders
 
-Runs bcl2fastq on newly completed NGS run folders in a specific directory. Sequencing is deemed complete by the
-presence of a file ("RTAComplete.txt"), created by the sequencer when sequencing is complete.
+The script performs demultiplexing, and also performs samplesheet validation using the seglh-naming library on runs
+that have not yet been demultiplexed to act as an early warning system for samplesheet errors.
 
-Carries out checks on the corresponding samplesheet in the samplesheets folder (should have name "RUN_samplesheet.csv",
-where "RUN" is the name of the run folder, and conform to naming convention specified in the seglh-naming library,
-contains expected data section headers, and contains allowed panel numbers and runtypes specified in the config file
+Firstly, runs a set of checks on all runfolders in a given directory to determine whether demultiplexing
+is required for that runfolder. The runfolder must meet the following requirements:
+ - bcl2fastq logfile "bcl2fastq2_output.log" absent (demultiplexing not yet performed). bcl2fastq stdout and stderr
+   streams are written to this file
+ - Sequencing complete (presence of "RTAComplete.txt" file created by sequencer when sequencing completed)
+ - bcl2fastq is installed
+ - Sampleseheet does not contain any errors that would cause demultiplexing to fail. Must exist, be correctly named, be
+   populated, contain minimum expected data headers, samplenames must only contain valid characters
 
-Before demultiplexing, the script checks for the absence of the log file "bcl2fastq2_output.log" in the run folder.
-bcl2fastq stdout and stderr streams are written to this file, which when present indicates that
-demultiplexing is in process or has already been performed.
+If the sequencer does not require an integrity check, it skips straight to run_demultiplexing()
+
+If the sequencer does require an integrity check the following requirements must be met for demultiplexing to occur:
+- Checksum file must be present
+- The run has not failed a previous integrity check performed by this script
+- The checksums match in the checksum file
+
+run_demultiplexing then carries out demultiplexing tasks:
+- Create a demultiplexing log file to prevent a simultaneous attempt on the next run of the script (bcl2fastq is slow
+  to create the logfile)
+- If the run is a tso run, creates a tso bcl2fastq log file but does not demultiplex
+- Demultiplexes all other runs that get this far
+
+If the script has processed any runfolders, it renames the logfile with the runfolder names
 """
 
 import os
@@ -56,7 +71,7 @@ class GetListOfRuns(object):
         self.testing = config.testing
 
     def loop_through_runs(self):
-        """Pass NGS run folders to an instance of ReadyToStartDemultiplexing() for processing.
+        """Pass NGS runfolders to instance of ReadyToStartDemultiplexing() for processing.
         After demultiplexing is performed (or skipped) for all runfolders, close script log file.
         """
         self.demultiplex.logger("Automate demultiplex release {}: Demultiplex.py started on "
@@ -83,12 +98,8 @@ class GetListOfRuns(object):
         self.script_logfile.close()  # Close script log file when all processing complete
 
     def rename_demultiplex_logfile(self):
-        """Rename the logfile using runfolder names. Allows easy identification of processed runs in logfile name, and
-        differentiates log from others uplaoded to DNAnexus
-
-        Create string of all runfolders demultiplexed in the cycle, ending with '_demultiplex_script_log.txt'
-        Take current script logfile name, remove .txt and append processed_run_string
-        Rename log file with this new name
+        """Rename the logfile using demultiplexed runfolder names. Allows easy identification of processed runs
+        in logfile name, and differentiates log from others uploaded to DNAnexus
         """
         processed_run_string = "_{}_demultiplex_script_log.txt".format("_".join(self.demultiplex.processed_runfolders))
         new_scriptlog_name = "{}{}".format(os.path.splitext(self.logfile_name)[0], processed_run_string)
@@ -100,34 +111,42 @@ class ReadyToStartDemultiplexing(object):
     valid samplesheet is present.
 
     Arguments:
-        now
-            Timestamp for log file name, assigned to self.now (str).
+        now (str)
+            Timestamp for log file name, assigned to self.now
 
     Methods:
-        setup_demultiplexing(runfolder)
-            Carries out per-runfolder pre-demultiplexing tasks.
-        bcl2fastq_log()
+        check_demultiplexing_required(runfolder)
+            Carries out per-runfolder pre-demultiplexing tasks to determine whether demultiplexing required.
+        run_demultiplexing()
+            Call demultiplexing functions
+        bcl2fastq_log_present()
             Check presence of demultiplex logfile
-        valid_samplesheet()
+        validate_samplesheet()
             Check samplesheet is present and naming and contents are valid. Returns error string and boolean
-        has_run_finished()
+        sequencing_complete()
             Check if sequencing run has completed.
-        disallowed_ss_errs()
-            Check for specific errors that would case bcl2fastq to fail and whose presence should stop demultipelxing
         bcl2fastq_installed()
             Return true if bcl2fastq installed. Raise exception if bcl2fastq is not installed.
-        sequencer_requiring_integritycheck()
+        disallowed_ss_errs()
+            Check for specific errors that would case bcl2fastq to fail and whose presence should stop demultipelxing
+        sequencer_requires_integritycheck()
             Determines whether the run requires integrity checking (not possible on all sequencers).
         checksum_file_present()
             Checks if checksums generated for the run (i.e. integrity checking scripts have completed for the run).
         prior_integritycheck_failed()
             Check if run previously failed integrity check (needs manual intervention before further processing).
         checksums_match()
-            Checks whether checksums match in checksum file.
+            Checks whether checksums in the checksum file match
+            i.e. the runfolder copied to workstation has not been corrupted by the transfer.
+        send_integritycheckfail_email()
+            Sends email denoting checksums check has failed
         send_email()
-            Send progress messages via email.
-        tso500_run()
-            Determine whether runfolder is from a TSO500 run.
+            Send email message
+        create_demux_log()
+            Create file to prevent demultiplexing starting again.
+        create_tso_bcl2fastqlog(self):
+            If runfolder is from TSO500 run, create a bcl2fastq.log file and write to this (TSO500 runs do not
+            require demultiplexing)
         run_bcl2fastq()
             Run bcl2fastq with runfolder as input and check success.
         logger(message, tool)
@@ -177,14 +196,8 @@ class ReadyToStartDemultiplexing(object):
         self.sequencer_checksum = ""
         self.workstation_checksum = ""
 
-
-    def setup_demultiplexing(self, runfolder):
-        """ Carries out per-runfolder pre-demultiplexing tasks.
-
-         Check bcl2fastq installed, run integrity check if required, carry out samplesheet check, check if run is tso500,
-        run bcl2fastq, check logfile to determine whether demultiplexing successful, mark runfolder as processed
-
-
+    def check_demultiplexing_required(self, runfolder):
+        """ Carries out per-runfolder pre-demultiplexing tasks to determine whether demultiplexing required
         :param runfolder: Runfolder name
         """
         # Capture runfolder and path
@@ -192,45 +205,42 @@ class ReadyToStartDemultiplexing(object):
         self.runfolderpath = "{}{}".format(self.runfolders, self.runfolder)
         self.checksum_file_path = os.path.join(self.runfolderpath, self.checksum_file)
         self.demultiplex_log = "{}/{}/{}".format(self.runfolders, self.runfolder, self.demultiplexed)
+        self.samplesheet = "{}_SampleSheet.csv".format(self.runfolder)
+        self.samplesheet_path = os.path.join(self.ss_dir, self.samplesheet)
 
         # Write to log file, recording automate_demultiplex repo version
         self.logger("\nAutomate_demultiplexing release: {}\n-----------------{}-----------------\nAssessing......... "
                     "{}".format(git_tag.git_tag(), str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())),
                                 self.runfolderpath), "demultiplex_info")
 
-        if not self.bcl2fastq_log(): # If bcl2fastq logfile not present, perform samplesheet checks
-            return True
-        else:
-            self.logger("Run has not yet been demultiplexed", "demultiplex_info")
-            self.samplesheet = "{}_SampleSheet.csv".format(self.runfolder)
-            self.samplesheet_path = os.path.join(self.ss_dir, self.samplesheet)
-            self.valid_samplesheet()  # Does not stop the scripts at this point if there is an error
-            # If sequencing complete,and no disallowed samplesheet errors, setup demultiplexing
-            if self.has_run_finished():
-                # If bcl2fastq installed and no disallowed samplesheet errors
+        if not self.bcl2fastq_log_present():
+            self.validate_samplesheet()  # Early warning checks
+            if self.sequencing_complete():
                 if self.bcl2fastq_installed() and not self.disallowed_ss_errs():
-                    if self.sequencer_requiring_integritycheck() and self.checksum_file_present():
+                    if not self.sequencer_requiring_integritycheck():
+                        self.run_demultiplexing()
+                    if self.checksum_file_present():
                         if not self.prior_integritycheck_failed():
-                            # If checksums don't match, send failure email and stop processing
-                            if not self.checksums_match():
-                                self.send_icfail_email()
+                            if self.checksums_match():
+                                self.run_demultiplexing()
                             else:
+                                self.send_integritycheckfail_email()
 
-                                # Create file to prevent demultiplexing starting again.  cl2fastq2 v2.20 doesn't
-                                # produce stdout for a while after starting so create file here and append stdout later
-                                open(self.demultiplex_log, 'w').close()  # Close file immediately
+    def run_demultiplexing(self):
+        """Call demultiplexing functions
+        TSO runs don't require demultiplexing. Create bcl2fastq log so scripts skip over these runs in future.
+        """
+        # Prevent simultaneous demultiplex attempt on next run of script (bcl2fastq is slow to create logfile)
+        self.create_demux_log()
 
-                                # TSO500 runs dont require demultiplexing (create bcl2fastqlog)
-                                if SamplesheetCheck(self.samplesheet_path).tso:
-                                    self.create_tso_bcl2fastqlog()
-                                else:  # Run demultiplexing
-                                    self.run_bcl2fastq()
+        if SamplesheetCheck(self.samplesheet_path).tso:
+            self.create_tso_bcl2fastqlog()
+        else:
+            self.run_bcl2fastq()
+        # Add runfolder name to processed runfolder list. Used to name script log file at end of
+        self.processed_runfolders.append(self.runfolder)
 
-                                # Add runfolder name to self.processed_runfolders. Runfolder names in this list are appended
-                                # To the script log file at the end of the script cycle.
-                                self.processed_runfolders.append(self.runfolder)
-
-    def bcl2fastq_log(self):
+    def bcl2fastq_log_present(self):
         """Check presence of demultiplex logfile
         ("bcl2fastq2_output.log", or "demultiplexlog.txt" for backwards compatability)
         """
@@ -249,7 +259,7 @@ class ReadyToStartDemultiplexing(object):
             self.logger("Demultiplexing not yet completed - no demultiplex log found @ {}/{} "
                         "\n--- CONTINUE ---".format(self.runfolderpath, self.demultiplexed_oldname), "demultiplex_info")
 
-    def valid_samplesheet(self):
+    def validate_samplesheet(self):
         """ Check samplesheet is present and naming and contents are valid. Returns error string and boolean.
         """
         ss = SamplesheetCheck(self.samplesheet_path)
@@ -263,7 +273,7 @@ class ReadyToStartDemultiplexing(object):
             success = True
         return ss.errors, success
 
-    def has_run_finished(self):
+    def sequencing_complete(self):
         """Check if sequencing has completed for the current runfolder - presence of "RTAComplete.txt".
         """
         if os.path.isfile("{}/{}".format(self.runfolderpath, self.run_complete)):  # Is RTAcomplete.txt present
@@ -272,29 +282,6 @@ class ReadyToStartDemultiplexing(object):
             return True
         else:
             self.logger("Run not yet complete \n--- STOP ---\n", "demultiplex_info")
-
-    def disallowed_ss_errs(self):
-        """ Check for specific errors that would case bcl2fastq to fail and whose presence should stop demultipelxing
-        """
-        disallowed_errs = ["sspresent_err", "ssempty_err", "headers_err", "validchars_err"]
-        errors, success = self.valid_samplesheet()
-        if not success:
-            if any(errors[key] for key in disallowed_errs):
-                err_str = ", ".join([item for sublist in errors.values() for item in sublist])
-                self.logger("Demultiplexing halted due to samplesheet errors {}: "
-                            "{}".format(self.samplesheet, err_str), "demultiplex_fail_samplesheet")
-        else:
-            return True
-
-    def create_tso_bcl2fastqlog(self):
-        """If runfolder is from TSO500 run, create a bcl2fastq.log file and write to this (TSO500 runs do not
-        require demultiplexing)
-        """
-        self.logger("{} is a {}".format(self.runfolder, self.tso500_bcl2fastq_msg),
-                    "demultiplex_success")
-        with open(self.demultiplex_log, 'w') as bcl2fastq2_log:
-            bcl2fastq2_log.write("\n{}".format(self.tso500_bcl2fastq_msg))
-            self.logger("Bcl2fastq.log file created for TSO run: {}".format(self.runfolder), "demultiplex_info")
 
     def bcl2fastq_installed(self):
         """Call path to bcl2fastq2 using subprocess, capture streams, raise exception if bcl2fastq not installed.
@@ -311,24 +298,20 @@ class ReadyToStartDemultiplexing(object):
             self.logger("BCL2FastQ installation test passed.", "demultiplex_success")
             return True
 
-    def send_icfail_email(self):
-        """Calls functions (pre-checks) to determine whether checksums can be checked for the run (integrity checking)
-
-        Ensures runfolder copied to workstation hasn't been corrupted by the transfer.
-        Checksum generation and initial integrity checks are carried out by the sequencer_checksum.py script running
-        on the sequencer, and written to a checksum file for access by this script.
-
-        NB. this integrity check is not possible on all sequencers (ie miseq).
+    def disallowed_ss_errs(self):
+        """ Check for specific errors that would case bcl2fastq to fail and whose presence should stop demultipelxing
         """
-        self.email_subject = "MOKA ALERT: INTEGRITY CHECK FAILED"
-        self.email_priority = 1
-        self.email_message = "run:\t{}\nPlease follow the protocol "\
-                             "for when integrity checks fail".format(self.runfolder)
-        self.send_email()
-        self.logger("Integrity check fail. checksums do not match for ""{} see "
-                    "{}".format(self.runfolder, self.checksum_file_path), "demultiplex_fail")
+        disallowed_errs = ["sspresent_err", "ssname_err", "ssempty_err", "headers_err", "validchars_err"]
+        errors, success = self.validate_samplesheet()
+        if success:
+            return True
+        else:
+            if any(errors[key] for key in disallowed_errs):
+                err_str = ", ".join([item for sublist in errors.values() for item in sublist])
+                self.logger("Demultiplexing halted due to samplesheet errors {}: "
+                            "{}".format(self.samplesheet, err_str), "demultiplex_fail_samplesheet")
 
-    def sequencer_requiring_integritycheck(self):
+    def sequencer_requires_integritycheck(self):
         """Check whether checksum check needed. Only runs from sequencers that can have checksums generated require
         this - not all sequencers can have checksums generated by the integrity check script.
         """
@@ -349,10 +332,9 @@ class ReadyToStartDemultiplexing(object):
 
     def prior_integritycheck_failed(self):
         """Check if runfolder has failed a previous integrity check by this script
-        Denoted by presence of self.checksum_complete_flag string in checksum file
-        This flag prevents checksums_match from performing further integrity checks
-        (This string is added when self.checksums_match() is called and self.checksum_match
-        is not present in the first line of the file)
+        Denoted by presence of self.checksum_complete_flag string in checksum file (flag added when
+        self.checksums_match() called and self.checksum_match is absent in the first line of the file - prevents
+        checksums_match performing further integrity checks
         """
         with open(self.checksum_file_path, 'r') as checksum_file:
             checksums = checksum_file.readlines()  # read checksum file into list
@@ -362,9 +344,15 @@ class ReadyToStartDemultiplexing(object):
             return True
 
     def checksums_match(self):
-        """Checks whether checksums match in checksum file.
-        File should contain: Pass/fail statement in Line 1, checksums for both copies of run folder on lines 2 and 3
-        Function adds line to file to denote integrity check has been assessed - stops repetition if check fails
+        """Checks whether checksums in the checksum file match - i.e. the runfolder copied to workstation has not been
+        corrupted by the transfer.
+        Checksum generation and initial integrity checks are carried out by the sequencer_checksum.py script running on
+        the sequencer, and written to a checksum file for access by this script. Checksum generation and integrity
+        check is not possible on all sequencers (i.e. miseq).
+
+        Checksum file should contain:
+            Pass/fail statement in Line 1, checksums for both copies of run folder on lines 2 and 3
+            Function adds line to file to denote integrity check has been assessed - stops repetition if check fails
         """
         self.logger("Data integrity checks starting...", "demultiplex_info")
 
@@ -379,8 +367,19 @@ class ReadyToStartDemultiplexing(object):
             self.logger("Integrity check of runfolder {} passed".format(self.runfolder), "demultiplex_success")
             return True  # checksums match
 
+    def send_integritycheckfail_email(self):
+        """Sends email denoting checksums check has failed
+        """
+        self.email_subject = "MOKA ALERT: INTEGRITY CHECK FAILED"
+        self.email_priority = 1
+        self.email_message = "run:\t{}\nPlease follow the protocol "\
+                             "for when integrity checks fail".format(self.runfolder)
+        self.send_email()
+        self.logger("Integrity check fail. checksums do not match for ""{} see "
+                    "{}".format(self.runfolder, self.checksum_file_path), "demultiplex_fail")
+
     def send_email(self):
-        """Send progress log messages via email to recipient (self.you) via SMTP.
+        """Send email to recipient (self.you) via SMTP
         """
         self.logfile("Sending an email. Recipient: {}. Subject: {}. "
                      "Body:\n{}".format(self.me, self.email_subject, self.email_message), "demultiplex_info")
@@ -403,6 +402,21 @@ class ReadyToStartDemultiplexing(object):
         except Exception:
             self.logger("Error when sending email. Email not sent.", "demultiplex_fail")
 
+    def create_demux_log(self):
+        """Create file to prevent demultiplexing starting again.
+        bl2fastq2 v2.20 doesn't produce stdout for a while after starting so create file here and append stdout later
+        """
+        open(self.demultiplex_log, 'w').close()
+
+    def create_tso_bcl2fastqlog(self):
+        """If runfolder is from TSO500 run, create a bcl2fastq.log file and write to this (TSO500 runs do not
+        require demultiplexing)
+        """
+        self.logger("{} is a {}".format(self.runfolder, self.tso500_bcl2fastq_msg), "demultiplex_success")
+        with open(self.demultiplex_log, 'w') as bcl2fastq2_log:
+            bcl2fastq2_log.write("\n{}".format(self.tso500_bcl2fastq_msg))
+            self.logger("Bcl2fastq.log file created for TSO run: {}".format(self.runfolder), "demultiplex_info")
+
     def run_bcl2fastq(self):
         """Runs bcl2fastq and checks if completed successfully.
         Create and run bcl2fastq shell command to run demultiplexing using runfolder as input
@@ -422,7 +436,7 @@ class ReadyToStartDemultiplexing(object):
         self.logger("Demultiplexing started for run {} using bcl2fastq command: "
                     "{}".format(self.runfolder, cmd), "demultiplex_info")
 
-        subprocess.call([cmd], shell=True) # Wait until subprocess completes
+        subprocess.call([cmd], shell=True)  # Wait until subprocess completes
 
         # Read last 10 lines of demultiplex logfile - details success or failure of bcl2fastq command
         bcl2fastq_log_tail = subprocess.check_output(["tail", "-n", "10", self.demultiplex_log])
