@@ -12,10 +12,19 @@ The following modules are core dependencies:
 * [decision_support_tool_inputs.py](decision_support_tool_inputs.py) - Print inputs required by decision support tool 
 upload applications on DNANexus
 * [samplesheet_validator.py](samplesheet_validator.py) - Validates naming and contents of samplesheets prior to 
-demultiplexing
+demultiplexing. Uses the [seglh-naming](https://github.com/moka-guys/seglh-naming) package
 * [adlogger.py](ad_logger.py) - Logging module, currently only used by 
 [upload_and_setoff_workflows.py](upload_and_setoff_workflows.py)
 * [git_tag.py](git_tag.py) - Retrieve git tag (script version) from the repository
+
+Please read further documentation in [docs/](docs/) to learn more about each script.
+
+## Seglh-naming installation
+
+The [seglh-naming](https://github.com/moka-guys/seglh-naming) package should be installed using the requirements.txt 
+file:
+
+`pip install -r requirements.txt`
 
 ## Logging
 
