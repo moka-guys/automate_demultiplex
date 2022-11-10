@@ -53,12 +53,11 @@ class GetListOfRuns(object):
         """self.runfolder_dir points to workstation runfolders location
         Its value here must be same as in ReadyToStartDemultiplexing()
         """
-        self.testing = config.testing
         self.runfolder_dir = config.runfolders
         self.runfolders = os.listdir(self.runfolder_dir)
         # Set script log file path and name for this hour's cron job (script log file).
         self.scriptlog = "{}{}.txt".format(config.demultiplex_logfiles,
-                                            str('{:%Y%m%d_%H%M%S}'.format(datetime.datetime.now())))
+                                           str('{:%Y%m%d_%H%M%S}'.format(datetime.datetime.now())))
         open(self.scriptlog, 'w').close()  # Create logfile
         # Create class instance for checking and running demultiplexing per runfolder
         self.runfolder_pattern = config.runfolder_pattern
@@ -140,6 +139,7 @@ class ReadyToStartDemultiplexing(object):
     """
 
     def __init__(self, scriptlog, runfolder_dir):
+        self.log_flags = config.demultiplex_log_flags
         self.sequencers_with_integritycheck = config.sequencers_with_integrity_check
         # Logfiles
         self.scriptlog = scriptlog
@@ -181,16 +181,6 @@ class ReadyToStartDemultiplexing(object):
 
         self.processed_runfolders = []
 
-        self.testing = config.testing
-
-        # Set success and failure messages
-        if self.testing:
-            self.log_flags = {'info': 'demultiplex_info', 'fail': 'demultiplex_fail',
-                              'success': 'demultiplex_success', 'ss_warning': 'samplesheet_warning'}
-        else:
-            self.log_flags = {'info': 'demultiplextest_info', 'fail': 'demultiplextest_fail',
-                              'success': 'demultiplextest_success', 'test_warning': 'testsamplesheet_warning'}
-            
     def check_demultiplexing_required(self, runfolder):
         """ Carries out per-runfolder pre-demultiplexing tasks to determine whether demultiplexing required
         :param runfolder: Runfolder name

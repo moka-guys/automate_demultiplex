@@ -61,6 +61,12 @@ bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 demultiplex_success_match = r".*Processing completed with 0 errors and 0 warnings.$"
 demultiplexing_log_file_TSO500_message = "TSO500 run. Does not need demultiplexing locally"
 
+if testing:
+	demultiplex_log_flags = {'info': 'demultiplex_info', 'fail': 'demultiplex_fail',
+							 'success': 'demultiplex_success', 'ss_warning': 'samplesheet_warning'}
+else:
+	self.demultiplex_log_flags = {'info': 'demultiplextest_info', 'fail': 'demultiplextest_fail',
+								  'success': 'demultiplextest_success', 'test_warning': 'testsamplesheet_warning'}
 
 # ================ UPLOAD AND SETOFF WORKFLOWS ===========================================================
 
