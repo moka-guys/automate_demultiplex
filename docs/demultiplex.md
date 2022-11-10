@@ -16,9 +16,14 @@ The following criteria must be met:
 and stderr streams are written to this file.
 2. Sequencing is complete (presence of `RTAComplete.txt` file created by the sequencer when sequencing is complete)
 3. bcl2fastq is installed on the workstation 
-4. Sampleseheet does not contain any errors that would cause demultiplexing to fail - checks are carried out by the
-[samplesheet_validator.py](samplesheet_validator.py). Samplesheet must exist, be correctly named, be populated, contain 
-minimum expected data headers, samplenames must only contain valid characters
+4. Samplesheet does not contain any errors that would cause demultiplexing to fail - checks are carried out by the
+[samplesheet_validator.py](samplesheet_validator.py) and the absence of error messages for specific tests is checked:
+   * Sample sheet is present
+   * Samplesheet name is valid (validates using the [seglh-naming](https://github.com/moka-guys/seglh-naming) library)
+   * Samplesheet is not empty
+   * Samplesheet contains the minimum expected `[Data]` section headers: `Sample_ID, Sample_Name, index`
+   * Sample name does not contain any illegal characters (in case this was not rectified after the early warning checks 
+   as this will cause bcl2fastq to fail)
 
 If a runfolder meets these initial criteria:
 
@@ -35,14 +40,14 @@ be called:
 * Create a demultiplexing log file to prevent a simultaneous attempt on the next run of the script (bcl2fastq is slow
   to create the logfile)
 * If the run is a tso run, creates a tso bcl2fastq log file but does not demultiplex 
-* Otherwise, demultiplexes all other runs that get this far using bcl2fastq2 (v2.20)
+* Otherwise, demultiplexes all other runs that get this far using `bcl2fastq2 (v2.20)`
 
 If the script has processed any runfolders, it renames the logfile with the runfolder names
 
 
 ## Configuration
 
-Settings are imported from [samplesheet_validator.py](../automate_demultiplex_config.py).
+Settings are imported from [automate_demultiplex_config.py](../automate_demultiplex_config.py).
 
 ## Logging
 
@@ -59,3 +64,14 @@ Logs from this script containing the follow strings will trigger alerts to the #
 * demultiplex_fail
 * smartsheet_fail
 * samplesheet_warning
+
+## Testin
+
+**N.B. Tests and test cases/files MUST be maintained and updated accordingly in conjunction with script development**
+
+The script has a full test suite ([test_samplesheet_validator.py](../test/test_samplesheet_validator.py), with test 
+files stored in [/test/test_files](../test/test_files)). These tests should be run before pushing any code to ensure all
+tests in the GitHub Actions workflow pass. Similarly, the following
+command should be run before pushing code to identify and rectify any style inconsistencies:
+
+`flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
