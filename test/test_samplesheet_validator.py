@@ -1,17 +1,10 @@
-import pytest
-from samplesheet_validator import SamplesheetCheck
-import argparse
-import os
-import re
-from collections import defaultdict
-import tempfile
-import shutil
-import logging
-import automate_demultiplex_config as config
+import pytest, argparse, os, re, tempfile, shutil, logging, string
 import adlogger #import ADLoggers, get_runfolder_log_config
+from samplesheet_validator import SamplesheetCheck
+from collections import defaultdict
+import automate_demultiplex_config as config
 from seglh_naming.sample import Sample
 from seglh_naming.samplesheet import Samplesheet
-import string
 
 
 @pytest.fixture

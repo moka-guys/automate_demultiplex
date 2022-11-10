@@ -45,20 +45,16 @@ runtype_list = ["NGS", "ADX", "ONC", "SNP", "PGT", "TSO", "LRPCR"]
 
 # Integrity check
 md5checksum_name = "md5checksum.txt" # File holding checksum results
-checksum_complete_flag = "Checksum result reported" # Checksum complete statement
-checksum_match = "Checksums match" # Statement to write when checksums match
+checksumcomp_complete_msg = "Checksum result reported" # Checksum complete statement
+checksum_match_msg = "Checksums match" # Statement to write when checksums match
 # Sequencers requiring md5 checksums from integrity check to be assessed
 sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 
-# Demultiplex
-demultiplex_test_folder = ["999999_M02353_0496_000000000-D8ICF", "999999_NB552085_0077_WESPIPECAN",
-						   "999999_A01229_0010_AHY5TWDICP"]
 # files for checking NGS runfolders before demultiplexing
-file_complete_run = "RTAComplete.txt"
+file_run_complete = "RTAComplete.txt"
 file_demultiplexing = "bcl2fastq2_output.log"
-file_demultiplexing_old = "demultiplexlog.txt"
 
-bcl2fastq = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq" # Path to bcl2fastq
+bcl2fastq_path = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq" # Path to bcl2fastq
 bcl2fastq_stats_filename = "Stats.json"
 bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 

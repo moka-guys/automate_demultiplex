@@ -5,18 +5,12 @@ Uses the seglh-naming library. And adds further lab-specific checks e.g. whether
 those in allowed list from the config file. Collects all errors in an errors list (ValidSamplesheet.errors)
 """
 
-import argparse
-import os
-import re
+import argparse, os, re, tempfile, shutil, logging, string
 from collections import defaultdict
-import tempfile
-import shutil
-import logging
 import automate_demultiplex_config as config
 import adlogger #import ADLoggers, get_runfolder_log_config
 from seglh_naming.sample import Sample
 from seglh_naming.samplesheet import Samplesheet
-import string
 
 
 def arg_parse():
