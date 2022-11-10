@@ -4,9 +4,9 @@
 import pytest, datetime, os, logging
 from demultiplex import GetListOfRuns, ReadyToStartDemultiplexing
 
-LOGGER = logging.getLogger(__name__)
-
-open('script_logfile.txt', 'w').close()
+scriptlog = 'script_logfile.txt'
+bcl2fastqlog = 'test_bcl2fastq2_output.log'
+bcl2fastqlog_path = os.path.join("{}/{}".format(os.getcwd(), bcl2fastqlog))
 
 
 @pytest.fixture
@@ -14,8 +14,6 @@ def base_path():
     return os.path.join(os.getcwd(), '/test/test_files/')
 
 def startdemultiplex_obj():
-    scriptlog = 'script_logfile.txt'
-    bcl2fastqlog = 'test_bcl2fastq2_output.log'
     for file in scriptlog, bcl2fastqlog:
         path = os.path.join(os.getcwd(), file)
         if os.path.isfile(path):
@@ -71,7 +69,7 @@ def getlistofruns_obj():
 # def test_send_integritycheckfail_email():
 #     pass
 
-
+#
 # DONE
 def test_send_email_success():
     sd = startdemultiplex_obj()
@@ -91,6 +89,7 @@ def test_send_email_fail():
 # DONE
 def test_create_bcl2fastqlog_pass():
     sd = startdemultiplex_obj()
+    sd.bcl2fastqlog_path = bcl2fastqlog_path
     sd.create_bcl2fastqlog()
     assert os.path.isfile(sd.bcl2fastqlog)
 
@@ -128,3 +127,11 @@ def test_logger_pass():
     assert sd.logger(message, tool)
     with open(sd.scriptlog) as f:
         assert expected_message in f.read()
+
+
+def teardown_function():
+    """Remove files created during tests
+    """
+    for file in scriptlog, bcl2fastqlog:
+        if os.path.isfile(file):
+            os.remove(file)
