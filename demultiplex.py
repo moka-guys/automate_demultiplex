@@ -144,7 +144,7 @@ class ReadyToStartDemultiplexing(object):
         # Logfiles
         self.scriptlog = scriptlog
         # Directories
-        self.runfolder_dir = runfolder_dir # Workstation runfolder location
+        self.runfolder_dir = runfolder_dir  # Workstation runfolder location
         self.ss_dir = config.samplesheets_dir
         # Checksum file
         self.checksumfile = config.md5checksum_name
@@ -258,7 +258,7 @@ class ReadyToStartDemultiplexing(object):
     def sequencing_complete(self):
         """Check if sequencing has completed for the current runfolder - presence of "RTAComplete.txt".
         """
-        if os.path.isfile("{}/{}".format(self.runfolderpath, self.run_complete)):  # Is RTAcomplete.txt present
+        if os.path.isfile("{}/{}".format(self.runfolderpath, self.run_complete)):   # Is RTAcomplete.txt present
             self.logger("Run finished  -  RTAcomplete.txt found @ "
                         "{}/{}\n".format(self.runfolderpath, self.run_complete), self.log_flags['info'])
             return True

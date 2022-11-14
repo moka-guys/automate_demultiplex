@@ -1,7 +1,7 @@
 """
 
 """
-import pytest, datetime, os, logging
+import pytest, datetime, os
 from demultiplex import GetListOfRuns, ReadyToStartDemultiplexing
 
 scriptlog = 'script_logfile.txt'
@@ -13,6 +13,7 @@ bcl2fastqlog_path = os.path.join("{}/{}".format(os.getcwd(), bcl2fastqlog))
 def base_path():
     return os.path.join(os.getcwd(), '/test/test_files/')
 
+
 def startdemultiplex_obj():
     for file in scriptlog, bcl2fastqlog:
         path = os.path.join(os.getcwd(), file)
@@ -21,13 +22,14 @@ def startdemultiplex_obj():
     sd = ReadyToStartDemultiplexing(str('{:%Y%m%d_%H%M%S}'.format(datetime.datetime.now())), 'script_logfile.txt')
     sd.bcl2fastqlog = bcl2fastqlog
     sd.scriptlog = scriptlog
-    sd.runfolder=''
-    sd.runfolder_dir=os.getcwd()
+    sd.runfolder = ''
+    sd.runfolder_dir = os.getcwd()
     sd.email_subject = "string"
-    sd.email_message="Please ignore this email. This is a demultiplex.py unit test"
+    sd.email_message = "Please ignore this email. This is a demultiplex.py unit test"
     sd.log_flags = {'info': 'demultiplextest_info', 'fail': 'demultiplextest_fail',
-                      'success': 'demultiplextest_success', 'test_warning': 'testsamplesheet_warning'}
+                    'success': 'demultiplextest_success', 'test_warning': 'testsamplesheet_warning'}
     return sd
+
 
 def getlistofruns_obj():
     glr = GetListOfRuns()
@@ -69,13 +71,14 @@ def getlistofruns_obj():
 # def test_send_integritycheckfail_email():
 #     pass
 
-#
+
 # DONE
 def test_send_email_success():
     sd = startdemultiplex_obj()
     sd.email_subject = "DEMULTIPLEX TEST PASS - PLEASE IGNORE"
     sd.email_message = "Please ignore this email. This is a demultiplex.py unit test"
     assert sd.send_email()
+
 
 # DONE
 def test_send_email_fail():
@@ -86,12 +89,14 @@ def test_send_email_fail():
     sd.email_subject = "DEMULTIPLEX TEST FAIL - PLEASE IGNORE"
     assert not sd.send_email()
 
+
 # DONE
 def test_create_bcl2fastqlog_pass():
     sd = startdemultiplex_obj()
     sd.bcl2fastqlog_path = bcl2fastqlog_path
     sd.create_bcl2fastqlog()
     assert os.path.isfile(sd.bcl2fastqlog)
+
 
 # DONE
 def test_create_tso_bcl2fastqlog_pass():
@@ -100,9 +105,10 @@ def test_create_tso_bcl2fastqlog_pass():
     sd = startdemultiplex_obj()
     sd.bcl2fastqlog_path = bcl2fastqlog_path
     sd.create_tso_bcl2fastqlog()
-    assert os.path.isfile(bcl2fastqlog_path) # file contents
+    assert os.path.isfile(bcl2fastqlog_path)
     with open(bcl2fastqlog_path) as f:
         assert expected_message in f.read()
+
 
 # DONE
 def test_create_tso_bcl2fastqlog_fail():
@@ -117,6 +123,7 @@ def test_create_tso_bcl2fastqlog_fail():
 
 # def test_run_bcl2fastq_fail():
 #         pass
+
 
 def test_logger_pass():
     """Check expected strings written to logfile. This means writing to syslog was also successful

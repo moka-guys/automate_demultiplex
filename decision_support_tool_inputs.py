@@ -86,7 +86,7 @@ class DecisionTooler(object):
         jobid = None
         bamjobid = None
         for stage in json_ob["stages"]:
-            if  stage["id"] == config.mokapipe_filter_vcf_with_bedfile_stage:
+            if stage["id"] == config.mokapipe_filter_vcf_with_bedfile_stage:
                 jobid = stage["execution"]["id"]
             elif stage["id"] == config.mokapipe_gatk_human_exome_stage:
                 bamjobid = stage["execution"]["id"]
@@ -104,7 +104,7 @@ class DecisionTooler(object):
         cmd = (
             "source {}; dx describe"
             " {}:{} --json --auth-token {}"
-        ).format(config.sdk_source_cmd,project, analysis_id, config.Nexus_API_Key)
+        ).format(config.sdk_source_cmd, project, analysis_id, config.Nexus_API_Key)
         # jobid comes from the sentieon sub-job, which takes a few moments to initiate after
         # calling the sentieon app. Running this script immediately after running the sentieon
         # workflow raises an IndexError. We retry in the while loop until the jobid is available.
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     args = get_arguments()
     ajson = json.loads(
         subprocess.check_output(
-            ["dx", "describe", args.analysis_id, "--auth", config.Nexus_API_Key, "--json",]
+            ["dx", "describe", args.analysis_id, "--auth", config.Nexus_API_Key, "--json"]
         )
     )
 

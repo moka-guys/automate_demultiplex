@@ -8,6 +8,7 @@ import os
 
 import automate_demultiplex_config as config
 
+
 def get_runfolder_log_config(runfolder, timestamp):
     """Return an ADLogger config for a runfolder.
 
@@ -48,6 +49,7 @@ def get_runfolder_log_config(runfolder, timestamp):
 
     return log_config
 
+
 class DataOnlyLogger:
     """Carry name and filepath for logfiles that are not written to.
 
@@ -58,6 +60,7 @@ class DataOnlyLogger:
     def __init__(self, name, filepath):
         self.name = name
         self.filepath = filepath
+
 
 class ADLoggers():
     """Access all logfiles uploaded to DNANexus as part of automate demultiplex scripts.
@@ -87,7 +90,7 @@ class ADLoggers():
             "demultiplex", demultiplex, file_only=True
         )
 
-                # Container for all logfiles
+        # Container for all logfiles
         self.all = [
             self.script,
             self.project,
@@ -108,12 +111,11 @@ class ADLoggers():
         for handler in upload_agent_handlers:
             handler.close()
             self.upload_agent.removeHandler(handler)
-        
+
         logging.shutdown()
 
-
     def list_logfiles(self):
-        return [ logger.filepath for logger in self.all ]
+        return [logger.filepath for logger in self.all]
 
     def _get_file_handler(self, filepath):
         fh = logging.FileHandler(filepath, mode='a', delay=True)
@@ -122,14 +124,14 @@ class ADLoggers():
         return fh
 
     def _get_syslog_handler(self):
-        slh = logging.handlers.SysLogHandler(address = '/dev/log')
+        slh = logging.handlers.SysLogHandler(address='/dev/log')
         slh.setLevel(logging.DEBUG)
         slh.setFormatter(self.formatter)
         return slh
 
     def _get_ad_logger(self, name, filepath, file_only=False):
         """Returns a python logging object for automate demultiplex scripts.
-        
+
         Args:
             name(str): Logger name
             filepath(str): Logfile path
