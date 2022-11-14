@@ -5,10 +5,9 @@ Uses the seglh-naming library. And adds further lab-specific checks e.g. whether
 those in allowed list from the config file. Collects all errors in an errors list (ValidSamplesheet.errors)
 """
 
-import argparse, os, re, tempfile, shutil, logging, string
+import argparse, os, re
 from collections import defaultdict
 import automate_demultiplex_config as config
-import adlogger #import ADLoggers, get_runfolder_log_config
 from seglh_naming.sample import Sample
 from seglh_naming.samplesheet import Samplesheet
 
@@ -20,16 +19,15 @@ def arg_parse():
     created argument parser.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--samplesheet', type=str, required=True, dest = 'samplesheet', help="samplesheet")
-    parser.add_argument('-t', '--type', type=str, required=True, dest = 'type',
+    parser.add_argument('-s', '--samplesheet', type=str, required=True, dest='samplesheet', help="samplesheet")
+    parser.add_argument('-t', '--type', type=str, required=True, dest='type',
                         help="script mode type (runfolder, or ss_upload")
     args = parser.parse_args()
     return args
 
 
 class SamplesheetCheck(object):
-    """
-    Runs the checks. Called by webapp for uploaded samplesheets (uses name of file being uploaded),
+    """ Runs the checks. Called by webapp for uploaded samplesheets (uses name of file being uploaded),
     and called for runs not yet demultiplexed (uses path of expected samplesheet from demultiplex script)
 
     Methods:
@@ -167,7 +165,7 @@ class SamplesheetCheck(object):
     def comp_samplenameid(self):
         """ Check whether names match between Sample_ID and Sample_Name in data section of samplesheet
         """
-        differences =", ".join(map(str, (list(set(self.samples["Sample_ID"]) - set(self.samples["Sample_Name"])))))
+        differences = ", ".join(map(str, (list(set(self.samples["Sample_ID"]) - set(self.samples["Sample_Name"])))))
         if differences:
             self.errors["samplenameid_err"].append("The following Sample IDs do not match the "
                                                    "corresponding Sample Name: ({})".format(differences))
@@ -204,7 +202,7 @@ class SamplesheetCheck(object):
         """
         runtype = re.match("^[A-Z]*", sample_obj.libraryprep)  # extract first group of capitalised characters
         if runtype.group(0) not in config.runtype_list:
-             self.errors["runtypes_err"].append("Runtype not in allowed list ({}, {})".format(sample, key))
+            self.errors["runtypes_err"].append("Runtype not in allowed list ({}, {})".format(sample, key))
 
     def check_tso(self):
         """ Returns True if TSO sample
