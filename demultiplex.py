@@ -32,8 +32,8 @@ If the script has processed any runfolders, it renames the logfile with the runf
 import os, subprocess, datetime, smtplib, re
 from email.message import Message
 import automate_demultiplex_config as config  # import config file
-import git_tag as git_tag  # import function which reads the git tag
-from samplesheet_validator import SamplesheetCheck
+from git_tag.git_tag import git_tag  # import function which reads the git tag
+from samplesheet_validator.samplesheet_validator import SamplesheetCheck
 
 
 class GetListOfRuns(object):
@@ -173,6 +173,11 @@ class ReadyToStartDemultiplexing(object):
         self.email_priority = 1
         self.email_subject = ""
         self.email_message = ""
+        # Lists for samplesheet check
+        self.sequencerid_list = config.sequencer_ids
+        self.panel_list = config.panel_list
+        self.runtype_list = config.runtype_list
+        self.tso500panel_list = config.tso500_panel_list
         # Runfolder
         self.runfolder = ""
         self.runfolderpath = ""
@@ -221,8 +226,9 @@ class ReadyToStartDemultiplexing(object):
         """
         # Prevent simultaneous demultiplex attempt on next run of script (bcl2fastq is slow to create logfile)
         self.create_bcl2fastqlog()
-
-        if SamplesheetCheck(self.samplesheet_path).tso:
+        ss = SamplesheetCheck(self.samplesheet_path, self.sequencerid_list, self.panel_list,
+                              self.runtype_list, self.tso500panel_list)
+        if ss.tso:
             self.create_tso_bcl2fastqlog()
         else:
             self.run_bcl2fastq()
@@ -244,7 +250,8 @@ class ReadyToStartDemultiplexing(object):
     def validate_samplesheet(self):
         """ Check samplesheet is present and naming and contents are valid. Returns error string and boolean.
         """
-        ss = SamplesheetCheck(self.samplesheet_path)
+        ss = SamplesheetCheck(self.samplesheet_path, self.sequencerid_list, self.panel_list,
+                              self.runtype_list, self.tso500panel_list)
         err_str = ", ".join([item for sublist in ss.errors.values() for item in sublist])
         if err_str:
             self.logger("Samplesheet checks failed {}: "
