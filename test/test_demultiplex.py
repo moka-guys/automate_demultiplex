@@ -73,21 +73,21 @@ def getlistofruns_obj():
 
 
 # DONE
-def test_send_email_success():
-    sd = startdemultiplex_obj()
-    sd.email_subject = "DEMULTIPLEX TEST PASS - PLEASE IGNORE"
-    sd.email_message = "Please ignore this email. This is a demultiplex.py unit test"
-    assert sd.send_email()
-
-
-# DONE
-def test_send_email_fail():
-    """Test email sending failure - incorrect credentials provided
-    """
-    sd = startdemultiplex_obj()
-    sd.user = "abc"
-    sd.email_subject = "DEMULTIPLEX TEST FAIL - PLEASE IGNORE"
-    assert not sd.send_email()
+# def test_send_email_success():
+#     sd = startdemultiplex_obj()
+#     sd.email_subject = "DEMULTIPLEX TEST PASS - PLEASE IGNORE"
+#     sd.email_message = "Please ignore this email. This is a demultiplex.py unit test"
+#     assert sd.send_email()
+#
+#
+# # DONE
+# def test_send_email_fail():
+#     """Test email sending failure - incorrect credentials provided
+#     """
+#     sd = startdemultiplex_obj()
+#     sd.user = "abc"
+#     sd.email_subject = "DEMULTIPLEX TEST FAIL - PLEASE IGNORE"
+#     assert not sd.send_email()
 
 
 # DONE

@@ -2,12 +2,11 @@
 """ Script for checking sample sheet naming and contents.
 
 Uses the seglh-naming library. And adds further lab-specific checks e.g. whether sequencer IDs and runtypes match
-those in allowed list from the config file. Collects all errors in an errors list (ValidSamplesheet.errors)
+those in lists of allowed IDs. Collects all errors in an errors list (ValidSamplesheet.errors)
 """
 
 import argparse, os, re
 from collections import defaultdict
-import automate_demultiplex_config as config
 from seglh_naming.sample import Sample
 from seglh_naming.samplesheet import Samplesheet
 
@@ -19,9 +18,13 @@ def arg_parse():
     created argument parser.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--samplesheet', type=str, required=True, dest='samplesheet', help="samplesheet")
-    parser.add_argument('-t', '--type', type=str, required=True, dest='type',
-                        help="script mode type (runfolder, or ss_upload")
+    parser.add_argument('-s', '--samplesheet', type=str, required=True,
+                        dest='samplesheet', help="Samplesheet to validate")
+    parser.add_argument('-p', '', type=list, required=True, dest='panel_list',
+                        help="List of allowed panel numbers")
+    parser.add_argument('-r', '--runtype', type=list, required=True, dest='runtype_list')
+    parser.add_argument('-t', '--tso500panel_list', type=list, required=True, dest='tso500panel_list',
+                        help="List of tso500 panel numbers")
     args = parser.parse_args()
     return args
 
@@ -38,7 +41,7 @@ class SamplesheetCheck(object):
         check_ss_name()
             Validate samplesheet names using seglh-naming Samplesheet module
         check_sequencer_id()
-            Check element 2 of samplesheet (sequencer name matches list of allowed names in config.sequencer_ids)
+            Check element 2 of samplesheet (sequencer name matches list of allowed names in self.sequencerid_list)
         check_ss_contents()
             Check if samplesheet is empty (<10kbytes)
         get_data_section()
@@ -52,14 +55,14 @@ class SamplesheetCheck(object):
         check_sample()
             Validate sample names using seglh-naming Sample module.
         check_pannos()
-            Check sample names contain allowed pan numbers from config.panel_list number list
+            Check sample names contain allowed pan numbers from self.panel_list number list
         check_runtypes()
-            Check sample names contain allowed runtypes from config.runtype_list
+            Check sample names contain allowed runtypes from self.runtype_list
         check_tso()
             Returns True if TSO sample
     """
 
-    def __init__(self, ss_path):
+    def __init__(self, ss_path, sequencerid_list, panel_list, runtype_list, tso500panel_list):
         self.ss_path = ss_path
         self.ss_obj = ''
         self.pannumbers = []
@@ -69,6 +72,10 @@ class SamplesheetCheck(object):
         self.data_headers = []  # populate with headers from data section
         self.missing_headers = []  # populate with missing headers
         self.expected_data_headers = ["Sample_ID", "Sample_Name", "index"]
+        self.sequencerid_list = sequencerid_list
+        self.panel_list = panel_list
+        self.runtype_list = runtype_list
+        self.tso500panel_list = tso500panel_list
 
         self.ss_checks()
 
@@ -113,9 +120,9 @@ class SamplesheetCheck(object):
         return self.ss_obj
 
     def check_sequencer_id(self):
-        """ Check element 2 of samplesheet (sequencer name matches list of allowed names in config.sequencer_ids)
+        """ Check element 2 of samplesheet (sequencer name matches list of allowed names in self.sequencerid_list)
         """
-        if self.ss_obj.sequencerid not in config.sequencer_ids:
+        if self.ss_obj.sequencerid not in self.sequencerid_list:
             self.errors["sequencerid_err"].append("Sequencer id not in allowed list "
                                                   "({}, {})".format(self.ss_obj, self.ss_obj.sequencerid))
 
@@ -189,31 +196,31 @@ class SamplesheetCheck(object):
             self.errors["sample_err"].append("{}: {}".format(key, str(e)))
 
     def check_pannos(self, sample, key, sample_obj):
-        """ Check sample names contain allowed pan numbers from config.panel_list number list.
+        """ Check sample names contain allowed pan numbers from self.panel_list number list.
         """
-        # extract pan no (last element), check against config.panel list
+        # extract pan no (last element), check against self.panel_list list
         self.pannumbers.append(sample_obj.panelnumber)
-        if sample_obj.panelnumber not in config.panel_list:
+        if sample_obj.panelnumber not in self.panel_list:
             self.errors["panno_err"].append("Pan number not in allowed list: "
                                             "{} ({}: {})".format(sample_obj.panelnumber, key, sample))
 
     def check_runtypes(self, sample, key, sample_obj):
-        """ Check sample names contain allowed runtypes from config.runtype_list
+        """ Check sample names contain allowed runtypes from self.runtype_list
         """
         runtype = re.match("^[A-Z]*", sample_obj.libraryprep)  # extract first group of capitalised characters
-        if runtype.group(0) not in config.runtype_list:
+        if runtype.group(0) not in self.runtype_list:
             self.errors["runtypes_err"].append("Runtype not in allowed list ({}, {})".format(sample, key))
 
     def check_tso(self):
         """ Returns True if TSO sample
         """
-        if any(item in self.pannumbers for item in config.tso500_panel_list):
+        if any(item in self.pannumbers for item in self.tso500panel_list):
             self.tso = True
 
 
 def main():
     args = arg_parse()
-    ss = SamplesheetCheck(args.samplesheet)
+    ss = SamplesheetCheck(args.samplesheet, panel_list, runtype_list, tso500panel_list)
     for key in ss.errors.keys():
         print(', '.join(ss.errors[key]))
 
