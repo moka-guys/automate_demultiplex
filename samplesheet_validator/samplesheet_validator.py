@@ -67,10 +67,10 @@ class SamplesheetCheck(object):
         self.ss_obj = ''
         self.pannumbers = []
         self.tso = ''
-        self.samples = defaultdict(str)  # store sample IDs and sample names from samplesheet
-        self.errors = defaultdict(list)  # store errors
-        self.data_headers = []  # populate with headers from data section
-        self.missing_headers = []  # populate with missing headers
+        self.samples = defaultdict(str)  # Store sample IDs and sample names from samplesheet
+        self.errors = defaultdict(list)  # Store errors
+        self.data_headers = []  # Populate with headers from data section
+        self.missing_headers = []  # Populate with missing headers
         self.expected_data_headers = ["Sample_ID", "Sample_Name", "index"]
         self.sequencerid_list = sequencerid_list
         self.panel_list = panel_list
@@ -90,9 +90,9 @@ class SamplesheetCheck(object):
             if self.check_ss_contents():
                 self.get_data_section()
                 self.check_expected_headers()
-                # check sample id or sample name columns are not missing before doing sample validation
+                # Check sample id or sample name columns are not missing before doing sample validation
                 self.comp_samplenameid()
-                for key in self.samples.keys():  # run checks at the sample level
+                for key in self.samples.keys():  # Run checks at the sample level
                     for sample in self.samples[key]:
                         self.check_illegal_chars(sample, key)
                         sample_obj = self.check_sample(sample, key)
@@ -148,7 +148,7 @@ class SamplesheetCheck(object):
                     break
                 elif len(line.split(",")[0]) < 2:  # skip empty lines
                     pass
-                else:  # contains sample
+                else:  # Contains sample
                     try:
                         sample_details = line.split(",")
                         sample_id, sample_name = sample_details[0], sample_details[1]
@@ -198,7 +198,6 @@ class SamplesheetCheck(object):
     def check_pannos(self, sample, key, sample_obj):
         """ Check sample names contain allowed pan numbers from self.panel_list number list.
         """
-        # extract pan no (last element), check against self.panel_list list
         self.pannumbers.append(sample_obj.panelnumber)
         if sample_obj.panelnumber not in self.panel_list:
             self.errors["panno_err"].append("Pan number not in allowed list: "
@@ -207,7 +206,7 @@ class SamplesheetCheck(object):
     def check_runtypes(self, sample, key, sample_obj):
         """ Check sample names contain allowed runtypes from self.runtype_list
         """
-        runtype = re.match("^[A-Z]*", sample_obj.libraryprep)  # extract first group of capitalised characters
+        runtype = re.match("^[A-Z]*", sample_obj.libraryprep)  # Extract first group of capitalised characters
         if runtype.group(0) not in self.runtype_list:
             self.errors["runtypes_err"].append("Runtype not in allowed list ({}, {})".format(sample, key))
 
