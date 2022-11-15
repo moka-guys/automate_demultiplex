@@ -1,7 +1,8 @@
+""" demultiplex.py pytest unit tests
 """
-
-"""
-import pytest, datetime, os
+import pytest
+import datetime
+import os
 from demultiplex import GetListOfRuns, ReadyToStartDemultiplexing
 
 scriptlog = 'script_logfile.txt'
