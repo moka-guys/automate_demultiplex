@@ -147,6 +147,7 @@ class ADLoggers():
         logger.addHandler(self._get_syslog_handler())
         return logger
 
+
 if __name__ == '__main__':
     # Example ADLogger instance
     loggers = ADLoggers(None, None, None, None, None, script='test.log')

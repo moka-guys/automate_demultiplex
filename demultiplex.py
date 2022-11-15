@@ -29,10 +29,14 @@ run_demultiplexing then carries out demultiplexing tasks:
 If the script has processed any runfolders, it renames the logfile with the runfolder names
 """
 
-import os, subprocess, datetime, smtplib, re
+import os
+import subprocess
+import datetime
+import smtplib
+import re
 from email.message import Message
-import automate_demultiplex_config as config  # import config file
-from git_tag.git_tag import git_tag  # import function which reads the git tag
+import automate_demultiplex_config as config  # Import config file
+from git_tag.git_tag import git_tag  # Import function which reads the git tag
 from samplesheet_validator.samplesheet_validator import SamplesheetCheck
 
 
@@ -360,7 +364,7 @@ class ReadyToStartDemultiplexing(object):
         """Send email to recipient (self.you) via SMTP
         """
         self.logger("Sending an email. Recipient: {}. Subject: {}. "
-                     "Body:\n{}".format(self.me, self.email_subject, self.email_message), self.log_flags['info'])
+                    "Body:\n{}".format(self.me, self.email_subject, self.email_message), self.log_flags['info'])
 
         m = Message()  # Create email.Message() object
         m['X-Priority'] = str(self.email_priority)  # X-Priority = 1. Sets a high-priority e-mail.

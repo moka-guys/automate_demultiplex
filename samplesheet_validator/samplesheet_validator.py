@@ -5,7 +5,9 @@ Uses the seglh-naming library. And adds further lab-specific checks e.g. whether
 those in lists of allowed IDs. Collects all errors in an errors list (ValidSamplesheet.errors)
 """
 
-import argparse, os, re
+import argparse
+import os
+import re
 from collections import defaultdict
 from seglh_naming.sample import Sample
 from seglh_naming.samplesheet import Samplesheet
@@ -219,7 +221,7 @@ class SamplesheetCheck(object):
 
 def main():
     args = arg_parse()
-    ss = SamplesheetCheck(args.samplesheet, panel_list, runtype_list, tso500panel_list)
+    ss = SamplesheetCheck(args.samplesheet, args.panel_list, args.runtype_list, args.tso500panel_list)
     for key in ss.errors.keys():
         print(', '.join(ss.errors[key]))
 

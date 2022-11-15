@@ -221,7 +221,7 @@ mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_
 mokapipe_mokapicard_capturetype_stage = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.Capture_panel=%s"
 mokapipe_haplotype_padding_input = " -i{}.padding=".format(mokapipe_gatk_human_exome_stage)
 mokapipe_haplotype_vcf_output_format = " -i{}.output_format=both".format(mokapipe_gatk_human_exome_stage)
-mokapipe_filter_vcf_with_bedfile_bed_input = " -i.bedfile=".format(mokapipe_filter_vcf_with_bedfile_stage)
+mokapipe_filter_vcf_with_bedfile_bed_input = " -i{}.bedfile=".format(mokapipe_filter_vcf_with_bedfile_stage)
 mokapipe_vcf_output_name = "filtered_vcf"
 mokapipe_bam_output_name = "bam"
 mokapipe_happy_skip = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.skip=%s"
