@@ -1,2 +1,2 @@
-git+https://github.com/moka-guys/seglh_naming.git@v1.0.3
+git+https://github.com/moka-guys/seglh-naming.git@v1.0.3
 pytest==4.4.0

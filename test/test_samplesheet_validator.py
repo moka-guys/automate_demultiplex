@@ -63,8 +63,8 @@ def invalid_contents(base_path):
 
 def test_check_paths_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("sspresent_err")
+        assert "sspresent_err" not in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                       runtype_list, tso500_panel_list).errors
 
 def test_check_paths_invalid(invalid_paths):
     for samplesheet in invalid_paths:
@@ -75,20 +75,20 @@ def test_check_paths_invalid(invalid_paths):
 
 def test_check_ss_name_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("ssname_err")
+        assert "ssname_err" not in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                    runtype_list, tso500_panel_list).errors
 
 
 def test_check_ss_name_invalid(invalid_names):
     for samplesheet in invalid_names:
-        assert SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                runtype_list, tso500_panel_list).errors.has_key("ssname_err")
+        assert "ssname_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                runtype_list, tso500_panel_list).errors
 
 
 def test_check_sequencer_id_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("sequencerid_err")
+        assert not "sequencerid_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                         runtype_list, tso500_panel_list).errors
 
 
 def test_check_sequencer_id_invalid(invalid_contents):
@@ -100,8 +100,8 @@ def test_check_sequencer_id_invalid(invalid_contents):
 
 def test_check_ss_contents_populated(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("ssempty_err")
+        assert not "ssempty_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                     runtype_list, tso500_panel_list).errors
 
 
 def test_check_ss_contents_empty(empty_file):
@@ -113,8 +113,8 @@ def test_check_ss_contents_empty(empty_file):
 
 def test_expected_headers_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("headers_err")
+        assert not "headers_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                     runtype_list, tso500_panel_list).errors
 
 
 def test_expected_headers_invalid(invalid_contents):
@@ -126,8 +126,8 @@ def test_expected_headers_invalid(invalid_contents):
 
 def test_comp_samplenameid_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("samplenameid_err")
+        assert not "samplenameid_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                          runtype_list, tso500_panel_list).errors
 
 
 def test_comp_samplenameid_invalid(invalid_contents):
@@ -139,8 +139,8 @@ def test_comp_samplenameid_invalid(invalid_contents):
 
 def test_check_illegal_chars_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("validchars_err")
+        assert not "validchars_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                        runtype_list, tso500_panel_list).errors
 
 
 def check_illegal_chars_invalid(invalid_contents):
@@ -152,20 +152,20 @@ def check_illegal_chars_invalid(invalid_contents):
 
 def test_check_sample_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("sample_err")
+        assert not "sample_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                    runtype_list, tso500_panel_list).errors
 
 
 def test_check_sample_invalid(invalid_contents):
     for samplesheet in invalid_contents:
-        assert SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                runtype_list, tso500_panel_list).errors.has_key("sample_err")
+        assert "sample_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                runtype_list, tso500_panel_list).errors
 
 
 def test_check_pannos_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("panno_err")
+        assert not "panno_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                   runtype_list, tso500_panel_list).errors
 
 
 def test_check_pannos_invalid(invalid_contents):
@@ -177,8 +177,8 @@ def test_check_pannos_invalid(invalid_contents):
 
 def test_check_runtypes_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
-        assert not SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                    runtype_list, tso500_panel_list).errors.has_key("runtypes_err")
+        assert not "runtypes_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                      runtype_list, tso500_panel_list).errors
 
 
 def test_check_runtypes_invalid(invalid_contents):
@@ -203,5 +203,5 @@ def test_multiple_errors(invalid_contents):
 
             assert any(msg in s for s in flatlist)
 
-        assert SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
-                                runtype_list, tso500_panel_list).errors.has_key("sample_err")
+        assert "sample_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
+                                                runtype_list, tso500_panel_list).errors
