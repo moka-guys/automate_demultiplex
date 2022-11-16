@@ -1,11 +1,10 @@
-"""adlogger.py
-
-Automate demultiplex logging.
+# coding=utf-8
+""" Automate demultiplex logging.
 """
 import logging
 import logging.handlers
 import os
-
+import sys
 import automate_demultiplex_config as config
 
 
@@ -32,7 +31,8 @@ def get_runfolder_log_config(runfolder, timestamp):
     # Configuration for ADLoggers.
     # Dictionary where keys are ADLoggers.__init__ arguments and values are logfile paths.
     log_config = {
-        "script": os.path.join(config.upload_and_setoff_workflow_logfile, timestamp + "_upload_and_setoff_workflow.log"),
+        "script": os.path.join(config.upload_and_setoff_workflow_logfile,
+                               timestamp + "_upload_and_setoff_workflow.log"),
         "project": os.path.join(
             config.DNA_Nexus_project_creation_logfolder + runfolder.runfolder_name + ".sh"
         ),
@@ -52,7 +52,6 @@ def get_runfolder_log_config(runfolder, timestamp):
 
 class DataOnlyLogger:
     """Carry name and filepath for logfiles that are not written to.
-
     Args:
         name(str): Logfile shorthand name
         filepath(str): Logfile filepath
@@ -62,7 +61,7 @@ class DataOnlyLogger:
         self.filepath = filepath
 
 
-class ADLoggers():
+class ADLoggers(object):
     """Access all logfiles uploaded to DNANexus as part of automate demultiplex scripts.
 
     Args:

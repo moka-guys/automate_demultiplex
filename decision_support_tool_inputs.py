@@ -10,9 +10,7 @@ import json
 import re
 from collections import namedtuple
 import argparse
-
-# import config file
-import automate_demultiplex_config as config
+import automate_demultiplex_config as config  # Import config file
 from upload_and_setoff_workflows import RunfolderProcessor
 
 
