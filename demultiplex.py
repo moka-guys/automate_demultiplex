@@ -35,9 +35,9 @@ import datetime
 import smtplib
 import re
 from email.message import Message
-import automate_demultiplex_config as config  # Import config file
 from git_tag.git_tag import git_tag  # Import function which reads the git tag
 from samplesheet_validator.samplesheet_validator import SamplesheetCheck
+import automate_demultiplex_config as config  # Import config file
 
 
 class GetListOfRuns(object):
@@ -74,7 +74,7 @@ class GetListOfRuns(object):
         After demultiplexing is performed (or skipped) for all runfolders, close script log file.
         """
         self.demultiplex.logger("Automate demultiplex release {}: Demultiplex.py started on "
-                                "workstation.".format(git_tag.git_tag()), "demultiplex_started")
+                                "workstation.".format(git_tag), "demultiplex_started")
 
         for folder in self.runfolders:  # Pass runfolders to demultiplex.demultiplex_checks()
             if folder not in self.ignore_dirs and os.path.isdir("{}/{}".format(self.runfolder_dir, folder)) \
@@ -86,7 +86,7 @@ class GetListOfRuns(object):
         self.num_processed_runfolders = len(self.demultiplex.processed_runfolders)
 
         self.demultiplex.logger("Automate demultiplex release {}: Demultiplex.py complete. {} runfolder(s) processed."
-                                "".format(git_tag.git_tag(), str(self.num_processed_runfolders)),
+                                "".format(git_tag, str(self.num_processed_runfolders)),
                                 "demultiplex_complete")
 
         if self.num_processed_runfolders > 0:  # If runfolders processed, rename logfile with runfolder names
@@ -203,7 +203,7 @@ class ReadyToStartDemultiplexing(object):
         self.samplesheet = "{}_SampleSheet.csv".format(self.runfolder)
         # Write to log file, recording automate_demultiplex repo version
         self.logger("\nAutomate_demultiplexing release: {}\n-----------------{}-----------------\nAssessing......... "
-                    "{}".format(git_tag.git_tag(), str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())),
+                    "{}".format(git_tag, str('{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())),
                                 self.runfolderpath), self.log_flags['info'])
 
         if not self.bcl2fastqlog_present():
@@ -320,7 +320,7 @@ class ReadyToStartDemultiplexing(object):
             self.logger("Checksums file present", self.log_flags['info'])
             return True
 
-        else:  # integrity check not been performed
+        else:  # Integrity check not been performed
             self.logger("Integrity check not yet performed on sequencer. Stopping...", self.log_flags['info'])
 
     def prior_integritycheck_failed(self):
@@ -330,9 +330,9 @@ class ReadyToStartDemultiplexing(object):
         checksums_match performing further integrity checks
         """
         with open(self.checksumfile_path, 'r') as checksumfile:
-            checksums = checksumfile.readlines()  # read checksum file into list
+            checksums = checksumfile.readlines()  # Read checksum file into list
 
-        if self.checksum_complete_flag in checksums[-1]:  # (last line in file, last element in list)
+        if self.checksum_complete_flag in checksums[-1]:  # Last line in file, last element in list
             self.logger("Previously reported failed integrity check", self.log_flags['info'])
             return True
 
