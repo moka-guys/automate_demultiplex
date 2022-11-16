@@ -4,16 +4,16 @@
 Upload NGS data to DNANexus and trigger analysis workflows.
 """
 import datetime
+import sys
 import os
 import re
 import smtplib
 import subprocess
 from email.message import Message
 from shutil import copyfile
-
 import automate_demultiplex_config as config
-from git_tag.git_tag import git_tag  # import function which reads the git tag
-import adlogger #import ADLoggers, get_runfolder_log_config
+from git_tag.git_tag import git_tag  # Import function which reads the git tag
+import adlogger  # Import ADLoggers, get_runfolder_log_config
 
 
 class SequencingRuns(list):
@@ -194,7 +194,7 @@ class RunfolderProcessor(object):
         Raises exception if any test does not pass
         Returns = None
         """
-        self.loggers.script.info("automate_demultiplexing release:{}".format(git_tag.git_tag()))
+        self.loggers.script.info("automate_demultiplexing release:{}".format(git_tag))
         # Call upload agent,using perform test function. Pass output of this to self.test_upload_agent
         if not self.test_upload_agent( 
             self.perform_test(
@@ -1669,7 +1669,7 @@ class RunfolderProcessor(object):
         # remove the bit that adds the job to the depends on list for the negative control as varscan
         # fails on nearempty/-empty BAM files 
         # and this will stop multiqc etc running
-        if "NTCcon" in fastqs[0]:
+        if "NTC" in fastqs[0]:
             dx_command = dx_command.replace("jobid=$(", "").replace(
                 config.Nexus_API_Key + ")", config.Nexus_API_Key
             )
