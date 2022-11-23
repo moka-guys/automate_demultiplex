@@ -73,6 +73,7 @@ class GetRunfolders(object):
                                                 str('{:%Y%m%d_%H%M%S}'.format(self.datetime_now)))
         self.logger = Logging(self.scriptlog_path).logger
         self.log_msgs = config.demux_logmsgs
+        self.log_flags = config.demultiplex_log_flags
 
     def run_demultiplexrunfolders(self):
         """Pass NGS runfolders to instance of DemultiplexRunfolder() for processing.

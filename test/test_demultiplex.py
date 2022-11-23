@@ -39,7 +39,7 @@ class TestGetRunfolders(object):
         """ Create DemultiplexRunfolder object to use in tests
         """
         gr_obj = GetRunfolders(runfolders_path=cls.runfolders_path, demultiplex_logfiles=cls.demultiplex_logfiles,
-                               datetime_now=cls.datetime_now, bcl2fastq_path=cls.bcl2fastq_path)
+                               datetime_now=cls.datetime_now)
         return gr_obj
 
     @pytest.fixture
@@ -94,6 +94,7 @@ class TestDemultiplexRunfolder(object):
         cls.md5checksum_pass = "{}md5checksum_pass.txt".format(cls.temp_dir)
         cls.md5checksum_fail = "{}md5checksum_fail.txt".format(cls.temp_dir)
         cls.bcl2fastqlog_path = "{}bcl2fastq2_output.log".format(cls.temp_dir)
+        cls.bcl2fastq_path = "{}bcl2fastq".format(test_files_dir)
 
         cls.test_runfolder = ''
         cls.test_files_dir = test_files_dir
@@ -118,7 +119,8 @@ class TestDemultiplexRunfolder(object):
     def dr_obj(cls):
         """ Create DemultiplexRunfolder object to use in tests
         """
-        dr = DemultiplexRunfolder(cls.scriptlog_path, cls.samplesheet_path, cls.test_files_dir, cls.test_runfolder)
+        dr = DemultiplexRunfolder(cls.scriptlog_path, cls.samplesheet_path, cls.test_files_dir, cls.test_runfolder,
+                                  bcl2fastq_path=cls.bcl2fastq_path)
         dr.bcl2fastqlog_path = cls.bcl2fastqlog_path
         dr.bcl2fastq_path = "{}bcl2fastq".format(cls.test_files_dir)  # Path to functioning test bcl2fastq executable
 
@@ -215,7 +217,8 @@ class TestDemultiplexRunfolder(object):
     def test_run_demultiplexing_tso_valid(cls, tso_runfolder):
         for runfolderpath, folder_name, samplesheet_path in tso_runfolder:
             runfolder_obj = DemultiplexRunfolder(scriptlog_path=cls.scriptlog_path, samplesheet_path=samplesheet_path,
-                                                 runfolderpath=runfolderpath, folder_name=folder_name)
+                                                 runfolderpath=runfolderpath, folder_name=folder_name,
+                                                 bcl2fastq_path=cls.bcl2fastq_path)
 
             assert not runfolder_obj.run_demultiplexing()  # TSO runs are not demultiplexed
             assert runfolder_obj.run_processed
@@ -223,7 +226,8 @@ class TestDemultiplexRunfolder(object):
     def test_run_demultiplexing_tso_invalid(cls, non_tso_runfolder):
         for runfolderpath, folder_name, samplesheet_path in non_tso_runfolder:
             runfolder_obj = DemultiplexRunfolder(scriptlog_path=cls.scriptlog_path, samplesheet_path=samplesheet_path,
-                                                 runfolderpath=runfolderpath, folder_name=folder_name)
+                                                 runfolderpath=runfolderpath, folder_name=folder_name,
+                                                 bcl2fastq_path=cls.bcl2fastq_path)
 
             # Command to run in place of bcl2fastq command that appends processing complete string to bcl2fastq logfile
             runfolder_obj.bcl2fastq_cmd = 'echo "Processing completed with 0 " \
@@ -237,13 +241,15 @@ class TestDemultiplexRunfolder(object):
         for runfolderpath, folder_name, samplesheet_path in demultiplexing_notrequired:
             assert not DemultiplexRunfolder(scriptlog_path=cls.scriptlog_path, samplesheet_path=samplesheet_path,
                                             runfolderpath=runfolderpath,
-                                            folder_name=folder_name).demultiplexing_required()
+                                            folder_name=folder_name,
+                                            bcl2fastq_path=cls.bcl2fastq_path).demultiplexing_required()
 
     def test_demultiplexing_required_true(cls, demultiplexing_required):
         """ Test demultiplexing_required() returns True for cases where demultiplexing is required"""
         for runfolderpath, folder_name, samplesheet_path in demultiplexing_required:
             assert DemultiplexRunfolder(scriptlog_path=cls.scriptlog_path, samplesheet_path=samplesheet_path,
-                                        runfolderpath=runfolderpath, folder_name=folder_name).demultiplexing_required()
+                                        runfolderpath=runfolderpath, folder_name=folder_name,
+                                        bcl2fastq_path=cls.bcl2fastq_path).demultiplexing_required()
 
     def test_valid_samplesheet_pass(cls, dr_obj, valid_samplesheets):
         for path in valid_samplesheets:
