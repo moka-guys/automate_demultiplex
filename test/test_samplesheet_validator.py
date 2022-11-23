@@ -7,7 +7,7 @@ from automate_demultiplex_config import sequencer_ids, runtype_list, panel_list,
 
 @pytest.fixture
 def base_path():
-    return os.path.join(os.getcwd(), 'test/test_files/')
+    return os.path.join(os.getcwd(), 'test/samplesheets/')
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ def empty_file(base_path):
 
 @pytest.fixture
 def invalid_contents(base_path):
-    """Test cases with all the following: invalid sequencer id, invalid headers, invalid sample names,
+    """ Test cases with all the following: invalid sequencer id, invalid headers, invalid sample names,
     non-matching samplenames, invalid panel number, invalid runtype
     """
     return [
@@ -62,13 +62,29 @@ def invalid_contents(base_path):
     ]
 
 
-def test_check_paths_valid(valid_samplesheets):
+@pytest.fixture
+def tso_samplesheet_valid(base_path):
+    """ Valid TSO samplesheet """
+    return [
+        ('{}221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv'.format(base_path))
+    ]
+
+
+@pytest.fixture
+def tso_samplesheet_invalid(base_path):
+    """ Samplesheet not from TSO run """
+    return [
+        ('{}220408_A02631_0186_000000000-JLJFE_SampleSheet.csv'.format(base_path))
+    ]
+
+
+def test_check_ss_present_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert "sspresent_err" not in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
                                                        runtype_list, tso500_panel_list).errors
 
 
-def test_check_paths_invalid(invalid_paths):
+def test_check_ss_present_invalid(invalid_paths):
     for samplesheet in invalid_paths:
         msg = 'Samplesheet with supplied name not present'
         assert msg in str(SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
@@ -181,6 +197,16 @@ def test_check_runtypes_valid(valid_samplesheets):
     for samplesheet in valid_samplesheets:
         assert "runtypes_err" not in SamplesheetCheck(samplesheet, sequencer_ids, panel_list,
                                                       runtype_list, tso500_panel_list).errors
+
+
+def check_tso_valid(tso_samplesheet_valid):
+    assert SamplesheetCheck(tso_samplesheet_valid, sequencer_ids,
+                            panel_list, runtype_list, tso500_panel_list).tso == True
+
+
+def check_tso_invalid(tso_samplesheet_invalid):
+    assert not SamplesheetCheck(tso_samplesheet_invalid, sequencer_ids,
+                                panel_list, runtype_list, tso500_panel_list).tso == True
 
 
 def test_check_runtypes_invalid(invalid_contents):
