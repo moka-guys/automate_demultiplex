@@ -229,7 +229,7 @@ class TestDemultiplexRunfolder(object):
                                             runfolderpath=runfolderpath,
                                             folder_name=folder_name).demultiplexing_required()
 
-    def test_demultiplexing_requried_true(cls, demultiplexing_required):
+    def test_demultiplexing_required_true(cls, demultiplexing_required):
         """ Test demultiplexing_required() returns True for cases where demultiplexing is required"""
         for runfolderpath, folder_name, samplesheet_path in demultiplexing_required:
             assert DemultiplexRunfolder(scriptlog_path=cls.scriptlog_path, samplesheet_path=samplesheet_path,
