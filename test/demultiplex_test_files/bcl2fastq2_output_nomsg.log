@@ -1,0 +1,33 @@
+BCL to FASTQ file converter
+bcl2fastq v2.20.0.422
+Copyright (c) 2007-2017 Illumina, Inc.
+
+2022-04-30 19:20:02 [7f0022bcc780] Command-line invocation: /usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq -R /media/data3/share/220429_NB552085_0195_AHKV7WAFX3 --sample-sheet /media/data3/share/samplesheets/220429_NB552085_0195_AHKV7WAFX3_SampleSheet.csv --no-lane-splitting
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Minimum log level: INFO
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Sample sheet: '/media/data3/share/samplesheets/220429_NB552085_0195_AHKV7WAFX3_SampleSheet.csv'
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Runfolder path: '/media/data3/share/220429_NB552085_0195_AHKV7WAFX3'
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Input path: '/media/data3/share/220429_NB552085_0195_AHKV7WAFX3/Data/Intensities/BaseCalls/'
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Intensities path: '/media/data3/share/220429_NB552085_0195_AHKV7WAFX3/Data/Intensities/'
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Output path: '/media/data3/share/220429_NB552085_0195_AHKV7WAFX3/Data/Intensities/BaseCalls/'
+2022-04-30 19:20:02 [7f0022bcc780] INFO: InterOp path: '/media/data3/share/220429_NB552085_0195_AHKV7WAFX3/InterOp/'
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Stats path: '/media/data3/share/220429_NB552085_0195_AHKV7WAFX3/Data/Intensities/BaseCalls/Stats/'
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Reports path: '/media/data3/share/220429_NB552085_0195_AHKV7WAFX3/Data/Intensities/BaseCalls/Reports/'
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Detected CPUs: 16
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Loading threads: 4
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Processing threads: 16
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Writing threads: 4
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Allowed barcode mismatches: 1
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Tiles: <ALL>
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Minimum trimmed read length: 35
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Use bases masks: <NONE>
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Mask short adapter reads: 22
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Adapter stringency: 0.9
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Adapter trimming method: Allow matches with indels
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Ignore missing BCLs: NO
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Ignore missing filters: NO
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Ignore missing positions: NO
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Ignore missing controls: NO
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Include non-PF clusters: NO
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Create FASTQs for index reads: NO
+2022-04-30 19:20:02 [7f0022bcc780] INFO: Use bgzf compression for FASTQ files: YES
+2022-04-30 19:20:02 [7f0022bcc780] INFO: FASTQ compression level: 4

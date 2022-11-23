@@ -466,7 +466,7 @@ class RunfolderProcessor(object):
         """
         demultiplex_file_path = os.path.join(
             self.runfolder_obj.runfolderpath,
-            config.file_demultiplexing
+            config.bcl2fastqlog_name
         )
         # check demultiplexing has been done using perform_test - returns true if file present
         if self.perform_test(demultiplex_file_path, "demultiplex_started"):
@@ -2372,8 +2372,8 @@ class RunfolderProcessor(object):
                 files_to_upload_list.append(logger.filepath)
         
         # add the demultiplexing log file
-        files_to_upload_string += " '" + os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing) + "'"
-        files_to_upload_list.append(os.path.join(self.runfolder_obj.runfolderpath, config.file_demultiplexing))
+        files_to_upload_string += " '" + os.path.join(self.runfolder_obj.runfolderpath, config.bcl2fastqlog_name) + "'"
+        files_to_upload_list.append(os.path.join(self.runfolder_obj.runfolderpath, config.bcl2fastqlog_name))
         # create a list which, when joined will form a single upload agent command, uploading each
         # file in logger.filepath
         command_list = [

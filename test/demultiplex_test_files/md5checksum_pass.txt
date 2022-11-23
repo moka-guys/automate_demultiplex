@@ -1,0 +1,3 @@
+Checksums match after 1 hours
+workstation checksum (Z:\221102_NB552085_0217_AHNLT7AFX3)=dbe4fbd8c4461b799cae52858980a56e
+sequencer checksum (D:\Illumina\NextSeq Control Software Temp\221102_NB552085_0217_AHNLT7AFX3)=dbe4fbd8c4461b799cae52858980a56e
