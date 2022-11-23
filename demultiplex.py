@@ -231,9 +231,9 @@ class DemultiplexRunfolder(object):
                                 return True
                             else:  # Send email denoting checksums check has failed
                                 Email(self.scriptlog_path, self.icfail_emailsubj, self.icfail_emailmsg).send_email()
-                                self.logger(
-                                    self.log_msgs['ic_fail'].format(self.runfolder_name, self.checksumfile_path),
-                                    extra={'flag': self.log_flags['fail']})
+                                self.logger.error(self.log_msgs['ic_fail'].format(self.runfolder_name,
+                                                                                  self.checksumfile_path),
+                                                  extra={'flag': self.log_flags['fail']})
 
     def run_demultiplexing(self):
         """Call demultiplexing functions
