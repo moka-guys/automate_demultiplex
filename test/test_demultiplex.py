@@ -6,7 +6,7 @@ import datetime
 import os
 import shutil
 from demultiplex import GetRunfolders, DemultiplexRunfolder, Email, Logging
-from test_samplesheet_validator import base_path, valid_samplesheets, invalid_paths, invalid_names, \
+from test.test_samplesheet_validator import base_path, valid_samplesheets, invalid_paths, invalid_names, \
     empty_file, invalid_contents
 import itertools
 
