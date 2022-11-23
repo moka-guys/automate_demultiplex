@@ -40,6 +40,7 @@ class TestGetRunfolders(object):
         """
         gr_obj = GetRunfolders(runfolders_path=cls.runfolders_path, demultiplex_logfiles=cls.demultiplex_logfiles,
                                datetime_now=cls.datetime_now)
+        gr_obj.bcl2fastq_path = cls.bcl2fastq_path
         return gr_obj
 
     @pytest.fixture
@@ -89,18 +90,17 @@ class TestDemultiplexRunfolder(object):
 
     @classmethod
     def class_attributes(cls):
+        cls.scriptlog_path = scriptlog_path
         cls.temp_dir = temp_dir
+        cls.test_files_dir = test_files_dir
+        cls.test_runfolder = ''
         cls.temp_runfolderdir = "{}test_runfolders/".format(cls.temp_dir)
+        cls.samplesheet_path = ''.format(os.getcwd())
         cls.md5checksum_pass = "{}md5checksum_pass.txt".format(cls.temp_dir)
         cls.md5checksum_fail = "{}md5checksum_fail.txt".format(cls.temp_dir)
+        cls.md5checksum_prevfail = "{}md5checksum_previouslyfailed.txt".format(cls.test_files_dir)
         cls.bcl2fastqlog_path = "{}bcl2fastq2_output.log".format(cls.temp_dir)
         cls.bcl2fastq_path = "{}bcl2fastq".format(test_files_dir)
-
-        cls.test_runfolder = ''
-        cls.test_files_dir = test_files_dir
-        cls.scriptlog_path = scriptlog_path
-        cls.samplesheet_path = ''.format(os.getcwd())
-        cls.md5checksum_prevfail = "{}md5checksum_previouslyfailed.txt".format(cls.test_files_dir)
 
     @pytest.fixture(autouse=True)
     def run_before_and_after_tests(cls):
