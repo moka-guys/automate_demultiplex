@@ -52,6 +52,8 @@ class GetRunfolders(object):
         run_demultiplexrunfolders()
             Pass NGS runfolders to instance of DemultiplexRunfolder() for processing.
             After demultiplexing is performed (or skipped) for all runfolders, close script log file.
+        bcl2fastq_installed()
+            Check bcl2fastq exe file present and executable using os.access, raise exception if not installed
         rename_demultiplex_logfile()
             If runfolders processed, rename the logfile using processed runfolder names.
     """
@@ -64,6 +66,7 @@ class GetRunfolders(object):
         self.runfolder_names = os.listdir(self.runfolders_path)
         self.runfolder_pattern = config.runfolder_pattern
         self.datetime_now = datetime_now
+        self.bcl2fastq_path = config.bcl2fastq_path  # Path to bcl2fastq2
         # Logging
         self.demultiplex_logfiles = demultiplex_logfiles  # Directory containing script log
         self.scriptlog_path = "{}{}.txt".format(self.demultiplex_logfiles,  # Script logfile for this hour's cron job
@@ -83,16 +86,27 @@ class GetRunfolders(object):
         for folder_name in self.runfolder_names:  # Pass runfolders to demultiplex.demultiplex_checks()
             runfolderpath = "{}/{}".format(self.runfolders_path, folder_name)
             samplesheet_path = "{}samplesheets/{}_SampleSheet.csv".format(self.runfolders_path, folder_name)
-            if os.path.isdir(runfolderpath) and re.compile(self.runfolder_pattern).match(folder_name):
+            if self.bcl2fastq_installed() and os.path.isdir(runfolderpath) and \
+                    re.compile(self.runfolder_pattern).match(folder_name):
                 # If runfolder has been processed during this run of the scripts
                 demultiplex_obj = DemultiplexRunfolder(self.scriptlog_path, samplesheet_path,
-                                                       runfolderpath, folder_name)
+                                                       runfolderpath, folder_name, self.bcl2fastq_path)
                 demultiplex_obj.setoff_workflow()
                 if demultiplex_obj.run_processed:
                     processed_runfolders.append(folder_name)  # Add runfolder to processed runfolder list
 
         self.rename_demultiplex_logfile(processed_runfolders)
         return processed_runfolders
+
+    def bcl2fastq_installed(self):
+        """Check bcl2fastq exe file present and executable using os.access, raise exception if not installed.
+        """
+        if os.access(self.bcl2fastq_path, os.X_OK):
+            self.logger.info(self.log_msgs['bcl2fastq_test_pass'], extra={'flag': self.log_flags['success']})
+            return True
+        else:
+            self.logger.error(self.log_msgs['bcl2fastq_test_fail'], extra={'flag': self.log_flags['fail']})
+
 
     def rename_demultiplex_logfile(self, processed_runfolders):
         """If runfolders processed by bcl2fastq during this cycle,, rename the logfile using processed runfolder names.
@@ -125,8 +139,6 @@ class DemultiplexRunfolder(object):
             Check samplesheet is present and naming and contents are valid. Returns error string and boolean
         sequencing_complete()
             Check if sequencing run has completed.
-        bcl2fastq_installed()
-            Check bcl2fastq exe file present and executable using os.access, raise exception if not installed
         no_disallowed_sserrs()
             Check for specific errors that would case bcl2fastq2 to fail and whose presence should stop demultipelxing
         integritycheck_not_required()
@@ -153,7 +165,7 @@ class DemultiplexRunfolder(object):
             Write log messages to the system log.
     """
 
-    def __init__(self, scriptlog_path, samplesheet_path, runfolderpath, folder_name):
+    def __init__(self, scriptlog_path, samplesheet_path, runfolderpath, folder_name, bcl2fastq_path):
         # Logging
         self.scriptlog_path = scriptlog_path
         self.log_msgs = config.demux_logmsgs
@@ -181,7 +193,7 @@ class DemultiplexRunfolder(object):
         self.icfail_emailsubj = config.icfail_emailsubj
         self.icfail_emailmsg = config.icfail_emailmsg.format(self.runfolder_name)
         # Bcl2fastq
-        self.bcl2fastq_path = config.bcl2fastq_path  # Path to bcl2fastq2
+        self.bcl2fastq_path = bcl2fastq_path
         self.bcl2fastqlog_name = config.bcl2fastqlog_name  # File denoting demultiplexing status
         self.bcl2fastqlog_path = os.path.join("{}/{}".format(self.runfolderpath, self.bcl2fastqlog_name))
         self.tso500_bcl2fastq_msg = config.demultiplexing_log_file_TSO500_message
@@ -209,7 +221,7 @@ class DemultiplexRunfolder(object):
         if self.bcl2fastqlog_absent():
             self.valid_samplesheet()  # Early warning checks
             if self.sequencing_complete():
-                if self.bcl2fastq_installed() and self.no_disallowed_sserrs():
+                if self.no_disallowed_sserrs():
                     if self.integritycheck_not_required():
                         return True
                     elif self.checksumfile_present():
@@ -282,15 +294,6 @@ class DemultiplexRunfolder(object):
             self.logger.info(self.log_msgs['run_finished'].format(self.rtacompletefile_path),
                              extra={'flag': self.log_flags['info']})
             return True
-
-    def bcl2fastq_installed(self):
-        """Check bcl2fastq exe file present and executable using os.access, raise exception if not installed.
-        """
-        if os.access(self.bcl2fastq_path, os.X_OK):
-            self.logger.info(self.log_msgs['bcl2fastq_test_pass'], extra={'flag': self.log_flags['success']})
-            return True
-        else:
-            self.logger.error(self.log_msgs['bcl2fastq_test_fail'], extra={'flag': self.log_flags['fail']})
 
     def no_disallowed_sserrs(self):
         """ Check for specific errors that would case bcl2fastq2 to fail and whose presence should stop demultipelxing

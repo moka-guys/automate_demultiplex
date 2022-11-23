@@ -32,13 +32,14 @@ class TestGetRunfolders(object):
         cls.datetime_now = datetime.datetime.now()
         cls.test_files_dir = test_files_dir
         cls.scriptlog_path = scriptlog_path
+        cls.bcl2fastq_path = "{}bcl2fastq".format(test_files_dir)
 
     @pytest.fixture
     def gr_obj(cls):
         """ Create DemultiplexRunfolder object to use in tests
         """
         gr_obj = GetRunfolders(runfolders_path=cls.runfolders_path, demultiplex_logfiles=cls.demultiplex_logfiles,
-                               datetime_now=cls.datetime_now)
+                               datetime_now=cls.datetime_now, bcl2fastq_path=cls.bcl2fastq_path)
         return gr_obj
 
     @pytest.fixture
@@ -67,6 +68,15 @@ class TestGetRunfolders(object):
                                datetime_now=cls.datetime_now)
         processed_runfolders = gr_obj.run_demultiplexrunfolders()
         assert not processed_runfolders
+
+    def test_bcl2fastq_installed_pass(cls, gr_obj):
+        """ Check bcl2fastq_install function is working using functional test bcl2fastq executable"""
+        assert gr_obj.bcl2fastq_installed()
+
+    def test_bcl2fastq_installed_fail(cls, gr_obj):
+        """ Provide incorrect bcl2fastq path """
+        gr_obj.bcl2fastq_path = "/path/does/not/exist/bcl2fastq"
+        assert not gr_obj.bcl2fastq_installed()
 
     def test_rename_demultiplex_logfile(cls, gr_obj, processed_runfolders):
         """ Tests that script logfile is renamed if there are processed runfolders"""
@@ -265,15 +275,6 @@ class TestDemultiplexRunfolder(object):
         """ Provide path to nonexistent rtacompletefile """
         dr_obj.rtacompletefile_path = "/path/to/nonexistent/file.txt"
         assert not dr_obj.sequencing_complete()
-
-    def test_bcl2fastq_installed_pass(cls, dr_obj):
-        """ Check bcl2fastq_install function is working using functional test bcl2fastq executable"""
-        assert dr_obj.bcl2fastq_installed()
-
-    def test_bcl2fastq_installed_fail(cls, dr_obj):
-        """ Provide incorrect bcl2fastq path """
-        dr_obj.bcl2fastq_path = "/path/does/not/exist/bcl2fastq"
-        assert not dr_obj.bcl2fastq_installed()
 
     def test_no_disallowed_sserrs_pass(cls, dr_obj):
         """ Test no_disallowed_sserrs() using a perfect samplesheet"""
