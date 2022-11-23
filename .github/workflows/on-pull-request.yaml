@@ -46,4 +46,4 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
-          pytest -v --ignore test/test_upload_and_setoff_workflows.py
+          pytest -v -k 'not Email' --ignore test/test_upload_and_setoff_workflows.py
