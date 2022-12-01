@@ -2304,7 +2304,7 @@ class RunfolderProcessor(object):
     def upload_rest_of_runfolder(self):
         """
         Input = None
-        The rest of the runfolder requires backing up, excluding bcl files.
+        The rest of the runfolder requires backing up, excluding bcl files. BCL files are uploaded for TSO runs only.
         A python script which is a wrapper for the upload agent is used.
         This function copies the samplesheet from into the runfolder and then builds and executes
         the backup_runfolder.py command
