@@ -232,25 +232,26 @@ class RunfolderProcessor(object):
             # read samplesheet to create a list of samples
             TSO500_sample_list = self.check_for_TSO500()
             # if not TSO500 will return None
-            if TSO500_sample_list:
-                # set up a count and while loop so it will attempt to tar the runfolder twice
-                tar_attempt_count = 1
-                while tar_attempt_count < 5:
-                    self.loggers.script.info("Attempting tar TSO runfolder. attempt {}".format(tar_attempt_count))
+            #if TSO500_sample_list:
+             #   # set up a count and while loop so it will attempt to tar the runfolder twice
+              #  tar_attempt_count = 1
+               # while tar_attempt_count < 5:
+                #    self.loggers.script.info("Attempting tar TSO runfolder. attempt {}".format(tar_attempt_count))
                     # tar runfolder - returns True if tar created sucessfully. 
                     # If tar_runfolder is unsuccessful after 4 attempts self.list_of_processed_samples won't be populated and run won't progress
-                    if self.tar_runfolder():
+                 #   if self.tar_runfolder():
                         # set list of samplenames as list of processed samples - this will allow the project to be named properly.
                         # set tar folder path in place of the list of fastqs to upload
-                        self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
+                  #      self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
                         # complete successfully so break out of while loop
-                        break
+                   #     break
                     # increase tar count
-                    tar_attempt_count += 1
-            else:
-                self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
-                    self.runfolder_obj.fastq_folder_path
-                )
+                    #tar_attempt_count += 1
+            
+            self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
+                self.runfolder_obj.fastq_folder_path
+            )
+            
             if self.list_of_processed_samples:
                 # build the project name using the WES batch and NGS run numbers
                 (
@@ -298,9 +299,6 @@ class RunfolderProcessor(object):
 
                 self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
-                if TSO500_sample_list:
-                    self.remove_TSO500_tar()
-
                 # return true to denote that a runfolder was processed
                 return True
         else:
@@ -2319,19 +2317,37 @@ class RunfolderProcessor(object):
             self.loggers.script.info("Samplesheet copied to runfolder: {}".format(self.runfolder_obj.runfolder_samplesheet_name))
         else:
             self.loggers.script.info("Samplesheet not copied to runfolder")
+        
+        # build backup_runfolder.py command for TSO run 
+        TSO500_backup = self.check_for_TSO500()
+        # if not TSO500 will return None
+        if TSO500_backup:
+            cmd = (
+                "python3 "
+                + config.backup_runfolder_script
+                + " -i "
+                + self.runfolder_obj.runfolderpath
+                + " -p "
+                + self.runfolder_obj.nexus_project_name
+                + " DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath "
+                + config.backup_runfolder_logfile
+                + " -a "
+                + config.Nexus_API_Key
+            )
+        else:
         # build backup_runfolder.py command ignore some files
-        cmd = (
-            "python3 "
-            + config.backup_runfolder_script
-            + " -i "
-            + self.runfolder_obj.runfolderpath
-            + " -p "
-            + self.runfolder_obj.nexus_project_name
-            + " --ignore /L00,DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath "
-            + config.backup_runfolder_logfile
-            + " -a "
-            + config.Nexus_API_Key
-        )
+            cmd = (
+                "python3 "
+                + config.backup_runfolder_script
+                + " -i "
+                + self.runfolder_obj.runfolderpath
+                + " -p "
+                + self.runfolder_obj.nexus_project_name
+                + " --ignore /L00,DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath "
+                + config.backup_runfolder_logfile
+                + " -a "
+                + config.Nexus_API_Key
+            )
 
         # write to the log file that the runfolder is being uploaded, linking to log files for cmds and stdout
         self.loggers.script.info("Uploading rest of run folder to Nexus using backup_runfolder.py")
