@@ -232,7 +232,12 @@ class RunfolderProcessor(object):
             # read samplesheet to create a list of samples
             TSO500_sample_list = self.check_for_TSO500()
             # if not TSO500 will return None
-            #if TSO500_sample_list:
+            if TSO500_sample_list:
+                
+                self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_samplesheet_path
+                #self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
+                print "This is runfoldername" + str(self.list_of_processed_samples)
+                self.upload_rest_of_runfolder()
              #   # set up a count and while loop so it will attempt to tar the runfolder twice
               #  tar_attempt_count = 1
                # while tar_attempt_count < 5:
@@ -247,10 +252,10 @@ class RunfolderProcessor(object):
                    #     break
                     # increase tar count
                     #tar_attempt_count += 1
-            
-            self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
-                self.runfolder_obj.fastq_folder_path
-            )
+            else:
+                self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
+                    self.runfolder_obj.fastq_folder_path
+                )
             
             if self.list_of_processed_samples:
                 # build the project name using the WES batch and NGS run numbers
@@ -296,11 +301,14 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
-
-                self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
-                self.look_for_upload_errors(self.upload_log_files())
-                # return true to denote that a runfolder was processed
-                return True
+                #check if its a TSO500 run
+                TSO500_run_check = self.check_for_TSO500()
+                # if not TSO500 will return None
+                if TSO500_run_check:
+                    self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
+                    self.look_for_upload_errors(self.upload_log_files())
+                    # return true to denote that a runfolder was processed
+                    return True
         else:
             self.loggers.script.info(
                 'Runfolder has already been processed: {}. Skipping.'.format(
@@ -2329,7 +2337,7 @@ class RunfolderProcessor(object):
                 + self.runfolder_obj.runfolderpath
                 + " -p "
                 + self.runfolder_obj.nexus_project_name
-                + " DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath "
+                + " --ignore DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath "
                 + config.backup_runfolder_logfile
                 + " -a "
                 + config.Nexus_API_Key
