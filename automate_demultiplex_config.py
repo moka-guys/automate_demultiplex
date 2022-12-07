@@ -144,7 +144,7 @@ project_success = 'Created new project called "%s"'
 app_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"
 # path to the workflow in the app project
 
-mokapipe_path = "Workflows/GATK3.5_v2.16" 
+mokapipe_path = "Workflows/GATK3.5_v2.17"
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 
@@ -218,6 +218,7 @@ mokapipe_sambamba_exclude_duplicates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclud
 mokapipe_sambamba_exclude_failed_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclude_failed_quality_control=true"
 mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.merge_overlapping_mate_reads=true"
 mokapipe_fhPRS_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
+mokapipe_polyedge_skip = "stage-GK71VJ80VQgQkjvz0vyQ8YV1.skip=false"
 mokapipe_fhPRS_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
 mokapipe_FH_humanexome_instance_type= "mem3_ssd1_v2_x8" # required when creating gVCFs
 mokapipe_GATK_human_exome_appletID = "applet-FYZ097j0jy1ZZPx30GykP63J"
@@ -374,11 +375,11 @@ panel_list = [
 	"Pan4044", # STG VCP1
 	"Pan4049", # STG VCP2 CrCa
 	"Pan3174", # WES trio
-	"Pan4119", # VCP1 Viapath_R134(FH)
-	"Pan4121", # VCP1 Viapath_R184(CF)
-	"Pan4122", # VCP1 Viapath_R25(FGFR)
-	"Pan4125", # VCP1 Viapath_R73(DMD)
-	"Pan4126", # VCP1 Viapath_R337(CADASIL)
+	"Pan4119", # VCP1 Viapath R134 (FH)
+	"Pan4121", # VCP1 Viapath R184 (CF)
+	"Pan4122", # VCP1 Viapath R25 (FGFR)
+	"Pan4125", # VCP1 Viapath R73 (DMD)
+	"Pan4126", # VCP1 Viapath R337 (CADASIL)
 	"Pan4974", # VCP1 Viapath (Molecular Haemostasis) R112
 	"Pan4975", # VCP1 Viapath (Molecular Haemostasis) R115
 	"Pan4976", # VCP1 Viapath (Molecular Haemostasis) R116
@@ -390,38 +391,38 @@ panel_list = [
 	"Pan4982", # VCP1 Viapath (Molecular Haemostasis) R122
 	"Pan4983", # VCP1 Viapath (Molecular Haemostasis) R123
 	"Pan4984", # VCP1 Viapath (Molecular Haemostasis) R124
-	"Pan4145", # VCP3 Viapath_R79(CMD)
-	"Pan4146", # VCP3 Viapath_R81(CM)
-	"Pan4149", # VCP2 Viapath_R208(BRCA)
-	"Pan4150", # VCP2 Viapath_R207(ovarian)
-	"Pan4127", # VCP2 Viapath_R209(colorectal)
-	"Pan4129", # VCP2 Viapath_R210(lynch)
-	"Pan4964", # VCP2 Viapath_R259(nijmegen)
-	"Pan4130", # VCP2 Viapath_R211(polyposis)
-	"Pan4132", # VCP3 Viapath_R56
-	"Pan4134", # VCP3 Viapath_R57
-	"Pan4136", # VCP3 Viapath_R58
-	"Pan4137", # VCP3 Viapath_R60
-	"Pan4138", # VCP3 Viapath_R62
-	"Pan4143", # VCP3 Viapath_R66
-	"Pan4144", # VCP3 Viapath_R78
-	"Pan4151", # VCP3 Viapath_R82
-	"Pan4314", # VCP3 Viapath_R229
-	"Pan4351", # VCP3 Viapath_R227
-	"Pan4387", # VCP3 Viapath_R90
-	"Pan4390", # VCP3 Viapath_R97
+	"Pan4145", # VCP3 Viapath R79 (CMD)
+	"Pan4146", # VCP3 Viapath R81 (CM)
+	"Pan4149", # VCP2 Viapath R208 (BRCA)
+	"Pan4150", # VCP2 Viapath R207 (ovarian)
+	"Pan4127", # VCP2 Viapath R209 (colorectal)
+	"Pan4129", # VCP2 Viapath R210 (lynch)
+	"Pan4964", # VCP2 Viapath R259 (nijmegen)
+	"Pan4130", # VCP2 Viapath R211 (polyposis)
+	"Pan4132", # VCP3 Viapath R56
+	"Pan4134", # VCP3 Viapath R57
+	"Pan4136", # VCP3 Viapath R58
+	"Pan4137", # VCP3 Viapath R60
+	"Pan4138", # VCP3 Viapath R62
+	"Pan4143", # VCP3 Viapath R66
+	"Pan4144", # VCP3 Viapath R78
+	"Pan4151", # VCP3 Viapath R82
+	"Pan4314", # VCP3 Viapath R229
+	"Pan4351", # VCP3 Viapath R227
+	"Pan4387", # VCP3 Viapath R90
+	"Pan4390", # VCP3 Viapath R97
 	"Pan4009", # MokaSNP 
 	"Pan4396", # ArcherDx
-	"Pan4579", # VCP2_M1.1(somatic)
-	"Pan4574", # VCP2_M1.2(somatic)
+	"Pan4579", # VCP2 M1.1 (somatic)
+	"Pan4574", # VCP2 M1.2 (somatic)
 	"Pan4969", # TSO500 - no UTRS TERT promotor
 	"Pan5085", # TSO500 High throughput Synnovis. no UTRS TERT promotor
 	"Pan5086", # TSO500 High throughput BSPS. no UTRS TERT promotor
-	"Pan4821", # VCP1 STG R134_FH
-	"Pan4822", # VCP1 STG R184_CF
-	"Pan4823", # VCP1 STG R25_FGFR
-	"Pan4824", # VCP1 STG R73_DMD
-	"Pan4825", # VCP1 STG R337_CADASIL
+	"Pan4821", # VCP1 STG R134 FH
+	"Pan4822", # VCP1 STG R184 CF
+	"Pan4823", # VCP1 STG R25 FGFR
+	"Pan4824", # VCP1 STG R73 DMD
+	"Pan4825", # VCP1 STG R337 CADASIL
 	"Pan4816", # VCP2 STG R208 BRCA
 	"Pan4817", # VCP2 STG R207 ovarian
 	"Pan4818", # VCP2 STG R209 colorectal
@@ -481,6 +482,7 @@ default_panel_properties = {
 	"mokapipe_haplotype_caller_padding": 0,
 	"FH": False,
 	"FH_PRS_bedfile": FH_PRS_bedfile_name,
+	"MSH2": False,
 	"mokaamp_varscan_strandfilter": True,
 	"iva_upload": False,
 	"congenica_upload": True,
@@ -797,6 +799,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4949data.bed",
 	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4948data.bed",
+		"MSH2": True,
 	},
 	"Pan4127": {  #VCP2 R209 colorectal cancer (Viapath)
 	    "mokapipe": True,
@@ -817,6 +820,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4949data.bed",
 	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4948data.bed",
+		"MSH2": True,
 	},
 	"Pan4130": {  #VCP2 R211 polyposis (Viapath)
 	    "mokapipe": True,
@@ -827,6 +831,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4949data.bed",
 	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4948data.bed",
+		"MSH2": True,
 	},
 	"Pan4132": {  #VCP3 R56 (Viapath)
 		"mokapipe": True,
@@ -1234,6 +1239,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
+		"MSH2": True,
 	},
 	"Pan4820": {  # VCP2 STG R211
 		"mokapipe": True,
@@ -1246,6 +1252,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
+		"MSH2": True,
 	},
 	"Pan4816": {  # VCP2 STG R208
 		"mokapipe": True,
@@ -1270,6 +1277,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
+		"MSH2": True,
 	},
 	"Pan5007": {  # LRPCR Via R207 PMS2
 		"mokapipe": True,
@@ -1280,7 +1288,8 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
-		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
+		"MSH2": True,
 	},
 	"Pan5008": {  # LRPCR STG R207 PMS2
 		"mokapipe": True,
@@ -1292,7 +1301,8 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
-		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
+		"MSH2": True,
 	},
 	"Pan5011": {  # LRPCR Via R210 PMS2
 		"mokapipe": True,
@@ -1303,8 +1313,10 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
-		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
-	},
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
+		"MSH2": True,
+
+},
 	"Pan5012": {  # LRPCR STG R210 PMS2
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
@@ -1315,7 +1327,8 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
-		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
+		"MSH2": True,
 	},
 	"Pan5013": {  # LRPCR Via R211 PMS2
 		"mokapipe": True,
@@ -1326,7 +1339,8 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
-		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
+		"MSH2": True,
 	},
 	"Pan5014": {  # LRPCR STG R211 PMS2
 		"mokapipe": True,
@@ -1338,7 +1352,8 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4967_reference.bed", # LRPCR amplicon BED file
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
-		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q" # hs37d5_Pan4967.bwa-index.tar.gz
+		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
+		"MSH2": True,
 	},
 	"Pan5009": {  # LRPCR Via R208 CHEK2
 		"mokapipe": True,
