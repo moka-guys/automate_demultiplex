@@ -304,9 +304,9 @@ upload_multiqc_input = " -imultiqc_html="
 
 # TSO500 stage ids
 TSO500_docker_image_stage = " -iTSO500_ruo="
-TSO500_runfolder_tar_stage = " -irun_folder="
 TSO500_samplesheet_stage = " -isamplesheet="
 TSO500_analysis_options_stage = " -ianalysis_options="
+TSO500_project_name_stage= " -iproject_name="
 # TSO500 output parser stage ids
 TSO500_output_parser_project_name_stage = " -iproject_name="
 TSO500_output_parser_project_id_stage = " -iproject_id="

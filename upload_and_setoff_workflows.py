@@ -99,8 +99,6 @@ class RunfolderObject(object):
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
-        self.runfolder_tarball_path = "%s.tar" % self.runfolderpath
-        self.runfolder_tarball_name = "%s.tar" % self.runfolder_name
         self.runfolder_samplesheet_path = os.path.join(config.samplesheets_dir,self.runfolder_name + "_SampleSheet.csv")
         self.runfolder_samplesheet_name = self.runfolder_name + "_SampleSheet.csv"
 
@@ -228,30 +226,13 @@ class RunfolderProcessor(object):
         if not self.already_uploaded() and self.has_demultiplexed():
             # calculate cluster density
             self.calculate_cluster_density(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name)
-            # check for TSO500 run - this is not demultiplexed locally but the entire runfolder is uploaded as a tarball
+            # check for TSO500 run - this is not demultiplexed locally but the entire runfolder is uploaded
             # read samplesheet to create a list of samples
             TSO500_sample_list = self.check_for_TSO500()
             # if not TSO500 will return None
             if TSO500_sample_list:
-                
                 self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_samplesheet_path
-                #self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
-                print "This is runfoldername" + str(self.list_of_processed_samples)
                 self.upload_rest_of_runfolder()
-             #   # set up a count and while loop so it will attempt to tar the runfolder twice
-              #  tar_attempt_count = 1
-               # while tar_attempt_count < 5:
-                #    self.loggers.script.info("Attempting tar TSO runfolder. attempt {}".format(tar_attempt_count))
-                    # tar runfolder - returns True if tar created sucessfully. 
-                    # If tar_runfolder is unsuccessful after 4 attempts self.list_of_processed_samples won't be populated and run won't progress
-                 #   if self.tar_runfolder():
-                        # set list of samplenames as list of processed samples - this will allow the project to be named properly.
-                        # set tar folder path in place of the list of fastqs to upload
-                  #      self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
-                        # complete successfully so break out of while loop
-                   #     break
-                    # increase tar count
-                    #tar_attempt_count += 1
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
@@ -354,31 +335,6 @@ class RunfolderProcessor(object):
             self.loggers.script.info("UA_pass 'Upload Agent function test passed'")
             return True
 
-    def tar_runfolder(self):
-        """
-        Input: runfolder path
-        Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
-        Returns: True/False depending on test if tar folder created without error
-        """
-        # cd to runfolder and then run tar argument with:
-        # W (which verifies the archive as it's made)
-        # P uses absolute paths (required for -W step)
-        # c (creates an archive) 
-        # f (specify the filename of the archive)
-        # provide the folder name, not the full filepath to ensure the tar doesn't contain the full path from root
-        # redirect stderr to stdout so we can test for errors
-        cmd = "cd %s; tar -WPcf %s %s 2>&1" % (config.runfolders, self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolder_name)
-        (out, err) = self.execute_subprocess_command(cmd)
-        # assess stdout+stderr - if successful tar does not return any output
-        if self.perform_test(out, "tar_runfolder"):
-            self.loggers.script.info("tar runfolder created at {} without any errors".format(self.runfolder_obj.runfolder_tarball_path))
-            return True
-        # raise slack alert if success statement not present.
-        else:
-            self.loggers.script.error("UA_fail 'runfolder tarball creation failed for {}. tar verify output = {}'".format(self.runfolder_obj.runfolder_name,out))
-            return False
-
-
     def perform_test(self, test_input, test):
         """
         Input = test_input (string) and test_name (str)
@@ -411,15 +367,6 @@ class RunfolderProcessor(object):
                 return False
         if test == "cluster_density":
             if config.cluster_density_success_statement not in test_input or config.cluster_density_error_statement in test_input:
-                return False
-        # if tar completes expect no stdout or stderr.
-        if test == "tar_runfolder":
-            if len(test_input) > 1:
-                return False
-
-        # if tar completes expect no stdout or stderr.
-        if test == "delete_tso500_tar":
-            if len(test_input) > 1:
                 return False
 
         return True
@@ -523,24 +470,6 @@ class RunfolderProcessor(object):
         if sample_list:
             open(self.loggers.upload_agent.filepath, 'w').close()
         return sample_list
-
-
-    def remove_TSO500_tar(self):
-        """
-        Inputs = None
-        Last step of processing runfolder. If relevant deletes the TSO500 tarball.
-        If there is an error (len(stderr)>0) send a slack alert
-        Returns = None
-        """
-        cmd = "rm %s " % (self.runfolder_obj.runfolder_tarball_path)
-        # capture stdout and stderr
-        # NB all output from picard tool is in stderr
-        (out, err) = self.execute_subprocess_command(cmd)
-        # assess stderr , looking for expected success statement
-        if self.perform_test(err, "delete_tso500_tar"):
-            self.loggers.script.info("TSO500 tarball sucessfully removed - {}".format(cmd))
-        else:
-            self.loggers.script.error("UA_fail 'TSO500 tar not deleted : {}'".format(self.runfolder_obj.runfolder_tarball_path))
 
 
     def calculate_cluster_density(self, runfolder_path, runfolder_name):
@@ -1400,10 +1329,10 @@ class RunfolderProcessor(object):
             self.runfolder_obj.runfolder_name,
             config.TSO500_docker_image_stage,
             config.tso500_docker_image,
-            config.TSO500_runfolder_tar_stage,
-            self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_tarball_name,
             config.TSO500_samplesheet_stage,
             self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_samplesheet_name,
+            config.TSO500_project_name_stage,
+            self.runfolder_obj.nexus_project_name,
             config.TSO500_analysis_options_stage,
             TSO500_analysis_options,
             instance_type,
