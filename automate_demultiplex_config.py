@@ -163,8 +163,8 @@ congenica_app_path = "Apps/congenica_upload_v1.3.2"
 congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
 
 # TSO500 app
-tso500_app = "applet-GBKvYFQ0jy1Vx4zJ126gX4xp" # Apps/TSO500_v1.4.0
-tso500_app_name = "TSO500_v1.4.0"
+tso500_app = "applet-GKG7jV80jy1k5fK226X4xgJP" # Apps/TSO500_v1.4.0
+tso500_app_name = "TSO500_v1.5.0"
 tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 
 # TSO500_output_parser app

@@ -232,7 +232,7 @@ class RunfolderProcessor(object):
             # if not TSO500 will return None
             if TSO500_sample_list:
                 self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_samplesheet_path
-                self.upload_rest_of_runfolder()
+
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_folder_path
@@ -254,6 +254,16 @@ class RunfolderProcessor(object):
                 self.runfolder_obj.nexus_project_id = self.run_project_creation_script(view_users_list, admin_users_list).rstrip()
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks files were uploaded without error
+                if TSO500_sample_list:
+                    backup_attempt_count = 1
+                    while backup_attempt_count < 5:
+                        self.loggers.script.info("Attempting to backup TSO runfolder. attempt {}".format(backup_attempt_count))
+                        if self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder()):
+                            backup_attempt_count = 10                                         
+                        else:           
+                            # increase backup count
+                            backup_attempt_count += 1
+
                 self.look_for_upload_errors(self.upload_fastqs())
                 
                 # upload cluster density files and check upload was successful.
@@ -285,11 +295,11 @@ class RunfolderProcessor(object):
                 #check if its a TSO500 run
                 TSO500_run_check = self.check_for_TSO500()
                 # if not TSO500 will return None
-                if TSO500_run_check:
+                if not TSO500_run_check:
                     self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
-                    self.look_for_upload_errors(self.upload_log_files())
-                    # return true to denote that a runfolder was processed
-                    return True
+                self.look_for_upload_errors(self.upload_log_files())
+                # return true to denote that a runfolder was processed
+                return True
         else:
             self.loggers.script.info(
                 'Runfolder has already been processed: {}. Skipping.'.format(
@@ -2391,7 +2401,7 @@ class RunfolderProcessor(object):
                     self.runfolder_obj.runfolder_name
                     )
                 )
-
+        return upload_ok
 
 
     def execute_subprocess_command(self, command):
