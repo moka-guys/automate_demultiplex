@@ -207,7 +207,7 @@ mokapipe_haplotype_vcf_output_format = " -i" +mokapipe_gatk_human_exome_stage + 
 mokapipe_filter_vcf_with_bedfile_bed_input = " -i" +mokapipe_filter_vcf_with_bedfile_stage + ".bedfile="
 mokapipe_vcf_output_name = "filtered_vcf"
 mokapipe_bam_output_name = "bam"
-mokapipe_happy_skip = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.skip=%s" 
+mokapipe_happy_skip = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.skip=%s"
 mokapipe_happy_prefix = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.prefix=%s" 
 mokapipe_sambamba_bed_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed=" 
 mokapipe_sambamba_min_base_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_base_qual=10" 
@@ -218,7 +218,7 @@ mokapipe_sambamba_exclude_duplicates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclud
 mokapipe_sambamba_exclude_failed_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclude_failed_quality_control=true"
 mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.merge_overlapping_mate_reads=true"
 mokapipe_fhPRS_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
-mokapipe_polyedge_skip = "stage-GK71VJ80VQgQkjvz0vyQ8YV1.skip=false"
+mokapipe_polyedge_skip = " -istage-GK71VJ80VQgQkjvz0vyQ8YV1.skip=false"
 mokapipe_fhPRS_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
 mokapipe_FH_humanexome_instance_type= "mem3_ssd1_v2_x8" # required when creating gVCFs
 mokapipe_GATK_human_exome_appletID = "applet-FYZ097j0jy1ZZPx30GykP63J"

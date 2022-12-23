@@ -1537,7 +1537,7 @@ class RunfolderProcessor(object):
         if self.panel_dictionary[pannumber]["FH"]:
             # If sample is R134 we want app to run - set skip to false
             # Specify instance type for human exome app and specify output as both vcf and gvcf
-            FH_prs_cmd_string+=config.mokapipe_fhPRS_skip
+            FH_prs_cmd_string+= config.mokapipe_fhPRS_skip
             FH_prs_cmd_string+= " --instance-type %s=%s" % (config.mokapipe_gatk_human_exome_stage, config.mokapipe_FH_humanexome_instance_type)
             FH_prs_cmd_string+= config.mokapipe_haplotype_vcf_output_format
             FH_prs_cmd_string+= config.mokapipe_FH_GATK_timeout_args
