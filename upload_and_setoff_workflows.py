@@ -1529,25 +1529,31 @@ class RunfolderProcessor(object):
         for id in config.reference_sample_ids:
             if "_%s_" % (id) in fastq:
                 vcf_eval_skip_string = config.mokapipe_happy_skip % ("false")
-                
 
-        #Set parameters specific to FH_PRS app. 
-        #Set skip flag to false, specify instance type for human exome app and specify output as both vcf and gvcf.
+        # Set parameters specific to FH_PRS app
         FH_prs_bedfile_cmd = config.mokapipe_fhPRS_bedfile_input + bedfiles["fh_prs"]
-        FH_prs_cmd_string=""
+        FH_prs_cmd_string = ""
 
         if self.panel_dictionary[pannumber]["FH"]:
-            FH_prs_cmd_string+=config.mokapipe_fhPRS_skip
+            # If sample is R134 we want app to run - set skip to false
+            # Specify instance type for human exome app and specify output as both vcf and gvcf
+            FH_prs_cmd_string+= config.mokapipe_fhPRS_skip
             FH_prs_cmd_string+= " --instance-type %s=%s" % (config.mokapipe_gatk_human_exome_stage, config.mokapipe_FH_humanexome_instance_type)
             FH_prs_cmd_string+= config.mokapipe_haplotype_vcf_output_format
             FH_prs_cmd_string+= config.mokapipe_FH_GATK_timeout_args
+
+        # Set parameters specific to polyedge app
+        polyedge_cmd_string = ""
+
+        # If test contains MSH2, we want app to run - set skip to false
+        if self.panel_dictionary[pannumber]["MSH2"]:
+            polyedge_cmd_string += config.mokapipe_polyedge_skip
             
-        masked_reference_command=""
+        masked_reference_command = ""
         if self.panel_dictionary[pannumber]["masked_reference"]:
             masked_reference_command+=config.mokapipe_bwa_ref_genome % (self.panel_dictionary[pannumber]["masked_reference"])
-        #If sample is not R134 we want skip to be set to true (app default is skip=true)
-        #Assume all sample are not R134 and set skip to true
-        # create the dx command
+
+        # Create the dx command
         dx_command = (
             self.mokapipe_command
             + fastqs[2]
@@ -1570,6 +1576,7 @@ class RunfolderProcessor(object):
             + vcf_eval_prefix_string
             + FH_prs_cmd_string
             + FH_prs_bedfile_cmd
+            + polyedge_cmd_string
             + masked_reference_command
             + config.mokapipe_mokapicard_vendorbed_input
             + bedfiles["hsmetrics"]
@@ -1582,7 +1589,7 @@ class RunfolderProcessor(object):
         )
 
         return dx_command
-    
+
     def build_congenica_command_file(self):
         """
         Inputs = None
