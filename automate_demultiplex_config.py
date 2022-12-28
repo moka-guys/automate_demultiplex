@@ -368,11 +368,9 @@ congenica_samplename = " -ianalysis_name="
 
 # MokaSNP does not have R numbers as it is an identity check for the GMS SMS
 
-# Panels for WES (analysed in Congenica), SWIFT (analysed in QCII) and ArcherDX (analysed in Archer software),
-# are applied at the point of analysis, so R and M numbers for these are not listed below
-
-# Panel numbers for TSO do not refer to bed files, but refer to DNAnexus configuration (instance type,
-# project layout, etc.), so M numbers are not listed below
+# Panels for WES (analysed in Congenica), SWIFT and TSO500 (analysed in QCII), and ArcherDX (analysed in Archer
+# software), are applied at the point of analysis, so R and M numbers for these are not listed below. These pan numbers
+# do not necessarily refer to bed files but rather project configuration (e.g. DNAnexus instances, project layout etc.)
 
 panel_list = [
 	"Pan4009", # MokaSNP
