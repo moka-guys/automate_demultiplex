@@ -364,17 +364,33 @@ congenica_bam_inputname = " -ibam="
 congenica_samplename = " -ianalysis_name="
 
 
-# =====List of all panel numbers=====
+# ===== List of all panel numbers =====
+
+# MokaSNP does not have R numbers as it is an identity check for the GMS SMS
+
+# Panels for WES (analysed in Congenica), SWIFT (analysed in QCII) and ArcherDX (analysed in Archer software),
+# are applied at the point of analysis, so R and M numbers for these are not listed below
+
+# Panel numbers for TSO do not refer to bed files, but refer to DNAnexus configuration (instance type,
+# project layout, etc.), so M numbers are not listed below
+
 panel_list = [
-	"Pan4081", # Swift EGFR 
-	"Pan4082", # Swift 57 
+	"Pan4009", # MokaSNP
 	"Pan2835", # Twist WES
 	"Pan4940", # Twist WES for EB lab
-	"Pan4042", # STG VCP2 BRCA
-	"Pan4043", # STG VCP3
-	"Pan4044", # STG VCP1
-	"Pan4049", # STG VCP2 CrCa
 	"Pan3174", # WES trio
+	"Pan4081", # Swift EGFR
+	"Pan4082", # Swift 57
+	"Pan4396", # ArcherDx
+	"Pan4969", # TSO500 - no UTRS TERT promoter
+	"Pan5085", # TSO500 High throughput Synnovis. no UTRS TERT promoter
+	"Pan5086", # TSO500 High throughput BSPS. no UTRS TERT promoter
+	"Pan4579", # VCP2 M1.1 (somatic)
+	"Pan4574", # VCP2 M1.2 (somatic)
+	"Pan4042", # STG VCP2 BRCA - TO BE REMOVED IN FUTURE UPDATE
+	"Pan4043", # STG VCP3 - TO BE REMOVED IN FUTURE UPDATE
+	"Pan4044", # STG VCP1 - TO BE REMOVED IN FUTURE UPDATE
+	"Pan4049", # STG VCP2 CrCa - TO BE REMOVED IN FUTURE UPDATE
 	"Pan4119", # VCP1 Viapath R134 (FH)
 	"Pan4121", # VCP1 Viapath R184 (CF)
 	"Pan4122", # VCP1 Viapath R25 (FGFR)
@@ -411,13 +427,6 @@ panel_list = [
 	"Pan4351", # VCP3 Viapath R227
 	"Pan4387", # VCP3 Viapath R90
 	"Pan4390", # VCP3 Viapath R97
-	"Pan4009", # MokaSNP 
-	"Pan4396", # ArcherDx
-	"Pan4579", # VCP2 M1.1 (somatic)
-	"Pan4574", # VCP2 M1.2 (somatic)
-	"Pan4969", # TSO500 - no UTRS TERT promotor
-	"Pan5085", # TSO500 High throughput Synnovis. no UTRS TERT promotor
-	"Pan5086", # TSO500 High throughput BSPS. no UTRS TERT promotor
 	"Pan4821", # VCP1 STG R134 FH
 	"Pan4822", # VCP1 STG R184 CF
 	"Pan4823", # VCP1 STG R25 FGFR
@@ -991,7 +1000,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"clinical_coverage_depth" : 200,
 	},
-	"Pan4969" : { # TSO500 no UTRs. TERT promotor
+	"Pan4969" : { # TSO500 no UTRs. TERT promoter
 		"TSO500": True,
 		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
 		"clinical_coverage_depth" : 100,
@@ -999,7 +1008,7 @@ panel_settings = {
 		"coverage_min_basecall_qual":25,
 		"coverage_min_mapping_qual":30,
 	},
-	"Pan5085" : { # TSO500 High throughput Synnovis. no UTRs. TERT promotor
+	"Pan5085" : { # TSO500 High throughput Synnovis. no UTRs. TERT promoter
 		"TSO500": True,
 		"TSO500_high_throughput": True,
 		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
@@ -1008,7 +1017,7 @@ panel_settings = {
 		"coverage_min_basecall_qual":25,
 		"coverage_min_mapping_qual":30,
 	},
-	"Pan5086" : { # TSO500 High throughput BSPS. no UTRs. TERT promotor
+	"Pan5086" : { # TSO500 High throughput BSPS. no UTRs. TERT promoter
 		"TSO500": True,
 		"TSO500_high_throughput": True,
 		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
@@ -1289,7 +1298,6 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
 		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
-		"MSH2": True,
 	},
 	"Pan5008": {  # LRPCR STG R207 PMS2
 		"mokapipe": True,
@@ -1302,7 +1310,6 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
 		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
-		"MSH2": True,
 	},
 	"Pan5011": {  # LRPCR Via R210 PMS2
 		"mokapipe": True,
@@ -1314,9 +1321,7 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
 		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
-		"MSH2": True,
-
-},
+	},
 	"Pan5012": {  # LRPCR STG R210 PMS2
 		"mokapipe": True,
 		"multiqc_coverage_level": 30,
@@ -1328,7 +1333,6 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
 		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
-		"MSH2": True,
 	},
 	"Pan5013": {  # LRPCR Via R211 PMS2
 		"mokapipe": True,
@@ -1340,7 +1344,6 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
 		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
-		"MSH2": True,
 	},
 	"Pan5014": {  # LRPCR STG R211 PMS2
 		"mokapipe": True,
@@ -1353,7 +1356,6 @@ panel_settings = {
 		"variant_calling_bedfile": "Pan4767data.bed",
 		"sambamba_bedfile": "Pan5018dataSambamba.bed",
 		"masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q", # hs37d5_Pan4967.bwa-index.tar.gz
-		"MSH2": True,
 	},
 	"Pan5009": {  # LRPCR Via R208 CHEK2
 		"mokapipe": True,
