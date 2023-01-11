@@ -292,10 +292,8 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
-                #check if its a TSO500 run
-                TSO500_run_check = self.check_for_TSO500()
                 # if not TSO500 will return None
-                if not TSO500_run_check:
+                if not TSO500_sample_list:
                     self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
                 self.look_for_upload_errors(self.upload_log_files())
                 # return true to denote that a runfolder was processed
