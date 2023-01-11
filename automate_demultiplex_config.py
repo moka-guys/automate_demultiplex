@@ -124,7 +124,7 @@ mokasnp_pipeline_ID = "5091"
 # mokacan pipeline ID
 mokacan_pipeline_ID = "4728"
 # TSO500 pipeline ID
-TSO_pipeline_ID = "5095"
+TSO_pipeline_ID = "5227"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -157,14 +157,14 @@ mokasnp_path = "Workflows/MokaSNP_v1.2.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.15.0"
+multiqc_path = "Apps/multiqc_v1.16.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
 congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
 
 # TSO500 app
-tso500_app = "applet-GBKvYFQ0jy1Vx4zJ126gX4xp" # Apps/TSO500_v1.4.0
-tso500_app_name = "TSO500_v1.4.0"
+tso500_app = "applet-GKv42080jy1bfp261fpP1Gfy" # Apps/TSO500_v1.5.0
+tso500_app_name = "TSO500_v1.5.0"
 tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 
 # TSO500_output_parser app
@@ -173,7 +173,7 @@ tso500_output_parser_app = "applet-GBKvX5j0jy1kK8jj9F7jjVY7" # Apps/tso500_outpu
 coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
 sompy_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G9yPb780jy1p660k6yBvQg07"
-multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G7QB6zj0jy1z1ZV1P5VZBj9p" 
+multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GKGjkz00jy1zKfXJ5qfpfpF8" 
 upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
 TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
 
@@ -305,9 +305,9 @@ upload_multiqc_input = " -imultiqc_html="
 
 # TSO500 stage ids
 TSO500_docker_image_stage = " -iTSO500_ruo="
-TSO500_runfolder_tar_stage = " -irun_folder="
 TSO500_samplesheet_stage = " -isamplesheet="
 TSO500_analysis_options_stage = " -ianalysis_options="
+TSO500_project_name_stage= " -iproject_name="
 # TSO500 output parser stage ids
 TSO500_output_parser_project_name_stage = " -iproject_name="
 TSO500_output_parser_project_id_stage = " -iproject_id="
@@ -1450,6 +1450,5 @@ sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 bcl2fastq_stats_filename = "Stats.json"
 bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 
-# ================ TSO500
-tso500_success_tarball = "0"
+
 
