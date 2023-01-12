@@ -515,7 +515,7 @@ default_panel_properties = {
 	"archerdx": False,
 	"TSO500": False,
 	"TSO500_high_throughput": False,
-	"drylab_dnanexus_id": None,
+	"drylab_dnanexus_id": "BSPS_MD",
 	"masked_reference":False
 }
 
