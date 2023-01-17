@@ -515,7 +515,7 @@ default_panel_properties = {
 	"archerdx": False,
 	"TSO500": False,
 	"TSO500_high_throughput": False,
-	"drylab_dnanexus_id": "BSPS_MD",
+	"drylab_dnanexus_id": None,
 	"masked_reference":False
 }
 
@@ -1023,7 +1023,7 @@ panel_settings = {
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
 		"coverage_min_mapping_qual":30,
-		"drylab_dnanexus_id": None # can state this when we know it.
+		"drylab_dnanexus_id": "BSPS_MD"
 	},
 	"Pan4821": {  # VCP1 STG R134_FH
 		"mokapipe": True,
