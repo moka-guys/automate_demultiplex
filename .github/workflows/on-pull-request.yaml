@@ -26,6 +26,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8
           pip install pytest
+          pip install -r requirements.txt
           echo "dummytoken" > /home/runner/work/.dnanexus_auth_token
           echo "dummypw" > /home/runner/work/.amazon_email_pw
           echo "dummyuser" > /home/runner/work/.amazon_email_username
