@@ -1,20 +1,24 @@
+""" This script contains the function used to obtain the git tag of the current version of the
+repository
+"""
+
 import subprocess
 import os
 
 
 def git_tag():
-    """Rather than hard code the script release, read it directly from the repository"""
-    #  Set the command which prints the git tags for the folder containing the script that is being executed.
-    #  The tag looks like "v22-3-gccfd" so needs to be parsed. use awk to create an array "a", splitting on "-".
-    #  The print the first element of the array
-    cmd = "git -C %s describe --tags | awk '{split($0,a,\"-\"); " \
-          "print a[1]}'" % os.path.dirname(os.path.realpath(__file__))
+    """Obtain the git tag of the current commit"""
+    filepath = os.path.dirname(os.path.realpath(__file__))
+    cmd = f"git -C {filepath} describe --tags"
 
-    proc = subprocess.Popen([cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
-    out, err = proc.communicate()
+    proc = subprocess.Popen(
+        [cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True
+    )
+    out, _ = proc.communicate()
     #  Return standard out, removing any new line characters
-    return out.rstrip()
+    return out.rstrip().decode("utf-8")
 
 
 if __name__ == "__main__":
     git_tag()
+    print(git_tag())
