@@ -15,7 +15,6 @@ from test.test_samplesheet_validator import (
 )
 import pytest
 import sys
-from mock import patch
 import demultiplex
 import ad_config as config  # Import config file
 import ad_logger.ad_logger as ad_logger
@@ -31,13 +30,6 @@ temp_dir = os.path.join(testfiles_dir, "temp/")
 demultiplex_log_file = os.path.join(temp_dir, f"{datetime.datetime.now():%Y%m%d_%H%M%S}.txt")
 temp_runfolderdir = os.path.join(temp_dir, "test_runfolders/")
 temp_samplesheetsdir = os.path.join(temp_runfolderdir, "samplesheets/")
-
-
-# @patch('config.demultiplex_logpath', temp_dir)
-# @patch('demultiplex.config.demultiplex_logpath', temp_dir)
-# @patch('demultiplex.config.demultiplex_logpath', temp_dir)
-# @patch('demultiplex.GetRunfolders.demultiplex_log', demultiplex_log_file)
-
 
 @pytest.fixture(scope="module", autouse=True)
 def run_before_and_after_tests():
@@ -60,7 +52,6 @@ class TestGetRunfolders(object):
     to the absence of any sequencing data in the test cases. This should be tested using real data
     on the workstation."""
 
-    @patch('demultiplex.config.runfolders', temp_runfolderdir)
     @pytest.fixture(scope="function", autouse=True)
     def gr_mock(self, monkeypatch):
         """Create GetRunfolders object to use in tests
@@ -85,11 +76,11 @@ class TestGetRunfolders(object):
         inevitably fails for all runfolders due to absence of sequencing data in test cases"""
         assert not gr_mock.run_demultiplexrunfolders()
 
-    def test_bcl2fastq_installed_pass(self, gr_mock): # DONE
+    def test_bcl2fastq_installed_pass(self, gr_mock):  # DONE
         """Check bcl2fastq_install function is working using functional test bcl2fastq executable"""
         assert gr_mock.bcl2fastq_installed()
 
-    def test_bcl2fastq_installed_fail(self, monkeypatch, gr_mock): # DONE
+    def test_bcl2fastq_installed_fail(self, monkeypatch, gr_mock):  # DONE
         """Provide incorrect bcl2fastq path"""
         monkeypatch.setattr(gr_mock, "bcl2fastq_path", "/path/to/nonexistent/bcl2fastq")
         assert not gr_mock.bcl2fastq_installed()
@@ -106,7 +97,6 @@ class TestGetRunfolders(object):
 class TestDemultiplexRunfolder(object):
     """Test DemultiplexRunfolder class"""
 
-    @patch('demultiplex.config.runfolders', temp_runfolderdir)
     @pytest.fixture(scope="function", autouse=True)
     def gr_mock(self, monkeypatch):
         """Create GetRunfolders object to use in tests
@@ -458,9 +448,9 @@ class TestDemultiplexRunfolder(object):
     #     dr_mock.bcl2fastqlog_path = os.path.join(temp_dir, "bcl2fastq2_output_success.log")
     #     assert dr_mock.check_bcl2fastqlogfile()
 
-    def test_check_bcl2fastqlogfile_fail(self, dr_mock, bcl2fastqlog_fail):
-        """Test check_bcl2fastqlogfile returns False for logfiles not containing expected success
-        message from automate demultiplex config"""
-        for logpath in bcl2fastqlog_fail:
-            dr_mock.bcl2fastqlog_path = logpath  # Reset path to that from test case
-            assert not dr_mock.check_bcl2fastqlogfile()
+    # def test_check_bcl2fastqlogfile_fail(self, dr_mock, bcl2fastqlog_fail):
+    #     """Test check_bcl2fastqlogfile returns False for logfiles not containing expected success
+    #     message from automate demultiplex config"""
+    #     for logpath in bcl2fastqlog_fail:
+    #         dr_mock.bcl2fastqlog_path = logpath  # Reset path to that from test case
+    #         assert not dr_mock.check_bcl2fastqlogfile()

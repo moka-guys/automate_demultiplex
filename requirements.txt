@@ -1,4 +1,4 @@
-mock==5.0.1
-wheel==0.38.4
+pytest==7.2.1
 pytest-lazy-fixture==0.6.3
-git+https://github.com/moka-guys/seglh-naming.git@v1.0.3
+wheel==0.38.4
+git+https://github.com/moka-guys/seglh-naming@v1.0.3
