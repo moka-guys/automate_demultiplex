@@ -1,8 +1,9 @@
-"""
+""" Print inputs required by decision support tool upload applications on DNANexus
+
 In order to run some run wide tasks we need to supply the inputs in the form jobid.output_name
 This is hard to do if we are running workflows as the job id relates to one app within a workflow.
 This script takes an analysis id and returns the job id of the specific stage.
-The script prints the output to the command line formatted for the tool given in as an arguemnt.
+The script prints the output to the command line formatted for the tool given in as an argument.
 """
 
 import subprocess
@@ -10,7 +11,7 @@ import json
 import re
 from collections import namedtuple
 import argparse
-import automate_demultiplex_config as config  # Import config file
+import ad_config as config  # Import config file
 from upload_and_setoff_workflows import RunfolderProcessor
 
 
@@ -102,7 +103,7 @@ class DecisionTooler(object):
         cmd = (
             "source {}; dx describe"
             " {}:{} --json --auth-token {}"
-        ).format(config.sdk_source_cmd, project, analysis_id, config.Nexus_API_Key)
+        ).format(config.sdk_source_cmd, project, analysis_id, config.nexus_apikey)
         # jobid comes from the sentieon sub-job, which takes a few moments to initiate after
         # calling the sentieon app. Running this script immediately after running the sentieon
         # workflow raises an IndexError. We retry in the while loop until the jobid is available.
@@ -189,18 +190,18 @@ if __name__ == "__main__":
     args = get_arguments()
     ajson = json.loads(
         subprocess.check_output(
-            ["dx", "describe", args.analysis_id, "--auth", config.Nexus_API_Key, "--json"]
+            ["dx", "describe", args.analysis_id, "--auth", config.nexus_apikey, "--json"]
         )
     )
 
     # Get settings for analysis panel (used to determine which workflow is running)
     pannumber = re.search(r"Pan\d+", ajson["name"]).group()
-    # using function imported from upload_and_setoff_workflow.py build the panel dict to be used to
+    # Using function imported from upload_and_setoff_workflow.py build the panel dict to be used to
     # determine the workflow etc
     paneldict = RunfolderProcessor.set_panel_dictionary()
     pansettings = paneldict[pannumber]
 
-    # # Print decision support tool inputs
+    # Print decision support tool inputs
     tooler = DecisionTooler()
     workflow = tooler.get_workflow(pansettings)
     jobid, bamjobid = tooler.get_job_id(args.analysis_id, args.project, workflow)
