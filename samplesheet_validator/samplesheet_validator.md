@@ -23,7 +23,7 @@ Therefore, samplesheets should conform with the following requirements:
 
 ## Configuration
 
-Settings are imported from [automate_demultiplex_config.py](../automate_demultiplex_config.py)
+Settings are imported from [ad_config.py](../ad_config.py)
 
 ## Logging
 The script itself does not perform logging, however it collects error messages as it runs. When it is imported by the 
