@@ -14,7 +14,7 @@
 
 ## Configuration
 
-Settings are imported from [automate_demultiplex_config.py](../automate_demultiplex_config.py).
+Settings are imported from [ad_config.py](../ad_config.py).
 
 ## Logging
 
