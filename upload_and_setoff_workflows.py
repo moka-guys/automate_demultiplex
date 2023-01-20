@@ -4,21 +4,20 @@
 Upload NGS data to DNANexus and trigger analysis workflows.
 """
 import datetime
-import sys
 import os
 import re
-import smtplib
 import subprocess
-from email.message import Message
 from shutil import copyfile
-import automate_demultiplex_config as config
+import ad_config as config
 from git_tag.git_tag import git_tag  # Import function which reads the git tag
-import adlogger  # Import ADLoggers, get_runfolder_log_config
+import ad_logger.ad_logger as ad_logger
+import panel_config
+from ad_email.ad_email import AdEmail
 
 
 class SequencingRuns(list):
     """A container for NGS runfolders with methods to initiate runfolder processing.
-    
+
     Args:
         None
     Methods:
@@ -30,7 +29,7 @@ class SequencingRuns(list):
         # Enable this class to hold sequencing runs by inheriting from python's List object.
         super(SequencingRuns, self).__init__()
         # Timestamp for each instance is used to name logfiles.
-        self.now = str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
+        self.now = str(f"{datetime.datetime.now():%Y%m%d_%H%M%S}")
         self.runfolders = []
 
     def set_runfolders(self):
@@ -47,7 +46,11 @@ class SequencingRuns(list):
         all_runfolders = os.listdir(config.runfolders)
         for folder in all_runfolders:
             folder_exists = os.path.isdir(os.path.join(config.runfolders, folder))
-            if folder not in config.ignore_directories and folder_exists and re.compile(config.runfolder_pattern).match(folder):
+            if (
+                folder not in config.ignore_dirs
+                and folder_exists
+                and re.compile(config.runfolder_pattern).match(folder)
+            ):
                 self.runfolders.append(folder)
 
     def loop_through_runs(self):
@@ -56,24 +59,30 @@ class SequencingRuns(list):
         Process all NGS runfolders in class instance list.
         Returns = None
         """
-
         # Track processed runfolders to use later for naming logfiles.
         processed_runfolders = []
 
         # Process any runfolders added to class instance with self.set_runfolders()
         for folder in self.runfolders:
-            runfolder_instance = RunfolderProcessor(folder, self.now, debug_mode=config.testing)
+            runfolder_instance = RunfolderProcessor(
+                folder, self.now, debug_mode=config.testing
+            )
             # Append processed runfolders to tracking list
             if runfolder_instance.quarterback():
                 processed_runfolders.append(folder)
-            # close down the run folder specific logger handles
+            # Close down the run folder specific logger handles
             runfolder_instance.loggers.shutdown_logs()
-            
 
         # Add names of any processed runfolders to logfile
         if processed_runfolders:
-            original_logfile_path = config.upload_and_setoff_workflow_logfile + self.now + "_upload_and_setoff_workflow.log"
-            new_logfile = original_logfile_path.replace(self.now, self.now + "_" + "_".join(processed_runfolders)) 
+            original_logfile_path = os.path.join(
+                config.upload_script_logpath,
+                f"{self.now}_upload_and_setoff_workflow.log",
+            )
+            processed_runfolders_str = "_".join(processed_runfolders)
+            new_logfile = original_logfile_path.replace(
+                self.now, f"{self.now}_{processed_runfolders_str}"
+            )
             os.rename(original_logfile_path, new_logfile)
 
 
@@ -81,28 +90,31 @@ class RunfolderObject(object):
     """
     An object with runfolder specific properties.
     """
+
     def __init__(self, runfolder):
-        # set empty variables to be defined based on the run
+        # Set empty variables to be defined based on the run
         self.runfolder_name = runfolder
-        # create full path to runfolder
         self.runfolderpath = os.path.join(config.runfolders, runfolder)
-        # folder containing the fastqs for this project
-        self.fastq_folder_path = self.runfolderpath + config.fastq_folder
-        # path to the run folder's dx run commands
-        self.runfolder_dx_run_script = (
-            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_dx_run_commands.sh"
+        # Project fastq folder
+        self.fastq_dir_path = os.path.join(self.runfolderpath, config.fastq_dir)
+        # Runfolder dx run commands
+        self.runfolder_dx_run_script = os.path.join(
+            config.dnanexus_workflow_logfolder, "{runfolder_name}_dx_run_commands.sh"
         )
-        self.congenica_upload_command_script = (
-            config.DNA_Nexus_workflow_logfolder + self.runfolder_name + "_congenica_upload_commands.sh"
+
+        self.congenica_upload_command_script = os.path.join(
+            config.dnanexus_workflow_logfolder,
+            f"{self.runfolder_name}_" f"congenica_upload_commands.sh",
         )
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
-        self.runfolder_tarball_path = "%s.tar" % self.runfolderpath
-        self.runfolder_tarball_name = "%s.tar" % self.runfolder_name
-        self.runfolder_samplesheet_path = os.path.join(config.samplesheets_dir,self.runfolder_name + "_SampleSheet.csv")
-        self.runfolder_samplesheet_name = self.runfolder_name + "_SampleSheet.csv"
-
+        self.runfolder_tarball_path = f"{self.runfolderpath}.tar"
+        self.runfolder_tarball_name = f"{self.runfolder_name}.tar"
+        self.runfolder_samplesheet_path = os.path.join(
+            config.samplesheet_dir, f"{self.runfolder_name}_SampleSheet.csv"
+        )
+        self.runfolder_samplesheet_name = f"{self.runfolder_name}_SampleSheet.csv"
 
 
 class RunfolderProcessor(object):
@@ -116,60 +128,47 @@ class RunfolderProcessor(object):
     """
 
     def __init__(self, runfolder, now, debug_mode=False):
-        # capture class inputs
+        # Capture class inputs
         self.debug_mode = debug_mode
         self.runfolder_obj = RunfolderObject(runfolder)
+        self.bcl2fastq_logfile = os.path.join(
+            self.runfolder_obj.runfolderpath, config.bcl2fastqlog_filename
+        )
         self.now = now
-        
-        # string of fastqs for upload agent
-        self.fastq_string = ""
-
-        # list of fastqs to get ngs run number and WES batch
-        self.list_of_processed_samples = []
+        self.fastq_string = ""  # String of fastqs for upload agent
+        self.list_of_processed_samples = (
+            []
+        )  # Fastq list to get NGS run number and WES batch
 
         # DNA Nexus commands to be built on later
-        self.source_command = "#!/bin/bash\n. %s\ndepends_list=''" % (config.sdk_source_cmd)
-        self.createprojectcommand = 'project_id="$(dx new project --bill-to %s "%s" --brief --auth-token %s)"\n'
-        self.mokapipe_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokapipe_path)
-        self.wes_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokawes_path)
-        self.mokasnp_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokasnp_path)
-        self.archer_dx_command = "jobid=$(dx run %s%s -y --priority high --name " % (config.app_project, config.fastqc_app)
-        self.tso500_dx_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.tso500_app)
-        self.tso500_output_parser_dx_command = "jobid=$(dx run %s%s --priority high -y --name " %(config.app_project, config.tso500_output_parser_app)
-        self.peddy_command = "jobid=$(dx run %s%s" % (config.app_project, config.peddy_path)
-        self.multiqc_command = "jobid=$(dx run %s%s" % (config.app_project, config.multiqc_path)
-        self.upload_multiqc_command = "jobid=$(dx run %s%s -y" % (config.app_project, config.upload_multiqc_path)
-        self.RPKM_command = "dx run %s%s --priority high --instance-type mem1_ssd1_x8" % (config.app_project, config.RPKM_path)
-        self.mokaamp_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokaamp_path)
-        self.mokacan_command = "jobid=$(dx run %s%s --priority high -y --name " % (config.app_project, config.mokacan_path) 
-        self.decision_support_preperation = "analysisid=$(python %s -a " % (
-            os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                config.decision_support_tool_input_script,
-            )
+
+        self.congenica_upload_command = (
+            f"echo 'dx run {config.tools_project}{config.congenica_app_path} -y"
         )
-        self.congenica_upload_command = "echo 'dx run %s%s -y" % (config.app_project, config.congenica_app_path)
-        self.congenica_sftp_upload_command = "echo 'dx run %s%s -y" % (config.app_project, config.congenica_SFTP_upload_app)
-        # create filepath for file to hold congenica command(s)
-        self.congenica_upload_command_script_path = "%s%s_congenica.sh" % (config.DNA_Nexus_workflow_logfolder, self.runfolder_obj.runfolder_name)
-        # string to redirect command (with variables) into file
-        self.congenica_upload_command_redirect = "' >> %s" % (self.congenica_upload_command_script_path)
-        # project to upload run folder into
-        self.nexusproject = config.NexusProjectPrefix
-        self.project_bash_script_path = (
-            config.DNA_Nexus_project_creation_logfolder + self.runfolder_obj.runfolder_name + ".sh"
+        # Create filepath for file to hold congenica command(s)
+        self.congenica_upload_command_script_path = os.path.join(
+            config.dnanexus_workflow_logfolder,
+            f"{self.runfolder_obj.runfolder_name}_congenica.sh",
+        )
+        # String to redirect command (with variables) into file
+        self.congenica_upload_command_redirect = (
+            f"' >> {self.congenica_upload_command_script_path}"
+        )
+        # Project to upload run folder into
+        self.project_bash_script_path = os.path.join(
+            config.dnanexus_projectcreation_logfolder,
+            f"{self.runfolder_obj.runfolder_name}.sh",
         )
 
-        self.dest = " --dest="
-        self.dest_cmd = ""
+        self.dest_str = " --dest="
         self.project = " --project="
-        self.token = " --brief --auth-token %s)" % (config.Nexus_API_Key)
+        self.token = f" --brief --auth-token {config.nexus_apikey})"
         self.depends = " -y $depends_list"
 
-        # argument to capture jobids
+        # Argument to capture jobids
         self.depends_list = 'depends_list="${depends_list} -d ${jobid} "'
 
-        # command to restart upload agent part 1
+        # Command to restart upload agent part 1
         self.restart_ua_1 = "ua_status=1; while [ $ua_status -ne 0 ]; do "
         self.restart_ua_2 = (
             "; ua_status=$?; if [[ $ua_status -ne 0 ]]; then echo "
@@ -179,11 +178,15 @@ class RunfolderProcessor(object):
         self.panel_dictionary = self.set_panel_dictionary()
         self.sql_queries = {}
 
-        # call the function which populates a dictionary of run specific logs and logfile paths.
-        self.log_config = adlogger.get_runfolder_log_config(self.runfolder_obj, self.now)
-        # pass the dictionary created above into ADloggers class - ** unpacks this dictionary  
-        # to populate inputs. This is used as an object where various logs can be written 
-        self.loggers = adlogger.ADLoggers(**self.log_config)
+        # Call function which populates a dictionary of run specific logs and logfile paths.
+        self.log_config = ad_logger.get_adlogger_config(
+            self.runfolder_obj, self.now
+        )
+        # Pass the dictionary into ADloggers class - ** unpacks this dictionary to populate inputs.
+        # This is used as an object where various logs can be written
+        self.loggers = ad_logger.ADLoggers(**self.log_config)
+
+        self.email = AdEmail(email_priority=1, logger=self.loggers.script)
 
     def run_tests(self):
         """
@@ -194,24 +197,25 @@ class RunfolderProcessor(object):
         Raises exception if any test does not pass
         Returns = None
         """
-        self.loggers.script.info("automate_demultiplexing release:{}".format(git_tag))
-        # Call upload agent,using perform test function. Pass output of this to self.test_upload_agent
-        if not self.test_upload_agent( 
+        self.loggers.script.info("automate_demultiplexing release:%s", git_tag())
+        # Call upload agent using perform test function. Pass output to self.test_upload_agent
+        if not self.test_upload_agent(
             self.perform_test(
                 self.execute_subprocess_command(
-                    config.upload_agent_path + config.upload_agent_test_command
+                    config.upload_agent_path + config.upload_agent_test_cmd
                 )[0],
                 "ua",
             )
         ):
             raise Exception("Upload agent not installed")
 
-        # test dx toolkit installation
+        # Test dx toolkit installation
         if not self.test_dx_toolkit(
-            self.perform_test(self.execute_subprocess_command(config.dx_sdk_test)[0], "dx_toolkit")
+            self.perform_test(
+                self.execute_subprocess_command(config.dx_sdk_test)[0], "dx_toolkit"
+            )
         ):
             raise Exception("dx toolkit not installed")
-
 
     def quarterback(self):
         """
@@ -220,58 +224,75 @@ class RunfolderProcessor(object):
         Returns = True if runfolder processed
         """
         self.run_tests()
-        # build dictionary of panel settings
+        # Build dictionary of panel settings
         self.panel_dictionary = self.set_panel_dictionary()
 
-        # check if already uploaded and demultiplexing finished sucessfully
+        # Check if already uploaded and demultiplexing finished sucessfully
         if not self.already_uploaded() and self.has_demultiplexed():
-            # calculate cluster density
-            self.calculate_cluster_density(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name)
-            # check for TSO500 run - this is not demultiplexed locally but the entire runfolder is uploaded as a tarball
-            # read samplesheet to create a list of samples
-            TSO500_sample_list = self.check_for_TSO500()
-            # if not TSO500 will return None
-            if TSO500_sample_list:
-                # set up a count and while loop so it will attempt to tar the runfolder twice
+            self.calculate_cluster_density(
+                self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name
+            )
+            # tso500 run is not demultiplexed locally - entire runfolder is uploaded as a tarball
+            # Read samplesheet to create a list of samples
+            tso500_sample_list = (
+                self.check_for_tso500()
+            )  # If not tso500 will return None
+            if tso500_sample_list:
+                # Set up a count and while loop so it will attempt to tar the runfolder twice
                 tar_attempt_count = 1
                 while tar_attempt_count < 5:
-                    self.loggers.script.info("Attempting tar TSO runfolder. attempt {}".format(tar_attempt_count))
-                    # tar runfolder - returns True if tar created sucessfully. 
-                    # If tar_runfolder is unsuccessful after 4 attempts self.list_of_processed_samples won't be populated and run won't progress
+                    self.loggers.script.info(
+                        "Attempting tar TSO runfolder. attempt %s", tar_attempt_count
+                    )
+                    # Tar runfolder - return True if tar created sucessfully
+                    # If tar_runfolder is unsuccessful after 4 attempts
+                    # self.list_of_processed_samples won't be populated and run won't progress
                     if self.tar_runfolder():
-                        # set list of samplenames as list of processed samples - this will allow the project to be named properly.
-                        # set tar folder path in place of the list of fastqs to upload
-                        self.list_of_processed_samples, self.fastq_string = TSO500_sample_list, self.runfolder_obj.runfolder_tarball_path + " " + self.runfolder_obj.runfolder_samplesheet_path
-                        # complete successfully so break out of while loop
-                        break
-                    # increase tar count
+                        # Set list of samplenames as list of processed samples - this will allow
+                        # the project to be named properly.
+                        self.list_of_processed_samples = tso500_sample_list
+                        # Set tar folder path in place of the list of fastqs to upload
+                        self.fastq_string = (
+                            f"{self.runfolder_obj.runfolder_tarball_path} "
+                            f"{self.runfolder_obj.runfolder_samplesheet_path}"
+                        )
+                        break  # Complete successfully so break out of while loop
                     tar_attempt_count += 1
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
-                    self.runfolder_obj.fastq_folder_path
+                    self.runfolder_obj.fastq_dir_path
                 )
+
             if self.list_of_processed_samples:
-                # build the project name using the WES batch and NGS run numbers
+                # Build project name using WES batch and NGS run numbers
                 (
-                    self.dest_cmd,
+                    self.dest_str,
                     self.runfolder_obj.nexus_path,
                     self.runfolder_obj.nexus_project_name,
                 ) = self.build_nexus_project_name(
-                    self.capture_any_WES_batch_numbers(self.list_of_processed_samples),
+                    self.capture_any_wes_batch_numbers(self.list_of_processed_samples),
                     self.capture_library_batch_numbers(self.list_of_processed_samples),
                 )
-                # create bash script to create and share nexus project -return filepath
-                # pass filepath into module which runs project creation script - capturing projectid
-                view_users_list, admin_users_list = self.write_create_project_script(self.list_of_processed_samples)
-                self.runfolder_obj.nexus_project_id = self.run_project_creation_script(view_users_list, admin_users_list).rstrip()
-                # build upload agent command for fastq upload and write stdout to ua_stdout_log
-                # pass path to function which checks files were uploaded without error
+                # Create bash script to create and share nexus project - return filepath
+                # Pass filepath into module which runs project creation script - capturing projectid
+                view_users_list, admin_users_list = self.write_create_project_script(
+                    self.list_of_processed_samples
+                )
+                self.runfolder_obj.nexus_project_id = self.run_project_creation_script(
+                    view_users_list, admin_users_list
+                ).rstrip()
+                # Build upload agent command for fastq upload and write stdout to ua_stdout_log
+                # Pass path to function which checks files were uploaded without error
                 self.look_for_upload_errors(self.upload_fastqs())
-                
-                # upload cluster density files and check upload was successful.
-                self.look_for_upload_errors(self.upload_cluster_density_files_for_multiQC())
-                # upload bcl2fastq stats files and check upload was successful.
-                self.look_for_upload_errors(self.upload_bcl2fastq_QC_files_for_multiQC())
+
+                # Upload cluster density files and check upload was successful.
+                self.look_for_upload_errors(
+                    self.upload_cluster_density_files_for_multiqc()
+                )
+                # Upload bcl2fastq stats files and check upload was successful.
+                self.look_for_upload_errors(
+                    self.upload_bcl2fastq_qc_files_for_multiqc()
+                )
 
                 self.write_dx_run_cmds(
                     self.start_building_dx_run_cmds(self.list_of_processed_samples)
@@ -284,7 +305,7 @@ class RunfolderProcessor(object):
                 self.sql_queries["oncology"] = self.write_opms_queries_oncology(
                     self.list_of_processed_samples
                 )
-                self.sql_queries["TSO500"] = self.write_opms_queries_TSO500(
+                self.sql_queries["tso500"] = self.write_opms_queries_tso500(
                     self.list_of_processed_samples
                 )
                 self.sql_queries["custom_panel"] = self.write_opms_queries_custom_panel(
@@ -295,18 +316,19 @@ class RunfolderProcessor(object):
                 )
                 self.send_opms_queries()
 
-                self.look_for_upload_errors_backup_runfolder(self.upload_rest_of_runfolder())
+                self.look_for_upload_errors_backup_runfolder(
+                    self.upload_rest_of_runfolder()
+                )
                 self.look_for_upload_errors(self.upload_log_files())
-                if TSO500_sample_list:
-                    self.remove_TSO500_tar()
+                if tso500_sample_list:
+                    self.remove_tso500_tar()
 
                 # return true to denote that a runfolder was processed
                 return True
         else:
             self.loggers.script.info(
-                'Runfolder has already been processed: {}. Skipping.'.format(
-                    self.runfolder_obj.runfolder_name
-                )
+                "Runfolder has already been processed: %s. Skipping.",
+                self.runfolder_obj.runfolder_name,
             )
             return False
 
@@ -322,21 +344,24 @@ class RunfolderProcessor(object):
         Returns = dictionary of panel specific settings
         """
         dictionary_to_return = {}
-        # for each panel
-        for panel in config.panel_list:
-            # loop through default settings, adding to dictionary and  then loop through panel
+        for panel in panel_config.panel_list:
+            # Loop through default settings, adding to dictionary. Then loop through panel
             # settings from config, overwriting any defaults
             dictionary_to_return[panel] = {}
-            for setting in config.default_panel_properties:
-                dictionary_to_return[panel][setting] = config.default_panel_properties[setting]
-            for setting in config.panel_settings[panel]:
-                dictionary_to_return[panel][setting] = config.panel_settings[panel][setting]
+            for setting in panel_config.default_panel_properties:
+                dictionary_to_return[panel][
+                    setting
+                ] = panel_config.default_panel_properties[setting]
+            for setting in panel_config.panel_settings[panel]:
+                dictionary_to_return[panel][setting] = panel_config.panel_settings[
+                    panel
+                ][setting]
         return dictionary_to_return
 
     def test_upload_agent(self, test_result):
         """
         Input = boolean value (True/False)
-        This function receives the value from the function which assesses the output of calling the 
+        This function receives the value from the function which assesses the output of calling the
         upload agent with --version.
         Returns = boolean value
         """
@@ -356,21 +381,30 @@ class RunfolderProcessor(object):
         # cd to runfolder and then run tar argument with:
         # W (which verifies the archive as it's made)
         # P uses absolute paths (required for -W step)
-        # c (creates an archive) 
+        # c (creates an archive)
         # f (specify the filename of the archive)
-        # provide the folder name, not the full filepath to ensure the tar doesn't contain the full path from root
-        # redirect stderr to stdout so we can test for errors
-        cmd = "cd %s; tar -WPcf %s %s 2>&1" % (config.runfolders, self.runfolder_obj.runfolder_tarball_path, self.runfolder_obj.runfolder_name)
-        (out, err) = self.execute_subprocess_command(cmd)
-        # assess stdout+stderr - if successful tar does not return any output
+        # Provide folder name not full filepath - ensures tar doesn't contain full path from root
+        # Redirect stderr to stdout so we can test for errors
+        cmd = (
+            f"cd {config.runfolders}; tar -WPcf {self.runfolder_obj.runfolder_tarball_path} "
+            f"{self.runfolder_obj.runfolder_name} 2>&1"
+        )
+        (out, _) = self.execute_subprocess_command(cmd)
+        # Assess stdout+stderr - if successful tar does not return any output
         if self.perform_test(out, "tar_runfolder"):
-            self.loggers.script.info("tar runfolder created at {} without any errors".format(self.runfolder_obj.runfolder_tarball_path))
+            self.loggers.script.info(
+                "tar runfolder created at %s without any errors",
+                self.runfolder_obj.runfolder_tarball_path,
+            )
             return True
-        # raise slack alert if success statement not present.
-        else:
-            self.loggers.script.error("UA_fail 'runfolder tarball creation failed for {}. tar verify output = {}'".format(self.runfolder_obj.runfolder_name,out))
+        else:  # Raise slack alert if success statement not present
+            self.loggers.script.error(
+                "UA_fail 'runfolder tarball creation failed for %s. "
+                "tar verify output = %s'",
+                self.runfolder_obj.runfolder_name,
+                out,
+            )
             return False
-
 
     def perform_test(self, test_input, test):
         """
@@ -379,44 +413,43 @@ class RunfolderProcessor(object):
         Assesses output of test against expected response (as per config)
         Returns =  Boolean (True/False)
         """
-        # if expected string not in stdout return Falsetest_upload_agent
         if test == "ua":
             if config.upload_agent_expected_stdout not in test_input:
                 return False
-        # if expected string not in stdout return False
         if test == "dx_toolkit":
             if config.dx_sdk_test_expected_stdout not in test_input:
                 return False
-        # False if the demultiplex started file does not exist
-        if test == "demultiplex_started":
+        if (
+            test == "demultiplex_started"
+        ):  # False if the demultiplex started file does not exist
             if not os.path.isfile(test_input):
                 return False
-        if test =="TSO500":
-            if not re.search(config.demultiplexing_log_file_TSO500_message, test_input):
+        if test == "tso500":
+            if not re.search(config.demultiplexing_logfile_tso500_msg, test_input):
                 return False
-        # False if the upload file does not exist or does not contain data
         if test == "already_uploaded":
-            if not os.path.isfile(test_input):
+            if not os.path.isfile(
+                test_input
+            ):  # False if upload file does not exist or empty
                 return False
-        # demultiplex success -return False  if expected string NOT in last line of log file
-        if test == "demultiplex_success":
-            if not re.search(config.demultiplex_success_match, test_input):
+        if (
+            test == "demultiplex_success"
+        ):  # False if expected string NOT in last line of log file
+            if not re.search(config.demultiplex_success_regex, test_input):
                 return False
         if test == "cluster_density":
-            if config.cluster_density_success_statement not in test_input or config.cluster_density_error_statement in test_input:
+            if (
+                config.cluster_density_success_statement not in test_input
+                or config.cluster_density_error_statement in test_input
+            ):
                 return False
-        # if tar completes expect no stdout or stderr.
-        if test == "tar_runfolder":
+        if test == "tar_runfolder":  # If tar completes expect no stdout or stderr
             if len(test_input) > 1:
                 return False
-
-        # if tar completes expect no stdout or stderr.
-        if test == "delete_tso500_tar":
+        if test == "delete_tso500_tar":  # If tar completes expect no stdout or stderr
             if len(test_input) > 1:
                 return False
-
         return True
-        
 
     def test_dx_toolkit(self, test_result):
         """
@@ -428,7 +461,6 @@ class RunfolderProcessor(object):
         if not test_result:
             self.loggers.script.error("UA_fail 'dx toolkit function test failed'")
             return False
-            
         else:
             return True
 
@@ -439,18 +471,20 @@ class RunfolderProcessor(object):
         This function checks for presense of this file (using perform_test function).
         Returns = Boolean (True/False)
         """
-        # write to log file including the github repo tag and time stamp
-        self.loggers.script.info("Working on {}".format(self.runfolder_obj.runfolderpath))
+        # Write to log file including GitHub repo tag and time stamp
+        self.loggers.script.info("Working on %s", self.runfolder_obj.runfolderpath)
 
-        # use perform_test function to assert if the file exists - will return True if file exists
+        # Use perform_test function to assert if the file exists - will return True if file exists
         if self.perform_test(
-            os.path.join(self.runfolder_obj.runfolderpath, config.upload_started_file),
+            os.path.join(
+                self.runfolder_obj.runfolderpath, config.upload_started_filename
+            ),
             "already_uploaded",
         ):
             self.loggers.script.info("Upload started file present. Terminating.")
             return True
         else:
-            # if file doesn't exist return false to continue and write to log file
+            # If file doesn't exist return false to continue and write to log file
             self.loggers.script.info("Upload started file not found. Continuing.")
             return False
 
@@ -461,87 +495,87 @@ class RunfolderProcessor(object):
         The demultiplexing script will raise any alerts if issues are found with demultiplexing, but
          we also need to prevent further processing of the run.
         Passes the expected demultiplex log file path to perform_test function
-        If present, passes the last line of the log file to perform_test for a success check. 
+        If present, passes the last line of the log file to perform_test for a success check.
         Returns = Boolean (True/False)
         """
         demultiplex_file_path = os.path.join(
-            self.runfolder_obj.runfolderpath,
-            config.bcl2fastqlog_name
+            self.runfolder_obj.runfolderpath, config.bcl2fastqlog_filename
         )
-        # check demultiplexing has been done using perform_test - returns true if file present
+        # Check demultiplexing has been done using perform_test - return true if file present
         if self.perform_test(demultiplex_file_path, "demultiplex_started"):
-            with open(demultiplex_file_path, "r") as logfile:
-                # capture logfile into list (not doing this caused an issue with the if loop below)
-                logfile_list=logfile.readlines()
-                # check if it's a TSO500 run
-                if self.perform_test(logfile_list[-1], "TSO500"):
-                    self.loggers.script.info("TSO500 run detected.")
+            with open(demultiplex_file_path, "r", encoding="utf-8") as logfile:
+                # Capture logfile into list (not doing this caused an issue with the if loop below)
+                logfile_list = logfile.readlines()
+                if self.perform_test(logfile_list[-1], "tso500"):  # Check if tso500 run
+                    self.loggers.script.info("tso500 run detected.")
                     return True
-                # check if successful demuliplex statement in last line of log
+                # Check if successful demuliplex statement in last line of log
                 elif self.perform_test(logfile_list[-1], "demultiplex_success"):
                     self.loggers.script.info("Demultiplex completed succesfully.")
                     return True
                 else:
-                    # write to logfile that demultplex was not successful
+                    # Write to logfile that demultplex was not successful
                     self.loggers.script.info("Demultiplex failed.")
                     return False
         else:
-            # write to logfile that not yet demultiplexed
+            # Write to logfile that not yet demultiplexed
             self.loggers.script.info("Demultiplex has not been performed.")
             return False
 
-    def check_for_TSO500(self):
+    def check_for_tso500(self):
         """
-        Read samplesheet looking for TSO500 pan number.
-        If TSO500 pannumber present add samplename to list
+        Read samplesheet looking for tso500 pan number.
+        If tso500 pannumber present add samplename to list
         return sample_list (will return False if empty)
         """
-        sample_list=[]
-        with open(self.runfolder_obj.runfolder_samplesheet_path, 'r') as samplesheet_stream:
-
-                # read the file into a list and loop through the list in reverse (bottom to top).
-                # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
-                for line in reversed(samplesheet_stream.readlines()):
-                    if line.startswith("Sample_ID") or "[Data]" in line:
-                        break
-                    # skip empty lines (check first element of the line, after splitting on comma)
-                    elif len(line.split(",")[0]) <2:
-                        pass
-                    # if it's a line detailing a sample
-                    else:
-                        for pannum in config.tso500_panel_list:
-                            if pannum in line:
-                                sample_list.append(line.split(",")[0])
-        # as it takes a long time before the upload create the file to stop further processing
+        sample_list = []
+        with open(
+            self.runfolder_obj.runfolder_samplesheet_path, "r", encoding="utf-8"
+        ) as samplesheet_stream:
+            # Read file into list and loop through list in reverse
+            # Allows us to access sample names and stop at column headers, skipping file header
+            for line in reversed(samplesheet_stream.readlines()):
+                if line.startswith("Sample_ID") or "[Data]" in line:
+                    break
+                # Skip empty lines (check first element of the line, after splitting on comma)
+                elif len(line.split(",")[0]) < 2:
+                    pass
+                else:  # If it's a line detailing a sample
+                    for pannum in panel_config.tso500_panel_list:
+                        if pannum in line:
+                            sample_list.append(line.split(",")[0])
         if sample_list:
-            open(self.loggers.upload_agent.filepath, 'w').close()
+            # Create file - takes long time before upload creates file to stop further processing
+            open(self.loggers.upload_agent.filepath, "w", encoding="utf-8").close()
         return sample_list
 
-
-    def remove_TSO500_tar(self):
+    def remove_tso500_tar(self):
         """
         Inputs = None
-        Last step of processing runfolder. If relevant deletes the TSO500 tarball.
+        Last step of processing runfolder. If relevant deletes the tso500 tarball.
         If there is an error (len(stderr)>0) send a slack alert
         Returns = None
         """
-        cmd = "rm %s " % (self.runfolder_obj.runfolder_tarball_path)
-        # capture stdout and stderr
-        # NB all output from picard tool is in stderr
-        (out, err) = self.execute_subprocess_command(cmd)
-        # assess stderr , looking for expected success statement
+        cmd = f"rm {self.runfolder_obj.runfolder_tarball_path} "
+        # Capture stdout and stderr. NB all output from picard tool is in stderr
+        (_, err) = self.execute_subprocess_command(cmd)
+        # Assess stderr, looking for expected success statement
         if self.perform_test(err, "delete_tso500_tar"):
-            self.loggers.script.info("TSO500 tarball sucessfully removed - {}".format(cmd))
+            self.loggers.script.info("tso500 tarball sucessfully removed - %s", cmd)
         else:
-            self.loggers.script.error("UA_fail 'TSO500 tar not deleted : {}'".format(self.runfolder_obj.runfolder_tarball_path))
-
+            self.loggers.script.error(
+                "UA_fail 'tso500 tar not deleted : %s'",
+                self.runfolder_obj.runfolder_tarball_path,
+            )
 
     def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
         Inputs = runfolder name and runfolder path
         Uses a dockerised version of GATK to run picard CollectIlluminaLaneMetrics
-        This calculates cluster density and saves files (runfolder.illumina_phasing_metrics and runfolder.illumina_lane_metrics) to the runfolder
-        If success statement seen in stderr record in log file else raise slack alert but do not stop run.
+        This calculates cluster density and saves files (runfolder.illumina_phasing_metrics and
+        runfolder.illumina_lane_metrics) to the runfolder
+        If success statement seen in stderr record in log file else raise slack alert but do not
+        stop run.
         Returns = None
         """
         # if novaseq need to give an extra flag to CollectIlluminaLaneMetrics
@@ -551,22 +585,28 @@ class RunfolderProcessor(object):
             novaseq_flag = ""
 
         # docker command for tool
-        cmd = "sudo docker run --rm -v {}:/input_run \
-        broadinstitute/gatk:4.1.8.1 \
-        ./gatk CollectIlluminaLaneMetrics \
-        --RUN_DIRECTORY /input_run \
-        --OUTPUT_DIRECTORY /input_run \
-        --OUTPUT_PREFIX {} {}".format(runfolder_path, runfolder_name, novaseq_flag)
+        cmd = (
+            f"sudo docker run --rm -v {runfolder_path}:/input_run broadinstitute/gatk:4.1.8.1 "
+            "./gatk CollectIlluminaLaneMetrics "
+            "--RUN_DIRECTORY /input_run "
+            "--OUTPUT_DIRECTORY /input_run"
+            f"--OUTPUT_PREFIX {runfolder_name} {novaseq_flag}"
+        )
 
-        # capture stdout and stderr
-        # NB all output from picard tool is in stderr
-        (out, err) = self.execute_subprocess_command(cmd)
+        # capture stdout and stderr. NB all output from picard tool is in stderr
+        (_, err) = self.execute_subprocess_command(cmd)
         # assess stderr , looking for expected success statement
         if self.perform_test(err, "cluster_density"):
-            self.loggers.script.info("Cluster density calculation saved to {}".format(runfolder_name + config.cluster_density_file_suffix))
+            self.loggers.script.info(
+                "Cluster density calculation saved to %s",
+                runfolder_name + config.cluster_density_file_suffix,
+            )
         # raise slack alert if success statement not present.
         else:
-            self.loggers.script.error("UA_fail 'Cluster density calculation failed for : {}'".format(self.runfolder_obj.runfolder_name))
+            self.loggers.script.error(
+                "UA_fail 'Cluster density calculation failed for : %s'",
+                self.runfolder_obj.runfolder_name,
+            )
 
     def find_fastqs(self, runfolder_fastq_path):
         """
@@ -576,26 +616,23 @@ class RunfolderProcessor(object):
         panel settings. If there are any files where the pan number was not found sent an alert.
         Returns = a tuple of list of processed samples and string of fastq filepaths.
         """
-        # set up list of fastqs not to be processed
-        not_processed = []
+        not_processed = []  # Set up list of fastqs not to be processed
         list_of_processed_samples = []
         fastq_string = ""
-        # find all fastqs
         for fastq in os.listdir(runfolder_fastq_path):
-            # exclude undetermined and any fastqs created by miseq (seerated by "-" rather than "_")
+            # Exclude undetermined and any fastqs created by miseq (seerated by "-" rather than "_")
             if (
                 fastq.endswith("fastq.gz")
                 and not fastq.startswith("Undetermined")
                 and "-Pan" not in fastq
             ):
-                pan_match = re.search(r'Pan\d+', fastq)
-                if pan_match and (pan_match.group()) in config.panel_list:
-                    # we know what to do with it:
-                    # append to string of paths for upload agent
+                pan_match = re.search(r"Pan\d+", fastq)
+                if pan_match and (pan_match.group()) in panel_config.panel_list:
+                    # Append to string of paths for upload agent
                     fastq_string = (
-                        fastq_string + " " + self.runfolder_obj.fastq_folder_path + "/" + fastq
+                        f"{fastq_string} {self.runfolder_obj.fastq_dir_path}/{fastq}"
                     )
-                    # add the fastq name to a list to be used in create_nexus_file_path
+                    # Add fastq name to list to be used in create_nexus_file_path
                     list_of_processed_samples.append(fastq)
                 else:
                     # self.loggers.script.warning(
@@ -609,22 +646,24 @@ class RunfolderProcessor(object):
             #     )
             # )
             self.loggers.script.error(
-                "UA_fail '{} contained an unrecognised pan numbers: {}'".format(
-                    self.runfolder_obj.runfolder_name, ",".join(not_processed)
-                )
+                "UA_fail '%s contained an unrecognised pan numbers: %s'",
+                self.runfolder_obj.runfolder_name,
+                ",".join(not_processed),
             )
 
         if not list_of_processed_samples:
             self.loggers.script.error("UA_fail 'No known Pan numbers in fastq list'")
-            # if no fastqs to be processed return none object rather than empty list
+            # If no fastqs to be processed return none object rather than empty list
             list_of_processed_samples = None
             fastq_string = None
         else:
-            self.loggers.script.info("{} fastqs found".format(str(len(list_of_processed_samples))))
+            self.loggers.script.info(
+                "%s fastqs found", str(len(list_of_processed_samples))
+            )
 
         return (list_of_processed_samples, fastq_string)
 
-    def capture_any_WES_batch_numbers(self, list_of_processed_samples):
+    def capture_any_wes_batch_numbers(self, list_of_processed_samples):
         """
         Input = list of samples to be processed
         DNANexus projects are named after the runfolder suffixed with identifiers.
@@ -633,21 +672,17 @@ class RunfolderProcessor(object):
         If no batch numbers returns None
         Returns = string or None
         """
-        # a list to hold all the wes numbers
         wes_numbers = []
 
-        # for each fastq in the list of fastqs
         for fastq in list_of_processed_samples:
-            # if the run has any WES samples
             if "WES" in fastq:
-                # capture the WES batch (WES followed by digits)
-                # optional underscore ensures this will capture WES5 or WES_5 
+                # Capture WES batch (WES followed by digits)
+                # Optional underscore ensures this will capture WES5 or WES_5
                 wesbatch = re.search(r"WES_?\d+", fastq).group()
-                wes_numbers.append(wesbatch.replace("_",""))
-        # if no wes numbers are found return None rather than an empty string
+                wes_numbers.append(wesbatch.replace("_", ""))
         if wes_numbers:
             return "_".join(set(wes_numbers))
-        else:
+        else:  # If no wes numbers are found return None instead of empty string
             return None
 
     def capture_library_batch_numbers(self, list_of_processed_samples):
@@ -659,31 +694,24 @@ class RunfolderProcessor(object):
         If no library batch numbers found raise error.
         Returns = unique library batch numbers (str)
         """
-        # a list to hold all the librray batch numbers
         library_batch_numbers = []
 
-        # for each fastq in the list of fastqs
         for fastq in list_of_processed_samples:
-            # check there are underscores present
-            if "_" in fastq:
-                # split on underscores to capture the the library_batch number
-                # eg ONC100 or NGS100
+            if "_" in fastq:  # Check there are underscores present
+                # Split on underscores to capture library_batch number. eg ONC100 or NGS100
                 library_batch_numbers.append(fastq.split("_")[0])
 
-        # There should always be  library batch numbers found - raise an error if not
+        # There should always be library batch numbers found - raise error if not
         if library_batch_numbers:
             return "_".join(set(library_batch_numbers))
-        else:
-            # Prompt a slack alert
+        else:  # Prompt a slack alert
             self.loggers.script.error(
-                (
-                    "UA_fail '{} - Unable to identify library batch numbers. "
-                    "Check for underscores in the samplenames."
-                ).format(self.runfolder_obj.runfolder_name)
+                "UA_fail '%s - Unable to identify library batch numbers. "
+                "Check for underscores in the samplenames.",
+                self.runfolder_obj.runfolder_name,
             )
-            # raise exception to stop script
+            # Raise exception to stop script
             raise Exception("Unable to identify library batch numbers")
-
 
     def build_nexus_project_name(self, wes_number, library_batch):
         """
@@ -694,42 +722,30 @@ class RunfolderProcessor(object):
         development or archived) and is followed by the name of the runfolder.
         The WES batches and library prep strings are suffixed onto the project name (received as
         inputs from other functions).
-        Returns = tuple containing strings for self.dest, runfolder_obj.nexus_path and
+        Returns = tuple containing strings for self.dest_str, runfolder_obj.nexus_path and
             runfolder_obj.nexus_project_name
         """
         nexus_path = ""
         nexus_project_name = ""
-        # if wes batch numbers add this into the nexus path
-        if wes_number:
-            # self.nexus path
+        if wes_number:  # If WES batch numbers add this into the nexus path
             nexus_path = (
-                self.runfolder_obj.runfolder_name
-                + "_"
-                + library_batch
-                + "_"
-                + wes_number
-                + config.fastq_folder
+                f"{self.runfolder_obj.runfolder_name}_{library_batch}"
+                f"_{wes_number}{config.fastq_dir}"
             )
-            # build project name
             nexus_project_name = (
-                config.NexusProjectPrefix
-                + self.runfolder_obj.runfolder_name
-                + "_"
-                + library_batch
-                + "_"
-                + wes_number
+                f"{config.dnanexus_project_prefix}"
+                f"{self.runfolder_obj.runfolder_name}_{library_batch}_{wes_number}"
             )
         else:
-            # self.nexus path
             nexus_path = (
-                self.runfolder_obj.runfolder_name + "_" + library_batch + config.fastq_folder
+                f"{self.runfolder_obj.runfolder_name}_{library_batch}{config.fastq_dir}"
             )
-            # build project name
             nexus_project_name = (
-                config.NexusProjectPrefix + self.runfolder_obj.runfolder_name + "_" + library_batch
+                f"{config.dnanexus_project_prefix}"
+                f"{self.runfolder_obj.runfolder_name}_{library_batch}"
             )
 
-        # return tuple of string for self.dest
+        # Return tuple of string for self.dest_str
         return (nexus_project_name + ":/", nexus_path, nexus_project_name)
 
     def write_create_project_script(self, list_of_processed_samples):
@@ -738,280 +754,304 @@ class RunfolderProcessor(object):
         Once the project name has been defined the project can be created using the DNANexus sdk
         Commands are written to a bash script and executed using subprocess. The project is created
         and shared with users, with varying degrees of access as defined in the config file.
-        The list of processed samples is passed, extracting Pan numbers and assessing if the project should also be shared with any
+        The list of processed samples is passed, extracting Pan numbers and assessing if the project
+        should also be shared with any
         additional dry lab DNANexus accounts.
         This function writes a bash script containing the project creation command
         Return = two lists, one of users shared with view permissions, one with admin
         """
-        view_users_list=[]
-        admin_users_list=[]
+        view_users_list = []
+        admin_users_list = []
         # open bash script
-        with open(self.project_bash_script_path, "w") as project_script:
-            project_script.write(self.source_command + "\n")
+        with open(
+            self.project_bash_script_path, "w", encoding="utf-8"
+        ) as project_script:
+            project_script.write(config.source_cmd + "\n")
             project_script.write(
-                self.createprojectcommand
-                % (config.prod_organisation, self.runfolder_obj.nexus_project_name, config.Nexus_API_Key)
+                config.create_project_cmd
+                % (
+                    config.prod_organisation,
+                    self.runfolder_obj.nexus_project_name,
+                    config.nexus_apikey,
+                )
             )
-
-            # Share the project with the nexus usernames in the list in config file
-            # first give view permissions
-            for user in config.view_users:
+            # Share project with the nexus users
+            for user in config.view_users:  # Give view permissions
                 project_script.write(
-                    "dx invite %s $project_id VIEW --no-email --auth-token %s\n"
-                    % (user, config.Nexus_API_Key)
+                    f"dx invite {user} $project_id VIEW --no-email "
+                    f"--auth-token {config.nexus_apikey}\n"
                 )
                 view_users_list.append(user)
-            # then give admin permissions - required incase some users are in both lists.
+            # Give admin permissions - required incase some users are in both lists.
             for user in config.admin_users:
                 project_script.write(
-                    "dx invite %s $project_id ADMINISTER --no-email --auth-token %s\n"
-                    % (user, config.Nexus_API_Key)
+                    "dx invite {user} $project_id ADMINISTER --no-email "
+                    "--auth-token {config.nexus_apikey}\n"
                 )
                 admin_users_list.append(user)
-            # Some samples are analysed at dry labs. Access to projects should only be given when there is a sample for that dry lab on the run.
-            # create a list of Pan numbers in the run
-            pannumber_list=set([re.search(r"Pan\d+", sample).group() for sample in list_of_processed_samples])
-            # Pull out the drylab_dnanexus_ids for pan numbers where this is not None (default is None)
-            dry_lab_list = [self.panel_dictionary[pannumber]["drylab_dnanexus_id"] for pannumber in pannumber_list if self.panel_dictionary[pannumber]["drylab_dnanexus_id"]]
+            # Some samples are analysed at dry labs. Access to projects should only be given when
+            # there is a sample for that dry lab on the run.
+            # Create list of Pan numbers in the run
+            pannumber_list = set(
+                [
+                    re.search(r"Pan\d+", sample).group()
+                    for sample in list_of_processed_samples
+                ]
+            )
+            # Pull out drylab_dnanexus_ids for pan numbers where this is not None (default = None)
+            dry_lab_list = [
+                self.panel_dictionary[pannumber]["drylab_dnanexus_id"]
+                for pannumber in pannumber_list
+                if self.panel_dictionary[pannumber]["drylab_dnanexus_id"]
+            ]
             # loop through dry_lab_list sharing project with user with readonly access
             for user in dry_lab_list:
                 project_script.write(
-                    "dx invite %s $project_id VIEW --no-email --auth-token %s\n"
-                    % (user, config.Nexus_API_Key)
+                    f"dx invite {user} $project_id VIEW --no-email "
+                    f"--auth-token {config.nexus_apikey}\n"
                 )
                 view_users_list.append(user)
-            # echo the project id so it can be captured below
-            project_script.write("echo $project_id")
+            project_script.write("echo $project_id")  # Capture project id
             return view_users_list, admin_users_list
 
-    def run_project_creation_script(self,view_users_list,admin_users_list):
+    def run_project_creation_script(self, view_users_list, admin_users_list):
         """
         Inputs = two lists, one with view permissions, one with admin permissions
-        Calls subprocess command executing project creation bash script.
-        Output of this command is tested to see if it meets the expected pattern.
-        Returns - projectid (if created) , False (if debug) or an exception (non-debug)
+        Calls subprocess command executing project creation bash script
+        Output of this command is tested to see if it meets the expected pattern
+        Records in log file who project has been shared with
+        Returns - projectid (if created), False (if debug) or an exception (non-debug)
         """
-        # run a command to execute the bash script made above
-        cmd = "bash " + self.project_bash_script_path
+        cmd = "bash " + self.project_bash_script_path  # Execute script made above
         (out, _) = self.execute_subprocess_command(cmd)
 
-        # if start of project id is in out capture the id and write to logfiles and return
+        # If start of project id is in out capture the id and write to logfiles and return
         if "project-" in out:
-            # split std_out on "project" and get the last item to capture the project ID
-            projectid = "project" + out.split("project")[-1].rstrip()
+            # Split std_out on "project" and get the last item to capture the project ID
+            projectid = "project" + out.rsplit("project", maxsplit=1)[-1].rstrip()
 
-            # record in log file who project was shared with (VIEW)
             self.loggers.script.info(
-                "DNA Nexus project {} created and shared (VIEW) to {}".format(
-                    self.runfolder_obj.nexus_project_name, ",".join(view_users_list)
-                )
+                "DNA Nexus project %s created and shared (VIEW) to %s",
+                self.runfolder_obj.nexus_project_name,
+                ",".join(view_users_list),
             )
-
-            # record in log file who project was shared with (ADMIN)
             self.loggers.script.info(
-                "DNA Nexus project {} created and shared (ADMIN) to {}".format(
-                    self.runfolder_obj.nexus_project_name, ",".join(admin_users_list)
-                )
+                "DNA Nexus project %s created and shared (ADMIN) to %s",
+                self.runfolder_obj.nexus_project_name,
+                ",".join(admin_users_list),
             )
-
-            self.loggers.script.info("Projectid={}".format(projectid))
-            # return projectid
+            self.loggers.script.info("Projectid=%s", projectid)
             return projectid
         else:
-                self.loggers.script.error("UA_fail 'failed to create project in dna nexus'")
-                # raise exception to stop script
-                raise Exception("Unable to create DNA Nexus project")
+            self.loggers.script.error("UA_fail 'failed to create project in dna nexus'")
+            raise Exception(
+                "Unable to create DNA Nexus project"
+            )  # Raise exception to stop script
 
     def upload_fastqs(self):
         """
         Inputs:
             None
-        All samples to be processed were identified in find_fastqs() which also created a string of 
+        All samples to be processed were identified in find_fastqs() which also created a string of
         filepaths for all fastqs that is required by the upload agent.
-        This function can upload fastqs or a tar'd runfolder (TSO500) - If fastq's are being uploaded upload to subfolder, else upload to root of project
+        This function can upload fastqs or a tar'd runfolder (tso500) - If fastq's are being
+        uploaded upload to subfolder, else upload to root of project
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
         Returns:
             filepath to logfile
-            file_list (space delimited string of files) 
+            file_list (space delimited string of files)
             stage name (string)
         """
-        # test if fastqs are being uploaded - if so, set folder to the expected fastq location.
+        # Test if fastqs are being uploaded - if so, set folder to the expected fastq location.
         upload_folder = ""
         if "fastq.gz" in self.fastq_string:
             upload_folder = self.runfolder_obj.nexus_path
 
-        # build the nexus upload command
         nexus_upload_command = (
-            self.restart_ua_1
-            + config.upload_agent_path
-            + " --auth-token "
-            + config.Nexus_API_Key
-            + " --project "
-            + self.runfolder_obj.nexus_project_name
-            + "  --folder /"
-            + upload_folder
-            + " --do-not-compress --upload-threads 10 "
-            + self.fastq_string
-            + self.restart_ua_2 
+            f"{self.restart_ua_1}{config.upload_agent_path} "
+            f"--auth-token {config.nexus_apikey} "
+            f"--project {self.runfolder_obj.nexus_project_name} "
+            f"--folder /{upload_folder} "
+            f"--do-not-compress --upload-threads 10 {self.fastq_string}{self.restart_ua_2}"
         )
-
-
         # Log fastq upload command to the upload agent logfile
-        self.loggers.upload_agent.info("Fastq upload commands:\n{}".format(nexus_upload_command))
+        self.loggers.upload_agent.info(
+            "Fastq upload commands:\n%s", nexus_upload_command
+        )
         # write to automated script logfile
         self.loggers.script.info(
-            "Uploading fastqs. See commands at {}".format(self.loggers.upload_agent.filepath)
+            "Uploading fastqs. See commands at %s", self.loggers.upload_agent.filepath
         )
-
-        # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
+        # Execute upload agent command, write stdout and stderr to DNANexus_upload_started.txt
         out, err = self.execute_subprocess_command(nexus_upload_command)
-        self.loggers.upload_agent.info("Uploading fastqs:\n{}\n{}".format(out, err))
+        self.loggers.upload_agent.info("Uploading fastqs:\n%s\n%s", out, err)
         return self.loggers.upload_agent.filepath, self.fastq_string, "fastq"
-
 
     def look_for_upload_errors(self, upload_module_output):
         """
         Inputs :
         A tuple containing:
             path to log file
-            file_list = a string (space delimited list) or list of files to be uploaded at this stage
+            file_list = string (space delimited list) or list of files to be uploaded at this stage
             stage = the stage to be included in error report.
         Parse the file containing standard error/standard out from the upload agent.
-        For each expected file to be uploaded check the expected upload success statement is present.
+        For each expected file to be uploaded check the expected upload success statement is present
         If the success statement is absent raise an alert but do not stop script from running
-        Returns: 
+        Returns:
             strings (debug mode only).
         """
-        upload_agent_stdout_path, file_list, stage = upload_module_output
-        # This check is not always required, such as when optional files (eg the lane metrics) are not created so allow a new stage to be used to skip testing.
+        upload_agent_stdout_path, files_to_upload, stage = upload_module_output
+        # Check not always required, e.g. when optional files (eg lane metrics) are not created
+        # so allow a new stage to be used to skip testing
         if not stage == "skip_upload_error_check":
-            # list to hold any files with issues
-            issue_list=[]
-            # for each file in the list to upload
-            for file in file_list:
-                # set flag to say upload unsuccessful
-                upload_ok=False
-                # loop through log file - if it's a line relating to this fastq check it's uploaded successfully.
-                for line in open(upload_agent_stdout_path).readlines():
+            issue_list = []  # List to hold files with issues
+            for file in files_to_upload:
+                upload_ok = False  # Set flag to upload unsuccessful
+                # Loop through log file - if line relates to this fastq check, upload was successful
+                for line in open(
+                    upload_agent_stdout_path, "r", encoding="utf-8"
+                ).readlines():
                     if file in line and "was uploaded successfully. Closing..." in line:
                         upload_ok = True
-                # if at the end of the file there was no success statement found
-                if not upload_ok:
+                if not upload_ok:  # If no success statement at end of file
                     issue_list.append(file)
-            # Report back if ok
-            if issue_list:
+            if issue_list:  # Report back if ok
                 self.loggers.script.error(
-                    "UA_fail 'upload of {} files failed for run {}'".format(
-                        stage, self.runfolder_obj.runfolder_name
-                        )
-                    )
+                    "UA_fail 'upload of %s files failed for run %s'",
+                    stage,
+                    self.runfolder_obj.runfolder_name,
+                )
                 self.loggers.script.error(
-                    "UA_fail 'following files were not uploaded {}'".format(
-                        issue_list
-                        )
-                    )
-            # if no error 
+                    "UA_fail 'following files were not uploaded %s'", issue_list
+                )
+            # if no error
             else:
                 self.loggers.script.info(
-                    "UA_pass 'upload of files complete for run {}'".format(
-                        self.runfolder_obj.runfolder_name
-                    )
+                    "UA_pass 'upload of files complete for run %s'",
+                    self.runfolder_obj.runfolder_name,
                 )
 
-    def upload_cluster_density_files_for_multiQC(self):
+    def upload_cluster_density_files_for_multiqc(self):
         """
         Inputs = None
-        Some QC metrics files that are used by multiqc may need to be uploaded before the rest of the runfolder to ensure they are included in the report
+        Some QC metrics files that are used by multiqc may need to be uploaded before the rest of
+        the runfolder to ensure they are included in the report
         This function build an upload agent command for the cluster density files.
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
-        If debug mode the upload agent command is returned without calling execute_subprocess_command()
-        Returns filepath to logfile (non-debug) 
+        If debug mode the upload agent command is returned without calling
+        execute_subprocess_command()
+        Returns filepath to logfile (non-debug)
         """
         # build the nexus upload command
         file_list = [
-            os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.cluster_density_file_suffix)),
-            os.path.join(self.runfolder_obj.runfolderpath, str(self.runfolder_obj.runfolder_name) + str(config.phasing_metrics_file_suffix))
-            ]
-        # check if the cluster density files exist before trying to upload- if they don't the script will fail when trying to upload them.
+            os.path.join(
+                self.runfolder_obj.runfolderpath,
+                str(self.runfolder_obj.runfolder_name)
+                + str(config.cluster_density_file_suffix),
+            ),
+            os.path.join(
+                self.runfolder_obj.runfolderpath,
+                str(self.runfolder_obj.runfolder_name)
+                + str(config.phasing_metrics_file_suffix),
+            ),
+        ]
+        # Check cluster density files exist before trying to upload
+        # If they don't the script will fail when trying to upload them
         if all([os.path.isfile(f) for f in file_list]):
             nexus_upload_command = (
-                self.restart_ua_1
-                + config.upload_agent_path
-                + " --auth-token "
-                + config.Nexus_API_Key
-                + " --project "
-                + self.runfolder_obj.nexus_project_name
-                + "  --folder /QC"
-                + " --do-not-compress --upload-threads 1 "
-                + " ".join(file_list)
-                + self.restart_ua_2  
+                f"{self.restart_ua_1}{config.upload_agent_path} "
+                "--auth-token {config.nexus_apikey} "
+                f"--project {self.runfolder_obj.nexus_project_name} "
+                "--folder /QC--do-not-compress --upload-threads 1 "
+                f"{' '.join(file_list)}{self.restart_ua_2}"
             )
 
             # Log fastq upload command to the upload agent logfile
-            self.loggers.upload_agent.info("Upload cluster density commands:\n{}".format(nexus_upload_command))
-            # write to automated script logfile
+            self.loggers.upload_agent.info(
+                "Upload cluster density commands:\n%s", nexus_upload_command
+            )
+            # Write to automated script logfile
             self.loggers.script.info(
-                "Uploading cluster density files. See commands at {}".format(self.loggers.upload_agent.filepath)
+                "Uploading cluster density files. See commands at %s",
+                self.loggers.upload_agent.filepath,
             )
 
-            # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
+            # Execute upload agent command, write stdout and stderr to DNANexus_upload_started.txt
             out, err = self.execute_subprocess_command(nexus_upload_command)
-            self.loggers.upload_agent.info("Uploading cluster density files\n{}\n{}".format(out, err))
+            self.loggers.upload_agent.info(
+                "Uploading cluster density files\n%s\n%s", out, err
+            )
             return self.loggers.upload_agent.filepath, file_list, "cluster density"
-        # if the cluster density files do not exist skip the upload and return a string which skip the look_for_upload_errors checks.
+        # If cluster density files do not exist skip the upload and return a string which skips the
+        # look_for_upload_errors checks
         else:
-            self.loggers.script.info("UA_pass 'skipping upload of cluster density files - not all files present'")
+            self.loggers.script.info(
+                "UA_pass 'skipping upload of cluster density files - not all files present'"
+            )
             return None, None, "skip_upload_error_check"
-    
-    def upload_bcl2fastq_QC_files_for_multiQC(self):
+
+    def upload_bcl2fastq_qc_files_for_multiqc(self):
         """
         Inputs = None
-        Some QC metrics files that are used by multiqc may need to be uploaded before the rest of the runfolder to ensure they are included in the report
+        Some QC metrics files that are used by multiqc may need to be uploaded before the rest of
+        the runfolder to ensure they are included in the report
         This function build an upload agent command for the bcl2fastq stats.json.
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
-        Returns filepath to logfile (non-debug) 
+        Returns filepath to logfile (non-debug)
         """
-        # build the nexus upload command
+        # Build nexus upload command
         file_list = [
-            str(self.runfolder_obj.runfolderpath) + os.path.join(str(config.bcl2fastq_stats_path), str(config.bcl2fastq_stats_filename))
-            ]
-        # check if the files exist before trying to upload- if they don't the script will fail when trying to upload them.
+            str(self.runfolder_obj.runfolderpath)
+            + os.path.join(
+                str(config.bcl2fastq_stats_path), str(config.bcl2fastq_stats_filename)
+            )
+        ]
+        # Check if files exist before trying to upload
+        # If they don't the script will fail when trying to upload them.
         if all([os.path.isfile(f) for f in file_list]):
             nexus_upload_command = (
                 self.restart_ua_1
                 + config.upload_agent_path
                 + " --auth-token "
-                + config.Nexus_API_Key
+                + config.nexus_apikey
                 + " --project "
                 + self.runfolder_obj.nexus_project_name
                 + "  --folder /"
-                + self.runfolder_obj.nexus_path + "/Stats"
+                + self.runfolder_obj.nexus_path
+                + "/Stats"
                 + " --do-not-compress --upload-threads 1 "
                 + " ".join(file_list)
-                + self.restart_ua_2  
+                + self.restart_ua_2
             )
-
 
             # Log fastq upload command to the upload agent logfile
-            self.loggers.upload_agent.info("Upload bcl2fastq stats file commands:\n{}".format(nexus_upload_command))
+            self.loggers.upload_agent.info(
+                "Upload bcl2fastq stats file commands:\n%s", nexus_upload_command
+            )
             # write to automated script logfile
             self.loggers.script.info(
-                "Uploading bcl2fastq stats files. See commands at {}".format(self.loggers.upload_agent.filepath)
+                "Uploading bcl2fastq stats files. See commands at %s",
+                self.loggers.upload_agent.filepath,
             )
 
-            # execute upload agent command and write stdout and stderr to the DNANexus_upload_started.txt file
+            # Execute upload agent command and write stdout + stderr to DNANexus_upload_started.txt
             out, err = self.execute_subprocess_command(nexus_upload_command)
-            self.loggers.upload_agent.info("Uploading bcl2fastq stats files\n{}\n{}".format(out, err))
+            self.loggers.upload_agent.info(
+                "Uploading bcl2fastq stats files\n%s\n%s", out, err
+            )
             return self.loggers.upload_agent.filepath, file_list, "bcl2fastq_stats"
-        # if the cluster density files do not exist skip the upload and return a string which skip the look_for_upload_errors checks.
+        # If cluster density files do not exist skip upload and return string which skips
+        # look_for_upload_errors checks
         else:
-            self.loggers.script.info("UA_pass 'skipping upload of bcl2fastq stats files - not all files present'")
+            self.loggers.script.info(
+                "UA_pass 'skipping upload of bcl2fastq stats files - not all files present'"
+            )
             return None, None, "skip_upload_error_check"
 
     def nexus_fastq_paths(self, read1):
@@ -1047,99 +1087,108 @@ class RunfolderProcessor(object):
         3 scenarios for BED files:
             - Use a BED file with the same Pan number as the panel
             - Use a BED file with a different Pan number
-            - Use a BED file that isn't named with a Pan number eg the name of the capture kit 
+            - Use a BED file that isn't named with a Pan number eg the name of the capture kit
 
         Returns a dictionary
         """
         # create dict
         bed_dict = {}
 
-        # for sambamba/hs metrics bed file if a different bed file is specified in config file use that, otherwise use the pannumber
+        # for sambamba/hs metrics bed file if a different bed file is specified in config file use
+        # that, otherwise use the pannumber
         # given bed file could be a pan number or the name of a capture kit
         if self.panel_dictionary[pannumber]["sambamba_bedfile"]:
             bed_dict["sambamba"] = (
-                config.app_project
+                config.tools_project
                 + config.bedfile_folder
                 + self.panel_dictionary[pannumber]["sambamba_bedfile"]
             )
         else:
             bed_dict["sambamba"] = (
-                config.app_project + config.bedfile_folder + pannumber + "dataSambamba.bed"
+                config.tools_project
+                + config.bedfile_folder
+                + pannumber
+                + "dataSambamba.bed"
             )
 
         # for sambamba/hs metrics bed file if a different bed file is specified in config file use
         # that, otherwise use the pannumber
         if self.panel_dictionary[pannumber]["hsmetrics_bedfile"]:
             bed_dict["hsmetrics"] = (
-                config.app_project
+                config.tools_project
                 + config.bedfile_folder
                 + self.panel_dictionary[pannumber]["hsmetrics_bedfile"]
             )
         else:
             bed_dict["hsmetrics"] = (
-                config.app_project + config.bedfile_folder + pannumber + "data.bed"
+                config.tools_project + config.bedfile_folder + pannumber + "data.bed"
             )
-        #FH
+        # FH
         if self.panel_dictionary[pannumber]["FH_PRS_bedfile"]:
             bed_dict["fh_prs"] = (
-                config.app_project
+                config.tools_project
                 + config.bedfile_folder
                 + self.panel_dictionary[pannumber]["FH_PRS_bedfile"]
             )
         else:
             bed_dict["fh_prs"] = (
-                config.app_project + config.bedfile_folder + pannumber + "data.bed"
+                config.tools_project + config.bedfile_folder + pannumber + "data.bed"
             )
         # BED file used for variant calling
-        # Given bed file could have same pan number, different pan number, the name of a capture kit or None
+        # Given bed file could have same pan number, different pan number, the name of a capture
+        # kit or None
         # BED file may not be provided for variant calling
         if self.panel_dictionary[pannumber]["variant_calling_bedfile"]:
             # if bedfile starts with Pan use the Pan123data.bed
-            if self.panel_dictionary[pannumber]["variant_calling_bedfile"][0:3] == "Pan":
+            if (
+                self.panel_dictionary[pannumber]["variant_calling_bedfile"][0:3]
+                == "Pan"
+            ):
                 bed_dict["variant_calling_bedfile"] = (
-                    config.app_project
+                    config.tools_project
                     + config.bedfile_folder
                     + self.panel_dictionary[pannumber]["variant_calling_bedfile"]
                 )
-            # if bedfile stated is not named with "Pan" don't add "data.bed" - could be the capture design
+            # If bedfile stated is not named with "Pan" don't add "data.bed" - could be the capture
+            # design
             else:
                 bed_dict["variant_calling_bedfile"] = (
-                    config.app_project
+                    config.tools_project
                     + config.bedfile_folder
                     + self.panel_dictionary[pannumber]["variant_calling_bedfile"]
                 )
         # if mokawes command to be executed and the variant calling bedfile not in config
         else:
             bed_dict["variant_calling_bedfile"] = None
-        
-        # paired end BED file used by primer clipping tool 
+
+        # paired end BED file used by primer clipping tool
         if self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]:
             bed_dict["mokaamp_bed_PE_input"] = (
-                config.app_project
+                config.tools_project
                 + config.bedfile_folder
                 + self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]
             )
         else:
             bed_dict["mokaamp_bed_PE_input"] = (
-            config.app_project + config.bedfile_folder + pannumber + "_PE.bed"
-        )
-        
+                config.tools_project + config.bedfile_folder + pannumber + "_PE.bed"
+            )
+
         #  oncology variant callers need the flat file
         if self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]:
             bed_dict["mokaamp_variant_calling_bed"] = (
-                config.app_project
+                config.tools_project
                 + config.bedfile_folder
                 + self.panel_dictionary[pannumber]["mokaamp_variant_calling_bed"]
             )
         else:
             bed_dict["mokaamp_variant_calling_bed"] = (
-            config.app_project + config.bedfile_folder + pannumber + "_flat.bed"
-        )
+                config.tools_project + config.bedfile_folder + pannumber + "_flat.bed"
+            )
 
         # RPKM bedfile has a different Pan number - defined in the config dictionary
         if self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]:
             bed_dict["rpkm_bedfile"] = (
-                config.app_project
+                config.tools_project
                 + config.bedfile_folder
                 + self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]
                 + "_RPKM.bed"
@@ -1150,8 +1199,10 @@ class RunfolderProcessor(object):
         """
         Input = list of fastqs to be processed
         Loop through the list of fastqs, determine the pan number and use this to determine
-        which workflow/apps should be run. Each app/workflow command is built by calling the relevant function
-        When looping through samples flags and lists are used to determine which run wide tasks are required 
+        which workflow/apps should be run. Each app/workflow command is built by calling the
+        relevant function
+        When looping through samples flags and lists are used to determine which run wide tasks
+        are required
         These run wide commands eg multiqc are built after sample specific commands
         All commands are added to a list.
         Returns = list of commands
@@ -1159,63 +1210,73 @@ class RunfolderProcessor(object):
 
         # Update script log file to say what is being done.
         self.loggers.script.info("Building dx run commands")
-        
+
         # list to hold all commands.
         commands_list = []
-        commands_list.append(self.source_command)
-        
+        commands_list.append(config.source_cmd)
+
         # lists/flags for run wide commands
         peddy = False
         congenica_upload = False
-        joint_variant_calling = False # not currently in use
-        rpkm_list = [] # list for panels needing RPKM analysis
-        TSO500 = False
+        joint_variant_calling = False  # not currently in use
+        rpkm_list = []  # list for panels needing RPKM analysis
+        tso500 = False
 
         # loop through samples
         for fastq in list_of_processed_samples:
-    
-            # take read one - note TSO500 sample list are not fastqs so are treated differently (elif below)
+
+            # take read one - note tso500 sample list are not fastqs so are treated differently
+            # (elif below)
             if re.search(r"_R1_", fastq):
-                # extract Pan number and use this to determine which dx run commands are needed for the sample
+                # extract Pan number and use this to determine which dx run commands are needed for
+                # the sample
                 panel = re.search(r"Pan\d+", fastq).group()
-                # The order in which the modules are called here is important to ensure the order 
-                # of dx run commands is correct. This affects which decision support tool data is sent to.
-                
+                # The order in which the modules are called here is important to ensure the order
+                # of dx run commands is correct. This affects which decision support tool data is
+                # sent to.
+
                 # If panel is to be processed using MokaWES
                 if self.panel_dictionary[panel]["mokawes"]:
-                    # call function to build the MokaWES command and add to command list and depends list
-                    commands_list.append(self.create_mokawes_command(fastq, panel))
+                    # call function to build the MokaWES command and add to command list and
+                    # depends list
+                    commands_list.append(self.create_mokamokawes_cmd(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
                     # if sample to be uploaded to congenica there are 2 methods.
-                    # if a project id is specified in the config it means it can eb uploaded as if it were a custom panel sample
-                    # eg IR does not need patient specific info and can be uploaded using the upload agent
-                    # otherwise if the congenica project is not set it should be uploaded via the SFTP
+                    # if a project id is specified in the config it means it can eb uploaded as if
+                    # it were a custom panel sample
+                    # eg IR does not need patient specific info and can be uploaded using the
+                    # upload agent
+                    # otherwise if the congenica project is not set it should be uploaded via the
+                    # SFTP
                     if self.panel_dictionary[panel]["congenica_upload"]:
                         congenica_upload = True
                         commands_list.append(self.build_congenica_input_command())
-                        #if project is specified then upload via upload agent
+                        # if project is specified then upload via upload agent
                         if self.panel_dictionary[panel]["congenica_project"]:
-                            commands_list.append(self.run_congenica_command(fastq, panel))
-                        #if project is not specified upload via SFTP
+                            commands_list.append(
+                                self.run_congenica_command(fastq, panel)
+                            )
+                        # if project is not specified upload via SFTP
                         else:
-                            commands_list.append(self.run_congenica_SFTP_upload_command(fastq))
+                            commands_list.append(
+                                self.run_congenica_sftp_upload_command(fastq)
+                            )
                     # Set run-wide flags for Peddy and joint variant calling
                     if self.panel_dictionary[panel]["peddy"]:
                         peddy = True
 
-                    
-
                 # If panel is to be processed using mokapipe
                 if self.panel_dictionary[panel]["mokapipe"]:
-                    # call function to build the Mokapipe command and add to command list and depends list
-                    commands_list.append(self.create_mokapipe_command(fastq, panel))
+                    # call function to build the Mokapipe command and add to command list and
+                    # depends list
+                    commands_list.append(self.create_mokapipe_cmd(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
                     # # Add command for congenica
                     if self.panel_dictionary[panel]["congenica_upload"]:
                         congenica_upload = True
                         commands_list.append(self.build_congenica_input_command())
                         commands_list.append(self.run_congenica_command(fastq, panel))
-                    # add panel to RPKM list 
+                    # add panel to RPKM list
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
 
@@ -1223,39 +1284,41 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["mokaamp"]:
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
-                
+
                 if self.panel_dictionary[panel]["mokacan"]:
                     commands_list.append(self.create_mokacan_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
 
-                #if panel is to be processed using mokasnp
+                # if panel is to be processed using mokasnp
                 if self.panel_dictionary[panel]["mokasnp"]:
-                    commands_list.append(self.create_mokasnp_command(fastq, panel))
+                    commands_list.append(self.create_mokasnp_cmd(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
-                
+
                 if self.panel_dictionary[panel]["archerdx"]:
-                    commands_list.append(self.create_archerdx_command(fastq, panel, "R1"))
+                    commands_list.append(self.create_archerdx_cmd(fastq, panel, "R1"))
                     commands_list.append(self.add_to_depends_list(fastq))
-                    commands_list.append(self.create_archerdx_command(fastq, panel, "R2"))
+                    commands_list.append(self.create_archerdx_cmd(fastq, panel, "R2"))
                     commands_list.append(self.add_to_depends_list(fastq))
-            
+
             elif not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
-                # extract Pan number and use this to determine which dx run commands are needed for the sample
+                # extract Pan number and use this to determine which dx run commands are needed for
+                # the sample
                 panel = re.search(r"Pan\d+", fastq).group()
 
-                if self.panel_dictionary[panel]["TSO500"]:
-                    TSO500 = True
+                if self.panel_dictionary[panel]["tso500"]:
+                    tso500 = True
 
-        # if there is a congenica upload create the file which will be run manually, once QC is passed.
+        # if there is a congenica upload create the file which will be run manually, once QC is
+        # passed.
         if congenica_upload:
             self.build_congenica_command_file()
             # write to logger to create slack alert that there are some congenica files to upload
-            self.loggers.script.info("Congenica samples to upload in project {}".format(
-                    self.runfolder_obj.nexus_project_name
-                )
+            self.loggers.script.info(
+                "Congenica samples to upload in project %s",
+                self.runfolder_obj.nexus_project_name,
             )
 
-        # build run wide commands 
+        # build run wide commands
         if joint_variant_calling:
             commands_list.append(self.create_joint_variant_calling_command())
         if rpkm_list:
@@ -1263,46 +1326,50 @@ class RunfolderProcessor(object):
             # pass this list into function which takes into account panels which are to be analysed
             # together and returns a "cleaned_list"
             for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
-                commands_list.append(self.create_rpkm_command(rpkm))
+                commands_list.append(self.create_rpkm_cmd(rpkm))
         if peddy:
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause problems
-            commands_list.append(self.run_peddy_command())
+            commands_list.append(self.run_peddy_cmd())
             # add to depends list so multiqc doesn't start until peddy finishes
-            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # add_to_depends_list requires a string to determine if it's a negative control and
+            # shouldn't be added to depends on string.
             # pass "peddy" to ensure it isn't skipped
             commands_list.append(self.add_to_depends_list("peddy"))
-        
-        if TSO500:
-            # build command for the TSO500 app
-            commands_list.append(self.create_tso500_command(list_of_processed_samples))
-            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+
+        if tso500:
+            # build command for the tso500 app
+            commands_list.append(self.create_tso500_cmd(list_of_processed_samples))
+            # add_to_depends_list requires a string to determine if it's a negative control and
+            # shouldn't be added to depends on string.
             # pass "TSO" to ensure it isn't skipped
             commands_list.append(self.add_to_depends_list("TSO"))
-            # build command for the TSO500 output parser
-            commands_list.append(self.create_tso500_output_parser_command())
-            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
+            # build command for the tso500 output parser
+            commands_list.append(self.create_tso500_output_parser_cmd())
+            # add_to_depends_list requires a string to determine if it's a negative control and
+            # shouldn't be added to depends on string.
             # pass "TSO" to ensure it isn't skipped
             commands_list.append(self.add_to_depends_list("TSO"))
         else:
-            # don't need to do multiqc commands for TSO500
-            commands_list.append(self.create_multiqc_command())
-            commands_list.append(self.create_upload_multiqc_command())
+            # don't need to do multiqc commands for tso500
+            commands_list.append(self.create_multiqc_cmd())
+            commands_list.append(self.create_upload_multiqc_cmd())
 
         return commands_list
 
-    def create_mokawes_command(self, fastq, pannumber):
+    def create_mokamokawes_cmd(self, fastq, pannumber):
         """
-        Input = R1 fastq filename and Pan number for a single sample 
+        Input = R1 fastq filename and Pan number for a single sample
         Returns = dx run command for MokaWES workflow (string)
         """
-        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+        # Call function to build nexus fastq paths - returns tuple for read1, read2 and samplename
         fastqs = self.nexus_fastq_paths(fastq)
         # build dictionary of pan number specific/relevant bedfile to be used in command
         bedfiles = self.nexus_bedfiles(pannumber)
 
-        # A bedfile to restrict variant calling should be defined in the config file, otherwise it's None
-        # In the future we may not restrict variant calling using a bed file so support this possible use case.
+        # Bedfile to restrict variant calling should be defined in config file, otherwise it's None
+        # In the future we may not restrict variant calling using a bed file so support this
+        # possible use case
         if bedfiles["variant_calling_bedfile"]:
             bedfiles_string = (
                 config.wes_sentieon_targets_bed + bedfiles["variant_calling_bedfile"]
@@ -1310,9 +1377,9 @@ class RunfolderProcessor(object):
         else:
             bedfiles_string = ""
 
-        # create the MokaWES dx command
+        # Create the MokaWES dx command
         dx_command_list = [
-            self.wes_command,
+            config.mokawes_cmd,
             fastqs[2],
             config.wes_fastqc1,
             fastqs[0],
@@ -1325,8 +1392,7 @@ class RunfolderProcessor(object):
             config.wes_sambamba_bedfile,
             bedfiles["sambamba"],
             bedfiles_string,
-            self.dest,
-            self.dest_cmd,
+            self.dest_str,
             self.token,
         ]
 
@@ -1334,7 +1400,7 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_archerdx_command(self, fastq, pannumber, read):
+    def create_archerdx_cmd(self, fastq, read):
         """
         Build dx run command, in this case to run fastqc on a single fastq file
         Inputs:
@@ -1344,25 +1410,25 @@ class RunfolderProcessor(object):
         Returns:
             dx run command for fastqc (string)
         """
-        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+        # Call function to build nexus fastq paths - returns tuple for read1, read2 and samplename
         fastqs = self.nexus_fastq_paths(fastq)
         dx_command_list = [
-            self.archer_dx_command,
+            config.archerdx_cmd,
             fastqs[2],
             " -ireads=",
-            fastqs[0].replace("_R1_","_%s_" % (read)),
-            self.dest,
-            self.dest_cmd,
+            fastqs[0].replace("_R1_", f"_{read}_"),
+            self.dest_str,
             self.token,
         ]
         dx_command = "".join(map(str, dx_command_list))
 
         return dx_command
 
-    def create_tso500_command(self,list_of_processed_samples):
+    def create_tso500_cmd(self, list_of_processed_samples):
         """
         Build dx run command for tso500 docker app.
-        Will assess if it's a novaseq or not from the runfoldername and if it's a highthroughput TSO run (needing a larger instance type)
+        Will assess if it's a novaseq or not from the runfoldername and if it's a highthroughput
+        TSO run (needing a larger instance type)
         Inputs:
             List of samplenames to be processed
         Returns:
@@ -1370,44 +1436,57 @@ class RunfolderProcessor(object):
         """
         # Is it a novaseq run?
         if config.novaseq_id in self.runfolder_obj.runfolder_name:
-            TSO500_analysis_options = "--isNovaSeq "
+            tso500_analysis_options = "--isNovaSeq "
         else:
-            TSO500_analysis_options = ""
+            tso500_analysis_options = ""
 
         # get a list of unique pan numbers from samplenames
-        pannumber_list=set([re.search(r"Pan\d+", sample).group() for sample in list_of_processed_samples])
+        pannumber_list = set(
+            [
+                re.search(r"Pan\d+", sample).group()
+                for sample in list_of_processed_samples
+            ]
+        )
         # capture any pan numbers that are a highthroughput assay
-        high_throughput_list = [pannumber for pannumber in pannumber_list if self.panel_dictionary[pannumber]["TSO500_high_throughput"]]
-        # if this list is not empty apply high throughput instance type, otherwise use low throughput instance type
+        high_throughput_list = [
+            pannumber
+            for pannumber in pannumber_list
+            if self.panel_dictionary[pannumber]["tso500_high_throughput"]
+        ]
+        # if this list is not empty apply high throughput instance type, otherwise use low
+        # throughput instance type
         if high_throughput_list:
-            instance_type = " --instance-type %s " % config.TSO500_analysis_instance_high_throughput
+            instance_type = f" --instance-type {config.tso500_analysis_instance_high_throughput} "
         else:
-            instance_type = " --instance-type %s " % config.TSO500_analysis_instance_low_throughput
+            instance_type = f" --instance-type {config.tso500_analysis_instance_low_throughput} "
 
         # build dx run command - inputs are:
-        ## docker image (from config)
-        ## runfolder_tar and samplesheet paths (from runfolder_obj class)
-        ## analysis options eg --isNovaSeq flag
+        # docker image (from config)
+        # runfolder_tar and samplesheet paths (from runfolder_obj class)
+        # analysis options eg --isNovaSeq flag
         dx_command_list = [
-            self.tso500_dx_command, # ends with --name so supply the runfolder name to name the job
+            config.tso500_cmd,  # ends with --name so supply the runfolder name to name the job
             self.runfolder_obj.runfolder_name,
-            config.TSO500_docker_image_stage,
+            config.tso500_docker_image_stage,
             config.tso500_docker_image,
-            config.TSO500_runfolder_tar_stage,
-            self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_tarball_name,
-            config.TSO500_samplesheet_stage,
-            self.runfolder_obj.nexus_project_id+":"+self.runfolder_obj.runfolder_samplesheet_name,
-            config.TSO500_analysis_options_stage,
-            TSO500_analysis_options,
+            config.tso500_runfolder_tar_stage,
+            self.runfolder_obj.nexus_project_id
+            + ":"
+            + self.runfolder_obj.runfolder_tarball_name,
+            config.tso500_samplesheet_stage,
+            self.runfolder_obj.nexus_project_id
+            + ":"
+            + self.runfolder_obj.runfolder_samplesheet_name,
+            config.tso500_analysis_options_stage,
+            tso500_analysis_options,
             instance_type,
-            self.dest,
-            self.dest_cmd,
+            self.dest_str,
             self.token,
         ]
         dx_command = "".join(map(str, dx_command_list))
         return dx_command
 
-    def create_tso500_output_parser_command(self):
+    def create_tso500_output_parser_cmd(self):
         """
         Build dx run command for tso500_output_parser app
         Inputs:
@@ -1415,70 +1494,64 @@ class RunfolderProcessor(object):
         Returns:
             dx run command for tso500_output_parser app (string)
         """
-        #TODO LIMITATION = Pan numbers that require different settings to be applied in downstream tasks will need to be set off in different jobs.
-        # This function will need to adapt to this (currently takes settings from the first item in the list of TSO500 pan numbers in config.
+        # TODO LIMITATION = Pan numbers that require different settings to be applied in downstream
+        # tasks will need to be set off in different jobs.
+        # This function will need to adapt to this (currently takes settings from the first item in
+        # the list of tso500 pan numbers in config.
         # This primarily affects coverage
-        tso_pan_num = config.tso500_panel_list[0]
+        tso_pan_num = panel_config.tso500_panel_list[0]
         # build dictionary of pan number specific/relevant bedfile to be used in command
         bedfiles = self.nexus_bedfiles(tso_pan_num)
         dx_command_list = [
-            self.tso500_output_parser_dx_command,
+            config.tso500_output_parser_cmd,
             self.runfolder_obj.runfolder_name,
-            config.TSO500_output_parser_project_name_stage,
+            config.tso500_output_parser_project_name_stage,
             self.runfolder_obj.nexus_project_name,
-            config.TSO500_output_parser_project_id_stage,
+            config.tso500_output_parser_project_id_stage,
             self.runfolder_obj.nexus_project_id,
-            config.TSO500_output_parser_job_id_stage,
+            config.tso500_output_parser_job_id_stage,
             "$jobid",
-            config.TSO500_output_parser_coverage_bedfile_id_stage,
+            config.tso500_output_parser_coverage_bedfile_id_stage,
             bedfiles["sambamba"],
-            config.TSO500_output_parser_coverage_app_id_stage,
+            config.tso500_output_parser_coverage_app_id_stage,
             config.coverage_app_id,
-            config.TSO500_output_parser_fastqc_app_id_stage,
+            config.tso500_output_parser_fastqc_app_id_stage,
             config.fastqc_app_id,
-            config.TSO500_output_parser_sompy_app_id_stage,
+            config.tso500_output_parser_sompy_app_id_stage,
             config.sompy_app_id,
-            config.TSO500_output_parser_multiqc_app_id_stage,
+            config.tso500_output_parser_multiqc_app_id_stage,
             config.multiqc_app_id,
-            config.TSO500_output_parser_upload_multiqc_app_id_stage,
+            config.tso500_output_parser_upload_multiqc_app_id_stage,
             config.upload_multiqc_app_id,
-            config.TSO500_output_parser_coverage_commands_stage,
-            config.TSO500_output_parser_coverage_commands % (self.panel_dictionary[tso_pan_num]["coverage_min_basecall_qual"],self.panel_dictionary[tso_pan_num]["coverage_min_mapping_qual"]),
-            config.TSO500_output_parser_coverage_level_stage,
+            config.tso500_output_parser_coverage_commands_stage,
+            config.tso500_output_parser_coverage_commands
+            % (
+                self.panel_dictionary[tso_pan_num]["coverage_min_basecall_qual"],
+                self.panel_dictionary[tso_pan_num]["coverage_min_mapping_qual"],
+            ),
+            config.tso500_output_parser_coverage_level_stage,
             self.panel_dictionary[tso_pan_num]["clinical_coverage_depth"],
-            config.TSO500_output_parser_multiqc_coverage_level_stage,
+            config.tso500_output_parser_multiqc_coverage_level_stage,
             self.panel_dictionary[tso_pan_num]["multiqc_coverage_level"],
             " -d $jobid ",
-            self.dest,
-            self.dest_cmd,
-            self.token
+            self.dest_str,
+            self.token,
         ]
         dx_command = "".join(map(str, dx_command_list))
         return dx_command
 
-
-    def create_mokasnp_command(self, fastq, pannumber):
+    def create_mokasnp_cmd(self, fastq):
         """
-        Input = R1 fastq filename and Pan number for a single sample 
+        Input = R1 fastq filename and Pan number for a single sample
         Returns = dx run command for MokaSNP workflow (string)
         """
-        # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+        # Call function to build nexus fastq paths - returns tuple for read1 and read2 and
+        # samplename
         fastqs = self.nexus_fastq_paths(fastq)
-        # build dictionary of pan number specific/relevant bedfile to be used in command
-        bedfiles = self.nexus_bedfiles(pannumber)
 
-        # A bedfile to restrict variant calling should be defined in the config file, otherwise it's None
-        # In the future we may not restrict variant calling using a bed file so support this possible use case.
-        if bedfiles["variant_calling_bedfile"]:
-            bedfiles_string = (
-                config.snp_sentieon_targets_bed + bedfiles["variant_calling_bedfile"] 
-            )
-        else:
-            bedfiles_string = ""
-
-        # create the MokaSNP dx command
+        # Create the MokaSNP dx command
         dx_command_list = [
-            self.mokasnp_command,
+            config.mokasnp_cmd,
             fastqs[2],
             config.snp_fastqc1,
             fastqs[0],
@@ -1486,8 +1559,7 @@ class RunfolderProcessor(object):
             fastqs[1],
             config.snp_sentieon_samplename,
             fastqs[2],
-            self.dest,
-            self.dest_cmd,
+            self.dest_str,
             self.token,
         ]
 
@@ -1495,60 +1567,72 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_mokapipe_command(self, fastq, pannumber):
+    def create_mokapipe_cmd(self, fastq, pannumber):
         """
-        Input = R1 fastq filename and Pan number for a single sample 
+        Input = R1 fastq filename and Pan number for a single sample
         Returns =  dx run command for Mokapipe (string)
         """
-        # build nexus fastq paths - returns tuple for read1 and read2 and samplename and dictionary for bed files
+        # build nexus fastq paths - returns tuple for read1 and read2 and samplename and dictionary
+        # for bed files
         fastqs = self.nexus_fastq_paths(fastq)
         bedfiles = self.nexus_bedfiles(pannumber)
 
-        # Congenica requires variant calling to be restricted in the pipeline, in some cases to prevent incidental findings
+        # Congenica requires variant calling to be restricted in the pipeline, in some cases to
+        # prevent incidental findings
         # The variant caller pads bed files by 100bp by default so this may need to be overruled.
         # The panel dictionary default is to give a value of 0, which turns off this padding.
-        # An example of the use of this is for STG BrCa who require padding of +/- 11bp (bed files are padded +/-10bp) so 1bp padding is applied.
-        mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input + str(self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"])
-        
+        # An example of the use of this is for STG BrCa who require padding of +/- 11bp (bed files
+        # are padded +/-10bp) so 1bp padding is applied.
+        mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input + str(
+            self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"]
+        )
+
         if bedfiles["variant_calling_bedfile"]:
             bedfiles_string = (
-                config.mokapipe_filter_vcf_with_bedfile_bed_input + bedfiles["variant_calling_bedfile"]
+                config.mokapipe_filter_vcf_with_bedfile_bed_input
+                + bedfiles["variant_calling_bedfile"]
             )
         else:
             bedfiles_string = ""
-        
-        # if sample is not NA12878 we want to skip the vcfeval stage (the app default is skip=false).
-        # assume it's not a NA12878 sample, and set skip = true 
+
+        # if sample is not NA12878 we want to skip the vcfeval stage (the app default is skip=false)
+        # assume it's not a NA12878 sample, and set skip = true
         vcf_eval_skip_string = config.mokapipe_happy_skip % ("true")
         # set the prefix as the samplename
         vcf_eval_prefix_string = config.mokapipe_happy_prefix % (fastqs[2])
-        
-        # identify NA12878 samples by checking if any reference ids (flanked by underscores) are present in the fastq name 
-        # if so, set skip = false
-        for id in config.reference_sample_ids:
-            if "_%s_" % (id) in fastq:
-                vcf_eval_skip_string = config.mokapipe_happy_skip % ("false")
-                
 
-        #Set parameters specific to FH_PRS app. 
-        #Set skip flag to false, specify instance type for human exome app and specify output as both vcf and gvcf.
-        FH_prs_bedfile_cmd = config.mokapipe_fhPRS_bedfile_input + bedfiles["fh_prs"]
-        FH_prs_cmd_string=""
+        # identify NA12878 samples by checking if any reference ids (flanked by underscores) are
+        # present in the fastq name
+        # if so, set skip = false
+        for ref_sample_id in config.reference_sample_ids:
+            if f"_{ref_sample_id}_" in fastq:
+                vcf_eval_skip_string = config.mokapipe_happy_skip % ("false")
+
+        # Set parameters specific to FH_PRS app.
+        # Set skip flag to false, specify instance type for human exome app and specify output as
+        # both vcf and gvcf
+        fh_prs_bedfile_cmd = config.mokapipe_fhprs_bedfile_input + bedfiles["fh_prs"]
+        fh_prs_cmd_string = ""
 
         if self.panel_dictionary[pannumber]["FH"]:
-            FH_prs_cmd_string+=config.mokapipe_fhPRS_skip
-            FH_prs_cmd_string+= " --instance-type %s=%s" % (config.mokapipe_gatk_human_exome_stage, config.mokapipe_FH_humanexome_instance_type)
-            FH_prs_cmd_string+= config.mokapipe_haplotype_vcf_output_format
-            FH_prs_cmd_string+= config.mokapipe_FH_GATK_timeout_args
-            
-        masked_reference_command=""
+            fh_prs_cmd_string += (
+                f"{config.mokapipe_fhprs_skip} "
+                f"--instance-type {config.mokapipe_gatk_human_exome_stage}="
+                f"{config.mokapipe_fh_humanexome_instance_type}"
+                f"{config.mokapipe_haplotype_vcf_output_format}"
+                f"{config.mokapipe_fh_gatk_timeout_args}"
+            )
+
+        masked_reference_command = ""
         if self.panel_dictionary[pannumber]["masked_reference"]:
-            masked_reference_command+=config.mokapipe_bwa_ref_genome % (self.panel_dictionary[pannumber]["masked_reference"])
-        #If sample is not R134 we want skip to be set to true (app default is skip=true)
-        #Assume all sample are not R134 and set skip to true
+            masked_reference_command += config.mokapipe_bwa_ref_genome % (
+                self.panel_dictionary[pannumber]["masked_reference"]
+            )
+        # If sample is not R134 we want skip to be set to true (app default is skip=true)
+        # Assume all sample are not R134 and set skip to true
         # create the dx command
         dx_command = (
-            self.mokapipe_command
+            config.mokapipe_cmd
             + fastqs[2]
             + config.mokapipe_fastqc1
             + fastqs[0]
@@ -1567,30 +1651,32 @@ class RunfolderProcessor(object):
             + config.mokapipe_sambamba_count_overlapping_mates
             + vcf_eval_skip_string
             + vcf_eval_prefix_string
-            + FH_prs_cmd_string
-            + FH_prs_bedfile_cmd
+            + fh_prs_cmd_string
+            + fh_prs_bedfile_cmd
             + masked_reference_command
             + config.mokapipe_mokapicard_vendorbed_input
             + bedfiles["hsmetrics"]
-            + config.mokapipe_mokapicard_capturetype_stage % (self.panel_dictionary[pannumber]["capture_type"])
+            + config.mokapipe_mokapicard_capturetype_stage
+            % (self.panel_dictionary[pannumber]["capture_type"])
             + mokapipe_padding_cmd
             + bedfiles_string
-            + self.dest
-            + self.dest_cmd
+            + self.dest_str
             + self.token
         )
 
         return dx_command
-    
+
     def build_congenica_command_file(self):
         """
         Inputs = None
-        Create the file which will hold congenica commands. 
+        Create the file which will hold congenica commands.
         Write the source command, activating the environment (the sdk).
         Returns = None
         """
-        with open(self.congenica_upload_command_script_path, "w") as congenica_script:
-            congenica_script.write(self.source_command + "\n")
+        with open(
+            self.congenica_upload_command_script_path, "w", encoding="utf-8"
+        ) as congenica_script:
+            congenica_script.write(config.source_cmd + "\n")
 
     def build_congenica_input_command(self):
         """
@@ -1605,15 +1691,13 @@ class RunfolderProcessor(object):
         # $jobid is a bash variable which will be populated by when run on the command line
         # The python script has three inputs - the analysisID ($jobid), -t is the DSS and -p is the
         # DNA Nexus project the analysis is running in
-        dx_command = "%s $jobid -t congenica -p %s)" % (
-            self.decision_support_preperation,
-            self.runfolder_obj.nexus_project_name,
-        )
+        dx_command = f"{config.decision_support_preperation} $jobid -t congenica "\
+                     "-p {self.runfolder_obj.nexus_project_name})"
         return dx_command
 
     def create_mokaamp_command(self, fastq, pannumber):
         """
-        Input = R1 fastq file name and pan number for a single sample        
+        Input = R1 fastq file name and pan number for a single sample
         Returns = dx run command for MokaAMP (string)
         """
 
@@ -1623,7 +1707,7 @@ class RunfolderProcessor(object):
 
         # create the MokaAMP dx command
         dx_command_list = [
-            self.mokaamp_command,
+            config.mokaamp_cmd,
             fastqs[2],
             config.mokaamp_fastq_R1_stage,
             fastqs[0],
@@ -1649,16 +1733,15 @@ class RunfolderProcessor(object):
             bedfiles["mokaamp_variant_calling_bed"],
             config.mokaamp_varscan_strandfilter_stage,
             self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"],
-            config.mokaamp_bwa_reference_stage,
+            config.mokaamp_bwa_ref_stage,
             config.mokaamp_vardict_samplename_stage,
             fastqs[2],
             config.mokaamp_varscan_samplename_stage,
             fastqs[2],
-            config.mokaamp_mokapicard_reference_stage,
-            config.mokaamp_vardict_reference_stage,
-            config.mokaamp_varscan_reference_stage,
-            self.dest,
-            self.dest_cmd,
+            config.mokaamp_mokapicard_ref_stage,
+            config.mokaamp_vardict_ref_stage,
+            config.mokaamp_varscan_ref_stage,
+            self.dest_str,
             self.token,
         ]
 
@@ -1666,27 +1749,27 @@ class RunfolderProcessor(object):
         # to string and join to create dx_command.
         dx_command = "".join(map(str, dx_command_list))
 
-        # remove the bit that adds the job to the depends on list for the negative control as varscan
-        # fails on nearempty/-empty BAM files 
+        # remove the bit that adds the job to the depends on list for the negative control as
+        # varscan fails on nearempty/-empty BAM files
         # and this will stop multiqc etc running
         if "NTC" in fastqs[0]:
             dx_command = dx_command.replace("jobid=$(", "").replace(
-                config.Nexus_API_Key + ")", config.Nexus_API_Key
+                config.nexus_apikey + ")", config.nexus_apikey
             )
         return dx_command
 
     def create_mokacan_command(self, fastq, pannumber):
         """
-        Input = R1 fastq file name and pan number for a single sample        
+        Input = R1 fastq file name and pan number for a single sample
         Returns = dx run command for MokaCAN (string)
         """
         # build nexus fastq paths - returns tuple for read1 and read2 and dictionary for bed files
         fastqs = self.nexus_fastq_paths(fastq)
         bedfiles = self.nexus_bedfiles(pannumber)
-        
+
         # create the MokaCAN dx command
         dx_command_list = [
-            self.mokacan_command,
+            config.mokacan_cmd,
             fastqs[2],
             config.mokacan_fastqc_r1_stage,
             fastqs[0],
@@ -1708,25 +1791,23 @@ class RunfolderProcessor(object):
             bedfiles["variant_calling_bedfile"],
             config.mokacan_vardict_sample_name_stage,
             fastqs[2],
-            config.mokacan_senteion_bwa_reference_stage,
-            config.mokacan_senteion_reference_stage,
-            config.mokacan_picard_reference_stage,
-            config.mokacan_vardict_reference_stage,
-            config.mokacan_varscan_reference_stage,
-            self.dest,
-            self.dest_cmd,
+            config.mokacan_senteion_bwa_ref_stage,
+            config.mokacan_senteion_ref_stage,
+            config.mokacan_picard_ref_stage,
+            config.mokacan_vardict_ref_stage,
+            config.mokacan_varscan_ref_stage,
+            self.dest_str,
             self.token,
         ]
 
         # Variables from dx_command_list are read from config file as various atomic types. Convert
         # to string and join to create dx_command.
         dx_command = "".join(map(str, dx_command_list))
-        # remove the bit that adds the job to the depends on list for the negative control as varscan
-        # fails on near empty/-empty BAM files 
-        # and this will stop multiqc etc running
+        # remove the bit that adds the job to the depends on list for the negative control as
+        # varscan fails on near empty/-empty BAM files and this will stop multiqc etc running
         if "NTCcon" in fastqs[0]:
             dx_command = dx_command.replace("jobid=$(", "").replace(
-                config.Nexus_API_Key + ")", config.Nexus_API_Key
+                config.nexus_apikey + ")", config.nexus_apikey
             )
         return dx_command
 
@@ -1734,25 +1815,27 @@ class RunfolderProcessor(object):
         """
         Input = a list of panels which requires RPKM analysis
         Pan numbers are used to distinguish between samples analysed in congenica or in ingenuity.
-        These samples have the same wetlab work so can be combined for RPKM analysis 
+        These samples have the same wetlab work so can be combined for RPKM analysis
         This function determines if it's a pan number that can be analysed alongside another
         (using config bedfile property "RPKM_also_analyse")
-        and makes sure only one job is set off       
+        and makes sure only one job is set off
         Returns = A list with one pan number per analysis.
         """
         # empty list to return
         cleaned_list = []
         # list of bedfiles which already have a rpkm command
         addressed_panels = []
-        
+
         # for each panel which requires rpkm
         for pannumber in rpkm_list:
             # create a list for all pannumbers that should be included in this analysis
             rpkm_analysis_list = [pannumber]
-            # if it is analysed with other panels append these other panels 
+            # if it is analysed with other panels append these other panels
             if self.panel_dictionary[pannumber]["RPKM_also_analyse"]:
-                rpkm_analysis_list += self.panel_dictionary[pannumber]["RPKM_also_analyse"]
-            
+                rpkm_analysis_list += self.panel_dictionary[pannumber][
+                    "RPKM_also_analyse"
+                ]
+
             # Now we have all pan numbers to be included within this analysis
             for panel in rpkm_analysis_list:
                 # if one of the panels involved in the analysis has already been parsed this panel
@@ -1769,15 +1852,15 @@ class RunfolderProcessor(object):
 
         # record output of logic in logfile
         self.loggers.script.info(
-            "Combining panels for RPKM analysis.\nOriginal panels: {}\nPanels to analyse: {}".format(
-                ",".join(rpkm_list), ",".join(cleaned_list)
-            )
+            "Combining panels for RPKM analysis.\nOriginal panels: %s\nPanels to analyse: %s",
+            ",".join(rpkm_list),
+            ",".join(cleaned_list),
         )
 
         # return list to be used to build rpkm command(s).
         return cleaned_list
 
-    def create_rpkm_command(self, pannumber):
+    def create_rpkm_cmd(self, pannumber):
         """
         Input = Pannumber for a single RPKM analysis
         The RPKM app requires a project id, bedfile and a string containing the pannumber(s) of all
@@ -1788,18 +1871,22 @@ class RunfolderProcessor(object):
         # call function to return all the bedfile paths
         bedfiles = self.nexus_bedfiles(pannumber)
 
-        # Samples with different pannumbers can be included in the same RPKM analysis (defined in config).
-        # The app takes these pan numbers as a string, and will seperate on commas to identify multiple pan numbers
-        string_of_pannumbers_to_analyse = ",".join(set(self.panel_dictionary[pannumber]["RPKM_also_analyse"]))
+        # Samples with different pannumbers can be included in the same RPKM analysis
+        # (defined in config).
+        # The app takes these pan numbers as a string, and will seperate on commas to identify
+        # multiple pan numbers
+        string_of_pannumbers_to_analyse = ",".join(
+            set(self.panel_dictionary[pannumber]["RPKM_also_analyse"])
+        )
 
         # build RPKM command
         dx_command = (
-            self.RPKM_command
-            + config.rpkm_bedfile_input
+            config.RPKM_cmd
+            + config.mokapipe_rpkm_bedfile_input
             + bedfiles["rpkm_bedfile"]
-            + config.rpkm_project_input
+            + config.mokapipe_rpkm_project_input
             + self.runfolder_obj.nexus_project_name
-            + config.rpkm_bamfiles_to_download_input
+            + config.mokapipe_rpkm_bamfiles_to_download_input
             + string_of_pannumbers_to_analyse
             + self.project
             + self.runfolder_obj.nexus_project_id
@@ -1808,7 +1895,6 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-
     def run_congenica_command(self, fastq, pannumber):
         """
         Input = R1 fastq file name and pan number for a single sample
@@ -1816,19 +1902,23 @@ class RunfolderProcessor(object):
         doesn't run until the vcfs have been created.
         These inputs are created by a python script, which is called immediately before this job,
         and the output is captures into the variable $analysisid
-        The panel dictionary in the config file is used to determine the congenica project, IR template and credentials file
+        The panel dictionary in the config file is used to determine the congenica project, IR
+        template and credentials file
         This command is appended to a file which will be run after the QC is passed.
         Returns = dx run command for congenica import app (string)
         """
-        # check if any reference ids (flanked by underscores) are present in the fastq name and if so skip this step
-        for id in config.reference_sample_ids:
-            if "_%s_" % (id) in fastq:
+        # Check if any reference ids (flanked by underscores) are present in fastq name
+        # If so skip this step
+        for ref_sample_id in config.reference_sample_ids:
+            if f"_{ref_sample_id}_" in fastq:
                 self.loggers.script.info(
-                        "UA_pass 'NA12878 sample detected, not building congenica upload command for {}'".format(fastq)
-                        )
+                    "UA_pass 'NA12878 sample detected, "
+                    "not building congenica upload command for %s'",
+                    fastq,
+                )
                 return None
 
-        # the nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name 
+        # nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name
         # The samplename (fastqs[2]) is used to name the job
         fastqs = self.nexus_fastq_paths(fastq)
 
@@ -1845,43 +1935,44 @@ class RunfolderProcessor(object):
             + fastqs[2]
             + config.congenica_samplename
             + fastqs[2]
-            + self.dest
-            + self.dest_cmd
+            + self.dest_str
             + self.token.replace(")", self.congenica_upload_command_redirect)
         )
         return dx_command
 
-    def run_congenica_SFTP_upload_command(self, fastq):
+    def run_congenica_sftp_upload_command(self, fastq):
         """
         Input = R1 fastq file name
-        The import congenica SFTP app takes inputs in the format jobid.outputname which ensures the job
+        The import congenica SFTP app takes inputs in the format jobid.outputname which ensures job
         doesn't run until the vcfs have been created.
         These inputs are created by a python script, which is called immediately before this job,
         and the output is captures into the variable $analysisid
-        Upload via SFTP only required the bam and vcf inputs, and does not need projectids, IR templates or names 
+        Upload via SFTP only required the bam and vcf inputs, and does not need projectids,
+        IR templates or names
         This command is appended to a file which will be run after the QC is passed.
         Returns = dx run command for congenica import app (string)
         """
-        # check if any reference ids (flanked by underscores) are present in the fastq name and if so skip this step
-        for id in config.reference_sample_ids:
-            if "_%s_" % (id) in fastq:
+        # Check if reference ids (flanked by underscores) present in fastq name. If so, skip step
+        for ref_sample_id in config.reference_sample_ids:
+            if f"_{ref_sample_id}_" in fastq:
                 self.loggers.script.info(
-                        "UA_pass 'NA12878 sample detected, not building congenica upload command for {}'".format(fastq)
-                        )
+                    "UA_pass 'NA12878 sample detected, "
+                    "not building congenica upload command for %s'",
+                    fastq,
+                )
                 return None
 
-        # the nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name 
+        # nexus_fastq_paths function returns paths to the fastq files in Nexus and the sample name
         # The samplename (fastqs[2]) is used to name the job
         fastqs = self.nexus_fastq_paths(fastq)
 
         dx_command = (
-            self.congenica_sftp_upload_command
+            config.congenica_sftp_upload_cmd
             + "' $analysisid '"
             + " --name "
             + "congenica_SFTP_upload_"
             + fastqs[2]
-            + self.dest
-            + self.dest_cmd
+            + self.dest_str
             + self.token.replace(")", self.congenica_upload_command_redirect)
         )
         return dx_command
@@ -1893,30 +1984,30 @@ class RunfolderProcessor(object):
         The job ids are built into a string which can be passed to any apps to ensure these jobs
         don't start until all specified jobs have sucessfully completed.
         However, some jobs should be excluded from the depends list, eg negative controls
-        Returns = command which adds jobid to the bash string (string) 
+        Returns = command which adds jobid to the bash string (string)
         """
         if "NTCcon" in fastq:
             return None
         else:
             return self.depends_list
 
-    def create_multiqc_command(self):
+    def create_multiqc_cmd(self):
         """
         Input = None
         MultiQC is run at the very end of the run, after all QC tools have been run.
         MultiQC requires a project to download data from, and a coverage level.
-        The coverage level differs between panels. The lowest value for the panels on this run is used.
+        Coverage level differs between panels. Lowest value for the panels on this run is used.
         Returns = dx run command (string)
         """
         # set super high coverage level
         lowest_coverage_level = 1000000
-        # for each fastq to be processed 
+        # for each fastq to be processed
         for fastq in self.list_of_processed_samples:
             # take read one
             if re.search(r"_R1_", fastq):
                 # extract_Pan number and use this to determine which coverage level is required
                 pannumber = re.search(r"Pan\d+", fastq).group()
-                # if the required coverage for this panel is less than current value of lowest_coverage_level
+                # If required coverage for panel is less than current value of lowest_coverage_level
                 # set lowest_coverage_level to this level
                 if (
                     int(self.panel_dictionary[pannumber]["multiqc_coverage_level"])
@@ -1925,10 +2016,10 @@ class RunfolderProcessor(object):
                     lowest_coverage_level = self.panel_dictionary[pannumber][
                         "multiqc_coverage_level"
                     ]
-        
+
         # build multiqc command
         dx_command = (
-            self.multiqc_command
+            config.multiqc_cmd
             + config.multiqc_project_input
             + self.runfolder_obj.nexus_project_name
             + config.multiqc_coverage_level_input
@@ -1940,19 +2031,21 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def create_upload_multiqc_command(self):
+    def create_upload_multiqc_cmd(self):
         """
         Input = None
-        The input to the upload_multiqc app is the html_report output of the multiqc app, in the format jobid:output_name
+        The input to the upload_multiqc app is the html_report output of the multiqc app,
+        in the format jobid:output_name
         Returns = dx run command for the upload_multiqc app (string)
         """
-        # dx run + config.app_project + config.upload_multiqc_path + -imultiqc_html= + input.html
+        # dx run + config.tools_project + config.upload_multiqc_path + -imultiqc_html= + input.html
         dx_command = "".join(
             [
-                self.upload_multiqc_command,
+                config.upload_multiqc_cmd,
                 " -imultiqc_html=$jobid:multiqc_report",
                 " -imultiqc_data_input=$jobid:multiqc",
-                " -imultiqc_data_input=%s:/QC/*" % (self.runfolder_obj.nexus_project_name) + self.runfolder_obj.runfolder_name + config.cluster_density_file_suffix,
+                f" -imultiqc_data_input={(self.runfolder_obj.nexus_project_name)}:/QC/*"
+                f"{self.runfolder_obj.runfolder_name}{config.cluster_density_file_suffix}",
                 self.project,
                 self.runfolder_obj.nexus_project_id,
                 self.token,
@@ -1960,14 +2053,14 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def run_peddy_command(self):
+    def run_peddy_cmd(self):
         """
         Input = None
-        Peddy is run once at the end of a WES run. It takes a project and downloads all the required files.
+        Peddy is run once at the end of a WES run. Downloads required files from project
         Returns = dx run command for the peddy app (string)
         """
         dx_command = (
-            self.peddy_command
+            config.peddy_cmd
             + config.peddy_project_input
             + self.runfolder_obj.nexus_project_name
             + self.project
@@ -1983,9 +2076,13 @@ class RunfolderProcessor(object):
         Takes a list of commands generated by start_building_dx_run_cmds and writes them to file.
         Returns = None
         """
-        with open(self.runfolder_obj.runfolder_dx_run_script, "w") as dxrun_commands:
+        with open(
+            self.runfolder_obj.runfolder_dx_run_script, "w", encoding="utf-8"
+        ) as dxrun_commands:
             # remove any None values from the command_list
-            dxrun_commands.writelines([line + "\n" for line in filter(None, command_list)])
+            dxrun_commands.writelines(
+                [line + "\n" for line in filter(None, command_list)]
+            )
 
     def clean_stderr(self, err):
         """
@@ -1995,15 +2092,19 @@ class RunfolderProcessor(object):
         This function can be removed after the conflict is sorted
         Returns = lines of stderror not including expected messages (list)
         """
-        std_err_ignore_match = r"/usr/local/lib/python2.7/dist-packages/urllib3/util/ssl_.py:"
+        std_err_ignore_match = (
+            r"/usr/local/lib/python2.7/dist-packages/urllib3/util/ssl_.py:"
+        )
         sni_warning_ignore_match = r"SNIMissingWarning"
         cleaned_error = []
         for line in err.split("\n"):
             clean_line = line.rstrip()
             # If the line doesn't contain a string that should be ignored
-            if not re.match(std_err_ignore_match, clean_line) and not re.search(
-                sni_warning_ignore_match, clean_line
-            ) and len(clean_line) > 0:
+            if (
+                not re.match(std_err_ignore_match, clean_line)
+                and not re.search(sni_warning_ignore_match, clean_line)
+                and len(clean_line) > 0
+            ):
                 cleaned_error.append(line)
         return cleaned_error
 
@@ -2012,7 +2113,7 @@ class RunfolderProcessor(object):
         Input = None
         Executes the bash script written in write_dx_run_cmds()
         Cleans and reports any standard error via the logfile and sys.log
-        Outpt = None 
+        Outpt = None
         """
 
         # run a command to execute the bash script made above
@@ -2028,20 +2129,16 @@ class RunfolderProcessor(object):
             if cleaned_error:
                 # send message to logger/log file
                 self.loggers.script.error(
-                    "UA_fail 'Error when starting pipeline for run {}. Stderror = \n{}".format(
-                        self.runfolder_obj.runfolder_name, "\n".join(cleaned_error)
-                    )
+                    "UA_fail 'Error when starting pipeline for run %s. Stderror = \n%s",
+                    self.runfolder_obj.runfolder_name,
+                    "\n".join(cleaned_error),
                 )
-
         else:
             # write error message to log file
             self.loggers.script.info(
-                "UA_pass 'dx run commands issued without error for run {}'".format(
-                    self.runfolder_obj.runfolder_name
-                )
+                "UA_pass 'dx run commands issued without error for run %s'",
+                self.runfolder_obj.runfolder_name,
             )
-
-
 
     def write_opms_queries_custom_panel(self, list_of_processed_samples):
         """
@@ -2050,7 +2147,7 @@ class RunfolderProcessor(object):
         This function will create an insert query for each sample processed through mokapipe.
         If mokapipe samples are found this function will return a dictionary of sample counts, and a
         list of queries to be added to global dictionary.
-        Returns = dictionary or None 
+        Returns = dictionary or None
         """
         queries = []
         for fastq in list_of_processed_samples:
@@ -2058,12 +2155,29 @@ class RunfolderProcessor(object):
             if "_R1_" in fastq:
                 # extract_Pan number
                 pannumber = re.search(r"Pan\d+", fastq).group()
-                query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
-                # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
-                if self.panel_dictionary[pannumber]["mokapipe"] and self.panel_dictionary[pannumber]["congenica_upload"]:
-                    queries.append(query.format(str(fastq.split("_")[2]), config.mokapipe_congenica_pipeline_ID, self.runfolder_obj.runfolder_name))
+                query = (
+                    "insert into NGSCustomRuns(DNAnumber,PipelineVersion, "
+                    "RunID) values ('%s','%s','%s')"
+                )
+                # if the pan number was processed using mokapipe and congenica, add query to list
+                # of queries, capturing the DNA number from the fastq name
+                if (
+                    self.panel_dictionary[pannumber]["mokapipe"]
+                    and self.panel_dictionary[pannumber]["congenica_upload"]
+                ):
+                    queries.append(
+                        query,
+                        str(fastq.split("_")[2]),
+                        config.mokapipe_congenica_pipeline_id,
+                        self.runfolder_obj.runfolder_name,
+                    )
                 elif self.panel_dictionary[pannumber]["mokacan"]:
-                    queries.append(query.format(str(fastq.split("_")[2]), config.mokacan_pipeline_ID, self.runfolder_obj.runfolder_name))
+                    queries.append(
+                        query,
+                        str(fastq.split("_")[2]),
+                        config.mokacan_pipeline_id,
+                        self.runfolder_obj.runfolder_name,
+                    )
 
         if queries:
             # add workflow to sql dictionary
@@ -2075,8 +2189,8 @@ class RunfolderProcessor(object):
         """
         Input = list of fastqs to be processed
         All samples processed using MokaWES are recorded in moka using a single update query.
-        If MokaWES samples - Function populates a dictionary of sample counts, query (str) and list of samplenames to
-        be added to global dictionary.
+        If MokaWES samples - Function populates a dictionary of sample counts, query (str) and list
+        of samplenames to be added to global dictionary.
         Returns = dictionary or None
         """
         dnanumbers = []
@@ -2091,59 +2205,68 @@ class RunfolderProcessor(object):
                 # capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokawes"]:
                     dnanumbers.append(str(fastq.split("_")[2]))
-                    # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
+                    # Call function to build nexus fastq paths - returns tuple for read1, read2
+                    # and samplename
                     samplenames.append(self.nexus_fastq_paths(fastq)[2])
         if dnanumbers:
             return {
                 "count": len(dnanumbers),
                 "query": [
                     "update NGSTest set PipelineVersion = "
-                    + config.mokawes_pipeline_ID
+                    + config.mokawes_pipeline_id
                     + " , StatusID = "
-                    + config.mokastatus_dataproc_ID
+                    + config.mokastatus_dataproc_id
                     + " where dna in ('"
                     + ("','").join(dnanumbers)
                     + "') and StatusID = "
-                    + config.mokastat_nextsq_ID
+                    + config.mokastatus_nextsq_id
                 ],
-                "samplename_email": samplenames
+                "samplename_email": samplenames,
             }
         else:
             return None
 
-    
     def write_opms_queries_mokasnp(self, list_of_processed_samples):
         """
         Input = list of fastqs to be processed
         Samples processed using MokaSNP are recorded in Moka using an insert query.
         This function will create an insert query for each sample processed through MokaSNP.
-        If SNP genotyping samples are found this function will return a dictionary of sample counts, and a
-        list of queries to be added to global dictionary.
-        Returns = dictionary or None 
+        If SNP genotyping samples are found this function will return a dictionary of sample counts
+        and a list of queries to be added to global dictionary.
+        Returns = dictionary or None
         """
         queries = []
         for fastq in list_of_processed_samples:
-            # take read one
-            if "_R1_" in fastq:
-                # extract_Pan number
-                pannumber = re.search(r"Pan\d+", fastq).group()
-                query = "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values ('{}','{}','{}')"
-                # if the pan number was processed using mokapipe and congenica, add the query to list of queries, capturing the DNA number from the fastq name
+            if "_R1_" in fastq:  # Take read one
+                pannumber = re.search(r"Pan\d+", fastq).group()  # Extract Pan number
+                query = (
+                    "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) "
+                    "values ('%s','%s','%s')"
+                )
+                # If the pan number was processed using mokapipe and congenica, add the query to
+                # list of queries, capturing the DNA number from the fastq name
                 if self.panel_dictionary[pannumber]["mokasnp"]:
-                    queries.append(query.format(str(fastq.split("_")[2]), config.mokasnp_pipeline_ID, self.runfolder_obj.runfolder_name))
-
+                    queries.append(
+                        query,
+                        str(fastq.split("_")[2]),
+                        config.mokasnp_pipeline_id,
+                        self.runfolder_obj.runfolder_name,
+                    )
         if queries:
-            # add workflow to sql dictionary
-            return {"count": len(queries), "query": queries}
+            return {
+                "count": len(queries),
+                "query": queries,
+            }  # Add workflow to sql dictionary
         else:
             return None
 
     def write_opms_queries_oncology(self, list_of_processed_samples):
         """
         Input = list of fastqs to be processed
-        Samples tested using mokaamp or mokaonc are not booked into Moka until the analysis stage so
+        Samples tested using mokaamp are not booked into Moka until the analysis stage so
         create a query using IDs form the samplename
-        An insert query is build for each sample, recording the IDs which are the 3rd and 4th elements in the samplename.
+        An insert query is build for each sample, recording the IDs which are the 3rd and 4th
+        elements in the samplename.
         These are recorded along with the pipeline version and the name of the run.
         If not a None object is returned
         Return = dictionary
@@ -2153,9 +2276,10 @@ class RunfolderProcessor(object):
         # loop through fastqs to see which workflows were used
         for fastq in list_of_processed_samples:
             # take read one
-            # example fastq names: ONC20085_08_EK20826_2025029_SWIFT57_Pan2684_S8_R2_001.fastq.gz and ONC20085_06_NTCcon1_SWIFT57_Pan2684_S6_R1_001.fastq.gz
+            # example fastq names: ONC20085_08_EK20826_2025029_SWIFT57_Pan2684_S8_R2_001.fastq.gz
+            # and ONC20085_06_NTCcon1_SWIFT57_Pan2684_S6_R1_001.fastq.gz
             if "_R1_" in fastq:
-                # extract_Pan number 
+                # extract_Pan number
                 pannumber = re.search(r"Pan\d+", fastq).group()
                 # record id1 and 2 by taking the second and third elements
                 id1, id2 = fastq.split("_")[2:4]
@@ -2163,103 +2287,174 @@ class RunfolderProcessor(object):
                 if "NTCcon" in fastq:
                     id2 = "NULL"
                 # define query with placeholders
-                query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('{}','{}','{}','{}','{}')"
+                query = (
+                    "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,"
+                    "ngspanelid) values ('%s','%s','%s','%s','%s')"
+                )
 
-                # for mokaamp and mokaonc if relevant build the query, populating the placeholders.
+                # for mokaamp and archerdx if relevant build the query, populating the placeholders.
                 # add the name of the workflow to the list of workflows
                 if self.panel_dictionary[pannumber]["mokaamp"]:
-                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.mokaamp_pipeline_ID, pannumber.replace("Pan","")))
-                    workflows.append(config.mokaamp_path.split("/")[-1])
+                    queries.append(
+                        query,
+                        id1,
+                        id2,
+                        self.runfolder_obj.runfolder_name,
+                        config.mokaamp_pipeline_id,
+                        pannumber.replace("Pan", ""),
+                    )
+                    workflows.append(config.mokaamp_path.rsplit("/", maxsplit=1)[-1])
                 if self.panel_dictionary[pannumber]["archerdx"]:
-                    queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.archerDx_pipeline_ID, pannumber.replace("Pan","")))
-                    workflows.append(config.fastqc_app.split("/")[-1])
-        # if queries have been created return a dictionary
-        if queries:
-            # use queries list to create a count of samples, return list of queries and the set of the workflows (removing duplicates)
-            return {"count": len(queries), "query": queries, "workflows": set(workflows)}
+                    queries.append(
+                        query,
+                        id1,
+                        id2,
+                        self.runfolder_obj.runfolder_name,
+                        config.archerDx_pipeline_id,
+                        pannumber.replace("Pan", ""),
+                    )
+                    workflows.append(config.fastqc_app.rsplit("/", maxsplit=1)[-1])
+        if queries:  # If queries have been created return a dictionary
+            # Use queries list to create a count of samples, return list of queries and the set of
+            # the workflows (removing duplicates)
+            return {
+                "count": len(queries),
+                "query": queries,
+                "workflows": set(workflows),
+            }
         else:
             return None
 
-    def write_opms_queries_TSO500(self, list_of_processed_samples):
+    def write_opms_queries_tso500(self, list_of_processed_samples):
         """
         Input = list of samples to be processed
-        Samples tested using TSO500
-        An insert query is build for each sample, recording the IDs which are the 3rd and 4th elements in the samplename.
+        Samples tested using tso500
+        An insert query is build for each sample, recording the IDs which are the 3rd and 4th
+        elements in the samplename.
         These are recorded along with the pipeline version and the name of the run.
         If not a None object is returned
         Return = dictionary
         """
         queries = []
         workflows = []
-        query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('{}','{}','{}','{}','{}')"
+        query = (
+            "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,"
+            "ngspanelid) values ('%s','%s','%s','%s','%s')"
+        )
 
         # loop through fastqs to see which workflows were used
         for sample in list_of_processed_samples:
-            # extract_Pan number 
+            # extract_Pan number
             pannumber = re.search(r"Pan\d+", sample).group()
-            if self.panel_dictionary[pannumber]["TSO500"]:
+            if self.panel_dictionary[pannumber]["tso500"]:
                 # record id1 and 2 by taking the second and third elements
                 id1, id2 = sample.split("_")[2:4]
                 # define query with placeholders
-                queries.append(query.format(id1, id2, self.runfolder_obj.runfolder_name, config.TSO_pipeline_ID, pannumber.replace("Pan","")))
+                queries.append(
+                    query,
+                    id1,
+                    id2,
+                    self.runfolder_obj.runfolder_name,
+                    config.tso_pipeline_id,
+                    pannumber.replace("Pan", ""),
+                )
                 workflows.append(config.tso500_app_name)
-        # if queries have been created return a dictionary
-        if queries:
-            # use queries list to create a count of samples, return list of queries and the set of the workflows (removing duplicates)
-            return {"count": len(queries), "query": queries, "workflows": set(workflows)}
+        if queries:  # If queries have been created return a dictionary
+            # Use queries list to create a count of samples, return list of queries and the set of
+            # the workflows (removing duplicates)
+            return {
+                "count": len(queries),
+                "query": queries,
+                "workflows": set(workflows),
+            }
         else:
             return None
 
     def send_opms_queries(self):
         """
-        Input = None
         Queries to record the pipeline versions are emailed.
-        This function sends emails, using the queries written to self.sql_queries by the various test specific functions.
+        This function sends emails, using the queries written to self.sql_queries by the various
+        test specific functions.
         Oncology and rare disease emails are sent seperately and independantly of each other.
         Returns = None
         """
         # email body template - has the following requires following format:
-        # {config.test_email_header} {self.runfolder_obj.runfolder_name} being processed using workflow(s) {",".join(self.sql_queries["oncology"]["workflows"])}\n\n{sql_string}\n{"\n".join(self.sql_queries["oncology"]["query"])}\n
+        # {config.test_email_header} {self.runfolder_obj.runfolder_name} being processed using
+        # workflow(s) {",".join(self.sql_queries["oncology"]["workflows"])}\n\n{sql_str}\n{"\n".
+        # join(self.sql_queries["oncology"]["query"])}\n
         #
-        #  eg 
-        #   AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL (config.test_email_header - can be empty string)
-        #   999999_M02353_0496_000000000-D8M36_SWIFT being processed using workflow(s) MokaAMP_v2.2 (self.runfolder_obj.runfolder_name ... ",".join(self.sql_queries["oncology"]["workflows"]) )
-        #   Please update Moka using the below queries and ensure that 10 records are updated: (sql string - This can change - is different for the email to users who don't need the sql queries)
-        #   insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('NTCcon','NULL','999999_M02353_0496_000000000-D8M36_SWIFT','4851','4081') (sql queries - can be empty string for users who don't need these)
-    
-        sql_email_message = ("{} {} being processed using workflow(s) {}\n\n{}\n{}\n") 
-        
-        # send oncology email first
-        if self.sql_queries["oncology"]:
-            email_subject = (
-                "MOKA ALERT: Started pipeline for {}".format(self.runfolder_obj.runfolder_name)
-            )
-            email_priority = 1  # high priority
-            # populate the sql_string needed to fill the email_message
-            sql_string = "Please update Moka using the below queries and ensure that {} records are updated:\n\n".format(str(self.sql_queries["oncology"]["count"]))
-            email_message = sql_email_message.format(config.test_email_header, self.runfolder_obj.runfolder_name,",".join(self.sql_queries["oncology"]["workflows"]),sql_string,"\n".join(self.sql_queries["oncology"]["query"]))
-            # send email - if needed, pass multiple recipients in a list (no longer needed)
-            self.send_an_email(config.you, email_subject, email_message, email_priority)
+        #  eg
+        #   AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL
+        # (config.test_email_header - can be empty string)
+        #   999999_M02353_0496_000000000-D8M36_SWIFT being processed using workflow(s) MokaAMP_v2.2
+        # (self.runfolder_obj.runfolder_name ...
+        # ",".join(self.sql_queries["oncology"]["workflows"]))
+        #   Please update Moka using the below queries and ensure that 10 records are updated:
+        # (sql string - This can change - is different for the email to users who don't need the
+        # sql queries)
+        #   insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid)
+        # values ('NTCcon','NULL','999999_M02353_0496_000000000-D8M36_SWIFT','4851','4081') (sql
+        # queries - can be empty string for users who don't need these)
 
-            # email_for_cancer_ops leads to inform the pipeline has started
-            # set sql_string for the email message
-            sql_string="{} samples are being processed".format(str(self.sql_queries["oncology"]["count"]))
-            # fill template using empty string in place of sql queries
-            email_message = sql_email_message.format(config.test_email_header,self.runfolder_obj.runfolder_name,",".join(self.sql_queries["oncology"]["workflows"]),sql_string,"")
-            self.send_an_email(config.oncology_you, email_subject, email_message, email_priority)
-        
-        # Send TSO500 queries
-        if self.sql_queries["TSO500"]:
-            email_subject = (
-                "MOKA ALERT: Started pipeline for {}".format(self.runfolder_obj.runfolder_name)
-            )
-            email_priority = 1  # high priority
-            sql_string = "Please update Moka using the below queries and ensure that {} records are updated:\n\n".format(str(self.sql_queries["TSO500"]["count"]))
-            email_message = sql_email_message.format(config.test_email_header, self.runfolder_obj.runfolder_name,",".join(self.sql_queries["TSO500"]["workflows"]),sql_string,"\n".join(self.sql_queries["TSO500"]["query"]))
-            # send email
-            self.send_an_email(config.you, email_subject, email_message, email_priority)
+        sql_email_msg = "%s %s being processed using workflow(s) %s\n\n%s\n%s\n"
 
-        # build rare disease emails
+        if self.sql_queries["oncology"]:  # Send oncology email first
+            email_subject = (
+                f"MOKA ALERT: Started pipeline for {self.runfolder_obj.runfolder_name}"
+            )
+            # Populate sql_str needed to fill the email_msg
+            sql_str = (
+                "Please update Moka using the below queries and ensure that %s "
+                "records are updated:\n\n",
+                str(self.sql_queries["oncology"]["count"]),
+            )
+            email_msg = sql_email_msg, (
+                config.test_email_header,
+                self.runfolder_obj.runfolder_name,
+                ",".join(self.sql_queries["oncology"]["workflows"]),
+                sql_str,
+                "\n".join(self.sql_queries["oncology"]["query"]),
+            )
+            self.email.send_email(recipients=config.mokaguys_recipient,
+                                  email_subject=email_subject, email_message=email_msg)
+
+            # Email_for_cancer_ops leads to inform the pipeline has started
+            # Set sql_str for the email message
+            sql_str = "%s samples are being processed", str(
+                self.sql_queries["oncology"]["count"]
+            )
+
+            # Fill template using empty string in place of sql queries
+            email_msg = sql_email_msg, (
+                config.test_email_header,
+                self.runfolder_obj.runfolder_name,
+                ",".join(self.sql_queries["oncology"]["workflows"]),
+                sql_str,
+                "",
+            )
+            self.email.send_email(recipients=config.oncology_ops_email,
+                                  email_subject=email_subject, email_message=email_msg)
+
+        if self.sql_queries["tso500"]:  # Send tso500 queries
+            email_subject = (
+                f"MOKA ALERT: Started pipeline for {self.runfolder_obj.runfolder_name}"
+            )
+            sql_str = (
+                "Please update Moka using the below queries and ensure that %s records "
+                "are updated:\n\n",
+                str(self.sql_queries["tso500"]["count"]),
+            )
+            email_msg = sql_email_msg, (
+                config.test_email_header,
+                self.runfolder_obj.runfolder_name,
+                ",".join(self.sql_queries["tso500"]["workflows"]),
+                sql_str,
+                "\n".join(self.sql_queries["tso500"]["query"]),
+            )
+            self.email.send_email(recipients=config.mokaguys_recipient,
+                                  email_subject=email_subject, email_message=email_msg)
+
+        # Build rare disease emails
         # Start counters and placeholders to for email data
         workflows = []
         sql_statements = []
@@ -2267,38 +2462,53 @@ class RunfolderProcessor(object):
 
         # for each pipeline take queries, sample count and workflow name
         if self.sql_queries["custom_panel"]:
-            workflows.append(config.mokapipe_path.split("/")[-1])
+            workflows.append(config.mokapipe_path.rsplit("/", maxsplit=1)[-1])
             sql_statements += self.sql_queries["custom_panel"]["query"]
             count += self.sql_queries["custom_panel"]["count"]
         if self.sql_queries["mokawes"]:
-            workflows.append(config.mokawes_path.split("/")[-1])
+            workflows.append(config.mokawes_path.rsplit("/", maxsplit=1)[-1])
             sql_statements += self.sql_queries["mokawes"]["query"]
             count += self.sql_queries["mokawes"]["count"]
         if self.sql_queries["mokasnp"]:
-            workflows.append(config.mokasnp_path.split("/")[-1])
+            workflows.append(config.mokasnp_path.rsplit("/", maxsplit=1)[-1])
             sql_statements += self.sql_queries["mokasnp"]["query"]
             count += self.sql_queries["mokasnp"]["count"]
-        
+
         # send email
         if workflows and sql_statements:
             # email this query
             email_subject = (
-                "MOKA ALERT: Started pipeline for {}".format(self.runfolder_obj.runfolder_name)
+                f"MOKA ALERT: Started pipeline for {self.runfolder_obj.runfolder_name}"
             )
-            email_priority = 1  # high priority
-            sql_string = "Please update Moka using the below queries and ensure that {} records are updated:\n\n".format(str(count))
-            email_message = sql_email_message.format(config.test_email_header, self.runfolder_obj.runfolder_name,",".join(set(workflows)),sql_string,"\n".join(sql_statements))
-            # send email
-            self.send_an_email(config.you, email_subject, email_message, email_priority)
+            sql_str = (
+                "Please update Moka using the below queries and ensure that "
+                f"{str(count)} records are updated:\n\n"
+            )
 
-        if self.sql_queries["mokawes"]:
-            # send email to WES team to help IR upload
+            email_msg = sql_email_msg, (
+                config.test_email_header,
+                self.runfolder_obj.runfolder_name,
+                ",".join(set(workflows)),
+                sql_str,
+                "\n".join(sql_statements),
+            )
+            self.email.send_email(recipients=config.mokaguys_recipient,
+                                  email_subject=email_subject, email_message=email_msg)
+
+        if self.sql_queries["mokawes"]:  # Send email to WES team to help IR upload
             email_subject = (
-                    "MOKA ALERT: Started pipeline for {}".format(self.runfolder_obj.runfolder_name)
-                )
-            sql_string = "The following samples are being processed:\n"
-            email_message = sql_email_message.format(config.test_email_header, self.runfolder_obj.runfolder_name,config.mokawes_path.split("/")[-1],sql_string,"\n".join(self.sql_queries["mokawes"]["samplename_email"]))
-            self.send_an_email(config.WES_sample_name_email_list, email_subject, email_message, email_priority)
+                f"MOKA ALERT: Started pipeline for {self.runfolder_obj.runfolder_name}"
+            )
+            sql_str = "The following samples are being processed:\n"
+            email_msg = sql_email_msg, (
+                config.test_email_header,
+                self.runfolder_obj.runfolder_name,
+                config.mokawes_path.rsplit("/", maxsplit=1)[-1],
+                sql_str,
+                "\n".join(self.sql_queries["mokawes"]["samplename_email"]),
+            )
+            self.email.send_email(recipients=config.wes_samplename_email_list,
+                                  email_subject=email_subject, email_message=email_msg)
 
     def upload_rest_of_runfolder(self):
         """
@@ -2308,14 +2518,20 @@ class RunfolderProcessor(object):
         This function copies the samplesheet from into the runfolder and then builds and executes
         the backup_runfolder.py command
         Returns = filepath to backup script.
-        """       
+        """
         # try to copy samplesheet into project
         if os.path.exists(self.runfolder_obj.runfolder_samplesheet_path):
             copyfile(
                 self.runfolder_obj.runfolder_samplesheet_path,
-                os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name),
+                os.path.join(
+                    self.runfolder_obj.runfolderpath,
+                    self.runfolder_obj.runfolder_samplesheet_name,
+                ),
             )
-            self.loggers.script.info("Samplesheet copied to runfolder: {}".format(self.runfolder_obj.runfolder_samplesheet_name))
+            self.loggers.script.info(
+                "Samplesheet copied to runfolder: %s",
+                self.runfolder_obj.runfolder_samplesheet_name,
+            )
         else:
             self.loggers.script.info("Samplesheet not copied to runfolder")
         # build backup_runfolder.py command ignore some files
@@ -2329,21 +2545,21 @@ class RunfolderProcessor(object):
             + " --ignore /L00,DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath "
             + config.backup_runfolder_logfile
             + " -a "
-            + config.Nexus_API_Key
+            + config.nexus_apikey
         )
 
-        # write to the log file that the runfolder is being uploaded, linking to log files for cmds and stdout
-        self.loggers.script.info("Uploading rest of run folder to Nexus using backup_runfolder.py")
+        # Record runfolder upload in log file, linking to log files for cmds and stdout
+        self.loggers.script.info(
+            "Uploading rest of run folder to Nexus using backup_runfolder.py"
+        )
         self.loggers.script.info(cmd)
         self.loggers.script.info(
-            "See standard out from these commands in logfile at {}".format(
-                self.loggers.backup.filepath
-            )
+            "See standard out from these commands in logfile at %s",
+            self.loggers.backup.filepath,
         )
 
-        # run the command
         _out, _err = self.execute_subprocess_command(cmd)
-        #TODO add some tests for stderr?
+        # TODO add some tests for stderr?
 
         return self.loggers.backup.filepath
 
@@ -2351,46 +2567,37 @@ class RunfolderProcessor(object):
         """
         Input = None
         Upload the log files found in list_log_files.
-        Returns = filepath to the logfile containing output from the command, string of files to be uploaded and name of the stage to test
+        Returns = filepath to the logfile containing output from the command, string of files to be
+        uploaded and name of the stage to test
         """
-        # define where files to be uploaded to
+        # Define where files to be uploaded to
         nexus_upload_folder = (
             "/"
-            + self.runfolder_obj.nexus_project_name.replace(self.nexusproject, "")
+            + self.runfolder_obj.nexus_project_name.replace(
+                config.dnanexus_project_prefix, ""
+            )
             + "/Logfiles/"
         )
-        # create a list of files to be used to check outputs
+        # Create list of files to be used to check outputs
         files_to_upload_list = []
-        # create a space delimited string of files to be uploaded defined by the logger class
+        # Create space delimited string of files to be uploaded defined by the logger class
         files_to_upload_string = ""
         for logger in self.loggers.all:
             if logger.filepath:
-                files_to_upload_string += "'"
-                files_to_upload_string += logger.filepath
-                files_to_upload_string += "' "
-                # add to the list
+                files_to_upload_string += f"'{logger.filepath}"
                 files_to_upload_list.append(logger.filepath)
-        
-        # add the demultiplexing log file
-        files_to_upload_string += " '" + os.path.join(self.runfolder_obj.runfolderpath, config.bcl2fastqlog_name) + "'"
-        files_to_upload_list.append(os.path.join(self.runfolder_obj.runfolderpath, config.bcl2fastqlog_name))
-        # create a list which, when joined will form a single upload agent command, uploading each
-        # file in logger.filepath
-        command_list = [
-            config.upload_agent_path,
-            "--auth-token",
-            config.Nexus_API_Key,
-            "--project",
-            self.runfolder_obj.nexus_project_name,
-            "--folder",
-            nexus_upload_folder,
-            " --do-not-compress ",
-            files_to_upload_string
-        ]
-        # convert list to command line and append the logfile list
-        cmd = " ".join(command_list)
 
-        # write these commands to the upload agent logfile before upload.
+        files_to_upload_string += f" '{self.bcl2fastq_logfile}'"
+        files_to_upload_list.append(self.bcl2fastq_logfile)
+        # Create a list which, when joined will form a single upload agent command, uploading each
+        # file in logger.filepath
+        cmd = (f"{config.upload_agent_path} "
+               f"--auth-token {config.nexus_apikey} "
+               f"--project {self.runfolder_obj.nexus_project_name} "
+               f"--folder {nexus_upload_folder} "
+               f"--do-not-compress {files_to_upload_string}")
+
+        # Write commands to the upload agent logfile before upload
         self.loggers.script.info("Uploading logfiles.")
         self.loggers.script.info(cmd)
 
@@ -2398,12 +2605,15 @@ class RunfolderProcessor(object):
         out, err = self.execute_subprocess_command(cmd)
 
         # capture stdout to upload agent log file AND the script logfile
-        self.loggers.script.info("Uploading logfiles (this will not be included in DNANexus)")
+        self.loggers.script.info(
+            "Uploading logfiles (this will not be included in DNANexus)"
+        )
         self.loggers.script.info(out)
         self.loggers.script.info(err)
         self.loggers.upload_agent.info(out)
         self.loggers.upload_agent.info(err)
-        #TODO check correct logfile is being checked
+
+        # TODO check correct logfile is being checked
         return self.loggers.upload_agent.filepath, files_to_upload_list, "log files"
 
     def look_for_upload_errors_backup_runfolder(self, logfile):
@@ -2416,10 +2626,10 @@ class RunfolderProcessor(object):
         # if error statement seen report it regardless of presence of success statement
         # if success statement seen report it too.
         # set flags to avoid multiple reports
-        
+
         upload_ok = False
         error_seen = []
-        with open(logfile, "r") as backup_logfile:
+        with open(logfile, "r", encoding="utf-8") as backup_logfile:
             for line in backup_logfile.readlines():
                 if config.backup_runfolder_success in line:
                     upload_ok = True
@@ -2427,18 +2637,13 @@ class RunfolderProcessor(object):
                     error_seen.append(line)
         if error_seen:
             self.loggers.script.error(
-                "UA_fail 'Error in upload of rest of runfolder: {} in runfolder {}'".format(
-                    ";".join(error_seen), self.runfolder_obj.runfolder_name
-                )
+                "UA_fail 'Error in upload of rest of runfolder: %s in runfolder %s'",
+                ";".join(error_seen), self.runfolder_obj.runfolder_name
             )
         if upload_ok:
             self.loggers.script.info(
-                "UA_pass 'Rest of runfolder {} uploaded ok'".format(
-                    self.runfolder_obj.runfolder_name
-                    )
-                )
-
-
+                "UA_pass 'Rest of runfolder %s uploaded ok'", self.runfolder_obj.runfolder_name
+            )
 
     def execute_subprocess_command(self, command):
         """
@@ -2446,58 +2651,18 @@ class RunfolderProcessor(object):
         Takes a command, executes using subprocess.Popen
         Returns =  (stdout,stderr) (tuple)
         """
-        
+
         proc = subprocess.Popen(
-                [command],
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                shell=True,
-                executable="/bin/bash",
-            )
+            [command],
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            shell=True,
+            executable="/bin/bash",
+        )
 
         # capture the streams
         return proc.communicate()
-        
-    def send_an_email(self, to, email_subject, email_message, email_priority=3):
-        """
-        Input = email address, email_subject, email_message, email_priority (optional, default = standard priority)
-        Uses smtplib to send an email. 
-        Returns = None
-        """
-        # write to logfile
-        self.loggers.script.info(
-            "UA_pass Email being composed: Recipient: {}. Subject: {}. Body:\n{}".format(
-                str(to), email_subject, email_message
-            )
-        )
-        
-        # create message object
-        m = Message()
-        # set priority
-        m["X-Priority"] = str(email_priority)
-        # set subject
-        m["Subject"] = email_subject
-        # set body
-        m.set_payload(email_message)
 
-        try:
-            # server details
-            server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
-            server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
-            server.starttls()
-            server.ehlo()
-            server.login(config.user, config.pw)
-            server.sendmail(config.me, to, m.as_string())
-
-            # write to logfile
-            self.loggers.script.info(
-                "UA_pass Email sent without error"
-            )
-        except:
-            # write to logfile
-            self.loggers.script.info(
-                "UA_fail Error when attempting to send email"
-            )
 
 if __name__ == "__main__":
     # Create a custom list object to hold sequencing runs
