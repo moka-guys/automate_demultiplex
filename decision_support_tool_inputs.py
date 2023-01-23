@@ -138,14 +138,14 @@ class DecisionTooler(object):
         create a namedtuple named as the workflow name and with the output names from the app which
         produces the decision support tool inputs. returns the namedtuple
         """
-        if ps["mokawes"]:
+        if ps["pipeline"] == "mokawes":
             return self.workflow_object(
                 "mokawes",
                 config.mokawes_sentieon_vcf_output_name,
                 config.mokawes_sentieon_bam_output_name,
                 config.mokawes_sentieon_bai_output_name,
             )
-        elif ps["mokapipe"]:
+        elif ps["pipeline"] == "mokapipe":
             return self.workflow_object(
                 "mokapipe", config.mokapipe_vcf_output_name, config.mokapipe_bam_output_name, None,
             )

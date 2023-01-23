@@ -302,7 +302,7 @@ class RunfolderProcessor(object):
                 self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(
                     self.list_of_processed_samples
                 )
-                self.sql_queries["oncology"] = self.write_opms_queries_oncology(
+                self.sql_queries["mokaamp"] = self.write_opms_queries_mokaamp(
                     self.list_of_processed_samples
                 )
                 self.sql_queries["tso500"] = self.write_opms_queries_tso500(
@@ -352,8 +352,8 @@ class RunfolderProcessor(object):
                 dictionary_to_return[panel][
                     setting
                 ] = panel_config.default_panel_properties[setting]
-            for setting in panel_config.panel_settings[panel]:
-                dictionary_to_return[panel][setting] = panel_config.panel_settings[
+            for setting in panel_config.panel_dict[panel]:
+                dictionary_to_return[panel][setting] = panel_config.panel_dict[
                     panel
                 ][setting]
         return dictionary_to_return
@@ -1124,11 +1124,11 @@ class RunfolderProcessor(object):
                 config.tools_project + config.bedfile_folder + pannumber + "data.bed"
             )
         # FH
-        if self.panel_dictionary[pannumber]["FH_PRS_bedfile"]:
+        if self.panel_dictionary[pannumber]["FH"]:
             bed_dict["fh_prs"] = (
                 config.tools_project
                 + config.bedfile_folder
-                + self.panel_dictionary[pannumber]["FH_PRS_bedfile"]
+                + panel_config.FH_PRS_bedfile
             )
         else:
             bed_dict["fh_prs"] = (
@@ -1162,26 +1162,12 @@ class RunfolderProcessor(object):
             bed_dict["variant_calling_bedfile"] = None
 
         # paired end BED file used by primer clipping tool
-        if self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]:
-            bed_dict["mokaamp_bed_PE_input"] = (
-                config.tools_project
-                + config.bedfile_folder
-                + self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]
-            )
-        else:
-            bed_dict["mokaamp_bed_PE_input"] = (
+        bed_dict["mokaamp_bed_PE_input"] = (
                 config.tools_project + config.bedfile_folder + pannumber + "_PE.bed"
             )
 
-        #  oncology variant callers need the flat file
-        if self.panel_dictionary[pannumber]["mokaamp_bed_PE_input"]:
-            bed_dict["mokaamp_variant_calling_bed"] = (
-                config.tools_project
-                + config.bedfile_folder
-                + self.panel_dictionary[pannumber]["mokaamp_variant_calling_bed"]
-            )
-        else:
-            bed_dict["mokaamp_variant_calling_bed"] = (
+        #  mokaamp variant callers need the flat file
+        bed_dict["mokaamp_variant_calling_bed"] = (
                 config.tools_project + config.bedfile_folder + pannumber + "_flat.bed"
             )
 
@@ -1218,7 +1204,6 @@ class RunfolderProcessor(object):
         # lists/flags for run wide commands
         peddy = False
         congenica_upload = False
-        joint_variant_calling = False  # not currently in use
         rpkm_list = []  # list for panels needing RPKM analysis
         tso500 = False
 
@@ -1236,65 +1221,63 @@ class RunfolderProcessor(object):
                 # sent to.
 
                 # If panel is to be processed using MokaWES
-                if self.panel_dictionary[panel]["mokawes"]:
+                if self.panel_dictionary[panel]["pipeline"] == "mokawes":
                     # call function to build the MokaWES command and add to command list and
                     # depends list
                     commands_list.append(self.create_mokamokawes_cmd(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
                     # if sample to be uploaded to congenica there are 2 methods.
-                    # if a project id is specified in the config it means it can eb uploaded as if
+                    # if a project id is specified in the config it means it can be uploaded as if
                     # it were a custom panel sample
                     # eg IR does not need patient specific info and can be uploaded using the
                     # upload agent
                     # otherwise if the congenica project is not set it should be uploaded via the
                     # SFTP
-                    if self.panel_dictionary[panel]["congenica_upload"]:
-                        congenica_upload = True
-                        commands_list.append(self.build_congenica_input_command())
-                        # if project is specified then upload via upload agent
-                        if self.panel_dictionary[panel]["congenica_project"]:
-                            commands_list.append(
-                                self.run_congenica_command(fastq, panel)
-                            )
-                        # if project is not specified upload via SFTP
-                        else:
-                            commands_list.append(
-                                self.run_congenica_sftp_upload_command(fastq)
-                            )
+                    congenica_upload = True
+                    commands_list.append(self.build_congenica_input_command())
+                    # if project is specified then upload via upload agent
+                    if self.panel_dictionary[panel]["congenica_project"]:
+                        commands_list.append(
+                            self.run_congenica_command(fastq, panel)
+                        )
+                    # if project is not specified upload via SFTP
+                    else:
+                        commands_list.append(
+                            self.run_congenica_sftp_upload_command(fastq)
+                        )
                     # Set run-wide flags for Peddy and joint variant calling
                     if self.panel_dictionary[panel]["peddy"]:
                         peddy = True
 
                 # If panel is to be processed using mokapipe
-                if self.panel_dictionary[panel]["mokapipe"]:
+                if self.panel_dictionary[panel]["pipeline"] == "mokapipe":
                     # call function to build the Mokapipe command and add to command list and
                     # depends list
                     commands_list.append(self.create_mokapipe_cmd(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
                     # # Add command for congenica
-                    if self.panel_dictionary[panel]["congenica_upload"]:
-                        congenica_upload = True
-                        commands_list.append(self.build_congenica_input_command())
-                        commands_list.append(self.run_congenica_command(fastq, panel))
+                    congenica_upload = True
+                    commands_list.append(self.build_congenica_input_command())
+                    commands_list.append(self.run_congenica_command(fastq, panel))
                     # add panel to RPKM list
                     if self.panel_dictionary[panel]["RPKM_bedfile_pan_number"]:
                         rpkm_list.append(panel)
 
                 # If panel is to be processed using MokaAMP
-                if self.panel_dictionary[panel]["mokaamp"]:
+                if self.panel_dictionary[panel]["pipeline"] == "mokaamp":
                     commands_list.append(self.create_mokaamp_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
 
-                if self.panel_dictionary[panel]["mokacan"]:
+                if self.panel_dictionary[panel]["pipeline"] == "mokacan":
                     commands_list.append(self.create_mokacan_command(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
 
                 # if panel is to be processed using mokasnp
-                if self.panel_dictionary[panel]["mokasnp"]:
+                if self.panel_dictionary[panel]["pipeline"] == "mokasnp":
                     commands_list.append(self.create_mokasnp_cmd(fastq, panel))
                     commands_list.append(self.add_to_depends_list(fastq))
 
-                if self.panel_dictionary[panel]["archerdx"]:
+                if self.panel_dictionary[panel]["pipeline"] == "archerdx":
                     commands_list.append(self.create_archerdx_cmd(fastq, panel, "R1"))
                     commands_list.append(self.add_to_depends_list(fastq))
                     commands_list.append(self.create_archerdx_cmd(fastq, panel, "R2"))
@@ -1305,7 +1288,7 @@ class RunfolderProcessor(object):
                 # the sample
                 panel = re.search(r"Pan\d+", fastq).group()
 
-                if self.panel_dictionary[panel]["tso500"]:
+                if self.panel_dictionary[panel]["pipeline"] == "tso500":
                     tso500 = True
 
         # if there is a congenica upload create the file which will be run manually, once QC is
@@ -1319,8 +1302,6 @@ class RunfolderProcessor(object):
             )
 
         # build run wide commands
-        if joint_variant_calling:
-            commands_list.append(self.create_joint_variant_calling_command())
         if rpkm_list:
             # Create a set of RPKM numbers for one command per panel
             # pass this list into function which takes into account panels which are to be analysed
@@ -1451,7 +1432,7 @@ class RunfolderProcessor(object):
         high_throughput_list = [
             pannumber
             for pannumber in pannumber_list
-            if self.panel_dictionary[pannumber]["tso500_high_throughput"]
+            if self.panel_dictionary[pannumber]["panel_name"] == "tso500_high_throughput"
         ]
         # if this list is not empty apply high throughput instance type, otherwise use low
         # throughput instance type
@@ -1499,7 +1480,7 @@ class RunfolderProcessor(object):
         # This function will need to adapt to this (currently takes settings from the first item in
         # the list of tso500 pan numbers in config.
         # This primarily affects coverage
-        tso_pan_num = panel_config.tso500_panel_list[0]
+        tso_pan_num = "Pan4969"
         # build dictionary of pan number specific/relevant bedfile to be used in command
         bedfiles = self.nexus_bedfiles(tso_pan_num)
         dx_command_list = [
@@ -1583,9 +1564,8 @@ class RunfolderProcessor(object):
         # The panel dictionary default is to give a value of 0, which turns off this padding.
         # An example of the use of this is for STG BrCa who require padding of +/- 11bp (bed files
         # are padded +/-10bp) so 1bp padding is applied.
-        mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input + str(
-            self.panel_dictionary[pannumber]["mokapipe_haplotype_caller_padding"]
-        )
+        mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input + \
+                               str(panel_config.mokapipe_haplotype_caller_padding)
 
         if bedfiles["variant_calling_bedfile"]:
             bedfiles_string = (
@@ -1731,8 +1711,6 @@ class RunfolderProcessor(object):
             bedfiles["mokaamp_variant_calling_bed"],
             config.mokaamp_varscan_bed_stage,
             bedfiles["mokaamp_variant_calling_bed"],
-            config.mokaamp_varscan_strandfilter_stage,
-            self.panel_dictionary[pannumber]["mokaamp_varscan_strandfilter"],
             config.mokaamp_bwa_ref_stage,
             config.mokaamp_vardict_samplename_stage,
             fastqs[2],
@@ -1817,7 +1795,6 @@ class RunfolderProcessor(object):
         Pan numbers are used to distinguish between samples analysed in congenica or in ingenuity.
         These samples have the same wetlab work so can be combined for RPKM analysis
         This function determines if it's a pan number that can be analysed alongside another
-        (using config bedfile property "RPKM_also_analyse")
         and makes sure only one job is set off
         Returns = A list with one pan number per analysis.
         """
@@ -1831,10 +1808,14 @@ class RunfolderProcessor(object):
             # create a list for all pannumbers that should be included in this analysis
             rpkm_analysis_list = [pannumber]
             # if it is analysed with other panels append these other panels
-            if self.panel_dictionary[pannumber]["RPKM_also_analyse"]:
-                rpkm_analysis_list += self.panel_dictionary[pannumber][
-                    "RPKM_also_analyse"
-                ]
+            if ((self.panel_dictionary[pannumber]["pipeline"] == "mokapipe") and
+               (self.panel_dictionary[pannumber]["analyse_RPKM"])):
+                if self.panel_dictionary[pannumber]["panel_name"] == "vcp1":
+                    rpkm_analysis_list += panel_config.vcp1_panel_list
+                elif self.panel_dictionary[pannumber]["panel_name"] == "vcp1":
+                    rpkm_analysis_list += panel_config.vcp2_panel_list
+                elif self.panel_dictionary[pannumber]["panel_name"] == "vcp3":
+                    rpkm_analysis_list += panel_config.vcp3_panel_list
 
             # Now we have all pan numbers to be included within this analysis
             for panel in rpkm_analysis_list:
@@ -1875,9 +1856,15 @@ class RunfolderProcessor(object):
         # (defined in config).
         # The app takes these pan numbers as a string, and will seperate on commas to identify
         # multiple pan numbers
-        string_of_pannumbers_to_analyse = ",".join(
-            set(self.panel_dictionary[pannumber]["RPKM_also_analyse"])
-        )
+
+        if self.panel_dictionary[pannumber]["panel_name"] == "vcp1":
+            rpkm_analysis_list = panel_config.vcp1_panel_list
+        elif self.panel_dictionary[pannumber]["panel_name"] == "vcp1":
+            rpkm_analysis_list = panel_config.vcp2_panel_list
+        elif self.panel_dictionary[pannumber]["panel_name"] == "vcp3":
+            rpkm_analysis_list = panel_config.vcp3_panel_list
+
+        string_of_pannumbers_to_analyse = ",".join(set(rpkm_analysis_list))
 
         # build RPKM command
         dx_command = (
@@ -2162,7 +2149,7 @@ class RunfolderProcessor(object):
                 # if the pan number was processed using mokapipe and congenica, add query to list
                 # of queries, capturing the DNA number from the fastq name
                 if (
-                    self.panel_dictionary[pannumber]["mokapipe"]
+                    self.panel_dictionary[pannumber]["pipeline"] == "mokapipe"
                     and self.panel_dictionary[pannumber]["congenica_upload"]
                 ):
                     queries.append(
@@ -2171,7 +2158,7 @@ class RunfolderProcessor(object):
                         config.mokapipe_congenica_pipeline_id,
                         self.runfolder_obj.runfolder_name,
                     )
-                elif self.panel_dictionary[pannumber]["mokacan"]:
+                elif self.panel_dictionary[pannumber]["pipeline"] == "mokacan":
                     queries.append(
                         query,
                         str(fastq.split("_")[2]),
@@ -2203,7 +2190,7 @@ class RunfolderProcessor(object):
                 pannumber = re.search(r"Pan\d+", fastq).group()
                 # if the pan number was processed using mokawes add the query to list of queries,
                 # capturing the DNA number from the fastq name
-                if self.panel_dictionary[pannumber]["mokawes"]:
+                if self.panel_dictionary[pannumber]["pipeline"] == "mokawes":
                     dnanumbers.append(str(fastq.split("_")[2]))
                     # Call function to build nexus fastq paths - returns tuple for read1, read2
                     # and samplename
@@ -2245,7 +2232,7 @@ class RunfolderProcessor(object):
                 )
                 # If the pan number was processed using mokapipe and congenica, add the query to
                 # list of queries, capturing the DNA number from the fastq name
-                if self.panel_dictionary[pannumber]["mokasnp"]:
+                if self.panel_dictionary[pannumber]["pipeline"] == "mokasnp":
                     queries.append(
                         query,
                         str(fastq.split("_")[2]),
@@ -2260,7 +2247,7 @@ class RunfolderProcessor(object):
         else:
             return None
 
-    def write_opms_queries_oncology(self, list_of_processed_samples):
+    def write_opms_queries_mokaamp(self, list_of_processed_samples):
         """
         Input = list of fastqs to be processed
         Samples tested using mokaamp are not booked into Moka until the analysis stage so
@@ -2294,7 +2281,7 @@ class RunfolderProcessor(object):
 
                 # for mokaamp and archerdx if relevant build the query, populating the placeholders.
                 # add the name of the workflow to the list of workflows
-                if self.panel_dictionary[pannumber]["mokaamp"]:
+                if self.panel_dictionary[pannumber]["pipeline"] == "mokaamp":
                     queries.append(
                         query,
                         id1,
@@ -2304,7 +2291,7 @@ class RunfolderProcessor(object):
                         pannumber.replace("Pan", ""),
                     )
                     workflows.append(config.mokaamp_path.rsplit("/", maxsplit=1)[-1])
-                if self.panel_dictionary[pannumber]["archerdx"]:
+                if self.panel_dictionary[pannumber]["pipeline"] == "archerdx":
                     queries.append(
                         query,
                         id1,
@@ -2346,7 +2333,7 @@ class RunfolderProcessor(object):
         for sample in list_of_processed_samples:
             # extract_Pan number
             pannumber = re.search(r"Pan\d+", sample).group()
-            if self.panel_dictionary[pannumber]["tso500"]:
+            if self.panel_dictionary[pannumber]["pipeline"] == "tso500":
                 # record id1 and 2 by taking the second and third elements
                 id1, id2 = sample.split("_")[2:4]
                 # define query with placeholders
@@ -2380,15 +2367,15 @@ class RunfolderProcessor(object):
         """
         # email body template - has the following requires following format:
         # {config.test_email_header} {self.runfolder_obj.runfolder_name} being processed using
-        # workflow(s) {",".join(self.sql_queries["oncology"]["workflows"])}\n\n{sql_str}\n{"\n".
-        # join(self.sql_queries["oncology"]["query"])}\n
+        # workflow(s) {",".join(self.sql_queries["mokaamp"]["workflows"])}\n\n{sql_str}\n{"\n".
+        # join(self.sql_queries["mokaamp"]["query"])}\n
         #
         #  eg
         #   AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL
         # (config.test_email_header - can be empty string)
         #   999999_M02353_0496_000000000-D8M36_SWIFT being processed using workflow(s) MokaAMP_v2.2
         # (self.runfolder_obj.runfolder_name ...
-        # ",".join(self.sql_queries["oncology"]["workflows"]))
+        # ",".join(self.sql_queries["mokaamp"]["workflows"]))
         #   Please update Moka using the below queries and ensure that 10 records are updated:
         # (sql string - This can change - is different for the email to users who don't need the
         # sql queries)
@@ -2398,7 +2385,7 @@ class RunfolderProcessor(object):
 
         sql_email_msg = "%s %s being processed using workflow(s) %s\n\n%s\n%s\n"
 
-        if self.sql_queries["oncology"]:  # Send oncology email first
+        if self.sql_queries["mokaamp"]:  # Send mokaamp email first
             email_subject = (
                 f"MOKA ALERT: Started pipeline for {self.runfolder_obj.runfolder_name}"
             )
@@ -2406,14 +2393,14 @@ class RunfolderProcessor(object):
             sql_str = (
                 "Please update Moka using the below queries and ensure that %s "
                 "records are updated:\n\n",
-                str(self.sql_queries["oncology"]["count"]),
+                str(self.sql_queries["mokaamp"]["count"]),
             )
             email_msg = sql_email_msg, (
                 config.test_email_header,
                 self.runfolder_obj.runfolder_name,
-                ",".join(self.sql_queries["oncology"]["workflows"]),
+                ",".join(self.sql_queries["mokaamp"]["workflows"]),
                 sql_str,
-                "\n".join(self.sql_queries["oncology"]["query"]),
+                "\n".join(self.sql_queries["mokaamp"]["query"]),
             )
             self.email.send_email(recipients=config.mokaguys_recipient,
                                   email_subject=email_subject, email_message=email_msg)
@@ -2421,14 +2408,14 @@ class RunfolderProcessor(object):
             # Email_for_cancer_ops leads to inform the pipeline has started
             # Set sql_str for the email message
             sql_str = "%s samples are being processed", str(
-                self.sql_queries["oncology"]["count"]
+                self.sql_queries["mokaamp"]["count"]
             )
 
             # Fill template using empty string in place of sql queries
             email_msg = sql_email_msg, (
                 config.test_email_header,
                 self.runfolder_obj.runfolder_name,
-                ",".join(self.sql_queries["oncology"]["workflows"]),
+                ",".join(self.sql_queries["mokaamp"]["workflows"]),
                 sql_str,
                 "",
             )
