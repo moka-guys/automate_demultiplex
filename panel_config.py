@@ -9,11 +9,6 @@ panel_list = [
     "Pan4082",  # Swift 57
     "Pan2835",  # Twist WES
     "Pan4940",  # Twist WES for EB lab
-    "Pan4042",  # STG VCP2 BRCA
-    "Pan4043",  # STG VCP3
-    "Pan4044",  # STG VCP1
-    "Pan4049",  # STG VCP2 CrCa
-    "Pan3174",  # WES trio
     "Pan4119",  # VCP1 Viapath_R134(FH)
     "Pan4121",  # VCP1 Viapath_R184(CF)
     "Pan4122",  # VCP1 Viapath_R25(FGFR)
@@ -93,17 +88,17 @@ panel_list = [
 # Per-capture panel numbers for use with RPKM
 # IMPORTANT: Lists below are used by the trend analysis scripts.
 # If changed, trend analysis script needs updating
-vcp1_panel_list = ["Pan4119", "Pan4121", "Pan4122", "Pan4125", "Pan4126", "Pan4044", "Pan4821",
+vcp1_panel_list = ["Pan4119", "Pan4121", "Pan4122", "Pan4125", "Pan4126", "Pan4821",
                    "Pan4822", "Pan4823", "Pan4824", "Pan4825", "Pan4974", "Pan4975", "Pan4976",
                    "Pan4977", "Pan4978", "Pan4979", "Pan4980", "Pan4981", "Pan4982", "Pan4983",
                    "Pan4984"]
-vcp2_panel_list = ["Pan4149", "Pan4150", "Pan4127", "Pan4129", "Pan4130", "Pan4042", "Pan4049",
+vcp2_panel_list = ["Pan4149", "Pan4150", "Pan4127", "Pan4129", "Pan4130",
                    "Pan4816", "Pan4817", "Pan4818", "Pan4819", "Pan4820", "Pan4964"]
 vcp3_panel_list = ["Pan4132", "Pan4134", "Pan4136", "Pan4137", "Pan4138", "Pan4143", "Pan4144",
-                   "Pan4145", "Pan4146", "Pan4151", "Pan4043", "Pan4314", "Pan4351", "Pan4387",
+                   "Pan4145", "Pan4146", "Pan4151", "Pan4314", "Pan4351", "Pan4387",
                    "Pan4390", "Pan4826", "Pan4827", "Pan4828", "Pan4829", "Pan4830", "Pan4831",
                    "Pan4832", "Pan4833", "Pan4834", "Pan4835", "Pan4836"]
-WES_panel_lists = ["Pan2835", "Pan3174", "Pan4940"]
+WES_panel_lists = ["Pan2835", "Pan4940"]
 SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396"]
 swift_57G_panel_list = ["Pan4082"]
@@ -172,14 +167,6 @@ panel_settings = {
         "peddy": True,
         "congenica_project": "4697",
     },
-    "Pan3174": {  # TWIST WES TRIO at GSTT
-        "mokawes": True,
-        "multiqc_coverage_level": 20,
-        "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
-        "sambamba_bedfile": "Pan493dataSambamba.bed",
-        "peddy": True,
-        "congenica_upload": True
-    },
     "Pan4081": {  # EGFR SWIFT Panel
         "mokaamp": True,
         "oncology": True,
@@ -198,59 +185,10 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4082.bed",
         "sambamba_bedfile": "Pan4082Sambamba.bed",
     },
-    "Pan4044": {  # VCP1 STG
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan4399",
-        "RPKM_also_analyse": vcp1_panel_list,
-        "congenica_credentials": "STG",
-        "congenica_IR_template": "non-priority",
-        "congenica_project": "4203",
-        "hsmetrics_bedfile": "Pan4397data.bed",
-        "variant_calling_bedfile": "Pan4398data.bed",
-        "sambamba_bedfile": "Pan4397dataSambamba.bed",
-        "STG": True,
-    },
-    "Pan4042": {  # VCP2 STG BRCA
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3614",
-        "RPKM_also_analyse": vcp2_panel_list,
-        "congenica_credentials": "STG",
-        "congenica_IR_template": "non-priority",
-        "congenica_project": "1099",
-        "hsmetrics_bedfile": "Pan4949data.bed",
-        "variant_calling_bedfile": "Pan4948data.bed",
-        "sambamba_bedfile": "Pan4949dataSambamba.bed",
-    },
     "Pan4009": {  # MokaSNP
         "mokasnp": True,
         "multiqc_coverage_level": 30,
         "variant_calling_bedfile": "Pan4009.bed",
-    },
-    "Pan4049": {  # VCP2 STG CrCa
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3614",
-        "RPKM_also_analyse": vcp2_panel_list,
-        "congenica_credentials": "STG",
-        "congenica_IR_template": "non-priority",
-        "congenica_project": "4202",
-        "hsmetrics_bedfile": "Pan4949data.bed",
-        "variant_calling_bedfile": "Pan4948data.bed",
-        "sambamba_bedfile": "Pan4949dataSambamba.bed",
-    },
-    "Pan4043": {  # VCP3 STG
-        "mokapipe": True,
-        "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
-        "RPKM_also_analyse": vcp3_panel_list,
-        "congenica_credentials": "STG",
-        "congenica_IR_template": "non-priority",
-        "congenica_project": "4201",
-        "hsmetrics_bedfile": "Pan4535data.bed",
-        "variant_calling_bedfile": "Pan4535data.bed",
-        "sambamba_bedfile": "Pan4535dataSambamba.bed",
     },
     "Pan4119": {  # VCP1 R134_Familial hypercholesterolaemia-Familial hypercholesterolaemia
                   # Small panel (Viapath)

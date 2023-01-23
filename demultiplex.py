@@ -116,7 +116,7 @@ class GetRunfolders(object):
         self.demux_logger.info(
                     config.demux_logmsgs["demux_script_end"], git_tag(), num_processed_runfolders,
                     extra={"flag": "demultiplex_complete"})
-                    
+
         return processed_runfolders
 
     def bcl2fastq_installed(self):
@@ -508,8 +508,8 @@ class DemultiplexRunfolder(object):
                 return True
             except Exception as exception:
                 self.demux_logger.error(
-                    config.demux_logmsgs["create_tsobcl2fastqlog_fail"], self.runfolder_name, exception,
-                    extra={"flag": config.log_flags["fail"]}
+                    config.demux_logmsgs["create_tsobcl2fastqlog_fail"], self.runfolder_name,
+                    exception, extra={"flag": config.log_flags["fail"]}
                 )
 
     @staticmethod
@@ -538,8 +538,8 @@ class DemultiplexRunfolder(object):
                     return True
                 else:
                     self.demux_logger.error(
-                        config.demux_logmsgs["demux_error"], self.runfolder_name, self.bcl2fastqlog_path,
-                        extra={"flag": config.log_flags["fail"]}
+                        config.demux_logmsgs["demux_error"], self.runfolder_name,
+                        self.bcl2fastqlog_path, extra={"flag": config.log_flags["fail"]}
                     )
             else:
                 self.demux_logger.error(
@@ -548,8 +548,8 @@ class DemultiplexRunfolder(object):
                 )
         else:
             self.demux_logger.error(
-                config.demux_logmsgs["bcl2fastqlog_absent"], self.runfolder_name, self.bcl2fastqlog_path,
-                extra={"flag": config.log_flags["fail"]}
+                config.demux_logmsgs["bcl2fastqlog_absent"], self.runfolder_name,
+                self.bcl2fastqlog_path, extra={"flag": config.log_flags["fail"]}
             )
 
 
