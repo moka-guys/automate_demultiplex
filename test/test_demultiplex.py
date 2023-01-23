@@ -14,11 +14,8 @@ from test.test_samplesheet_validator import (
     invalid_contents,
 )
 import pytest
-import sys
 import demultiplex
 import ad_config as config  # Import config file
-import ad_logger.ad_logger as ad_logger
-import inspect
 
 # Variables used across test classes
 
@@ -30,6 +27,7 @@ temp_dir = os.path.join(testfiles_dir, "temp/")
 demultiplex_log_file = os.path.join(temp_dir, f"{datetime.datetime.now():%Y%m%d_%H%M%S}.txt")
 temp_runfolderdir = os.path.join(temp_dir, "test_runfolders/")
 temp_samplesheetsdir = os.path.join(temp_runfolderdir, "samplesheets/")
+
 
 @pytest.fixture(scope="module", autouse=True)
 def run_before_and_after_tests():
@@ -69,6 +67,7 @@ class TestGetRunfolders(object):
     def processed_runfolders(self):
         """String of 4 processed runfolders"""
         return [(4, ["these", "are", "processed", "runfolders"])]
+
     # NEED TO RETHINK THIS AND ADD A PASS AND FAIL CASE - SHOULD BE POSSIBLE NOW WITH MONKEYPATCH
     def test_rundemultiplexrunfolders(self, gr_mock):
         """Pass set of dummy runfolders to the test and assert that the expected number are
@@ -293,7 +292,8 @@ class TestDemultiplexRunfolder(object):
     @pytest.mark.parametrize('notrequired', [
         (pytest.lazy_fixture('demultiplexing_notrequired')),
         (pytest.lazy_fixture('tso_runfolder'))])
-    def test_demultiplexing_required_false(self, gr_mock, notrequired):  # DONE BUT NEED TO CHECK THIS COVERS ALL CASES
+    # DONE BUT NEED TO CHECK THIS COVERS ALL CASES
+    def test_demultiplexing_required_false(self, gr_mock, notrequired):
         """Test demultiplexing_required() does not return True for cases where demultiplexing is
         not required"""
         for runfolderpath, folder_name, samplesheet_path in notrequired:
@@ -305,7 +305,8 @@ class TestDemultiplexRunfolder(object):
                 logger=gr_mock.demux_logger
             ).demultiplexing_required()
 
-    def test_demultiplexing_required_true(self, gr_mock, demultiplexing_required):  # DONE BUT NEED TO CHECK THIS COVERS ALL CASES
+    # DONE BUT NEED TO CHECK THIS COVERS ALL CASES
+    def test_demultiplexing_required_true(self, gr_mock, demultiplexing_required):
         """Test demultiplexing_required() returns True for cases where demultiplexing is required"""
         for runfolderpath, folder_name, samplesheet_path in demultiplexing_required:
             assert demultiplex.DemultiplexRunfolder(
@@ -335,7 +336,7 @@ class TestDemultiplexRunfolder(object):
             assert runfolder_obj.run_processed
 
     def test_valid_samplesheet_pass(self, monkeypatch, dr_mock, valid_samplesheets):  # DONE
-        """Test function correctly returns valid flag, using a set of representative 
+        """Test function correctly returns valid flag, using a set of representative
         samplesheets"""
         for path in valid_samplesheets:
             monkeypatch.setattr(dr_mock, "samplesheet_path", path)

@@ -264,6 +264,7 @@ def check_tso_false(tso_samplesheet_invalid):
                                 panel_config.panel_list, runtype_list,
                                 panel_config.tso500_panel_list).tso
 
+
 def test_multiple_errors(invalid_contents):
     """Tests all expected errors are present at once - invalid sequencer id, invalid headers,
     invalid sample names, non-matching samplenames, invalid panel number, invalid runtype
