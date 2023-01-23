@@ -1211,9 +1211,9 @@ class RunfolderProcessor(object):
                     commands_list.append(self.add_to_depends_list(fastq))
 
                 if self.panel_dictionary[panel]["pipeline"] == "archerdx":
-                    commands_list.append(self.create_archerdx_cmd(fastq, panel, "R1"))
+                    commands_list.append(self.create_fastqc_cmd(fastq, panel, "R1"))
                     commands_list.append(self.add_to_depends_list(fastq))
-                    commands_list.append(self.create_archerdx_cmd(fastq, panel, "R2"))
+                    commands_list.append(self.create_fastqc_cmd(fastq, panel, "R2"))
                     commands_list.append(self.add_to_depends_list(fastq))
 
             elif not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
@@ -1314,7 +1314,7 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_archerdx_cmd(self, fastq, read):
+    def create_fastqc_cmd(self, fastq, read):
         """
         Build dx run command, in this case to run fastqc on a single fastq file
         Inputs:
@@ -1327,7 +1327,7 @@ class RunfolderProcessor(object):
         # Call function to build nexus fastq paths - returns tuple for read1, read2 and samplename
         fastqs = self.nexus_fastq_paths(fastq)
         dx_command_list = [
-            config.archerdx_cmd,
+            config.fastqc_cmd,
             fastqs[2],
             " -ireads=",
             fastqs[0].replace("_R1_", f"_{read}_"),

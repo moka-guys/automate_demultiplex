@@ -429,7 +429,7 @@ create_project_cmd = 'project_id="$(dx new project --bill-to %s "%s" --brief --a
 mokapipe_cmd = f"jobid=$(dx run {tools_project}{mokapipe_path} --priority high -y --name "
 mokawes_cmd = f"jobid=$(dx run {tools_project}{mokawes_path} --priority high -y --name "
 mokasnp_cmd = f"jobid=$(dx run {tools_project}{mokasnp_path} -y --priority high --name "
-archerdx_cmd = f"jobid=$(dx run {tools_project}{fastqc_app} -y --priority high --name "
+fastqc_cmd = f"jobid=$(dx run {tools_project}{fastqc_app} -y --priority high --name "
 tso500_cmd = f"jobid=$(dx run {tools_project}{tso500_app} --priority high -y --name "
 tso500_output_parser_cmd = f"jobid=$(dx run {tools_project}{tso500_output_parser_app} "\
                             "--priority high -y --name "
