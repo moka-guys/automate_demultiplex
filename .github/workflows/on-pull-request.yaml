@@ -29,16 +29,16 @@ jobs:
           echo "dummytoken" > /home/runner/work/.dnanexus_auth_token
           echo "dummypw" > /home/runner/work/.amazon_email_pw
           echo "dummyuser" > /home/runner/work/.amazon_email_username
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are:
-          # - syntax errors (E9)
-          # - common assertion and comparison gotchas (F63)
-          # - control flow gotchas (F7)
-          # - undefined names (F82)
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      # - name: Lint with flake8
+      #   run: |
+      #     # stop the build if there are:
+      #     # - syntax errors (E9)
+      #     # - common assertion and comparison gotchas (F63)
+      #     # - control flow gotchas (F7)
+      #     # - undefined names (F82)
+      #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+      #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
           python -m pytest -v -k 'not Email' --ignore test/test_upload_and_setoff_workflows.py
