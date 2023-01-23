@@ -260,26 +260,26 @@ view_users = ["org-viapath_prod", "InterpretationRequest"]  # DNAnexus users wit
 admin_users = ["mokaguys"]  # DNAnexus users with admin access
 
 # Paths / IDs for workflows in 001_Tools
-mokapipe_path = "Workflows/GATK3.5_v2.16"
+mokapipe_path = "Workflows/GATK3.5_v2.17"
 mokawes_path = "Workflows/MokaWES_v1.8"
 mokaamp_path = "Workflows/MokaAMP_v2.2"
 mokacan_path = "Workflows/MokaCAN_v1.0"
 mokasnp_path = "Workflows/MokaSNP_v1.2.0"
-tso500_app = "applet-GBKvYFQ0jy1Vx4zJ126gX4xp"
-tso500_app_name = "TSO500_v1.4.0"  # Input for tso500_output_parser_app
+tso500_app = "applet-GKv42080jy1bfp261fpP1Gfy"
+tso500_app_name = "TSO500_v1.5.0"  # Input for tso500_output_parser_app
 
 # Paths / IDs for apps in 001_Tools
 fastqc_app = "Apps/fastqc_v1.3"
 peddy_path = "Apps/peddy_v1.5"
 rpkm_path = "Apps/RPKM_using_conifer_v1.6"
-multiqc_path = "Apps/multiqc_v1.15.0"
+multiqc_path = "Apps/multiqc_v1.16.0"
 upload_multiqc_path = "Apps/upload_multiqc_v1.4.0"
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
 congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
-tso500_output_parser_app = "applet-GBKvX5j0jy1kK8jj9F7jjVY7"
+tso500_output_parser_app = "applet-GP0YXB00jy1kYKYp33yJZJ5B"
 # Inputs for tso500_output_parser_app
 upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
-multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G7QB6zj0jy1z1ZV1P5VZBj9p"
+multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GKGjkz00jy1zKfXJ5qfpfpF8"
 sompy_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G9yPb780jy1p660k6yBvQg07"
 coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
@@ -319,6 +319,7 @@ mokapipe_sambamba_exclude_failed_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6." \
 mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6." \
                                             "merge_overlapping_mate_reads=true"
 mokapipe_fhprs_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
+mokapipe_polyedge_skip = " -istage-GK71VJ80VQgQkjvz0vyQ8YV1.skip=false"
 mokapipe_fhprs_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
 mokapipe_fh_humanexome_instance_type = "mem3_ssd1_v2_x8"  # Required when creating gVCFs
 mokapipe_gatk_human_exome_appletid = "applet-FYZ097j0jy1ZZPx30GykP63J"
@@ -401,6 +402,7 @@ tso500_docker_image_stage = " -iTSO500_ruo="
 tso500_runfolder_tar_stage = " -irun_folder="
 tso500_samplesheet_stage = " -isamplesheet="
 tso500_analysis_options_stage = " -ianalysis_options="
+tso500_project_name_stage = " -iproject_name="
 tso500_analysis_instance_high_throughput = "mem1_ssd1_v2_x72"
 tso500_analysis_instance_low_throughput = "mem1_ssd1_v2_x36"
 
@@ -443,13 +445,13 @@ congenica_sftp_upload_cmd = f"echo 'dx run {tools_project}{congenica_SFTP_upload
 # ---- Moka settings -------------------------------------------------------------------------------
 
 # Moka IDs for generating SQLs to update the Mokadatabase (audit trail)
-mokapipe_congenica_pipeline_id = "5137"  # Mokapipe & congenica ID
+mokapipe_congenica_pipeline_id = "5221"  # Mokapipe & congenica ID
 mokawes_pipeline_id = "5078"  # MokaWES ID
 mokaamp_pipeline_id = "4851"  # MokaAMP ID
 archerDx_pipeline_id = "4562"  # Archer ID
 mokasnp_pipeline_id = "5091"  # MokaSNP ID
 mokacan_pipeline_id = "4728"  # mokacan pipeline ID
-tso_pipeline_id = "5095"  # TSO500 pipeline ID
+tso_pipeline_id = "5227"  # TSO500 pipeline ID
 
 # MokaWES test status
 mokastatus_nextsq_id = "1202218804"  # Test Status = NextSEQ sequencing

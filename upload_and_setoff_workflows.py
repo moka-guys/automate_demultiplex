@@ -109,8 +109,6 @@ class RunfolderObject(object):
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
-        self.runfolder_tarball_path = f"{self.runfolderpath}.tar"
-        self.runfolder_tarball_name = f"{self.runfolder_name}.tar"
         self.runfolder_samplesheet_path = os.path.join(
             config.samplesheet_dir, f"{self.runfolder_name}_SampleSheet.csv"
         )
@@ -175,7 +173,7 @@ class RunfolderProcessor(object):
             '"temporary issue when uploading file %s"; fi ; done'
         )
 
-        self.panel_dictionary = self.set_panel_dictionary()
+        self.panel_dictionary = {}  # self.set_panel_dictionary()
         self.sql_queries = {}
 
         # Call function which populates a dictionary of run specific logs and logfile paths.
@@ -225,39 +223,22 @@ class RunfolderProcessor(object):
         """
         self.run_tests()
         # Build dictionary of panel settings
-        self.panel_dictionary = self.set_panel_dictionary()
+        self.panel_dictionary = {}  # self.set_panel_dictionary()
 
         # Check if already uploaded and demultiplexing finished sucessfully
         if not self.already_uploaded() and self.has_demultiplexed():
             self.calculate_cluster_density(
                 self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_name
             )
-            # tso500 run is not demultiplexed locally - entire runfolder is uploaded as a tarball
+            # tso500 run is not demultiplexed locally - entire runfolder is uploaded
             # Read samplesheet to create a list of samples
             tso500_sample_list = (
                 self.check_for_tso500()
             )  # If not tso500 will return None
             if tso500_sample_list:
-                # Set up a count and while loop so it will attempt to tar the runfolder twice
-                tar_attempt_count = 1
-                while tar_attempt_count < 5:
-                    self.loggers.script.info(
-                        "Attempting tar TSO runfolder. attempt %s", tar_attempt_count
-                    )
-                    # Tar runfolder - return True if tar created sucessfully
-                    # If tar_runfolder is unsuccessful after 4 attempts
-                    # self.list_of_processed_samples won't be populated and run won't progress
-                    if self.tar_runfolder():
-                        # Set list of samplenames as list of processed samples - this will allow
-                        # the project to be named properly.
-                        self.list_of_processed_samples = tso500_sample_list
-                        # Set tar folder path in place of the list of fastqs to upload
-                        self.fastq_string = (
-                            f"{self.runfolder_obj.runfolder_tarball_path} "
-                            f"{self.runfolder_obj.runfolder_samplesheet_path}"
-                        )
-                        break  # Complete successfully so break out of while loop
-                    tar_attempt_count += 1
+                (self.list_of_processed_samples,
+                 self.fastq_string) = (tso500_sample_list,
+                                       self.runfolder_obj.runfolder_samplesheet_path)
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_dir_path
@@ -283,6 +264,17 @@ class RunfolderProcessor(object):
                 ).rstrip()
                 # Build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # Pass path to function which checks files were uploaded without error
+                if tso500_sample_list:
+                    backup_attempt_count = 1
+                    while backup_attempt_count < 5:
+                        self.loggers.script.info("Attempting to backup TSO runfolder. "
+                                                 f"attempt {backup_attempt_count}")
+                        if self.check_backuprunfolder_errors(self.upload_rest_of_runfolder()):
+                            backup_attempt_count = 10
+                        else:
+                            # increase backup count
+                            backup_attempt_count += 1
+
                 self.look_for_upload_errors(self.upload_fastqs())
 
                 # Upload cluster density files and check upload was successful.
@@ -315,10 +307,10 @@ class RunfolderProcessor(object):
                     self.list_of_processed_samples
                 )
                 self.send_opms_queries()
+                # if not TSO500 will return None
+                if not tso500_sample_list:
+                    self.check_backuprunfolder_errors(self.upload_rest_of_runfolder())
 
-                self.look_for_upload_errors_backup_runfolder(
-                    self.upload_rest_of_runfolder()
-                )
                 self.look_for_upload_errors(self.upload_log_files())
                 if tso500_sample_list:
                     self.remove_tso500_tar()
@@ -332,31 +324,31 @@ class RunfolderProcessor(object):
             )
             return False
 
-    @staticmethod
-    def set_panel_dictionary():
-        """
-        Input = None
-        Populate the dictionary detailing panel specific settings.
-        Default settings are set in the config file and then updated as and when required for each
-        panel the defaults in config file.
-        Loop through panel specific properties in config file and overwrite any default with panel
-        specific settings
-        Returns = dictionary of panel specific settings
-        """
-        dictionary_to_return = {}
-        for panel in panel_config.panel_list:
-            # Loop through default settings, adding to dictionary. Then loop through panel
-            # settings from config, overwriting any defaults
-            dictionary_to_return[panel] = {}
-            for setting in panel_config.default_panel_properties:
-                dictionary_to_return[panel][
-                    setting
-                ] = panel_config.default_panel_properties[setting]
-            for setting in panel_config.panel_dict[panel]:
-                dictionary_to_return[panel][setting] = panel_config.panel_dict[
-                    panel
-                ][setting]
-        return dictionary_to_return
+    # @staticmethod
+    # def set_panel_dictionary():
+    #     """
+    #     Input = None
+    #     Populate the dictionary detailing panel specific settings.
+    #     Default settings are set in the config file and then updated as and when required for each
+    #     panel the defaults in config file.
+    #     Loop through panel specific properties in config file and overwrite any default with panel
+    #     specific settings
+    #     Returns = dictionary of panel specific settings
+    #     """
+    #     dictionary_to_return = {}
+    #     for panel in panel_config.panel_list:
+    #         # Loop through default settings, adding to dictionary. Then loop through panel
+    #         # settings from config, overwriting any defaults
+    #         dictionary_to_return[panel] = {}
+    #         for setting in panel_config.default_panel_properties:
+    #             dictionary_to_return[panel][
+    #                 setting
+    #             ] = panel_config.default_panel_properties[setting]
+    #         for setting in panel_config.panel_dict[panel]:
+    #             dictionary_to_return[panel][setting] = panel_config.panel_dict[
+    #                 panel
+    #             ][setting]
+    #     return dictionary_to_return
 
     def test_upload_agent(self, test_result):
         """
@@ -371,40 +363,6 @@ class RunfolderProcessor(object):
         else:
             self.loggers.script.info("UA_pass 'Upload Agent function test passed'")
             return True
-
-    def tar_runfolder(self):
-        """
-        Input: runfolder path
-        Uses tar to create a file archive for a runfolder named /path/to/runfolder.tar
-        Returns: True/False depending on test if tar folder created without error
-        """
-        # cd to runfolder and then run tar argument with:
-        # W (which verifies the archive as it's made)
-        # P uses absolute paths (required for -W step)
-        # c (creates an archive)
-        # f (specify the filename of the archive)
-        # Provide folder name not full filepath - ensures tar doesn't contain full path from root
-        # Redirect stderr to stdout so we can test for errors
-        cmd = (
-            f"cd {config.runfolders}; tar -WPcf {self.runfolder_obj.runfolder_tarball_path} "
-            f"{self.runfolder_obj.runfolder_name} 2>&1"
-        )
-        (out, _) = self.execute_subprocess_command(cmd)
-        # Assess stdout+stderr - if successful tar does not return any output
-        if self.perform_test(out, "tar_runfolder"):
-            self.loggers.script.info(
-                "tar runfolder created at %s without any errors",
-                self.runfolder_obj.runfolder_tarball_path,
-            )
-            return True
-        else:  # Raise slack alert if success statement not present
-            self.loggers.script.error(
-                "UA_fail 'runfolder tarball creation failed for %s. "
-                "tar verify output = %s'",
-                self.runfolder_obj.runfolder_name,
-                out,
-            )
-            return False
 
     def perform_test(self, test_input, test):
         """
@@ -442,12 +400,6 @@ class RunfolderProcessor(object):
                 config.cluster_density_success_statement not in test_input
                 or config.cluster_density_error_statement in test_input
             ):
-                return False
-        if test == "tar_runfolder":  # If tar completes expect no stdout or stderr
-            if len(test_input) > 1:
-                return False
-        if test == "delete_tso500_tar":  # If tar completes expect no stdout or stderr
-            if len(test_input) > 1:
                 return False
         return True
 
@@ -548,25 +500,6 @@ class RunfolderProcessor(object):
             # Create file - takes long time before upload creates file to stop further processing
             open(self.loggers.upload_agent.filepath, "w", encoding="utf-8").close()
         return sample_list
-
-    def remove_tso500_tar(self):
-        """
-        Inputs = None
-        Last step of processing runfolder. If relevant deletes the tso500 tarball.
-        If there is an error (len(stderr)>0) send a slack alert
-        Returns = None
-        """
-        cmd = f"rm {self.runfolder_obj.runfolder_tarball_path} "
-        # Capture stdout and stderr. NB all output from picard tool is in stderr
-        (_, err) = self.execute_subprocess_command(cmd)
-        # Assess stderr, looking for expected success statement
-        if self.perform_test(err, "delete_tso500_tar"):
-            self.loggers.script.info("tso500 tarball sucessfully removed - %s", cmd)
-        else:
-            self.loggers.script.error(
-                "UA_fail 'tso500 tar not deleted : %s'",
-                self.runfolder_obj.runfolder_tarball_path,
-            )
 
     def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
@@ -1450,14 +1383,12 @@ class RunfolderProcessor(object):
             self.runfolder_obj.runfolder_name,
             config.tso500_docker_image_stage,
             config.tso500_docker_image,
-            config.tso500_runfolder_tar_stage,
-            self.runfolder_obj.nexus_project_id
-            + ":"
-            + self.runfolder_obj.runfolder_tarball_name,
             config.tso500_samplesheet_stage,
             self.runfolder_obj.nexus_project_id
             + ":"
             + self.runfolder_obj.runfolder_samplesheet_name,
+            config.tso500_project_name_stage,
+            self.runfolder_obj.nexus_project_name,
             config.tso500_analysis_options_stage,
             tso500_analysis_options,
             instance_type,
@@ -1564,8 +1495,8 @@ class RunfolderProcessor(object):
         # The panel dictionary default is to give a value of 0, which turns off this padding.
         # An example of the use of this is for STG BrCa who require padding of +/- 11bp (bed files
         # are padded +/-10bp) so 1bp padding is applied.
-        mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input + \
-                               str(panel_config.mokapipe_haplotype_caller_padding)
+        mokapipe_padding_cmd = (config.mokapipe_haplotype_padding_input +
+                                str(panel_config.mokapipe_haplotype_caller_padding))
 
         if bedfiles["variant_calling_bedfile"]:
             bedfiles_string = (
@@ -1589,12 +1520,12 @@ class RunfolderProcessor(object):
                 vcf_eval_skip_string = config.mokapipe_happy_skip % ("false")
 
         # Set parameters specific to FH_PRS app.
-        # Set skip flag to false, specify instance type for human exome app and specify output as
-        # both vcf and gvcf
         fh_prs_bedfile_cmd = config.mokapipe_fhprs_bedfile_input + bedfiles["fh_prs"]
         fh_prs_cmd_string = ""
 
         if self.panel_dictionary[pannumber]["FH"]:
+            # If sample is R134 we want app to run - set skip to false
+            # Specify instance type for human exome app and specify output as both vcf and gvcf
             fh_prs_cmd_string += (
                 f"{config.mokapipe_fhprs_skip} "
                 f"--instance-type {config.mokapipe_gatk_human_exome_stage}="
@@ -1603,14 +1534,19 @@ class RunfolderProcessor(object):
                 f"{config.mokapipe_fh_gatk_timeout_args}"
             )
 
+        # Set parameters specific to polyedge app
+        polyedge_cmd_string = ""
+
+        # If test contains MSH2, we want app to run - set skip to false
+        if self.panel_dictionary[pannumber]["MSH2"]:
+            polyedge_cmd_string += config.mokapipe_polyedge_skip
+
         masked_reference_command = ""
         if self.panel_dictionary[pannumber]["masked_reference"]:
             masked_reference_command += config.mokapipe_bwa_ref_genome % (
                 self.panel_dictionary[pannumber]["masked_reference"]
             )
-        # If sample is not R134 we want skip to be set to true (app default is skip=true)
-        # Assume all sample are not R134 and set skip to true
-        # create the dx command
+        # Create the dx command
         dx_command = (
             config.mokapipe_cmd
             + fastqs[2]
@@ -1633,6 +1569,7 @@ class RunfolderProcessor(object):
             + vcf_eval_prefix_string
             + fh_prs_cmd_string
             + fh_prs_bedfile_cmd
+            + polyedge_cmd_string
             + masked_reference_command
             + config.mokapipe_mokapicard_vendorbed_input
             + bedfiles["hsmetrics"]
@@ -2501,12 +2438,14 @@ class RunfolderProcessor(object):
         """
         Input = None
         The rest of the runfolder requires backing up, excluding bcl files.
+        BCL files are uploaded for TSO runs only.
+        The rest of the runfolder requires backing up, excluding bcl files.
         A python script which is a wrapper for the upload agent is used.
         This function copies the samplesheet from into the runfolder and then builds and executes
         the backup_runfolder.py command
         Returns = filepath to backup script.
         """
-        # try to copy samplesheet into project
+        # Try to copy samplesheet into project
         if os.path.exists(self.runfolder_obj.runfolder_samplesheet_path):
             copyfile(
                 self.runfolder_obj.runfolder_samplesheet_path,
@@ -2521,19 +2460,36 @@ class RunfolderProcessor(object):
             )
         else:
             self.loggers.script.info("Samplesheet not copied to runfolder")
-        # build backup_runfolder.py command ignore some files
-        cmd = (
-            "python3 "
-            + config.backup_runfolder_script
-            + " -i "
-            + self.runfolder_obj.runfolderpath
-            + " -p "
-            + self.runfolder_obj.nexus_project_name
-            + " --ignore /L00,DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath "
-            + config.backup_runfolder_logfile
-            + " -a "
-            + config.nexus_apikey
-        )
+
+        # build backup_runfolder.py command for TSO run
+        tso500_backup = self.check_for_tso500()
+        # if not TSO500 will return None
+        if tso500_backup:
+            cmd = (
+                "python3 "
+                + config.backup_runfolder_script
+                + " -i "
+                + self.runfolder_obj.runfolderpath
+                + " -p "
+                + self.runfolder_obj.nexus_project_name
+                + " --ignore DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath "
+                + config.backup_runfolder_logfile
+                + " -a "
+                + config.nexus_apikey
+            )
+        else:  # Build backup_runfolder.py command ignore some files
+            cmd = (
+                "python3 "
+                + config.backup_runfolder_script
+                + " -i "
+                + self.runfolder_obj.runfolderpath
+                + " -p "
+                + self.runfolder_obj.nexus_project_name
+                + " --ignore /L00,DNANexus_upload_started,add_runfolder_to_nexus_cmds --logpath "
+                + config.backup_runfolder_logfile
+                + " -a "
+                + config.nexus_apikey
+            )
 
         # Record runfolder upload in log file, linking to log files for cmds and stdout
         self.loggers.script.info(
@@ -2603,7 +2559,7 @@ class RunfolderProcessor(object):
         # TODO check correct logfile is being checked
         return self.loggers.upload_agent.filepath, files_to_upload_list, "log files"
 
-    def look_for_upload_errors_backup_runfolder(self, logfile):
+    def check_backuprunfolder_errors(self, logfile):
         """
         Input = path to logfile(backup_runfolder.py logfile)
         The presence of expected success/failure messages are checked and reported
@@ -2631,6 +2587,7 @@ class RunfolderProcessor(object):
             self.loggers.script.info(
                 "UA_pass 'Rest of runfolder %s uploaded ok'", self.runfolder_obj.runfolder_name
             )
+        return upload_ok
 
     def execute_subprocess_command(self, command):
         """
