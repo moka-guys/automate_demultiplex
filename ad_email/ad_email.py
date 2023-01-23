@@ -54,7 +54,8 @@ class AdEmail(object):
             self.server.login(config.user, config.pw)  # Login to server with user credentials
             # Send email to server
             self.server.sendmail(self.sender, [recipients], self.msg.as_string())
-            self.logger.info(config.email_logmsgs['email_pass'], extra={'flag': config.log_flags['info']})
+            self.logger.info(config.email_logmsgs['email_pass'],
+                             extra={'flag': config.log_flags['info']})
             return True
 
         except Exception as exception:
