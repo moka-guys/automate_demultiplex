@@ -40,5 +40,6 @@ jobs:
       #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
       #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
+      # We do not want it to run the email tests because the credentials are not stored in GitHub
         run: |
-          python -m pytest -v -k 'not Email' --ignore test/test_upload_and_setoff_workflows.py
+          python -m pytest -v -k 'not email'

@@ -15,6 +15,46 @@ import panel_config
 from ad_email.ad_email import AdEmail
 
 
+# TODO PULL AS MUCH INTO THIS FUNCTION AS POSSIBLE
+class RunfolderObject(object):
+    """
+    An object with runfolder specific properties.
+    """
+
+    def __init__(self, runfolder_name):
+        # Set empty variables to be defined based on the run
+        self.runfolder_name = runfolder_name
+        self.runfolderpath = os.path.join(config.runfolders, self.runfolder_name)
+        # Sequencing finished file
+        self.rtacompletefile_path = os.path.join(
+            self.runfolderpath, config.rtacomplete_filename
+        )
+        # Integrity check file
+        self.checksumfile_path = os.path.join(
+            self.runfolderpath, config.md5checksum_filename
+        )
+        # Bcl2fastq log file
+        self.bcl2fastqlog_path = os.path.join(
+            self.runfolderpath, config.bcl2fastqlog_filename
+        )
+        # Project fastq folder
+        self.fastq_dir_path = os.path.join(self.runfolderpath, config.fastq_dir)
+        # Runfolder dx run commands
+        self.runfolder_dx_run_script = os.path.join(
+            config.dnanexus_workflow_logfolder, "{runfolder_name}_dx_run_commands.sh"
+        )
+        self.congenica_upload_command_script = os.path.join(
+            config.dnanexus_workflow_logfolder,
+            f"{self.runfolder_name}_" f"congenica_upload_commands.sh",
+        )
+        self.samplesheet_path = os.path.join(
+            config.runfolders, "samplesheets", f"{self.runfolder_name}_SampleSheet.csv"
+        )
+        self.nexus_project_name = ""
+        self.nexus_path = ""
+        self.nexus_project_id = ""
+
+
 class SequencingRuns(list):
     """A container for NGS runfolders with methods to initiate runfolder processing.
 
@@ -43,12 +83,11 @@ class SequencingRuns(list):
         >>> # runs == ['runfolder1', 'runfolder2', 'runfolder3']
         Returns = None
         """
-        all_runfolders = os.listdir(config.runfolders)
-        for folder in all_runfolders:
-            folder_exists = os.path.isdir(os.path.join(config.runfolders, folder))
+        for folder in os.listdir(config.runfolders):
+            # If exists and is directory, shouldn't be ignored, and matches runfolder pattern
             if (
-                folder not in config.ignore_dirs
-                and folder_exists
+                os.path.isdir(os.path.join(config.runfolders, folder))
+                and folder not in config.ignore_dirs
                 and re.compile(config.runfolder_pattern).match(folder)
             ):
                 self.runfolders.append(folder)
@@ -84,35 +123,6 @@ class SequencingRuns(list):
                 self.now, f"{self.now}_{processed_runfolders_str}"
             )
             os.rename(original_logfile_path, new_logfile)
-
-
-class RunfolderObject(object):
-    """
-    An object with runfolder specific properties.
-    """
-
-    def __init__(self, runfolder):
-        # Set empty variables to be defined based on the run
-        self.runfolder_name = runfolder
-        self.runfolderpath = os.path.join(config.runfolders, runfolder)
-        # Project fastq folder
-        self.fastq_dir_path = os.path.join(self.runfolderpath, config.fastq_dir)
-        # Runfolder dx run commands
-        self.runfolder_dx_run_script = os.path.join(
-            config.dnanexus_workflow_logfolder, "{runfolder_name}_dx_run_commands.sh"
-        )
-
-        self.congenica_upload_command_script = os.path.join(
-            config.dnanexus_workflow_logfolder,
-            f"{self.runfolder_name}_" f"congenica_upload_commands.sh",
-        )
-        self.nexus_project_name = ""
-        self.nexus_path = ""
-        self.nexus_project_id = ""
-        self.runfolder_samplesheet_path = os.path.join(
-            config.samplesheet_dir, f"{self.runfolder_name}_SampleSheet.csv"
-        )
-        self.runfolder_samplesheet_name = f"{self.runfolder_name}_SampleSheet.csv"
 
 
 class RunfolderProcessor(object):
@@ -177,14 +187,15 @@ class RunfolderProcessor(object):
         self.sql_queries = {}
 
         # Call function which populates a dictionary of run specific logs and logfile paths.
-        self.log_config = ad_logger.get_adlogger_config(
+        self.log_config = ad_logger.get_runfolder_log_config(
             self.runfolder_obj, self.now
         )
         # Pass the dictionary into ADloggers class - ** unpacks this dictionary to populate inputs.
         # This is used as an object where various logs can be written
-        self.loggers = ad_logger.ADLoggers(**self.log_config)
+        self.loggers = ad_logger.AdLoggers(self.log_config)
 
-        self.email = AdEmail(email_priority=1, logger=self.loggers.script)
+        # TODO swap this over to new email module
+        self.email = AdEmail(email_priority=1, logger=self.loggers.upload_script)
 
     def run_tests(self):
         """
@@ -195,7 +206,7 @@ class RunfolderProcessor(object):
         Raises exception if any test does not pass
         Returns = None
         """
-        self.loggers.script.info("automate_demultiplexing release:%s", git_tag())
+        self.loggers.upload_script.info("automate_demultiplexing release:%s", git_tag())
         # Call upload agent using perform test function. Pass output to self.test_upload_agent
         if not self.test_upload_agent(
             self.perform_test(
@@ -236,9 +247,10 @@ class RunfolderProcessor(object):
                 self.check_for_tso500()
             )  # If not tso500 will return None
             if tso500_sample_list:
-                (self.list_of_processed_samples,
-                 self.fastq_string) = (tso500_sample_list,
-                                       self.runfolder_obj.runfolder_samplesheet_path)
+                (self.list_of_processed_samples, self.fastq_string) = (
+                    tso500_sample_list,
+                    self.runfolder_obj.runfolder_samplesheet_path,
+                )
             else:
                 self.list_of_processed_samples, self.fastq_string = self.find_fastqs(
                     self.runfolder_obj.fastq_dir_path
@@ -267,9 +279,13 @@ class RunfolderProcessor(object):
                 if tso500_sample_list:
                     backup_attempt_count = 1
                     while backup_attempt_count < 5:
-                        self.loggers.script.info("Attempting to backup TSO runfolder. "
-                                                 f"attempt {backup_attempt_count}")
-                        if self.check_backuprunfolder_errors(self.upload_rest_of_runfolder()):
+                        self.loggers.upload_script.info(
+                            "Attempting to backup TSO runfolder. " "attempt %s",
+                            backup_attempt_count,
+                        )
+                        if self.check_backuprunfolder_errors(
+                            self.upload_rest_of_runfolder()
+                        ):
                             backup_attempt_count = 10
                         else:
                             # increase backup count
@@ -318,7 +334,7 @@ class RunfolderProcessor(object):
                 # return true to denote that a runfolder was processed
                 return True
         else:
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "Runfolder has already been processed: %s. Skipping.",
                 self.runfolder_obj.runfolder_name,
             )
@@ -358,10 +374,12 @@ class RunfolderProcessor(object):
         Returns = boolean value
         """
         if not test_result:
-            self.loggers.script.error("UA_fail 'Upload Agent Test Failed'")
+            self.loggers.upload_script.error("UA_fail 'Upload Agent Test Failed'")
             return False
         else:
-            self.loggers.script.info("UA_pass 'Upload Agent function test passed'")
+            self.loggers.upload_script.info(
+                "UA_pass 'Upload Agent function test passed'"
+            )
             return True
 
     def perform_test(self, test_input, test):
@@ -411,7 +429,9 @@ class RunfolderProcessor(object):
         Returns = boolean value
         """
         if not test_result:
-            self.loggers.script.error("UA_fail 'dx toolkit function test failed'")
+            self.loggers.upload_script.error(
+                "UA_fail 'dx toolkit function test failed'"
+            )
             return False
         else:
             return True
@@ -424,7 +444,9 @@ class RunfolderProcessor(object):
         Returns = Boolean (True/False)
         """
         # Write to log file including GitHub repo tag and time stamp
-        self.loggers.script.info("Working on %s", self.runfolder_obj.runfolderpath)
+        self.loggers.upload_script.info(
+            "Working on %s", self.runfolder_obj.runfolderpath
+        )
 
         # Use perform_test function to assert if the file exists - will return True if file exists
         if self.perform_test(
@@ -433,11 +455,13 @@ class RunfolderProcessor(object):
             ),
             "already_uploaded",
         ):
-            self.loggers.script.info("Upload started file present. Terminating.")
+            self.loggers.upload_script.info("Upload started file present. Terminating.")
             return True
         else:
             # If file doesn't exist return false to continue and write to log file
-            self.loggers.script.info("Upload started file not found. Continuing.")
+            self.loggers.upload_script.info(
+                "Upload started file not found. Continuing."
+            )
             return False
 
     def has_demultiplexed(self):
@@ -459,19 +483,21 @@ class RunfolderProcessor(object):
                 # Capture logfile into list (not doing this caused an issue with the if loop below)
                 logfile_list = logfile.readlines()
                 if self.perform_test(logfile_list[-1], "tso500"):  # Check if tso500 run
-                    self.loggers.script.info("tso500 run detected.")
+                    self.loggers.upload_script.info("tso500 run detected.")
                     return True
                 # Check if successful demuliplex statement in last line of log
                 elif self.perform_test(logfile_list[-1], "demultiplex_success"):
-                    self.loggers.script.info("Demultiplex completed succesfully.")
+                    self.loggers.upload_script.info(
+                        "Demultiplex completed succesfully."
+                    )
                     return True
                 else:
                     # Write to logfile that demultplex was not successful
-                    self.loggers.script.info("Demultiplex failed.")
+                    self.loggers.upload_script.info("Demultiplex failed.")
                     return False
         else:
             # Write to logfile that not yet demultiplexed
-            self.loggers.script.info("Demultiplex has not been performed.")
+            self.loggers.upload_script.info("Demultiplex has not been performed.")
             return False
 
     def check_for_tso500(self):
@@ -482,7 +508,7 @@ class RunfolderProcessor(object):
         """
         sample_list = []
         with open(
-            self.runfolder_obj.runfolder_samplesheet_path, "r", encoding="utf-8"
+            self.runfolder_obj.samplesheet_path, "r", encoding="utf-8"
         ) as samplesheet_stream:
             # Read file into list and loop through list in reverse
             # Allows us to access sample names and stop at column headers, skipping file header
@@ -530,13 +556,13 @@ class RunfolderProcessor(object):
         (_, err) = self.execute_subprocess_command(cmd)
         # assess stderr , looking for expected success statement
         if self.perform_test(err, "cluster_density"):
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "Cluster density calculation saved to %s",
                 runfolder_name + config.cluster_density_file_suffix,
             )
         # raise slack alert if success statement not present.
         else:
-            self.loggers.script.error(
+            self.loggers.upload_script.error(
                 "UA_fail 'Cluster density calculation failed for : %s'",
                 self.runfolder_obj.runfolder_name,
             )
@@ -568,29 +594,31 @@ class RunfolderProcessor(object):
                     # Add fastq name to list to be used in create_nexus_file_path
                     list_of_processed_samples.append(fastq)
                 else:
-                    # self.loggers.script.warning(
+                    # self.loggers.upload_script.warning(
                     #     'UA_warning unable to find PanNumber in {}.'.format(fastq)
                     # )
                     not_processed.append(fastq)
         if not_processed:
-            # self.loggers.script.error(
+            # self.loggers.upload_script.error(
             #     "UA_fail 'Unrecognised panel number found in run {}.'".format(
             #         self.runfolder_obj.runfolder_name
             #     )
             # )
-            self.loggers.script.error(
+            self.loggers.upload_script.error(
                 "UA_fail '%s contained an unrecognised pan numbers: %s'",
                 self.runfolder_obj.runfolder_name,
                 ",".join(not_processed),
             )
 
         if not list_of_processed_samples:
-            self.loggers.script.error("UA_fail 'No known Pan numbers in fastq list'")
+            self.loggers.upload_script.error(
+                "UA_fail 'No known Pan numbers in fastq list'"
+            )
             # If no fastqs to be processed return none object rather than empty list
             list_of_processed_samples = None
             fastq_string = None
         else:
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "%s fastqs found", str(len(list_of_processed_samples))
             )
 
@@ -638,7 +666,7 @@ class RunfolderProcessor(object):
         if library_batch_numbers:
             return "_".join(set(library_batch_numbers))
         else:  # Prompt a slack alert
-            self.loggers.script.error(
+            self.loggers.upload_script.error(
                 "UA_fail '%s - Unable to identify library batch numbers. "
                 "Check for underscores in the samplenames.",
                 self.runfolder_obj.runfolder_name,
@@ -763,20 +791,22 @@ class RunfolderProcessor(object):
             # Split std_out on "project" and get the last item to capture the project ID
             projectid = "project" + out.rsplit("project", maxsplit=1)[-1].rstrip()
 
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "DNA Nexus project %s created and shared (VIEW) to %s",
                 self.runfolder_obj.nexus_project_name,
                 ",".join(view_users_list),
             )
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "DNA Nexus project %s created and shared (ADMIN) to %s",
                 self.runfolder_obj.nexus_project_name,
                 ",".join(admin_users_list),
             )
-            self.loggers.script.info("Projectid=%s", projectid)
+            self.loggers.upload_script.info("Projectid=%s", projectid)
             return projectid
         else:
-            self.loggers.script.error("UA_fail 'failed to create project in dna nexus'")
+            self.loggers.upload_script.error(
+                "UA_fail 'failed to create project in dna nexus'"
+            )
             raise Exception(
                 "Unable to create DNA Nexus project"
             )  # Raise exception to stop script
@@ -814,7 +844,7 @@ class RunfolderProcessor(object):
             "Fastq upload commands:\n%s", nexus_upload_command
         )
         # write to automated script logfile
-        self.loggers.script.info(
+        self.loggers.upload_script.info(
             "Uploading fastqs. See commands at %s", self.loggers.upload_agent.filepath
         )
         # Execute upload agent command, write stdout and stderr to DNANexus_upload_started.txt
@@ -851,17 +881,17 @@ class RunfolderProcessor(object):
                 if not upload_ok:  # If no success statement at end of file
                     issue_list.append(file)
             if issue_list:  # Report back if ok
-                self.loggers.script.error(
+                self.loggers.upload_script.error(
                     "UA_fail 'upload of %s files failed for run %s'",
                     stage,
                     self.runfolder_obj.runfolder_name,
                 )
-                self.loggers.script.error(
+                self.loggers.upload_script.error(
                     "UA_fail 'following files were not uploaded %s'", issue_list
                 )
             # if no error
             else:
-                self.loggers.script.info(
+                self.loggers.upload_script.info(
                     "UA_pass 'upload of files complete for run %s'",
                     self.runfolder_obj.runfolder_name,
                 )
@@ -908,7 +938,7 @@ class RunfolderProcessor(object):
                 "Upload cluster density commands:\n%s", nexus_upload_command
             )
             # Write to automated script logfile
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "Uploading cluster density files. See commands at %s",
                 self.loggers.upload_agent.filepath,
             )
@@ -922,7 +952,7 @@ class RunfolderProcessor(object):
         # If cluster density files do not exist skip the upload and return a string which skips the
         # look_for_upload_errors checks
         else:
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "UA_pass 'skipping upload of cluster density files - not all files present'"
             )
             return None, None, "skip_upload_error_check"
@@ -968,7 +998,7 @@ class RunfolderProcessor(object):
                 "Upload bcl2fastq stats file commands:\n%s", nexus_upload_command
             )
             # write to automated script logfile
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "Uploading bcl2fastq stats files. See commands at %s",
                 self.loggers.upload_agent.filepath,
             )
@@ -982,7 +1012,7 @@ class RunfolderProcessor(object):
         # If cluster density files do not exist skip upload and return string which skips
         # look_for_upload_errors checks
         else:
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "UA_pass 'skipping upload of bcl2fastq stats files - not all files present'"
             )
             return None, None, "skip_upload_error_check"
@@ -1096,13 +1126,13 @@ class RunfolderProcessor(object):
 
         # paired end BED file used by primer clipping tool
         bed_dict["mokaamp_bed_PE_input"] = (
-                config.tools_project + config.bedfile_folder + pannumber + "_PE.bed"
-            )
+            config.tools_project + config.bedfile_folder + pannumber + "_PE.bed"
+        )
 
         #  mokaamp variant callers need the flat file
         bed_dict["mokaamp_variant_calling_bed"] = (
-                config.tools_project + config.bedfile_folder + pannumber + "_flat.bed"
-            )
+            config.tools_project + config.bedfile_folder + pannumber + "_flat.bed"
+        )
 
         # RPKM bedfile has a different Pan number - defined in the config dictionary
         if self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]:
@@ -1128,7 +1158,7 @@ class RunfolderProcessor(object):
         """
 
         # Update script log file to say what is being done.
-        self.loggers.script.info("Building dx run commands")
+        self.loggers.upload_script.info("Building dx run commands")
 
         # list to hold all commands.
         commands_list = []
@@ -1170,9 +1200,7 @@ class RunfolderProcessor(object):
                     commands_list.append(self.build_congenica_input_command())
                     # if project is specified then upload via upload agent
                     if self.panel_dictionary[panel]["congenica_project"]:
-                        commands_list.append(
-                            self.run_congenica_command(fastq, panel)
-                        )
+                        commands_list.append(self.run_congenica_command(fastq, panel))
                     # if project is not specified upload via SFTP
                     else:
                         commands_list.append(
@@ -1229,7 +1257,7 @@ class RunfolderProcessor(object):
         if congenica_upload:
             self.build_congenica_command_file()
             # write to logger to create slack alert that there are some congenica files to upload
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "Congenica samples to upload in project %s",
                 self.runfolder_obj.nexus_project_name,
             )
@@ -1259,7 +1287,7 @@ class RunfolderProcessor(object):
             # pass "TSO" to ensure it isn't skipped
             commands_list.append(self.add_to_depends_list("TSO"))
             # build command for the tso500 output parser
-            commands_list.append(self.create_tso500_output_parser_cmd())
+            commands_list.append(self.create_tso500_op_cmd())
             # add_to_depends_list requires a string to determine if it's a negative control and
             # shouldn't be added to depends on string.
             # pass "TSO" to ensure it isn't skipped
@@ -1365,14 +1393,19 @@ class RunfolderProcessor(object):
         high_throughput_list = [
             pannumber
             for pannumber in pannumber_list
-            if self.panel_dictionary[pannumber]["panel_name"] == "tso500_high_throughput"
+            if self.panel_dictionary[pannumber]["panel_name"]
+            == "tso500_high_throughput"
         ]
         # if this list is not empty apply high throughput instance type, otherwise use low
         # throughput instance type
         if high_throughput_list:
-            instance_type = f" --instance-type {config.tso500_analysis_instance_high_throughput} "
+            instance_type = (
+                f" --instance-type {config.tso500_analysis_instance_high_throughput} "
+            )
         else:
-            instance_type = f" --instance-type {config.tso500_analysis_instance_low_throughput} "
+            instance_type = (
+                f" --instance-type {config.tso500_analysis_instance_low_throughput} "
+            )
 
         # build dx run command - inputs are:
         # docker image (from config)
@@ -1398,13 +1431,13 @@ class RunfolderProcessor(object):
         dx_command = "".join(map(str, dx_command_list))
         return dx_command
 
-    def create_tso500_output_parser_cmd(self):
+    def create_tso500_op_cmd(self):
         """
-        Build dx run command for tso500_output_parser app
+        Build dx run command for tso500_op app
         Inputs:
             None
         Returns:
-            dx run command for tso500_output_parser app (string)
+            dx run command for tso500_op app (string)
         """
         # TODO LIMITATION = Pan numbers that require different settings to be applied in downstream
         # tasks will need to be set off in different jobs.
@@ -1415,35 +1448,35 @@ class RunfolderProcessor(object):
         # build dictionary of pan number specific/relevant bedfile to be used in command
         bedfiles = self.nexus_bedfiles(tso_pan_num)
         dx_command_list = [
-            config.tso500_output_parser_cmd,
+            config.tso500_op_cmd,
             self.runfolder_obj.runfolder_name,
-            config.tso500_output_parser_project_name_stage,
+            config.tso500_op_project_name_stage,
             self.runfolder_obj.nexus_project_name,
-            config.tso500_output_parser_project_id_stage,
+            config.tso500_op_project_id_stage,
             self.runfolder_obj.nexus_project_id,
-            config.tso500_output_parser_job_id_stage,
+            config.tso500_op_job_id_stage,
             "$jobid",
-            config.tso500_output_parser_coverage_bedfile_id_stage,
+            config.tso500_op_coverage_bedfile_id_stage,
             bedfiles["sambamba"],
-            config.tso500_output_parser_coverage_app_id_stage,
+            config.tso500_op_coverage_app_id_stage,
             config.coverage_app_id,
-            config.tso500_output_parser_fastqc_app_id_stage,
+            config.tso500_op_fastqc_app_id_stage,
             config.fastqc_app_id,
-            config.tso500_output_parser_sompy_app_id_stage,
+            config.tso500_op_sompy_app_id_stage,
             config.sompy_app_id,
-            config.tso500_output_parser_multiqc_app_id_stage,
+            config.tso500_op_multiqc_app_id_stage,
             config.multiqc_app_id,
-            config.tso500_output_parser_upload_multiqc_app_id_stage,
+            config.tso500_op_upload_multiqc_app_id_stage,
             config.upload_multiqc_app_id,
-            config.tso500_output_parser_coverage_commands_stage,
-            config.tso500_output_parser_coverage_commands
+            config.tso500_op_coverage_commands_stage,
+            config.tso500_op_coverage_commands
             % (
                 self.panel_dictionary[tso_pan_num]["coverage_min_basecall_qual"],
                 self.panel_dictionary[tso_pan_num]["coverage_min_mapping_qual"],
             ),
-            config.tso500_output_parser_coverage_level_stage,
+            config.tso500_op_coverage_level_stage,
             self.panel_dictionary[tso_pan_num]["clinical_coverage_depth"],
-            config.tso500_output_parser_multiqc_coverage_level_stage,
+            config.tso500_op_multiqc_coverage_level_stage,
             self.panel_dictionary[tso_pan_num]["multiqc_coverage_level"],
             " -d $jobid ",
             self.dest_str,
@@ -1495,8 +1528,9 @@ class RunfolderProcessor(object):
         # The panel dictionary default is to give a value of 0, which turns off this padding.
         # An example of the use of this is for STG BrCa who require padding of +/- 11bp (bed files
         # are padded +/-10bp) so 1bp padding is applied.
-        mokapipe_padding_cmd = (config.mokapipe_haplotype_padding_input +
-                                str(panel_config.mokapipe_haplotype_caller_padding))
+        mokapipe_padding_cmd = config.mokapipe_haplotype_padding_input + str(
+            panel_config.mokapipe_haplotype_caller_padding
+        )
 
         if bedfiles["variant_calling_bedfile"]:
             bedfiles_string = (
@@ -1608,8 +1642,10 @@ class RunfolderProcessor(object):
         # $jobid is a bash variable which will be populated by when run on the command line
         # The python script has three inputs - the analysisID ($jobid), -t is the DSS and -p is the
         # DNA Nexus project the analysis is running in
-        dx_command = f"{config.decision_support_preperation} $jobid -t congenica "\
-                     "-p {self.runfolder_obj.nexus_project_name})"
+        dx_command = (
+            f"{config.decision_support_preperation} $jobid -t congenica "
+            "-p {self.runfolder_obj.nexus_project_name})"
+        )
         return dx_command
 
     def create_mokaamp_command(self, fastq, pannumber):
@@ -1745,8 +1781,9 @@ class RunfolderProcessor(object):
             # create a list for all pannumbers that should be included in this analysis
             rpkm_analysis_list = [pannumber]
             # if it is analysed with other panels append these other panels
-            if ((self.panel_dictionary[pannumber]["pipeline"] == "mokapipe") and
-               (self.panel_dictionary[pannumber]["analyse_RPKM"])):
+            if (self.panel_dictionary[pannumber]["pipeline"] == "mokapipe") and (
+                self.panel_dictionary[pannumber]["analyse_RPKM"]
+            ):
                 if self.panel_dictionary[pannumber]["panel_name"] == "vcp1":
                     rpkm_analysis_list += panel_config.vcp1_panel_list
                 elif self.panel_dictionary[pannumber]["panel_name"] == "vcp1":
@@ -1769,7 +1806,7 @@ class RunfolderProcessor(object):
                     cleaned_list.append(panel)
 
         # record output of logic in logfile
-        self.loggers.script.info(
+        self.loggers.upload_script.info(
             "Combining panels for RPKM analysis.\nOriginal panels: %s\nPanels to analyse: %s",
             ",".join(rpkm_list),
             ",".join(cleaned_list),
@@ -1835,7 +1872,7 @@ class RunfolderProcessor(object):
         # If so skip this step
         for ref_sample_id in config.reference_sample_ids:
             if f"_{ref_sample_id}_" in fastq:
-                self.loggers.script.info(
+                self.loggers.upload_script.info(
                     "UA_pass 'NA12878 sample detected, "
                     "not building congenica upload command for %s'",
                     fastq,
@@ -1879,7 +1916,7 @@ class RunfolderProcessor(object):
         # Check if reference ids (flanked by underscores) present in fastq name. If so, skip step
         for ref_sample_id in config.reference_sample_ids:
             if f"_{ref_sample_id}_" in fastq:
-                self.loggers.script.info(
+                self.loggers.upload_script.info(
                     "UA_pass 'NA12878 sample detected, "
                     "not building congenica upload command for %s'",
                     fastq,
@@ -2052,14 +2089,14 @@ class RunfolderProcessor(object):
             # if stderr after ignorning lines referring to the package conflict write to logger
             if cleaned_error:
                 # send message to logger/log file
-                self.loggers.script.error(
+                self.loggers.upload_script.error(
                     "UA_fail 'Error when starting pipeline for run %s. Stderror = \n%s",
                     self.runfolder_obj.runfolder_name,
                     "\n".join(cleaned_error),
                 )
         else:
             # write error message to log file
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "UA_pass 'dx run commands issued without error for run %s'",
                 self.runfolder_obj.runfolder_name,
             )
@@ -2339,8 +2376,11 @@ class RunfolderProcessor(object):
                 sql_str,
                 "\n".join(self.sql_queries["mokaamp"]["query"]),
             )
-            self.email.send_email(recipients=config.mokaguys_recipient,
-                                  email_subject=email_subject, email_message=email_msg)
+            self.email.send_email(
+                recipients=config.mokaguys_recipient,
+                email_subject=email_subject,
+                email_message=email_msg,
+            )
 
             # Email_for_cancer_ops leads to inform the pipeline has started
             # Set sql_str for the email message
@@ -2356,8 +2396,11 @@ class RunfolderProcessor(object):
                 sql_str,
                 "",
             )
-            self.email.send_email(recipients=config.oncology_ops_email,
-                                  email_subject=email_subject, email_message=email_msg)
+            self.email.send_email(
+                recipients=config.oncology_ops_email,
+                email_subject=email_subject,
+                email_message=email_msg,
+            )
 
         if self.sql_queries["tso500"]:  # Send tso500 queries
             email_subject = (
@@ -2375,8 +2418,11 @@ class RunfolderProcessor(object):
                 sql_str,
                 "\n".join(self.sql_queries["tso500"]["query"]),
             )
-            self.email.send_email(recipients=config.mokaguys_recipient,
-                                  email_subject=email_subject, email_message=email_msg)
+            self.email.send_email(
+                recipients=config.mokaguys_recipient,
+                email_subject=email_subject,
+                email_message=email_msg,
+            )
 
         # Build rare disease emails
         # Start counters and placeholders to for email data
@@ -2416,8 +2462,11 @@ class RunfolderProcessor(object):
                 sql_str,
                 "\n".join(sql_statements),
             )
-            self.email.send_email(recipients=config.mokaguys_recipient,
-                                  email_subject=email_subject, email_message=email_msg)
+            self.email.send_email(
+                recipients=config.mokaguys_recipient,
+                email_subject=email_subject,
+                email_message=email_msg,
+            )
 
         if self.sql_queries["mokawes"]:  # Send email to WES team to help IR upload
             email_subject = (
@@ -2431,8 +2480,11 @@ class RunfolderProcessor(object):
                 sql_str,
                 "\n".join(self.sql_queries["mokawes"]["samplename_email"]),
             )
-            self.email.send_email(recipients=config.wes_samplename_email_list,
-                                  email_subject=email_subject, email_message=email_msg)
+            self.email.send_email(
+                recipients=config.wes_samplename_email_list,
+                email_subject=email_subject,
+                email_message=email_msg,
+            )
 
     def upload_rest_of_runfolder(self):
         """
@@ -2454,12 +2506,12 @@ class RunfolderProcessor(object):
                     self.runfolder_obj.runfolder_samplesheet_name,
                 ),
             )
-            self.loggers.script.info(
+            self.loggers.upload_script.info(
                 "Samplesheet copied to runfolder: %s",
                 self.runfolder_obj.runfolder_samplesheet_name,
             )
         else:
-            self.loggers.script.info("Samplesheet not copied to runfolder")
+            self.loggers.upload_script.info("Samplesheet not copied to runfolder")
 
         # build backup_runfolder.py command for TSO run
         tso500_backup = self.check_for_tso500()
@@ -2492,11 +2544,11 @@ class RunfolderProcessor(object):
             )
 
         # Record runfolder upload in log file, linking to log files for cmds and stdout
-        self.loggers.script.info(
+        self.loggers.upload_script.info(
             "Uploading rest of run folder to Nexus using backup_runfolder.py"
         )
-        self.loggers.script.info(cmd)
-        self.loggers.script.info(
+        self.loggers.upload_script.info(cmd)
+        self.loggers.upload_script.info(
             "See standard out from these commands in logfile at %s",
             self.loggers.backup.filepath,
         )
@@ -2534,25 +2586,27 @@ class RunfolderProcessor(object):
         files_to_upload_list.append(self.bcl2fastq_logfile)
         # Create a list which, when joined will form a single upload agent command, uploading each
         # file in logger.filepath
-        cmd = (f"{config.upload_agent_path} "
-               f"--auth-token {config.nexus_apikey} "
-               f"--project {self.runfolder_obj.nexus_project_name} "
-               f"--folder {nexus_upload_folder} "
-               f"--do-not-compress {files_to_upload_string}")
+        cmd = (
+            f"{config.upload_agent_path} "
+            f"--auth-token {config.nexus_apikey} "
+            f"--project {self.runfolder_obj.nexus_project_name} "
+            f"--folder {nexus_upload_folder} "
+            f"--do-not-compress {files_to_upload_string}"
+        )
 
         # Write commands to the upload agent logfile before upload
-        self.loggers.script.info("Uploading logfiles.")
-        self.loggers.script.info(cmd)
+        self.loggers.upload_script.info("Uploading logfiles.")
+        self.loggers.upload_script.info(cmd)
 
         # execute ua command
         out, err = self.execute_subprocess_command(cmd)
 
         # capture stdout to upload agent log file AND the script logfile
-        self.loggers.script.info(
+        self.loggers.upload_script.info(
             "Uploading logfiles (this will not be included in DNANexus)"
         )
-        self.loggers.script.info(out)
-        self.loggers.script.info(err)
+        self.loggers.upload_script.info(out)
+        self.loggers.upload_script.info(err)
         self.loggers.upload_agent.info(out)
         self.loggers.upload_agent.info(err)
 
@@ -2579,13 +2633,15 @@ class RunfolderProcessor(object):
                 if config.backup_runfolder_error in line:
                     error_seen.append(line)
         if error_seen:
-            self.loggers.script.error(
+            self.loggers.upload_script.error(
                 "UA_fail 'Error in upload of rest of runfolder: %s in runfolder %s'",
-                ";".join(error_seen), self.runfolder_obj.runfolder_name
+                ";".join(error_seen),
+                self.runfolder_obj.runfolder_name,
             )
         if upload_ok:
-            self.loggers.script.info(
-                "UA_pass 'Rest of runfolder %s uploaded ok'", self.runfolder_obj.runfolder_name
+            self.loggers.upload_script.info(
+                "UA_pass 'Rest of runfolder %s uploaded ok'",
+                self.runfolder_obj.runfolder_name,
             )
         return upload_ok
 
