@@ -44,7 +44,7 @@ panel_dict = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "hsmetrics_bedfile": None,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan2835": {  # TWIST WES (Viapath)
         "panel_name": "wes",
@@ -62,7 +62,7 @@ panel_dict = {
         "masked_reference": False,
         "variant_calling_bedfile": None,
         "RPKM_bedfile_pan_number": None,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4940": {  # TWIST WES for EB lab (Viapath)
         "panel_name": "wes_eb",
@@ -80,7 +80,7 @@ panel_dict = {
         "masked_reference": False,
         "variant_calling_bedfile": None,
         "RPKM_bedfile_pan_number": None,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4081": {  # SWIFT EGFR (Viapath)
         "panel_name": "swift_egfr",
@@ -134,10 +134,10 @@ panel_dict = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "hsmetrics_bedfile": None,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
-                  # NOTE - TSO500 output parser settings are taken from Pan4969
+        # NOTE - TSO500 output parser settings are taken from Pan4969
         "panel_name": "tso500_low_throughput",
         "pipeline": "TSO500",
         "capture_type": "Hybridisation",
@@ -155,10 +155,10 @@ panel_dict = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "hsmetrics_bedfile": None,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
-                  # NOTE - TSO500 output parser settings are taken from Pan4969
+        # NOTE - TSO500 output parser settings are taken from Pan4969
         "panel_name": "tso500_high_throughput",
         "pipeline": "TSO500",
         "capture_type": "Hybridisation",
@@ -176,10 +176,10 @@ panel_dict = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "hsmetrics_bedfile": None,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan5086": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
-                  # NOTE - TSO500 output parser settings are taken from Pan4969
+        # NOTE - TSO500 output parser settings are taken from Pan4969
         "panel_name": "tso500_high_throughput",
         "pipeline": "TSO500",
         "capture_type": "Hybridisation",
@@ -197,7 +197,7 @@ panel_dict = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "hsmetrics_bedfile": None,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4579": {  # VCP2 M1.1 - Somatic
         "panel_name": "vcp2_somatic",
@@ -215,7 +215,7 @@ panel_dict = {
         "sambamba_bedfile": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4574": {  # VCP2 M1.2 - Somatic
         "panel_name": "vcp2_somatic",
@@ -233,7 +233,7 @@ panel_dict = {
         "sambamba_bedfile": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4119": {  # VCP1 R134 - FH small panel (Viapath)
         "panel_name": "vcp1",
@@ -252,7 +252,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
         "MSH2": True,
     },
     "Pan4121": {  # VCP1 R184 - CF (Viapath)
@@ -271,7 +271,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4122": {  # VCP1 R25 - FGFR (Viapath)
         "panel_name": "vcp1",
@@ -289,7 +289,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4125": {  # VCP1 R73 - DMD (Viapath)
         "panel_name": "vcp1",
@@ -307,7 +307,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4126": {  # VCP1 R337 - CADASIL (Viapath)
         "panel_name": "vcp1",
@@ -325,7 +325,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4974": {  # VCP1 R112 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -343,7 +343,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4975": {  # VCP1 R115 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -361,7 +361,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4976": {  # VCP1 R116 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -379,7 +379,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4977": {  # VCP1 R117 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -397,7 +397,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4978": {  # VCP1 R118 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -415,7 +415,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4979": {  # VCP1 R119 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -433,7 +433,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4980": {  # VCP1 R120 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -451,7 +451,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4981": {  # VCP1 R121 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -469,7 +469,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4982": {  # VCP1 R122 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -487,7 +487,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4983": {  # VCP1 R123 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -505,7 +505,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4984": {  # VCP1 R124 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -523,7 +523,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4145": {  # VCP3 R79 - CMD (Viapath)
         "panel_name": "vcp3",
@@ -541,7 +541,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4146": {  # VCP3 R81 - CM (Viapath)
         "panel_name": "vcp3",
@@ -559,7 +559,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4149": {  # VCP2 BRCA (Viapath)
         "panel_name": "vcp2",
@@ -577,7 +577,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4150": {  # VCP2 R207 - ovarian cancer (Viapath)
         "panel_name": "vcp2",
@@ -595,7 +595,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4127": {  # VCP2 R209 - colorectal cancer (Viapath)
         "panel_name": "vcp2",
@@ -613,7 +613,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
         "MSH2": True,
     },
     "Pan4129": {  # VCP2 R210 - Lynch syndrome (Viapath)
@@ -632,7 +632,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4964": {  # VCP2 R259 - nijmegen breakage (Viapath)
         "panel_name": "vcp2",
@@ -650,7 +650,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4130": {  # VCP2 R211 - polyposis (Viapath)
         "panel_name": "vcp2",
@@ -668,7 +668,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
         "MSH2": True,
     },
     "Pan4132": {  # VCP3 R56 (Viapath)
@@ -687,7 +687,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4134": {  # VCP3 R57 (Viapath)
         "panel_name": "vcp3",
@@ -705,7 +705,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4136": {  # VCP3 R58 (Viapath)
         "panel_name": "vcp3",
@@ -723,7 +723,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4137": {  # VCP3 R60 (Viapath)
         "panel_name": "vcp3",
@@ -741,7 +741,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4138": {  # VCP3 R62 (Viapath)
         "panel_name": "vcp3",
@@ -759,7 +759,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4143": {  # VCP3 R66 (Viapath)
         "panel_name": "vcp3",
@@ -777,7 +777,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4144": {  # VCP3 R78 (Viapath)
         "panel_name": "vcp3",
@@ -795,7 +795,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4151": {  # VCP3 R82 - limb girdle (Viapath)
         "panel_name": "vcp3",
@@ -813,7 +813,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4314": {  # VCP3 R229 (Viapath)
         "panel_name": "vcp3",
@@ -831,7 +831,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4351": {  # VCP3 R227 (Viapath)
         "panel_name": "vcp3",
@@ -849,7 +849,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4387": {  # VCP3 R90 - Bleeding and platelet disorders (Viapath)
         "panel_name": "vcp3",
@@ -867,7 +867,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4390": {  # VCP3 R97 - Thrombophilia with a likely monogenic cause (Viapath)
         "panel_name": "vcp3",
@@ -885,7 +885,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "congenica_IR_template": 'priority',
+        "congenica_IR_template": "priority",
     },
     "Pan4821": {  # VCP1 R13 - FH (STG)
         "panel_name": "vcp1",
@@ -994,7 +994,7 @@ panel_dict = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-		"MSH2": True,
+        "MSH2": True,
     },
     "Pan4817": {  # VCP2 R207 - ovarian (STG)
         "panel_name": "vcp2",
@@ -1456,16 +1456,36 @@ panel_dict = {
 # List of all panel numbers from panel_dict
 panel_list = list(panel_dict.keys())
 # Per-capture panel numbers for use with RPKM
-vcp1_panel_list = [k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "vcp1"]
-vcp2_panel_list = [k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "vcp2"]
-vcp3_panel_list = [k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "vcp3"]
-tso500_panel_list = [k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "TSO500"]
-WES_panel_lists = [k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "mokawes"]
-SNP_panel_lists = [k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "mokasnp"]
-archer_panel_list = [k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "archerdx"]
-swift_57G_panel_list = [k for k, v in panel_dict.items() if
-                        panel_dict[k]["panel_name"] == "swift_57g"]
-swift_egfr_panel_list = [k for k, v in panel_dict.items() if
-                         panel_dict[k]["panel_name"] == "swift_egfr"]
-mokacan_panel_list = [k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "mokacan"]
-LRPCR_panel_list = [k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "lrpcr"]
+vcp1_panel_list = [
+    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "vcp1"
+]
+vcp2_panel_list = [
+    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "vcp2"
+]
+vcp3_panel_list = [
+    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "vcp3"
+]
+tso500_panel_list = [
+    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "TSO500"
+]
+WES_panel_lists = [
+    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "mokawes"
+]
+SNP_panel_lists = [
+    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "mokasnp"
+]
+archer_panel_list = [
+    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "archerdx"
+]
+swift_57G_panel_list = [
+    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "swift_57g"
+]
+swift_egfr_panel_list = [
+    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "swift_egfr"
+]
+mokacan_panel_list = [
+    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "mokacan"
+]
+LRPCR_panel_list = [
+    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "lrpcr"
+]

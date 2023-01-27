@@ -29,7 +29,10 @@ def get_arguments():
     )
     # Define the arguments that will be taken.
     parser.add_argument(
-        "-a", "--analysis_id", required=True, help="workflow Analysis ID in format Analysis-abc123",
+        "-a",
+        "--analysis_id",
+        required=True,
+        help="workflow Analysis ID in format Analysis-abc123",
     )
     parser.add_argument(
         "-t",
@@ -100,10 +103,9 @@ class DecisionTooler(object):
         returns tuple of job ids that created vcf and bam
         """
         # obtain json for dx describe on the given analysis id
-        cmd = (
-            "source {}; dx describe"
-            " {}:{} --json --auth-token {}"
-        ).format(config.sdk_source_cmd, project, analysis_id, config.nexus_apikey)
+        cmd = ("source {}; dx describe" " {}:{} --json --auth-token {}").format(
+            config.sdk_source_cmd, project, analysis_id, config.nexus_apikey
+        )
         # jobid comes from the sentieon sub-job, which takes a few moments to initiate after
         # calling the sentieon app. Running this script immediately after running the sentieon
         # workflow raises an IndexError. We retry in the while loop until the jobid is available.
@@ -147,7 +149,10 @@ class DecisionTooler(object):
             )
         elif ps["pipeline"] == "mokapipe":
             return self.workflow_object(
-                "mokapipe", config.mokapipe_vcf_output_name, config.mokapipe_bam_output_name, None,
+                "mokapipe",
+                config.mokapipe_vcf_output_name,
+                config.mokapipe_bam_output_name,
+                None,
             )
 
     def printer(self, jobid, workflow, tool, pipe_bam_jobid):
@@ -190,7 +195,14 @@ if __name__ == "__main__":
     args = get_arguments()
     ajson = json.loads(
         subprocess.check_output(
-            ["dx", "describe", args.analysis_id, "--auth", config.nexus_apikey, "--json"]
+            [
+                "dx",
+                "describe",
+                args.analysis_id,
+                "--auth",
+                config.nexus_apikey,
+                "--json",
+            ]
         )
     )
 

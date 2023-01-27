@@ -54,8 +54,9 @@ class TestAdEmail():
 
     def test_send_email_success(self, upload_script_logger, email_subject,
                                 email_message, email_recipients):
-        ad_email_obj = AdEmail(email_priority=1, logger=upload_script_logger)
-        assert ad_email_obj.send_email(email_recipients, email_subject, email_message)
+        for recipients in email_recipients:
+            ad_email_obj = AdEmail(email_priority=1, logger=upload_script_logger)
+            assert ad_email_obj.send_email(email_recipients, email_subject, email_message)
 
     def test_send_email_fail(self, monkeypatch, upload_script_logger, email_subject,
                              email_message, email_recipients):
