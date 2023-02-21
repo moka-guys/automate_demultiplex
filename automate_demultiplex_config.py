@@ -168,7 +168,7 @@ tso500_app_name = "TSO500_v1.5.0"
 tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 
 # TSO500_output_parser app
-tso500_output_parser_app = "applet-GBKvX5j0jy1kK8jj9F7jjVY7" # Apps/tso500_output_parser_v1.2.0
+tso500_output_parser_app = "applet-GP0YXB00jy1kYKYp33yJZJ5B" # Apps/tso500_output_parser_v1.2.1
 # inputs for tso500_output_parser_app
 coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
@@ -1023,7 +1023,7 @@ panel_settings = {
 		"multiqc_coverage_level": 100,
 		"coverage_min_basecall_qual":25,
 		"coverage_min_mapping_qual":30,
-		"drylab_dnanexus_id": None # can state this when we know it.
+		"drylab_dnanexus_id": "BSPS_MD"
 	},
 	"Pan4821": {  # VCP1 STG R134_FH
 		"mokapipe": True,
