@@ -219,10 +219,10 @@ mokapipe_sambamba_exclude_duplicates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclud
 mokapipe_sambamba_exclude_failed_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclude_failed_quality_control=true"
 mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.merge_overlapping_mate_reads=true"
 mokapipe_fhPRS_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
-mokapipe_polyedge_stage = " istage-GK71VJ80VQgQkjvz0vyQ8YV1"
-polyedge_str = "%(stage_str)s.gene={} %(stage_str)s.chrom={} "\
-			   "%(stage_str)s.poly_start={} %(stage_str)s.poly_end={} "\
-			   "%(stage_str)s.skip=false" % {"stage_str": mokapipe_polyedge_stage}
+mokapipe_polyedge_stage = "stage-GK71VJ80VQgQkjvz0vyQ8YV1"
+polyedge_str = " -i%(stage_str)s.gene={} -i%(stage_str)s.chrom={} "\
+			   "-i%(stage_str)s.poly_start={} -i%(stage_str)s.poly_end={} "\
+			   "-i%(stage_str)s.skip=false" % {"stage_str": mokapipe_polyedge_stage}
 mokapipe_fhPRS_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
 mokapipe_FH_humanexome_instance_type= "mem3_ssd1_v2_x8" # required when creating gVCFs
 mokapipe_GATK_human_exome_appletID = "applet-FYZ097j0jy1ZZPx30GykP63J"
