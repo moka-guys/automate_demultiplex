@@ -772,7 +772,8 @@ class RunfolderProcessor(object):
             None
         All samples to be processed were identified in find_fastqs() which also created a string of 
         filepaths for all fastqs that is required by the upload agent.
-        This function can upload fastqs or a tar'd runfolder (TSO500) - If fastq's are being uploaded upload to subfolder, else upload to root of project
+        This function can upload fastqs or a tar'd runfolder (previously used for TSO500) 
+        - If fastq's are being uploaded upload to subfolder, else upload to root of project
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
