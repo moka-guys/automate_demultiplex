@@ -1488,9 +1488,13 @@ class RunfolderProcessor(object):
         # Set parameters specific to polyedge app
         polyedge_cmd_string = ""
 
-        # If test contains MSH2, we want app to run - set skip to false
-        if self.panel_dictionary[pannumber]["MSH2"]:
-            polyedge_cmd_string += config.mokapipe_polyedge_skip
+        if self.panel_dictionary[pannumber]["polyedge"]:
+            gene = self.panel_dictionary[pannumber]["polyedge"]
+            
+            polyedge_cmd_string += config.polyedge_str.format(
+                gene, config.polyedge_inputs[gene]["chrom"],
+                config.polyedge_inputs[gene]["poly_start"],
+                config.polyedge_inputs[gene]["poly_end"])
             
         masked_reference_command = ""
         if self.panel_dictionary[pannumber]["masked_reference"]:
@@ -1500,9 +1504,13 @@ class RunfolderProcessor(object):
         dx_command = (
             self.mokapipe_command
             + fastqs[2]
-            + config.mokapipe_fastqc1
+            + config.mokapipe_fastqc
             + fastqs[0]
-            + config.mokapipe_fastqc2
+            + config.mokapipe_fastqc
+            + fastqs[1]
+            + config.mokapipe_bwa_reads
+            + fastqs[0]
+            + config.mokapipe_bwa_reads2
             + fastqs[1]
             + config.mokapipe_bwa_rg_sample
             + fastqs[2]

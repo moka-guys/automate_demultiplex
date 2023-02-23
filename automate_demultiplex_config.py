@@ -112,7 +112,7 @@ reference_sample_ids = ["NA12878", "136819"]
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
-mokapipe_congenica_pipeline_ID = "5221" 
+mokapipe_congenica_pipeline_ID = "5229"
 # Current MokaWES ID
 mokawes_pipeline_ID = "5078"
 # MokaAMP ID
@@ -144,7 +144,7 @@ project_success = 'Created new project called "%s"'
 app_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"
 # path to the workflow in the app project
 
-mokapipe_path = "Workflows/GATK3.5_v2.17"
+mokapipe_path = "Workflows/GATK3.5_v2.18"
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 
@@ -196,8 +196,9 @@ mokapipe_filter_vcf_with_bedfile_stage = "stage-G5Kpgv80zB02Q64zFf94G05F"
 mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 
 # Mokapipe workflow inputs
-mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
-mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
+mokapipe_fastqc = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
+mokapipe_bwa_reads = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz="
+mokapipe_bwa_reads2 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz="
 mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
 mokapipe_bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=%s"  # bwa reference genome
 mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
@@ -218,7 +219,10 @@ mokapipe_sambamba_exclude_duplicates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclud
 mokapipe_sambamba_exclude_failed_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclude_failed_quality_control=true"
 mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.merge_overlapping_mate_reads=true"
 mokapipe_fhPRS_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
-mokapipe_polyedge_skip = " -istage-GK71VJ80VQgQkjvz0vyQ8YV1.skip=false"
+mokapipe_polyedge_stage = "stage-GK71VJ80VQgQkjvz0vyQ8YV1"
+polyedge_str = " -i%(stage_str)s.gene={} -i%(stage_str)s.chrom={} "\
+			   "-i%(stage_str)s.poly_start={} -i%(stage_str)s.poly_end={} "\
+			   "-i%(stage_str)s.skip=false" % {"stage_str": mokapipe_polyedge_stage}
 mokapipe_fhPRS_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
 mokapipe_FH_humanexome_instance_type= "mem3_ssd1_v2_x8" # required when creating gVCFs
 mokapipe_GATK_human_exome_appletID = "applet-FYZ097j0jy1ZZPx30GykP63J"
@@ -489,7 +493,7 @@ default_panel_properties = {
 	"mokapipe_haplotype_caller_padding": 0,
 	"FH": False,
 	"FH_PRS_bedfile": FH_PRS_bedfile_name,
-	"MSH2": False,
+	"polyedge": False,
 	"mokaamp_varscan_strandfilter": True,
 	"iva_upload": False,
 	"congenica_upload": True,
@@ -806,7 +810,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4949data.bed",
 	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4948data.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4127": {  #VCP2 R209 colorectal cancer (Viapath)
 	    "mokapipe": True,
@@ -827,7 +831,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4949data.bed",
 	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4948data.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4130": {  #VCP2 R211 polyposis (Viapath)
 	    "mokapipe": True,
@@ -838,7 +842,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4949data.bed",
 	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4948data.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4132": {  #VCP3 R56 (Viapath)
 		"mokapipe": True,
@@ -1246,7 +1250,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4820": {  # VCP2 STG R211
 		"mokapipe": True,
@@ -1259,7 +1263,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4816": {  # VCP2 STG R208
 		"mokapipe": True,
@@ -1284,7 +1288,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan5007": {  # LRPCR Via R207 PMS2
 		"mokapipe": True,
@@ -1450,5 +1454,8 @@ sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 bcl2fastq_stats_filename = "Stats.json"
 bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 
-
-
+polyedge_inputs = {"MSH2":
+					{"chrom": 2,
+					"poly_start": 47641559,
+					"poly_end": 47641586,
+					}}
