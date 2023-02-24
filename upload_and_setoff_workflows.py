@@ -1895,6 +1895,7 @@ class RunfolderProcessor(object):
             + str(lowest_coverage_level)
             + self.project
             + self.runfolder_obj.nexus_project_id
+            + "--instance-type mem1_ssd1_v2_x4"
             + self.depends
             + self.token
         )
