@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -124,7 +124,7 @@ mokasnp_pipeline_ID = "5091"
 # mokacan pipeline ID
 mokacan_pipeline_ID = "4728"
 # TSO500 pipeline ID
-TSO_pipeline_ID = "5227"
+TSO_pipeline_ID = "5234"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -157,14 +157,14 @@ mokasnp_path = "Workflows/MokaSNP_v1.2.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.16.0"
+multiqc_path = "Apps/multiqc_v1.17.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
 congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
 
 # TSO500 app
-tso500_app = "applet-GKv42080jy1bfp261fpP1Gfy" # Apps/TSO500_v1.5.0
-tso500_app_name = "TSO500_v1.5.0"
+tso500_app = "applet-GPgkz0j0jy1Yf4XxkXjVgKfv" # Apps/TSO500_v1.5.1
+tso500_app_name = "TSO500_v1.5.1"
 tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 
 # TSO500_output_parser app
@@ -173,7 +173,7 @@ tso500_output_parser_app = "applet-GP0YXB00jy1kYKYp33yJZJ5B" # Apps/tso500_outpu
 coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
 sompy_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G9yPb780jy1p660k6yBvQg07"
-multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GKGjkz00jy1zKfXJ5qfpfpF8" 
+multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GPgbyk00jy1kpgvggbp12Vfg" 
 upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
 TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
 
@@ -383,10 +383,13 @@ panel_list = [
 	"Pan3174", # WES trio
 	"Pan4081", # Swift EGFR
 	"Pan4082", # Swift 57
-	"Pan4396", # ArcherDx
+	"Pan4396", # ArcherDx (Synnovis)
+	"Pan5113", # ArcherDx (BSPS)
+	"Pan5115", # ArcherDx (control)
 	"Pan4969", # TSO500 - no UTRS TERT promoter
 	"Pan5085", # TSO500 High throughput Synnovis. no UTRS TERT promoter
-	"Pan5086", # TSO500 High throughput BSPS. no UTRS TERT promoter
+	"Pan5112", # TSO500 High throughput BSPS. no UTRS TERT promoter
+	"Pan5114", # TSO500 High throughput Control. no UTRS TERT promoter
 	"Pan4579", # VCP2 M1.1 (somatic)
 	"Pan4574", # VCP2 M1.2 (somatic)
 	"Pan4042", # STG VCP2 BRCA - TO BE REMOVED IN FUTURE UPDATE
@@ -470,12 +473,12 @@ vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","
 vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390","Pan4826","Pan4827","Pan4828","Pan4829","Pan4830","Pan4831","Pan4832","Pan4833","Pan4834","Pan4835","Pan4836"]
 WES_panel_lists = ["Pan2835","Pan3174","Pan4940"]
 SNP_panel_lists = ["Pan4009"]
-archer_panel_list = ["Pan4396"]
+archer_panel_list = ["Pan4396","Pan5113","Pan5115"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4579","Pan4574"]
 LRPCR_panel_list = ["Pan5007","Pan5008","Pan5009","Pan5010","Pan5011","Pan5012","Pan5013","Pan5014","Pan5015","Pan5016"]
-tso500_panel_list = ["Pan4969","Pan5085","Pan5086"] # note the settings from the first item in this list are used when setting off the dx run commands.
+tso500_panel_list = ["Pan4969","Pan5085","Pan5112","Pan5114"] # note the settings from the first item in this list are used when setting off the TSO500_output_parser commands.
 
 
 default_panel_properties = {
@@ -984,7 +987,15 @@ panel_settings = {
 		"sambamba_bedfile": "Pan4995dataSambamba.bed",
 		"variant_calling_bedfile": "Pan4995data.bed",
 	},
-	"Pan4396": { #ArcherDx
+	"Pan4396": { #ArcherDx (Synnovis)
+		"archerdx": True,
+		"congenica_upload": False,
+	},
+		"Pan5113": { #ArcherDx (BSPS)
+		"archerdx": True,
+		"congenica_upload": False,
+	},
+		"Pan5115": { #ArcherDx (Control)
 		"archerdx": True,
 		"congenica_upload": False,
 	},
@@ -1019,7 +1030,17 @@ panel_settings = {
 		"coverage_min_basecall_qual":25,
 		"coverage_min_mapping_qual":30,
 	},
-	"Pan5086" : { # TSO500 High throughput BSPS. no UTRs. TERT promoter
+	"Pan5112" : { # TSO500 High throughput BSPS. no UTRs. TERT promoter
+		"TSO500": True,
+		"TSO500_high_throughput": True,
+		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+		"clinical_coverage_depth" : 100,
+		"multiqc_coverage_level": 100,
+		"coverage_min_basecall_qual":25,
+		"coverage_min_mapping_qual":30,
+		"drylab_dnanexus_id": "BSPS_MD"
+	},
+		"Pan5114" : { # TSO500 High throughput Control. no UTRs. TERT promoter
 		"TSO500": True,
 		"TSO500_high_throughput": True,
 		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
