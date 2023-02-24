@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = True
+testing = False
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -42,7 +42,12 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
-demultiplex_test_folder = ["999999_M02353_0496_000000000-DEMUX","999999_A01229_0010_DEMUXINTEG","999999_A01229_0049_AHMKTSO500"]
+demultiplex_test_folder = ["999999_A01229_0496_DEMUXINTEG", "999999_M02353_0496_000000000-DEMUX",
+			   "999999_M02353_0496_000000000-SWIFT", "999999_M02353_0566_000000000-JKADX",
+			   "999999_M02631_0256_000000000-LRPCR", "999999_NB551068_0150_VCP123MSH2FHLRPCR",
+			   "999999_NB552085_0077_WESPIPECAN", "999999_NB552085_0148_AHC2WWASNP",
+			   "999999_NB552085_0233_DRYLABADX", "999999_A01229_0049_AHMKTSO500",
+			   "999999_A01229_0163_AHGJFTDMXY"]
 
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
