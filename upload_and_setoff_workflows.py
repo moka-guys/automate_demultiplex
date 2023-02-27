@@ -772,7 +772,8 @@ class RunfolderProcessor(object):
             None
         All samples to be processed were identified in find_fastqs() which also created a string of 
         filepaths for all fastqs that is required by the upload agent.
-        This function can upload fastqs or a tar'd runfolder (TSO500) - If fastq's are being uploaded upload to subfolder, else upload to root of project
+        This function can upload fastqs or a tar'd runfolder (previously used for TSO500) 
+        - If fastq's are being uploaded upload to subfolder, else upload to root of project
         This command is passed to execute_subprocess_command() and all standard error/standard out
         written to a log file. The upload command is written in a way where it is repeated until it
         exits with an exit status of 0.
@@ -1488,9 +1489,13 @@ class RunfolderProcessor(object):
         # Set parameters specific to polyedge app
         polyedge_cmd_string = ""
 
-        # If test contains MSH2, we want app to run - set skip to false
-        if self.panel_dictionary[pannumber]["MSH2"]:
-            polyedge_cmd_string += config.mokapipe_polyedge_skip
+        if self.panel_dictionary[pannumber]["polyedge"]:
+            gene = self.panel_dictionary[pannumber]["polyedge"]
+            
+            polyedge_cmd_string += config.polyedge_str.format(
+                gene, config.polyedge_inputs[gene]["chrom"],
+                config.polyedge_inputs[gene]["poly_start"],
+                config.polyedge_inputs[gene]["poly_end"])
             
         masked_reference_command = ""
         if self.panel_dictionary[pannumber]["masked_reference"]:
@@ -1500,9 +1505,13 @@ class RunfolderProcessor(object):
         dx_command = (
             self.mokapipe_command
             + fastqs[2]
-            + config.mokapipe_fastqc1
+            + config.mokapipe_fastqc
             + fastqs[0]
-            + config.mokapipe_fastqc2
+            + config.mokapipe_fastqc
+            + fastqs[1]
+            + config.mokapipe_bwa_reads
+            + fastqs[0]
+            + config.mokapipe_bwa_reads2
             + fastqs[1]
             + config.mokapipe_bwa_rg_sample
             + fastqs[2]
@@ -1886,6 +1895,7 @@ class RunfolderProcessor(object):
             + str(lowest_coverage_level)
             + self.project
             + self.runfolder_obj.nexus_project_id
+            + " --instance-type mem1_ssd1_v2_x4"
             + self.depends
             + self.token
         )

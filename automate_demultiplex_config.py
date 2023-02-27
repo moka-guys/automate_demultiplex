@@ -42,7 +42,9 @@ file_demultiplexing_old = "demultiplexlog.txt"
 # directories to be ignored when looping through runfolders
 ignore_directories = ["samplesheets", "GlacierTest"]
 
-demultiplex_test_folder = ["999999_M02353_0496_000000000-DEMUX","999999_A01229_0010_DEMUXINTEG","999999_A01229_0049_AHMKTSO500"]
+# TSO500 runfolder is used for testing both demultiplexing and usw script
+demultiplex_test_folder = ["999999_A01229_0496_DEMUXINTEG", "999999_M02353_0496_000000000-DEMUX",
+			   "999999_A01229_0049_AHMKTSO500"]
 
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
@@ -112,7 +114,7 @@ reference_sample_ids = ["NA12878", "136819"]
 # =====Moka settings=====
 # Moka IDs for generating SQLs to update the Mokadatabase
 # audit trail ID for Mokapipe & congenica
-mokapipe_congenica_pipeline_ID = "5221" 
+mokapipe_congenica_pipeline_ID = "5229"
 # Current MokaWES ID
 mokawes_pipeline_ID = "5078"
 # MokaAMP ID
@@ -124,7 +126,7 @@ mokasnp_pipeline_ID = "5091"
 # mokacan pipeline ID
 mokacan_pipeline_ID = "4728"
 # TSO500 pipeline ID
-TSO_pipeline_ID = "5227"
+TSO_pipeline_ID = "5234"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -144,7 +146,7 @@ project_success = 'Created new project called "%s"'
 app_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"
 # path to the workflow in the app project
 
-mokapipe_path = "Workflows/GATK3.5_v2.17"
+mokapipe_path = "Workflows/GATK3.5_v2.18"
 # path to the WES workflow in the app project
 mokawes_path = "Workflows/MokaWES_v1.8"
 
@@ -157,14 +159,14 @@ mokasnp_path = "Workflows/MokaSNP_v1.2.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.16.0"
+multiqc_path = "Apps/multiqc_v1.17.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
 congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
 
 # TSO500 app
-tso500_app = "applet-GKv42080jy1bfp261fpP1Gfy" # Apps/TSO500_v1.5.0
-tso500_app_name = "TSO500_v1.5.0"
+tso500_app = "applet-GPgkz0j0jy1Yf4XxkXjVgKfv" # Apps/TSO500_v1.5.1
+tso500_app_name = "TSO500_v1.5.1"
 tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 
 # TSO500_output_parser app
@@ -173,7 +175,7 @@ tso500_output_parser_app = "applet-GP0YXB00jy1kYKYp33yJZJ5B" # Apps/tso500_outpu
 coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
 sompy_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G9yPb780jy1p660k6yBvQg07"
-multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GKGjkz00jy1zKfXJ5qfpfpF8" 
+multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GPgbyk00jy1kpgvggbp12Vfg" 
 upload_multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
 TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
 
@@ -196,8 +198,9 @@ mokapipe_filter_vcf_with_bedfile_stage = "stage-G5Kpgv80zB02Q64zFf94G05F"
 mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
 
 # Mokapipe workflow inputs
-mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
-mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
+mokapipe_fastqc = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
+mokapipe_bwa_reads = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads_fastqgz="
+mokapipe_bwa_reads2 = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.reads2_fastqgz="
 mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="  # bwa rg samplename
 mokapipe_bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=%s"  # bwa reference genome
 mokapipe_mokapicard_vendorbed_input = " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="  # HSMetrics Bed file
@@ -218,7 +221,10 @@ mokapipe_sambamba_exclude_duplicates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclud
 mokapipe_sambamba_exclude_failed_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclude_failed_quality_control=true"
 mokapipe_sambamba_count_overlapping_mates = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.merge_overlapping_mate_reads=true"
 mokapipe_fhPRS_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
-mokapipe_polyedge_skip = " -istage-GK71VJ80VQgQkjvz0vyQ8YV1.skip=false"
+mokapipe_polyedge_stage = "stage-GK71VJ80VQgQkjvz0vyQ8YV1"
+polyedge_str = " -i%(stage_str)s.gene={} -i%(stage_str)s.chrom={} "\
+			   "-i%(stage_str)s.poly_start={} -i%(stage_str)s.poly_end={} "\
+			   "-i%(stage_str)s.skip=false" % {"stage_str": mokapipe_polyedge_stage}
 mokapipe_fhPRS_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
 mokapipe_FH_humanexome_instance_type= "mem3_ssd1_v2_x8" # required when creating gVCFs
 mokapipe_GATK_human_exome_appletID = "applet-FYZ097j0jy1ZZPx30GykP63J"
@@ -379,10 +385,13 @@ panel_list = [
 	"Pan3174", # WES trio
 	"Pan4081", # Swift EGFR
 	"Pan4082", # Swift 57
-	"Pan4396", # ArcherDx
+	"Pan4396", # ArcherDx (Synnovis)
+	"Pan5113", # ArcherDx (BSPS)
+	"Pan5115", # ArcherDx (control)
 	"Pan4969", # TSO500 - no UTRS TERT promoter
 	"Pan5085", # TSO500 High throughput Synnovis. no UTRS TERT promoter
-	"Pan5086", # TSO500 High throughput BSPS. no UTRS TERT promoter
+	"Pan5112", # TSO500 High throughput BSPS. no UTRS TERT promoter
+	"Pan5114", # TSO500 High throughput Control. no UTRS TERT promoter
 	"Pan4579", # VCP2 M1.1 (somatic)
 	"Pan4574", # VCP2 M1.2 (somatic)
 	"Pan4042", # STG VCP2 BRCA - TO BE REMOVED IN FUTURE UPDATE
@@ -466,12 +475,12 @@ vcp2_panel_list = ["Pan4149","Pan4150","Pan4127","Pan4129","Pan4130","Pan4042","
 vcp3_panel_list = ["Pan4132","Pan4134","Pan4136","Pan4137","Pan4138","Pan4143","Pan4144","Pan4145","Pan4146","Pan4151","Pan4043","Pan4314","Pan4351","Pan4387","Pan4390","Pan4826","Pan4827","Pan4828","Pan4829","Pan4830","Pan4831","Pan4832","Pan4833","Pan4834","Pan4835","Pan4836"]
 WES_panel_lists = ["Pan2835","Pan3174","Pan4940"]
 SNP_panel_lists = ["Pan4009"]
-archer_panel_list = ["Pan4396"]
+archer_panel_list = ["Pan4396","Pan5113","Pan5115"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
 mokacan_panel_list = ["Pan4579","Pan4574"]
 LRPCR_panel_list = ["Pan5007","Pan5008","Pan5009","Pan5010","Pan5011","Pan5012","Pan5013","Pan5014","Pan5015","Pan5016"]
-tso500_panel_list = ["Pan4969","Pan5085","Pan5086"] # note the settings from the first item in this list are used when setting off the dx run commands.
+tso500_panel_list = ["Pan4969","Pan5085","Pan5112","Pan5114"] # note the settings from the first item in this list are used when setting off the TSO500_output_parser commands.
 
 
 default_panel_properties = {
@@ -489,7 +498,7 @@ default_panel_properties = {
 	"mokapipe_haplotype_caller_padding": 0,
 	"FH": False,
 	"FH_PRS_bedfile": FH_PRS_bedfile_name,
-	"MSH2": False,
+	"polyedge": False,
 	"mokaamp_varscan_strandfilter": True,
 	"iva_upload": False,
 	"congenica_upload": True,
@@ -806,7 +815,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4949data.bed",
 	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4948data.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4127": {  #VCP2 R209 colorectal cancer (Viapath)
 	    "mokapipe": True,
@@ -827,7 +836,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4949data.bed",
 	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4948data.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4130": {  #VCP2 R211 polyposis (Viapath)
 	    "mokapipe": True,
@@ -838,7 +847,7 @@ panel_settings = {
 	    "hsmetrics_bedfile": "Pan4949data.bed",
 	    "sambamba_bedfile": "Pan4949dataSambamba.bed",
 	    "variant_calling_bedfile": "Pan4948data.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4132": {  #VCP3 R56 (Viapath)
 		"mokapipe": True,
@@ -980,7 +989,15 @@ panel_settings = {
 		"sambamba_bedfile": "Pan4995dataSambamba.bed",
 		"variant_calling_bedfile": "Pan4995data.bed",
 	},
-	"Pan4396": { #ArcherDx
+	"Pan4396": { #ArcherDx (Synnovis)
+		"archerdx": True,
+		"congenica_upload": False,
+	},
+		"Pan5113": { #ArcherDx (BSPS)
+		"archerdx": True,
+		"congenica_upload": False,
+	},
+		"Pan5115": { #ArcherDx (Control)
 		"archerdx": True,
 		"congenica_upload": False,
 	},
@@ -1015,7 +1032,17 @@ panel_settings = {
 		"coverage_min_basecall_qual":25,
 		"coverage_min_mapping_qual":30,
 	},
-	"Pan5086" : { # TSO500 High throughput BSPS. no UTRs. TERT promoter
+	"Pan5112" : { # TSO500 High throughput BSPS. no UTRs. TERT promoter
+		"TSO500": True,
+		"TSO500_high_throughput": True,
+		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+		"clinical_coverage_depth" : 100,
+		"multiqc_coverage_level": 100,
+		"coverage_min_basecall_qual":25,
+		"coverage_min_mapping_qual":30,
+		"drylab_dnanexus_id": "BSPS_MD"
+	},
+		"Pan5114" : { # TSO500 High throughput Control. no UTRs. TERT promoter
 		"TSO500": True,
 		"TSO500_high_throughput": True,
 		"sambamba_bedfile": "Pan4969dataSambamba.bed", # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
@@ -1246,7 +1273,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4820": {  # VCP2 STG R211
 		"mokapipe": True,
@@ -1259,7 +1286,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan4816": {  # VCP2 STG R208
 		"mokapipe": True,
@@ -1284,7 +1311,7 @@ panel_settings = {
 		"hsmetrics_bedfile": "Pan4949data.bed",
 		"variant_calling_bedfile": "Pan4948data.bed",
 		"sambamba_bedfile": "Pan4949dataSambamba.bed",
-		"MSH2": True,
+		"polyedge": "MSH2",
 	},
 	"Pan5007": {  # LRPCR Via R207 PMS2
 		"mokapipe": True,
@@ -1450,5 +1477,8 @@ sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
 bcl2fastq_stats_filename = "Stats.json"
 bcl2fastq_stats_path = os.path.join(fastq_folder,"Stats")
 
-
-
+polyedge_inputs = {"MSH2":
+					{"chrom": 2,
+					"poly_start": 47641559,
+					"poly_end": 47641586,
+					}}
