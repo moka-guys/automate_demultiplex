@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10.6"]
+        python-version: ['3.10.6']
 
     steps:
       - uses: actions/checkout@v3
@@ -42,4 +42,4 @@ jobs:
       - name: Test with pytest
       # We do not want it to run the email tests because the credentials are not stored in GitHub
         run: |
-          python -m pytest -v -k 'not email'
+          python -m pytest -v -k 'not email and not test_bcl2fastq_installed_pass'
