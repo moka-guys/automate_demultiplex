@@ -1,17 +1,21 @@
 """ PANEL NUMBERS AND PANEL PROPERTIES
 
-Need to test whether having these in this file will affect the trend analysis script
+Need to test whether having these in this file will affect the trend analysis
+script
 """
+import ad_config
 
 # THINGS THAT DON't NEED TO BE IN THE PANEL CONFIG:
 # Move congenica congenica_IR_template logic into upload and setoff script,
 # using congenica_credentials flags
 # Same for masked_reference, using lrpcr panel_name
 
-mokapipe_haplotype_caller_padding = 0
-FH_PRS_bedfile = "Pan4909.bed"  # Mokapipe FH_PRS BED file
+MOKAPIPE_HAPLOTYPE_CALLER_PADDING = 0
+FH_PRS_BEDFILE = "Pan4909.bed"  # Mokapipe FH_PRS BED file
+MASKED_REFERENCE = f"{ad_config.TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q"
 
-# "congenica_project"- None = no upload. False = SFTP upload. Number = normal upload
+# "congenica_project"- None = no upload. False = SFTP upload. Number = normal
+# upload
 # "congenica_credentials" - "Viapath" OR "STG"
 # "capture type" - Amplicon or Hybridisation
 # 'sambamba_bedfile' - bedfile filename, or None
@@ -20,14 +24,21 @@ FH_PRS_bedfile = "Pan4909.bed"  # Mokapipe FH_PRS BED file
 # 'peddy' - true or false
 # 'hsmetrics_bedfile' - bedfile filename, or None
 # 'congenica_IR_template' - priority, non-priority, or None
-# 'masked_reference' - false or projectid:fileid. Currently set as hs37d5_Pan4967.bwa-index.tar.gz
+# 'masked_reference' - false or projectid:fileid. Currently set as
+# hs37d5_Pan4967.bwa-index.tar.gz
 
 # MokaSNP does not have R numbers as it is an identity check for the GMS SMS
 # Panels for WES (analysed in Congenica), SWIFT and TSO500 (analysed in QCII),
-# and ArcherDX (analysed in Archer software), are applied at the point of analysis,
-# so R and M numbers for these are not listed below. These pan numbers do not necessarily refer
-# to bed files but rather project configuration (e.g. DNAnexus instances, project layout etc.)
-panel_dict = {
+# and ArcherDX (analysed in Archer software), are applied at the point of
+# analysis, so R and M numbers for these are not listed below. These pan
+# numbers do not necessarily refer to bed files but rather project
+# configuration (e.g. DNAnexus instances, project layout etc.)
+
+
+# TODO add StG true / false dict item to be used to suppy stg pan number inputs
+# into the duty_csv app
+# TODO use **dict.fromkeys( to reduce duplication between configuration
+PANEL_DICT = {
     "Pan4009": {  # MokaSNP
         "panel_name": "mokasnp",
         "pipeline": "mokasnp",
@@ -869,7 +880,8 @@ panel_dict = {
         "peddy": False,
         "congenica_IR_template": "priority",
     },
-    "Pan4390": {  # VCP3 R97 - Thrombophilia with a likely monogenic cause (Viapath)
+    # VCP3 R97 - Thrombophilia with a likely monogenic cause (Viapath)
+    "Pan4390": {
         "panel_name": "vcp3",
         "pipeline": "mokapipe",
         "capture_type": "Hybridisation",
@@ -1276,10 +1288,10 @@ panel_dict = {
         "capture_type": "Amplicon",
         "congenica_IR_template": "priority",
         "congenica_project": "9986",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4767data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
@@ -1295,10 +1307,10 @@ panel_dict = {
         "congenica_IR_template": "non-priority",
         "congenica_project": "10010",
         "congenica_credentials": "STG",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4767data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "FH": False,
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
@@ -1312,10 +1324,10 @@ panel_dict = {
         "capture_type": "Amplicon",
         "congenica_IR_template": "priority",
         "congenica_project": "9984",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4767data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
@@ -1331,10 +1343,10 @@ panel_dict = {
         "congenica_IR_template": "non-priority",
         "congenica_project": "10009",
         "congenica_credentials": "STG",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4766data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "FH": False,
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
@@ -1348,10 +1360,10 @@ panel_dict = {
         "capture_type": "Amplicon",
         "congenica_IR_template": "priority",
         "congenica_project": "9981",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4767data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
@@ -1367,10 +1379,10 @@ panel_dict = {
         "congenica_IR_template": "non-priority",
         "congenica_project": "10042",
         "congenica_credentials": "STG",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4767data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "FH": False,
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
@@ -1384,10 +1396,10 @@ panel_dict = {
         "capture_type": "Amplicon",
         "congenica_IR_template": "priority",
         "congenica_project": "9982",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4767data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
@@ -1403,10 +1415,10 @@ panel_dict = {
         "congenica_IR_template": "non-priority",
         "congenica_project": "10042",
         "congenica_credentials": "STG",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4767data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "FH": False,
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
@@ -1420,10 +1432,10 @@ panel_dict = {
         "capture_type": "Amplicon",
         "congenica_IR_template": "non-priority",  # TODO
         "congenica_project": "9547",  # TODO
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4971data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
@@ -1438,10 +1450,10 @@ panel_dict = {
         "capture_type": "Amplicon",
         "congenica_IR_template": "priority",
         "congenica_project": "9985",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BED file
+        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4768data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
-        "masked_reference": "project-ByfFPz00jy1fk6PjpZ95F27J:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "masked_reference": MASKED_REFERENCE,
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
@@ -1451,41 +1463,46 @@ panel_dict = {
 }
 
 # Extract pan number lists from panel dict
-# vcp1_panel_list, vcp2_panel_list and vcp3_panel_list are also used by the trend analysis script
+# vcp1_panel_list, vcp2_panel_list and vcp3_panel_list are also used by the
+# trend analysis script
 
-# List of all panel numbers from panel_dict
-panel_list = list(panel_dict.keys())
+# List of all panel numbers from PANEL_DICT
+PANEL_LIST = list(PANEL_DICT.keys())
 # Per-capture panel numbers for use with RPKM
-vcp1_panel_list = [
-    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "vcp1"
+VCP1_PANEL_LIST = [
+    k for k, v in PANEL_DICT.items() if PANEL_DICT[k]["panel_name"] == "vcp1"
 ]
-vcp2_panel_list = [
-    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "vcp2"
+VCP2_PANEL_LIST = [
+    k for k, v in PANEL_DICT.items() if PANEL_DICT[k]["panel_name"] == "vcp2"
 ]
-vcp3_panel_list = [
-    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "vcp3"
+VCP3_PANEL_LIST = [
+    k for k, v in PANEL_DICT.items() if PANEL_DICT[k]["panel_name"] == "vcp3"
 ]
-tso500_panel_list = [
-    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "TSO500"
+TSO500_PANEL_LIST = [
+    k for k, v in PANEL_DICT.items() if PANEL_DICT[k]["pipeline"] == "TSO500"
 ]
-WES_panel_lists = [
-    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "mokawes"
+WES_PANEL_LIST = [
+    k for k, v in PANEL_DICT.items() if PANEL_DICT[k]["pipeline"] == "mokawes"
 ]
-SNP_panel_lists = [
-    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "mokasnp"
+SNP_PANEL_LIST = [
+    k for k, v in PANEL_DICT.items() if PANEL_DICT[k]["pipeline"] == "mokasnp"
 ]
-archer_panel_list = [
-    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "archerdx"
+ARCHER_PANEL_LIST = [
+    k for k, v in PANEL_DICT.items() if PANEL_DICT[k]["pipeline"] == "archerdx"
 ]
-swift_57G_panel_list = [
-    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "swift_57g"
+SWIFT_57G_PANEL_LIST = [
+    k
+    for k, v in PANEL_DICT.items()
+    if PANEL_DICT[k]["panel_name"] == "swift_57g"
 ]
-swift_egfr_panel_list = [
-    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "swift_egfr"
+SWIFT_EGFR_PANEL_LIST = [
+    k
+    for k, v in PANEL_DICT.items()
+    if PANEL_DICT[k]["panel_name"] == "swift_egfr"
 ]
-mokacan_panel_list = [
-    k for k, v in panel_dict.items() if panel_dict[k]["pipeline"] == "mokacan"
+MOKACAN_PANEL_LIST = [
+    k for k, v in PANEL_DICT.items() if PANEL_DICT[k]["pipeline"] == "mokacan"
 ]
-LRPCR_panel_list = [
-    k for k, v in panel_dict.items() if panel_dict[k]["panel_name"] == "lrpcr"
+LRPCR_PANEL_LIST = [
+    k for k, v in PANEL_DICT.items() if PANEL_DICT[k]["panel_name"] == "lrpcr"
 ]
