@@ -4,7 +4,7 @@
 import os
 import pytest
 from samplesheet_validator.samplesheet_validator import SamplesheetCheck
-from ad_config import sequencer_ids, runtype_list
+import ad_config as config
 import panel_config
 
 
@@ -88,41 +88,43 @@ def tso_samplesheet_invalid(base_path):
 def test_check_ss_present_valid(valid_samplesheets):
     """Test function is able to correctly identify that the samplesheet is present"""
     for samplesheet in valid_samplesheets:
-        assert "sspresent_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                       panel_config.panel_list, runtype_list,
-                                                       panel_config.tso500_panel_list).errors
+        assert "sspresent_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                       panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                       panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_check_ss_present_invalid(invalid_paths):
     """Test function is able to correctly identify that the samplesheet is absent"""
     for samplesheet in invalid_paths:
         msg = 'Samplesheet with supplied name not present'
-        assert msg in str(SamplesheetCheck(samplesheet, sequencer_ids,
-                                           panel_config.panel_list, runtype_list,
-                                           panel_config.tso500_panel_list).errors["sspresent_err"])
+        assert msg in str(SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                           panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                           panel_config.TSO500_PANEL_LIST).errors['sspresent_err'])
 
 
 def test_check_ss_name_valid(valid_samplesheets):
     """Test function is able to correctly identify that sample names are valid"""
     for samplesheet in valid_samplesheets:
-        assert "ssname_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                    panel_config.panel_list, runtype_list,
-                                                    panel_config.tso500_panel_list).errors
+        assert "ssname_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                    panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                    panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_check_ss_name_invalid(invalid_names):
     """Test function is able to correctly identify that sample names are invalid"""
     for samplesheet in invalid_names:
-        assert "ssname_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_config.panel_list,
-                                                runtype_list, panel_config.tso500_panel_list).errors
+        assert "ssname_err" in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_check_sequencer_id_valid(valid_samplesheets):
     """Test function is able to correctly identify that sequencer ids are valid"""
     for samplesheet in valid_samplesheets:
-        assert "sequencerid_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                         panel_config.panel_list, runtype_list,
-                                                         panel_config.tso500_panel_list).errors
+        assert "sequencerid_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                         panel_config.PANEL_LIST,
+                                                         config.RUNTYPE_LIST,
+                                                         panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_check_sequencer_id_invalid(invalid_contents):
@@ -130,50 +132,52 @@ def test_check_sequencer_id_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         msg = 'Sequencer id not in allowed list'
         assert msg in str(
-            SamplesheetCheck(samplesheet, sequencer_ids, panel_config.panel_list, runtype_list,
-                             panel_config.tso500_panel_list).errors["sequencerid_err"])
+            SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                             panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                             panel_config.TSO500_PANEL_LIST).errors['sequencerid_err'])
 
 
 def test_check_ss_contents_populated(valid_samplesheets):
     """Test function is able to correctly identify that samplesheet is not empty"""
     for samplesheet in valid_samplesheets:
-        assert "ssempty_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                     panel_config.panel_list, runtype_list,
-                                                     panel_config.tso500_panel_list).errors
+        assert "ssempty_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                     panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                     panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_check_ss_contents_empty(empty_file):
     """Test function is able to correctly identify that samplesheet is empty"""
     for samplesheet in empty_file:
         msg = 'Samplesheet empty (<10 bytes)'
-        assert msg in str(SamplesheetCheck(samplesheet, sequencer_ids,
-                                           panel_config.panel_list, runtype_list,
-                                           panel_config.tso500_panel_list).errors["ssempty_err"])
+        assert msg in str(SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                           panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                           panel_config.TSO500_PANEL_LIST).errors['ssempty_err'])
 
 
 def test_expected_headers_valid(valid_samplesheets):
     """Test function is able to correctly identify that samplesheet headers are valid"""
     for samplesheet in valid_samplesheets:
-        assert "headers_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                     panel_config.panel_list, runtype_list,
-                                                     panel_config.tso500_panel_list).errors
+        assert "headers_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                     panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                     panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_expected_headers_invalid(invalid_contents):
     """Test function is able to correctly identify that samplesheet headers are invalid"""
     for samplesheet in invalid_contents:
         msg = 'Header(/s) missing from [Data] section'
-        assert msg in str(SamplesheetCheck(samplesheet, sequencer_ids,
-                                           panel_config.panel_list, runtype_list,
-                                           panel_config.tso500_panel_list).errors["headers_err"])
+        assert msg in str(SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                           panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                           panel_config.TSO500_PANEL_LIST).errors['headers_err'])
 
 
 def test_comp_samplenameid_valid(valid_samplesheets):
     """Test function is able to correctly identify that samplename and sampleid match"""
     for samplesheet in valid_samplesheets:
-        assert "samplenameid_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                          panel_config.panel_list, runtype_list,
-                                                          panel_config.tso500_panel_list).errors
+        assert "samplenameid_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                          panel_config.PANEL_LIST,
+                                                          config.RUNTYPE_LIST,
+                                                          panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_comp_samplenameid_invalid(invalid_contents):
@@ -181,49 +185,52 @@ def test_comp_samplenameid_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         msg = 'The following Sample IDs do not match the corresponding Sample Name'
         assert msg in str(
-            SamplesheetCheck(samplesheet, sequencer_ids, panel_config.panel_list, runtype_list,
-                             panel_config.tso500_panel_list).errors["samplenameid_err"])
+            SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                             panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                             panel_config.TSO500_PANEL_LIST).errors['samplenameid_err'])
 
 
 def test_check_illegal_chars_valid(valid_samplesheets):
     """Test function is able to correctly identify that samplename
     does not contain invalid characters"""
     for samplesheet in valid_samplesheets:
-        assert "validchars_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                        panel_config.panel_list, runtype_list,
-                                                        panel_config.tso500_panel_list).errors
+        assert "validchars_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                        panel_config.PANEL_LIST,
+                                                        config.RUNTYPE_LIST,
+                                                        panel_config.TSO500_PANEL_LIST).errors
 
 
 def check_illegal_chars_invalid(invalid_contents):
     """Test function is able to correctly identify that samplename contains invalid characters"""
     msg = 'Sample name contains invalid characters'
     for samplesheet in invalid_contents:
-        assert msg in str(SamplesheetCheck(samplesheet, sequencer_ids,
-                                           panel_config.panel_list, runtype_list,
-                                           panel_config.tso500_panel_list).errors["validchars_err"])
+        assert msg in str(SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                           panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                           panel_config.TSO500_PANEL_LIST).errors['validchars_err'])
 
 
 def test_check_sample_valid(valid_samplesheets):
     """Test function is able to correctly identify that sample name is valid"""
     for samplesheet in valid_samplesheets:
-        assert "sample_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                    panel_config.panel_list, runtype_list,
-                                                    panel_config.tso500_panel_list).errors
+        assert "sample_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                    panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                    panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_check_sample_invalid(invalid_contents):
     """Test function is able to correctly identify that sample name is not valid"""
     for samplesheet in invalid_contents:
-        assert "sample_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_config.panel_list,
-                                                runtype_list, panel_config.tso500_panel_list).errors
+        assert "sample_err" in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_check_pannos_valid(valid_samplesheets):
     """Test function is able to correctly identify that panel numbers are valid"""
     for samplesheet in valid_samplesheets:
-        assert "panno_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                   panel_config.panel_list, runtype_list,
-                                                   panel_config.tso500_panel_list).errors
+        assert "panno_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                   panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                   panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_check_pannos_invalid(invalid_contents):
@@ -231,16 +238,21 @@ def test_check_pannos_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         msg = 'Pan number not in allowed list'
         assert msg in str(
-            SamplesheetCheck(samplesheet, sequencer_ids, panel_config.panel_list,
-                             runtype_list, panel_config.tso500_panel_list).errors["panno_err"])
+            SamplesheetCheck(samplesheet, config.SEQUENCER_IDS, panel_config.PANEL_LIST,
+                             config.RUNTYPE_LIST,
+                             panel_config.TSO500_PANEL_LIST).errors['panno_err'])
 
 
 def test_check_runtypes_valid(valid_samplesheets):
     """Test function is able to correctly identify that runtypes are valid"""
     for samplesheet in valid_samplesheets:
-        assert "runtypes_err" not in SamplesheetCheck(samplesheet, sequencer_ids,
-                                                      panel_config.panel_list, runtype_list,
-                                                      panel_config.tso500_panel_list).errors
+        print(config.RUNTYPE_LIST)
+        print(SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                      panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                      panel_config.TSO500_PANEL_LIST).errors)
+        assert "runtypes_err" not in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                      panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                      panel_config.TSO500_PANEL_LIST).errors
 
 
 def test_check_runtypes_invalid(invalid_contents):
@@ -248,21 +260,22 @@ def test_check_runtypes_invalid(invalid_contents):
     for samplesheet in invalid_contents:
         msg = 'Runtype not in allowed list'
         assert msg in str(
-            SamplesheetCheck(samplesheet, sequencer_ids, panel_config.panel_list, runtype_list,
-                             panel_config.tso500_panel_list).errors["runtypes_err"])
+            SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                             panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                             panel_config.TSO500_PANEL_LIST).errors['runtypes_err'])
 
 
 def check_tso_true(tso_samplesheet_valid):
     """Test function is able to correctly identify that runtypes are TSO500"""
-    assert SamplesheetCheck(tso_samplesheet_valid, sequencer_ids, panel_config.panel_list,
-                            runtype_list, panel_config.tso500_panel_list).tso
+    assert SamplesheetCheck(tso_samplesheet_valid, config.SEQUENCER_IDS, panel_config.PANEL_LIST,
+                            config.RUNTYPE_LIST, panel_config.TSO500_PANEL_LIST).tso
 
 
 def check_tso_false(tso_samplesheet_invalid):
     """Test function is able to correctly identify that runtypes are not TSO500"""
-    assert not SamplesheetCheck(tso_samplesheet_invalid, sequencer_ids,
-                                panel_config.panel_list, runtype_list,
-                                panel_config.tso500_panel_list).tso
+    assert not SamplesheetCheck(tso_samplesheet_invalid, config.SEQUENCER_IDS,
+                                panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                panel_config.TSO500_PANEL_LIST).tso
 
 
 def test_multiple_errors(invalid_contents):
@@ -275,12 +288,13 @@ def test_multiple_errors(invalid_contents):
     for samplesheet in invalid_contents:
         for msg in msgs:
             flatlist = [item for sublist in
-                        SamplesheetCheck(samplesheet, sequencer_ids,
-                                         panel_config.panel_list, runtype_list,
-                                         panel_config.tso500_panel_list).errors.values()
+                        SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                         panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                         panel_config.TSO500_PANEL_LIST).errors.values()
                         for item in sublist]
 
             assert any(msg in s for s in flatlist)
 
-        assert "sample_err" in SamplesheetCheck(samplesheet, sequencer_ids, panel_config.panel_list,
-                                                runtype_list, panel_config.tso500_panel_list).errors
+        assert "sample_err" in SamplesheetCheck(samplesheet, config.SEQUENCER_IDS,
+                                                panel_config.PANEL_LIST, config.RUNTYPE_LIST,
+                                                panel_config.TSO500_PANEL_LIST).errors
