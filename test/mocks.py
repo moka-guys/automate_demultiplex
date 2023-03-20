@@ -18,7 +18,7 @@
 #         return "test/data/UPLOAD_PATH.txt"
 
 #     def upload_log_files(self):
-#         return "test/data/UPLOAD_LOGFILES.txt"
+#         return "test/data/UPLODIRS['AD_LOGDIR'].txt"
 
 #     def run_dx_run_commands(self):
 #         pass

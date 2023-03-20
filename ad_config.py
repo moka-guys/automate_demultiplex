@@ -2,551 +2,750 @@
 """
 Automate demultiplex configuration.
 
-The variables defined in this module are required by scripts in the automate_demultiplex repository
-(https://github.com/moka-guys/automate_demultiplex)
+The variables defined in this module are required by scripts in the automate_
+demultiplex repository (https://github.com/moka-guys/automate_demultiplex)
 
-The config file is split into sections. Those settings that are used across scripts and those that
-are specific to a script.
+The config file is split into sections. Those settings that are used across
+scripts and those that are specific to a script.
 """
 
 import os
 
-# ================ GENERAL =========================================================================
+# ================ GENERAL ====================================================
 # Settings used across multiple scripts
 
-testing = True  # Set testing mode
+TESTING = True  # Set testing mode
 
-# Root of folder containing apps, automate_demultiplexing_logfiles and development_area scripts
-# (2 levels up from this file)
-document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 
-ad_logfiles = os.path.join(document_root, "automate_demultiplexing_logfiles")
+DOCUMENT_DIR = os.path.dirname(os.path.realpath(__file__))
+# Root of folder containing apps, automate_demultiplexing_logfiles and
+# development_area scripts (2 levels up from this file)
+DOCUMENT_ROOT = "/".join(DOCUMENT_DIR.split("/")[:-2])
 
-novaseq_id = "A01229"
-
-# ----- Runfolders ---------------------------------------------------------------------------------
-
-runfolder_pattern = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
-ignore_dirs = [
-    "samplesheets"
-]  # Directories to be ignored when looping through runfolders
+AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
 
 # Path to run folders - use testing flag to determine folders
-if not testing:
-    runfolders = "/media/data3/share"
-
-else:
-    runfolders = "/media/data3/share/testing"
-
-
-# ----- Logfiles -----------------------------------------------------------------------------------
-
-bcl2fastqlog_filename = "bcl2fastq2_output.log"
-demultiplexing_logfile_tso500_msg = "TSO500 run. Does not need demultiplexing locally"
-demultiplex_success_regex = r".*Processing completed with 0 errors and 0 warnings.$"
-
-# Test-dependent settings
-if testing:
-    logging_formatter = (
-        "%(asctime)s - TEST MODE - %(name)s - " "%(flag)s - %(levelname)s - %(message)s"
-    )
-    log_flags = {
-        "info": "demultiplextest_info",
-        "fail": "demultiplextest_fail",
-        "success": "demultiplextest_success",
-        "ss_warning": "testsamplesheet_warning",
-    }
+if not TESTING:
+    RUNFOLDERS = "/media/data3/share"
     # Folder containing demultiplex logs
-    demultiplex_logpath = os.path.join(runfolders, "Demultiplexing_log_files/")
-else:
-    logging_formatter = (
+    DEMULTIPLEX_LOGPATH = os.path.join(RUNFOLDERS, "Demultiplexing_log_files/")
+    LOGGING_FORMATTER = (
         "%(asctime)s - %(name)s - %(flag)s - %(levelname)s - %(message)s"
     )
-    log_flags = {
+    LOG_FLAGS = {
         "info": "demultiplex_info",
         "fail": "demultiplex_fail",
         "success": "demultiplex_success",
         "ss_warning": "samplesheet_warning",
     }
+    EMAIL_HEADER = ""
+else:
+    RUNFOLDERS = "/media/data3/share/testing"
     # Folder containing demultiplex logs
-    demultiplex_logpath = os.path.join(ad_logfiles, "Demultiplexing_log_files/")
+    DEMULTIPLEX_LOGPATH = os.path.join(AD_LOGDIR, "Demultiplexing_log_files/")
 
-# Subdirectories
-samplesheet_dir = os.path.join(runfolders, "samplesheets")  # Samplesheet folder
-fastq_dir = "/Data/Intensities/BaseCalls"  # Path to fastq files
+    LOGGING_FORMATTER = (
+        "%(asctime)s - TEST MODE - %(name)s - %(flag)s - "
+        "%(levelname)s - %(message)s"
+    )
+    LOG_FLAGS = {
+        "info": "demultiplextest_info",
+        "fail": "demultiplextest_fail",
+        "success": "demultiplextest_success",
+        "ss_warning": "testsamplesheet_warning",
+    }
+    EMAIL_HEADER = "AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL\n\n"
 
-# ---- Filepaths -----------------------------------------------------------------------------------
 
-# Path to log file which records the output of the upload agent
-upload_script_logpath = os.path.join(ad_logfiles, "upload_agent_script_logfiles/")
+DIRS = {
+    "dx_run_cmds": os.path.join(AD_LOGDIR, "dx_run_commands"),
+    "fastqs": "/Data/Intensities/BaseCalls",  # Path to fastq files
+    "bcl2fastq_stats": "/Data/Intensities/BaseCalls/Stats",
+    "backup_runfolderlogs": os.path.join(
+        AD_LOGDIR, "backup_runfolder_logfiles"
+    ),
+}
 
-# Name of log file which records the output of the upload agent
-upload_started_filename = "DNANexus_upload_started.txt"
-
-# Log folder containing project creation logs
-dnanexus_projectcreation_logfolder = os.path.join(
-    ad_logfiles, "nexus_project_creation_scripts", "create_nexus_project_"
+SAMPLESHEET_NAME = os.path.join(
+    RUNFOLDERS, "samplesheets", "%s_SampleSheet.csv"
 )
+SAMPLESHEET_PATH = os.path.join(
+    RUNFOLDERS, "samplesheets", "%s_SampleSheet.csv"
+)
+BACKUP_RUNFOLDER_LOGFILE = os.path.join(
+    DIRS["backup_runfolderlogs"], "%s_backup_runfolder.log"
+)
+DXRUN_SCRIPT = os.path.join(DIRS["dx_run_cmds"], "%s_dx_run_commands.sh")
+# Script containing dnanexus project creation command
+PROJ_CREATION_SCRIPT = os.path.join(
+    AD_LOGDIR, "nexus_project_creation_scripts", "create_nexus_project_%s.sh"
+)
+# Path to log file which records the output of the upload agent
+UPLOAD_SCRIPT_LOGFILE = os.path.join(
+    AD_LOGDIR,
+    "upload_agent_script_logfiles",
+    "%s_upload_and_setoff_workflow.log",
+)
+BCL2FASTQ = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
 
-# Backup runfolder folder
-backup_runfolder_logfile = os.path.join(ad_logfiles, "backup_runfolder_logfiles")
 
-# ----- DNAnexus -----------------------------------------------------------------------------------
+# TODO move these back to their own variables
+PATHS = {
+    # DNAnexus run command script
+    "congenica_upload_script": os.path.join(
+        DIRS["dx_run_cmds"], "%s_congenica.sh"
+    ),
+    "upload_agent": os.path.join(
+        DOCUMENT_ROOT, "apps/dnanexus-upload-agent-1.5.17-linux/ua"
+    ),
+    "backup_runfolder_script": os.path.join(
+        DOCUMENT_ROOT, "apps/workstation_housekeeping/backup_runfolder.py"
+    ),
+    "dsptool_input_script": os.path.join(
+        DOCUMENT_DIR, "decision_support_tool_inputs.py"
+    ),
+    "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
+    "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
+    "sdk_source": "/etc/profile.d/dnanexus.environment.sh",
+    "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
+}
 
-# DNAnexus authentication token
-nexus_apikey_file = os.path.join(document_root, ".dnanexus_auth_token")
-with open(nexus_apikey_file, "r", encoding="utf-8") as nexus_api:
-    nexus_apikey = nexus_api.readline().rstrip()
+FILENAMES = {
+    "rtacomplete": "RTAComplete.txt",  # Sequencing complete file
+    "md5checksum": "md5checksum.txt",  # File holding checksum results
+    "bcl2fastqlog": "bcl2fastq2_output.log",
+    "upload_started": "DNANexus_upload_started.txt",  # Holds UA output
+    "bcl2fastq_stats": "Stats.json",
+}
 
-sdk_source_cmd = "/etc/profile.d/dnanexus.environment.sh"
+RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 
-# DNAnexus settings used across multiple scripts
-mokapipe_filter_vcf_with_bedfile_stage = "stage-G5Kpgv80zB02Q64zFf94G05F"
-mokapipe_gatk_human_exome_stage = "stage-F28y4qQ0jy1fkqfy5v2b8byx"
-sentieon_stage_id = "stage-Ff0P73j0GYKX41VkF3j62F9j"
-
-# ----- Email settings -----------------------------------------------------------------------------
-
-username_filepath = os.path.join(document_root, ".amazon_email_username")
-pw_file = os.path.join(document_root, ".amazon_email_pw")
+# ================ AD_EMAIL ===================================================
 
 with open(
-    username_filepath, "r", encoding="utf-8"
-) as username_file:  # Get email username
-    user = username_file.readline().rstrip()
+    PATHS["email_user"], "r", encoding="utf-8"
+) as EMAIL_USER_FILE:  # Get email username
+    EMAIL_USER = EMAIL_USER_FILE.readline().rstrip()
 
-with open(pw_file, "r", encoding="utf-8") as email_password_file:  # Get email password
-    pw = email_password_file.readline().rstrip()
-
-
-host = "email-smtp.eu-west-1.amazonaws.com"
-port = 587
-smtp_do_tls = True
+with open(
+    PATHS["email_pw"], "r", encoding="utf-8"
+) as EMAIL_PW_FILE:  # Get email password
+    EMAIL_PW = EMAIL_PW_FILE.readline().rstrip()
 
 
-mokaguys_email = "gst-tr.mokaguys@nhs.net"
-mokalerts_email = "moka.alerts@gstt.nhs.uk"
+HOST = "email-smtp.eu-west-1.amazonaws.com"
+PORT = 587
+SMTP_DO_TLS = True
 
+
+MOKAGUYS_EMAIL = "gst-tr.mokaguys@nhs.net"
+MOKA_ALERTS_EMAIL = "moka.alerts@gstt.nhs.uk"
 
 # Test settings
-if testing:
-    test_email_header = (
-        "AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL\n\n"
-    )
-    mokaguys_recipient = "mokaguys@gmail.com"
+if TESTING:
+    SQL_EMAIL_SUBJ = "SQL ALERT: TESTING - PLEASE IGNORE THIS EMAIL"
+    SQL_EMAIL_MSG = "%s being processed using workflow(s) %s\n\n%s\n%s\n"
+    MOKAGUYS_RECIPIENT = "mokaguys@gmail.com"
     # Oncology email address for email alerts
-    oncology_ops_email = mokaguys_email
-    wes_samplename_email_list = [mokaguys_email]
+    ONCOLOGY_OPS_EMAIL = MOKAGUYS_EMAIL
+    WES_SAMPLENAME_EMAILLIST = [MOKAGUYS_EMAIL]
 
 # Production settings
 else:
-    test_email_header = ""
-    mokaguys_recipient = mokaguys_email
+    SQL_EMAIL_SUBJ = "SQL ALERT: Started pipeline for %s"
+    SQL_EMAIL_MSG = (
+        "%s being processed using workflow(s) %s\n\nPlease update Moka using "
+        "the below queries and ensure that %s records are updated:\n\n\n%s\n"
+    )
+    EMAIL_MSG = (
+        "%s being processed using workflow(s) %s\n\nThe following samples are "
+        "being processed:\n\n%s\n"
+    )
+
+    MOKAGUYS_RECIPIENT = MOKAGUYS_EMAIL
     # Oncology email address for email alerts
-    oncology_ops_email = "m.neat@nhs.net"
-    wes_samplename_email_list = [
+    ONCOLOGY_OPS_EMAIL = "m.neat@nhs.net"
+    WES_SAMPLENAME_EMAILLIST = [
         "gst-tr.ViapathGeneticsAdmin@nhs.net",
         "lu.liu@viapath.co.uk",
         "Suzanne.lillis@viapath.co.uk",
         "eblab@gstt.nhs.uk",
-        mokaguys_email,
+        MOKAGUYS_EMAIL,
     ]
 
-
-email_logmsgs = {
-    "email_sending": "Sending an email. Recipient: %s. Subject: %s. Body: %s",
-    "email_pass": "Email sent without error",
-    "email_fail": "Error when sending email. Email not sent. Exception: %s",
-}
-
-# ================ DEMULTIPLEXING (demultiplex.py) =================================================
-# Settings unique to the demultiplex script
-
-# Sequencer / run identifiers
-sequencer_ids = ["NB551068", "NB552085", "M02353", "M02631", "A01229"]
-runtype_list = ["NGS", "ADX", "ONC", "SNP", "TSO", "LRPCR"]
-
-# Integrity check
-md5checksum_filename = "md5checksum.txt"  # File holding checksum results
-checksum_complete_msg = "Checksum result reported"  # Checksum complete statement
-checksum_match_msg = "Checksums match"  # Statement to write when checksums match
-# Sequencers requiring md5 checksums from integrity check to be assessed
-sequencers_with_integrity_check = ["NB551068", "NB552085", novaseq_id]
-icfail_emailsubj = "DEMULTIPLEX ALERT: INTEGRITY CHECK FAILED"
-icfail_emailmsg = "Run:\t{}\nPlease follow the protocol for when integrity checks fail"
-
-# Sequencing complete file
-rtacomplete_filename = "RTAComplete.txt"
-
-# Bcl2fastq2
-bcl2fastq_path = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"  # Path to bcl2fastq
-bcl2fastq_stats_filename = "Stats.json"
-bcl2fastq_stats_path = os.path.join(fastq_dir, "Stats")
-
-demux_logmsgs = {
-    "demux_script_start": "Automate demultiplex release %s: Demultiplex.py started on workstation",
-    "demux_script_end": "Automate demultiplex release %s: Demultiplex.py complete. %s runfolder(s) processed",
-    "rename_demuxlog_success": "Demultiplex logfile successfully renamed with runfolder names. New name: %s",
-    "rename_demuxlog_fail": "Demultiplex logfile rename failed for file %s",
-    "demux_runfolder_start": "Automate_demultiplex release: %s -------------- Assessing %s",
-    "ic_fail": "Integrity check fail. Checksums do not match for %s see %s",
-    "bcl2fastq_start": "Demultiplexing started for run %s using bcl2fastq command: %s",
-    "bcl2fastq_complete": "bcl2fastq subprocess complete for run %s",
-    "bcl2fastq_failed": "bcl2fastq subprocess failed for run %s",
-    "demux_already_complete": "Demultiplexing already completed - bcl2fastq log found @ %s --- STOP ---",
-    "demux_not_complete": "Demultiplexing not yet completed - no demultiplex log found @ %s --- CONTINUE ---",
-    "sschecks_not_passed": "Samplesheet did not pass checks %s: %s",
-    "sschecks_passed": "Samplesheet passed all checks %s",
-    "run_finished": "Run finished - RTAComplete.txt found @ %s",
-    "run_incomplete": "Sequencing not yet complete (RTAComplete.txt file absent) @ %s --- STOP ---",
-    "bcl2fastq_test_fail": "BCL2FastQ installation test failed",
-    "bcl2fastq_test_pass": "BCL2FastQ installation test passed",
-    "ssfail_haltdemux": "Demultiplexing halted due to samplesheet errors %s: %s",
-    "ic_required": "This run was sequenced on a sequencer that requires integrity checking",
-    "ic_notrequired": "Integrity check not required",
-    "csumfile_present": "Checksums file present - checksums have been generated by integrity check scripts",
-    "csumfile_absent": "Demultiplexing halted: Integrity check not yet performed on sequencer "
-    "(checksum file absent)",
-    "checksums_checked": "Checksums already checked for this run",
-    "checksums_notchecked": "Checksums not yet checked for this run",
-    "ic_start": "Data integrity checks starting...",
-    "ic_pass": "Integrity check for runfolder %s passed",
-    "create_bcl2fastqlog_pass": "Created bcl2fastq logfile for run %s",
-    "create_bcl2fastqlog_fail": "Failed to create bcl2fastq logfile for run %s. Exception: %s",
-    "create_tsobcl2fastqlog_pass": "bcl2fastq2_output.log file created for TSO run: %s",
-    "create_tsobcl2fastqlog_fail": "Failed to create bcl2fastq2_output.log file for TSO run: %s. Exception: %s",
-    "demux_complete": "Demultiplexing complete without error for run %s",
-    "demux_error": "ERROR - DEMULTIPLEXING UNSUCCESSFUL (BCL2FastQ2 ERROR) "
-    "- Demultiplexing failed for run %s. Please see logfile %s",
-    "bcl2fastqlog_empty": "ERROR - BCL2FASTQ2 logfile is empty for run %s. Please see logfile %s",
-    "bcl2fastqlog_absent": "ERROR - BCL2FASTQ2 logfile does not exist for run %s. Please see logfile ",
-}
-
-
-# ===== DECISION SUPPORT SCRIPT (decision_support_tool_inputs.py) ==================================
-# Settings unique to the decision support script
-
-decision_support_tool_input_script = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), "decision_support_tool_inputs.py"
-)
-mokawes_sentieon_bam_output_name = "mappings_bam"
-mokawes_sentieon_bai_output_name = "mappings_bam_bai"
-mokawes_sentieon_vcf_output_name = "variants_vcf"
-congenica_vcf_inputname = " -ivcf="
-congenica_bam_inputname = " -ibam="
-congenica_samplename = " -ianalysis_name="
-mokapipe_vcf_output_name = "filtered_vcf"
-mokapipe_bam_output_name = "bam"
-
-
-# ================ UPLOAD AND SETOFF WORKFLOWS =====================================================
+# ================ UPLOAD AND SETOFF WORKFLOWS ================================
 # Settings unique to the upload and setoff workflows script
 
-reference_sample_ids = [
+REF_SAMPLE_IDS = [
     "NA12878",
     "136819",
 ]  # NA12878 identifiers to exclude from congenica upload
 
-# ---- Filepaths -----------------------------------------------------------------------------------
-upload_agent_path = os.path.join("apps/dnanexus-upload-agent-1.5.17-linux/ua")
-backup_runfolder_script = os.path.join(
-    "apps/workstation_housekeeping/backup_runfolder.py"
+# ---- Filepaths --------------------------------------------------------------
+
+
+# ---- Commands and strings ---------------------------------------------------
+UPLOAD_AGENT_TEST_CMD = " --version"
+DX_SDK_TEST = f"source {PATHS['sdk_source']};dx --version"  # Tests dx toolkit
+BACKUP_RUNFOLDER_SUCCESS = "backup_runfolder INFO - END"
+BACKUP_RUNFOLDER_ERROR = "backup_runfolder.UAcaller ERROR"
+DX_SDK_TEST_EXPECTED_STDOUT = "dx v0.2"  # Expected result from testing
+UPLOAD_AGENT_EXPECTED_STDOUT = (
+    "Upload Agent Version:"  # Upload agent test response
 )
 
-# ---- Commands and strings ------------------------------------------------------------------------
-upload_agent_test_cmd = " --version"
-ua_error = "Error Message: 'Could not resolve: api.dnanexus.com"
-dx_sdk_test = (
-    f"source {sdk_source_cmd};dx --version"  # Command to test dx toolkit# GENERAL
+STRINGS = {
+    "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
+    "cd_err": "PicardException",
+}
+
+DEMULTIPLEXLOG_TSO500MSG = "TSO500 run. Does not need demultiplexing locally"
+DEMULTIPLEX_SUCCESS_REGEX = (
+    r".*Processing completed with 0 errors and 0 warnings.$"
 )
-backup_runfolder_success = "backup_runfolder INFO - END"
-backup_runfolder_error = "backup_runfolder.UAcaller ERROR"
-dx_sdk_test_expected_stdout = "dx v0.2"  # Expected result from testing
-upload_agent_expected_stdout = "Upload Agent Version:"  # Upload agent test response
 
-# ---- Cluster density strings ---------------------------------------------------------------------
-cluster_density_success_statement = "picard.illumina.CollectIlluminaLaneMetrics done"
-cluster_density_error_statement = "PicardException"
-cluster_density_file_suffix = ".illumina_lane_metrics"
-phasing_metrics_file_suffix = ".illumina_phasing_metrics"
+CLUSTER_DENSITY_FILE_SUFFIX = ".illumina_lane_metrics"
+PHASING_METRICS_FILE_SUFFIX = ".illumina_phasing_metrics"
 
-# ---- DNAnexus ------------------------------------------------------------------------------------
+# ================ DEMULTIPLEXING (demultiplex.py) ============================
+# Settings unique to the demultiplex script
 
-# Path to DNAnexus run command log file
-dnanexus_workflow_logfolder = os.path.join(ad_logfiles, "/dx_run_commands/")
+# Sequencer / run identifiers
+NOVASEQ_ID = "A01229"
+SEQUENCER_IDS = ["NB551068", "NB552085", "M02353", "M02631", NOVASEQ_ID]
+RUNTYPE_LIST = ["NGS", "ADX", "ONC", "SNP", "TSO", "LRPCR"]
+# Sequencers requiring md5 checksums from integrity check to be assessed
+SEQUENCERS_WITH_INTEGRITY_CHECK = ["NB551068", "NB552085", NOVASEQ_ID]
+
+
+# Integrity check
+CHECKSUM_COMPLETE_MSG = (
+    "Checksum result reported"  # Checksum complete statement
+)
+CHECKSUM_MATCH_MSG = (
+    "Checksums match"  # Statement to write when checksums match
+)
+
+
+LOG_MSGS = {
+    "email": {
+        "email_sending": (
+            "Sending an email. Recipient: %s. Subject: %s. Body: %s"
+        ),
+        "email_pass": "Email sent without error",
+        "email_fail": (
+            "Error when sending email. Email not sent. Exception: %s"
+        ),
+    },
+    "demultiplex": {
+        "demux_script_start": "Automate demultiplex release %s: "
+        "Demultiplex.py started on workstation",
+        "demux_script_end": (
+            "Automate demultiplex release %s: Demultiplex.py complete"
+        ),
+        "runfolders_processed": "%s runfolder(s) processed",
+        "rename_demuxlog_success": (
+            "Demultiplex logfile successfully renamed with "
+            "runfolder names. New name: %s"
+        ),
+        "rename_demuxlog_fail": (
+            "Demultiplex logfile rename failed for file %s with exception: %s"
+        ),
+        "rename_demuxlog_pass": (
+            "Demultiplex logfile rename passed for file %s. Now %s"
+        ),
+        "demux_runfolder_start": (
+            "Automate_demultiplex release: %s -------------- Assessing %s"
+        ),
+        "ic_fail": (
+            "Integrity check fail. Checksums do not match for %s see %s"
+        ),
+        "bcl2fastq_start": (
+            "Demultiplexing started for run %s using bcl2fastq command: %s"
+        ),
+        "bcl2fastq_complete": "bcl2fastq subprocess complete for run %s",
+        "bcl2fastq_failed": "bcl2fastq subprocess failed for run %s",
+        "demux_already_complete": (
+            "Demultiplexing already completed - "
+            "bcl2fastq log found @ %s --- STOP ---"
+        ),
+        "demux_not_complete": (
+            "Demultiplexing not yet completed - no demultiplex "
+            "log found @ %s --- CONTINUE ---"
+        ),
+        "sschecks_not_passed": "Samplesheet did not pass checks %s: %s",
+        "sschecks_passed": "Samplesheet passed all checks %s",
+        "run_finished": "Run finished - RTAComplete.txt found @ %s",
+        "run_incomplete": (
+            "Sequencing not yet complete (RTAComplete.txt "
+            "file absent) @ %s --- STOP ---"
+        ),
+        "bcl2fastq_test_fail": "BCL2FastQ installation test failed",
+        "bcl2fastq_test_pass": "BCL2FastQ installation test passed",
+        "ssfail_haltdemux": (
+            "Demultiplexing halted due to samplesheet errors %s: %s"
+        ),
+        "ic_required": (
+            "This run was sequenced on a sequencer that requires integrity "
+            "checking"
+        ),
+        "ic_notrequired": "Integrity check not required",
+        "csumfile_present": (
+            "Checksums file present - checksums have been "
+            "generated by integrity check scripts"
+        ),
+        "csumfile_absent": (
+            "Demultiplexing halted: Integrity check not yet performed on "
+            "sequencer (checksum file absent)"
+        ),
+        "checksums_checked": "Checksums already checked for this run",
+        "checksums_notchecked": "Checksums not yet checked for this run",
+        "ic_start": "Data integrity checks starting...",
+        "ic_pass": "Integrity check for runfolder %s passed",
+        "create_bcl2fastqlog_pass": "Created bcl2fastq logfile for run %s",
+        "create_bcl2fastqlog_fail": (
+            "Failed to create bcl2fastq logfile for run %s. Exception: %s"
+        ),
+        "TSO500_run": f"%s is a {DEMULTIPLEXLOG_TSO500MSG}",
+        "write_TSO_msg_to_bcl2fastqlog": (
+            "TSO500 message successfully written to "
+            "bcl2fastq2_output.log file for TSO run: %s"
+        ),
+        "demux_complete": "Demultiplexing complete without error for run %s",
+        "demux_error": (
+            "ERROR - DEMULTIPLEXING UNSUCCESSFUL (BCL2FastQ2 ERROR) "
+            "- Demultiplexing failed for run %s. Please see logfile %s"
+        ),
+        "bcl2fastqlog_empty": (
+            "ERROR - BCL2FASTQ2 logfile is empty for run %s. "
+            "Please see logfile %s"
+        ),
+        "bcl2fastqlog_absent": (
+            "ERROR - BCL2FASTQ2 logfile does not exist for "
+            "run %s. Please see logfile "
+        ),
+    },
+}
+
+MOKAWES_SENTIEON_BAM_OUTPUT_NAME = "mappings_bam"
+MOKAWES_SENTIEON_BAI_OUTPUT_NAME = "mappings_bam_bai"
+MOKAWES_SENTIEON_VCF_OUTPUT_NAME = "variants_vcf"
+MOKAPIPE_VCF_OUTPUT_NAME = "filtered_vcf"
+MOKAPIPE_BAM_OUTPUT_NAME = "bam"
+
+#  ================  DNAnexus  ================================================
 
 # General
-bedfile_folder = "Data/BED/"
-dnanexus_project_prefix = "002_"  # Project to upload run folder into
-project_success = (
-    'Created new project called "%s"'  # Success statement when creating project
-)
-prod_organisation = (
-    "org-viapath_prod"  # DNAnexus organisation to create the project within
-)
-tools_project = "project-ByfFPz00jy1fk6PjpZ95F27J:/"  # 001_ToolsReferenceData
-view_users = [
-    "org-viapath_prod",
-    "InterpretationRequest",
-]  # DNAnexus users with view access
-admin_users = ["mokaguys"]  # DNAnexus users with admin access
+with open(PATHS["dnanexus_authtoken"], "r", encoding="utf-8") as TOKEN_FILE:
+    DNANEXUS_APIKEY = TOKEN_FILE.readline().rstrip()  # Auth token
 
-# Paths / IDs for workflows in 001_Tools
-mokapipe_path = "Workflows/GATK3.5_v2.17"
-mokawes_path = "Workflows/MokaWES_v1.8"
-mokaamp_path = "Workflows/MokaAMP_v2.2"
-mokacan_path = "Workflows/MokaCAN_v1.0"
-mokasnp_path = "Workflows/MokaSNP_v1.2.0"
-tso500_app = "applet-GKv42080jy1bfp261fpP1Gfy"
-tso500_app_name = "TSO500_v1.5.0"  # Input for tso500_op_app
+BEDFILE_FOLDER = "Data/BED/"
+DNANEXUS_PROJECT_PREFIX = "002_"  # Project to upload run folder into
+PROJECT_SUCCESS = 'Created new project called "%s"'  # Success statement
+PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
+
+DNANEXUS_USERS = {  # User access level
+    "viewers": ['org-viapath_prod", "InterpretationRequest'],
+    "admins": ["mokaguys"],
+}
 
 # Paths / IDs for apps in 001_Tools
-fastqc_app = "Apps/fastqc_v1.3"
-peddy_path = "Apps/peddy_v1.5"
-rpkm_path = "Apps/RPKM_using_conifer_v1.6"
-multiqc_path = "Apps/multiqc_v1.16.0"
-upload_multiqc_path = "Apps/upload_multiqc_v1.4.0"
-congenica_app_path = "Apps/congenica_upload_v1.3.2"
-congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
-tso500_op_app = "applet-GP0YXB00jy1kYKYp33yJZJ5B"
-# Inputs for tso500_op_app
-upload_multiqc_app_id = (
-    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
-)
-multiqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GKGjkz00jy1zKfXJ5qfpfpF8"
-sompy_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G9yPb780jy1p660k6yBvQg07"
-coverage_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
-fastqc_app_id = "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
+TOOLS_PROJECT = "project-ByfFPz00jy1fk6PjpZ95F27J"  # 001_ToolsReferenceData
 
-# Paths / IDs for docker images
-tso500_docker_image = "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
+APP_IDS = {
+    "TSO500": f"{TOOLS_PROJECT}:applet-GKv42080jy1bfp261fpP1Gfy",
+    "TSO500_OP": f"{TOOLS_PROJECT}:applet-GP0YXB00jy1kYKYp33yJZJ5B",
+    "congenica_SFTP": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",
+    "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",
+    "multiqc": f"{TOOLS_PROJECT}:applet-GKGjkz00jy1zKfXJ5qfpfpF8",
+    "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",
+    "sambamba": f"{TOOLS_PROJECT}:applet-G6vyyf00jy1kPkX9PJ1YkxB1",
+    "fastqc": f"{TOOLS_PROJECT}:applet-FBPFfkj0jy1Q114YGQ0yQX8Y",
+    "gatk": f"{TOOLS_PROJECT}:applet-FYZ097j0jy1ZZPx30GykP63J",
+}
 
-# Inputs shared across workflows
-peddy_project_input = " -iproject_for_peddy="
-multiqc_project_input = " -iproject_for_multiqc="
-multiqc_coverage_level_input = " -icoverage_level="
+# Inputs for apps run outside of workflows
+APP_INPUTS = {
+    "tso500": {
+        "docker": " -iTSO500_ruo=",
+        "samplesheet": " -isamplesheet=",
+        "analysis_options": " -ianalysis_options=",
+        "project_name": " -iproject_name=",
+        "ht_instance": "mem1_ssd1_v2_x72",
+        "lt_instance": "mem1_ssd1_v2_x36",
+    },
+    "tso500_op": {
+        "project_name": " -iproject_name=",
+        "project_id": " -iproject_id=",
+        "tso500_jobid": " -itso500_jobid=",
+        "sambamba_bed": " -icoverage_bedfile_id=",
+        "sambamba_id": " -icoverage_app_id=",
+        "fastqc_id": " -ifastqc_app_id=",
+        "sompy_id": " -isompy_app_id=",
+        "multiqc_id": " -imultiqc_app_id=",
+        "upload_multiqc_id": " -iupload_multiqc_app_id=",
+        "sambamba_cov_cmds": (
+            " -icoverage_commands='-imerge_overlapping_mate_reads=true "
+            "-iexclude_failed_quality_control=true "
+            "-iexclude_duplicate_reads=true "
+            "-imin_base_qual=%s -imin_mapping_qual=%s'"
+        ),
+        "sambamba_cov_level": " -icoverage_level=",
+        "multiqc_cov_level": " -imultiqc_coverage_level=",
+    },
+    "peddy": {
+        "project_name": " -iproject_for_peddy=",
+    },
+    "multiqc": {
+        "project_name": " -iproject_for_multiqc=",
+        "coverage_level": " -icoverage_level=",
+    },
+    "congenica_upload": {
+        "vcf": " -ivcf=",
+        "bam": " -ibam=",
+        "samplename": " -ianalysis_name=",
+    },
+}
 
-# MokaPIPE workflow inputs
-mokapipe_fastqc1 = " -istage-Bz3YpP80jy1Y1pZKbZ35Bp0x.reads="  # FastQC Read 1
-mokapipe_fastqc2 = " -istage-Bz3YpP80jy1x7G5QfG3442gX.reads="  # FastQC Read 2
-mokapipe_bwa_rg_sample = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.read_group_sample="
-mokapipe_bwa_ref_genome = " -istage-Byz9BJ80jy1k2VB9xVXBp0Fg.genomeindex_targz=%s"
-# HSMetrics Bedfile
-mokapipe_mokapicard_vendorbed_input = (
-    " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.vendor_exome_bedfile="
-)
-mokapipe_mokapicard_capturetype_stage = (
-    " -istage-F9GK4QQ0jy1qj14PPZxxq3VG.Capture_panel=%s"
-)
-mokapipe_haplotype_padding_input = f" -i{mokapipe_gatk_human_exome_stage}.padding="
-mokapipe_haplotype_vcf_output_format = (
-    f" -i{mokapipe_gatk_human_exome_stage}.output_format=both"
-)
-mokapipe_filter_vcf_with_bedfile_bed_input = (
-    f" -i{mokapipe_filter_vcf_with_bedfile_stage}.bedfile="
-)
-
-mokapipe_happy_skip = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.skip=%s"
-mokapipe_happy_prefix = " -istage-G8V205j0fB6QGKXQ2gZ5pB1z.prefix=%s"
-mokapipe_sambamba_bed_input = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.sambamba_bed="
-mokapipe_sambamba_min_base_qual = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_base_qual=10"
-mokapipe_sambamba_min_mapping_qual = (
-    " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.min_mapping_qual=20"
-)
-mokapipe_sambamba_coverage_level = " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.coverage_level=30"
-mokapipe_sambamba_filter_cmds = (
-    " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.additional_filter_commands="
-    "'not (unmapped or secondary_alignment)'"
-)
-mokapipe_sambamba_exclude_duplicates = (
-    " -istage-F35zBKQ0jy1XpfzYPZY4bgX6.exclude_duplicate_reads" "=true"
-)
-mokapipe_sambamba_exclude_failed_qual = (
-    " -istage-F35zBKQ0jy1XpfzYPZY4bgX6." "exclude_failed_quality_control=true"
-)
-mokapipe_sambamba_count_overlapping_mates = (
-    " -istage-F35zBKQ0jy1XpfzYPZY4bgX6." "merge_overlapping_mate_reads=true"
-)
-mokapipe_fhprs_skip = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.skip=false"
-mokapipe_polyedge_skip = " -istage-GK71VJ80VQgQkjvz0vyQ8YV1.skip=false"
-mokapipe_fhprs_bedfile_input = " -istage-G9BfkZQ0fB6jZY7v1PfJ81F6.BEDfile="
-mokapipe_fh_humanexome_instance_type = "mem3_ssd1_v2_x8"  # Required when creating gVCFs
-mokapipe_gatk_human_exome_appletid = "applet-FYZ097j0jy1ZZPx30GykP63J"
-# Set 6 hour timeout policy for gatk app and jobtimeoutexceeded reason to auto restart list
-# THIS SHOULD BE MOVED TO THE APP DXAPP.JSON FILE
-mokapipe_fh_gatk_timeout_args = (
-    ' --extra-args \'{"timeoutPolicyByExecutable": {"%s": '
-    '{"*":{"hours": 6}}}, "executionPolicy": {"restartOn": '
+# Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
+# reason to auto restart list
+# TODO move this to the DXAPP.JSON file
+MOKAPIPE_FH_GATK_TIMEOUT_ARGS = (
+    ' --extra-args \'{"timeoutPolicyByExecutable": {"'
+    f'{APP_IDS["gatk"]}'
+    '": {"*":{"hours": 6}}}, "executionPolicy": {"restartOn": '
     '{"JobTimeoutExceeded":1, "JMInternalError":'
     ' 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
-    % mokapipe_gatk_human_exome_appletid
-)
-mokapipe_rpkm_bedfile_input = " -ibedfile="
-mokapipe_rpkm_project_input = " -iproject_name="
-mokapipe_rpkm_bamfiles_to_download_input = " -ibamfile_pannumbers="
-
-# MokaWES workflow inputs
-wes_fastqc1 = " -istage-Ff0P5Jj0GYKY717pKX3vX8Z3.reads="  # FastQC Read 1
-wes_fastqc2 = " -istage-Ff0P5V00GYKyJfpX5bqX69Yg.reads="  # FastQC Read
-wes_picard_bedfile = (
-    " -istage-Ff0P5pQ0GYKVBB0g1FG27BV8.vendor_exome_bedfile="  # HSmetrics bedfile
-)
-wes_sambamba_bedfile = " -istage-Ff0P82Q0GYKQ4j8b4gXzjqxX.sambamba_bed="
-# Senteion app sample name - prevents sample being incorrectly parsed from fastq filename
-wes_sentieon_samplename = f" -i{sentieon_stage_id}.sample="
-wes_sentieon_targets_bed = f" -i{sentieon_stage_id}.targets_bed="
-
-# MokaSNP workflow inputs
-snp_fastqc1 = " -istage-FgPp4V00YkVJVjKF4kYkBF8v.reads="  # FastQC Read 1
-snp_fastqc2 = " -istage-FgPp4V00YkVJVjKF4kYkBF90.reads="  # FastQC Read 2
-snp_sentieon_stage_id = "stage-FgPp4XQ0YkV48jZG4Py6F55k"
-snp_sentieon_targets_bed = f" -i{snp_sentieon_stage_id}.targets_bed="
-# Senteion app sample name - prevents sample being incorrectly parsed from fastq filename
-snp_sentieon_samplename = f" -i{snp_sentieon_stage_id}.sample="
-
-# MokaAMP workflow inputs
-mokaamp_fastq_R1_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads_fastqgz="
-mokaamp_fastq_R2_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.reads2_fastqgz="
-mokaamp_bwa_rg_sample = " -istage-FPzGj780jy1g3p1F4F8z4J7V.read_group_sample="
-mokaamp_mokapicard_bed_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
-mokaamp_mokapicard_capturetype_stage = (
-    " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
-)
-mokaamp_ampliconfilter_BEDPE_stage = " -istage-FPzGjJQ0jy1fF6505zFP6zz9.PE_BED="
-mokaamp_chanjo_cov_level_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
-mokaamp_sambamba_bed_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
-mokaamp_vardict_bed_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.bedfile="
-mokaamp_vardict_samplename_stage = (
-    " -istage-G0vKZk80GfYkQx86PJGGjz9Y.sample_name=vardict_"
-)
-mokaamp_varscan_bed_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
-mokaamp_varscan_samplename_stage = (
-    " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.samplename=varscan_"
-)
-mokaamp_varscan_strandfilter_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.strand_filter="
-mokaamp_mpileup_cov_level_stage = " -istage-FxypXb807p1zj3g8Jv45Y54P.min_coverage="
-mokaamp_bwa_ref_stage = (
-    " -istage-FPzGj780jy1g3p1F4F8z4J7V.genomeindex_targz="
-    "project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY4942J35xX095VZyQBk0v"
-)
-mokaamp_mokapicard_ref_stage = (
-    " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index="
-    "project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-)
-mokaamp_vardict_ref_stage = (
-    " -istage-G0vKZk80GfYkQx86PJGGjz9Y.ref_genome="
-    "project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-)
-mokaamp_varscan_ref_stage = (
-    " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome="
-    "project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 )
 
-# MokaCAN workflow inputs
-mokacan_fastqc_r1_stage = " -istage-FPzGj6Q0jy1fF6505zFP6zz5.reads="
-mokacan_fastqc_r2_stage = " -istage-FPzGj5j0jy1x97jg607Fg229.reads="
-mokacan_picard_bedfile_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
-mokacan_picard_capturetype_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
-mokacan_sambamba_bedfile_stage = " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
-mokacan_vardict_bedfile_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
-mokacan_sentieon_sample_name_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.sample="
-mokacan_sambamba_coverage_level_stage = (
-    " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
-)
-mokacan_vardict_sample_name_stage = (
-    " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.sample_name=vardict_"
-)
-mokacan_varscan_bedfile_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
-mokacan_senteion_bwa_ref_stage = (
-    " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genomebwaindex_targz="
-    "project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY4942J35xX095VZyQBk0v"
-)
-mokacan_senteion_ref_stage = (
-    " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genome_fastagz="
-    "project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY7VG2J35Vfvpkj8y0KZ01"
-)
-mokacan_picard_ref_stage = (
-    " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index="
-    "project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-)
-mokacan_vardict_ref_stage = (
-    " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.ref_genome="
-    "project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-)
-mokacan_varscan_ref_stage = (
-    " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome="
-    "project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-)
+FILE_IDS = {
+    "tso500_docker": f"{TOOLS_PROJECT}:file-Fz9Zyx00b5j8xKVkKv4fZ6JB",
+    "hs37d5_bwa_index": f"{TOOLS_PROJECT}:file-B6ZY4942J35xX095VZyQBk0v",
+    "hs37d5_ref": f"{TOOLS_PROJECT}:file-ByYgX700b80gf4ZY1GxvF3Jv",
+}
 
-# TSO500 workflow inputs
-tso500_docker_image_stage = " -iTSO500_ruo="
-tso500_runfolder_tar_stage = " -irun_folder="
-tso500_samplesheet_stage = " -isamplesheet="
-tso500_analysis_options_stage = " -ianalysis_options="
-tso500_project_name_stage = " -iproject_name="
-tso500_analysis_instance_high_throughput = "mem1_ssd1_v2_x72"
-tso500_analysis_instance_low_throughput = "mem1_ssd1_v2_x36"
+# TODO in future switch all to using workflow IDs where possible
+APP_PATHS = {
+    "fastqc": "Apps/fastqc_v1.3",
+    "peddy": "Apps/peddy_v1.5",
+    "rpkm": "Apps/RPKM_using_conifer_v1.6",
+    "multiqc": "Apps/multiqc_v1.16.0",
+    "upload_multiqc": "Apps/upload_multiqc_v1.4.0",
+    "congenica": "Apps/congenica_upload_v1.3.2",
+}
 
-tso500_op_project_name_stage = " -iproject_name="
-tso500_op_project_id_stage = " -iproject_id="
-tso500_op_job_id_stage = " -itso500_jobid="
-tso500_op_coverage_bedfile_id_stage = " -icoverage_bedfile_id="
-tso500_op_coverage_app_id_stage = " -icoverage_app_id="
-tso500_op_fastqc_app_id_stage = " -ifastqc_app_id="
-tso500_op_sompy_app_id_stage = " -isompy_app_id="
-tso500_op_multiqc_app_id_stage = " -imultiqc_app_id="
-tso500_op_upload_multiqc_app_id_stage = " -iupload_multiqc_app_id="
-tso500_op_coverage_commands_stage = " -icoverage_commands="
-tso500_op_coverage_level_stage = " -icoverage_level="
-tso500_op_multiqc_coverage_level_stage = " -imultiqc_coverage_level="
-tso500_op_coverage_commands = (
-    "'-imerge_overlapping_mate_reads=true "
-    "-iexclude_failed_quality_control=true "
-    "-iexclude_duplicate_reads=true -imin_base_qual=%s "
-    "-imin_mapping_qual=%s'"
-)
+WORKFLOW_PATHS = {
+    "mokapipe": "Workflows/GATK3.5_v2.17",
+    "mokawes": "Workflows/MokaWES_v1.8",
+    "mokaamp": "Workflows/MokaAMP_v2.2",
+    "mokacan": "Workflows/MokaCAN_v1.0",
+    "mokasnp": "Workflows/MokaSNP_v1.2.0",
+}
+
+# Paths / IDs for workflows in 001_Tools
+TSO500_APP_NAME = "TSO500_v1.5.0"  # Input for APP_IDS['TSO500_OP']
+
+
+STAGE_IDS = {
+    "mokapipe": {
+        "filter_vcf": "stage-G5Kpgv80zB02Q64zFf94G05F",
+        "gatk": "stage-F28y4qQ0jy1fkqfy5v2b8byx",
+        "fastqc1": "stage-Bz3YpP80jy1Y1pZKbZ35Bp0x",
+        "fastqc2": "stage-Bz3YpP80jy1x7G5QfG3442gX",
+        "bwa": "stage-Byz9BJ80jy1k2VB9xVXBp0Fg",
+        "picard": "stage-F9GK4QQ0jy1qj14PPZxxq3VG",
+        "happy": "stage-G8V205j0fB6QGKXQ2gZ5pB1z",
+        "sambamba": "stage-F35zBKQ0jy1XpfzYPZY4bgX6",
+        "fhprs": "stage-G9BfkZQ0fB6jZY7v1PfJ81F6",
+        "polyedge": "stage-GK71VJ80VQgQkjvz0vyQ8YV1",
+    },
+    "mokawes": {
+        "fastqc1": "stage-Ff0P5Jj0GYKY717pKX3vX8Z3",
+        "fastqc2": "stage-Ff0P5V00GYKyJfpX5bqX69Yg",
+        "picard": "stage-Ff0P5pQ0GYKVBB0g1FG27BV8",
+        "sambamba": "stage-Ff0P82Q0GYKQ4j8b4gXzjqxX",
+        "sentieon": "stage-Ff0P73j0GYKX41VkF3j62F9j",
+    },
+    "mokasnp": {
+        "fastqc1": "stage-FgPp4V00YkVJVjKF4kYkBF8v",
+        "fastqc2": "stage-FgPp4V00YkVJVjKF4kYkBF90",
+        "sentieon": "stage-FgPp4XQ0YkV48jZG4Py6F55k",
+    },
+    "mokaamp": {
+        "fastqc1": "stage-FPzGj780jy1g3p1F4F8z4J7V",
+        "fastqc2": "stage-FPzGj780jy1g3p1F4F8z4J7V",
+        "bwa": "stage-FPzGj780jy1g3p1F4F8z4J7V",
+        "picard": "stage-FPzGjV80jy1x97jg607Fg22b",
+        "ampliconfilt": "stage-FPzGjJQ0jy1fF6505zFP6zz9",
+        "sambamba": "stage-FPzGjfQ0jy1y01vG60K22qG1",
+        "vardict": "stage-G0vKZk80GfYkQx86PJGGjz9Y",
+        "varscan": "stage-FPzGjp80jy1V3Jvb5z6xfpfZ",
+        "mpileup": "stage-FxypXb807p1zj3g8Jv45Y54P",
+    },
+    "mokacan": {
+        "fastqc1": "stage-FPzGj6Q0jy1fF6505zFP6zz5",
+        "fastqc2": "stage-FPzGj5j0jy1x97jg607Fg229",
+        "picard": "stage-FPzGjV80jy1x97jg607Fg22b",
+        "sambamba": "stage-FPzGjfQ0jy1y01vG60K22qG1",
+        "vardict": "stage-FPzGjgj0jy1Q2JJF2zYx5J5k",
+        "sentieon": "stage-FgYgB2Q087fjzvxy9f4q1K8X",
+        "varscan": "stage-FPzGjp80jy1V3Jvb5z6xfpfZ",
+    },
+}
+
+STAGE_INPUTS = {
+    "mokapipe": {
+        "fastqc1_reads": f" -i{STAGE_IDS['mokapipe']['fastqc1']}.reads=",
+        "fastqc2_reads": f" -i{STAGE_IDS['mokapipe']['fastqc2']}.reads=%s",
+        "bwa_rg_sample": (
+            f" -i{STAGE_IDS['mokapipe']['bwa']}.read_group_sample="
+        ),
+        "bwa_ref": f" -i{STAGE_IDS['mokapipe']['bwa']}.genomeindex_targz=",
+        # HSMetrics Bedfile
+        "picard_bed": (
+            f" -i{STAGE_IDS['mokapipe']['picard']}.vendor_exome_bedfile="
+        ),
+        "picard_capturetype": (
+            f" -i{STAGE_IDS['mokapipe']['picard']}.Capture_panel="
+        ),
+        "gatk_padding": f" -i{STAGE_IDS['mokapipe']['gatk']}.padding=",
+        "gatk_vcf_format": (
+            f" -i{STAGE_IDS['mokapipe']['gatk']}.output_format=both"
+        ),
+        "filter_vcf_bed": f" -i{STAGE_IDS['mokapipe']['filter_vcf']}.bedfile=",
+        "happy_skip": f" -i{STAGE_IDS['mokapipe']['happy']}.skip=",
+        "happy_prefix": f" -i{STAGE_IDS['mokapipe']['happy']}.prefix=",
+        "sambamba_bed": (
+            f" -i{STAGE_IDS['mokapipe']['sambamba']}.sambamba_bed="
+        ),
+        "sambamba_min_base_qual": (
+            f" -i{STAGE_IDS['mokapipe']['sambamba']}.min_base_qual=10"
+        ),
+        "sambamba_min_mapping_qual": (
+            f" -i{STAGE_IDS['mokapipe']['sambamba']}.min_mapping_qual=20"
+        ),
+        "sambamba_cov_level": (
+            f" -i{STAGE_IDS['mokapipe']['sambamba']}.coverage_level=30"
+        ),
+        "sambamba_filter_cmds": f" -i{STAGE_IDS['mokapipe']['sambamba']}"
+        ".additional_filter_commands="
+        "'not (unmapped or secondary_alignment)'",
+        "sambamba_excl_dups": f" -i{STAGE_IDS['mokapipe']['sambamba']}"
+        ".exclude_duplicate_reads=true",
+        "sambamba_excl_failed_qual": f" -i{STAGE_IDS['mokapipe']['sambamba']}"
+        ".exclude_failed_quality_control=true",
+        "sambamba_count_overl_mates": f" -i{STAGE_IDS['mokapipe']['sambamba']}"
+        ".merge_overlapping_mate_reads=true",
+        "fhprs_skip": f" -i{STAGE_IDS['mokapipe']['fhprs']}.skip=false",
+        "fhprs_bed": f" -i{STAGE_IDS['mokapipe']['fhprs']}.BEDfile=",
+        "fhprs_instance": "mem3_ssd1_v2_x8",  # Required when creating gVCFs
+        "polyedge_skip": f" -i{STAGE_IDS['mokapipe']['polyedge']}.skip=false",
+    },
+    "rpkm": {
+        "bed": " -ibedfile=",
+        "proj": " -iproject_name=",
+        "pannos": " -ibamfile_pannumbers=",
+    },
+    "mokawes": {
+        "fastqc1_reads": f" -i{STAGE_IDS['mokawes']['fastqc1']}.reads=",
+        "fastqc2_reads": f" -i{STAGE_IDS['mokawes']['fastqc2']}.reads=",
+        # HSmetrics bedfile
+        "picard_bed": (
+            f" -i{STAGE_IDS['mokawes']['picard']}.vendor_exome_bedfile="
+        ),
+        "sambamba_bed": f" -i{STAGE_IDS['mokawes']['sambamba']}.sambamba_bed=",
+        # Prevents incorrect parsing from fastq filename
+        "sentieon_samplename": (
+            f" -i{STAGE_IDS['mokawes']['sentieon']}.sample="
+        ),
+        "sentieon_bed": f" -i{STAGE_IDS['mokawes']['sentieon']}.targets_bed=",
+    },
+    "mokasnp": {
+        "fastqc1_reads": f" -i{STAGE_IDS['mokasnp']['fastqc1']}.reads=",
+        "fastqc2_reads": f" -i{STAGE_IDS['mokasnp']['fastqc2']}.reads=",
+        "sentieon_bed": f" -i{STAGE_IDS['mokasnp']['sentieon']}.targets_bed=",
+        # Prevents incorrect parsing from fastq filename
+        "sentieon_samplename": (
+            f" -i{STAGE_IDS['mokasnp']['sentieon']}.sample="
+        ),
+    },
+    "mokaamp": {
+        "fastqc1_reads": (
+            f" -i{STAGE_IDS['mokaamp']['fastqc1']}.reads_fastqgz="
+        ),
+        "fastqc2_reads": (
+            f" -i{STAGE_IDS['mokaamp']['fastqc1']}.reads2_fastqgz="
+        ),
+        "bwa_rg_sample": (
+            f" -i{STAGE_IDS['mokaamp']['bwa']}.read_group_sample="
+        ),
+        "bwa_ref": (
+            f" -i{STAGE_IDS['mokaamp']['bwa']}"
+            f".genomeindex_targz={FILE_IDS['hs37d5_bwa_index']}"
+        ),
+        "picard_bed": (
+            f" -i{STAGE_IDS['mokaamp']['picard']}.vendor_exome_bedfile="
+        ),
+        "picard_capturetype": (
+            f" -i{STAGE_IDS['mokaamp']['picard']}.Capture_panel="
+        ),
+        "picard_ref": (
+            f" -i{STAGE_IDS['mokaamp']['picard']}."
+            f"fasta_index={FILE_IDS['hs37d5_ref']}"
+        ),
+        "ampliconfilt_bed": (
+            f" -i{STAGE_IDS['mokaamp']['ampliconfilt']}.PE_BED="
+        ),
+        "sambamba_cov_level": (
+            f" -i{STAGE_IDS['mokaamp']['sambamba']}.coverage_level="
+        ),
+        "sambamba_bed": f" -i{STAGE_IDS['mokaamp']['sambamba']}.sambamba_bed=",
+        "vardict_ref": (
+            f" -i{STAGE_IDS['mokaamp']['vardict']}."
+            f"ref_genome={FILE_IDS['hs37d5_ref']}"
+        ),
+        "vardict_bed": f" -i{STAGE_IDS['mokaamp']['vardict']}.bedfile=",
+        "vardict_samplename": (
+            f" -i{STAGE_IDS['mokaamp']['vardict']}.sample_name=vardict_"
+        ),
+        "varscan_ref": (
+            f" -i{STAGE_IDS['mokaamp']['varscan']}."
+            f"ref_genome={FILE_IDS['hs37d5_ref']}"
+        ),
+        "varscan_bed": f" -i{STAGE_IDS['mokaamp']['varscan']}.bed_file=",
+        "varscan_samplename": (
+            f" -i{STAGE_IDS['mokaamp']['varscan']}.samplename=varscan_"
+        ),
+        "varscan_strandfilter": (
+            f" -i{STAGE_IDS['mokaamp']['varscan']}.strand_filter="
+        ),
+        "mpileup_covlevel": (
+            f" -i{STAGE_IDS['mokaamp']['mpileup']}.min_coverage="
+        ),
+    },
+    "mokacan": {
+        "fastqc1_reads": f" -i{STAGE_IDS['mokacan']['fastqc1']}.reads=",
+        "fastqc2_reads": f" -i{STAGE_IDS['mokacan']['fastqc2']}.reads=",
+        "picard_bed": (
+            f" -i{STAGE_IDS['mokacan']['picard']}.vendor_exome_bedfile="
+        ),
+        "picard_capturetype": (
+            f" -i{STAGE_IDS['mokacan']['picard']}.Capture_panel="
+        ),
+        "picard_ref": (
+            f" -i{STAGE_IDS['mokacan']['picard']}."
+            f"fasta_index={FILE_IDS['hs37d5_ref']}"
+        ),
+        "sambamba_bed": f" -i{STAGE_IDS['mokacan']['sambamba']}.sambamba_bed=",
+        "sambamba_cov_level": (
+            f" -i{STAGE_IDS['mokacan']['sambamba']}.coverage_level="
+        ),
+        "vardict_ref": (
+            f" -i{STAGE_IDS['mokacan']['vardict']}."
+            f"ref_genome={FILE_IDS['hs37d5_ref']}"
+        ),
+        "vardict_bed": f" -i{STAGE_IDS['mokacan']['vardict']}.bedfile=",
+        "vardict_samplename": (
+            f" -i{STAGE_IDS['mokacan']['vardict']}.sample_name=vardict_"
+        ),
+        "varscan_ref": (
+            f" -i{STAGE_IDS['mokacan']['varscan']}."
+            f"ref_genome={FILE_IDS['hs37d5_ref']}"
+        ),
+        "varscan_bed": f" -i{STAGE_IDS['mokacan']['varscan']}.bed_file=",
+        "sentieon_samplename": (
+            f" -i{STAGE_IDS['mokacan']['sentieon']}.sample="
+        ),
+        "sentieon_bwa_ref": (
+            f" -i{STAGE_IDS['mokacan']['sentieon']}.genomebwaindex_targz="
+            f"{TOOLS_PROJECT}:{FILE_IDS['hs37d5_bwa_index']}"
+        ),
+        "sentieon_ref": (
+            f" -i{STAGE_IDS['mokacan']['sentieon']}.genome_fastagz="
+            f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01"
+        ),
+    },
+}
 
 # Command strings
-source_cmd = f"#!/bin/bash\n. {sdk_source_cmd}\ndepends_list=''"
-create_project_cmd = (
-    'project_id="$(dx new project --bill-to %s "%s" --brief --auth-token %s)"\n'
-)
-mokapipe_cmd = (
-    f"jobid=$(dx run {tools_project}{mokapipe_path} --priority high -y --name "
-)
-mokawes_cmd = f"jobid=$(dx run {tools_project}{mokawes_path} --priority high -y --name "
-mokasnp_cmd = f"jobid=$(dx run {tools_project}{mokasnp_path} -y --priority high --name "
-fastqc_cmd = f"jobid=$(dx run {tools_project}{fastqc_app} -y --priority high --name "
-tso500_cmd = f"jobid=$(dx run {tools_project}{tso500_app} --priority high -y --name "
-tso500_op_cmd = (
-    f"jobid=$(dx run {tools_project}{tso500_op_app} " "--priority high -y --name "
-)
-peddy_cmd = f"jobid=$(dx run {tools_project}{peddy_path}"
-multiqc_cmd = f"jobid=$(dx run {tools_project}{multiqc_path}"
-upload_multiqc_cmd = f"jobid=$(dx run {tools_project}{upload_multiqc_path} -y"
-RPKM_cmd = (
-    f"dx run {tools_project}{rpkm_path} --priority high --instance-type mem1_ssd1_x8"
-)
-mokaamp_cmd = f"jobid=$(dx run {tools_project}{mokaamp_path} --priority high -y --name "
-mokacan_cmd = f"jobid=$(dx run {tools_project}{mokacan_path} --priority high -y --name "
-decision_support_preperation = (
-    f"analysisid=$(python {decision_support_tool_input_script} -a "
-)
-congenica_sftp_upload_cmd = (
-    f"echo 'dx run {tools_project}{congenica_SFTP_upload_app}%s -y"
-)
+SOURCE_CMD = f"#!/bin/bash\n. {PATHS['sdk_source']}\ndepends_list=''"
 
-# ---- Moka settings -------------------------------------------------------------------------------
+DX_RUN_CMDS = {
+    "create_proj": (
+        'project_id="$(dx new project --bill-to %s "%s" --brief '
+        '--auth-token %s)"\n'
+    ),
+    "mokapipe": (
+        f"jobid=$(dx run {TOOLS_PROJECT}:/{WORKFLOW_PATHS['mokapipe']}"
+        " --priority high -y --name "
+    ),
+    "mokawes": (
+        f"jobid=$(dx run {TOOLS_PROJECT}:/{WORKFLOW_PATHS['mokawes']}"
+        " --priority high -y --name "
+    ),
+    "mokasnp": (
+        f"jobid=$(dx run {TOOLS_PROJECT}:/{WORKFLOW_PATHS['mokasnp']}"
+        " -y --priority high --name "
+    ),
+    "mokaamp": (
+        f"jobid=$(dx run {TOOLS_PROJECT}:/{WORKFLOW_PATHS['mokaamp']}"
+        " --priority high -y --name "
+    ),
+    "mokacan": (
+        f"jobid=$(dx run {TOOLS_PROJECT}:/{WORKFLOW_PATHS['mokacan']}"
+        " --priority high -y --name "
+    ),
+    "tso500": (
+        f"jobid=$(dx run {TOOLS_PROJECT}:/{APP_IDS['TSO500']}"
+        " --priority high -y --name "
+    ),
+    "tso500_op": (
+        f"jobid=$(dx run {TOOLS_PROJECT}:/{APP_IDS['TSO500_OP']}"
+        " --priority high -y --name "
+    ),
+    "fastqc": (
+        f"jobid=$(dx run {TOOLS_PROJECT}:/{APP_PATHS['fastqc']} -y "
+        "--priority high --name "
+    ),
+    "peddy": f"jobid=$(dx run {TOOLS_PROJECT}:/{APP_PATHS['peddy']}",
+    "multiqc": f"jobid=$(dx run {TOOLS_PROJECT}:/{APP_PATHS['multiqc']}",
+    "upload_multiqc": (
+        f"jobid=$(dx run {TOOLS_PROJECT}:/{APP_PATHS['upload_multiqc']} -y"
+    ),
+    "rpkm": (
+        f"dx run {TOOLS_PROJECT}:/{APP_PATHS['rpkm']}"
+        " --priority high --instance-type mem1_ssd1_x8"
+    ),
+    "decision_support_prep": (
+        f"analysisid=$(python {PATHS['dsptool_input_script']} -a "
+    ),
+    "congenica_sftp": (
+        f"echo 'dx run {TOOLS_PROJECT}:/{APP_IDS['congenica_SFTP']}%s -y"
+    ),
+}
+
+USW_LOGMSGS = {
+    "script_start": "automate_demultiplexing release:%s",
+    "create_proj_success": (
+        "DNA Nexus project %s created and shared (VIEW) to %s"
+    ),
+    "create_proj_fail": "UA_fail 'failed to create project in dna nexus'",
+}
+# ---- Moka settings ----------------------------------------------------------
 
 # Moka IDs for generating SQLs to update the Mokadatabase (audit trail)
-mokapipe_congenica_pipeline_id = "5221"  # Mokapipe & congenica ID
-mokawes_pipeline_id = "5078"  # MokaWES ID
-mokaamp_pipeline_id = "4851"  # MokaAMP ID
-archerDx_pipeline_id = "4562"  # Archer ID
-mokasnp_pipeline_id = "5091"  # MokaSNP ID
-mokacan_pipeline_id = "4728"  # mokacan pipeline ID
-tso_pipeline_id = "5227"  # TSO500 pipeline ID
+WORKFLOW_IDS = {
+    "mokapipe": 5221,
+    "mokawes": 5078,
+    "mokaamp": 4851,
+    "archerdx": 4562,
+    "mokasnp": 5091,
+    "mokacan": 4728,
+    "tso500": 5227,
+}
 
-# MokaWES test status
-mokastatus_nextsq_id = "1202218804"  # Test Status = NextSEQ sequencing
-mokastatus_dataproc_id = "1202218805"  # Test Status = Data Processing
+# Moka WES test status
+WES_TEST_STATUS = {
+    "nextseq_sequencing": 1202218804,  # Test Status = NextSEQ sequencing
+    "data_processing": 1202218805,  # Test Status = Data Processing
+}
