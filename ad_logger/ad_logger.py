@@ -1,13 +1,13 @@
 # coding=utf-8
 """ Automate demultiplex logging.
 
-Currently only the 'script', 'upload_agent' and 'backup' logfiles are configured to be writeable to
+Currently only the 'script", 'upload_agent' and 'backup' logfiles are configured to be writeable to
 by this script. These logfiles are written to by the upload and setoff workflows script.
 
 
-        self.script = self._get_ad_logger('automate_demultiplex', script)
-        self.upload_agent = self._get_ad_logger('upload_agent', upload_agent)
-        self.backup = self._get_ad_logger('backup_runfolder', backup)
+        self.script = self._get_ad_logger('automate_demultiplex", script)
+        self.upload_agent = self._get_ad_logger('upload_agent", upload_agent)
+        self.backup = self._get_ad_logger('backup_runfolder", backup)
 """
 import sys
 import os
@@ -16,54 +16,52 @@ import logging.handlers
 import ad_config as config
 
 
-def get_demux_log_config(timestamp):
-    """Get the demultiplex script logfile before it is renamed with processed runfolders"""
-    log_config = {
-        "demultiplex": os.path.join(config.demultiplex_logpath, f"{timestamp}.txt")
-        }
-    return log_config
-
-
 # TODO finish filling in arguments
-def get_runfolder_log_config(runfolder_obj, timestamp):
+def get_log_config(timestamp, rf_obj=None):
     """Return an ADLogger config for a runfolder.
     Args:
-        runfolder_obj: A runfolder object with the following attributes:
-                        runfolder_name runfolderpath
-        runfolder_dx_run_script
-
-
         timestamp(str): Timestamp as str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
+        rf_obj: A runfolder object with the following attributes:
+                        runfolder_name runfolderpath
+
     Returns:
         log_config(dict): A dictionary of arguments for ADLoggers
     """
 
-    # Find the demultiplex logfile for the runfolder.
-    # Logfile name contains demultiplex timestamp which is unknown at this point.
-    # Search for any demultiplex logfiles matching the runfodler name and return the first.
-    any_demultiplex_logs = [
-        os.path.join(config.demultiplex_logpath, filename)
-        for filename in os.listdir(config.demultiplex_logpath)
-        if runfolder_obj.runfolder_name in filename
-    ]
-    demultiplex_log = any_demultiplex_logs.pop() if any_demultiplex_logs else None
+    demux_scriptlog = os.path.join(
+        config.DEMULTIPLEX_LOGPATH, f"{timestamp}.txt"
+    )
 
     # Configuration for ADLoggers.
     # Dictionary where keys are ADLoggers.__init__ arguments and values are logfile paths.
-    log_config = {
-        "demultiplex": demultiplex_log,
-        "upload_agent": os.path.join(
-            runfolder_obj.runfolderpath, config.upload_started_filename
-        ),
-        "backup": os.path.join(
-            config.backup_runfolder_logfile, f"{runfolder_obj.runfolder_name}_backup_runfolder.log",
-        ),
-        "project": os.path.join(config.dnanexus_projectcreation_logfolder,
-                                "{runfolder.runfolder_name}.sh"),
-        "dx_run": runfolder_obj.runfolder_dx_run_script,
-        "upload_script": os.path.join(config.upload_script_logpath,
-                                      f"{timestamp}_upload_and_setoff_workflow.log")
-    }
+    if rf_obj:
+        # Find the demultiplex logfile for the runfolder.
+        # Logfile name contains demultiplex timestamp which is unknown at this point.
+        # Search for any demultiplex logfiles matching the runfodler name and return the first.
+        # If none exist, get the logfile from before it is renamed with processed runfolders
+        any_demultiplex_logs = [
+            os.path.join(config.DEMULTIPLEX_LOGPATH, filename)
+            for filename in os.listdir(config.DEMULTIPLEX_LOGPATH)
+            if rf_obj.runfolder_name in filename
+        ]
+
+        demultiplex_rf_log = (
+            any_demultiplex_logs.pop()
+            if any_demultiplex_logs
+            else demux_scriptlog
+        )
+
+        log_config = {
+            "demultiplex": demultiplex_rf_log,
+            "upload_agent": rf_obj.upload_agent_logfile,
+            "backup": config.BACKUP_RUNFOLDER_LOGFILE % rf_obj.runfolder_name,
+            "project": rf_obj.project_creation_logfile,
+            "dx_run": rf_obj.runfolder_dx_run_script,
+            "upload_script": config.BACKUP_RUNFOLDER_LOGFILE % timestamp,
+        }
+    else:
+        log_config = {"demultiplex": demux_scriptlog}
+
     return log_config
 
 
@@ -85,72 +83,55 @@ class AdLoggers(object):
                             *projname*_upload_and_setoff_workflow.log
     """
 
-    formatter = logging.Formatter(config.logging_formatter)  # Log string format
+    _formatter = logging.Formatter(
+        config.LOGGING_FORMATTER
+    )  # Log string format
 
-    def __init__(self, log_config, runfolder=True):
+    def __init__(self, log_config):
         """
         Args:
             logger_name(str): Logger name
             logfile_path(str): Logfile path
         """
-        # Logfile to be written to by demultiplex.py
-        self.demultiplex = self._get_logger('demultiplex', log_config['demultiplex'])
+        self._log_config = log_config
+        self.all_loggers = []  # Collect all loggers
 
-        if not runfolder:
-            self.upload_agent = False
-            self.backup = False
-            self.project = False
-            self.dx_run = False
-            self.upload_script = False
-        else:
-            # Logfiles to be written to by upload_and_setoff_workflows
-            self.upload_agent = self._get_logger('upload_agent', log_config['upload_agent'])
-            self.backup = self._get_logger('backup_runfolder', log_config['backup'])
-            self.project = self._get_logger("create_project", log_config['project'])
-            self.dx_run = self._get_logger("dx_run", log_config['dx_run'])
-            self.upload_script = self._get_logger('upload_script', log_config['script'])
-
-        # Container for all loggers
-        self.all = [
-            self.demultiplex,
-            self.backup,
-            self.project,
-            self.dx_run,
-            self.upload_script
-        ]
+        # Assign loggers from log config as class attributes
+        for key in log_config:
+            setattr(AdLoggers, key, self._get_logger(key, log_config[key]))
+            self.all_loggers.append(getattr(AdLoggers, key))
 
     def shutdown_logs(self):
         """
         To prevent duplicate filehandlers and system handlers close and remove all handlers
-        for all log files taht have a python logging object
+        for all log files that have a python logging object
         """
-        for ad_logger in self.all:
-            if ad_logger:
-                for handler in ad_logger.handlers[:]:
-                    handler.close()
-                    ad_logger.removeHandler(handler)
-        logging.shutdown()
+        for logger in self.all_loggers:
+            for handler in logger.handlers[:]:
+                logger.removeHandler(handler)
+                handler.close()
+            print(logger.handlers)
 
     def _get_file_handler(self, filepath):
         file_handler = logging.FileHandler(filepath, mode="a", delay=True)
         file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(self.formatter)
+        file_handler.setFormatter(self._formatter)
         return file_handler
 
     def _get_syslog_handler(self):
         syslog_handler = logging.handlers.SysLogHandler(address="/dev/log")
         syslog_handler.setLevel(logging.DEBUG)
-        syslog_handler.setFormatter(self.formatter)
+        syslog_handler.setFormatter(self._formatter)
         return syslog_handler
 
     def _get_stream_handler(self):
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setLevel(logging.DEBUG)
-        stream_handler.setFormatter(self.formatter)
+        stream_handler.setFormatter(self._formatter)
         return stream_handler
 
     def _get_logger(self, name, filepath):
-        """ Returns a Python logging object
+        """Returns a Python logging object
 
         Args:
             name(str): Logger name
