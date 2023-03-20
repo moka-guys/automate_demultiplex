@@ -1,9 +1,13 @@
-""" Print inputs required by decision support tool upload applications on DNANexus
+""" Print inputs required by decision support tool upload
+applicationson DNANexus
 
-In order to run some run wide tasks we need to supply the inputs in the form jobid.output_name
-This is hard to do if we are running workflows as the job id relates to one app within a workflow.
+In order to run some run wide tasks we need to supply the inputs in the
+    form jobid.output_name
+This is hard to do if we are running workflows as the job id relates to one
+    app within a workflow.
 This script takes an analysis id and returns the job id of the specific stage.
-The script prints the output to the command line formatted for the tool given in as an argument.
+The script prints the output to the command line formatted for the tool given
+    in as an argument.
 """
 
 import subprocess
@@ -17,14 +21,15 @@ from upload_and_setoff_workflows import RunfolderProcessor
 
 def get_arguments():
     """
-    Uses argparse module to define and handle command line input arguments and help menu
+    Uses argparse module to define and handle command line input arguments
+    and help menu
     """
-    # Create ArgumentParser object. Description message will be displayed as part of help message if
-    # script is run with -h flag
+    # Create ArgumentParser object. Description message will be displayed as
+    # part of help message if script is run with -h flag
     parser = argparse.ArgumentParser(
         description=(
-            "given an analysis-id will obtain the job ids for bam and vcf files for upload to the "
-            "specified decision support tool"
+            "given an analysis-id will obtain the job ids for bam and vcf "
+            "files for upload to the specified decision support tool"
         )
     )
     # Define the arguments that will be taken.
@@ -56,8 +61,8 @@ class DecisionTooler(object):
     Builds decision support tool command line inputs
     """
 
-    # named tuple to hold all the output names - This tuple name is "workflow" and has four
-    # attributes which can be accessed using Workflow.attribute
+    # named tuple to hold all the output names - This tuple name is "workflow"
+    # and has four attributes which can be accessed using Workflow.attribute
     workflow_object = namedtuple("Workflow", "name vcf_out bam_out bai_out")
 
     def __init__(self):
@@ -66,49 +71,55 @@ class DecisionTooler(object):
     def _parse_mokawes_json(self, json_ob):
         """
         Take the JSON from dx describe on MokaWES.
-        MokaWES Senteion app is itself a workflow, this means there are two valid approaches to
-        obtaining the job id depending on how quickly the dx run command is processed and the
-        sentieon workflow is established. Parse to get the job id using two approaches.
-        If not found return null
+        MokaWES Senteion app is itself a workflow, this means there are two
+        valid approaches to obtaining the job id depending on how quickly the
+        dx run command is processed and the sentieon workflow is established.
+        Parse to get the job id using two approaches. If not found return null
         """
         # for each stage
         for stage in json_ob["stages"]:
             # check for app name
-            if stage["id"] == config.sentieon_stage_id:
+            if stage["id"] == config.STAGE_IDS["mokapipe"]["senteion"]:
                 return stage["execution"]["id"]
         return None
 
     def _parse_mokapipe_json(self, json_ob):
         """
         Parse the dx describe output from the mokapipe analysis id
-        use the stage id to identify the job id of the required stage (see config file)
-        return the job id for the bed filtering app for vcf and return the gatk human exome
-        pipeline for BAM
+        use the stage id to identify the job id of the required stage (see
+        config file)
+        return the job id for the bed filtering app for vcf and return the
+        gatk human exome pipeline for BAM
         """
         jobid = None
         bamjobid = None
         for stage in json_ob["stages"]:
-            if stage["id"] == config.mokapipe_filter_vcf_with_bedfile_stage:
+            if stage["id"] == config.STAGE_IDS["mokapipe"]["filter_vcf"]:
                 jobid = stage["execution"]["id"]
-            elif stage["id"] == config.mokapipe_gatk_human_exome_stage:
+            elif stage["id"] == config.STAGE_IDS["mokapipe"]["gatk"]:
                 bamjobid = stage["execution"]["id"]
         return jobid, bamjobid
 
     def get_job_id(self, analysis_id, project, workflow):
         """
         perform dx describe on the workflow (analysis id)
-        Loop through up to 1000 times incase the dx run commands have not yet been executed
-        Depending on the workflow pass the dx describe json to a workflow specific function.
+        Loop through up to 1000 times incase the dx run commands have no
+        yet been executed
+        Depending on the workflow pass the dx describe json to a workflow
+        specific function.
         recieves the bam and vcf stage ids
         returns tuple of job ids that created vcf and bam
         """
         # obtain json for dx describe on the given analysis id
-        cmd = ("source {}; dx describe" " {}:{} --json --auth-token {}").format(
-            config.sdk_source_cmd, project, analysis_id, config.nexus_apikey
+        cmd = (
+            f"source {config.PATHS['SDK_SOURCE']}; dx describe "
+            f"{project}:{analysis_id} --json "
+            "--auth-token {config.DNANEXUS_APIKEY}"
         )
-        # jobid comes from the sentieon sub-job, which takes a few moments to initiate after
-        # calling the sentieon app. Running this script immediately after running the sentieon
-        # workflow raises an IndexError. We retry in the while loop until the jobid is available.
+        # jobid comes from the sentieon sub-job, which takes a few moments to
+        # initiate after calling the sentieon app. Running this script
+        # immediately after running the sentieon workflow raises an
+        # IndexError. We retry in the while loop until the jobid is available.
         jobid = None
         bamjobid = None
         tries = 0
@@ -116,7 +127,10 @@ class DecisionTooler(object):
             try:
                 # execute command
                 proc = subprocess.Popen(
-                    [cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True
+                    [cmd],
+                    stderr=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    shell=True,
                 )
                 # capture the streams
                 (out, _) = proc.communicate()
@@ -134,60 +148,52 @@ class DecisionTooler(object):
                     raise Exception("Maximum Tries Exceeded")
         return jobid, bamjobid
 
-    def get_workflow(self, ps):
+    def get_workflow(self, pansettings):
         """
         input is the panel settings dictionary created outside of this class
-        create a namedtuple named as the workflow name and with the output names from the app which
-        produces the decision support tool inputs. returns the namedtuple
+        create a namedtuple named as the workflow name and with the output
+        names from the app which produces the decision support tool inputs.
+        returns the namedtuple
         """
-        if ps["pipeline"] == "mokawes":
+        if pansettings["pipeline"] == "mokawes":
             return self.workflow_object(
                 "mokawes",
-                config.mokawes_sentieon_vcf_output_name,
-                config.mokawes_sentieon_bam_output_name,
-                config.mokawes_sentieon_bai_output_name,
+                config.MOKAWES_SENTIEON_VCF_OUTPUT_NAME,
+                config.MOKAWES_SENTIEON_BAM_OUTPUT_NAME,
+                config.MOKAWES_SENTIEON_BAI_OUTPUT_NAME,
             )
-        elif ps["pipeline"] == "mokapipe":
+        elif pansettings["pipeline"] == "mokapipe":
             return self.workflow_object(
                 "mokapipe",
-                config.mokapipe_vcf_output_name,
-                config.mokapipe_bam_output_name,
+                config.MOKAPIPE_VCF_OUTPUT_NAME,
+                config.MOKAPIPE_BAM_OUTPUT_NAME,
                 None,
             )
 
     def printer(self, jobid, workflow, tool, pipe_bam_jobid):
         """
-        recieves the jobids that created vcf and bam and the decision support tool to be used
-        also recieves the named tuple containing the workflow details (output names for each
-        relevant decision support tool input).
+        recieves the jobids that created vcf and bam and the decision support
+        tool to be used
+        also recieves the named tuple containing the workflow details (output
+        names for each relevant decision support tool input).
         Each tool and each workflow requires a slightly different input.
-        prints to stdout the required input for the decision support tool app in form
-        decision_suport_tool_input=jobid.outputname
+        prints to stdout the required input for the decision support tool app
+        in form decision_suport_tool_input=jobid.outputname
         """
         if tool == "congenica":
             if workflow.name == "mokawes":
                 print(
-                    " %s%s:%s%s%s:%s"
-                    % (
-                        config.congenica_vcf_inputname,
-                        jobid,
-                        workflow.vcf_out,
-                        config.congenica_bam_inputname,
-                        jobid,
-                        workflow.bam_out,
-                    )
+                    f" {config.APP_INPUTS['congenica_upload']['vcf']}"
+                    f"{jobid}:{workflow.vcf_out}"
+                    f"{config.APP_INPUTS['congenica_upload']['bam']}"
+                    f"{jobid}:{workflow.bam_out}"
                 )
             elif workflow.name == "mokapipe":
                 print(
-                    " %s%s:%s%s%s:%s"
-                    % (
-                        config.congenica_vcf_inputname,
-                        jobid,
-                        workflow.vcf_out,
-                        config.congenica_bam_inputname,
-                        pipe_bam_jobid,
-                        workflow.bam_out,
-                    )
+                    f" {config.APP_INPUTS['congenica_upload']['vcf']}"
+                    f"{jobid}:{workflow.vcf_out}"
+                    f"{config.APP_INPUTS['congenica_upload']['bam']}"
+                    f"{pipe_bam_jobid}:{workflow.bam_out}"
                 )
 
 
@@ -200,21 +206,23 @@ if __name__ == "__main__":
                 "describe",
                 args.analysis_id,
                 "--auth",
-                config.nexus_apikey,
+                config.DNANEXUS_APIkey,
                 "--json",
             ]
         )
     )
 
-    # Get settings for analysis panel (used to determine which workflow is running)
+    # Get settings for analysis panel (to determine which workflow is running)
     pannumber = re.search(r"Pan\d+", ajson["name"]).group()
-    # Using function imported from upload_and_setoff_workflow.py build the panel dict to be used to
-    # determine the workflow etc
+    # Using function imported from upload_and_setoff_workflow.py build the
+    # panel dict to be used to determine the workflow etc
     paneldict = RunfolderProcessor.set_panel_dictionary()
     pansettings = paneldict[pannumber]
 
     # Print decision support tool inputs
     tooler = DecisionTooler()
     workflow = tooler.get_workflow(pansettings)
-    jobid, bamjobid = tooler.get_job_id(args.analysis_id, args.project, workflow)
+    jobid, bamjobid = tooler.get_job_id(
+        args.analysis_id, args.project, workflow
+    )
     tooler.printer(jobid, workflow, args.tool, pipe_bam_jobid=bamjobid)
