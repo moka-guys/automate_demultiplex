@@ -1,5 +1,8 @@
 # coding=utf-8
 """ demultiplex.py pytest unit tests
+
+N.B. test_bcl2fastq_installed_pass() will only pass when the testing is being
+carried out on the workstation
 """
 import os
 import shutil
@@ -20,10 +23,11 @@ import ad_config as config  # Import config file
 
 # Path of directory containing test files
 testfiles_dir = os.path.abspath("test/demultiplex_test_files/")
-# Location of the bcl2fastq executable within this repository for testing purposes
 # Temporary directory to copy test files into and to contain outputs
 temp_dir = os.path.join(testfiles_dir, "temp/")
 temp_runfolderdir = os.path.join(temp_dir, "test_runfolders/")
+
+samplesheet_path = os.path.join(temp_runfolderdir, "samplesheets", "%s_SampleSheet.csv")
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -33,9 +37,9 @@ def run_before_and_after_tests(monkeypatch):
     Removes temporary directory (containing temporary test files and created flag files)
     after testing complete
     """
-    monkeypatch.setattr(config, "bcl2fastq_path", os.path.join("/bin/true"))
-    monkeypatch.setattr(config, "runfolders", temp_runfolderdir)
-    monkeypatch.setattr(config, "demultiplex_logpath", temp_dir)
+    monkeypatch.setattr(config, "RUNFOLDERS", temp_runfolderdir)
+    monkeypatch.setattr(config, "DEMULTIPLEX_LOGPATH", temp_dir)
+    monkeypatch.setattr(config, "SAMPLESHEET_PATH", samplesheet_path)
 
     shutil.copytree(testfiles_dir, temp_dir)
     yield  # Where the testing happens
@@ -51,46 +55,105 @@ class TestGetRunfolders(object):
     to the absence of any sequencing data in the test cases. This should be tested using real data
     on the workstation."""
 
-    @pytest.fixture(scope="function", autouse=True)
-    def gr_mock(self):
-        """Create GetRunfolders object to use in tests
-        Fixture is called automatically for all tests
-        Monkeypatch paths from config that will not exist on the local machine so would cause
-        tests to fail
-        We want this to re-run for each test in case any patching has been performed
-        within individual tests"""
-        return demultiplex.GetRunfolders()
-
     @pytest.fixture(scope="function")
     def processed_runfolders(self):
-        """String of 4 processed runfolders"""
-        return [(4, ["these", "are", "processed", "runfolders"])]
+        """String of 4 dummy processed runfolders"""
+        return (['these", "are", "processed", "runfolders'])
+    
+    @pytest.fixture(scope="function")
+    def no_processed_runfolders(self):
+        """Empty list, i.e. no runfolders were processed"""
+        return []
+    
+    @pytest.fixture(scope="function")
+    def runfolders_toproc(self):
+        """List of runfolders requiring processing"""
+        return (["999999_M02631_0000_00000TEST4", "999999_A01229_0000_00000TEST9",
+                 "999999_A01229_0000_0000TEST11"])
 
-    # # NEED TO RETHINK THIS AND ADD A PASS AND FAIL CASE - SHOULD BE POSSIBLE NOW WITH MONKEYPATCH
-    # def test_rundemultiplexrunfolders(self, gr_mock):
-    #     """Pass set of dummy runfolders to the test and assert that the expected number are
-    #     processed. processed_runfolders should be empty as the script tries to run bcl2fastq so
-    #     inevitably fails for all runfolders due to absence of sequencing data in test cases"""
-    #     assert not gr_mock.run_demultiplexrunfolders()
+    @pytest.fixture(scope="function")
+    def runfolders_nottoproc(self):
+        """List of runfolders that do not require processing"""
+        return (["999999_A01229_0000_00000TEST1", "999999_A01229_0000_00000TEST2",
+                 "999999_A01229_0000_00000TEST3", "999999_A01229_0000_00000TEST5",
+                 "999999_A01229_0000_00000TEST6", "999999_A01229_0000_00000TEST7",
+                 "999999_A01229_0000_00000TEST8", "999999_A01229_0000_0000TEST10"])
 
-    def test_bcl2fastq_installed_pass(self, gr_mock):  # DONE
-        """Check bcl2fastq_install function is working using functional test bcl2fastq executable"""
-        assert gr_mock.bcl2fastq_installed()
+    def test_demultiplex_runfolders_toproc(self, monkeypatch, runfolders_toproc):
+        """Pass set of runfolders expected to be successfully processed by the script.
+        Assert that the expected number are processed"""
+        monkeypatch.setattr(config, "BCL2FASTQ", os.path.join("/bin/true"))
+        gr_obj = demultiplex.GetRunfolders()
+        monkeypatch.setattr(gr_obj, "runfolder_names", runfolders_toproc)
+        assert all(runfolders in runfolders_toproc
+                   for runfolders in gr_obj.demultiplex_runfolders())
 
-    def test_bcl2fastq_installed_fail(self, monkeypatch, gr_mock):  # DONE
+    def test_demultiplex_runfolders_nottoproc(self, monkeypatch, runfolders_nottoproc):
+        """Pass set of runfolders that shouldnt be processed for various reasons.
+        Assert that none have been processed"""
+        gr_obj = demultiplex.GetRunfolders()
+        monkeypatch.setattr(gr_obj, "runfolder_names", runfolders_nottoproc)
+        assert not gr_obj.demultiplex_runfolders()
+
+    def test_bcl2fastq_installed_pass(self):
+        """Check bcl2fastq_install function is working using blc2fastq path. This is expected
+        to fail if tests are being carried out on a machine other than the workstation"""
+        assert demultiplex.GetRunfolders().bcl2fastq_installed()
+
+    def test_bcl2fastq_installed_dummy_pass(self, monkeypatch):
+        """Check bcl2fastq_install function is working using /bin/true instead of bcl2fastq
+        executable (in case bcl2fastq is not functional on the machine in use)"""
+        monkeypatch.setattr(config, "BCL2FASTQ", os.path.join("/bin/true"))
+        assert demultiplex.GetRunfolders().bcl2fastq_installed()
+
+    def test_bcl2fastq_installed_fail(self, monkeypatch):
         """Provide incorrect bcl2fastq path"""
-        monkeypatch.setattr(gr_mock, "bcl2fastq_path", "/path/to/nonexistent/bcl2fastq")
-        assert not gr_mock.bcl2fastq_installed()
+        monkeypatch.setattr(config, "BCL2FASTQ", "/path/to/nonexistent/bcl2fastq")
+        assert not demultiplex.GetRunfolders().bcl2fastq_installed()
 
-    def test_rename_demultiplex_logfile(self, processed_runfolders, gr_mock):  # DONE
+    def test_get_new_logfilename_processed(self, processed_runfolders):
+        """ Test function returns logfile name containing processed runfolders
+        """
+        gr_obj = demultiplex.GetRunfolders()
+        assert all(name in gr_obj.get_new_logfilename(processed_runfolders)
+                   for name in processed_runfolders)
+    
+    def test_get_new_logfilename_noneprocessed(self, no_processed_runfolders):
+        """ Test function returns None logfile name when no runfolders processed
+        """
+        gr_obj = demultiplex.GetRunfolders()
+        assert not gr_obj.get_new_logfilename(no_processed_runfolders)
+
+    def test_rename_demultiplex_logfile_renamed(self):
         """Tests that script logfile is renamed if there are processed runfolders
         Create the file ready for function to rename"""
-        for num_runfolders, runfolders in processed_runfolders:
-            open(
-                gr_mock.demultiplex_logfile, "w+", encoding="utf-8"
-            ).close()  # Create logfile
-            assert gr_mock.rename_demultiplex_logfile(runfolders, num_runfolders)
-            assert all(name in gr_mock.demultiplex_logfile for name in runfolders)
+        gr_obj = demultiplex.GetRunfolders()
+        old_logfile_name = gr_obj.log_config['demultiplex']
+        new_logfile_name = f"{old_logfile_name}_addedtext"
+        open(gr_obj.log_config['demultiplex'], "w", encoding="utf-8").close()  # Create logfile
+        assert gr_obj.rename_demultiplex_logfile(new_logfile_name)
+        assert os.path.exists(new_logfile_name)
+
+    def test_rename_demultiplex_logfile_notrenamed(self):
+        """Test exception raised if logfile cannot be renamed, by using a nonexistent logfile
+        """
+        gr_obj = demultiplex.GetRunfolders()
+        old_logfile_name = gr_obj.log_config['demultiplex']
+        new_logfile_name = f"{old_logfile_name}_addedtext"
+        assert not gr_obj.rename_demultiplex_logfile(new_logfile_name)
+        assert not os.path.exists(new_logfile_name)
+        with open(gr_obj.log_config['demultiplex'], "r", encoding="utf-8") as logfile:
+            assert "Demultiplex logfile rename failed" in logfile.read()
+
+    def test_get_new_logger_pass(self):
+        """ Test function successfully creates new logger
+        """
+        gr_obj = demultiplex.GetRunfolders()
+        old_logfile_name = gr_obj.log_config['demultiplex']
+        new_logfile_name = f"{old_logfile_name}_addedtext"
+        gr_obj.get_new_logger(new_logfile_name)
+        assert gr_obj.log_config['demultiplex'] == new_logfile_name
+        assert gr_obj.loggers.demultiplex.filepath == new_logfile_name
 
 
 class TestDemultiplexRunfolder(object):
@@ -117,18 +180,12 @@ class TestDemultiplexRunfolder(object):
     @pytest.fixture(scope="function")
     def icheck_required(self):
         """Runfolder that would require an integrity check"""
-        return "999999_NB551068_0009_AH3YERAFX3"
+        return ['999999_NB551068_0009_AH3YERAFX3']
 
     @pytest.fixture(scope="function")
     def icheck_notrequired(self):
         """Runfolder that would not require an integrity check"""
-        return "999999_M02353_0641_000000000-TESTS"
-
-    @pytest.fixture(scope="function")
-    def temp_md5checksum_fail(self):
-        """Mock checksum file. This is a file within the repository that contains the md5
-        checksum fail string"""
-        return os.path.join(temp_dir, "md5checksum_fail.txt")
+        return ['999999_M02353_0641_000000000-TESTS']
 
     @pytest.fixture(scope="function")
     def internal_chars_invalid(self):
@@ -171,6 +228,13 @@ class TestDemultiplexRunfolder(object):
         )
 
     @pytest.fixture(scope="function")
+    def demultiplexing_required(self):
+        """Return runfolders where demultiplexing is required
+        Both funfolers - sequencing complete, demultipelxing has not yet started
+        """
+        return (["999999_M02631_0000_00000TEST4", "999999_A01229_0000_00000TEST7"])
+
+    @pytest.fixture(scope="function")
     def demultiplexing_notrequired(self):
         """This test covers all runfolder cases where demultiplexing is not required
         runfolerpath, folder_name, samplesheet_path
@@ -180,25 +244,28 @@ class TestDemultiplexRunfolder(object):
         999999_A01229_0000_00000TEST5: Checksum file absent
         999999_A01229_0000_00000TEST6: Checksums do not match
         999999_A01229_0000_0000TEST10: Samplesheet missing
+        999999_A01229_0000_0000TEST11: TSO500 run
         """
-        return [
+        return ([
             "999999_A01229_0000_00000TEST1",
             "999999_A01229_0000_00000TEST2",
             "999999_A01229_0000_00000TEST3",
             "999999_A01229_0000_00000TEST5",
             "999999_A01229_0000_00000TEST6",
+            "999999_A01229_0000_00000TEST8",
             "999999_A01229_0000_0000TEST10",
-        ]
+            "999999_A01229_0000_0000TEST11",
+        ])
 
     @pytest.fixture(scope="function")
     def rf_with_bcl2fastqlog(self):
         """Return runfolders with bcl2fastqlog present"""
-        return ["999999_A01229_0000_00000TEST1"]
+        return ['999999_A01229_0000_00000TEST1']
 
     @pytest.fixture(scope="function")
     def rf_no_bcl2fastqlog(self):
         """Return reunfolders with absetnt bcl2fastqlog"""
-        return [
+        return ([
             "999999_A01229_0000_00000TEST2",
             "999999_A01229_0000_00000TEST3",
             "999999_M02631_0000_00000TEST4",
@@ -208,19 +275,20 @@ class TestDemultiplexRunfolder(object):
             "999999_A01229_0000_00000TEST8",
             "999999_A01229_0000_00000TEST9",
             "999999_A01229_0000_0000TEST10",
-        ]
+        ])
 
     @pytest.fixture(scope="function")
     def rtacomplete_present(self):
         """Return runfolders containing rtacomplete file"""
-        return [
+        return ([
             "999999_A01229_0000_00000TEST3",
             "999999_M02631_0000_00000TEST4",
             "999999_A01229_0000_00000TEST5",
             "999999_A01229_0000_00000TEST6",
             "999999_A01229_0000_00000TEST7",
             "999999_A01229_0000_0000TEST10",
-        ]
+            "999999_A01229_0000_0000TEST11"
+        ])
 
     @pytest.fixture(scope="function")
     def rtacomplete_absent(self):
@@ -228,27 +296,27 @@ class TestDemultiplexRunfolder(object):
         return ["999999_A01229_0000_00000TEST1", "999999_A01229_0000_00000TEST2"]
 
     @pytest.fixture(scope="function")
-    def checksumfile_present_noprevfail(self):
-        """Return runfolders containing checksumfile containing a previous checksum check message
-        and a pass message"""
-        return "999999_A01229_0000_0000TEST10"
+    def checksumfile_present_pass_checked(self):
+        """Return runfolders containing checksumfile containing matching checksums,
+        a pass message, and a previous checksum check message"""
+        return ['999999_A01229_0000_0000TEST10']
 
     @pytest.fixture(scope="function")
     def checksumfile_present_fail_notchecked(self):
-        """Return runfolders containing checksumfile containing no previous checksum check message
-        and a failure message"""
-        return "999999_A01229_0000_00000TEST6"
+        """Return runfolders containing checksumfile containing non-matching checksums,
+        a failure message and no previous checksum check message"""
+        return ['999999_A01229_0000_00000TEST6']
 
     @pytest.fixture(scope="function")
     def checksumfile_present_pass_notchecked(self):
-        """Return runfolders containing checksumfile containing no previous checksum check message
-        and a checksum pass message"""
-        return "999999_A01229_0000_00000TEST7"
+        """Return runfolders containing checksumfile containing matching checksums,
+        a checksum pass message, and no previous checksum check message"""
+        return ["999999_A01229_0000_00000TEST7", "999999_A01229_0000_0000TEST11"]
 
     @pytest.fixture(scope="function")
     def checksumfile_absent(self):
         """Return runfolders with no checksum file"""
-        return [
+        return ([
             "999999_A01229_0000_00000TEST1",
             "999999_A01229_0000_00000TEST2",
             "999999_A01229_0000_00000TEST3",
@@ -256,88 +324,47 @@ class TestDemultiplexRunfolder(object):
             "999999_A01229_0000_00000TEST5",
             "999999_A01229_0000_00000TEST8",
             "999999_A01229_0000_00000TEST9",
-        ]
-
-    @pytest.fixture(scope="function")
-    def demultiplexing_required(self):
-        """Return runfolders where demultiplexing is required
-        Both funfolers - sequencing complete, demultipelxing has not yet started
-        """
-        return ["999999_M02631_0000_00000TEST4", "999999_A01229_0000_00000TEST7"]
+        ])
 
     @pytest.fixture(scope="function")
     def tso_runfolder(self):
         """This test covers all runfolder cases where the runfolder is from a tso run
         999999_A01229_0000_00000TEST8: Demultiplexing not yet complete (no demultiplex logfile)
         """
-        return ["999999_A01229_0000_00000TEST8"]
+        return ["999999_A01229_0000_00000TEST8", "999999_A01229_0000_0000TEST11"]
 
     @pytest.fixture(scope="function")
     def non_tso_runfolder(self):
-        """This test case contains runfolders that are not a tso run"""
-        return ["999999_A01229_0000_00000TEST9"]
+        """This test case contains runfolders requiring demultiplexing that are not a tso run"""
+        return ["999999_A01229_0000_00000TEST9", "999999_A01229_0000_00000TEST7"]
 
-    # TODO DONE BUT NEED TO CHECK THIS COVERS ALL CASES
-    @pytest.mark.parametrize(
-        "notrequired",
-        [
-            (pytest.lazy_fixture("demultiplexing_notrequired")),
-            (pytest.lazy_fixture("tso_runfolder")),
-        ],
-    )
-    def test_demultiplexing_required_false(self, notrequired):
-        """Test demultiplexing_required() does not return True for cases where demultiplexing is
-        not required"""
-        for folder_name in notrequired:
-            print(demultiplex.DemultiplexRunfolder(folder_name).loggers)
-            assert not demultiplex.DemultiplexRunfolder(
-                folder_name
-            ).demultiplexing_required()
+    def test_setoff_workflow_success(self, monkeypatch, demultiplexing_required):
+        """Test that function sets off run processing correctly for runfolders that require it"""
+        monkeypatch.setattr(config, "BCL2FASTQ", os.path.join("/bin/true"))
+        for folder in demultiplexing_required:
+            assert demultiplex.DemultiplexRunfolder(folder).setoff_workflow()
 
-    # TODO DONE BUT NEED TO CHECK THIS COVERS ALL CASES
+    def test_setoff_workflow_fail(self, demultiplexing_notrequired):
+        """Test that function correctly does not process runfolderst that do not need processing"""
+        for folder in demultiplexing_notrequired:
+            assert not demultiplex.DemultiplexRunfolder(folder).setoff_workflow()
+
     def test_demultiplexing_required_true(self, demultiplexing_required):
-        """Test demultiplexing_required() returns True for cases where demultiplexing is required"""
+        """Test demultiplexing_required() returns True when demultiplexing required"""
         for folder_name in demultiplexing_required:
             assert demultiplex.DemultiplexRunfolder(
                 folder_name
             ).demultiplexing_required()
 
-    # TODO write this test
-    # def test_demultiplexing_required_false(self, , monkeypatch):
+    def test_demultiplexing_required_false(self, demultiplexing_notrequired):
+        """Test demultiplexing_required() returns none when demultiplexing not required"""
+        for folder_name in demultiplexing_notrequired:
+            print(demultiplex.DemultiplexRunfolder(folder_name).loggers)
+            assert not demultiplex.DemultiplexRunfolder(
+                folder_name
+            ).demultiplexing_required()
 
-    def test_run_demultiplexing_success(self, non_tso_runfolder):
-        """Test function correctly identifies tso runfolder and so does not
-        call demultiplexing functions"""
-        for folder_name in non_tso_runfolder:
-            dr_obj = demultiplex.DemultiplexRunfolder(folder_name)
-            # Command to run in place of bcl2fastq command that appends processing complete
-            # string to bcl2fastq logfile
-            dr_obj.bcl2fastq_cmd = f'echo "Processing completed with 0 errors and 0 " \
-                                   "warnings" >> {dr_obj.rf_obj.bcl2fastqlog_path}'
-
-            assert dr_obj.run_demultiplexing() and dr_obj.run_processed
-
-    def test_valid_samplesheet_pass(self, monkeypatch, valid_samplesheets):  # DONE
-        """Test function correctly returns valid flag, using a set of representative
-        samplesheets"""
-        for path in valid_samplesheets:
-            dr_obj = demultiplex.DemultiplexRunfolder("")
-            monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", path)
-            valid, _ = dr_obj.valid_samplesheet()
-            assert valid
-
-    def test_valid_samplesheet_fail(
-        self, monkeypatch, ss_with_disallowed_sserrs
-    ):  # DONE
-        """Test function fails to return valid flag as expected, using a set of samplesheets
-        covering all failure cases"""
-        for path in ss_with_disallowed_sserrs:
-            dr_obj = demultiplex.DemultiplexRunfolder("")
-            monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", path)
-            valid, _ = dr_obj.valid_samplesheet()
-            assert not valid
-
-    def test_bcl2fastqlog_absent_false(self, rf_with_bcl2fastqlog):  # DONE
+    def test_bcl2fastqlog_absent_false(self, rf_with_bcl2fastqlog):
         """Test function correctly identifies presence of bcl2fastqlogfile using an empty file"""
         for runfolder in rf_with_bcl2fastqlog:
             assert not demultiplex.DemultiplexRunfolder(runfolder).bcl2fastqlog_absent()
@@ -348,6 +375,24 @@ class TestDemultiplexRunfolder(object):
         for runfolder in rf_no_bcl2fastqlog:
             dr_obj = demultiplex.DemultiplexRunfolder(runfolder)
             assert dr_obj.bcl2fastqlog_absent()
+
+    def test_valid_samplesheet_pass(self, monkeypatch, valid_samplesheets):
+        """Test function correctly returns valid flag, using a set of representative
+        samplesheets"""
+        for path in valid_samplesheets:
+            dr_obj = demultiplex.DemultiplexRunfolder("")
+            monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", path)
+            valid, _ = dr_obj.valid_samplesheet()
+            assert valid
+
+    def test_valid_samplesheet_fail(self, monkeypatch, ss_with_disallowed_sserrs):
+        """Test function fails to return valid flag as expected, using a set of samplesheets
+        covering all failure cases"""
+        for path in ss_with_disallowed_sserrs:
+            dr_obj = demultiplex.DemultiplexRunfolder("")
+            monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", path)
+            valid, _ = dr_obj.valid_samplesheet()
+            assert not valid
 
     def test_sequencing_complete_pass(self, rtacomplete_present):
         """Test sequencing_complete() can identify presence of rtacomplete file"""
@@ -393,28 +438,27 @@ class TestDemultiplexRunfolder(object):
     )
     def test_no_prior_ic_pass(self, no_prior_ic):
         """Test function correctly identifies there has been a prior integrity check"""
-        assert demultiplex.DemultiplexRunfolder(no_prior_ic).no_prior_ic()
+        for runfolder in no_prior_ic:
+            assert demultiplex.DemultiplexRunfolder(runfolder).no_prior_ic()
 
-    def test_no_prior_ic_fail(self, checksumfile_present_noprevfail):
-        """Test function correctly identifies there has been a previously failed
-        integrity check"""
-        assert not demultiplex.DemultiplexRunfolder(
-            checksumfile_present_noprevfail
-        ).no_prior_ic()
+    def test_no_prior_ic_fail(self, checksumfile_present_pass_checked):
+        """Test function correctly identifies checksums have been assessed by
+        the script previously"""
+        for runfolder in checksumfile_present_pass_checked:
+            assert not demultiplex.DemultiplexRunfolder(runfolder).no_prior_ic()
 
     @pytest.mark.parametrize(
         "checksumfile_present",
         [
             (pytest.lazy_fixture("checksumfile_present_fail_notchecked")),
             (pytest.lazy_fixture("checksumfile_present_pass_notchecked")),
+            (pytest.lazy_fixture("checksumfile_present_pass_checked")),
         ],
     )
     def test_checksumfile_present_pass(self, checksumfile_present):
         """Test function correctly detects presence of checksum file"""
-        print(checksumfile_present)
-        assert demultiplex.DemultiplexRunfolder(
-            checksumfile_present
-        ).checksumfile_present()
+        for runfolder in checksumfile_present:
+            assert demultiplex.DemultiplexRunfolder(runfolder).checksumfile_present()
 
     def test_checksumfile_present_fail(self, checksumfile_absent):
         """Test function correctly detects absence of checksum file"""
@@ -423,25 +467,42 @@ class TestDemultiplexRunfolder(object):
                 runfolder
             ).checksumfile_present()
 
-    # TODO adapt the tests below to both of these - the previous test covered both
-    # def checksum_complete_msg_absent()
-    # def checksums_match()
-    # passes_integrity_check
-    # def test_integrity_check_success_true(self, dr_mock):
-    #     """Test function correctly identifies checksums match.
-    #     Copies file as the function adds a line of text to the file.
-    #     """
-    #     assert dr_mock.passes_integrity_check()
-    # passes_integrity_check
-    # def test_integrity_check_success_false(self, monkeypatch, dr_mock, temp_md5checksum_fail):
-    #     """Test function correctly identifes checksums do not match.
-    #     Copies file as the function adds a line of text to the file."""
-    #     monkeypatch.setattr(dr_mock, "checksumfile_path", temp_md5checksum_fail)
-    #     assert not dr_mock.passes_integrity_check()
+    @pytest.mark.parametrize(
+        "checksum_msg_absent",
+        [
+            (pytest.lazy_fixture("checksumfile_present_pass_notchecked")),
+            (pytest.lazy_fixture("checksumfile_present_fail_notchecked")),
+        ],
+    )
+    def test_checksum_complete_msg_absent_pass(self, checksum_msg_absent):
+        """Test function correctly identifies presence of checksum complete
+        string in the checksum file"""
+        for runfolder in checksum_msg_absent:
+            assert demultiplex.DemultiplexRunfolder(runfolder).checksum_complete_msg_absent()
 
-    # TODO write tests for this
-    # def test_prevent_future_ics_pass():
-    # def test_prevent_future_ics_fail():
+    def test_checksum_complete_msg_absent_fail(self, checksumfile_present_pass_checked):
+        """Test function correctly identifies absence of the checksum complete
+        string in the checksum file"""
+        for runfolder in checksumfile_present_pass_checked:
+            assert not demultiplex.DemultiplexRunfolder(runfolder).checksum_complete_msg_absent()
+
+    def test_checksums_match_pass(self, checksumfile_present_pass_notchecked):
+        """Test function correctly identifies presence of checksum match string in checksum file
+        Also test function adds line to denote integrity check has been assessed"""
+        for runfolder in checksumfile_present_pass_notchecked:
+            dr_obj = demultiplex.DemultiplexRunfolder(runfolder)
+            assert demultiplex.DemultiplexRunfolder(runfolder).checksums_match()
+            with open(dr_obj.rf_obj.checksumfile_path, "r", encoding="utf-8") as checksumfile:
+                assert config.CHECKSUM_COMPLETE_MSG in checksumfile.read()
+
+    def test_checksums_match_fail(self, checksumfile_present_pass_notchecked):
+        """Test function correctly identifies absence of checksum match string in checksum file
+        Also test function adds line to denote integrity check has been assessed"""
+        for runfolder in checksumfile_present_pass_notchecked:
+            dr_obj = demultiplex.DemultiplexRunfolder(runfolder)
+            assert dr_obj.checksums_match()
+            with open(dr_obj.rf_obj.checksumfile_path, "r", encoding="utf-8") as checksumfile:
+                assert config.CHECKSUM_COMPLETE_MSG in checksumfile.read()
 
     def test_create_bcl2fastqlog_success(self):
         """Test function can successfully create a bcl2fastq log file"""
@@ -449,13 +510,43 @@ class TestDemultiplexRunfolder(object):
         assert dr_obj.create_bcl2fastqlog()
         assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_path)
 
+    def test_create_bcl2fastqlog_fail(self, monkeypatch):
+        """Test function fails when expected using dummy bcl2fastq log path with nonexistent dirs"""
+        dr_obj = demultiplex.DemultiplexRunfolder("")
+        monkeypatch.setattr(dr_obj.rf_obj, "bcl2fastqlog_path", "/path/to/nonexistent/log.log")
+        assert not dr_obj.create_bcl2fastqlog()
+        assert not os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_path)
+
     def test_add_bcl2fastqlog_tso_msg_success(self):
         """Test function can correctly add tso message to the bcl2fastq2 logfile"""
         dr_obj = demultiplex.DemultiplexRunfolder("")
         assert dr_obj.add_bcl2fastqlog_tso_msg()
         assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_path)
         with open(dr_obj.rf_obj.bcl2fastqlog_path, encoding="utf-8") as file:
-            assert config.demultiplexing_logfile_tso500_msg in file.read()
+            assert config.DEMULTIPLEXLOG_TSO500MSG in file.read()
+
+    def test_run_demultiplexing_success(self, non_tso_runfolder):
+        """Test demultiplexing is performed successfully. N.B. this does not test the functioning
+        of the bcl2fastq executable, which must be tested separately as part of the final manual
+        testing
+        """
+        for folder_name in non_tso_runfolder:
+            dr_obj = demultiplex.DemultiplexRunfolder(folder_name)
+            # Command to run in place of bcl2fastq command that appends processing complete
+            # string to bcl2fastq logfile
+            dr_obj.bcl2fastq_cmd = '/bin/true'
+            assert dr_obj.run_demultiplexing() and dr_obj.run_processed
+
+    def test_run_demultiplexing_fail(self, non_tso_runfolder):
+        """Test function fails when providing "/bin/false" as command
+        """
+        for folder_name in non_tso_runfolder:
+            dr_obj = demultiplex.DemultiplexRunfolder(folder_name)
+            # Command to run in place of bcl2fastq command that appends processing complete
+            # string to bcl2fastq logfile
+            dr_obj.bcl2fastq_cmd = '/bin/false'
+            assert not dr_obj.run_demultiplexing() and not dr_obj.run_processed
+
 
     def test_run_subprocess_success(self):
         """Test function successfully executes subprocess"""
