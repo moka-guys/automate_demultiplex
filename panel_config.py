@@ -134,25 +134,32 @@ PANEL_DICT = {
         "congenica_IR_template": None,
         "polyedge": False,
     },
-    "Pan4396": {  # ArcherDx (Viapath)
-        "panel_name": "archerdx",
-        "pipeline": "archerdx",
-        "capture_type": "Hybridisation",
-        "clinical_coverage_depth": False,
-        "multiqc_coverage_level": None,  # TODO check if this is correct
-        "congenica_project": False,
-        "congenica_credentials": False,
-        "FH": False,
-        "drylab_dnanexus_id": None,
-        "masked_reference": False,
-        "sambamba_bedfile": None,
-        "variant_calling_bedfile": None,
-        "RPKM_bedfile_pan_number": None,
-        "peddy": False,
-        "hsmetrics_bedfile": None,
-        "congenica_IR_template": "priority",
-        "polyedge": False,
-    },
+    **dict.fromkeys(
+        [
+            "Pan4396",  # ArcherDx (Synnovis)
+            "Pan5113",  # ArcherDx (BSPS)
+            "Pan5115",  # ArcherDx (Control)
+        ],
+        {
+            "panel_name": "archerdx",
+            "pipeline": "archerdx",
+            "capture_type": "Hybridisation",
+            "clinical_coverage_depth": False,
+            "multiqc_coverage_level": None,  # TODO check if this is correct
+            "congenica_project": False,
+            "congenica_credentials": False,
+            "FH": False,
+            "drylab_dnanexus_id": None,
+            "masked_reference": False,
+            "sambamba_bedfile": None,
+            "variant_calling_bedfile": None,
+            "RPKM_bedfile_pan_number": None,
+            "peddy": False,
+            "hsmetrics_bedfile": None,
+            "congenica_IR_template": None,
+            "polyedge": False,
+        },
+    ),
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
         # NOTE - TSO500 output parser settings are taken from Pan4969
         "panel_name": "tso500_low_throughput",
@@ -172,7 +179,7 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "hsmetrics_bedfile": None,
-        "congenica_IR_template": "priority",
+        "congenica_IR_template": None,
         "polyedge": False,
     },
     "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
@@ -194,7 +201,7 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "hsmetrics_bedfile": None,
-        "congenica_IR_template": "priority",
+        "congenica_IR_template": None,
         "polyedge": False,
     },
     "Pan5112": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
@@ -216,7 +223,7 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "hsmetrics_bedfile": None,
-        "congenica_IR_template": "priority",
+        "congenica_IR_template": None,
         "polyedge": False,
     },
     "Pan5114": {  # TSO500 High throughput Control. no UTRs. TERT promoter
@@ -238,7 +245,7 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "hsmetrics_bedfile": None,
-        "congenica_IR_template": "priority",
+        "congenica_IR_template": None,
         "polyedge": False,
     },
     "Pan4579": {  # VCP2 M1.1 - Somatic
