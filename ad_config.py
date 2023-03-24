@@ -360,7 +360,7 @@ APP_IDS = {
     "TSO500_OP": f"{TOOLS_PROJECT}:applet-GP0YXB00jy1kYKYp33yJZJ5B",
     "congenica_SFTP": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",
     "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",
-    "multiqc": f"{TOOLS_PROJECT}:applet-GKGjkz00jy1zKfXJ5qfpfpF8",
+    "multiqc": f"{TOOLS_PROJECT}:applet-GPgbyk00jy1kpgvggbp12Vfg",
     "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",
     "sambamba": f"{TOOLS_PROJECT}:applet-G6vyyf00jy1kPkX9PJ1YkxB1",
     "fastqc": f"{TOOLS_PROJECT}:applet-FBPFfkj0jy1Q114YGQ0yQX8Y",
@@ -432,7 +432,7 @@ APP_PATHS = {
     "fastqc": "Apps/fastqc_v1.3",
     "peddy": "Apps/peddy_v1.5",
     "rpkm": "Apps/RPKM_using_conifer_v1.6",
-    "multiqc": "Apps/multiqc_v1.16.0",
+    "multiqc": "Apps/multiqc_v1.17.0",
     "upload_multiqc": "Apps/upload_multiqc_v1.4.0",
     "congenica": "Apps/congenica_upload_v1.3.2",
 }
