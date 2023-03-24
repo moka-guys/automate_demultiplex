@@ -356,7 +356,7 @@ DNANEXUS_USERS = {  # User access level
 TOOLS_PROJECT = "project-ByfFPz00jy1fk6PjpZ95F27J"  # 001_ToolsReferenceData
 
 APP_IDS = {
-    "TSO500": f"{TOOLS_PROJECT}:applet-GKv42080jy1bfp261fpP1Gfy",
+    "TSO500": f"{TOOLS_PROJECT}:applet-GPgkz0j0jy1Yf4XxkXjVgKfv",
     "TSO500_OP": f"{TOOLS_PROJECT}:applet-GP0YXB00jy1kYKYp33yJZJ5B",
     "congenica_SFTP": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",
     "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",
@@ -446,7 +446,7 @@ WORKFLOW_PATHS = {
 }
 
 # Paths / IDs for workflows in 001_Tools
-TSO500_APP_NAME = "TSO500_v1.5.0"  # Input for APP_IDS['TSO500_OP']
+TSO500_APP_NAME = "TSO500_v1.5.1"  # Input for APP_IDS['TSO500_OP']
 
 
 STAGE_IDS = {
@@ -749,7 +749,7 @@ WORKFLOW_IDS = {
     "archerdx": 4562,
     "mokasnp": 5091,
     "mokacan": 4728,
-    "tso500": 5227,
+    "tso500": 5234,
 }
 
 # Moka WES test status
