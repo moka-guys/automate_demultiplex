@@ -54,7 +54,10 @@ else:
         "success": "demultiplextest_success",
         "ss_warning": "testsamplesheet_warning",
     }
-    EMAIL_HEADER = "AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. PLEASE IGNORE THIS EMAIL\n\n"
+    EMAIL_HEADER = (
+        "AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. "
+        "PLEASE IGNORE THIS EMAIL\n\n"
+    )
 
 
 DIRS = {
