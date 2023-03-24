@@ -315,15 +315,11 @@ class RunfolderProcessor(object):
                 )
                 self.send_opms_queries()
                 # if not TSO500 will return None
-                if not tso500_sample_list:
+                if not TSO500_sample_list:
                     self.check_backuprunfolder_errors(
                         self.upload_rest_of_runfolder()
                     )
-
                 self.look_for_upload_errors(self.upload_log_files())
-                if tso500_sample_list:
-                    self.remove_tso500_tar()
-
                 # return true to denote that a runfolder was processed
                 return True
         else:
@@ -1695,10 +1691,14 @@ class RunfolderProcessor(object):
         # underscores) are present in the fastq name
         # if so, set skip = false
         for ref_sample_id in config.REF_SAMPLE_IDS:
-            if f"_{ref_sample_id}_" in fastq:
-                vcf_eval_skip_string = config.STAGE_INPUTS["mokapipe"][
-                    "happy_skip"
-                ] % ("false")
+            if "_%s_" % (id) in fastq:
+                vcf_eval_skip_string = config.mokapipe_happy_skip % ("false")
+
+        # Set parameters specific to FH_PRS app
+        FH_prs_bedfile_cmd = (
+            config.mokapipe_fhPRS_bedfile_input + bedfiles["fh_prs"]
+        )
+        FH_prs_cmd_string = ""
 
         # Set parameters specific to FH_PRS app.
         fh_prs_bedfile_cmd = (
@@ -1723,9 +1723,14 @@ class RunfolderProcessor(object):
 
         # If test contains MSH2, we want app to run - set skip to false
         if self.panel_dictionary[pannumber]["MSH2"]:
-            polyedge_cmd_string += config.STAGE_INPUTS["mokapipe"][
-                "polyedge_skip"
-            ]
+            gene = self.panel_dictionary[pannumber]["polyedge"]
+
+            polyedge_cmd_string += config.polyedge_str.format(
+                gene,
+                config.polyedge_inputs[gene]["chrom"],
+                config.polyedge_inputs[gene]["poly_start"],
+                config.polyedge_inputs[gene]["poly_end"],
+            )
 
         masked_reference_command = ""
         if self.panel_dictionary[pannumber]["masked_reference"]:
@@ -1740,6 +1745,9 @@ class RunfolderProcessor(object):
             + config.STAGE_INPUTS["mokapipe"]["fastqc1_reads"]
             + fastqs[0]
             + config.STAGE_INPUTS["mokapipe"]["fastqc2_reads"]
+            + config.STAGE_INPUTS["mokapipe"]["mokapipe_bwa_reads"]
+            + fastqs[0]
+            + config.STAGE_INPUTS["mokapipe"]["mokapipe_bwa_reads2"]
             + fastqs[1]
             + config.STAGE_INPUTS["mokapipe"]["bwa_rg_sample"]
             + fastqs[2]
@@ -2170,6 +2178,7 @@ class RunfolderProcessor(object):
             + str(lowest_coverage_level)
             + self.project
             + self.runfolder_obj.nexus_project_id
+            + " --instance-type mem1_ssd1_v2_x4"
             + self.depends
             + self.token
         )
@@ -2705,7 +2714,6 @@ class RunfolderProcessor(object):
         Input = None
         The rest of the runfolder requires backing up, excluding bcl files.
         BCL files are uploaded for TSO runs only.
-        The rest of the runfolder requires backing up, excluding bcl files.
         A python script which is a wrapper for the upload agent is used.
         This function copies the samplesheet from into the runfolder and then
         builds and executes the backup_runfolder.py command
