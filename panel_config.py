@@ -56,6 +56,7 @@ PANEL_DICT = {
         "peddy": False,
         "hsmetrics_bedfile": None,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan2835": {  # TWIST WES (Viapath)
         "panel_name": "wes",
@@ -74,6 +75,7 @@ PANEL_DICT = {
         "variant_calling_bedfile": None,
         "RPKM_bedfile_pan_number": None,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4940": {  # TWIST WES for EB lab (Viapath)
         "panel_name": "wes_eb",
@@ -92,6 +94,7 @@ PANEL_DICT = {
         "variant_calling_bedfile": None,
         "RPKM_bedfile_pan_number": None,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4081": {  # SWIFT EGFR (Viapath)
         "panel_name": "swift_egfr",
@@ -110,6 +113,7 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "congenica_IR_template": None,
+        "polyedge": False,
     },
     "Pan4082": {  # SWIFT 57G (Viapath)
         "panel_name": "swift_57g",
@@ -128,6 +132,7 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "congenica_IR_template": None,
+        "polyedge": False,
     },
     "Pan4396": {  # ArcherDx (Viapath)
         "panel_name": "archerdx",
@@ -146,6 +151,7 @@ PANEL_DICT = {
         "peddy": False,
         "hsmetrics_bedfile": None,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
         # NOTE - TSO500 output parser settings are taken from Pan4969
@@ -167,6 +173,7 @@ PANEL_DICT = {
         "peddy": False,
         "hsmetrics_bedfile": None,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
         # NOTE - TSO500 output parser settings are taken from Pan4969
@@ -188,6 +195,7 @@ PANEL_DICT = {
         "peddy": False,
         "hsmetrics_bedfile": None,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan5086": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
         # NOTE - TSO500 output parser settings are taken from Pan4969
@@ -209,6 +217,7 @@ PANEL_DICT = {
         "peddy": False,
         "hsmetrics_bedfile": None,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4579": {  # VCP2 M1.1 - Somatic
         "panel_name": "vcp2_somatic",
@@ -227,6 +236,7 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4574": {  # VCP2 M1.2 - Somatic
         "panel_name": "vcp2_somatic",
@@ -245,6 +255,7 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4119": {  # VCP1 R134 - FH small panel (Viapath)
         "panel_name": "vcp1",
@@ -264,7 +275,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
-        "MSH2": True,
+        "polyedge": False,
     },
     "Pan4121": {  # VCP1 R184 - CF (Viapath)
         "panel_name": "vcp1",
@@ -283,6 +294,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4122": {  # VCP1 R25 - FGFR (Viapath)
         "panel_name": "vcp1",
@@ -301,6 +313,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4125": {  # VCP1 R73 - DMD (Viapath)
         "panel_name": "vcp1",
@@ -319,6 +332,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4126": {  # VCP1 R337 - CADASIL (Viapath)
         "panel_name": "vcp1",
@@ -337,6 +351,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4974": {  # VCP1 R112 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -355,6 +370,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4975": {  # VCP1 R115 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -373,6 +389,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4976": {  # VCP1 R116 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -391,6 +408,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4977": {  # VCP1 R117 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -409,6 +427,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4978": {  # VCP1 R118 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -427,6 +446,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4979": {  # VCP1 R119 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -445,6 +465,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4980": {  # VCP1 R120 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -463,6 +484,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4981": {  # VCP1 R121 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -481,6 +503,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4982": {  # VCP1 R122 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -499,6 +522,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4983": {  # VCP1 R123 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -517,6 +541,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4984": {  # VCP1 R124 - Molecular Haemostasis (Viapath)
         "panel_name": "vcp1",
@@ -535,6 +560,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4145": {  # VCP3 R79 - CMD (Viapath)
         "panel_name": "vcp3",
@@ -545,14 +571,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "4666",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4146": {  # VCP3 R81 - CM (Viapath)
         "panel_name": "vcp3",
@@ -563,14 +590,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "4666",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4149": {  # VCP2 BRCA (Viapath)
         "panel_name": "vcp2",
@@ -589,6 +617,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4150": {  # VCP2 R207 - ovarian cancer (Viapath)
         "panel_name": "vcp2",
@@ -607,6 +636,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": "MSH2",
     },
     "Pan4127": {  # VCP2 R209 - colorectal cancer (Viapath)
         "panel_name": "vcp2",
@@ -625,7 +655,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
-        "MSH2": True,
+        "polyedge": False,
     },
     "Pan4129": {  # VCP2 R210 - Lynch syndrome (Viapath)
         "panel_name": "vcp2",
@@ -644,6 +674,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": "MSH2",
     },
     "Pan4964": {  # VCP2 R259 - nijmegen breakage (Viapath)
         "panel_name": "vcp2",
@@ -662,6 +693,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4130": {  # VCP2 R211 - polyposis (Viapath)
         "panel_name": "vcp2",
@@ -680,7 +712,7 @@ PANEL_DICT = {
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
-        "MSH2": True,
+        "polyedge": "MSH2",
     },
     "Pan4132": {  # VCP3 R56 (Viapath)
         "panel_name": "vcp3",
@@ -691,14 +723,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5092",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4134": {  # VCP3 R57 (Viapath)
         "panel_name": "vcp3",
@@ -709,14 +742,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5092",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4136": {  # VCP3 R58 (Viapath)
         "panel_name": "vcp3",
@@ -727,14 +761,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5092",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4137": {  # VCP3 R60 (Viapath)
         "panel_name": "vcp3",
@@ -745,14 +780,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5092",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4138": {  # VCP3 R62 (Viapath)
         "panel_name": "vcp3",
@@ -763,14 +799,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5092",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4143": {  # VCP3 R66 (Viapath)
         "panel_name": "vcp3",
@@ -781,14 +818,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5092",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4144": {  # VCP3 R78 (Viapath)
         "panel_name": "vcp3",
@@ -799,14 +837,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5092",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4151": {  # VCP3 R82 - limb girdle (Viapath)
         "panel_name": "vcp3",
@@ -817,14 +856,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5092",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4314": {  # VCP3 R229 (Viapath)
         "panel_name": "vcp3",
@@ -835,14 +875,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5290",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4351": {  # VCP3 R227 (Viapath)
         "panel_name": "vcp3",
@@ -853,14 +894,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "5522",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4387": {  # VCP3 R90 - Bleeding and platelet disorders (Viapath)
         "panel_name": "vcp3",
@@ -871,14 +913,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "4699",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     # VCP3 R97 - Thrombophilia with a likely monogenic cause (Viapath)
     "Pan4390": {
@@ -890,14 +933,15 @@ PANEL_DICT = {
         "RPKM_bedfile_pan_number": "Pan4362",
         "congenica_project": "4699",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "congenica_credentials": "Viapath",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
         "congenica_IR_template": "priority",
+        "polyedge": False,
     },
     "Pan4821": {  # VCP1 R13 - FH (STG)
         "panel_name": "vcp1",
@@ -916,6 +960,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4822": {  # VCP1 R184 - CF (STG)
         "panel_name": "vcp1",
@@ -934,6 +979,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4823": {  # VCP1 R25_ - FGFR (STG)
         "panel_name": "vcp1",
@@ -952,6 +998,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4824": {  # VCP1 R73 - DMD (STG)
         "panel_name": "vcp1",
@@ -970,6 +1017,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4825": {  # VCP1 R337 - cadasil (STG)
         "panel_name": "vcp1",
@@ -988,6 +1036,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4816": {  # VCP2 R208 - BRCA (STG)
         "panel_name": "vcp2",
@@ -1006,7 +1055,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "MSH2": True,
+        "polyedge": False,
     },
     "Pan4817": {  # VCP2 R207 - ovarian (STG)
         "panel_name": "vcp2",
@@ -1025,6 +1074,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": "MSH2",
     },
     "Pan4818": {  # VCP2 R209 - colorectal (STG)
         "panel_name": "vcp2",
@@ -1043,7 +1093,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "MSH2": True,
+        "polyedge": False,
     },
     "Pan4819": {  # VCP2 R210 - lynch (STG)
         "panel_name": "vcp2",
@@ -1062,6 +1112,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": "MSH2",
     },
     "Pan4820": {  # VCP2 R211 - polyposis (STG)
         "panel_name": "vcp2",
@@ -1080,7 +1131,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
-        "MSH2": True,
+        "polyedge": "MSH2",
     },
     "Pan4826": {  # VCP3 R56 - (STG)
         "panel_name": "vcp3",
@@ -1092,13 +1143,14 @@ PANEL_DICT = {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
         "congenica_project": "4201",
-        "hsmetrics_bedfile": "Pan4535data.bed",
-        "variant_calling_bedfile": "Pan4535data.bed",
-        "sambamba_bedfile": "Pan4535dataSambamba.bed",
+        "hsmetrics_bedfile": "Pan4995data.bed",
+        "variant_calling_bedfile": "Pan4995data.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "FH": False,
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4827": {  # VCP3 R57 - (STG)
         "panel_name": "vcp3",
@@ -1117,6 +1169,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4828": {  # VCP3 R58 - (STG)
         "panel_name": "vcp3",
@@ -1135,6 +1188,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4829": {  # VCP3 R60 - (STG)
         "panel_name": "vcp3",
@@ -1153,6 +1207,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4830": {  # VCP3 R62 - (STG)
         "panel_name": "vcp3",
@@ -1171,6 +1226,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4831": {  # VCP3 R66 - (STG)
         "panel_name": "vcp3",
@@ -1189,6 +1245,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4832": {  # VCP3 R78 - (STG)
         "panel_name": "vcp3",
@@ -1207,6 +1264,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4833": {  # VCP3 R79 - CMD (STG)
         "panel_name": "vcp3",
@@ -1225,6 +1283,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4834": {  # VCP3 R81 - CM (STG)
         "panel_name": "vcp3",
@@ -1243,6 +1302,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4835": {  # VCP3 R82 - limb girdle (STG)
         "panel_name": "vcp3",
@@ -1261,6 +1321,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan4836": {  # VCP3 R229 - (STG)
         "panel_name": "vcp3",
@@ -1279,6 +1340,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "masked_reference": False,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5007": {  # LRPCR R207 - PMS2 (Viapath)
         "panel_name": "lrpcr",
@@ -1297,6 +1359,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5008": {  # LRPCR R207 - PMS2 (STG)
         "panel_name": "lrpcr",
@@ -1315,6 +1378,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5009": {  # LRPCR R208 - CHEK2 (Viapath)
         "panel_name": "lrpcr",
@@ -1333,6 +1397,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5010": {  # LRPCR R208 - CHEK2 (STG)
         "panel_name": "lrpcr",
@@ -1351,6 +1416,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5011": {  # LRPCR R210 - PMS2 (Viapath)
         "panel_name": "lrpcr",
@@ -1369,6 +1435,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5012": {  # LRPCR R210 - PMS2 (STG)
         "panel_name": "lrpcr",
@@ -1387,6 +1454,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5013": {  # LRPCR R211 - PMS2 (Viapath)
         "panel_name": "lrpcr",
@@ -1405,6 +1473,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5014": {  # LRPCR R211 - PMS2 (STG)
         "panel_name": "lrpcr",
@@ -1423,6 +1492,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5015": {  # LRPCR R71 - SMN1 (Viapath)
         "panel_name": "lrpcr",
@@ -1441,6 +1511,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
     "Pan5016": {  # LRPCR R239 - IKBKG (Viapath)
         "panel_name": "lrpcr",
@@ -1459,6 +1530,7 @@ PANEL_DICT = {
         "drylab_dnanexus_id": None,
         "RPKM_bedfile_pan_number": None,
         "peddy": False,
+        "polyedge": False,
     },
 }
 

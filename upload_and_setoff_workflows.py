@@ -1721,15 +1721,17 @@ class RunfolderProcessor(object):
         # Set parameters specific to polyedge app
         polyedge_cmd_string = ""
 
-        # If test contains MSH2, we want app to run - set skip to false
-        if self.panel_dictionary[pannumber]["MSH2"]:
+        # If test contains polyedge, we want app to run
+        if self.panel_dictionary[pannumber]["polyedge"]:
             gene = self.panel_dictionary[pannumber]["polyedge"]
 
-            polyedge_cmd_string += config.polyedge_str.format(
+            polyedge_cmd_string += config.STAGE_INPUTS["mokapipe"][
+                "polyedge_str"
+            ].format(
                 gene,
-                config.polyedge_inputs[gene]["chrom"],
-                config.polyedge_inputs[gene]["poly_start"],
-                config.polyedge_inputs[gene]["poly_end"],
+                config.POLYEDGE_INPUTS[gene]["chrom"],
+                config.POLYEDGE_INPUTS[gene]["poly_start"],
+                config.POLYEDGE_INPUTS[gene]["poly_end"],
             )
 
         masked_reference_command = ""
@@ -1742,12 +1744,12 @@ class RunfolderProcessor(object):
         dx_command = (
             config.DX_RUN_CMDS["mokapipe"]
             + fastqs[2]
-            + config.STAGE_INPUTS["mokapipe"]["fastqc1_reads"]
+            + config.STAGE_INPUTS["mokapipe"]["fastqc_reads"]
             + fastqs[0]
-            + config.STAGE_INPUTS["mokapipe"]["fastqc2_reads"]
-            + config.STAGE_INPUTS["mokapipe"]["mokapipe_bwa_reads"]
+            + config.STAGE_INPUTS["mokapipe"]["fastqc_reads"]
+            + config.STAGE_INPUTS["mokapipe"]["bwa_reads1"]
             + fastqs[0]
-            + config.STAGE_INPUTS["mokapipe"]["mokapipe_bwa_reads2"]
+            + config.STAGE_INPUTS["mokapipe"]["bwa_reads2"]
             + fastqs[1]
             + config.STAGE_INPUTS["mokapipe"]["bwa_rg_sample"]
             + fastqs[2]
