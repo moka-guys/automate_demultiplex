@@ -79,7 +79,10 @@ class GetRunfolders(object):
         Its value here must be same as in ReadyToStartDemultiplexing()
         """
         self.runfolders_path = config.RUNFOLDERS
-        self.runfolder_names = os.listdir(self.runfolders_path)
+        if config.TESTING:
+            self.runfolder_names = config.DEMULTIPLEX_TEST_RUNFOLDERS
+        else:
+            self.runfolder_names = os.listdir(self.runfolders_path)
 
         self.timestamp = f"{datetime.datetime.now():%Y%m%d_%H%M%S}"
 

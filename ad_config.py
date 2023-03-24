@@ -24,6 +24,14 @@ DOCUMENT_ROOT = "/".join(DOCUMENT_DIR.split("/")[:-2])
 
 AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
 
+
+# TSO500 runfolder is used for testing both demultiplexing and usw script
+DEMULTIPLEX_TEST_RUNFOLDERS = [
+    "999999_A01229_0496_DEMUXINTEG",
+    "999999_M02353_0496_000000000-DEMUX",
+    "999999_A01229_0049_AHMKTSO500",
+]
+
 # Path to run folders - use testing flag to determine folders
 if not TESTING:
     RUNFOLDERS = "/media/data3/share"
@@ -497,7 +505,7 @@ STAGE_IDS = {
 
 STAGE_INPUTS = {
     "mokapipe": {
-        "fastqc_reads": f" -i{STAGE_IDS['mokapipe']['fastqc1']}.reads=",
+        "fastqc_reads": f" -i{STAGE_IDS['mokapipe']['fastqc']}.reads=",
         "bwa_reads1": f" -i{STAGE_IDS['mokapipe']['bwa']}.reads_fastqgz=",
         "bwa_reads2": f" -i{STAGE_IDS['mokapipe']['bwa']}.reads2_fastqgz=",
         "bwa_rg_sample": (
