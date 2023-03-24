@@ -197,7 +197,7 @@ PANEL_DICT = {
         "congenica_IR_template": "priority",
         "polyedge": False,
     },
-    "Pan5086": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
+    "Pan5112": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
         # NOTE - TSO500 output parser settings are taken from Pan4969
         "panel_name": "tso500_high_throughput",
         "pipeline": "TSO500",
@@ -207,7 +207,29 @@ PANEL_DICT = {
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
         "coverage_min_mapping_qual": 30,
-        "drylab_dnanexus_id": None,  # Can state this when we know it.
+        "drylab_dnanexus_id": "BSPS_MD",
+        "congenica_project": False,
+        "congenica_credentials": False,
+        "FH": False,
+        "masked_reference": False,
+        "variant_calling_bedfile": None,
+        "RPKM_bedfile_pan_number": None,
+        "peddy": False,
+        "hsmetrics_bedfile": None,
+        "congenica_IR_template": "priority",
+        "polyedge": False,
+    },
+    "Pan5114": {  # TSO500 High throughput Control. no UTRs. TERT promoter
+        # NOTE - TSO500 output parser settings are taken from Pan4969
+        "panel_name": "tso500_high_throughput",
+        "pipeline": "TSO500",
+        "capture_type": "Hybridisation",
+        "sambamba_bedfile": "Pan4969dataSambamba.bed",
+        "clinical_coverage_depth": 100,
+        "multiqc_coverage_level": 100,
+        "coverage_min_basecall_qual": 25,
+        "coverage_min_mapping_qual": 30,
+        "drylab_dnanexus_id": "BSPS_MD",
         "congenica_project": False,
         "congenica_credentials": False,
         "FH": False,
