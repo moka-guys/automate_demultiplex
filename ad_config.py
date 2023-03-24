@@ -438,7 +438,7 @@ APP_PATHS = {
 }
 
 WORKFLOW_PATHS = {
-    "mokapipe": "Workflows/GATK3.5_v2.17",
+    "mokapipe": "Workflows/GATK3.5_v2.18",
     "mokawes": "Workflows/MokaWES_v1.8",
     "mokaamp": "Workflows/MokaAMP_v2.2",
     "mokacan": "Workflows/MokaCAN_v1.0",
@@ -453,8 +453,7 @@ STAGE_IDS = {
     "mokapipe": {
         "filter_vcf": "stage-G5Kpgv80zB02Q64zFf94G05F",
         "gatk": "stage-F28y4qQ0jy1fkqfy5v2b8byx",
-        "fastqc1": "stage-Bz3YpP80jy1Y1pZKbZ35Bp0x",
-        "fastqc2": "stage-Bz3YpP80jy1x7G5QfG3442gX",
+        "fastqc": "stage-Bz3YpP80jy1Y1pZKbZ35Bp0x",
         "bwa": "stage-Byz9BJ80jy1k2VB9xVXBp0Fg",
         "picard": "stage-F9GK4QQ0jy1qj14PPZxxq3VG",
         "happy": "stage-G8V205j0fB6QGKXQ2gZ5pB1z",
@@ -498,8 +497,9 @@ STAGE_IDS = {
 
 STAGE_INPUTS = {
     "mokapipe": {
-        "fastqc1_reads": f" -i{STAGE_IDS['mokapipe']['fastqc1']}.reads=",
-        "fastqc2_reads": f" -i{STAGE_IDS['mokapipe']['fastqc2']}.reads=%s",
+        "fastqc_reads": f" -i{STAGE_IDS['mokapipe']['fastqc1']}.reads=",
+        "bwa_reads1": f" -i{STAGE_IDS['mokapipe']['bwa']}.reads_fastqgz=",
+        "bwa_reads2": f" -i{STAGE_IDS['mokapipe']['bwa']}.reads2_fastqgz=",
         "bwa_rg_sample": (
             f" -i{STAGE_IDS['mokapipe']['bwa']}.read_group_sample="
         ),
@@ -542,7 +542,12 @@ STAGE_INPUTS = {
         "fhprs_skip": f" -i{STAGE_IDS['mokapipe']['fhprs']}.skip=false",
         "fhprs_bed": f" -i{STAGE_IDS['mokapipe']['fhprs']}.BEDfile=",
         "fhprs_instance": "mem3_ssd1_v2_x8",  # Required when creating gVCFs
-        "polyedge_skip": f" -i{STAGE_IDS['mokapipe']['polyedge']}.skip=false",
+        "polyedge_str": (
+            " -i%(stage_str)s.gene={} -i%(stage_str)s.chrom={} "
+            "-i%(stage_str)s.poly_start={} -i%(stage_str)s.poly_end={} "
+            "-i%(stage_str)s.skip=false"
+            % {"stage_str": STAGE_IDS["mokapipe"]["polyedge"]}
+        ),
     },
     "rpkm": {
         "bed": " -ibedfile=",
@@ -738,7 +743,7 @@ USW_LOGMSGS = {
 
 # Moka IDs for generating SQLs to update the Mokadatabase (audit trail)
 WORKFLOW_IDS = {
-    "mokapipe": 5221,
+    "mokapipe": 5229,
     "mokawes": 5078,
     "mokaamp": 4851,
     "archerdx": 4562,
@@ -751,4 +756,12 @@ WORKFLOW_IDS = {
 WES_TEST_STATUS = {
     "nextseq_sequencing": 1202218804,  # Test Status = NextSEQ sequencing
     "data_processing": 1202218805,  # Test Status = Data Processing
+}
+
+POLYEDGE_INPUTS = {
+    "MSH2": {
+        "chrom": 2,
+        "poly_start": 47641559,
+        "poly_end": 47641586,
+    }
 }
