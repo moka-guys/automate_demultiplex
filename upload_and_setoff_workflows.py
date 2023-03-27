@@ -117,6 +117,7 @@ class RunfolderObject(object):
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
+        self.runfolder_subdir = ""
         self.runfolder_samplesheet_path = os.path.join(
             config.samplesheets_dir, self.runfolder_name + "_SampleSheet.csv"
         )
@@ -164,7 +165,7 @@ class RunfolderProcessor(object):
             "jobid=$(dx run %s%s --priority high -y --name "
             % (config.app_project, config.mokasnp_path)
         )
-        self.archer_dx_command = (
+        self.fastqc_command = (
             "jobid=$(dx run %s%s -y --priority high --name "
             % (config.app_project, config.fastqc_app)
         )
@@ -172,9 +173,13 @@ class RunfolderProcessor(object):
             "jobid=$(dx run %s%s --priority high -y --name "
             % (config.app_project, config.tso500_app)
         )
-        self.tso500_output_parser_dx_command = (
+        self.sompy_dx_command = (
             "jobid=$(dx run %s%s --priority high -y --name "
-            % (config.app_project, config.tso500_output_parser_app)
+            % (config.app_project, config.sompy_app_id)
+        )
+        self.sambamba_dx_command = (
+            "jobid=$(dx run %s%s --priority high -y --name "
+            % (config.app_project, config.sambamba_app_id)
         )
         self.peddy_command = "jobid=$(dx run %s%s" % (
             config.app_project,
@@ -330,22 +335,17 @@ class RunfolderProcessor(object):
                     self.dest_cmd,
                     self.runfolder_obj.nexus_path,
                     self.runfolder_obj.nexus_project_name,
+                    self.runfolder_subdir
                 ) = self.build_nexus_project_name(
-                    self.capture_any_WES_batch_numbers(
-                        self.list_of_processed_samples
-                    ),
-                    self.capture_library_batch_numbers(
-                        self.list_of_processed_samples
-                    ),
+                    self.capture_any_WES_batch_numbers(),
+                    self.capture_library_batch_numbers(),
                 )
                 # create bash script to create and share nexus project -return filepath
                 # pass filepath into module which runs project creation script - capturing projectid
                 (
                     view_users_list,
                     admin_users_list,
-                ) = self.write_create_project_script(
-                    self.list_of_processed_samples
-                )
+                ) = self.write_create_project_script()
                 self.runfolder_obj.nexus_project_id = (
                     self.run_project_creation_script(
                         view_users_list, admin_users_list
@@ -381,31 +381,19 @@ class RunfolderProcessor(object):
                 )
 
                 self.write_dx_run_cmds(
-                    self.start_building_dx_run_cmds(
-                        self.list_of_processed_samples
-                    )
+                    self.start_building_dx_run_cmds()
                 )
                 self.run_dx_run_commands()
 
-                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes(
-                    self.list_of_processed_samples
-                )
+                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes()
                 self.sql_queries[
                     "oncology"
-                ] = self.write_opms_queries_oncology(
-                    self.list_of_processed_samples
-                )
-                self.sql_queries["TSO500"] = self.write_opms_queries_TSO500(
-                    self.list_of_processed_samples
-                )
+                ] = self.write_opms_queries_oncology()
+                self.sql_queries["TSO500"] = self.write_opms_queries_TSO500()
                 self.sql_queries[
                     "custom_panel"
-                ] = self.write_opms_queries_custom_panel(
-                    self.list_of_processed_samples
-                )
-                self.sql_queries["mokasnp"] = self.write_opms_queries_mokasnp(
-                    self.list_of_processed_samples
-                )
+                ] = self.write_opms_queries_custom_panel()
+                self.sql_queries["mokasnp"] = self.write_opms_queries_mokasnp()
                 self.send_opms_queries()
                 # if not TSO500 will return None
                 if not TSO500_sample_list:
@@ -696,16 +684,8 @@ class RunfolderProcessor(object):
                     # add the fastq name to a list to be used in create_nexus_file_path
                     list_of_processed_samples.append(fastq)
                 else:
-                    # self.loggers.script.warning(
-                    #     'UA_warning unable to find PanNumber in {}.'.format(fastq)
-                    # )
                     not_processed.append(fastq)
         if not_processed:
-            # self.loggers.script.error(
-            #     "UA_fail 'Unrecognised panel number found in run {}.'".format(
-            #         self.runfolder_obj.runfolder_name
-            #     )
-            # )
             self.loggers.script.error(
                 "UA_fail '{} contained an unrecognised pan numbers: {}'".format(
                     self.runfolder_obj.runfolder_name, ",".join(not_processed)
@@ -726,7 +706,7 @@ class RunfolderProcessor(object):
 
         return (list_of_processed_samples, fastq_string)
 
-    def capture_any_WES_batch_numbers(self, list_of_processed_samples):
+    def capture_any_WES_batch_numbers(self):
         """
         Input = list of samples to be processed
         DNANexus projects are named after the runfolder suffixed with identifiers.
@@ -739,7 +719,7 @@ class RunfolderProcessor(object):
         wes_numbers = []
 
         # for each fastq in the list of fastqs
-        for fastq in list_of_processed_samples:
+        for fastq in self.list_of_processed_samples:
             # if the run has any WES samples
             if "WES" in fastq:
                 # capture the WES batch (WES followed by digits)
@@ -752,7 +732,7 @@ class RunfolderProcessor(object):
         else:
             return None
 
-    def capture_library_batch_numbers(self, list_of_processed_samples):
+    def capture_library_batch_numbers(self):
         """
         Input = list of samples to be processed
         DNANexus project names are the runfolder suffixed with identifiers to help future dearchival
@@ -765,7 +745,7 @@ class RunfolderProcessor(object):
         library_batch_numbers = []
 
         # for each fastq in the list of fastqs
-        for fastq in list_of_processed_samples:
+        for fastq in self.list_of_processed_samples:
             # check there are underscores present
             if "_" in fastq:
                 # split on underscores to capture the the library_batch number
@@ -811,15 +791,19 @@ class RunfolderProcessor(object):
                 + wes_number
                 + config.fastq_folder
             )
-            # build project name
-            nexus_project_name = (
-                config.NexusProjectPrefix
-                + self.runfolder_obj.runfolder_name
+            runfolder_subdir = (
+                self.runfolder_obj.runfolder_name
                 + "_"
                 + library_batch
                 + "_"
                 + wes_number
             )
+            # build project name
+            nexus_project_name = (
+                config.NexusProjectPrefix
+                + runfolder_subdir
+            )
+
         else:
             # self.nexus path
             nexus_path = (
@@ -828,18 +812,22 @@ class RunfolderProcessor(object):
                 + library_batch
                 + config.fastq_folder
             )
-            # build project name
-            nexus_project_name = (
-                config.NexusProjectPrefix
-                + self.runfolder_obj.runfolder_name
+            runfolder_subdir = (
+                self.runfolder_obj.runfolder_name
                 + "_"
                 + library_batch
             )
+            # build project name
+            nexus_project_name = (
+                config.NexusProjectPrefix
+                + runfolder_subdir
+            )
+
 
         # return tuple of string for self.dest
-        return (nexus_project_name + ":/", nexus_path, nexus_project_name)
+        return (nexus_project_name + ":/", nexus_path, nexus_project_name, runfolder_subdir)
 
-    def write_create_project_script(self, list_of_processed_samples):
+    def write_create_project_script(self):
         """
         Input = list of processed samples
         Once the project name has been defined the project can be created using the DNANexus sdk
@@ -884,7 +872,7 @@ class RunfolderProcessor(object):
             pannumber_list = set(
                 [
                     re.search(r"Pan\d+", sample).group()
-                    for sample in list_of_processed_samples
+                    for sample in self.list_of_processed_samples
                 ]
             )
             # Pull out the drylab_dnanexus_ids for pan numbers where this is not None (default is None)
@@ -1195,19 +1183,33 @@ class RunfolderProcessor(object):
         Returns a tuple (r1_filepath,r2_filepath,samplename)
         """
         # build full file nexus path including project
-        read1_nexus_path = (
-            self.runfolder_obj.nexus_project_name
-            + ":"
-            + os.path.join(self.runfolder_obj.nexus_path, read1)
-        )
-        # create read2 by replacing R1 with R2
-        read2_nexus_path = (
-            self.runfolder_obj.nexus_project_name
-            + ":"
-            + os.path.join(
-                self.runfolder_obj.nexus_path, read1.replace("_R1_", "_R2_")
+        if "TSO" in read1:
+            read1_nexus_path = (
+                self.runfolder_obj.nexus_project_name
+                + ":/analysis_folder/Logs_Intermediates/CollapsedReads/"
+                + "%s/%s_R1.fastq.gz" % (read1, read1)
             )
-        )
+            # create read2 by replacing R1 with R2
+            read2_nexus_path = (
+                self.runfolder_obj.nexus_project_name
+                + ":/analysis_folder/Logs_Intermediates/CollapsedReads/"
+                + "%s/%s_R2.fastq.gz" % (read1, read1)
+
+            )
+        else:
+            read1_nexus_path = (
+                self.runfolder_obj.nexus_project_name
+                + ":"
+                + os.path.join(self.runfolder_obj.nexus_path, read1)
+            )
+            # create read2 by replacing R1 with R2
+            read2_nexus_path = (
+                self.runfolder_obj.nexus_project_name
+                + ":"
+                + os.path.join(
+                    self.runfolder_obj.nexus_path, read1.replace("_R1_", "_R2_")
+                )
+            )
         # samplename is used to assign read groups in BWA or as an input to sentieon
         sample_name = read1.split("_R1_")[0]
         return (read1_nexus_path, read2_nexus_path, sample_name)
@@ -1346,7 +1348,7 @@ class RunfolderProcessor(object):
             )
         return bed_dict
 
-    def start_building_dx_run_cmds(self, list_of_processed_samples):
+    def start_building_dx_run_cmds(self):
         """
         Input = list of fastqs to be processed
         Loop through the list of fastqs, determine the pan number and use this to determine
@@ -1372,7 +1374,7 @@ class RunfolderProcessor(object):
         TSO500 = False
 
         # loop through samples
-        for fastq in list_of_processed_samples:
+        for fastq in self.list_of_processed_samples:
             # take read one - note TSO500 sample list are not fastqs so are treated differently (elif below)
             if re.search(r"_R1_", fastq):
                 # extract Pan number and use this to determine which dx run commands are needed for the sample
@@ -1452,11 +1454,7 @@ class RunfolderProcessor(object):
 
                 if self.panel_dictionary[panel]["archerdx"]:
                     commands_list.append(
-                        self.create_archerdx_command(fastq, panel, "R1")
-                    )
-                    commands_list.append(self.add_to_depends_list(fastq))
-                    commands_list.append(
-                        self.create_archerdx_command(fastq, panel, "R2")
+                        self.create_fastqc_command(fastq, panel)
                     )
                     commands_list.append(self.add_to_depends_list(fastq))
 
@@ -1490,29 +1488,32 @@ class RunfolderProcessor(object):
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause problems
             commands_list.append(self.run_peddy_command())
-            # add to depends list so multiqc doesn't start until peddy finishes
-            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
-            # pass "peddy" to ensure it isn't skipped
-            commands_list.append(self.add_to_depends_list("peddy"))
 
         if TSO500:
             # build command for the TSO500 app
-            commands_list.append(
-                self.create_tso500_command(list_of_processed_samples)
-            )
-            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
-            # pass "TSO" to ensure it isn't skipped
-            commands_list.append(self.add_to_depends_list("TSO"))
-            # build command for the TSO500 output parser
-            commands_list.append(self.create_tso500_output_parser_command())
-            # add_to_depends_list requires a string to determine if it's a negative control and shouldn't be added to depends on string.
-            # pass "TSO" to ensure it isn't skipped
-            commands_list.append(self.add_to_depends_list("TSO"))
-        else:
-            # don't need to do multiqc commands for TSO500
-            commands_list.append(self.create_multiqc_command())
-            commands_list.append(self.create_upload_multiqc_command())
-            commands_list.append(self.create_duty_csv_command())
+            commands_list.append(self.create_tso500_command())
+            commands_list.append(self.add_to_depends_list("TSO500"))
+            for sample in self.list_of_processed_samples:
+                pannumber = re.search(r"Pan\d+", fastq).group()
+                commands_list.append(
+                    self.create_fastqc_command(sample, pannumber)
+                )
+                commands_list.append(self.add_to_depends_list("fastqc"))
+                commands_list.append(
+                    self.create_sambamba_cmd(sample, pannumber)
+                    )
+                commands_list.append(self.add_to_depends_list("sambamba"))
+                if "HD200" in sample:
+                    commands_list.append(
+                        self.create_sompy_cmd(sample, pannumber)
+                        )
+                    commands_list.append(self.add_to_depends_list("sompy"))
+        commands_list.append(self.create_multiqc_command())
+        commands_list.append(self.add_to_depends_list("MultiQC"))
+        commands_list.append(self.create_upload_multiqc_command(TSO500))
+        commands_list.append(self.add_to_depends_list("UploadMultiQC"))
+        commands_list.append(self.create_duty_csv_command())
+
         return commands_list
 
     def create_mokawes_command(self, fastq, pannumber):
@@ -1559,35 +1560,39 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_archerdx_command(self, fastq, pannumber, read):
+    def create_fastqc_command(self, fastqs, pannumber):
         """
-        Build dx run command, in this case to run fastqc on a single fastq file
+        Build dx run command
         Inputs:
-            R1 fastq filename
+            fastqs
             Pan number
-            read (R1 or R2)
         Returns:
             dx run command for fastqc (string)
         """
         # call function to build nexus fastq paths - returns tuple for read1 and read2 and samplename
-        fastqs = self.nexus_fastq_paths(fastq)
+        fastqs = self.nexus_fastq_paths(fastqs)
+
         dx_command_list = [
-            self.archer_dx_command,
+            self.fastqc_command,
             fastqs[2],
             " -ireads=",
-            fastqs[0].replace("_R1_", "_%s_" % (read)),
+            fastqs[0],
+            " -ireads=",
+            fastqs[1],
             self.dest,
             self.dest_cmd,
-            self.token,
         ]
+        dx_command_list.append(self.token)
+
         dx_command = "".join(map(str, dx_command_list))
 
         return dx_command
 
-    def create_tso500_command(self, list_of_processed_samples):
+    def create_tso500_command(self):
         """
         Build dx run command for tso500 docker app.
-        Will assess if it's a novaseq or not from the runfoldername and if it's a highthroughput TSO run (needing a larger instance type)
+        Will assess if it's a novaseq or not from the runfoldername and if it's
+        a highthroughput TSO run (needing a larger instance type)
         Inputs:
             List of samplenames to be processed
         Returns:
@@ -1603,7 +1608,7 @@ class RunfolderProcessor(object):
         pannumber_list = set(
             [
                 re.search(r"Pan\d+", sample).group()
-                for sample in list_of_processed_samples
+                for sample in self.list_of_processed_samples
             ]
         )
         # capture any pan numbers that are a highthroughput assay
@@ -1612,15 +1617,16 @@ class RunfolderProcessor(object):
             for pannumber in pannumber_list
             if self.panel_dictionary[pannumber]["TSO500_high_throughput"]
         ]
-        # if this list is not empty apply high throughput instance type, otherwise use low throughput instance type
+        # if this list is not empty apply high throughput instance type,
+        # otherwise use low throughput instance type
         if high_throughput_list:
             instance_type = (
-                " --instance-type %s "
+                "--instance-type %s "
                 % config.TSO500_analysis_instance_high_throughput
             )
         else:
             instance_type = (
-                " --instance-type %s "
+                "--instance-type %s "
                 % config.TSO500_analysis_instance_low_throughput
             )
 
@@ -1642,6 +1648,7 @@ class RunfolderProcessor(object):
             config.TSO500_analysis_options_stage,
             TSO500_analysis_options,
             instance_type,
+            "--wait ",
             self.dest,
             self.dest_cmd,
             self.token,
@@ -1649,62 +1656,65 @@ class RunfolderProcessor(object):
         dx_command = "".join(map(str, dx_command_list))
         return dx_command
 
-    def create_tso500_output_parser_command(self):
-        """
-        Build dx run command for tso500_output_parser app
-        Inputs:
-            None
-        Returns:
-            dx run command for tso500_output_parser app (string)
-        """
-        # TODO LIMITATION = Pan numbers that require different settings to be applied in downstream tasks will need to be set off in different jobs.
-        # This function will need to adapt to this (currently takes settings from the first item in the list of TSO500 pan numbers in config.
-        # This primarily affects coverage
-        tso_pan_num = config.tso500_panel_list[0]
-        # build dictionary of pan number specific/relevant bedfile to be used in command
-        bedfiles = self.nexus_bedfiles(tso_pan_num)
+    def create_sambamba_cmd(self, sample, pannumber):
+        """"""
+        # Get inputs based on output location within project
+        bam_index = (
+            "%sanalysis_folder/Logs_Intermediates/StitchedRealigned"
+            "/%s/%s.bam.bai" % (self.dest_cmd, sample, sample)
+            )
+        bam = (
+            "%sanalysis_folder/Logs_Intermediates/StitchedRealigned"
+            "/%s/%s.bam" % (self.dest_cmd, sample, sample)
+            )
+        # Build dictionary of pan number specific/relevant bedfile to
+        # be used in command
+        bedfiles = self.nexus_bedfiles(pannumber)
+
         dx_command_list = [
-            self.tso500_output_parser_dx_command,
-            self.runfolder_obj.runfolder_name,
-            config.TSO500_output_parser_project_name_stage,
-            self.runfolder_obj.nexus_project_name,
-            config.TSO500_output_parser_project_id_stage,
-            self.runfolder_obj.nexus_project_id,
-            config.TSO500_output_parser_job_id_stage,
-            "$jobid",
-            config.TSO500_output_parser_coverage_bedfile_id_stage,
-            bedfiles["sambamba"],
-            config.TSO500_output_parser_coverage_app_id_stage,
-            config.coverage_app_id,
-            config.TSO500_output_parser_fastqc_app_id_stage,
-            config.fastqc_app_id,
-            config.TSO500_output_parser_sompy_app_id_stage,
-            config.sompy_app_id,
-            config.TSO500_output_parser_multiqc_app_id_stage,
-            config.multiqc_app_id,
-            config.TSO500_output_parser_upload_multiqc_app_id_stage,
-            config.upload_multiqc_app_id,
-            config.TSO500_output_parser_coverage_commands_stage,
-            config.TSO500_output_parser_coverage_commands
-            % (
-                self.panel_dictionary[tso_pan_num][
-                    "coverage_min_basecall_qual"
-                ],
-                self.panel_dictionary[tso_pan_num][
-                    "coverage_min_mapping_qual"
-                ],
-            ),
-            config.TSO500_output_parser_coverage_level_stage,
-            self.panel_dictionary[tso_pan_num]["clinical_coverage_depth"],
-            config.TSO500_output_parser_multiqc_coverage_level_stage,
-            self.panel_dictionary[tso_pan_num]["multiqc_coverage_level"],
-            " -d $jobid ",
+            self.sambamba_dx_command,
+            sample,
+            " -ibam_index=%s" % bam_index,
+            " -ibamfile=%s" % bam,
+            (" -icoverage_level=%s"
+            % self.panel_dictionary[pannumber]["clinical_coverage_depth"]),
+            " -isambamba_bed=%s " % bedfiles["sambamba"],
+            (config.TSO500_coverage_commands
+                % (
+                    self.panel_dictionary[pannumber][
+                        "coverage_min_basecall_qual"
+                    ],
+                    self.panel_dictionary[pannumber][
+                        "coverage_min_mapping_qual"
+                    ],
+                )),
+            self.dest,
+            "%scoverage/%s" % (self.dest_cmd, pannumber),
+            self.token,
+        ]
+        return "".join(map(str, dx_command_list))
+
+    def create_sompy_cmd(self, sample, pannumber):
+        """"""
+        dest_cmd = self.dest_cmd + "coverage/%s" % pannumber
+        # Get inputs based on output location within project
+        vcf = (
+            "%sanalysis_folder/Results/%s/%s"
+            "_MergedSmallVariants.genome.vcf" 
+            % (self.dest_cmd, sample, sample)
+            )
+        dx_command_list = [
+            self.sompy_dx_command,
+            sample,
+            " -itruthVCF=project-ByfFPz00jy1fk6PjpZ95F27J:file-G7g9Pfj0jy1f87k1J1qqX83X",
+            " -iqueryVCF=%s" % vcf,
+            " -iTSO=true",
+            " -iskip=false",
             self.dest,
             self.dest_cmd,
             self.token,
         ]
-        dx_command = "".join(map(str, dx_command_list))
-        return dx_command
+        return "".join(map(str, dx_command_list))
 
     def create_mokasnp_command(self, fastq, pannumber):
         """
@@ -2198,15 +2208,14 @@ class RunfolderProcessor(object):
         Returns = dx run command (string)
         """
         # set super high coverage level
-        lowest_coverage_level = 1000000
+        lowest_coverage_level = 100000
         # for each fastq to be processed
-        for fastq in self.list_of_processed_samples:
-            # take read one
-            if re.search(r"_R1_", fastq):
+        for fastq in self.list_of_processed_samples:  # take read one
+            if re.search(r"_R1_", fastq) or fastq.startswith("TSO"):
                 # extract_Pan number and use this to determine which coverage level is required
                 pannumber = re.search(r"Pan\d+", fastq).group()
-                # if the required coverage for this panel is less than current value of lowest_coverage_level
-                # set lowest_coverage_level to this level
+            # if the required coverage for this panel is less than current value of lowest_coverage_level
+            # set lowest_coverage_level to this level
                 if (
                     int(
                         self.panel_dictionary[pannumber][
@@ -2234,24 +2243,36 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def create_upload_multiqc_command(self):
+    def create_upload_multiqc_command(self, TSO500):
         """
         Input = None
         The input to the upload_multiqc app is the html_report output of the multiqc app, in the format jobid:output_name
         Returns = dx run command for the upload_multiqc app (string)
         """
-        # dx run + config.app_project + config.upload_multiqc_path + -imultiqc_html= + input.html
+        if TSO500:
+            multiqc_data_input = (" -imultiqc_data_input=%s:/%s/*%s%s" %
+                (self.runfolder_obj.nexus_project_name,
+                self.runfolder_subdir,
+                self.runfolder_obj.runfolder_name,
+                config.cluster_density_file_suffix)
+            )
+        else:
+            multiqc_data_input = (
+                " -imultiqc_data_input=%s:/QC/*%s%s" %
+                (self.runfolder_obj.nexus_project_name,
+                self.runfolder_obj.runfolder_name,
+                config.cluster_density_file_suffix)
+            )
+
         dx_command = "".join(
             [
                 self.upload_multiqc_command,
                 " -imultiqc_html=$jobid:multiqc_report",
                 " -imultiqc_data_input=$jobid:multiqc",
-                " -imultiqc_data_input=%s:/QC/*"
-                % (self.runfolder_obj.nexus_project_name)
-                + self.runfolder_obj.runfolder_name
-                + config.cluster_density_file_suffix,
+                multiqc_data_input,
                 self.project,
                 self.runfolder_obj.nexus_project_id,
+                self.depends,
                 self.token,
             ]
         )
@@ -2264,15 +2285,23 @@ class RunfolderProcessor(object):
          app is the html_report output of the multiqc app, in the format jobid:output_name
         Returns = dx run command for the upload_multiqc app (string)
         """
-        dx_command = "".join(
-            [
-                self.duty_csv_command,
-                " -iproject_name=%s" % self.runfolder_obj.nexus_project_name,
-                config.duty_csv_inputs[tso_pannumbers],
-                config.duty_csv_inputs[stg_pannumbers],
-                config.duty_csv_inputs[cp_capture_pannos],
-            ]
+        dx_command = (
+            " ".join(
+                [
+                    self.duty_csv_command,
+                    "-iproject_name=%s"
+                    % self.runfolder_obj.nexus_project_name,
+                    config.duty_csv_inputs["tso_pannumbers"],
+                    config.duty_csv_inputs["stg_pannumbers"],
+                    config.duty_csv_inputs["cp_capture_pannos"],
+                ]
+            )
+            + self.project
+            + self.runfolder_obj.nexus_project_id
+            + self.depends
+            + self.token
         )
+        return dx_command
 
     def run_peddy_command(self):
         """
@@ -2364,7 +2393,7 @@ class RunfolderProcessor(object):
                 )
             )
 
-    def write_opms_queries_custom_panel(self, list_of_processed_samples):
+    def write_opms_queries_custom_panel(self):
         """
         Input = list of fastqs to be processed
         Samples processed using Mokapipe are recorded in Moka using an insert query.
@@ -2374,7 +2403,7 @@ class RunfolderProcessor(object):
         Returns = dictionary or None
         """
         queries = []
-        for fastq in list_of_processed_samples:
+        for fastq in self.list_of_processed_samples:
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
@@ -2407,7 +2436,7 @@ class RunfolderProcessor(object):
         else:
             return None
 
-    def write_opms_queries_mokawes(self, list_of_processed_samples):
+    def write_opms_queries_mokawes(self):
         """
         Input = list of fastqs to be processed
         All samples processed using MokaWES are recorded in moka using a single update query.
@@ -2418,7 +2447,7 @@ class RunfolderProcessor(object):
         dnanumbers = []
         samplenames = []
         # add workflow to sql dictionary
-        for fastq in list_of_processed_samples:
+        for fastq in self.list_of_processed_samples:
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
@@ -2447,7 +2476,7 @@ class RunfolderProcessor(object):
         else:
             return None
 
-    def write_opms_queries_mokasnp(self, list_of_processed_samples):
+    def write_opms_queries_mokasnp(self):
         """
         Input = list of fastqs to be processed
         Samples processed using MokaSNP are recorded in Moka using an insert query.
@@ -2457,7 +2486,7 @@ class RunfolderProcessor(object):
         Returns = dictionary or None
         """
         queries = []
-        for fastq in list_of_processed_samples:
+        for fastq in self.list_of_processed_samples:
             # take read one
             if "_R1_" in fastq:
                 # extract_Pan number
@@ -2479,7 +2508,7 @@ class RunfolderProcessor(object):
         else:
             return None
 
-    def write_opms_queries_oncology(self, list_of_processed_samples):
+    def write_opms_queries_oncology(self):
         """
         Input = list of fastqs to be processed
         Samples tested using mokaamp or mokaonc are not booked into Moka until the analysis stage so
@@ -2492,7 +2521,7 @@ class RunfolderProcessor(object):
         queries = []
         workflows = []
         # loop through fastqs to see which workflows were used
-        for fastq in list_of_processed_samples:
+        for fastq in self.list_of_processed_samples:
             # take read one
             # example fastq names: ONC20085_08_EK20826_2025029_SWIFT57_Pan2684_S8_R2_001.fastq.gz and ONC20085_06_NTCcon1_SWIFT57_Pan2684_S6_R1_001.fastq.gz
             if "_R1_" in fastq:
@@ -2541,7 +2570,7 @@ class RunfolderProcessor(object):
         else:
             return None
 
-    def write_opms_queries_TSO500(self, list_of_processed_samples):
+    def write_opms_queries_TSO500(self):
         """
         Input = list of samples to be processed
         Samples tested using TSO500
@@ -2555,7 +2584,7 @@ class RunfolderProcessor(object):
         query = "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values ('{}','{}','{}','{}','{}')"
 
         # loop through fastqs to see which workflows were used
-        for sample in list_of_processed_samples:
+        for sample in self.list_of_processed_samples:
             # extract_Pan number
             pannumber = re.search(r"Pan\d+", sample).group()
             if self.panel_dictionary[pannumber]["TSO500"]:
@@ -2756,9 +2785,7 @@ class RunfolderProcessor(object):
             self.loggers.script.info("Samplesheet not copied to runfolder")
 
         # build backup_runfolder.py command for TSO run
-        TSO500_backup = self.check_for_TSO500()
-        # if not TSO500 will return None
-        if TSO500_backup:
+        if self.check_for_TSO500():
             cmd = (
                 "python3 "
                 + config.backup_runfolder_script

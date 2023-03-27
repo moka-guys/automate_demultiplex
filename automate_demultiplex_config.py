@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -176,34 +176,20 @@ tso500_docker_image = (
     "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 )
 
-# TSO500_output_parser app
-tso500_output_parser_app = (
-    "applet-GP0YXB00jy1kYKYp33yJZJ5B"  # Apps/tso500_output_parser_v1.2.1
-)
-# inputs for tso500_output_parser_app
-coverage_app_id = (
-    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G6vyyf00jy1kPkX9PJ1YkxB1"
-)
-fastqc_app_id = (
-    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-FBPFfkj0jy1Q114YGQ0yQX8Y"
+sambamba_app_id = (
+    "applet-G6vyyf00jy1kPkX9PJ1YkxB1"
 )
 sompy_app_id = (
-    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G9yPb780jy1p660k6yBvQg07"
+    "applet-G9yPb780jy1p660k6yBvQg07"
 )
-multiqc_app_id = (
-    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GPgbyk00jy1kpgvggbp12Vfg"
-)
-upload_multiqc_app_id = (
-    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-G2XY8QQ0p7kzvPZBJGFygP6f"
-)
-TSO500_output_parser_coverage_commands = "'-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s'"
+TSO500_coverage_commands = "-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true -iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s"
 
 # path to app which uploads multiqc report
 upload_multiqc_path = "Apps/upload_multiqc_v1.4.0"
 # RPKM path
 RPKM_path = "Apps/RPKM_using_conifer_v1.6"
 # FastQC app
-fastqc_app = "Apps/fastqc_v1.3"
+fastqc_app = "Apps/fastqc_v1.4.0"
 # bedfile folder
 bedfile_folder = "Data/BED/"
 # DNA Nexus organisation to create the project within
@@ -391,21 +377,7 @@ TSO500_docker_image_stage = " -iTSO500_ruo="
 TSO500_samplesheet_stage = " -isamplesheet="
 TSO500_analysis_options_stage = " -ianalysis_options="
 TSO500_project_name_stage = " -iproject_name="
-# TSO500 output parser stage ids
-TSO500_output_parser_project_name_stage = " -iproject_name="
-TSO500_output_parser_project_id_stage = " -iproject_id="
-TSO500_output_parser_job_id_stage = " -itso500_jobid="
-TSO500_output_parser_coverage_bedfile_id_stage = " -icoverage_bedfile_id="
-TSO500_output_parser_coverage_app_id_stage = " -icoverage_app_id="
-TSO500_output_parser_fastqc_app_id_stage = " -ifastqc_app_id="
-TSO500_output_parser_sompy_app_id_stage = " -isompy_app_id="
-TSO500_output_parser_multiqc_app_id_stage = " -imultiqc_app_id="
-TSO500_output_parser_upload_multiqc_app_id_stage = " -iupload_multiqc_app_id="
-TSO500_output_parser_coverage_commands_stage = " -icoverage_commands="
-TSO500_output_parser_coverage_level_stage = " -icoverage_level="
-TSO500_output_parser_multiqc_coverage_level_stage = (
-    " -imultiqc_coverage_level="
-)
+
 # app instance types
 TSO500_analysis_instance_high_throughput = "mem1_ssd1_v2_x72"
 TSO500_analysis_instance_low_throughput = "mem1_ssd1_v2_x36"
@@ -1665,12 +1637,12 @@ duty_csv_id = (
     "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GQG5kvQ0jy1YxB6Bq4KggVq5"
 )
 duty_csv_inputs = {
-    "tso_pannumbers": "-itso_pannumbers=Pan4969,Pan5085,Pan5114 ",
+    "tso_pannumbers": "-itso_pannumbers=Pan4969,Pan5085,Pan5114",
     "stg_pannumbers": (
         "-istg_pannumbers=Pan4042,Pan4043,Pan4044,Pan4049,Pan4821,Pan4822,"
         "Pan4823,Pan4824,Pan4825,Pan4816,Pan4817,Pan4818,Pan4819,Pan4820,"
         "Pan4826,Pan4827,Pan4828,Pan4829,Pan4830,Pan4831,Pan4832,Pan4833,"
-        "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014 "
+        "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014"
     ),
-    "cp_capture_pannos": "-icp_capture_pannos=Pan3614,Pan4399,Pan4362 ",
+    "cp_capture_pannos": "-icp_capture_pannos=Pan3614,Pan4399,Pan4362",
 }
