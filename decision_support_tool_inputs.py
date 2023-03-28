@@ -79,7 +79,10 @@ class DecisionTooler(object):
         # for each stage
         for stage in json_ob["stages"]:
             # check for app name
-            if stage["id"] == config.STAGE_IDS["mokapipe"]["senteion"]:
+            if (
+                stage["id"]
+                == config.NEXUS_IDS["STAGES"]["mokapipe"]["senteion"]
+            ):
                 return stage["execution"]["id"]
         return None
 
@@ -94,9 +97,12 @@ class DecisionTooler(object):
         jobid = None
         bamjobid = None
         for stage in json_ob["stages"]:
-            if stage["id"] == config.STAGE_IDS["mokapipe"]["filter_vcf"]:
+            if (
+                stage["id"]
+                == config.NEXUS_IDS["STAGES"]["mokapipe"]["filter_vcf"]
+            ):
                 jobid = stage["execution"]["id"]
-            elif stage["id"] == config.STAGE_IDS["mokapipe"]["gatk"]:
+            elif stage["id"] == config.NEXUS_IDS["STAGES"]["mokapipe"]["gatk"]:
                 bamjobid = stage["execution"]["id"]
         return jobid, bamjobid
 

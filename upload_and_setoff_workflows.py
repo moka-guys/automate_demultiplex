@@ -14,6 +14,7 @@ import ad_logger.ad_logger as ad_logger
 import panel_config
 from ad_email.ad_email import AdEmail
 from runfolder_obj.runfolder_obj import RunfolderObject
+import dxpy
 
 
 class SequencingRuns(list):
@@ -157,7 +158,6 @@ class RunfolderProcessor(object):
         # This is used as an object where various logs can be written
         self.loggers = ad_logger.AdLoggers(self.log_config)
 
-        # TODO swap this over to new email module
         self.email = AdEmail(
             email_priority=1, logger=self.loggers.upload_script
         )
@@ -540,6 +540,7 @@ class RunfolderProcessor(object):
             ).close()
         return sample_list
 
+    # TODO move this to the demultiplexing script
     def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
         Inputs = runfolder name and runfolder path
@@ -1544,7 +1545,7 @@ class RunfolderProcessor(object):
             config.DX_RUN_CMDS["tso500"],
             self.runfolder_obj.runfolder_name,
             config.APP_INPUTS["tso500"]["docker"],
-            config.FILE_IDS["tso500_docker"],
+            config.NEXUS_IDS["FILES"]["tso500_docker"],
             config.APP_INPUTS["tso500"]["samplesheet"],
             self.runfolder_obj.nexus_project_id
             + ":"
@@ -1712,7 +1713,8 @@ class RunfolderProcessor(object):
             # both vcf and gvcf
             fh_prs_cmd_string += (
                 f"{config.STAGE_INPUTS['mokapipe']['fhprs_skip']} "
-                f"--instance-type {config.STAGE_IDS['mokapipe']['gatk']}="
+                f"--instance-type "
+                f"{config.NEXUS_IDS['STAGES']['mokapipe']['gatk']}="
                 f"{config.STAGE_INPUTS['mokapipe']['fhprs_instance']}"
                 f"{config.STAGE_INPUTS['mokapipe']['gatk_vcf_format']}"
                 f"{config.MOKAPIPE_FH_GATK_TIMEOUT_ARGS}"
@@ -2336,14 +2338,14 @@ class RunfolderProcessor(object):
                     queries.append(
                         query,
                         str(fastq.split("_")[2]),
-                        config.WORKFLOW_IDS["mokapipe"],
+                        config.SQL_IDS["WORKFLOWS"]["mokapipe"],
                         self.runfolder_obj.runfolder_name,
                     )
                 elif self.panel_dictionary[pannumber]["pipeline"] == "mokacan":
                     queries.append(
                         query,
                         str(fastq.split("_")[2]),
-                        config.WORKFLOW_IDS["mokacan"],
+                        config.SQL_IDS["WORKFLOWS"]["mokacan"],
                         self.runfolder_obj.runfolder_name,
                     )
 
@@ -2383,13 +2385,13 @@ class RunfolderProcessor(object):
                 "count": len(dnanumbers),
                 "query": [
                     "update NGSTest set PipelineVersion = "
-                    + config.WORKFLOW_IDS["mokawes"]
+                    + config.SQL_IDS["WORKFLOWS"]["mokawes"]
                     + " , StatusID = "
-                    + config.WES_TEST_STATUS["data_processing"]
+                    + config.SQL_IDS["WES_TEST_STATUS"]["data_processing"]
                     + " where dna in ('"
                     + ("','").join(dnanumbers)
                     + "') and StatusID = "
-                    + config.WES_TEST_STATUS["nextseq_sequencing"]
+                    + config.SQL_IDS["WES_TEST_STATUS"]["nextseq_sequencing"]
                 ],
                 "samplename_email": samplenames,
             }
@@ -2425,7 +2427,7 @@ class RunfolderProcessor(object):
                     queries.append(
                         query,
                         str(fastq.split("_")[2]),
-                        config.WORKFLOW_IDS["mokasnp"],
+                        config.SQL_IDS["WORKFLOWS"]["mokasnp"],
                         self.runfolder_obj.runfolder_name,
                     )
         if queries:
@@ -2480,13 +2482,13 @@ class RunfolderProcessor(object):
                         id1,
                         id2,
                         self.runfolder_obj.runfolder_name,
-                        config.WORKFLOW_IDS["mokaamp"],
+                        config.SQL_IDS["WORKFLOWS"]["mokaamp"],
                         pannumber.replace("Pan", ""),
                     )
                     workflows.append(
-                        config.WORKFLOW_PATHS["mokaamp"].rsplit(
-                            "/", maxsplit=1
-                        )[-1]
+                        dxpy.describe(
+                            config.NEXUS_IDS["WORKFLOW_PATHS"]["mokaamp"]
+                        )["name"]
                     )
                 if self.panel_dictionary[pannumber]["pipeline"] == "archerdx":
                     queries.append(
@@ -2494,11 +2496,13 @@ class RunfolderProcessor(object):
                         id1,
                         id2,
                         self.runfolder_obj.runfolder_name,
-                        config.WORKFLOW_IDS["archerdx"],
+                        config.SQL_IDS["WORKFLOWS"]["archerdx"],
                         pannumber.replace("Pan", ""),
                     )
                     workflows.append(
-                        config.APP_PATHS["fastqc"].rsplit("/", maxsplit=1)[-1]
+                        dxpy.describe(
+                            config.NEXUS_IDS["WORKFLOW_PATHS"]["fastqc"]
+                        )["name"]
                     )
         if queries:  # If queries have been created return a dictionary
             # Use queries list to create a count of samples, return list of
@@ -2543,7 +2547,7 @@ class RunfolderProcessor(object):
                     id1,
                     id2,
                     self.runfolder_obj.runfolder_name,
-                    config.WORKFLOW_IDS["tso500"],
+                    config.SQL_IDS["WORKFLOWS"]["tso500"],
                     pannumber.replace("Pan", ""),
                 )
                 workflows.append(config.TSO500_APP_NAME)
@@ -2648,19 +2652,25 @@ class RunfolderProcessor(object):
         # for each pipeline take queries, sample count and workflow name
         if self.sql_queries["custom_panel"]:
             workflows.append(
-                config.WORKFLOW_PATHS["mokapipe"].rsplit("/", maxsplit=1)[-1]
+                dxpy.describe(config.NEXUS_IDS["WORKFLOW_PATHS"]["mokapipe"])[
+                    "name"
+                ]
             )
             sql_statements += self.sql_queries["custom_panel"]["query"]
             count += self.sql_queries["custom_panel"]["count"]
         if self.sql_queries["mokawes"]:
             workflows.append(
-                config.WORKFLOW_PATHS["mokawes"].rsplit("/", maxsplit=1)[-1]
+                dxpy.describe(config.NEXUS_IDS["WORKFLOW_PATHS"]["mokawes"])[
+                    "name"
+                ]
             )
             sql_statements += self.sql_queries["mokawes"]["query"]
             count += self.sql_queries["mokawes"]["count"]
         if self.sql_queries["mokasnp"]:
             workflows.append(
-                config.WORKFLOW_PATHS["mokasnp"].rsplit("/", maxsplit=1)[-1]
+                dxpy.describe(config.NEXUS_IDS["WORKFLOW_PATHS"]["mokasnp"])[
+                    "name"
+                ]
             )
             sql_statements += self.sql_queries["mokasnp"]["query"]
             count += self.sql_queries["mokasnp"]["count"]
@@ -2701,7 +2711,9 @@ class RunfolderProcessor(object):
             email_msg = sql_email_msg, (
                 config.EMAIL_HEADER,
                 self.runfolder_obj.runfolder_name,
-                config.WORKFLOW_PATHS["mokawes"].rsplit("/", maxsplit=1)[-1],
+                dxpy.describe(config.NEXUS_IDS["WORKFLOW_PATHS"]["mokawes"])[
+                    "name"
+                ],
                 sql_str,
                 "\n".join(self.sql_queries["mokawes"]["samplename_email"]),
             )
