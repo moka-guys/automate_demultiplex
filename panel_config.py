@@ -34,9 +34,6 @@ MASKED_REFERENCE = f"{ad_config.TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q"
 # numbers do not necessarily refer to bed files but rather project
 # configuration (e.g. DNAnexus instances, project layout etc.)
 
-
-# TODO add StG true / false dict item to be used to suppy stg pan number inputs
-# into the duty_csv app
 # TODO use **dict.fromkeys( to reduce duplication between configuration
 PANEL_DICT = {
     "Pan4009": {  # MokaSNP
@@ -145,7 +142,7 @@ PANEL_DICT = {
             "pipeline": "archerdx",
             "capture_type": "Hybridisation",
             "clinical_coverage_depth": False,
-            "multiqc_coverage_level": None,  # TODO check if this is correct
+            "multiqc_coverage_level": None,  # As we don't align for Archer
             "congenica_project": False,
             "congenica_credentials": False,
             "FH": False,
@@ -252,7 +249,7 @@ PANEL_DICT = {
         "panel_name": "vcp2_somatic",
         "pipeline": "mokacan",
         "capture_type": "Hybridisation",
-        "multiqc_coverage_level": 30,  # TODO check if this is correct
+        "multiqc_coverage_level": 30,
         "variant_calling_bedfile": "Pan4578data.bed",
         "hsmetrics_bedfile": "Pan4949data.bed",
         "clinical_coverage_depth": 200,
@@ -271,7 +268,7 @@ PANEL_DICT = {
         "panel_name": "vcp2_somatic",
         "pipeline": "mokacan",
         "capture_type": "Hybridisation",
-        "multiqc_coverage_level": 30,  # TODO check if this is correct
+        "multiqc_coverage_level": 30,
         "variant_calling_bedfile": "Pan4577data.bed",
         "hsmetrics_bedfile": "Pan4949data.bed",
         "clinical_coverage_depth": 200,
@@ -1529,8 +1526,8 @@ PANEL_DICT = {
         "clinical_coverage_depth": False,
         "multiqc_coverage_level": 30,
         "capture_type": "Amplicon",
-        "congenica_IR_template": "non-priority",  # TODO
-        "congenica_project": "9547",  # TODO
+        "congenica_IR_template": "non-priority",
+        "congenica_project": "9547",
         "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
         "variant_calling_bedfile": "Pan4971data.bed",
         "sambamba_bedfile": "Pan5018dataSambamba.bed",
