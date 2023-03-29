@@ -1494,7 +1494,7 @@ class RunfolderProcessor(object):
             commands_list.append(self.create_tso500_command())
             commands_list.append(self.add_to_depends_list("TSO500"))
             for sample in self.list_of_processed_samples:
-                pannumber = re.search(r"Pan\d+", fastq).group()
+                pannumber = re.search(r"Pan\d+", sample).group()
                 commands_list.append(
                     self.create_fastqc_command(sample, pannumber)
                 )
