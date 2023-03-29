@@ -125,13 +125,13 @@ mokawes_pipeline_ID = "5078"
 # MokaAMP ID
 mokaamp_pipeline_ID = "4851"
 # Archer ID
-archerDx_pipeline_ID = "4562"
+archerDx_pipeline_ID = "5238"
 # MokaSNP ID
 mokasnp_pipeline_ID = "5091"
 # mokacan pipeline ID
 mokacan_pipeline_ID = "4728"
 # TSO500 pipeline ID
-TSO_pipeline_ID = "5234"
+TSO_pipeline_ID = "5237"
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -436,6 +436,9 @@ congenica_samplename = " -ianalysis_name="
 # Panels for WES (analysed in Congenica), SWIFT and TSO500 (analysed in QCII), and ArcherDX (analysed in Archer
 # software), are applied at the point of analysis, so R and M numbers for these are not listed below. These pan numbers
 # do not necessarily refer to bed files but rather project configuration (e.g. DNAnexus instances, project layout etc.)
+
+# If the tso pan numbers, stg pan numbers or custom panels whole capture pan
+# numbers change, these must be updated in the duty_csv_inputs config
 
 panel_list = [
     "Pan4009",  # MokaSNP
@@ -1637,6 +1640,7 @@ duty_csv_id = (
     "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GQG5kvQ0jy1YxB6Bq4KggVq5"
 )
 duty_csv_inputs = {
+    # tso_pannumbers should not include the dry lab pan number
     "tso_pannumbers": "-itso_pannumbers=Pan4969,Pan5085,Pan5114",
     "stg_pannumbers": (
         "-istg_pannumbers=Pan4042,Pan4043,Pan4044,Pan4049,Pan4821,Pan4822,"
