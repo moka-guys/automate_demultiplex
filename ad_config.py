@@ -97,7 +97,15 @@ UPLOAD_SCRIPT_LOGFILE = os.path.join(
     "%s_upload_and_setoff_workflow.log",
 )
 BCL2FASTQ = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
-
+#  N.B. n--no-lane-splitting creates a single fastq for a sample,
+# not into one fastq per lane)
+BCL2FASTQ_CMD = f"{BCL2FASTQ} -R %s --sample-sheet %s --no-lane-splitting"
+# Shell command to run cluster density calculation
+CD_CMD = (
+    "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 "
+    "./gatk CollectIlluminaLaneMetrics --RUN_DIRECTORY /input_run "
+    "--OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
+)
 
 # TODO move these back to their own variables
 PATHS = {
@@ -206,7 +214,7 @@ UPLOAD_AGENT_EXPECTED_STDOUT = (
 
 STRINGS = {
     "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
-    "cd_err": "PicardException",
+    "cd_err": "Exception",
 }
 
 DEMULTIPLEXLOG_TSO500MSG = "TSO500 run. Does not need demultiplexing locally"
@@ -334,6 +342,14 @@ LOG_MSGS = {
             "ERROR - BCL2FASTQ2 logfile does not exist for "
             "run %s. Please see logfile "
         ),
+        "running_cd": (
+            "Running the following command for cluster density calculation: %s"
+        ),
+        "cd_success": (
+            "Cluster density calculation saved to "
+            f"%s{CLUSTER_DENSITY_FILE_SUFFIX}"
+        ),
+        "cd_fail": ("Cluster density calculation failed for : %s. Error: %s"),
     },
 }
 

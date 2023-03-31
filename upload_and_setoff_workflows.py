@@ -208,10 +208,6 @@ class RunfolderProcessor(object):
 
         # Check if already uploaded and demultiplexing finished sucessfully
         if not self.already_uploaded() and self.has_demultiplexed():
-            self.calculate_cluster_density(
-                self.runfolder_obj.runfolderpath,
-                self.runfolder_obj.runfolder_name,
-            )
             # tso500 run is not demultiplexed locally - entire runfolder is
             # uploaded
             # Read samplesheet to create a list of samples
@@ -407,12 +403,6 @@ class RunfolderProcessor(object):
         ):  # False if expected string NOT in last line of log file
             if not re.search(config.DEMULTIPLEX_SUCCESS_REGEX, test_input):
                 return False
-        if test == "cluster_density":
-            if (
-                config.STRINGS["cd_success"] not in test_input
-                or config.STRINGS["cd_err"] in test_input
-            ):
-                return False
         return True
 
     def test_dx_toolkit(self, test_result):
@@ -539,51 +529,6 @@ class RunfolderProcessor(object):
                 self.loggers.upload_agent.filepath, "w", encoding="utf-8"
             ).close()
         return sample_list
-
-    # TODO move this to the demultiplexing script
-    def calculate_cluster_density(self, runfolder_path, runfolder_name):
-        """
-        Inputs = runfolder name and runfolder path
-        Uses a dockerised version of GATK to run picard
-        CollectIlluminaLaneMetrics
-        This calculates cluster density and saves files
-        (runfolder.illumina_phasing_metrics and
-        runfolder.illumina_lane_metrics) to the runfolder
-        If success statement seen in stderr record in log file else raise
-        slack alert but do not stop run.
-        Returns = None
-        """
-        # If novaseq need to give an extra flag to CollectIlluminaLaneMetrics
-        if config.NOVASEQ_ID in runfolder_name:
-            novaseq_flag = " --IS_NOVASEQ"
-        else:
-            novaseq_flag = ""
-
-        # docker command for tool
-        cmd = (
-            f"sudo docker run --rm -v {runfolder_path}:/input_run "
-            "broadinstitute/gatk:4.1.8.1 "
-            "./gatk CollectIlluminaLaneMetrics "
-            "--RUN_DIRECTORY /input_run "
-            "--OUTPUT_DIRECTORY /input_run"
-            f"--OUTPUT_PREFIX {runfolder_name} {novaseq_flag}"
-        )
-
-        # capture stdout and stderr. NB all output from picard tool is in
-        # stderr
-        (_, err) = self.execute_subprocess_command(cmd)
-        # assess stderr , looking for expected success statement
-        if self.perform_test(err, "cluster_density"):
-            self.loggers.upload_script.info(
-                "Cluster density calculation saved to %s",
-                runfolder_name + config.CLUSTER_DENSITY_FILE_SUFFIX,
-            )
-        # raise slack alert if success statement not present.
-        else:
-            self.loggers.upload_script.error(
-                "UA_fail 'Cluster density calculation failed for : %s'",
-                self.runfolder_obj.runfolder_name,
-            )
 
     def find_fastqs(self, runfolder_fastq_path):
         """
