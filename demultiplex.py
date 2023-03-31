@@ -296,13 +296,15 @@ class DemultiplexRunfolder(object):
         ]
         self.run_processed = False
 
-        # Shell command to run demultiplexing. Appends stdout and stderr to
-        # the bcl2fastqlog file. (N.B. n--no-lane-splitting creates a single
-        # fastq for a sample, not into one fastq per lane)
-        self.bcl2fastq_cmd = (
-            f"{config.BCL2FASTQ} -R {self.rf_obj.runfolderpath} "
-            "--sample-sheet {self.rf_obj} --no-lane-splitting >> "
-            f"{self.rf_obj.bcl2fastqlog_path} 2>&1"
+        # Shell command to run demultiplexing
+        self.bcl2fastq_cmd = config.BCL2FASTQ_CMD % (
+            self.rf_obj.runfolderpath,
+            self.rf_obj.samplesheet_path,
+        )
+        # Shell command to run cluster density calculation
+        self.cluster_density_cmd = config.CD_CMD % (
+            self.rf_obj.runfolderpath,
+            self.rf_obj.runfolder_name,
         )
 
     def setoff_workflow(self):
@@ -311,7 +313,16 @@ class DemultiplexRunfolder(object):
         is required
         """
         if self.demultiplexing_required():
-            return self.run_demultiplexing()
+            self.loggers.demultiplex.info(
+                "Demux required pass",
+                extra={"flag": config.LOG_FLAGS["info"]},
+            )
+            if self.run_demultiplexing() and self.calculate_cluster_density():
+                self.loggers.demultiplex.info(
+                    "Others pass",
+                    extra={"flag": config.LOG_FLAGS["info"]},
+                )
+                return True
 
     def demultiplexing_required(self):
         """
@@ -341,6 +352,7 @@ class DemultiplexRunfolder(object):
                                 sscheck_obj.tso
                             ):  # TSO500 runs do not require demultiplexing
                                 self.add_bcl2fastqlog_tso_msg()
+                                self.calculate_cluster_density()
                             else:
                                 return True
 
@@ -487,10 +499,11 @@ class DemultiplexRunfolder(object):
             return True
 
     def checksum_complete_msg_absent(self):
-        """Check for absence of config.checksum_complete_msg string in
-        checksum file. This string is the last line in the file, so last
-        element in list when file is read. Absence of this string denotes that
-        an integrity check has not yet been performed
+        """
+        Check for absence of config.checksum_complete_msg string in checksum
+        file. This string is the last line in the file, so last element in the
+        list when the file is read. Absence of this string denotes that an
+        integrity check has not yet been performed
         """
         with open(
             self.rf_obj.checksumfile_path, "r", encoding="utf-8"
@@ -619,13 +632,29 @@ class DemultiplexRunfolder(object):
                 extra={"flag": config.LOG_FLAGS["info"]},
             )
             # Runs bcl2fastq2 and checks if completed successfully
-            if self.run_subprocess(self.bcl2fastq_cmd):
+            bcl2fastq_out = self.run_subprocess(self.bcl2fastq_cmd)
+            self.loggers.demultiplex.info(
+                bcl2fastq_out.returncode,
+                extra={"flag": config.LOG_FLAGS["info"]},
+            )
+            if bcl2fastq_out.returncode == 0:
                 self.loggers.demultiplex.info(
                     config.LOG_MSGS["demultiplex"]["bcl2fastq_complete"],
                     self.rf_obj.runfolder_name,
                     extra={"flag": config.LOG_FLAGS["success"]},
                 )
+                with open(
+                    self.rf_obj.bcl2fastqlog_path, "w", encoding="UTF-8"
+                ) as bcl2fastqlogfile:
+                    bcl2fastqlogfile.write(
+                        bcl2fastq_out.stdout.decode(encoding="UTF-8")
+                    )
+                    bcl2fastqlogfile.write(
+                        bcl2fastq_out.stderr.decode(encoding="UTF-8")
+                    )
                 self.check_bcl2fastqlogfile()  # Check for success statement
+                # TODO investigate whether the above is written correctly and
+                # in correct order
                 self.run_processed = True
                 return True
             else:
@@ -635,17 +664,29 @@ class DemultiplexRunfolder(object):
                     extra={"flag": config.LOG_FLAGS["fail"]},
                 )
 
-    # TODO add capturing errors
-    @staticmethod
-    def run_subprocess(cmd):
-        """Takes a string command as input and runs this as a subprocess"""
-        return (
-            subprocess.call([cmd], shell=True) == 0
-        )  # Wait until subprocess completes
+    def run_subprocess(self, cmd):
+        """
+        Takes a string command as input and runs this as a subprocess
+        """
+        completedprocess = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            shell=True,
+        )
+        self.loggers.demultiplex.info(
+            "STDOUT"
+            + completedprocess.stdout.decode(encoding="UTF-8")
+            + "STDERR"
+            + completedprocess.stderr.decode(encoding="UTF-8"),
+            extra={"flag": config.LOG_FLAGS["info"]},
+        )
+        return completedprocess
 
     def check_bcl2fastqlogfile(self):
-        """Read last x lines of bcl2fastqlog logfile and search for success
-        statement
+        """
+        Read last x lines of bcl2fastqlog logfile, search for success statement
         The last 10 lines of the demultiplex logfile detail the success of the
         bcl2fastq2 command. If success statement not present, report last few
         lines to demultiplex log
@@ -655,6 +696,12 @@ class DemultiplexRunfolder(object):
                 self.rf_obj.bcl2fastqlog_path, "r", encoding="utf-8"
             ) as logfile:
                 bcl2fastq2_log_tail = "".join(logfile.readlines()[-10:])
+
+                self.loggers.demultiplex.info(
+                    "TAIL: " + bcl2fastq2_log_tail,
+                    extra={"flag": config.LOG_FLAGS["info"]},
+                )
+
             if bcl2fastq2_log_tail:
                 if re.search(
                     config.DEMULTIPLEX_SUCCESS_REGEX, str(bcl2fastq2_log_tail)
@@ -683,6 +730,58 @@ class DemultiplexRunfolder(object):
             self.loggers.demultiplex.error(
                 config.LOG_MSGS["demultiplex"]["bcl2fastqlog_absent"],
                 self.rf_obj.runfolder_name,
+                extra={"flag": config.LOG_FLAGS["fail"]},
+            )
+
+    # TODO improve this
+    def calculate_cluster_density(self):
+        """
+        Run dockerised GATK to run Picard CollectIlluminaLaneMetrics - this
+        calculates cluster density and saves files
+        (runfolder.illumina_phasing_metrics and
+        runfolder.illumina_lane_metrics) to the runfolder. If the success
+        statement is seen in the stderr, record in the log file else raise
+        slack alert but don't stop the run
+            :return True|None:  True if success statement seen
+        """
+
+        # If novaseq need to give an extra flag to CollectIlluminaLaneMetrics
+        if config.NOVASEQ_ID in self.rf_obj.runfolder_name:
+            novaseq_flag = " --IS_NOVASEQ"
+        else:
+            novaseq_flag = ""
+
+        self.cluster_density_cmd = self.cluster_density_cmd + novaseq_flag
+
+        self.loggers.demultiplex.info(
+            config.LOG_MSGS["demultiplex"]["running_cd"],
+            self.cluster_density_cmd,
+            extra={"flag": config.LOG_FLAGS["info"]},
+        )
+        clusterdensity_out = self.run_subprocess(self.cluster_density_cmd)
+
+        if clusterdensity_out.returncode == 0:
+            # Assess stderr , looking for expected success statement
+            if config.STRINGS[
+                "cd_success"
+            ] in clusterdensity_out.stderr.decode(
+                encoding="UTF-8"
+            ) or config.STRINGS[
+                "cd_err"
+            ] not in clusterdensity_out.stderr.decode(
+                encoding="UTF-8"
+            ):
+                self.loggers.demultiplex.info(
+                    config.LOG_MSGS["demultiplex"]["cd_success"],
+                    self.rf_obj.runfolder_name,
+                    extra={"flag": config.LOG_FLAGS["info"]},
+                )
+                return True
+        else:  # Raise slack alert
+            self.loggers.demultiplex.error(
+                config.LOG_MSGS["demultiplex"]["cd_fail"],
+                self.rf_obj.runfolder_name,
+                clusterdensity_out.stderr,
                 extra={"flag": config.LOG_FLAGS["fail"]},
             )
 
