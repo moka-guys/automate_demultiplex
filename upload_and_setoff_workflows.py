@@ -1488,6 +1488,7 @@ class RunfolderProcessor(object):
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause problems
             commands_list.append(self.run_peddy_command())
+            commands_list.append(self.add_to_depends_list("peddy"))
 
         if TSO500:
             # build command for the TSO500 app
