@@ -1,4 +1,5 @@
 pytest-lazy-fixture==0.6.3
 wheel==0.38.4
 pytest==7.2.1
-git+https://github.com/moka-guys/seglh-naming@v1.0.3
+git+https://github.com/moka-guys/seglh-naming@v1.0.4
+dxpy==0.338.1
