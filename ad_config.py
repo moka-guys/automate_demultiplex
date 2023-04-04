@@ -26,7 +26,7 @@ AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
 
 # TSO500 runfolder is used for testing both demultiplexing and usw script
 DEMULTIPLEX_TEST_RUNFOLDERS = [
-    "999999_A01229_0496_DEMUXINTEG",
+    "999999_NB552085_0496_DEMUXINTEG",
     "999999_M02353_0496_000000000-DEMUX",
     "999999_A01229_0049_AHMKTSO500",
 ]
@@ -35,7 +35,7 @@ DEMULTIPLEX_TEST_RUNFOLDERS = [
 if not TESTING:
     RUNFOLDERS = "/media/data3/share"
     # Folder containing demultiplex logs
-    DEMULTIPLEX_LOGPATH = os.path.join(RUNFOLDERS, "Demultiplexing_log_files/")
+    DEMULTIPLEX_LOGPATH = os.path.join(AD_LOGDIR, "Demultiplexing_log_files/")
     LOGGING_FORMATTER = (
         "%(asctime)s - %(name)s - %(flag)s - %(levelname)s - %(message)s"
     )
@@ -49,8 +49,7 @@ if not TESTING:
 else:
     RUNFOLDERS = "/media/data3/share/testing"
     # Folder containing demultiplex logs
-    DEMULTIPLEX_LOGPATH = os.path.join(AD_LOGDIR, "Demultiplexing_log_files/")
-
+    DEMULTIPLEX_LOGPATH = os.path.join(RUNFOLDERS, "Demultiplexing_log_files/")
     LOGGING_FORMATTER = (
         "%(asctime)s - TEST MODE - %(name)s - %(flag)s - "
         "%(levelname)s - %(message)s"
@@ -97,7 +96,7 @@ UPLOAD_SCRIPT_LOGFILE = os.path.join(
     "%s_upload_and_setoff_workflow.log",
 )
 BCL2FASTQ = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
-#  N.B. n--no-lane-splitting creates a single fastq for a sample,
+# N.B. n--no-lane-splitting creates a single fastq for a sample,
 # not into one fastq per lane)
 BCL2FASTQ_CMD = f"{BCL2FASTQ} -R %s --sample-sheet %s --no-lane-splitting"
 # Shell command to run cluster density calculation
@@ -159,8 +158,8 @@ SMTP_DO_TLS = True
 MOKAGUYS_EMAIL = "gst-tr.mokaguys@nhs.net"
 MOKA_ALERTS_EMAIL = "moka.alerts@gstt.nhs.uk"
 
-# Test settings
-if TESTING:
+
+if TESTING:  # Test settings
     SQL_EMAIL_SUBJ = "SQL ALERT: TESTING - PLEASE IGNORE THIS EMAIL"
     SQL_EMAIL_MSG = "%s being processed using workflow(s) %s\n\n%s\n%s\n"
     MOKAGUYS_RECIPIENT = "mokaguys@gmail.com"
@@ -168,8 +167,7 @@ if TESTING:
     ONCOLOGY_OPS_EMAIL = MOKAGUYS_EMAIL
     WES_SAMPLENAME_EMAILLIST = [MOKAGUYS_EMAIL]
 
-# Production settings
-else:
+else:  # Production settings
     SQL_EMAIL_SUBJ = "SQL ALERT: Started pipeline for %s"
     SQL_EMAIL_MSG = (
         "%s being processed using workflow(s) %s\n\nPlease update Moka using "
@@ -272,6 +270,12 @@ LOG_MSGS = {
         "rename_demuxlog_pass": (
             "Demultiplex logfile rename passed for file %s. Now %s"
         ),
+        "demultiplexing_required": (
+            "Demultiplexing is required for this runfolder"
+        ),
+        "processing_complete": (
+            "Processing is complete for this runfolder"
+        ),
         "demux_runfolder_start": (
             "Automate_demultiplex release: %s -------------- Assessing %s"
         ),
@@ -329,6 +333,12 @@ LOG_MSGS = {
             "TSO500 message successfully written to "
             "bcl2fastq2_output.log file for TSO run: %s"
         ),
+        "subprocess_success": (
+            "Subprocess successful for command %s with error code %s"
+            ),
+        "subprocess_fail": (
+            "ERROR - Subprocess failed for command %s with error code %s"
+            ),
         "demux_complete": "Demultiplexing complete without error for run %s",
         "demux_error": (
             "ERROR - DEMULTIPLEXING UNSUCCESSFUL (BCL2FastQ2 ERROR) "

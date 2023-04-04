@@ -193,7 +193,7 @@ class TestGetRunfolders(object):
         """
         gr_obj = demultiplex.GetRunfolders()
         old_logfile_name = gr_obj.log_config["demultiplex"]
-        new_logfile_name = f"{old_logfile_name}_addedtext"
+        new_logfile_name = f"/nonexistent/path/{old_logfile_name}_addedtext"
         assert not gr_obj.rename_demultiplex_logfile(new_logfile_name)
         assert not os.path.exists(new_logfile_name)
         with open(
@@ -264,7 +264,8 @@ class TestDemultiplexRunfolder(object):
         return [
             os.path.join(
                 os.getcwd(),
-                "/test/samplesheets/210513_M02631_0236_000000000-JFMNK_SampleSheet.csv",
+                ("/test/samplesheets/"
+                "210513_M02631_0236_000000000-JFMNK_SampleSheet.csv"),
             )
         ]
 
@@ -275,7 +276,8 @@ class TestDemultiplexRunfolder(object):
         """
         return os.path.join(
             os.getcwd(),
-            "test/samplesheets/210408_M02631_0186_000000000-JFMNK_SampleSheet.csv",
+            ("test/samplesheets/"
+            "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv"),
         )
 
     @pytest.fixture(scope="function")
@@ -497,8 +499,6 @@ class TestDemultiplexRunfolder(object):
             assert not demultiplex.DemultiplexRunfolder(
                 folder_name
             ).demultiplexing_required()
-
-    # TODO add test for calculate_cluster_density()
 
     def test_bcl2fastqlog_absent_false(self, rf_with_bcl2fastqlog):
         """

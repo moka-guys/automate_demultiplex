@@ -1,9 +1,10 @@
 # coding=utf-8
-""" Automate demultiplex logging.
+"""
+Automate demultiplex logging.
 
-Currently only the 'script", 'upload_agent' and 'backup' logfiles are configured to be writeable to
-by this script. These logfiles are written to by the upload and setoff workflows script.
-
+Currently only the 'script", 'upload_agent' and 'backup' logfiles are
+configured to be writeable to by this script. These logfiles are written to by
+the upload and setoff workflows script.
 
         self.script = self._get_ad_logger('automate_demultiplex", script)
         self.upload_agent = self._get_ad_logger('upload_agent", upload_agent)
@@ -20,8 +21,9 @@ import ad_config as config
 def get_log_config(timestamp, rf_obj=None):
     """Return an ADLogger config for a runfolder.
     Args:
-        timestamp(str): Timestamp as str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
-        rf_obj: A runfolder object with the following attributes:
+        timestamp(str): Timestamp as 
+                        str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
+        rf_obj:         A runfolder object with the following attributes:
                         runfolder_name runfolderpath
 
     Returns:
@@ -32,13 +34,14 @@ def get_log_config(timestamp, rf_obj=None):
         config.DEMULTIPLEX_LOGPATH, f"{timestamp}.txt"
     )
 
-    # Configuration for ADLoggers.
-    # Dictionary where keys are ADLoggers.__init__ arguments and values are logfile paths.
+    # Configuration for ADLoggers. Dictionary where keys are ADLoggers.__init__
+    # arguments and values are logfile paths.
     if rf_obj:
-        # Find the demultiplex logfile for the runfolder.
-        # Logfile name contains demultiplex timestamp which is unknown at this point.
-        # Search for any demultiplex logfiles matching the runfodler name and return the first.
-        # If none exist, get the logfile from before it is renamed with processed runfolders
+        # Find the demultiplex logfile for the runfolder. Logfile name contains
+        # demultiplex timestamp which is unknown at this point. Search for any
+        # demultiplex logfiles matching the runfodler name and return the first
+        # If none exist, get the logfile from before it is renamed with
+        # processed runfolders
         any_demultiplex_logs = [
             os.path.join(config.DEMULTIPLEX_LOGPATH, filename)
             for filename in os.listdir(config.DEMULTIPLEX_LOGPATH)
@@ -66,19 +69,24 @@ def get_log_config(timestamp, rf_obj=None):
 
 
 class AdLoggers(object):
-    """Access runfolder-associated logfiles, which are also uploaded to DNAnexus as part of the
-    automate demultiplex scripts. (upload_agent file is not uploaded because it is being written
-    to as the upload is taking place)
+    """
+    Access runfolder-associated logfiles, which are also uploaded to DNAnexus
+    as part of the automate demultiplex scripts. (upload_agent file is not
+    uploaded because it is being written to as the upload is taking place)
 
     Args:
-        demultiplex(str): Path to logfile of decisions made during demultiplexing script
-                          *projname*_demultiplex_script_log.txt
-        upload_agent(str): Upload agent logfile. Stores Logs relating to runfolder upload.
-                           *runfolderpath*/DNANexus_upload_started.txt
-        backup(str): Path to logfile for runfolder backup. *projname*_backup_runfolder.log
-        project(str): Path to DNAnexus project creation bash script
-                      create_nexus_project_*projname*.sh
-        dx_run(str): Path to dx run commands. *projname*_dx_run_commands.sh
+        demultiplex(str):   Path to logfile of decisions made during
+                            demultiplexing script 
+                            *projname*_demultiplex_script_log.txt
+        upload_agent(str):  Upload agent logfile. Stores Logs relating to
+                            runfolder upload. 
+                            *runfolderpath*/DNANexus_upload_started.txt
+        backup(str):        Path to logfile for runfolder backup.
+                            *projname*_backup_runfolder.log
+        project(str):       Path to DNAnexus project creation bash script
+                            create_nexus_project_*projname*.sh
+        dx_run(str):        Path to dx run commands.
+                            *projname*_dx_run_commands.sh
         upload_script(str): upload_and_setoff_workflows script logfile.
                             *projname*_upload_and_setoff_workflow.log
     """
@@ -103,14 +111,13 @@ class AdLoggers(object):
 
     def shutdown_logs(self):
         """
-        To prevent duplicate filehandlers and system handlers close and remove all handlers
-        for all log files that have a python logging object
+        To prevent duplicate filehandlers and system handlers close and remove
+        all handlers for all log files that have a python logging object
         """
         for logger in self.all_loggers:
             for handler in logger.handlers[:]:
                 logger.removeHandler(handler)
                 handler.close()
-            print(logger.handlers)
 
     def _get_file_handler(self, filepath):
         file_handler = logging.FileHandler(filepath, mode="a", delay=True)
@@ -131,7 +138,8 @@ class AdLoggers(object):
         return stream_handler
 
     def _get_logger(self, name, filepath):
-        """Returns a Python logging object
+        """
+        Returns a Python logging object
 
         Args:
             name(str): Logger name
