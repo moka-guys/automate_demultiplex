@@ -49,6 +49,18 @@ import panel_config
 from runfolder_obj.runfolder_obj import RunfolderObject
 
 
+
+timestamp = f"{datetime.datetime.now():%Y%m%d_%H%M%S}"
+# Call the function which populates a dictionary with the script
+# logfile for this hour's cron job
+log_config = ad_logger.get_log_config(timestamp)
+
+# Pass the log_config dictionary into ADloggers class
+# This is used as an object where various logs can be written
+loggers = ad_logger.AdLoggers(log_config)
+
+# TODO fix multiple logger instances
+
 # TODO merge this with the SequencingRuns class in usw
 class GetRunfolders(object):
     """
@@ -83,16 +95,8 @@ class GetRunfolders(object):
             self.runfolder_names = config.DEMULTIPLEX_TEST_RUNFOLDERS
         else:
             self.runfolder_names = os.listdir(self.runfolders_path)
-
-        self.timestamp = f"{datetime.datetime.now():%Y%m%d_%H%M%S}"
-
-        # Call the function which populates a dictionary with the script
-        # logfile for this hour's cron job
-        self.log_config = ad_logger.get_log_config(self.timestamp)
-
-        # Pass the log_config dictionary into ADloggers class
-        # This is used as an object where various logs can be written
-        self.loggers = ad_logger.AdLoggers(self.log_config)
+        self.log_config = log_config
+        self.loggers = loggers
         # This has to be a class attribute for pytest purposes
         self.bcl2fastq_path = config.BCL2FASTQ
 
@@ -126,7 +130,7 @@ class GetRunfolders(object):
                 if demultiplex_obj.run_processed:
                     # Add runfolder to processed runfolder list
                     processed_runfolders.append(folder_name)
-
+                
         new_logfilename = self.get_new_logfilename(processed_runfolders)
         if new_logfilename:
             self.rename_demultiplex_logfile(new_logfilename)
@@ -136,7 +140,6 @@ class GetRunfolders(object):
             git_tag(),
             extra={"flag": "demultiplex_complete"},
         )
-        self.loggers.shutdown_logs()
         return processed_runfolders
 
     def bcl2fastq_installed(self):
@@ -211,10 +214,9 @@ class GetRunfolders(object):
         Assign new logfile to class attribute, and create new adlogger instance
         """
         self.loggers.shutdown_logs()  # Shutdown the old logger
-        self.log_config["demultiplex"] = new_demultiplex_logfile
-        self.loggers = ad_logger.AdLoggers(
-            self.log_config
-        )  # Get logger for renamed file
+        log_config["demultiplex"] = new_demultiplex_logfile
+        # Get logger for renamed file
+        self.loggers = ad_logger.AdLoggers(log_config)  
 
 
 class DemultiplexRunfolder(object):
@@ -274,17 +276,17 @@ class DemultiplexRunfolder(object):
     """
 
     def __init__(self, folder_name):
-        self.timestamp = f"{datetime.datetime.now():%Y%m%d_%H%M%S}"
+        self.timestamp = timestamp
 
         # Runfolder object containing runfolder-specific attributes
         self.rf_obj = RunfolderObject(str(folder_name))
         # Call the function which populates a dictionary with the script
         # logfile for this hour's cron job
-        self.log_config = ad_logger.get_log_config(self.timestamp)
+        self.log_config = log_config
 
         # Pass the log_config dictionary into ADloggers class
         # This is used as an object where various logs can be written
-        self.loggers = ad_logger.AdLoggers(self.log_config)
+        self.loggers = loggers
 
         # Samplesheet
         self.disallowed_sserrs = [
@@ -314,12 +316,12 @@ class DemultiplexRunfolder(object):
         """
         if self.demultiplexing_required():
             self.loggers.demultiplex.info(
-                "Demux required pass",
+                config.LOG_MSGS["demultiplex"]["demultiplexing_required"],
                 extra={"flag": config.LOG_FLAGS["info"]},
             )
             if self.run_demultiplexing() and self.calculate_cluster_density():
                 self.loggers.demultiplex.info(
-                    "Others pass",
+                    config.LOG_MSGS["demultiplex"]["processing_complete"],
                     extra={"flag": config.LOG_FLAGS["info"]},
                 )
                 return True
@@ -495,7 +497,6 @@ class DemultiplexRunfolder(object):
                 config.LOG_MSGS["demultiplex"]["csumfile_present"],
                 extra={"flag": config.LOG_FLAGS["info"]},
             )
-            print("present")
             return True
 
     def checksum_complete_msg_absent(self):
@@ -675,13 +676,26 @@ class DemultiplexRunfolder(object):
             check=False,
             shell=True,
         )
-        self.loggers.demultiplex.info(
-            "STDOUT"
-            + completedprocess.stdout.decode(encoding="UTF-8")
-            + "STDERR"
-            + completedprocess.stderr.decode(encoding="UTF-8"),
-            extra={"flag": config.LOG_FLAGS["info"]},
+        if completedprocess.returncode == 0:
+            self.loggers.demultiplex.info(
+                config.LOG_MSGS["demultiplex"]["subprocess_success"],
+                cmd,
+                completedprocess.returncode,
+                extra={"flag": config.LOG_FLAGS["info"]},
+            )
+        else:
+            self.loggers.demultiplex.error(
+                config.LOG_MSGS["demultiplex"]["subprocess_fail"],
+                cmd,
+                completedprocess.returncode,
+                extra={"flag": config.LOG_FLAGS["info"]},
         )
+        for line in completedprocess.stderr.decode("utf-8").split("\r\n"):
+            self.loggers.demultiplex.info(
+                line,
+                extra={"flag": config.LOG_FLAGS["info"]}
+                )
+
         return completedprocess
 
     def check_bcl2fastqlogfile(self):
@@ -696,11 +710,6 @@ class DemultiplexRunfolder(object):
                 self.rf_obj.bcl2fastqlog_path, "r", encoding="utf-8"
             ) as logfile:
                 bcl2fastq2_log_tail = "".join(logfile.readlines()[-10:])
-
-                self.loggers.demultiplex.info(
-                    "TAIL: " + bcl2fastq2_log_tail,
-                    extra={"flag": config.LOG_FLAGS["info"]},
-                )
 
             if bcl2fastq2_log_tail:
                 if re.search(
@@ -784,6 +793,7 @@ class DemultiplexRunfolder(object):
                 clusterdensity_out.stderr,
                 extra={"flag": config.LOG_FLAGS["fail"]},
             )
+            self.loggers.demultiplex.error(clusterdensity_out.returncode)
 
 
 if __name__ == "__main__":

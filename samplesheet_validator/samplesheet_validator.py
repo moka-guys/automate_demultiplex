@@ -111,7 +111,6 @@ class SamplesheetCheck(object):
         Appends info to dict. If samplesheet present returns true, else returns
         false.
         """
-        print(self.ss_path)
         if os.path.isfile(self.ss_path):
             return True
         else:
@@ -283,7 +282,6 @@ if __name__ == "__main__":
         path = os.path.join(
             "/home/rachel/samplesheets/samplesheets/", samplesheet
         )
-        print(path)
         ss_obj = SamplesheetCheck(
             path,
             config.SEQUENCER_IDS,
