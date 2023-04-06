@@ -1462,7 +1462,7 @@ class RunfolderProcessor(object):
 
                 if self.panel_dictionary[panel]["archerdx"]:
                     commands_list.append(
-                        self.create_fastqc_command(fastq, panel)
+                        self.create_fastqc_command(fastq)
                     )
                     commands_list.append(self.add_to_depends_list(fastq))
 
@@ -1493,7 +1493,7 @@ class RunfolderProcessor(object):
             for sample in self.list_of_processed_samples:
                 pannumber = re.search(r"Pan\d+", sample).group()
                 commands_list.append(
-                    self.create_fastqc_command(sample, pannumber)
+                    self.create_fastqc_command(sample)
                 )
                 commands_list.append(self.add_to_depends_list(sample))
                 if "HD200" in sample:
@@ -1514,7 +1514,9 @@ class RunfolderProcessor(object):
                 commands_list.append(
                     self.create_sambamba_cmd(sample, pannumber)
                     )
-                commands_list.append(self.add_to_depends_list(sample))
+                # Don't want to exclude negative controls from the depends list
+                # as we want a coverage report to help assess contamination
+                commands_list.append(self.add_to_depends_list("sambamba"))
 
         if rpkm_list:
             # Create a set of RPKM numbers for one command per panel
@@ -1572,7 +1574,7 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_fastqc_command(self, fastqs, pannumber):
+    def create_fastqc_command(self, fastqs):
         """
         Build dx run command
         Inputs:
