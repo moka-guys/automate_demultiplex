@@ -1375,8 +1375,16 @@ class RunfolderProcessor(object):
 
         # loop through samples
         for fastq in self.list_of_processed_samples:
+            # Check if TSO500 sample
+            if not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
+                # extract Pan number and use this to determine which dx run commands are needed for the sample
+                panel = re.search(r"Pan\d+", fastq).group()
+
+                if self.panel_dictionary[panel]["TSO500"]:
+                    TSO500 = True
+
             # take read one - note TSO500 sample list are not fastqs so are treated differently (elif below)
-            if re.search(r"_R1_", fastq):
+            elif re.search(r"_R1_", fastq):
                 # extract Pan number and use this to determine which dx run commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
                 # The order in which the modules are called here is important to ensure the order
@@ -1458,13 +1466,6 @@ class RunfolderProcessor(object):
                     )
                     commands_list.append(self.add_to_depends_list(fastq))
 
-            elif not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
-                # extract Pan number and use this to determine which dx run commands are needed for the sample
-                panel = re.search(r"Pan\d+", fastq).group()
-
-                if self.panel_dictionary[panel]["TSO500"]:
-                    TSO500 = True
-
         # if there is a congenica upload create the file which will be run manually, once QC is passed.
         if congenica_upload:
             self.build_congenica_command_file()
@@ -1478,12 +1479,6 @@ class RunfolderProcessor(object):
         # build run wide commands
         if joint_variant_calling:
             commands_list.append(self.create_joint_variant_calling_command())
-        if rpkm_list:
-            # Create a set of RPKM numbers for one command per panel
-            # pass this list into function which takes into account panels which are to be analysed
-            # together and returns a "cleaned_list"
-            for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
-                commands_list.append(self.create_rpkm_command(rpkm))
         if peddy:
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause problems
@@ -1491,28 +1486,44 @@ class RunfolderProcessor(object):
             commands_list.append(self.add_to_depends_list("peddy"))
 
         if TSO500:
-            # build command for the TSO500 app
+            # build command for the TSO500 app and set off fastqc commands
             commands_list.append(self.create_tso500_command())
             commands_list.append(self.add_to_depends_list("TSO500"))
+            
             for sample in self.list_of_processed_samples:
                 pannumber = re.search(r"Pan\d+", sample).group()
                 commands_list.append(
                     self.create_fastqc_command(sample, pannumber)
                 )
-                commands_list.append(self.add_to_depends_list("fastqc"))
-                commands_list.append(
-                    self.create_sambamba_cmd(sample, pannumber)
-                    )
-                commands_list.append(self.add_to_depends_list("sambamba"))
+                commands_list.append(self.add_to_depends_list(sample))
                 if "HD200" in sample:
                     commands_list.append(
                         self.create_sompy_cmd(sample, pannumber)
                         )
                     commands_list.append(self.add_to_depends_list("sompy"))
+    
         commands_list.append(self.create_multiqc_command())
         commands_list.append(self.add_to_depends_list("MultiQC"))
         commands_list.append(self.create_upload_multiqc_command(TSO500))
         commands_list.append(self.add_to_depends_list("UploadMultiQC"))
+        # setoff the below commands later as they are not depended upon by 
+        # MultiQC but are required for duty_csv
+
+        if TSO500:
+            for sample in self.list_of_processed_samples:
+                commands_list.append(
+                    self.create_sambamba_cmd(sample, pannumber)
+                    )
+                commands_list.append(self.add_to_depends_list(sample))
+
+        if rpkm_list:
+            # Create a set of RPKM numbers for one command per panel
+            # pass this list into function which takes into account panels
+            # which are to be analysed together and returns a "cleaned_list"
+            for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
+                commands_list.append(self.create_rpkm_command(rpkm))
+                commands_list.append(self.add_to_depends_list("rpkm"))
+
         commands_list.append(self.create_duty_csv_command())
 
         return commands_list
