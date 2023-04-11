@@ -1375,7 +1375,7 @@ class RunfolderProcessor(object):
 
         # loop through samples
         for fastq in self.list_of_processed_samples:
-            # Check if TSO500 sample
+            # Check if TSO sample using read 1 (TSO runs treated differently)
             if not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
                 # extract Pan number and use this to determine which dx run commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
@@ -1383,7 +1383,7 @@ class RunfolderProcessor(object):
                 if self.panel_dictionary[panel]["TSO500"]:
                     TSO500 = True
 
-            # take read one - note TSO500 sample list are not fastqs so are treated differently (elif below)
+            # If read 1 but not a not TSO500 sample
             elif re.search(r"_R1_", fastq):
                 # extract Pan number and use this to determine which dx run commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
