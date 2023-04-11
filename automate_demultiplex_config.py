@@ -1637,7 +1637,7 @@ polyedge_inputs = {
 }
 
 duty_csv_id = (
-    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GQG5kvQ0jy1YxB6Bq4KggVq5"
+    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GQg9J280jy1Zf79KGx9gk5K3"
 )
 duty_csv_inputs = {
     # tso_pannumbers should not include the dry lab pan number
