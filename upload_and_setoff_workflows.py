@@ -166,7 +166,7 @@ class RunfolderProcessor(object):
             % (config.app_project, config.mokasnp_path)
         )
         self.fastqc_command = (
-            "jobid=$(dx run %s%s -y --priority high --name "
+            "jobid=$(dx run %s%s --priority high -y --name "
             % (config.app_project, config.fastqc_app)
         )
         self.tso500_dx_command = (
@@ -181,21 +181,21 @@ class RunfolderProcessor(object):
             "jobid=$(dx run %s%s --priority high -y --name "
             % (config.app_project, config.sambamba_app_id)
         )
-        self.peddy_command = "jobid=$(dx run %s%s" % (
+        self.peddy_command = "jobid=$(dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x2" % (
             config.app_project,
             config.peddy_path,
         )
-        self.multiqc_command = "jobid=$(dx run %s%s" % (
+        self.multiqc_command = "jobid=$(dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x4" % (
             config.app_project,
             config.multiqc_path,
         )
-        self.upload_multiqc_command = "jobid=$(dx run %s%s -y" % (
+        self.upload_multiqc_command = "jobid=$(dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x2" % (
             config.app_project,
             config.upload_multiqc_path,
         )
         self.duty_csv_command = "jobid=$(dx run %s -y" % config.duty_csv_id
         self.RPKM_command = (
-            "dx run %s%s --priority high --instance-type mem1_ssd1_x8"
+            "dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x8"
             % (config.app_project, config.RPKM_path)
         )
         self.mokaamp_command = (
@@ -212,7 +212,7 @@ class RunfolderProcessor(object):
                 config.decision_support_tool_input_script,
             )
         )
-        self.congenica_upload_command = "echo 'dx run %s%s -y" % (
+        self.congenica_upload_command = "echo 'dx run %s%s -y --instance-type mem1_ssd1_v2_x2" % (
             config.app_project,
             config.congenica_app_path,
         )
@@ -2251,7 +2251,6 @@ class RunfolderProcessor(object):
             + str(lowest_coverage_level)
             + self.project
             + self.runfolder_obj.nexus_project_id
-            + " --instance-type mem1_ssd1_v2_x4"
             + self.depends
             + self.token
         )

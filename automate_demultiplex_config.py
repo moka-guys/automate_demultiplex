@@ -260,7 +260,7 @@ mokapipe_FH_humanexome_instance_type = (
     "mem3_ssd1_v2_x8"  # required when creating gVCFs
 )
 mokapipe_GATK_human_exome_appletID = "applet-FYZ097j0jy1ZZPx30GykP63J"
-mokapipe_FH_GATK_timeout_args = (
+mokapipe_FH_GATK_timeout_args = ( #TODO change timeout time
     ' --extra-args \'{"timeoutPolicyByExecutable": {"%s": {"*":{"hours": 6}}}, "executionPolicy": {"restartOn": {"JobTimeoutExceeded":1,"JMInternalError": 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
     % (mokapipe_GATK_human_exome_appletID)
 )  # set timeout policy of 6 hours to gatk app and add the jobtimeoutexceeded reason to the auto restart list
@@ -484,6 +484,7 @@ panel_list = [
     "Pan4129",  # VCP2 Viapath R210 (lynch)
     "Pan4964",  # VCP2 Viapath R259 (nijmegen)
     "Pan4130",  # VCP2 Viapath R211 (polyposis)
+    "Pan5121",  # VCP2 Viapath R430 (prostate)
     "Pan4132",  # VCP3 Viapath R56
     "Pan4134",  # VCP3 Viapath R57
     "Pan4136",  # VCP3 Viapath R58
@@ -506,6 +507,7 @@ panel_list = [
     "Pan4818",  # VCP2 STG R209 colorectal
     "Pan4819",  # VCP2 STG R210 lynch
     "Pan4820",  # VCP2 STG R211 polyposis
+    "Pan5122",  # VCP2 STG R430 prostate
     "Pan4826",  # VCP3 STG R56
     "Pan4827",  # VCP3 STG R57
     "Pan4828",  # VCP3 STG R58
@@ -570,6 +572,8 @@ vcp2_panel_list = [
     "Pan4819",
     "Pan4820",
     "Pan4964",
+    "Pan5121",
+    "Pan5122",
 ]
 vcp3_panel_list = [
     "Pan4132",
@@ -985,6 +989,17 @@ panel_settings = {
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan3614",
         "congenica_project": "5095",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "hsmetrics_bedfile": "Pan4949data.bed",
+        "sambamba_bedfile": "Pan4949dataSambamba.bed",
+        "variant_calling_bedfile": "Pan4948data.bed",
+        "polyedge": "MSH2",
+    },
+    "Pan5121": {  # VCP2 R430 prostate (Viapath)
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3614",
+        "congenica_project": "12814",
         "RPKM_also_analyse": vcp2_panel_list,
         "hsmetrics_bedfile": "Pan4949data.bed",
         "sambamba_bedfile": "Pan4949dataSambamba.bed",
@@ -1455,6 +1470,19 @@ panel_settings = {
         "sambamba_bedfile": "Pan4949dataSambamba.bed",
         "polyedge": "MSH2",
     },
+    "Pan5122": {  # VCP2 STG R430 prostate
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan3614",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "congenica_credentials": "STG",
+        "congenica_IR_template": "non-priority",
+        "congenica_project": "", #TODO add StG project ID
+        "hsmetrics_bedfile": "Pan4949data.bed",
+        "variant_calling_bedfile": "Pan4948data.bed",
+        "sambamba_bedfile": "Pan4949dataSambamba.bed",
+        "polyedge": "MSH2",
+    },
     "Pan5007": {  # LRPCR Via R207 PMS2
         "mokapipe": True,
         "multiqc_coverage_level": 30,
@@ -1646,7 +1674,7 @@ duty_csv_inputs = {
         "-istg_pannumbers=Pan4042,Pan4043,Pan4044,Pan4049,Pan4821,Pan4822,"
         "Pan4823,Pan4824,Pan4825,Pan4816,Pan4817,Pan4818,Pan4819,Pan4820,"
         "Pan4826,Pan4827,Pan4828,Pan4829,Pan4830,Pan4831,Pan4832,Pan4833,"
-        "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014"
+        "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014,Pan5122"
     ),
     "cp_capture_pannos": "-icp_capture_pannos=Pan3614,Pan4399,Pan4362",
 }
