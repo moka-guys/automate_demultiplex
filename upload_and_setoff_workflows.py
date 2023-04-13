@@ -241,7 +241,7 @@ class RunfolderProcessor(object):
         self.dest_cmd = ""
         self.project = " --project="
         self.token = " --brief --auth-token %s)" % (config.Nexus_API_Key)
-        self.depends = " -y $depends_list"
+        self.depends = " $depends_list"
 
         # argument to capture jobids
         self.depends_list = 'depends_list="${depends_list} -d ${jobid} "'
