@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -46,7 +46,7 @@ ignore_directories = ["samplesheets", "GlacierTest"]
 
 # TSO500 runfolder is used for testing both demultiplexing and usw script
 demultiplex_test_folder = [
-    "999999_A01229_0496_DEMUXINTEG",
+    "999999_NB552085_0496_DEMUXINTEG",
     "999999_M02353_0496_000000000-DEMUX",
     "999999_A01229_0049_AHMKTSO500",
 ]
