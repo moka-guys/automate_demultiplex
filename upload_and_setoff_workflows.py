@@ -1514,9 +1514,10 @@ class RunfolderProcessor(object):
                 commands_list.append(
                     self.create_sambamba_cmd(sample, pannumber)
                     )
-                # Don't want to exclude negative controls from the depends list
-                # as we want a coverage report to help assess contamination
-                commands_list.append(self.add_to_depends_list("sambamba"))
+                # Exclude negative controls from the depends list as the NTC
+                # coverage calculation can often fail. We want the coverage
+                # report for the NTC sample to help assess contamination
+                commands_list.append(self.add_to_depends_list(sample))
 
         if rpkm_list:
             # Create a set of RPKM numbers for one command per panel
