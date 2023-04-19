@@ -1161,14 +1161,14 @@ panel_settings = {
     "Pan4574": {  # somatic VCP2 M1.2
         "mokacan": True,
         "congenica_upload": False,
-        "variant_calling_bedfile": "Pan5119data.bed",
+        "variant_calling_bedfile": "Pan4578data.bed",
         "hsmetrics_bedfile": "Pan5123data.bed",
         "clinical_coverage_depth": 200,
     },
     "Pan4579": {  # somatic VCP2 M1.1
         "mokacan": True,
         "congenica_upload": False,
-        "variant_calling_bedfile": "Pan5119data.bed",
+        "variant_calling_bedfile": "Pan4578data.bed",
         "hsmetrics_bedfile": "Pan5123data.bed",
         "clinical_coverage_depth": 200,
     },
