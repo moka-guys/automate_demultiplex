@@ -260,8 +260,8 @@ mokapipe_FH_humanexome_instance_type = (
     "mem3_ssd1_v2_x8"  # required when creating gVCFs
 )
 mokapipe_GATK_human_exome_appletID = "applet-FYZ097j0jy1ZZPx30GykP63J"
-mokapipe_FH_GATK_timeout_args = ( #TODO change timeout time
-    ' --extra-args \'{"timeoutPolicyByExecutable": {"%s": {"*":{"hours": 6}}}, "executionPolicy": {"restartOn": {"JobTimeoutExceeded":1,"JMInternalError": 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
+mokapipe_FH_GATK_timeout_args = (
+    ' --extra-args \'{"timeoutPolicyByExecutable": {"%s": {"*":{"hours": 12}}}, "executionPolicy": {"restartOn": {"JobTimeoutExceeded":1,"JMInternalError": 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
     % (mokapipe_GATK_human_exome_appletID)
 )  # set timeout policy of 6 hours to gatk app and add the jobtimeoutexceeded reason to the auto restart list
 # Mokapipe FH_PRS BED file
@@ -1161,15 +1161,15 @@ panel_settings = {
     "Pan4574": {  # somatic VCP2 M1.2
         "mokacan": True,
         "congenica_upload": False,
-        "variant_calling_bedfile": "Pan4577data.bed",
-        "hsmetrics_bedfile": "Pan4949data.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+        "hsmetrics_bedfile": "Pan5123data.bed",
         "clinical_coverage_depth": 200,
     },
     "Pan4579": {  # somatic VCP2 M1.1
         "mokacan": True,
         "congenica_upload": False,
-        "variant_calling_bedfile": "Pan4578data.bed",
-        "hsmetrics_bedfile": "Pan4949data.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+        "hsmetrics_bedfile": "Pan5123data.bed",
         "clinical_coverage_depth": 200,
     },
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
