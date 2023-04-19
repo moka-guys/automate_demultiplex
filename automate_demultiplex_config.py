@@ -48,7 +48,7 @@ ignore_directories = ["samplesheets", "GlacierTest"]
 demultiplex_test_folder = [
     "999999_NB552085_0496_DEMUXINTEG",
     "999999_M02353_0496_000000000-DEMUX",
-    "999999_A01229_0182_AHM2YLDRX2",
+    "999999_A01229_0182_AHM2TSO500",
 ]
 
 # path to log file which records the output of the upload agent
