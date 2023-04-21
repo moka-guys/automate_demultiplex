@@ -34,6 +34,9 @@ MASKED_REFERENCE = f"{ad_config.TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q"
 # numbers do not necessarily refer to bed files but rather project
 # configuration (e.g. DNAnexus instances, project layout etc.)
 
+# If the tso pan numbers, stg pan numbers or custom panels whole capture pan
+# numbers change, these must be updated in the duty_csv_inputs config
+
 # TODO use **dict.fromkeys( to reduce duplication between configuration
 PANEL_DICT = {
     "Pan4009": {  # MokaSNP
@@ -158,7 +161,6 @@ PANEL_DICT = {
         },
     ),
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
-        # NOTE - TSO500 output parser settings are taken from Pan4969
         "panel_name": "tso500_low_throughput",
         "pipeline": "TSO500",
         "capture_type": "Hybridisation",
@@ -180,7 +182,6 @@ PANEL_DICT = {
         "polyedge": False,
     },
     "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
-        # NOTE - TSO500 output parser settings are taken from Pan4969
         "panel_name": "tso500_high_throughput",
         "pipeline": "TSO500",
         "capture_type": "Hybridisation",
@@ -202,7 +203,6 @@ PANEL_DICT = {
         "polyedge": False,
     },
     "Pan5112": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
-        # NOTE - TSO500 output parser settings are taken from Pan4969
         "panel_name": "tso500_high_throughput",
         "pipeline": "TSO500",
         "capture_type": "Hybridisation",
@@ -224,7 +224,6 @@ PANEL_DICT = {
         "polyedge": False,
     },
     "Pan5114": {  # TSO500 High throughput Control. no UTRs. TERT promoter
-        # NOTE - TSO500 output parser settings are taken from Pan4969
         "panel_name": "tso500_high_throughput",
         "pipeline": "TSO500",
         "capture_type": "Hybridisation",

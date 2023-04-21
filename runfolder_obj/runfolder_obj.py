@@ -65,3 +65,5 @@ class RunfolderObject(object):
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
+        self.nexus_runfolder_subdir = ""
+        self.nexus_proj_root = ""
