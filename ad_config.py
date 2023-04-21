@@ -25,8 +25,8 @@ AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
 
 
 # TSO500 runfolder is used for testing both demultiplexing and usw script
-DEMULTIPLEX_TEST_RUNFOLDERS = [
-    "999999_NB552085_0496_DEMUXINTEG",
+demultiplex_test_folder = [
+    "999999_A01229_0496_DEMUXINTEG",
     "999999_M02353_0496_000000000-DEMUX",
     "999999_A01229_0049_AHMKTSO500",
 ]
@@ -273,9 +273,7 @@ LOG_MSGS = {
         "demultiplexing_required": (
             "Demultiplexing is required for this runfolder"
         ),
-        "processing_complete": (
-            "Processing is complete for this runfolder"
-        ),
+        "processing_complete": ("Processing is complete for this runfolder"),
         "demux_runfolder_start": (
             "Automate_demultiplex release: %s -------------- Assessing %s"
         ),
@@ -335,10 +333,10 @@ LOG_MSGS = {
         ),
         "subprocess_success": (
             "Subprocess successful for command %s with error code %s"
-            ),
+        ),
         "subprocess_fail": (
             "ERROR - Subprocess failed for command %s with error code %s"
-            ),
+        ),
         "demux_complete": "Demultiplexing complete without error for run %s",
         "demux_error": (
             "ERROR - DEMULTIPLEXING UNSUCCESSFUL (BCL2FastQ2 ERROR) "
@@ -396,16 +394,16 @@ NEXUS_IDS = {
     },
     "APPS": {
         "TSO500": f"{TOOLS_PROJECT}:applet-GPgkz0j0jy1Yf4XxkXjVgKfv",
-        "TSO500_OP": f"{TOOLS_PROJECT}:applet-GP0YXB00jy1kYKYp33yJZJ5B",
         "congenica_SFTP": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",
         "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",
         "multiqc": f"{TOOLS_PROJECT}:applet-GPgbyk00jy1kpgvggbp12Vfg",
         "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",
         "sambamba": f"{TOOLS_PROJECT}:applet-G6vyyf00jy1kPkX9PJ1YkxB1",
-        "fastqc": f"{TOOLS_PROJECT}:applet-FBPFfkj0jy1Q114YGQ0yQX8Y",
+        "fastqc": f"{TOOLS_PROJECT}:applet-GKXqZV80jy1QxF4yKYB4Y3Kz",
         "gatk": f"{TOOLS_PROJECT}:applet-FYZ097j0jy1ZZPx30GykP63J",
         "peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",
         "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",
+        "duty_csv": "f{TOOLS_PROJECT}:applet-GQG5kvQ0jy1YxB6Bq4KggVq5",
     },
     "WORKFLOWS": {
         "mokapipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",
@@ -471,36 +469,59 @@ APP_INPUTS = {
         "ht_instance": "mem1_ssd1_v2_x72",
         "lt_instance": "mem1_ssd1_v2_x36",
     },
-    "tso500_op": {
-        "project_name": " -iproject_name=",
-        "project_id": " -iproject_id=",
-        "tso500_jobid": " -itso500_jobid=",
-        "sambamba_bed": " -icoverage_bedfile_id=",
-        "sambamba_id": " -icoverage_app_id=",
-        "fastqc_id": " -ifastqc_app_id=",
-        "sompy_id": " -isompy_app_id=",
-        "multiqc_id": " -imultiqc_app_id=",
-        "upload_multiqc_id": " -iupload_multiqc_app_id=",
-        "sambamba_cov_cmds": (
+    "sambamba": {
+        "bam": " -ibamfile=",
+        "bai": " -ibam_index=",
+        "coverage_level": " -icoverage_level=",
+        "sambamba_bed": " -isambamba_bed=",
+        "cov_cmds": (
             " -icoverage_commands='-imerge_overlapping_mate_reads=true "
             "-iexclude_failed_quality_control=true "
             "-iexclude_duplicate_reads=true "
             "-imin_base_qual=%s -imin_mapping_qual=%s'"
         ),
-        "sambamba_cov_level": " -icoverage_level=",
-        "multiqc_cov_level": " -imultiqc_coverage_level=",
     },
     "peddy": {
         "project_name": " -iproject_for_peddy=",
+    },
+    "sompy": {
+        "truth_vcf": (
+            " -itruthVCF=project-ByfFPz00jy1fk6PjpZ95F27J:"
+            "file-G7g9Pfj0jy1f87k1J1qqX83X"
+        ),
+        "query_vcf": " -iqueryVCF=",
+        "tso": " -iTSO=true",
+        "skip": " -iskip=false",
+    },
+    "rpkm": {
+        "bed": " -ibedfile=",
+        "proj": " -iproject_name=",
+        "pannos": " -ibamfile_pannumbers=",
     },
     "multiqc": {
         "project_name": " -iproject_for_multiqc=",
         "coverage_level": " -icoverage_level=",
     },
+    "upload_multiqc": {
+        "data_input": " -imultiqc_data_input=",
+        "multiqc_html": " -imultiqc_html=$jobid:multiqc_report",
+    },
     "congenica_upload": {
         "vcf": " -ivcf=",
         "bam": " -ibam=",
         "samplename": " -ianalysis_name=",
+    },
+    "duty_csv": {
+        "project_name": " -iproject_name=",
+        # tso_pannumbers should not include the dry lab pan number
+        "tso_pannumbers": "-itso_pannumbers=Pan4969,Pan5085,Pan5114",
+        "stg_pannumbers": (
+            "-istg_pannumbers=Pan4042,Pan4043,Pan4044,Pan4049,Pan4821,Pan4822,"
+            "Pan4823,Pan4824,Pan4825,Pan4816,Pan4817,Pan4818,Pan4819,Pan4820,"
+            "Pan4826,Pan4827,Pan4828,Pan4829,Pan4830,Pan4831,Pan4832,Pan4833,"
+            "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014"
+        ),
+        "cp_capture_pannos": "-icp_capture_pannos=Pan3614,Pan4399,Pan4362",
     },
 }
 
@@ -602,11 +623,6 @@ STAGE_INPUTS = {
             "-i%(stage_str)s.skip=false"
             % {"stage_str": NEXUS_IDS["STAGES"]["mokapipe"]["polyedge"]}
         ),
-    },
-    "rpkm": {
-        "bed": " -ibedfile=",
-        "proj": " -iproject_name=",
-        "pannos": " -ibamfile_pannumbers=",
     },
     "mokawes": {
         "fastqc1_reads": (
@@ -798,10 +814,6 @@ DX_RUN_CMDS = {
         f"jobid=$(dx run {NEXUS_IDS['APPS']['TSO500']}"
         " --priority high -y --name "
     ),
-    "tso500_op": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['TSO500_OP']}"
-        " --priority high -y --name "
-    ),
     "fastqc": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['fastqc']} -y "
         "--priority high --name "
@@ -821,6 +833,15 @@ DX_RUN_CMDS = {
     "congenica_sftp": (
         f"echo 'dx run {NEXUS_IDS['APPS']['congenica_SFTP']}%s -y"
     ),
+    "sompy": (
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['sompy']} "
+        "--priority high -y --name "
+    ),
+    "sambamba": (
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['sambamba']} "
+        "--priority high -y --name "
+    ),
+    "duty_csv": (f"jobid=$(dx run {NEXUS_IDS['APPS']['duty_csv']} -y"),
 }
 
 USW_LOGMSGS = {
@@ -838,10 +859,10 @@ SQL_IDS = {
         "mokapipe": 5229,
         "mokawes": 5078,
         "mokaamp": 4851,
-        "archerdx": 4562,
+        "archerdx": 5238,
         "mokasnp": 5091,
         "mokacan": 4728,
-        "tso500": 5234,
+        "tso500": 5237,
     },
     "WES_TEST_STATUS": {
         "nextseq_sequencing": 1202218804,  # Test Status = NextSEQ sequencing
