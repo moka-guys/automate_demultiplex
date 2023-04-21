@@ -149,9 +149,11 @@ class RunfolderProcessor(object):
         self.list_of_processed_samples = []
 
         # DNA Nexus commands to be built on later
-        self.source_command = "#!/bin/bash\n. %s\ndepends_list=''" % (
+        self.source_command = "#!/bin/bash\n. %s\n" % (
             config.sdk_source_cmd
         )
+        self.empty_depends = "depends_list=''\n"
+        self.empty_gatk_depends = "depends_list_gatk=''\n"
         self.createprojectcommand = 'project_id="$(dx new project --bill-to %s "%s" --brief --auth-token %s)"\n'
         self.mokapipe_command = (
             "jobid=$(dx run %s%s --priority high -y --name "
@@ -242,9 +244,12 @@ class RunfolderProcessor(object):
         self.project = " --project="
         self.token = " --brief --auth-token %s)" % (config.Nexus_API_Key)
         self.depends = " $depends_list"
+        self.depends_gatk = " $depends_list_gatk"
 
-        # argument to capture jobids
+        # arguments to capture jobids
         self.depends_list = 'depends_list="${depends_list} -d ${jobid} "'
+        self.depends_list_gatk = 'depends_list_gatk="${depends_list_gatk} -d ${jobid} "'
+        self.depends_list_recombined = 'depends_list="${depends_list} ${depends_list_gatk} "'
         # Argument to define depends_list only if the job ID exists
         self.if_jobid_exists_depends ='if ! [ -z "${jobid}" ]; then %s; fi'
 
@@ -845,6 +850,7 @@ class RunfolderProcessor(object):
         # open bash script
         with open(self.project_bash_script_path, "w") as project_script:
             project_script.write(self.source_command + "\n")
+            project_script.write(self.empty_depends)
             project_script.write(
                 self.createprojectcommand
                 % (
@@ -1367,6 +1373,8 @@ class RunfolderProcessor(object):
         # list to hold all commands.
         commands_list = []
         commands_list.append(self.source_command)
+        commands_list.append(self.empty_depends)
+        commands_list.append(self.empty_gatk_depends)
 
         # lists/flags for run wide commands
         peddy = False
@@ -1398,7 +1406,7 @@ class RunfolderProcessor(object):
                     commands_list.append(
                         self.create_mokawes_command(fastq, panel)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.add_to_depends_list(fastq, 'depends_list'))
                     # if sample to be uploaded to congenica there are 2 methods.
                     # if a project id is specified in the config it means it can eb uploaded as if it were a custom panel sample
                     # eg IR does not need patient specific info and can be uploaded using the upload agent
@@ -1428,7 +1436,8 @@ class RunfolderProcessor(object):
                     commands_list.append(
                         self.create_mokapipe_command(fastq, panel)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.add_to_depends_list(fastq, 'depends_list'))
+                    commands_list.append(self.add_to_depends_list(fastq, 'depends_list_gatk'))
                     # # Add command for congenica
                     if self.panel_dictionary[panel]["congenica_upload"]:
                         congenica_upload = True
@@ -1447,26 +1456,26 @@ class RunfolderProcessor(object):
                     commands_list.append(
                         self.create_mokaamp_command(fastq, panel)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.add_to_depends_list(fastq, 'depends_list'))
 
                 if self.panel_dictionary[panel]["mokacan"]:
                     commands_list.append(
                         self.create_mokacan_command(fastq, panel)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.add_to_depends_list(fastq, 'depends_list'))
 
                 # if panel is to be processed using mokasnp
                 if self.panel_dictionary[panel]["mokasnp"]:
                     commands_list.append(
                         self.create_mokasnp_command(fastq, panel)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.add_to_depends_list(fastq, 'depends_list'))
 
                 if self.panel_dictionary[panel]["archerdx"]:
                     commands_list.append(
                         self.create_fastqc_command(fastq)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(self.add_to_depends_list(fastq, 'depends_list'))
 
         # if there is a congenica upload create the file which will be run manually, once QC is passed.
         if congenica_upload:
@@ -1485,12 +1494,12 @@ class RunfolderProcessor(object):
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause problems
             commands_list.append(self.run_peddy_command())
-            commands_list.append(self.add_to_depends_list("peddy"))
+            commands_list.append(self.add_to_depends_list("peddy", 'depends_list'))
 
         if TSO500:
             # build command for the TSO500 app and set off fastqc commands
             commands_list.append(self.create_tso500_command())
-            commands_list.append(self.add_to_depends_list("TSO500"))
+            commands_list.append(self.add_to_depends_list("TSO500", 'depends_list'))
             
             # For TSO samples, the fastqs are created within DNAnexus and the
             # commands are generated using sample names parsed from the
@@ -1506,7 +1515,7 @@ class RunfolderProcessor(object):
                 )
                 # Only add to depends_list if job ID from previous command
                 # is not empty
-                commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample))
+                commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
 
                 if "HD200" in sample:
                     commands_list.append(
@@ -1514,12 +1523,12 @@ class RunfolderProcessor(object):
                         )
                     # Only add to depends_list if job ID from previous command
                     # is not empty
-                    commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list("sompy"))
+                    commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list("sompy", 'depends_list'))
     
         commands_list.append(self.create_multiqc_command())
-        commands_list.append(self.add_to_depends_list("MultiQC"))
+        commands_list.append(self.add_to_depends_list("MultiQC", 'depends_list'))
         commands_list.append(self.create_upload_multiqc_command(TSO500))
-        commands_list.append(self.add_to_depends_list("UploadMultiQC"))
+        commands_list.append(self.add_to_depends_list("UploadMultiQC", 'depends_list'))
         # setoff the below commands later as they are not depended upon by 
         # MultiQC but are required for duty_csv
 
@@ -1533,7 +1542,7 @@ class RunfolderProcessor(object):
                 # report for the NTC sample to help assess contamination.
                 # Only add to depends_list if job ID from previous command
                 # is not empty
-                commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample))
+                commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
 
         if rpkm_list:
             # Create a set of RPKM numbers for one command per panel
@@ -1541,7 +1550,7 @@ class RunfolderProcessor(object):
             # which are to be analysed together and returns a "cleaned_list"
             for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
                 commands_list.append(self.create_rpkm_command(rpkm))
-                commands_list.append(self.add_to_depends_list("rpkm"))
+                commands_list.append(self.add_to_depends_list("rpkm", 'depends_list'))
 
         commands_list.append(self.create_duty_csv_command())
 
@@ -1914,6 +1923,7 @@ class RunfolderProcessor(object):
             self.congenica_upload_command_script_path, "w"
         ) as congenica_script:
             congenica_script.write(self.source_command + "\n")
+            congenica_script.write(self.empty_depends)
 
     def build_congenica_input_command(self):
         """
@@ -2130,7 +2140,7 @@ class RunfolderProcessor(object):
             + string_of_pannumbers_to_analyse
             + self.project
             + self.runfolder_obj.nexus_project_id
-            + self.depends
+            + self.depends_gatk
             + self.token.rstrip(")")
         )
         return dx_command
@@ -2216,7 +2226,7 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def add_to_depends_list(self, fastq):
+    def add_to_depends_list(self, fastq, depends_type):
         """
         Input = fastq file
         As jobs are set off the jobid is captured
@@ -2227,8 +2237,12 @@ class RunfolderProcessor(object):
         """
         if "NTCcon" in fastq:
             return None
-        else:
+        elif depends_type=='depends_list':
             return self.depends_list
+        elif depends_type=='depends_list_gatk':
+            return self.depends_list_gatk
+        elif depends_type=='depends_list_recombined':
+            return self.depends_list_recombined
 
     def create_multiqc_command(self):
         """
