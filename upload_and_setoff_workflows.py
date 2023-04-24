@@ -197,7 +197,7 @@ class RunfolderProcessor(object):
         )
         self.duty_csv_command = "jobid=$(dx run %s -y" % config.duty_csv_id
         self.RPKM_command = (
-            "dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x8"
+            "jobid=$(dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x8"
             % (config.app_project, config.RPKM_path)
         )
         self.mokaamp_command = (
@@ -2142,7 +2142,7 @@ class RunfolderProcessor(object):
             + self.project
             + self.runfolder_obj.nexus_project_id
             + self.depends_gatk
-            + self.token.rstrip(")")
+            + self.token
         )
         return dx_command
 
