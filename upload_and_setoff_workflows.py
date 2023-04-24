@@ -197,7 +197,7 @@ class RunfolderProcessor(object):
         )
         self.duty_csv_command = "jobid=$(dx run %s -y" % config.duty_csv_id
         self.RPKM_command = (
-            "dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x8"
+            "jobid=$(dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x8"
             % (config.app_project, config.RPKM_path)
         )
         self.mokaamp_command = (
@@ -353,62 +353,62 @@ class RunfolderProcessor(object):
                     view_users_list,
                     admin_users_list,
                 ) = self.write_create_project_script()
-                self.runfolder_obj.nexus_project_id = (
-                    self.run_project_creation_script(
-                        view_users_list, admin_users_list
-                    ).rstrip()
-                )
-                # build upload agent command for fastq upload and write stdout to ua_stdout_log
-                # pass path to function which checks files were uploaded without error
-                if TSO500_sample_list:
-                    backup_attempt_count = 1
-                    while backup_attempt_count < 5:
-                        self.loggers.script.info(
-                            "Attempting to backup TSO runfolder. attempt {}".format(
-                                backup_attempt_count
-                            )
-                        )
-                        if self.look_for_upload_errors_backup_runfolder(
-                            self.upload_rest_of_runfolder()
-                        ):
-                            backup_attempt_count = 10
-                        else:
-                            # increase backup count
-                            backup_attempt_count += 1
+                # self.runfolder_obj.nexus_project_id = (
+                #     self.run_project_creation_script(
+                #         view_users_list, admin_users_list
+                #     ).rstrip()
+                # )
+                # # build upload agent command for fastq upload and write stdout to ua_stdout_log
+                # # pass path to function which checks files were uploaded without error
+                # if TSO500_sample_list:
+                #     backup_attempt_count = 1
+                #     while backup_attempt_count < 5:
+                #         self.loggers.script.info(
+                #             "Attempting to backup TSO runfolder. attempt {}".format(
+                #                 backup_attempt_count
+                #             )
+                #         )
+                #         if self.look_for_upload_errors_backup_runfolder(
+                #             self.upload_rest_of_runfolder()
+                #         ):
+                #             backup_attempt_count = 10
+                #         else:
+                #             # increase backup count
+                #             backup_attempt_count += 1
 
-                self.look_for_upload_errors(self.upload_fastqs())
+                # self.look_for_upload_errors(self.upload_fastqs())
 
-                # upload cluster density files and check upload was successful.
-                self.look_for_upload_errors(
-                    self.upload_cluster_density_files_for_multiQC()
-                )
-                # upload bcl2fastq stats files and check upload was successful.
-                self.look_for_upload_errors(
-                    self.upload_bcl2fastq_QC_files_for_multiQC()
-                )
+                # # upload cluster density files and check upload was successful.
+                # self.look_for_upload_errors(
+                #     self.upload_cluster_density_files_for_multiQC()
+                # )
+                # # upload bcl2fastq stats files and check upload was successful.
+                # self.look_for_upload_errors(
+                #     self.upload_bcl2fastq_QC_files_for_multiQC()
+                # )
 
                 self.write_dx_run_cmds(
                     self.start_building_dx_run_cmds()
                 )
-                self.run_dx_run_commands()
+                # self.run_dx_run_commands()
 
-                self.sql_queries["mokawes"] = self.write_opms_queries_mokawes()
-                self.sql_queries[
-                    "oncology"
-                ] = self.write_opms_queries_oncology()
-                self.sql_queries["TSO500"] = self.write_opms_queries_TSO500()
-                self.sql_queries[
-                    "custom_panel"
-                ] = self.write_opms_queries_custom_panel()
-                self.sql_queries["mokasnp"] = self.write_opms_queries_mokasnp()
-                self.send_opms_queries()
-                # if not TSO500 will return None
-                if not TSO500_sample_list:
-                    self.look_for_upload_errors_backup_runfolder(
-                        self.upload_rest_of_runfolder()
-                    )
-                self.look_for_upload_errors(self.upload_log_files())
-                # return true to denote that a runfolder was processed
+                # self.sql_queries["mokawes"] = self.write_opms_queries_mokawes()
+                # self.sql_queries[
+                #     "oncology"
+                # ] = self.write_opms_queries_oncology()
+                # self.sql_queries["TSO500"] = self.write_opms_queries_TSO500()
+                # self.sql_queries[
+                #     "custom_panel"
+                # ] = self.write_opms_queries_custom_panel()
+                # self.sql_queries["mokasnp"] = self.write_opms_queries_mokasnp()
+                # self.send_opms_queries()
+                # # if not TSO500 will return None
+                # if not TSO500_sample_list:
+                #     self.look_for_upload_errors_backup_runfolder(
+                #         self.upload_rest_of_runfolder()
+                #     )
+                # self.look_for_upload_errors(self.upload_log_files())
+                # # return true to denote that a runfolder was processed
                 return True
         else:
             self.loggers.script.info(
@@ -2142,7 +2142,7 @@ class RunfolderProcessor(object):
             + self.project
             + self.runfolder_obj.nexus_project_id
             + self.depends_gatk
-            + self.token.rstrip(")")
+            + self.token
         )
         return dx_command
 
