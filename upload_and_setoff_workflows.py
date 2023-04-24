@@ -1551,6 +1551,7 @@ class RunfolderProcessor(object):
             for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
                 commands_list.append(self.create_rpkm_command(rpkm))
                 commands_list.append(self.add_to_depends_list("rpkm", 'depends_list'))
+            commands_list.append(self.add_to_depends_list("depends", 'depends_list_recombined'))
 
         commands_list.append(self.create_duty_csv_command())
 
