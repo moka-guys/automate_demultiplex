@@ -41,8 +41,16 @@ def run_before_and_after_tests(monkeypatch):
     (containing temporary test files and created flag files) after testing
     complete
     """
-    monkeypatch.setattr(config, "RUNFOLDERS", temp_runfolderdir)
+    monkeypatch.setattr(demultiplex.config, "RUNFOLDERS", temp_runfolderdir)
+
+    monkeypatch.setattr(
+        demultiplex.ad_logger.config, "RUNFOLDERS", temp_runfolderdir
+    )
     monkeypatch.setattr(config, "DEMULTIPLEX_LOGPATH", temp_dir)
+    monkeypatch.setattr(
+        demultiplex.ad_logger.config, "DEMULTIPLEX_LOGPATH", temp_dir
+    )
+
     monkeypatch.setattr(config, "SAMPLESHEET_PATH", samplesheet_path)
 
     shutil.copytree(testfiles_dir, temp_dir)
@@ -264,8 +272,10 @@ class TestDemultiplexRunfolder(object):
         return [
             os.path.join(
                 os.getcwd(),
-                ("/test/samplesheets/"
-                "210513_M02631_0236_000000000-JFMNK_SampleSheet.csv"),
+                (
+                    "/test/samplesheets/"
+                    "210513_M02631_0236_000000000-JFMNK_SampleSheet.csv"
+                ),
             )
         ]
 
@@ -276,8 +286,10 @@ class TestDemultiplexRunfolder(object):
         """
         return os.path.join(
             os.getcwd(),
-            ("test/samplesheets/"
-            "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv"),
+            (
+                "test/samplesheets/"
+                "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv"
+            ),
         )
 
     @pytest.fixture(scope="function")

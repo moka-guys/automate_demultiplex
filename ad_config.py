@@ -25,10 +25,10 @@ AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
 
 
 # TSO500 runfolder is used for testing both demultiplexing and usw script
-demultiplex_test_folder = [
-    "999999_A01229_0496_DEMUXINTEG",
+DEMULTIPLEX_TEST_RUNFOLDERS = [
+    "999999_NB552085_0496_DEMUXINTEG",
     "999999_M02353_0496_000000000-DEMUX",
-    "999999_A01229_0049_AHMKTSO500",
+    "999999_A01229_0182_AHM2TSO500",
 ]
 
 # Path to run folders - use testing flag to determine folders
@@ -519,7 +519,7 @@ APP_INPUTS = {
             "-istg_pannumbers=Pan4042,Pan4043,Pan4044,Pan4049,Pan4821,Pan4822,"
             "Pan4823,Pan4824,Pan4825,Pan4816,Pan4817,Pan4818,Pan4819,Pan4820,"
             "Pan4826,Pan4827,Pan4828,Pan4829,Pan4830,Pan4831,Pan4832,Pan4833,"
-            "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014"
+            "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014,Pan5122"
         ),
         "cp_capture_pannos": "-icp_capture_pannos=Pan3614,Pan4399,Pan4362",
     },
@@ -531,7 +531,7 @@ APP_INPUTS = {
 MOKAPIPE_FH_GATK_TIMEOUT_ARGS = (
     ' --extra-args \'{"timeoutPolicyByExecutable": {"'
     f'{NEXUS_IDS["APPS"]["gatk"]}'
-    '": {"*":{"hours": 6}}}, "executionPolicy": {"restartOn": '
+    '": {"*":{"hours": 12}}}, "executionPolicy": {"restartOn": '
     '{"JobTimeoutExceeded":1, "JMInternalError":'
     ' 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
 )
@@ -574,7 +574,9 @@ STAGE_INPUTS = {
         "filter_vcf_bed": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['filter_vcf']}.bedfile="
         ),
-        "happy_skip": f" -i{NEXUS_IDS['STAGES']['mokapipe']['happy']}.skip=",
+        "happy_skip": (
+            f" -i{NEXUS_IDS['STAGES']['mokapipe']['happy']}.skip=false"
+        ),
         "happy_prefix": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['happy']}.prefix="
         ),
@@ -783,7 +785,9 @@ STAGE_INPUTS = {
 }
 
 # Command strings
-SOURCE_CMD = f"#!/bin/bash\n. {PATHS['sdk_source']}\ndepends_list=''"
+SOURCE_CMD = f"#!/bin/bash\n. {PATHS['sdk_source']}\n"
+EMPTY_DEPENDS = "depends_list=''\n"
+EMPTY_GATK_DEPENDS = "depends_list_gatk=''\n"
 
 DX_RUN_CMDS = {
     "create_proj": (
@@ -815,23 +819,31 @@ DX_RUN_CMDS = {
         " --priority high -y --name "
     ),
     "fastqc": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['fastqc']} -y "
-        "--priority high --name "
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['fastqc']} "
+        "--priority high -y --name "
     ),
-    "peddy": f"jobid=$(dx run {NEXUS_IDS['APPS']['peddy']}",
-    "multiqc": f"jobid=$(dx run {NEXUS_IDS['APPS']['multiqc']}",
+    "peddy": (
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['peddy']} "
+        "--priority high -y --instance-type mem1_ssd1_v2_x2"
+    ),
+    "multiqc": (
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['multiqc']} "
+        "--priority high -y --instance-type mem1_ssd1_v2_x4"
+    ),
     "upload_multiqc": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} -y"
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} "
+        "--priority high -y --instance-type mem1_ssd1_v2_x2"
     ),
     "rpkm": (
         f"dx run {NEXUS_IDS['APPS']['rpkm']}"
-        " --priority high --instance-type mem1_ssd1_x8"
+        " --priority high -y --instance-type mem1_ssd1_v2_x8"
     ),
     "decision_support_prep": (
         f"analysisid=$(python {PATHS['dsptool_input_script']} -a "
     ),
     "congenica_sftp": (
-        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_SFTP']}%s -y"
+        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_SFTP']} "
+        "--priority high -y --instance-type mem1_ssd1_v2_x2"
     ),
     "sompy": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['sompy']} "
@@ -841,7 +853,9 @@ DX_RUN_CMDS = {
         f"jobid=$(dx run {NEXUS_IDS['APPS']['sambamba']} "
         "--priority high -y --name "
     ),
-    "duty_csv": (f"jobid=$(dx run {NEXUS_IDS['APPS']['duty_csv']} -y"),
+    "duty_csv": (
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y"
+    ),
 }
 
 USW_LOGMSGS = {

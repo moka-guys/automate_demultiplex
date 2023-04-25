@@ -8,13 +8,13 @@ import os
 import re
 import subprocess
 from shutil import copyfile
+import dxpy
 import ad_config as config
 from git_tag.git_tag import git_tag  # Import function which reads the git tag
 import ad_logger.ad_logger as ad_logger
 import panel_config
 from ad_email.ad_email import AdEmail
 from runfolder_obj.runfolder_obj import RunfolderObject
-import dxpy
 
 
 class SequencingRuns(list):
@@ -133,10 +133,19 @@ class RunfolderProcessor(object):
         self.dest_str = " --dest="
         self.project = " --project="
         self.token = f" --brief --auth-token {config.DNANEXUS_APIKEY})"
-        self.depends = " -y $depends_list"
+        self.depends = " $depends_list"
+        self.depends_gatk = " $depends_list_gatk"
 
-        # Argument to capture jobids
+        # Arguments to capture jobids
         self.depends_list = 'depends_list="${depends_list} -d ${jobid} "'
+        self.depends_list_gatk = (
+            'depends_list_gatk="${depends_list_gatk} -d ${jobid} "'
+        )
+        self.depends_list_recombined = (
+            'depends_list="${depends_list} ${depends_list_gatk} "'
+        )
+        # Argument to define depends_list only if the job ID exists
+        self.if_jobid_exists_depends = 'if ! [ -z "${jobid}" ]; then %s; fi'
 
         # Command to restart upload agent part 1
         self.restart_ua_1 = "ua_status=1; while [ $ua_status -ne 0 ]; do "
@@ -296,7 +305,7 @@ class RunfolderProcessor(object):
                 self.sql_queries["mokasnp"] = self.write_opms_queries_mokasnp()
                 self.send_opms_queries()
                 # if not TSO500 will return None
-                if not TSO500_sample_list:
+                if not tso500_sample_list:
                     self.check_backuprunfolder_errors(
                         self.upload_rest_of_runfolder()
                     )
@@ -702,6 +711,7 @@ class RunfolderProcessor(object):
             self.project_bash_script_path, "w", encoding="utf-8"
         ) as project_script:
             project_script.write(config.SOURCE_CMD + "\n")
+            project_script.write(config.EMPTY_DEPENDS)
             project_script.write(
                 config.DX_RUN_CMDS["create_proj"]
                 % (
@@ -1048,13 +1058,13 @@ class RunfolderProcessor(object):
             read1_nexus_path = (
                 self.runfolder_obj.nexus_project_name
                 + ":/analysis_folder/Logs_Intermediates/CollapsedReads/"
-                + "%s/%s_R1.fastq.gz" % (read1, read1)
+                + f"{read1}/{read1}_R1.fastq.gz"
             )
             # create read2 by replacing R1 with R2
             read2_nexus_path = (
                 self.runfolder_obj.nexus_project_name
                 + ":/analysis_folder/Logs_Intermediates/CollapsedReads/"
-                + "%s/%s_R2.fastq.gz" % (read1, read1)
+                + f"{read1}/{read1}_R2.fastq.gz"
             )
         else:
             read1_nexus_path = (
@@ -1221,6 +1231,8 @@ class RunfolderProcessor(object):
         # list to hold all commands.
         commands_list = []
         commands_list.append(config.SOURCE_CMD)
+        commands_list.append(config.EMPTY_DEPENDS)
+        commands_list.append(config.EMPTY_GATK_DEPENDS)
 
         # lists/flags for run wide commands
         peddy = False
@@ -1228,11 +1240,18 @@ class RunfolderProcessor(object):
         rpkm_list = []  # list for panels needing RPKM analysis
         tso500 = False
 
-        # loop through samples
         for fastq in self.list_of_processed_samples:
-            # take read one - note tso500 sample list are not fastqs so are
-            # treated differently (elif below)
-            if re.search(r"_R1_", fastq):
+            # Check if TSO sample using read 1 (TSO runs treated differently)
+            if not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
+                # Extract Pan number and use to determine which dx run
+                # commands are needed for the sample
+                panel = re.search(r"Pan\d+", fastq).group()
+
+                if self.panel_dictionary[panel]["TSO500"]:
+                    tso500 = True
+
+            # If read 1 but not a not TSO500 sample
+            elif re.search(r"_R1_", fastq):
                 # extract Pan number and use this to determine which dx run
                 # commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
@@ -1247,8 +1266,10 @@ class RunfolderProcessor(object):
                     commands_list.append(
                         self.create_mokamokawes_cmd(fastq, panel)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
-                    # if sample to be uploaded to congenica there are 2 methods
+                    commands_list.append(
+                        self.add_to_depends_list(fastq, "depends_list")
+                    )
+                    # If sample requires congenica upload, there are 2 methods
                     # if a project id is specified in the config it means it
                     # can be uploaded as if it were a custom panel sample
                     # eg IR does not need patient specific info and can be
@@ -1278,7 +1299,12 @@ class RunfolderProcessor(object):
                     commands_list.append(
                         self.create_mokapipe_cmd(fastq, panel)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(
+                        self.add_to_depends_list(fastq, "depends_list")
+                    )
+                    commands_list.append(
+                        self.add_to_depends_list(fastq, "depends_list_gatk")
+                    )
                     # # Add command for congenica
                     congenica_upload = True
                     commands_list.append(self.build_congenica_input_command())
@@ -1294,30 +1320,30 @@ class RunfolderProcessor(object):
                     commands_list.append(
                         self.create_mokaamp_command(fastq, panel)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(
+                        self.add_to_depends_list(fastq, "depends_list")
+                    )
 
                 if self.panel_dictionary[panel]["pipeline"] == "mokacan":
                     commands_list.append(
                         self.create_mokacan_command(fastq, panel)
                     )
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(
+                        self.add_to_depends_list(fastq, "depends_list")
+                    )
 
                 # if panel is to be processed using mokasnp
                 if self.panel_dictionary[panel]["pipeline"] == "mokasnp":
                     commands_list.append(self.create_mokasnp_cmd(fastq))
-                    commands_list.append(self.add_to_depends_list(fastq))
+                    commands_list.append(
+                        self.add_to_depends_list(fastq, "depends_list")
+                    )
 
                 if self.panel_dictionary[panel]["pipeline"] == "archerdx":
-                    commands_list.append(self.create_fastqc_cmd(fastq, panel))
-                    commands_list.append(self.add_to_depends_list(fastq))
-
-            elif not re.search(r"_R1_", fastq) and fastq.startswith("TSO"):
-                # extract Pan number and use this to determine which dx run
-                # commands are needed for the sample
-                panel = re.search(r"Pan\d+", fastq).group()
-
-                if self.panel_dictionary[panel]["pipeline"] == "tso500":
-                    tso500 = True
+                    commands_list.append(self.create_fastqc_cmd(fastq))
+                    commands_list.append(
+                        self.add_to_depends_list(fastq, "depends_list")
+                    )
 
         # if there is a congenica upload create the file which will be run
         # manually, once QC is  passed.
@@ -1331,13 +1357,6 @@ class RunfolderProcessor(object):
             )
 
         # build run wide commands
-        if rpkm_list:
-            # Create a set of RPKM numbers for one command per panel
-            # pass this list into function which takes into account panels
-            # which are to be analysed
-            # together and returns a "cleaned_list"
-            for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
-                commands_list.append(self.create_rpkm_cmd(rpkm))
         if peddy:
             # TODO if custom panels and WES done together currently no way
             # to stop custom panels being analysed by peddy - may cause
@@ -1347,35 +1366,83 @@ class RunfolderProcessor(object):
             # add_to_depends_list requires a string to determine if it's a
             # negative control and shouldn't be added to depends on string.
             # pass "peddy" to ensure it isn't skipped
-            commands_list.append(self.add_to_depends_list("peddy"))
+            commands_list.append(
+                self.add_to_depends_list("peddy", "depends_list")
+            )
 
         if tso500:
-            # build command for the tso500 app
+            # build command for the TSO500 app and set off fastqc commands
             commands_list.append(self.create_tso500_cmd())
-            # add_to_depends_list requires a string to determine if it's a
-            # negative control and shouldn't be added to depends on string.
-            # pass "TSO" to ensure it isn't skipped
-            commands_list.append(self.add_to_depends_list("TSO500"))
+            commands_list.append(
+                self.add_to_depends_list("TSO500", "depends_list")
+            )
+            # For TSO samples, the fastqs are created within DNAnexus and the
+            # commands are generated using sample names parsed from the
+            # samplesheet. If for whatever reason those fastqs are not created
+            # by the DNAnexus app, the downstream job will not set off and
+            # therefore will produce no job ID to provide to the depends_list,
+            # which will create an error/ slack alert. To solve this problem,
+            # the job ID is only added to the depends list if it exits
             for sample in self.list_of_processed_samples:
                 pannumber = re.search(r"Pan\d+", sample).group()
+                commands_list.append(self.create_fastqc_command(sample))
+                # Only add to depends_list if job ID from previous command
+                # is not empty
                 commands_list.append(
-                    self.create_fastqc_command(sample, pannumber)
+                    self.if_jobid_exists_depends
+                    % self.add_to_depends_list(sample, "depends_list")
                 )
-                commands_list.append(self.add_to_depends_list("fastqc"))
-                commands_list.append(
-                    self.create_sambamba_cmd(sample, pannumber)
-                )
-                commands_list.append(self.add_to_depends_list("sambamba"))
+
                 if "HD200" in sample:
                     commands_list.append(
                         self.create_sompy_cmd(sample, pannumber)
                     )
-                    commands_list.append(self.add_to_depends_list("sompy"))
+                    # Only add to depends_list if job ID from previous command
+                    # is not empty
+                    commands_list.append(
+                        self.if_jobid_exists_depends
+                        % self.add_to_depends_list("sompy", "depends_list")
+                    )
 
         commands_list.append(self.create_multiqc_cmd())
-        commands_list.append(self.add_to_depends_list("MultiQC"))
-        commands_list.append(self.create_upload_multiqc_cmd(TSO500))
-        commands_list.append(self.add_to_depends_list("UploadMultiQC"))
+        commands_list.append(
+            self.add_to_depends_list("MultiQC", "depends_list")
+        )
+        commands_list.append(self.create_upload_multiqc_cmd(tso500))
+        commands_list.append(
+            self.add_to_depends_list("UploadMultiQC", "depends_list")
+        )
+        # setoff the below commands later as they are not depended upon by
+        # MultiQC but are required for duty_csv
+
+        if tso500:
+            for sample in self.list_of_processed_samples:
+                commands_list.append(
+                    self.create_sambamba_cmd(sample, pannumber)
+                )
+                # Exclude negative controls from the depends list as the NTC
+                # coverage calculation can often fail. We want the coverage
+                # report for the NTC sample to help assess contamination.
+                # Only add to depends_list if job ID from previous command
+                # is not empty
+                commands_list.append(
+                    self.if_jobid_exists_depends
+                    % self.add_to_depends_list(sample, "depends_list")
+                )
+
+        if rpkm_list:
+            # Create a set of RPKM numbers for one command per panel
+            # pass this list into function which takes into account panels
+            # which are to be analysed together and returns a "cleaned_list"
+            for rpkm in self.prepare_rpkm_list(set(rpkm_list)):
+                commands_list.append(self.create_rpkm_cmd(rpkm))
+                commands_list.append(
+                    self.add_to_depends_list("rpkm", "depends_list")
+                )
+            commands_list.append(
+                self.add_to_depends_list("depends", "depends_list_recombined")
+            )
+
         commands_list.append(self.create_duty_csv_command())
 
         return commands_list
@@ -1524,16 +1591,22 @@ class RunfolderProcessor(object):
         return dx_command
 
     def create_sambamba_cmd(self, sample, pannumber):
-        """"""
+        """
+        Build dx run command, to run sambamba on a single bam file
+        Inputs:
+            sample name
+            Pan number
+        Returns:
+            dx run command for sambamba (string)
+        """
         # Get inputs based on output location within project
         bam_index = (
-            "%sanalysis_folder/Logs_Intermediates/StitchedRealigned"
-            "/%s/%s.bam.bai"
-            % (self.runfolder_obj.nexus_proj_root, sample, sample)
+            f"{self.runfolder_obj.nexus_proj_root}analysis_folder/"
+            f"Logs_Intermediates/StitchedRealigned/{sample}/{sample}.bam.bai"
         )
         bam = (
-            "%sanalysis_folder/Logs_Intermediates/StitchedRealigned"
-            "/%s/%s.bam" % (self.runfolder_obj.nexus_proj_root, sample, sample)
+            f"{self.runfolder_obj.nexus_proj_root}analysis_folder/"
+            f"Logs_Intermediates/StitchedRealigned/{sample}/{sample}.bam"
         )
         # Build dictionary of pan number specific/relevant bedfile to
         # be used in command
@@ -1562,7 +1635,14 @@ class RunfolderProcessor(object):
         return "".join(map(str, dx_command_list))
 
     def create_sompy_cmd(self, sample, pannumber):
-        """"""
+        """
+        Build dx run command, to run sompy on a single vcf file
+        Inputs:
+            sample name
+            Pan number
+        Returns:
+            dx run command for sompy (string)
+        """
         # Get inputs based on output location within project
         vcf = (
             f"{self.runfolder_obj.nexus_proj_root}analysis_folder/Results/"
@@ -1577,7 +1657,7 @@ class RunfolderProcessor(object):
             config.APP_INPUTS["sompy"]["tso"],
             config.APP_INPUTS["sompy"]["skip"],
             self.dest_str,
-            self.runfolder_obj.nexus_proj_root,
+            f"{self.runfolder_obj.nexus_proj_root }coverage/{pannumber}",
             self.token,
         ]
         return "".join(map(str, dx_command_list))
@@ -1654,16 +1734,12 @@ class RunfolderProcessor(object):
         # underscores) are present in the fastq name
         # if so, set skip = false
         for ref_sample_id in config.REF_SAMPLE_IDS:
-            if "_%s_" % (id) in fastq:
-                vcf_eval_skip_string = config.mokapipe_happy_skip % ("false")
+            if f"_{ref_sample_id}_" in fastq:
+                vcf_eval_skip_string = config.STAGE_INPUTS["mokapipe"][
+                    "happy_skip"
+                ]
 
         # Set parameters specific to FH_PRS app
-        FH_prs_bedfile_cmd = (
-            config.mokapipe_fhPRS_bedfile_input + bedfiles["fh_prs"]
-        )
-        FH_prs_cmd_string = ""
-
-        # Set parameters specific to FH_PRS app.
         fh_prs_bedfile_cmd = (
             config.STAGE_INPUTS["mokapipe"]["fhprs_bed"] + bedfiles["fh_prs"]
         )
@@ -1756,6 +1832,7 @@ class RunfolderProcessor(object):
             self.congenica_upload_command_script_path, "w", encoding="utf-8"
         ) as congenica_script:
             congenica_script.write(config.SOURCE_CMD + "\n")
+            congenica_script.write(config.EMPTY_DEPENDS)
 
     def build_congenica_input_command(self):
         """
@@ -1992,8 +2069,8 @@ class RunfolderProcessor(object):
             + string_of_pannumbers_to_analyse
             + self.project
             + self.runfolder_obj.nexus_project_id
-            + self.depends
-            + self.token.rstrip(")")
+            + self.depends_gatk
+            + self.token
         )
         return dx_command
 
@@ -2090,7 +2167,7 @@ class RunfolderProcessor(object):
         )
         return dx_command
 
-    def add_to_depends_list(self, fastq):
+    def add_to_depends_list(self, fastq, depends_type):
         """
         Input = fastq file
         As jobs are set off the jobid is captured
@@ -2103,8 +2180,12 @@ class RunfolderProcessor(object):
         """
         if "NTCcon" in fastq:
             return None
-        else:
+        elif depends_type == "depends_list":
             return self.depends_list
+        elif depends_type == "depends_list_gatk":
+            return self.depends_list_gatk
+        elif depends_type == "depends_list_recombined":
+            return self.depends_list_recombined
 
     def create_multiqc_cmd(self):
         """
@@ -2148,13 +2229,12 @@ class RunfolderProcessor(object):
             + str(lowest_coverage_level)
             + self.project
             + self.runfolder_obj.nexus_project_id
-            + " --instance-type mem1_ssd1_v2_x4"
             + self.depends
             + self.token
         )
         return dx_command
 
-    def create_upload_multiqc_cmd(self, TSO500):
+    def create_upload_multiqc_cmd(self, tso500):
         """
         Input = None
         The input to the upload_multiqc app is the html_report output of the
@@ -2162,7 +2242,7 @@ class RunfolderProcessor(object):
         in the format jobid:output_name
         Returns = dx run command for the upload_multiqc app (string)
         """
-        if TSO500:
+        if tso500:
             multiqc_data_input = (
                 f"{self.runfolder_obj.nexus_project_name}:/"
                 f"{self.runfolder_obj.nexus_runfolder_subdir}/*"
@@ -2195,8 +2275,9 @@ class RunfolderProcessor(object):
     def create_duty_csv_command(self):
         """
         Input = None
-        The input to the duty_csv app is the pan numbers
-         app is the html_report output of the multiqc app, in the format jobid:output_name
+        The input to the duty_csv app is the dnanexus project name, and the
+        pan numbers for tso samples, stg samples, and the custom panel whole
+        capture for each core panel
         Returns = dx run command for the upload_multiqc app (string)
         """
         dx_command = (
@@ -2242,6 +2323,8 @@ class RunfolderProcessor(object):
         writes them to file.
         Returns = None
         """
+        self.loggers.upload_script.info("Writing dx run commands")
+
         with open(
             self.runfolder_obj.runfolder_dx_run_script, "w", encoding="utf-8"
         ) as dxrun_commands:

@@ -48,8 +48,6 @@ import ad_config as config  # Import config file
 import panel_config
 from runfolder_obj.runfolder_obj import RunfolderObject
 
-
-
 timestamp = f"{datetime.datetime.now():%Y%m%d_%H%M%S}"
 # Call the function which populates a dictionary with the script
 # logfile for this hour's cron job
@@ -60,6 +58,7 @@ log_config = ad_logger.get_log_config(timestamp)
 loggers = ad_logger.AdLoggers(log_config)
 
 # TODO fix multiple logger instances
+
 
 # TODO merge this with the SequencingRuns class in usw
 class GetRunfolders(object):
@@ -91,6 +90,7 @@ class GetRunfolders(object):
         Its value here must be same as in ReadyToStartDemultiplexing()
         """
         self.runfolders_path = config.RUNFOLDERS
+        print(self.runfolders_path)
         if config.TESTING:
             self.runfolder_names = config.DEMULTIPLEX_TEST_RUNFOLDERS
         else:
@@ -130,7 +130,7 @@ class GetRunfolders(object):
                 if demultiplex_obj.run_processed:
                     # Add runfolder to processed runfolder list
                     processed_runfolders.append(folder_name)
-                
+
         new_logfilename = self.get_new_logfilename(processed_runfolders)
         if new_logfilename:
             self.rename_demultiplex_logfile(new_logfilename)
@@ -216,7 +216,7 @@ class GetRunfolders(object):
         self.loggers.shutdown_logs()  # Shutdown the old logger
         log_config["demultiplex"] = new_demultiplex_logfile
         # Get logger for renamed file
-        self.loggers = ad_logger.AdLoggers(log_config)  
+        self.loggers = ad_logger.AdLoggers(log_config)
 
 
 class DemultiplexRunfolder(object):
@@ -689,12 +689,11 @@ class DemultiplexRunfolder(object):
                 cmd,
                 completedprocess.returncode,
                 extra={"flag": config.LOG_FLAGS["info"]},
-        )
+            )
         for line in completedprocess.stderr.decode("utf-8").split("\r\n"):
             self.loggers.demultiplex.info(
-                line,
-                extra={"flag": config.LOG_FLAGS["info"]}
-                )
+                line, extra={"flag": config.LOG_FLAGS["info"]}
+            )
 
         return completedprocess
 
