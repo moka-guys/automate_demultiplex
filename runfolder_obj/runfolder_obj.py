@@ -12,7 +12,8 @@ class RunfolderObject(object):
     An object with runfolder specific properties.
     """
 
-    def __init__(self, runfolder_name):
+    def __init__(self, runfolder_name, timestamp):
+        self.timestamp = timestamp
         # Set empty variables to be defined based on the run
         self.runfolder_name = runfolder_name
         self.runfolderpath = os.path.join(
@@ -50,7 +51,10 @@ class RunfolderObject(object):
         self.project_creation_logfile = (
             config.PROJ_CREATION_SCRIPT % self.runfolder_name
         )
-
+        # Backup runfolder logfile
+        self.backup_runfolder_logfile = (
+            config.BACKUP_RUNFOLDER_LOGFILE % self.runfolder_name
+        )
         # Upload agent logfile
         self.upload_agent_logfile = os.path.join(
             self.runfolderpath, config.FILENAMES["upload_started"]

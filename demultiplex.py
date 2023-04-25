@@ -48,18 +48,8 @@ import ad_config as config  # Import config file
 import panel_config
 from runfolder_obj.runfolder_obj import RunfolderObject
 
-timestamp = f"{datetime.datetime.now():%Y%m%d_%H%M%S}"
-# Call the function which populates a dictionary with the script
-# logfile for this hour's cron job
-log_config = ad_logger.get_log_config(timestamp)
-
-# Pass the log_config dictionary into ADloggers class
-# This is used as an object where various logs can be written
-loggers = ad_logger.AdLoggers(log_config)
 
 # TODO fix multiple logger instances
-
-
 # TODO merge this with the SequencingRuns class in usw
 class GetRunfolders(object):
     """
@@ -89,14 +79,14 @@ class GetRunfolders(object):
         """self.runfolders_path points to workstation runfolders location
         Its value here must be same as in ReadyToStartDemultiplexing()
         """
-        self.runfolders_path = config.RUNFOLDERS
-        print(self.runfolders_path)
+        self.timestamp = f"{datetime.datetime.now():%Y%m%d_%H%M%S}"
+
         if config.TESTING:
             self.runfolder_names = config.DEMULTIPLEX_TEST_RUNFOLDERS
         else:
-            self.runfolder_names = os.listdir(self.runfolders_path)
-        self.log_config = log_config
-        self.loggers = loggers
+            self.runfolder_names = os.listdir(config.RUNFOLDERS)
+        self.loggers = ad_logger.AdLoggers(self.timestamp).loggers
+
         # This has to be a class attribute for pytest purposes
         self.bcl2fastq_path = config.BCL2FASTQ
 
@@ -117,7 +107,7 @@ class GetRunfolders(object):
         ) in (
             self.runfolder_names
         ):  # Pass runfolders to demultiplex.demultiplex_checks()
-            rf_obj = RunfolderObject(folder_name)
+            rf_obj = RunfolderObject(folder_name, self.timestamp)
 
             if (
                 self.bcl2fastq_installed()
@@ -177,7 +167,7 @@ class GetRunfolders(object):
             proc_rf_string = "_".join(processed_runfolders)
             new_logfilename = (
                 f"{demultiplex_log_noext}_"
-                f"{proc_rf_string}_demultiplex_script_log.txt"
+                f"{proc_rf_string}_demultiplex_script_log.log"
             )
         return new_logfilename
 
@@ -279,7 +269,7 @@ class DemultiplexRunfolder(object):
         self.timestamp = timestamp
 
         # Runfolder object containing runfolder-specific attributes
-        self.rf_obj = RunfolderObject(str(folder_name))
+        self.rf_obj = RunfolderObject(str(folder_name), self.timestamp)
         # Call the function which populates a dictionary with the script
         # logfile for this hour's cron job
         self.log_config = log_config
