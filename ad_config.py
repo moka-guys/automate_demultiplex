@@ -36,6 +36,9 @@ if not TESTING:
     RUNFOLDERS = "/media/data3/share"
     # Folder containing demultiplex logs
     DEMULTIPLEX_LOGPATH = os.path.join(AD_LOGDIR, "Demultiplexing_log_files/")
+    UPLOAD_SCRIPT_LOGDIR = os.path.join(
+        AD_LOGDIR, "upload_agent_script_logfiles"
+    )
     LOGGING_FORMATTER = (
         "%(asctime)s - %(name)s - %(flag)s - %(levelname)s - %(message)s"
     )
@@ -50,6 +53,9 @@ else:
     RUNFOLDERS = "/media/data3/share/testing"
     # Folder containing demultiplex logs
     DEMULTIPLEX_LOGPATH = os.path.join(RUNFOLDERS, "Demultiplexing_log_files/")
+    UPLOAD_SCRIPT_LOGDIR = os.path.join(
+        RUNFOLDERS, "upload_agent_script_logfiles"
+    )
     LOGGING_FORMATTER = (
         "%(asctime)s - TEST MODE - %(name)s - %(flag)s - "
         "%(levelname)s - %(message)s"
@@ -89,12 +95,21 @@ DXRUN_SCRIPT = os.path.join(DIRS["dx_run_cmds"], "%s_dx_run_commands.sh")
 PROJ_CREATION_SCRIPT = os.path.join(
     AD_LOGDIR, "nexus_project_creation_scripts", "create_nexus_project_%s.sh"
 )
-# Path to log file which records the output of the upload agent
+
+# Path to log file recording output of the upload and setoff workflow script
 UPLOAD_SCRIPT_LOGFILE = os.path.join(
-    AD_LOGDIR,
-    "upload_agent_script_logfiles",
+    UPLOAD_SCRIPT_LOGDIR,
     "%s_upload_and_setoff_workflow.log",
 )
+
+# Path to log file which records the output of the demultiplex script
+DEMULTIPLEX_SCRIPT_LOGFILE = (
+    os.path.join(
+        DEMULTIPLEX_LOGPATH,
+        "%s_demultiplex_script_log.log",
+    ),
+)
+
 BCL2FASTQ = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
 # N.B. n--no-lane-splitting creates a single fastq for a sample,
 # not into one fastq per lane)

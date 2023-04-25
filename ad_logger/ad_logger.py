@@ -17,57 +17,6 @@ import logging.handlers
 import ad_config as config
 
 
-# TODO finish filling in arguments
-def get_log_config(timestamp, rf_obj=None):
-    """Return an ADLogger config for a runfolder.
-    Args:
-        timestamp(str): Timestamp as
-                        str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
-        rf_obj:         A runfolder object with the following attributes:
-                        runfolder_name runfolderpath
-
-    Returns:
-        log_config(dict): A dictionary of arguments for ADLoggers
-    """
-
-    demux_scriptlog = os.path.join(
-        config.DEMULTIPLEX_LOGPATH, f"{timestamp}.txt"
-    )
-
-    # Configuration for ADLoggers. Dictionary where keys are ADLoggers.__init__
-    # arguments and values are logfile paths.
-    if rf_obj:
-        # Find the demultiplex logfile for the runfolder. Logfile name contains
-        # demultiplex timestamp which is unknown at this point. Search for any
-        # demultiplex logfiles matching the runfodler name and return the first
-        # If none exist, get the logfile from before it is renamed with
-        # processed runfolders
-        any_demultiplex_logs = [
-            os.path.join(config.DEMULTIPLEX_LOGPATH, filename)
-            for filename in os.listdir(config.DEMULTIPLEX_LOGPATH)
-            if rf_obj.runfolder_name in filename
-        ]
-
-        demultiplex_rf_log = (
-            any_demultiplex_logs.pop()
-            if any_demultiplex_logs
-            else demux_scriptlog
-        )
-
-        log_config = {
-            "demultiplex": demultiplex_rf_log,
-            "upload_agent": rf_obj.upload_agent_logfile,
-            "backup": config.BACKUP_RUNFOLDER_LOGFILE % rf_obj.runfolder_name,
-            "project": rf_obj.project_creation_logfile,
-            "dx_run": rf_obj.runfolder_dx_run_script,
-            "upload_script": config.BACKUP_RUNFOLDER_LOGFILE % timestamp,
-        }
-    else:
-        log_config = {"demultiplex": demux_scriptlog}
-
-    return log_config
-
-
 class AdLoggers(object):
     """
     Access runfolder-associated logfiles, which are also uploaded to DNAnexus
@@ -95,26 +44,85 @@ class AdLoggers(object):
         config.LOGGING_FORMATTER
     )  # Log string format
 
-    def __init__(self, log_config):
+    def __init__(self, timestamp, rf_obj=None):
         """
         Args:
             logger_name(str): Logger name
             logfile_path(str): Logfile path
         """
-        self._log_config = log_config
-        self.all_loggers = []  # Collect all loggers
+        self.timestamp = timestamp
+        self.rf_obj = rf_obj
+        self.log_config = self.get_log_config()
+        self.loggers = self.get_loggers()  # Collect all loggers
 
-        # Assign loggers from log config as class attributes
-        for key in log_config:
-            setattr(AdLoggers, key, self._get_logger(key, log_config[key]))
-            self.all_loggers.append(getattr(AdLoggers, key))
+    def get_loggers(self):
+        """
+        Assign loggers using log config
+        """
+        all_loggers = []
+
+        for key in self.log_config:
+            setattr(
+                AdLoggers, key, self._get_logger(key, self.log_config[key])
+            )
+            all_loggers.append(getattr(AdLoggers, key))
+        return all_loggers
+
+    def get_log_config(self):
+        """Return an ADLogger config for a runfolder.
+
+        Returns:
+            log_config(dict): A dictionary of arguments for ADLoggers
+        """
+
+        # Configuration for ADLoggers. Dictionary where keys are
+        # ADLoggers.__init__ arguments and values are logfile paths.
+
+        log_config = {
+            # Upload and setoff workflows script logfile
+            "upload_script": self.get_scriptlog(
+                config.UPLOAD_SCRIPT_LOGDIR,
+                config.UPLOAD_SCRIPT_LOGFILE % self.timestamp,
+            ),
+            "demultiplex": self.get_scriptlog(
+                config.DEMULTIPLEX_LOGPATH,
+                config.DEMULTIPLEX_SCRIPT_LOGFILE % self.timestamp,
+            ),
+        }
+
+        if self.rf_obj:
+            rf_log_config = {
+                "upload_agent": self.rf_obj.upload_agent_logfile,
+                "backup": self.rf_obj.backup_runfolder_logfile,
+                "project": self.rf_obj.project_creation_logfile,
+                "dx_run": self.rf_obj.runfolder_dx_run_script,
+            }
+            log_config |= rf_log_config
+        return log_config
+
+    def get_scriptlog(self, directory, logfile):
+        """
+        Find the demultiplex logfile for the runfolder. Logfile name contains
+        demultiplex timestamp which is unknown at this point. Search for any
+        demultiplex logfiles matching the runfodler name and return the first
+        If none exist, get the logfile from before it is renamed with
+        processed runfolders
+        """
+
+        any_logs = [
+            os.path.join(directory, filename)
+            for filename in os.listdir(directory)
+            if self.rf_obj.runfolder_name in filename
+        ]
+        logfile = any_logs.pop() if any_logs else logfile
+        return logfile
 
     def shutdown_logs(self):
         """
         To prevent duplicate filehandlers and system handlers close and remove
         all handlers for all log files that have a python logging object
         """
-        for logger in self.all_loggers:
+        for logger in self.loggers:
             for handler in logger.handlers[:]:
                 logger.removeHandler(handler)
                 handler.close()
