@@ -21,7 +21,7 @@ import ad_config as config
 def get_log_config(timestamp, rf_obj=None):
     """Return an ADLogger config for a runfolder.
     Args:
-        timestamp(str): Timestamp as 
+        timestamp(str): Timestamp as
                         str("{:%Y%m%d_%H%M%S}".format(datetime.datetime.now()))
         rf_obj:         A runfolder object with the following attributes:
                         runfolder_name runfolderpath
@@ -76,10 +76,10 @@ class AdLoggers(object):
 
     Args:
         demultiplex(str):   Path to logfile of decisions made during
-                            demultiplexing script 
+                            demultiplexing script
                             *projname*_demultiplex_script_log.txt
         upload_agent(str):  Upload agent logfile. Stores Logs relating to
-                            runfolder upload. 
+                            runfolder upload.
                             *runfolderpath*/DNANexus_upload_started.txt
         backup(str):        Path to logfile for runfolder backup.
                             *projname*_backup_runfolder.log
