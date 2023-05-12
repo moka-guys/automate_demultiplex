@@ -8,7 +8,7 @@ demultiplex repository (https://github.com/moka-guys/automate_demultiplex)
 The config file is split into sections. Those settings that are used across
 scripts and those that are specific to a script.
 """
-
+# TODO move log file paths back to production locations when testing done
 import os
 
 # ================ GENERAL ====================================================
@@ -19,10 +19,7 @@ TESTING = True  # Set testing mode
 DOCUMENT_DIR = os.path.dirname(os.path.realpath(__file__))
 # Root of folder containing apps, automate_demultiplexing_logfiles and
 # development_area scripts (2 levels up from this file)
-DOCUMENT_ROOT = "/".join(DOCUMENT_DIR.split("/")[:-2])
-
-AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
-
+DOCUMENT_ROOT = "/".join(DOCUMENT_DIR.split("/")[:-3])
 
 # TSO500 runfolder is used for testing both demultiplexing and usw script
 DEMULTIPLEX_TEST_RUNFOLDERS = [
@@ -34,112 +31,154 @@ DEMULTIPLEX_TEST_RUNFOLDERS = [
 # Path to run folders - use testing flag to determine folders
 if not TESTING:
     RUNFOLDERS = "/media/data3/share"
-    # Folder containing demultiplex logs
-    DEMULTIPLEX_LOGPATH = os.path.join(AD_LOGDIR, "Demultiplexing_log_files/")
-    UPLOAD_SCRIPT_LOGDIR = os.path.join(
-        AD_LOGDIR, "upload_agent_script_logfiles"
-    )
+    AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
     LOGGING_FORMATTER = (
         "%(asctime)s - %(name)s - %(flag)s - %(levelname)s - %(message)s"
     )
     LOG_FLAGS = {
-        "info": "demultiplex_info",
-        "fail": "demultiplex_fail",
-        "success": "demultiplex_success",
-        "ss_warning": "samplesheet_warning",
+        "demultiplex": {
+            "info": "demultiplex_info",
+            "fail": "demultiplex_fail",
+            "success": "demultiplex_success",
+            "ss_warning": "samplesheet_warning",
+            },
+        "usw": {
+            "info": "usw_info",
+            "fail": "usw_fail",
+            "success": "usw_success",
+            },
+        "email": {
+            "info": "email_info",
+            "fail": "email_fail",
+            "success": "email_success",
+            },
+        "backup_runfolder": {
+            "info": "backuprunfolder_info",
+            "fail": "backuprunfolder_fail",
+            "success": "backuprunfolder_success",
+        }
     }
     EMAIL_HEADER = ""
 else:
     RUNFOLDERS = "/media/data3/share/testing"
-    # Folder containing demultiplex logs
-    DEMULTIPLEX_LOGPATH = os.path.join(RUNFOLDERS, "Demultiplexing_log_files/")
-    UPLOAD_SCRIPT_LOGDIR = os.path.join(
-        RUNFOLDERS, "upload_agent_script_logfiles"
-    )
+    AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     LOGGING_FORMATTER = (
         "%(asctime)s - TEST MODE - %(name)s - %(flag)s - "
         "%(levelname)s - %(message)s"
     )
     LOG_FLAGS = {
-        "info": "demultiplextest_info",
-        "fail": "demultiplextest_fail",
-        "success": "demultiplextest_success",
-        "ss_warning": "testsamplesheet_warning",
+        "demultiplex": {
+            "info": "demultiplextest_info",
+            "fail": "demultiplextest_fail",
+            "success": "demultiplextest_success",
+            "ss_warning": "testsamplesheet_warning",
+            },
+        "usw": {
+            "info": "uswtest_info",
+            "fail": "uswtest_fail",
+            "success": "uswtest_success",
+            },
+        "email": {
+            "info": "emailtest_info",
+            "fail": "emailtest_fail",
+            "success": "emailtest_success",
+            },
+        "backup_runfolder": {
+            "info": "backuprunfoldertest_info",
+            "fail": "backuprunfoldertest_fail",
+            "success": "backuprunfoldertest_success",
+        }
     }
     EMAIL_HEADER = (
         "AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. "
         "PLEASE IGNORE THIS EMAIL\n\n"
     )
 
-
 DIRS = {
-    "dx_run_cmds": os.path.join(AD_LOGDIR, "dx_run_commands"),
-    "fastqs": "/Data/Intensities/BaseCalls",  # Path to fastq files
-    "bcl2fastq_stats": "/Data/Intensities/BaseCalls/Stats",
-    "backup_runfolderlogs": os.path.join(
-        AD_LOGDIR, "backup_runfolder_logfiles"
-    ),
+    "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
+    "bcl2fastq_stats": "Data/Intensities/BaseCalls/Stats",
 }
 
-SAMPLESHEET_NAME = os.path.join(
-    RUNFOLDERS, "samplesheets", "%s_SampleSheet.csv"
-)
+SAMPLESHEET_NAME = "%s_SampleSheet.csv"
 SAMPLESHEET_PATH = os.path.join(
-    RUNFOLDERS, "samplesheets", "%s_SampleSheet.csv"
-)
-BACKUP_RUNFOLDER_LOGFILE = os.path.join(
-    DIRS["backup_runfolderlogs"], "%s_backup_runfolder.log"
-)
-DXRUN_SCRIPT = os.path.join(DIRS["dx_run_cmds"], "%s_dx_run_commands.sh")
-# Script containing dnanexus project creation command
-PROJ_CREATION_SCRIPT = os.path.join(
-    AD_LOGDIR, "nexus_project_creation_scripts", "create_nexus_project_%s.sh"
+    RUNFOLDERS, "samplesheets", SAMPLESHEET_NAME
 )
 
-# Path to log file recording output of the upload and setoff workflow script
-UPLOAD_SCRIPT_LOGFILE = os.path.join(
-    UPLOAD_SCRIPT_LOGDIR,
-    "%s_upload_and_setoff_workflow.log",
-)
+# Folders containing logfiles
+LOGDIRS = {
+    "demultiplex": os.path.join(AD_LOGDIR, "Demultiplexing_log_files/"),
+    "dx_run_cmds": os.path.join(AD_LOGDIR, "dx_run_commands"),
+    "backup_runfolder": os.path.join(AD_LOGDIR, "backup_runfolder_logfiles"),
+    "upload_script": os.path.join(AD_LOGDIR, "upload_agent_script_logfiles"),
+    "nexus_project_creation_scripts": (
+        os.path.join(AD_LOGDIR, "nexus_project_creation_scripts")
+        ),
+}
 
-# Path to log file which records the output of the demultiplex script
-DEMULTIPLEX_SCRIPT_LOGFILE = (
-    os.path.join(
-        DEMULTIPLEX_LOGPATH,
-        "%s_demultiplex_script_log.log",
-    ),
-)
-
-BCL2FASTQ = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
-# N.B. n--no-lane-splitting creates a single fastq for a sample,
-# not into one fastq per lane)
-BCL2FASTQ_CMD = f"{BCL2FASTQ} -R %s --sample-sheet %s --no-lane-splitting"
-# Shell command to run cluster density calculation
-CD_CMD = (
-    "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 "
-    "./gatk CollectIlluminaLaneMetrics --RUN_DIRECTORY /input_run "
-    "--OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
-)
-
-# TODO move these back to their own variables
-PATHS = {
+# Paths to logfiles
+LOGFILES = {
+    # Records output of demultiplex script
+    "demultiplex_script_logfile": os.path.join(
+        LOGDIRS["demultiplex"],
+        "%s_demultiplex_script_log.log"
+        ),
+    # Records output of upload and setoff workflow script
+    "upload_script": os.path.join(
+        LOGDIRS["upload_script"],
+        "%s_upload_and_setoff_workflow.log"
+        ),
+    "backup_runfolder": os.path.join(
+        LOGDIRS["backup_runfolder"], "%s_backup_runfolder.log"
+        ),
+    "dx_run_script": os.path.join(
+        LOGDIRS["dx_run_cmds"], "%s_dx_run_commands.sh"
+        ),
     # DNAnexus run command script
     "congenica_upload_script": os.path.join(
-        DIRS["dx_run_cmds"], "%s_congenica.sh"
-    ),
-    "upload_agent": os.path.join(
-        DOCUMENT_ROOT, "apps/dnanexus-upload-agent-1.5.17-linux/ua"
-    ),
-    "backup_runfolder_script": os.path.join(
-        DOCUMENT_ROOT, "apps/workstation_housekeeping/backup_runfolder.py"
-    ),
+        LOGDIRS["dx_run_cmds"], "%s_congenica.sh"
+        ),
+    # Script containing dnanexus project creation command
+    "proj_creation_script": os.path.join(
+        LOGDIRS["nexus_project_creation_scripts"],
+        "create_nexus_project_%s.sh"
+        ),
+}
+
+SCRIPTS = {
+    "sdk_source": "/usr/local/src/mokaguys/apps/dx-toolkit/environment",
     "dsptool_input_script": os.path.join(
         DOCUMENT_DIR, "decision_support_tool_inputs.py"
     ),
+}
+
+# TODO move these back to their own variables
+EXECUTABLES = {
+    "bcl2fastq": "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq",
+    "upload_agent": os.path.join(
+        DOCUMENT_ROOT, "apps/dnanexus-upload-agent-1.5.17-linux/ua"
+    ),
+}
+
+CREDENTIALS = {
     "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
     "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
-    "sdk_source": "/etc/profile.d/dnanexus.environment.sh",
     "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
+}
+
+CMDS = {
+    # N.B. n--no-lane-splitting creates a single fastq for a sample,
+    # not into one fastq per lane)
+    "bcl2fastq": (
+        f"{EXECUTABLES['bcl2fastq']} -R %s --sample-sheet %s "
+        "--no-lane-splitting"
+        ),
+    # Shell command to run cluster density calculation
+    "cluster_density": (
+        "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 "
+        "./gatk CollectIlluminaLaneMetrics --RUN_DIRECTORY /input_run "
+        "--OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
+        ),
+    "sdk_source": f"#!/bin/bash\n. {SCRIPTS['sdk_source']}\n",
 }
 
 FILENAMES = {
@@ -154,55 +193,46 @@ RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 
 # ================ AD_EMAIL ===================================================
 
-with open(
-    PATHS["email_user"], "r", encoding="utf-8"
-) as EMAIL_USER_FILE:  # Get email username
-    EMAIL_USER = EMAIL_USER_FILE.readline().rstrip()
+MAIL_SETTINGS = {
+    "host": "email-smtp.eu-west-1.amazonaws.com",
+    "port": 587,
+    "mokaguys_email": "gst-tr.mokaguys@nhs.net",
+    "moka_alerts_email": "moka.alerts@gstt.nhs.uk",
+}
 
-with open(
-    PATHS["email_pw"], "r", encoding="utf-8"
-) as EMAIL_PW_FILE:  # Get email password
-    EMAIL_PW = EMAIL_PW_FILE.readline().rstrip()
-
-
-HOST = "email-smtp.eu-west-1.amazonaws.com"
-PORT = 587
-SMTP_DO_TLS = True
-
-
-MOKAGUYS_EMAIL = "gst-tr.mokaguys@nhs.net"
-MOKA_ALERTS_EMAIL = "moka.alerts@gstt.nhs.uk"
-
-
-if TESTING:  # Test settings
-    SQL_EMAIL_SUBJ = "SQL ALERT: TESTING - PLEASE IGNORE THIS EMAIL"
-    SQL_EMAIL_MSG = "%s being processed using workflow(s) %s\n\n%s\n%s\n"
-    MOKAGUYS_RECIPIENT = "mokaguys@gmail.com"
-    # Oncology email address for email alerts
-    ONCOLOGY_OPS_EMAIL = MOKAGUYS_EMAIL
-    WES_SAMPLENAME_EMAILLIST = [MOKAGUYS_EMAIL]
-
+if TESTING:
+    MAIL_SETTINGS = MAIL_SETTINGS | {
+        "sql_email_subj": "SQL ALERT: TESTING - PLEASE IGNORE THIS EMAIL",
+        "sql_email_msg": "%s being processed using workflow(s) %s\n\n%s\n%s\n",
+        "email_msg": False,
+        "mokaguys_recipient": "mokaguys@gmail.com",
+        # Oncology email address for email alerts
+        "oncology_ops_email": MAIL_SETTINGS["mokaguys_email"],
+        "wes_samplename_emaillist": [MAIL_SETTINGS["mokaguys_email"]],
+    }
 else:  # Production settings
-    SQL_EMAIL_SUBJ = "SQL ALERT: Started pipeline for %s"
-    SQL_EMAIL_MSG = (
-        "%s being processed using workflow(s) %s\n\nPlease update Moka using "
-        "the below queries and ensure that %s records are updated:\n\n\n%s\n"
-    )
-    EMAIL_MSG = (
-        "%s being processed using workflow(s) %s\n\nThe following samples are "
-        "being processed:\n\n%s\n"
-    )
-
-    MOKAGUYS_RECIPIENT = MOKAGUYS_EMAIL
-    # Oncology email address for email alerts
-    ONCOLOGY_OPS_EMAIL = "m.neat@nhs.net"
-    WES_SAMPLENAME_EMAILLIST = [
-        "gst-tr.ViapathGeneticsAdmin@nhs.net",
-        "lu.liu@viapath.co.uk",
-        "Suzanne.lillis@viapath.co.uk",
-        "eblab@gstt.nhs.uk",
-        MOKAGUYS_EMAIL,
-    ]
+    MAIL_SETTINGS = MAIL_SETTINGS | {
+        "sql_email_subj": "SQL ALERT: Started pipeline for %s",
+        "sql_email_msg": (
+            "%s being processed using workflow(s) %s\n\nPlease update Moka "
+            "using the below queries and ensure that %s records are "
+            "updated:\n\n\n%s\n"
+            ),
+        "email_msg": (
+            "%s being processed using workflow(s) %s\n\nThe following samples "
+            "are being processed:\n\n%s\n"
+            ),
+        "mokaguys_recipient": MAIL_SETTINGS["mokaguys_email"],
+        # Oncology email address for email alerts
+        "oncology_ops_email": "m.neat@nhs.net",
+        "wes_samplename_emaillist": [
+            "gst-tr.ViapathGeneticsAdmin@nhs.net",
+            "lu.liu@viapath.co.uk",
+            "Suzanne.lillis@viapath.co.uk",
+            "eblab@gstt.nhs.uk",
+            MAIL_SETTINGS["mokaguys_email"],
+            ],
+    }
 
 # ================ UPLOAD AND SETOFF WORKFLOWS ================================
 # Settings unique to the upload and setoff workflows script
@@ -212,15 +242,13 @@ REF_SAMPLE_IDS = [
     "136819",
 ]  # NA12878 identifiers to exclude from congenica upload
 
-# ---- Filepaths --------------------------------------------------------------
-
-
 # ---- Commands and strings ---------------------------------------------------
 UPLOAD_AGENT_TEST_CMD = " --version"
-DX_SDK_TEST = f"source {PATHS['sdk_source']};dx --version"  # Tests dx toolkit
+# Tests dx toolkit
+DX_SDK_TEST = f"source {SCRIPTS['sdk_source']}; dx --version"
 BACKUP_RUNFOLDER_SUCCESS = "backup_runfolder INFO - END"
 BACKUP_RUNFOLDER_ERROR = "backup_runfolder.UAcaller ERROR"
-DX_SDK_TEST_EXPECTED_STDOUT = "dx v0.2"  # Expected result from testing
+DX_SDK_TEST_EXPECTED_STDOUT = "dx v0.347.0"  # Expected result from testing
 UPLOAD_AGENT_EXPECTED_STDOUT = (
     "Upload Agent Version:"  # Upload agent test response
 )
@@ -231,9 +259,8 @@ STRINGS = {
 }
 
 DEMULTIPLEXLOG_TSO500MSG = "TSO500 run. Does not need demultiplexing locally"
-DEMULTIPLEX_SUCCESS_REGEX = (
-    r".*Processing completed with 0 errors and 0 warnings.$"
-)
+DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
+DEMULTIPLEX_SUCCESS_REGEX = rf".*{DEMULTIPLEX_SUCCESS}$"
 
 CLUSTER_DENSITY_FILE_SUFFIX = ".illumina_lane_metrics"
 PHASING_METRICS_FILE_SUFFIX = ".illumina_phasing_metrics"
@@ -257,33 +284,33 @@ CHECKSUM_MATCH_MSG = (
     "Checksums match"  # Statement to write when checksums match
 )
 
-
 LOG_MSGS = {
     "email": {
         "email_sending": (
             "Sending an email. Recipient: %s. Subject: %s. Body: %s"
         ),
-        "email_pass": "Email sent without error",
+        "email_pass": "Email sent successfully",
         "email_fail": (
-            "Error when sending email. Email not sent. Exception: %s"
+            "ERROR - Email not sent. Exception: %s"
         ),
     },
     "demultiplex": {
         "demux_script_start": "Automate demultiplex release %s: "
         "Demultiplex.py started on workstation",
         "demux_script_end": (
-            "Automate demultiplex release %s: Demultiplex.py complete"
+            "Automate demultiplex release %s: Demultiplex.py complete. %s "
+            "runfolders processed: %s"
         ),
-        "runfolders_processed": "%s runfolder(s) processed",
+        "runfolder_processed": "Runfolder has been processed: %s",
         "rename_demuxlog_success": (
             "Demultiplex logfile successfully renamed with "
             "runfolder names. New name: %s"
         ),
+        "rename_demuxlog_pass": (
+            "Demultiplex logfile renamed successfully for file %s to %s"
+        ),
         "rename_demuxlog_fail": (
             "Demultiplex logfile rename failed for file %s with exception: %s"
-        ),
-        "rename_demuxlog_pass": (
-            "Demultiplex logfile rename passed for file %s. Now %s"
         ),
         "demultiplexing_required": (
             "Demultiplexing is required for this runfolder"
@@ -347,12 +374,12 @@ LOG_MSGS = {
             "bcl2fastq2_output.log file for TSO run: %s"
         ),
         "subprocess_success": (
-            "Subprocess successful for command %s with error code %s"
+            "Subprocess successful for command %s with exit code %s"
         ),
         "subprocess_fail": (
-            "ERROR - Subprocess failed for command %s with error code %s"
+            "ERROR - Subprocess failed for command %s with exit code %s"
         ),
-        "demux_complete": "Demultiplexing complete without error for run %s",
+        "demux_complete": "Demultiplexing completed successfully for run %s",
         "demux_error": (
             "ERROR - DEMULTIPLEXING UNSUCCESSFUL (BCL2FastQ2 ERROR) "
             "- Demultiplexing failed for run %s. Please see logfile %s"
@@ -385,18 +412,21 @@ MOKAPIPE_BAM_OUTPUT_NAME = "bam"
 #  ================  DNAnexus  ================================================
 
 # General
-with open(PATHS["dnanexus_authtoken"], "r", encoding="utf-8") as TOKEN_FILE:
-    DNANEXUS_APIKEY = TOKEN_FILE.readline().rstrip()  # Auth token
-
 BEDFILE_FOLDER = "Data/BED/"
 DNANEXUS_PROJECT_PREFIX = "002_"  # Project to upload run folder into
 PROJECT_SUCCESS = 'Created new project called "%s"'  # Success statement
 PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
 
-DNANEXUS_USERS = {  # User access level
-    "viewers": ['org-viapath_prod", "InterpretationRequest'],
-    "admins": ["mokaguys"],
-}
+if TESTING:
+    DNANEXUS_USERS = {  # User access level
+        "viewers": [],
+        "admins": [PROD_ORGANISATION],
+    }
+else:
+    DNANEXUS_USERS = {  # User access level
+        "viewers": [PROD_ORGANISATION, 'InterpretationRequest'],
+        "admins": ["mokaguys"],
+    }
 
 # Paths / IDs for apps in 001_Tools
 TOOLS_PROJECT = "project-ByfFPz00jy1fk6PjpZ95F27J"  # 001_ToolsReferenceData
@@ -405,7 +435,13 @@ NEXUS_IDS = {
     "FILES": {
         "tso500_docker": f"{TOOLS_PROJECT}:file-Fz9Zyx00b5j8xKVkKv4fZ6JB",
         "hs37d5_bwa_index": f"{TOOLS_PROJECT}:file-B6ZY4942J35xX095VZyQBk0v",
-        "hs37d5_ref": f"{TOOLS_PROJECT}:file-ByYgX700b80gf4ZY1GxvF3Jv",
+        "hs37d5_ref_with_index": (
+            f"{TOOLS_PROJECT}:file-ByYgX700b80gf4ZY1GxvF3Jv"
+            ),
+        "hs37d5_ref_no_index": (
+            f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01"
+            ),
+        "masked_reference": f"{TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q",
     },
     "APPS": {
         "TSO500": f"{TOOLS_PROJECT}:applet-GPgkz0j0jy1Yf4XxkXjVgKfv",
@@ -418,7 +454,7 @@ NEXUS_IDS = {
         "gatk": f"{TOOLS_PROJECT}:applet-FYZ097j0jy1ZZPx30GykP63J",
         "peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",
         "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",
-        "duty_csv": "f{TOOLS_PROJECT}:applet-GQG5kvQ0jy1YxB6Bq4KggVq5",
+        "duty_csv": f"{TOOLS_PROJECT}:applet-GQG5kvQ0jy1YxB6Bq4KggVq5",
     },
     "WORKFLOWS": {
         "mokapipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",
@@ -528,15 +564,9 @@ APP_INPUTS = {
     },
     "duty_csv": {
         "project_name": " -iproject_name=",
-        # tso_pannumbers should not include the dry lab pan number
-        "tso_pannumbers": "-itso_pannumbers=Pan4969,Pan5085,Pan5114",
-        "stg_pannumbers": (
-            "-istg_pannumbers=Pan4042,Pan4043,Pan4044,Pan4049,Pan4821,Pan4822,"
-            "Pan4823,Pan4824,Pan4825,Pan4816,Pan4817,Pan4818,Pan4819,Pan4820,"
-            "Pan4826,Pan4827,Pan4828,Pan4829,Pan4830,Pan4831,Pan4832,Pan4833,"
-            "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014,Pan5122"
-        ),
-        "cp_capture_pannos": "-icp_capture_pannos=Pan3614,Pan4399,Pan4362",
+        "tso_pannumbers": "-itso_pannumbers=",
+        "stg_pannumbers": "-istg_pannumbers=",
+        "cp_capture_pannos": "-icp_capture_pannos=",
     },
 }
 
@@ -550,10 +580,6 @@ MOKAPIPE_FH_GATK_TIMEOUT_ARGS = (
     '{"JobTimeoutExceeded":1, "JMInternalError":'
     ' 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
 )
-
-# Paths / IDs for workflows in 001_Tools
-TSO500_APP_NAME = "TSO500_v1.5.1"
-
 
 STAGE_INPUTS = {
     "mokapipe": {
@@ -590,7 +616,7 @@ STAGE_INPUTS = {
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['filter_vcf']}.bedfile="
         ),
         "happy_skip": (
-            f" -i{NEXUS_IDS['STAGES']['mokapipe']['happy']}.skip=false"
+            f" -i{NEXUS_IDS['STAGES']['mokapipe']['happy']}.skip="
         ),
         "happy_prefix": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['happy']}.prefix="
@@ -600,15 +626,15 @@ STAGE_INPUTS = {
         ),
         "sambamba_min_base_qual": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['sambamba']}"
-            f".min_base_qual=10"
+            f".min_base_qual="
         ),
         "sambamba_min_mapping_qual": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['sambamba']}"
-            f".min_mapping_qual=20"
+            f".min_mapping_qual="
         ),
         "sambamba_cov_level": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['sambamba']}"
-            f".coverage_level=30"
+            f".coverage_level"
         ),
         "sambamba_filter_cmds": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['sambamba']}"
@@ -634,11 +660,20 @@ STAGE_INPUTS = {
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['fhprs']}.BEDfile="
         ),
         "fhprs_instance": "mem3_ssd1_v2_x8",  # Required when creating gVCFs
-        "polyedge_str": (
-            " -i%(stage_str)s.gene={} -i%(stage_str)s.chrom={} "
-            "-i%(stage_str)s.poly_start={} -i%(stage_str)s.poly_end={} "
-            "-i%(stage_str)s.skip=false"
-            % {"stage_str": NEXUS_IDS["STAGES"]["mokapipe"]["polyedge"]}
+        "polyedge_gene": (
+            f" -i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}gene="
+            ),
+        "polyedge_chrom": (
+            f" -i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}.chrom="
+            ),
+        "polyedge_poly_start": (
+            f" -i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}.poly_start="
+            ),
+        "polyedge_poly_end": (
+            f" -i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}.poly_end="
+            ),
+        "polyedge_skip": (
+            f"-i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}.skip=false"
         ),
     },
     "mokawes": {
@@ -702,7 +737,7 @@ STAGE_INPUTS = {
         ),
         "picard_ref": (
             f" -i{NEXUS_IDS['STAGES']['mokaamp']['picard']}."
-            f"fasta_index={NEXUS_IDS['FILES']['hs37d5_ref']}"
+            f"fasta_index={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
         ),
         "ampliconfilt_bed": (
             f" -i{NEXUS_IDS['STAGES']['mokaamp']['ampliconfilt']}.PE_BED="
@@ -715,7 +750,7 @@ STAGE_INPUTS = {
         ),
         "vardict_ref": (
             f" -i{NEXUS_IDS['STAGES']['mokaamp']['vardict']}."
-            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref']}"
+            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
         ),
         "vardict_bed": (
             f" -i{NEXUS_IDS['STAGES']['mokaamp']['vardict']}.bedfile="
@@ -726,7 +761,7 @@ STAGE_INPUTS = {
         ),
         "varscan_ref": (
             f" -i{NEXUS_IDS['STAGES']['mokaamp']['varscan']}."
-            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref']}"
+            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
         ),
         "varscan_bed": (
             f" -i{NEXUS_IDS['STAGES']['mokaamp']['varscan']}.bed_file="
@@ -758,7 +793,7 @@ STAGE_INPUTS = {
         ),
         "picard_ref": (
             f" -i{NEXUS_IDS['STAGES']['mokacan']['picard']}."
-            f"fasta_index={NEXUS_IDS['FILES']['hs37d5_ref']}"
+            f"fasta_index={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
         ),
         "sambamba_bed": (
             f" -i{NEXUS_IDS['STAGES']['mokacan']['sambamba']}.sambamba_bed="
@@ -768,7 +803,7 @@ STAGE_INPUTS = {
         ),
         "vardict_ref": (
             f" -i{NEXUS_IDS['STAGES']['mokacan']['vardict']}."
-            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref']}"
+            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
         ),
         "vardict_bed": (
             f" -i{NEXUS_IDS['STAGES']['mokacan']['vardict']}.bedfile="
@@ -779,7 +814,7 @@ STAGE_INPUTS = {
         ),
         "varscan_ref": (
             f" -i{NEXUS_IDS['STAGES']['mokacan']['varscan']}."
-            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref']}"
+            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
         ),
         "varscan_bed": (
             f" -i{NEXUS_IDS['STAGES']['mokacan']['varscan']}.bed_file="
@@ -794,13 +829,12 @@ STAGE_INPUTS = {
         ),
         "sentieon_ref": (
             f" -i{NEXUS_IDS['STAGES']['mokacan']['sentieon']}.genome_fastagz="
-            f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01"
+            f"{TOOLS_PROJECT}:{NEXUS_IDS['FILES']['hs37d5_ref_no_index']}"
         ),
     },
 }
 
 # Command strings
-SOURCE_CMD = f"#!/bin/bash\n. {PATHS['sdk_source']}\n"
 EMPTY_DEPENDS = "depends_list=''\n"
 EMPTY_GATK_DEPENDS = "depends_list_gatk=''\n"
 
@@ -854,7 +888,7 @@ DX_RUN_CMDS = {
         " --priority high -y --instance-type mem1_ssd1_v2_x8"
     ),
     "decision_support_prep": (
-        f"analysisid=$(python {PATHS['dsptool_input_script']} -a "
+        f"analysisid=$(python {SCRIPTS['dsptool_input_script']} -a "
     ),
     "congenica_sftp": (
         f"echo 'dx run {NEXUS_IDS['APPS']['congenica_SFTP']} "
@@ -873,13 +907,6 @@ DX_RUN_CMDS = {
     ),
 }
 
-USW_LOGMSGS = {
-    "script_start": "automate_demultiplexing release:%s",
-    "create_proj_success": (
-        "DNA Nexus project %s created and shared (VIEW) to %s"
-    ),
-    "create_proj_fail": "UA_fail 'failed to create project in dna nexus'",
-}
 # ---- Moka settings ----------------------------------------------------------
 
 # Moka IDs for generating SQLs to update the Mokadatabase (audit trail)
@@ -897,12 +924,4 @@ SQL_IDS = {
         "nextseq_sequencing": 1202218804,  # Test Status = NextSEQ sequencing
         "data_processing": 1202218805,  # Test Status = Data Processing
     },
-}
-
-POLYEDGE_INPUTS = {
-    "MSH2": {
-        "chrom": 2,
-        "poly_start": 47641559,
-        "poly_end": 47641586,
-    }
 }
