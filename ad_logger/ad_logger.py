@@ -11,10 +11,10 @@ the upload and setoff workflows script.
         self.backup = self._get_ad_logger('backup_runfolder", backup)
 """
 import sys
-import os
 import logging
 import logging.handlers
-import ad_config as config
+import config.ad_config as ad_config
+import ad_logger.log_config as log_config
 
 
 class AdLoggers(object):
@@ -40,82 +40,67 @@ class AdLoggers(object):
                             *projname*_upload_and_setoff_workflow.log
     """
 
-    _formatter = logging.Formatter(
-        config.LOGGING_FORMATTER
-    )  # Log string format
+    _formatter = logging.Formatter(ad_config.LOGGING_FORMATTER)
 
-    def __init__(self, timestamp, rf_obj=None):
+    def __init__(self, timestamp, runfolder_obj=None):
         """
         Args:
             logger_name(str): Logger name
             logfile_path(str): Logfile path
         """
         self.timestamp = timestamp
-        self.rf_obj = rf_obj
-        self.log_config = self.get_log_config()
+        self.runfolder_obj = runfolder_obj
+        self.logfiles_config = self.get_logfiles_config()
+        self.log_flags = log_config.LOG_FLAGS
         self.loggers = self.get_loggers()  # Collect all loggers
+        self.msgs = log_config.LOG_MSGS
 
     def get_loggers(self):
         """
-        Assign loggers using log config
+        Assign loggers using log ad_config
         """
         all_loggers = []
 
-        for key in self.log_config:
+        for key in self.logfiles_config:
             setattr(
-                AdLoggers, key, self._get_logger(key, self.log_config[key])
+                AdLoggers, key,
+                self._get_logger(key, self.logfiles_config[key])
             )
             all_loggers.append(getattr(AdLoggers, key))
         return all_loggers
 
-    def get_log_config(self):
-        """Return an ADLogger config for a runfolder.
+    def get_logfiles_config(self):
+        """Return an ADLogger ad_config for a runfolder.
 
         Returns:
             log_config(dict): A dictionary of arguments for ADLoggers
         """
-
         # Configuration for ADLoggers. Dictionary where keys are
         # ADLoggers.__init__ arguments and values are logfile paths.
-
-        log_config = {
-            # Upload and setoff workflows script logfile
-            "upload_script": self.get_scriptlog(
-                config.UPLOAD_SCRIPT_LOGDIR,
-                config.UPLOAD_SCRIPT_LOGFILE % self.timestamp,
-            ),
-            "demultiplex": self.get_scriptlog(
-                config.DEMULTIPLEX_LOGPATH,
-                config.DEMULTIPLEX_SCRIPT_LOGFILE % self.timestamp,
-            ),
-        }
-
-        if self.rf_obj:
-            rf_log_config = {
-                "upload_agent": self.rf_obj.upload_agent_logfile,
-                "backup": self.rf_obj.backup_runfolder_logfile,
-                "project": self.rf_obj.project_creation_logfile,
-                "dx_run": self.rf_obj.runfolder_dx_run_script,
+        if self.runfolder_obj:
+            # Runfolder-specific logfiles
+            logfiles_config = {
+                "usw_rf": self.runfolder_obj.upload_runfolder_logfile,
+                "demultiplex_rf": (
+                    self.runfolder_obj.demultiplex_runfolder_logfile
+                    ),
+                "upload_agent": self.runfolder_obj.upload_agent_logfile,
+                "backup": self.runfolder_obj.backup_runfolder_logfile,
+                "project": self.runfolder_obj.project_creation_logfile,
+                "dx_run": self.runfolder_obj.runfolder_dx_run_script,
             }
-            log_config |= rf_log_config
-        return log_config
-
-    def get_scriptlog(self, directory, logfile):
-        """
-        Find the demultiplex logfile for the runfolder. Logfile name contains
-        demultiplex timestamp which is unknown at this point. Search for any
-        demultiplex logfiles matching the runfodler name and return the first
-        If none exist, get the logfile from before it is renamed with
-        processed runfolders
-        """
-
-        any_logs = [
-            os.path.join(directory, filename)
-            for filename in os.listdir(directory)
-            if self.rf_obj.runfolder_name in filename
-        ]
-        logfile = any_logs.pop() if any_logs else logfile
-        return logfile
+        else:
+            logfiles_config = {
+                # Upload and setoff workflows script logfile
+                "usw_script": (
+                    ad_config.LOGFILES["upload_script"] % self.timestamp
+                    ),
+                "demultiplex_script": (
+                    ad_config.LOGFILES["demultiplex_script_logfile"] %
+                    self.timestamp
+                    ),
+            }
+        return logfiles_config
 
     def shutdown_logs(self):
         """
