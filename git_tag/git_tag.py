@@ -1,5 +1,6 @@
-""" This script contains the function used to obtain the git tag of the current version of the
-repository
+"""
+This script contains the function used to obtain the git tag of the current
+version of the repository
 """
 
 import subprocess
@@ -20,5 +21,4 @@ def git_tag():
 
 
 if __name__ == "__main__":
-    git_tag()
     print(git_tag())

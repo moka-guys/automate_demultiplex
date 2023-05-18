@@ -16,10 +16,10 @@ import os
 
 TESTING = True  # Set testing mode
 
-DOCUMENT_DIR = os.path.dirname(os.path.realpath(__file__))
+DOCUMENT_DIR = "/".join((os.path.dirname(os.path.realpath(__file__)).split("/")[:-1]))
 # Root of folder containing apps, automate_demultiplexing_logfiles and
 # development_area scripts (2 levels up from this file)
-DOCUMENT_ROOT = "/".join(DOCUMENT_DIR.split("/")[:-3])
+DOCUMENT_ROOT = "/".join(DOCUMENT_DIR.split("/")[:-2])
 
 # TSO500 runfolder is used for testing both demultiplexing and usw script
 DEMULTIPLEX_TEST_RUNFOLDERS = [
@@ -30,65 +30,23 @@ DEMULTIPLEX_TEST_RUNFOLDERS = [
 
 # Path to run folders - use testing flag to determine folders
 if not TESTING:
+    JOB_NAME_STR = "--name "
     RUNFOLDERS = "/media/data3/share"
     AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
     LOGGING_FORMATTER = (
         "%(asctime)s - %(name)s - %(flag)s - %(levelname)s - %(message)s"
     )
-    LOG_FLAGS = {
-        "demultiplex": {
-            "info": "demultiplex_info",
-            "fail": "demultiplex_fail",
-            "success": "demultiplex_success",
-            "ss_warning": "samplesheet_warning",
-            },
-        "usw": {
-            "info": "usw_info",
-            "fail": "usw_fail",
-            "success": "usw_success",
-            },
-        "email": {
-            "info": "email_info",
-            "fail": "email_fail",
-            "success": "email_success",
-            },
-        "backup_runfolder": {
-            "info": "backuprunfolder_info",
-            "fail": "backuprunfolder_fail",
-            "success": "backuprunfolder_success",
-        }
-    }
     EMAIL_HEADER = ""
 else:
+    # This must be @-separated to be picked up by the gmail filter which
+    # determines which slack channel to send the alert to
+    JOB_NAME_STR = "--name TEST@"
     RUNFOLDERS = "/media/data3/share/testing"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     LOGGING_FORMATTER = (
         "%(asctime)s - TEST MODE - %(name)s - %(flag)s - "
         "%(levelname)s - %(message)s"
     )
-    LOG_FLAGS = {
-        "demultiplex": {
-            "info": "demultiplextest_info",
-            "fail": "demultiplextest_fail",
-            "success": "demultiplextest_success",
-            "ss_warning": "testsamplesheet_warning",
-            },
-        "usw": {
-            "info": "uswtest_info",
-            "fail": "uswtest_fail",
-            "success": "uswtest_success",
-            },
-        "email": {
-            "info": "emailtest_info",
-            "fail": "emailtest_fail",
-            "success": "emailtest_success",
-            },
-        "backup_runfolder": {
-            "info": "backuprunfoldertest_info",
-            "fail": "backuprunfoldertest_fail",
-            "success": "backuprunfoldertest_success",
-        }
-    }
     EMAIL_HEADER = (
         "AUTOMATED SCRIPTS ARE BEING RUN IN TEST MODE. "
         "PLEASE IGNORE THIS EMAIL\n\n"
@@ -198,19 +156,17 @@ MAIL_SETTINGS = {
     "port": 587,
     "mokaguys_email": "gst-tr.mokaguys@nhs.net",
     "moka_alerts_email": "moka.alerts@gstt.nhs.uk",
-}
-
-if TESTING:
-    MAIL_SETTINGS = MAIL_SETTINGS | {
-        "sql_email_subj": "SQL ALERT: TESTING - PLEASE IGNORE THIS EMAIL",
-        "sql_email_msg": "%s being processed using workflow(s) %s\n\n%s\n%s\n",
-        "email_msg": False,
-        "mokaguys_recipient": "mokaguys@gmail.com",
-        # Oncology email address for email alerts
-        "oncology_ops_email": MAIL_SETTINGS["mokaguys_email"],
-        "wes_samplename_emaillist": [MAIL_SETTINGS["mokaguys_email"]],
+    "sql_email_subj": "TEST MODE: SQL ALERT: Started pipeline for %s",
+    "sql_email_msg": "%s being processed using workflow(s) %s\n\n%s\n%s\n",
+    "pipeline_start_subj": "TEST MODE: MOKA ALERT: Started pipeline for %s",
+    "email_msg": False,
+    "mokaguys_recipient": "mokaguys@gmail.com",
+    # Oncology email address for email alerts
+    "oncology_ops_email": "mokaguys@gmail.com",
+    "wes_samplename_emaillist": "mokaguys@gmail.com",
     }
-else:  # Production settings
+
+if not TESTING:  # Overwrite test settings with prod settings
     MAIL_SETTINGS = MAIL_SETTINGS | {
         "sql_email_subj": "SQL ALERT: Started pipeline for %s",
         "sql_email_msg": (
@@ -218,6 +174,7 @@ else:  # Production settings
             "using the below queries and ensure that %s records are "
             "updated:\n\n\n%s\n"
             ),
+        "pipeline_start_subj": "MOKA ALERT: Started pipeline for %s",
         "email_msg": (
             "%s being processed using workflow(s) %s\n\nThe following samples "
             "are being processed:\n\n%s\n"
@@ -284,125 +241,6 @@ CHECKSUM_MATCH_MSG = (
     "Checksums match"  # Statement to write when checksums match
 )
 
-LOG_MSGS = {
-    "email": {
-        "email_sending": (
-            "Sending an email. Recipient: %s. Subject: %s. Body: %s"
-        ),
-        "email_pass": "Email sent successfully",
-        "email_fail": (
-            "ERROR - Email not sent. Exception: %s"
-        ),
-    },
-    "demultiplex": {
-        "demux_script_start": "Automate demultiplex release %s: "
-        "Demultiplex.py started on workstation",
-        "demux_script_end": (
-            "Automate demultiplex release %s: Demultiplex.py complete. %s "
-            "runfolders processed: %s"
-        ),
-        "runfolder_processed": "Runfolder has been processed: %s",
-        "rename_demuxlog_success": (
-            "Demultiplex logfile successfully renamed with "
-            "runfolder names. New name: %s"
-        ),
-        "rename_demuxlog_pass": (
-            "Demultiplex logfile renamed successfully for file %s to %s"
-        ),
-        "rename_demuxlog_fail": (
-            "Demultiplex logfile rename failed for file %s with exception: %s"
-        ),
-        "demultiplexing_required": (
-            "Demultiplexing is required for this runfolder"
-        ),
-        "processing_complete": ("Processing is complete for this runfolder"),
-        "demux_runfolder_start": (
-            "Automate_demultiplex release: %s -------------- Assessing %s"
-        ),
-        "ic_fail": (
-            "Integrity check fail. Checksums do not match for %s see %s"
-        ),
-        "bcl2fastq_start": (
-            "Demultiplexing started for run %s using bcl2fastq command: %s"
-        ),
-        "bcl2fastq_complete": "bcl2fastq subprocess complete for run %s",
-        "bcl2fastq_failed": "bcl2fastq subprocess failed for run %s",
-        "demux_already_complete": (
-            "Demultiplexing already completed - "
-            "bcl2fastq log found @ %s --- STOP ---"
-        ),
-        "demux_not_complete": (
-            "Demultiplexing not yet completed - no demultiplex "
-            "log found @ %s --- CONTINUE ---"
-        ),
-        "sschecks_not_passed": "Samplesheet did not pass checks %s: %s",
-        "sschecks_passed": "Samplesheet passed all checks %s",
-        "run_finished": "Run finished - RTAComplete.txt found @ %s",
-        "run_incomplete": (
-            "Sequencing not yet complete (RTAComplete.txt "
-            "file absent) @ %s --- STOP ---"
-        ),
-        "bcl2fastq_test_fail": "BCL2FastQ installation test failed",
-        "bcl2fastq_test_pass": "BCL2FastQ installation test passed",
-        "ssfail_haltdemux": (
-            "Demultiplexing halted due to samplesheet errors %s: %s"
-        ),
-        "ic_required": (
-            "This run was sequenced on a sequencer that requires integrity "
-            "checking"
-        ),
-        "ic_notrequired": "Integrity check not required",
-        "csumfile_present": (
-            "Checksums file present - checksums have been "
-            "generated by integrity check scripts"
-        ),
-        "csumfile_absent": (
-            "Demultiplexing halted: Integrity check not yet performed on "
-            "sequencer (checksum file absent)"
-        ),
-        "checksums_checked": "Checksums already checked for this run",
-        "checksums_notchecked": "Checksums not yet checked for this run",
-        "ic_start": "Data integrity checks starting...",
-        "ic_pass": "Integrity check for runfolder %s passed",
-        "create_bcl2fastqlog_pass": "Created bcl2fastq logfile for run %s",
-        "create_bcl2fastqlog_fail": (
-            "Failed to create bcl2fastq logfile for run %s. Exception: %s"
-        ),
-        "TSO500_run": f"%s is a {DEMULTIPLEXLOG_TSO500MSG}",
-        "write_TSO_msg_to_bcl2fastqlog": (
-            "TSO500 message successfully written to "
-            "bcl2fastq2_output.log file for TSO run: %s"
-        ),
-        "subprocess_success": (
-            "Subprocess successful for command %s with exit code %s"
-        ),
-        "subprocess_fail": (
-            "ERROR - Subprocess failed for command %s with exit code %s"
-        ),
-        "demux_complete": "Demultiplexing completed successfully for run %s",
-        "demux_error": (
-            "ERROR - DEMULTIPLEXING UNSUCCESSFUL (BCL2FastQ2 ERROR) "
-            "- Demultiplexing failed for run %s. Please see logfile %s"
-        ),
-        "bcl2fastqlog_empty": (
-            "ERROR - BCL2FASTQ2 logfile is empty for run %s. "
-            "Please see logfile %s"
-        ),
-        "bcl2fastqlog_absent": (
-            "ERROR - BCL2FASTQ2 logfile does not exist for "
-            "run %s. Please see logfile "
-        ),
-        "running_cd": (
-            "Running the following command for cluster density calculation: %s"
-        ),
-        "cd_success": (
-            "Cluster density calculation saved to "
-            f"%s{CLUSTER_DENSITY_FILE_SUFFIX}"
-        ),
-        "cd_fail": ("Cluster density calculation failed for : %s. Error: %s"),
-    },
-}
-
 MOKAWES_SENTIEON_BAM_OUTPUT_NAME = "mappings_bam"
 MOKAWES_SENTIEON_BAI_OUTPUT_NAME = "mappings_bam_bai"
 MOKAWES_SENTIEON_VCF_OUTPUT_NAME = "variants_vcf"
@@ -412,7 +250,7 @@ MOKAPIPE_BAM_OUTPUT_NAME = "bam"
 #  ================  DNAnexus  ================================================
 
 # General
-BEDFILE_FOLDER = "Data/BED/"
+BEDFILE_FOLDER = "/Data/BED/"
 DNANEXUS_PROJECT_PREFIX = "002_"  # Project to upload run folder into
 PROJECT_SUCCESS = 'Created new project called "%s"'  # Success statement
 PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
@@ -445,7 +283,8 @@ NEXUS_IDS = {
     },
     "APPS": {
         "TSO500": f"{TOOLS_PROJECT}:applet-GPgkz0j0jy1Yf4XxkXjVgKfv",
-        "congenica_SFTP": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",
+        "congenica_app": f"{TOOLS_PROJECT}:applet-G8QGBK80jy1zJK6g9yVP7P8V",
+        "congenica_sftp": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",
         "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",
         "multiqc": f"{TOOLS_PROJECT}:applet-GPgbyk00jy1kpgvggbp12Vfg",
         "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",
@@ -460,7 +299,6 @@ NEXUS_IDS = {
         "mokapipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",
         "mokawes": f"{TOOLS_PROJECT}:workflow-FjjbQ5Q0jy1ZgyjQ3g1zgx9k",
         "mokaamp": f"{TOOLS_PROJECT}:workflow-G6F70180jy1gGK38FYXk618g",
-        "mokacan": f"{TOOLS_PROJECT}:workflow-G3vYKQj0jy1jy4FzKGvjJZK9",
         "mokasnp": f"{TOOLS_PROJECT}:workflow-GB3kyJj0jy1j06704fxX9J7j",
     },
     "STAGES": {
@@ -497,15 +335,6 @@ NEXUS_IDS = {
             "vardict": "stage-G0vKZk80GfYkQx86PJGGjz9Y",
             "varscan": "stage-FPzGjp80jy1V3Jvb5z6xfpfZ",
             "mpileup": "stage-FxypXb807p1zj3g8Jv45Y54P",
-        },
-        "mokacan": {
-            "fastqc1": "stage-FPzGj6Q0jy1fF6505zFP6zz5",
-            "fastqc2": "stage-FPzGj5j0jy1x97jg607Fg229",
-            "picard": "stage-FPzGjV80jy1x97jg607Fg22b",
-            "sambamba": "stage-FPzGjfQ0jy1y01vG60K22qG1",
-            "vardict": "stage-FPzGjgj0jy1Q2JJF2zYx5J5k",
-            "sentieon": "stage-FgYgB2Q087fjzvxy9f4q1K8X",
-            "varscan": "stage-FPzGjp80jy1V3Jvb5z6xfpfZ",
         },
     },
 }
@@ -575,7 +404,7 @@ APP_INPUTS = {
 # TODO move this to the DXAPP.JSON file for FH app
 MOKAPIPE_FH_GATK_TIMEOUT_ARGS = (
     ' --extra-args \'{"timeoutPolicyByExecutable": {"'
-    f'{NEXUS_IDS["APPS"]["gatk"]}'
+    f'{NEXUS_IDS["APPS"]["gatk"].split(":")[1]}'
     '": {"*":{"hours": 12}}}, "executionPolicy": {"restartOn": '
     '{"JobTimeoutExceeded":1, "JMInternalError":'
     ' 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
@@ -634,7 +463,7 @@ STAGE_INPUTS = {
         ),
         "sambamba_cov_level": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['sambamba']}"
-            f".coverage_level"
+            f".coverage_level="
         ),
         "sambamba_filter_cmds": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['sambamba']}"
@@ -661,7 +490,7 @@ STAGE_INPUTS = {
         ),
         "fhprs_instance": "mem3_ssd1_v2_x8",  # Required when creating gVCFs
         "polyedge_gene": (
-            f" -i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}gene="
+            f" -i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}.gene="
             ),
         "polyedge_chrom": (
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}.chrom="
@@ -673,7 +502,7 @@ STAGE_INPUTS = {
             f" -i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}.poly_end="
             ),
         "polyedge_skip": (
-            f"-i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}.skip=false"
+            f" -i{NEXUS_IDS['STAGES']['mokapipe']['polyedge']}.skip=false"
         ),
     },
     "mokawes": {
@@ -777,61 +606,6 @@ STAGE_INPUTS = {
             f" -i{NEXUS_IDS['STAGES']['mokaamp']['mpileup']}.min_coverage="
         ),
     },
-    "mokacan": {
-        "fastqc1_reads": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['fastqc1']}.reads="
-        ),
-        "fastqc2_reads": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['fastqc2']}.reads="
-        ),
-        "picard_bed": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['picard']}"
-            f".vendor_exome_bedfile="
-        ),
-        "picard_capturetype": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['picard']}.Capture_panel="
-        ),
-        "picard_ref": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['picard']}."
-            f"fasta_index={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
-        ),
-        "sambamba_bed": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['sambamba']}.sambamba_bed="
-        ),
-        "sambamba_cov_level": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['sambamba']}.coverage_level="
-        ),
-        "vardict_ref": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['vardict']}."
-            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
-        ),
-        "vardict_bed": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['vardict']}.bedfile="
-        ),
-        "vardict_samplename": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['vardict']}"
-            f".sample_name=vardict_"
-        ),
-        "varscan_ref": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['varscan']}."
-            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
-        ),
-        "varscan_bed": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['varscan']}.bed_file="
-        ),
-        "sentieon_samplename": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['sentieon']}.sample="
-        ),
-        "sentieon_bwa_ref": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['sentieon']}"
-            f".genomebwaindex_targz="
-            f"{TOOLS_PROJECT}:{NEXUS_IDS['FILES']['hs37d5_bwa_index']}"
-        ),
-        "sentieon_ref": (
-            f" -i{NEXUS_IDS['STAGES']['mokacan']['sentieon']}.genome_fastagz="
-            f"{TOOLS_PROJECT}:{NEXUS_IDS['FILES']['hs37d5_ref_no_index']}"
-        ),
-    },
 }
 
 # Command strings
@@ -839,71 +613,73 @@ EMPTY_DEPENDS = "depends_list=''\n"
 EMPTY_GATK_DEPENDS = "depends_list_gatk=''\n"
 
 DX_RUN_CMDS = {
-    "create_proj": (
+    "create_proj": str(
         'project_id="$(dx new project --bill-to %s "%s" --brief '
         '--auth-token %s)"\n'
     ),
-    "mokapipe": (
+    "mokapipe": str(
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['mokapipe']}"
-        " --priority high -y --name "
+        f" --priority high -y {JOB_NAME_STR}"
     ),
-    "mokawes": (
+    "mokawes": str(
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['mokawes']}"
-        " --priority high -y --name "
+        f" --priority high -y {JOB_NAME_STR}"
     ),
-    "mokasnp": (
+    "mokasnp": str(
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['mokasnp']}"
-        " -y --priority high --name "
+        f" -y --priority high {JOB_NAME_STR}"
     ),
-    "mokaamp": (
+    "mokaamp": str(
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['mokaamp']}"
-        " --priority high -y --name "
-    ),
-    "mokacan": (
-        f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['mokacan']}"
-        " --priority high -y --name "
+        f" --priority high -y {JOB_NAME_STR}"
     ),
     "tso500": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['TSO500']}"
-        " --priority high -y --name "
+        f" --priority high -y {JOB_NAME_STR}"
     ),
     "fastqc": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['fastqc']} "
-        "--priority high -y --name "
+        f"--priority high -y {JOB_NAME_STR}"
     ),
     "peddy": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['peddy']} "
-        "--priority high -y --instance-type mem1_ssd1_v2_x2"
+        f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
     "multiqc": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['multiqc']} "
-        "--priority high -y --instance-type mem1_ssd1_v2_x4"
+        f"--priority high -y --instance-type mem1_ssd1_v2_x4 {JOB_NAME_STR}"
     ),
     "upload_multiqc": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} "
-        "--priority high -y --instance-type mem1_ssd1_v2_x2"
+        f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
     "rpkm": (
-        f"dx run {NEXUS_IDS['APPS']['rpkm']}"
-        " --priority high -y --instance-type mem1_ssd1_v2_x8"
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['rpkm']}"
+        f" --priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
     "decision_support_prep": (
-        f"analysisid=$(python {SCRIPTS['dsptool_input_script']} -a "
+        f"analysisid=$(python {SCRIPTS['dsptool_input_script']} -a"
     ),
     "congenica_sftp": (
-        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_SFTP']} "
-        "--priority high -y --instance-type mem1_ssd1_v2_x2"
+        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_sftp']} "
+        f"--priority high -y ' $analysisid ' {JOB_NAME_STR}"
+    ),
+    "congenica_app": (
+        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_app']} "
+        "--priority high -y --instance-type mem1_ssd1_v2_x2 ' $analysisid ' "
+        f"{JOB_NAME_STR}"
     ),
     "sompy": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['sompy']} "
-        "--priority high -y --name "
+        f"--priority high -y {JOB_NAME_STR}"
     ),
     "sambamba": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['sambamba']} "
-        "--priority high -y --name "
+        f"--priority high -y {JOB_NAME_STR}"
     ),
     "duty_csv": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y"
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y "
+        f"{JOB_NAME_STR}"
     ),
 }
 
@@ -917,7 +693,6 @@ SQL_IDS = {
         "mokaamp": 4851,
         "archerdx": 5238,
         "mokasnp": 5091,
-        "mokacan": 4728,
         "tso500": 5237,
     },
     "WES_TEST_STATUS": {

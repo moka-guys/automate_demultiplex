@@ -11,7 +11,9 @@ import re
 from collections import defaultdict
 from seglh_naming.sample import Sample
 from seglh_naming.samplesheet import Samplesheet
-import ad_config as config
+import config.ad_config as ad_config
+
+# TODO add logging - logger as class argument
 
 
 class SamplesheetCheck(object):
@@ -284,10 +286,10 @@ if __name__ == "__main__":
         )
         ss_obj = SamplesheetCheck(
             path,
-            config.SEQUENCER_IDS,
-            config.PANEL_LIST,
-            config.RUNTYPE_LIST,
-            config.TSO_PANEL_LIST,
+            ad_config.SEQUENCER_IDS,
+            ad_config.PANEL_LIST,
+            ad_config.RUNTYPE_LIST,
+            ad_config.TSO_PANEL_LIST,
         )
         for err_type, items in ss_obj.errors.items():
             for item in items:
