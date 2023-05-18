@@ -4,36 +4,11 @@
 N.B. test_email_sending_success() will only pass when running on the
 workstation where the required auth details are stored
 """
-import os
-import shutil
 import logging
 import pytest
 from ad_email.ad_email import AdEmail
-import ad_config as config  # Import config file
-
-
-# Variables used across test classes
-# Path of directory containing test files
-testfiles_dir = os.path.abspath("test/demultiplex_test_files/")
-# Temporary directory to run tests in
-temp_dir = os.path.join(testfiles_dir, "temp/")
-temp_runfolderdir = os.path.join(temp_dir, "test_runfolders/")
-
-
-@pytest.fixture(scope="function", autouse=True)
-def run_before_and_after_tests():
-    """
-    Setup and teardown before and after each test
-    Create temp dir for script to create files in. Removed by teardown class
-    Removes temporary directory (containing created files) after testing
-    complete
-    """
-    # SETUP - run before all tests
-    os.makedirs(temp_dir)
-    yield  # Where the testing happens
-    # TEARDOWN - cleanup after each test
-    if os.path.isdir(temp_dir):
-        shutil.rmtree(temp_dir)
+import config.ad_config as ad_config  # Import config file
+# import inspect
 
 
 class TestAdEmail:
@@ -68,8 +43,9 @@ class TestAdEmail:
         Return test email recipients
         """
         return [
-            (config.MOKAGUYS_RECIPIENT),
-            ([config.MOKAGUYS_RECIPIENT, config.MOKAGUYS_RECIPIENT]),
+            [ad_config.MAIL_SETTINGS['mokaguys_recipient']],
+            [ad_config.MAIL_SETTINGS['mokaguys_recipient'],
+             ad_config.MAIL_SETTINGS["mokaguys_email"]],
         ]
 
     def test_send_email_success(
@@ -80,13 +56,15 @@ class TestAdEmail:
         email_recipients,
     ):
         """
-        Test email sending success. NB this test will only pass when running on
-        the workstation where the required auth details are stored
+        Test email sending success. NB this test will only pass when running
+        on the workstation where the required auth details are stored
         """
-        ad_email_obj = AdEmail(email_priority=1, logger=upload_script_logger)
-        assert ad_email_obj.send_email(
-            email_recipients, email_subject, email_message
-        )
+        for recipients_list in email_recipients:
+            ad_email_obj = AdEmail(logger=upload_script_logger)
+
+            assert ad_email_obj.send_email(
+                recipients_list, email_subject, email_message, 1,
+            )
 
     def test_send_email_fail(
         self,
@@ -99,11 +77,9 @@ class TestAdEmail:
         """
         Test email sending failure - incorrect credentials provided
         """
-        for recipients in email_recipients:
-            monkeypatch.setattr(config, "EMAIL_USER", "abc")
-            ad_email_obj = AdEmail(
-                email_priority=1, logger=upload_script_logger
-            )
+        for recipients_list in email_recipients:
+            ad_email_obj = AdEmail(logger=upload_script_logger)
+            monkeypatch.setattr(ad_email_obj, "email_user", "abc")
             assert not ad_email_obj.send_email(
-                recipients, email_subject, email_message
+                recipients_list, email_subject, email_message, 1, 
             )
