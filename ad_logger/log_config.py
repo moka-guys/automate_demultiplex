@@ -7,22 +7,22 @@ if ad_config.TESTING:
             "fail": "demultiplex_fail",
             "success": "demultiplex_success",
             "ss_warning": "samplesheet_warning",
-            },
+        },
         "usw": {
             "info": "usw_info",
             "fail": "usw_fail",
             "success": "usw_success",
-            },
+        },
         "email": {
             "info": "email_info",
             "fail": "email_fail",
             "success": "email_success",
-            },
+        },
         "backup_runfolder": {
             "info": "backuprunfolder_info",
             "fail": "backuprunfolder_fail",
             "success": "backuprunfolder_success",
-        }
+        },
     }
 else:
     LOG_FLAGS = {
@@ -31,30 +31,29 @@ else:
             "fail": "demultiplextest_fail",
             "success": "demultiplextest_success",
             "ss_warning": "testsamplesheet_warning",
-            },
+        },
         "usw": {
             "info": "uswtest_info",
             "fail": "uswtest_fail",
             "success": "uswtest_success",
-            },
+        },
         "email": {
             "info": "emailtest_info",
             "fail": "emailtest_fail",
             "success": "emailtest_success",
-            },
+        },
         "backup_runfolder": {
             "info": "backuprunfoldertest_info",
             "fail": "backuprunfoldertest_fail",
             "success": "backuprunfoldertest_success",
-        }
+        },
     }
 
 LOG_MSGS = {
     "demultiplex": {
         "script_start": (
-            "Automate demultiplex release: %s . "
-            "Start of demultiplex.py script"
-            ),
+            "Automate demultiplex release: %s . " "Start of demultiplex.py script"
+        ),
         "demux_script_end": (
             "Automate demultiplex release %s: Demultiplex.py complete. %s "
             "runfolders processed: %s"
@@ -70,16 +69,13 @@ LOG_MSGS = {
         "rename_demuxlog_fail": (
             "Demultiplex logfile rename failed for file %s with exception: %s"
         ),
-        "demultiplexing_required": (
-            "Demultiplexing is required for this runfolder"
-        ),
+        "demultiplexing_required": ("Demultiplexing is required for this runfolder"),
         "processing_complete": ("Processing is complete for this runfolder"),
         "demux_runfolder_start": (
             "Automate_demultiplex release: %s -------------- Assessing %s"
         ),
         "ic_fail": (
-            "DEMUX_FAIL - Integrity check fail. Checksums do not match for "
-            "%s see %s"
+            "DEMUX_FAIL - Integrity check fail. Checksums do not match for " "%s see %s"
         ),
         "bcl2fastq_start": (
             "Demultiplexing started for run %s using bcl2fastq command: %s"
@@ -107,8 +103,7 @@ LOG_MSGS = {
             "DEMUX_FAIL - Demultiplexing halted due to samplesheet errors %s: %s"
         ),
         "ic_required": (
-            "This run was sequenced on a sequencer that requires integrity "
-            "checking"
+            "This run was sequenced on a sequencer that requires integrity " "checking"
         ),
         "ic_notrequired": "Integrity check not required",
         "csumfile_present": (
@@ -160,46 +155,30 @@ LOG_MSGS = {
             f"%s{ad_config.CLUSTER_DENSITY_FILE_SUFFIX}"
         ),
         "cd_fail": (
-            "DEMUX_FAIL - Cluster density calculation failed for : %s. "
-            "Error: %s"
-            ),
+            "DEMUX_FAIL - Cluster density calculation failed for : %s. " "Error: %s"
+        ),
     },
     "usw": {
         "script_start": (
             "Automate demultiplex release: %s . "
             "Start of upload_and_setoff_workflows.py script"
-            ),
-        "runfolder_identified": (
-            "Identified runfolder: %s",
         ),
-        "runfolder_looping": (
-            "Looping through runfolders: %s",
-        ),
-        "runfolder_processed": (
-            "Runfolder has been processed: %s",
-        ),
-        "runfolder_not_processed": (
-            "Runfolder not processed: %s",
-        ),
+        "runfolder_identified": ("Identified runfolder: %s",),
+        "runfolder_looping": ("Looping through runfolders: %s",),
+        "runfolder_processed": ("Runfolder has been processed: %s",),
+        "runfolder_not_processed": ("Runfolder not processed: %s",),
         "script_complete": (
             "Automate demultiplex release %s: Demultiplex.py complete. %s "
             "runfolders processed: %s",
         ),
-        "testing_software": (
-            "automate_demultiplexing release: %s",
-        ),
-        "dxtoolkittest_pass": (
-            "dx toolkit source command successful. Stdout: %s",
-        ),
+        "testing_software": ("automate_demultiplexing release: %s",),
+        "dxtoolkittest_pass": ("dx toolkit source command successful. Stdout: %s",),
         "dxtoolkittest_fail": (
-            "USW_FAIL - dx toolkit source command failed. Stdout: %s. "
-            "Stderr: %s"
+            "USW_FAIL - dx toolkit source command failed. Stdout: %s. " "Stderr: %s"
         ),
         "TSO_backup_attempt": "Attempting to backup TSO runfolder. Attempt %s",
         "runfolder_prev_proc": "Runfolder previously processed: %s. Skipping.",
-        "uatest_fail": (
-            "USW_FAIL - Upload Agent Test Failed. Stdout: %s. Stderr: %s"
-            ),
+        "uatest_fail": ("USW_FAIL - Upload Agent Test Failed. Stdout: %s. Stderr: %s"),
         "uatest_pass": "Upload Agent function test passed. Stdout: %s",
         "ua_file_present": "Upload started file present. Terminating.",
         "ua_file_absent": "Upload started file not found. Continuing.",
@@ -207,87 +186,90 @@ LOG_MSGS = {
         "demux_complete": "Demultiplex completed succesfully.",
         "demux_failed": "Demultiplex failed.",
         "not_yet_demultiplexed": "Demultiplex has not been performed.",
-        "fastq_identified": "Fastq identified: %s",
-        "recognised_pannos": "Fastq contains recognised pan number: %s, %s",
-        "unrecognised_panno": (
-            "USW_FAIL - Fastq does not contain a recognised pan number: %s"
-            ),
         "fastqs_identified": (
-            "Identified %s total samples to process, and %s "
-            "samples not to process",
-            ),
+            "Identified %s total samples to process, and %s " "samples not to process",
+        ),
         "no_fastqs_with_pannos": (
-            "USW_FAIL - No fastqs in runfolder contained identifiable "
-            "pan numbers",
-            ),
+            "USW_FAIL - No fastqs in runfolder contained identifiable " "pan numbers",
+        ),
         "library_batch_no_err": (
             "USW_FAIL '%s - Unable to identify library batch numbers. Check "
             "for underscores in the samplenames.",
-            ),
-        "creating_proj": (
-            "Executing project creation script: %s"
-            ),
-        "proj_created": (
-            "DNAnexus project %s (%s) created and shared (%s) to %s",
-            ),
+        ),
+        "creating_proj": "Executing project creation script: %s",
+        "proj_created": "DNAnexus project %s (%s) created and shared (%s) to %s",
         "proj_creation_fail": (
             "USW_FAIL - failed to create project in dna nexus for %s"
-            ),
-        "fastq_upload_cmds": "Fastq upload commands:\n%s",
-        "uploading_fastqs": "Uploading fastqs. See commands at %s",
-        "fastq_upload_output": "Fastq upload.\nStdout:\n%sStderr:\n%s\n",
-        "upload_fail": (
-            "USW_FAIL - upload of %s files failed for run %s. Files: %s"
-            ),
+        ),
+        "upload_cmds": "%s upload commands:\n%s",
+        "uploading_files": "Uploading %s files (%s). See commands at %s",
+        "upload_output": "%s upload output.\nStdout:\n%sStderr:\n%s\n",
+        "upload_fail": "USW_FAIL - upload of %s files failed for run %s. Files: %s",
         "upload_success": "Upload of files complete for run %s",
-        "cd_upload_cmds": "Upload cluster density commands:\n%s",
-        "uploading_cd_files": (
-            "Uploading cluster density files. See commands at %s"
-            ),
+        "uploading_cd_files": ("Uploading cluster density files. See commands at %s"),
         "cd_upload_output": "Uploading cluster density files\n%s\n%s",
         "cd_files_absent": (
             "Skipping upload of cluster density files - not all files present"
-            ),
+        ),
         "bcl2fastq_upload_cmds": "Upload bcl2fastq stats file commands:\n%s",
         "uploading_bcl2fastq_files": (
             "Uploading bcl2fastq stats files. See commands at %s"
-            ),
+        ),
         "bcl2fastq_upload_output": "Uploading bcl2fastq stats files\n%s\n%s",
         "bcl2fastq_files_absent": (
             "Skipping upload of bcl2fastq stats files - not all files present"
-            ),
+        ),
         "building_cmds": "Building dx run commands",
         "sample": "Identified %s sample",
         "congenica_upload_required": (
             "Samples in project %s require upload to congenica"
-            ),
+        ),
         "cmds_built": "Finished building dx run commands",
         "building_cmd": "Building %s cmd for %s",
         "reference_sample": (
-            "NA12878 sample detected, not building congenica upload command "
-            "for %s"
-            ),
+            "NA12878 sample detected, not building congenica upload command " "for %s"
+        ),
         "writing_cmds": "Writing dx run commands",
         "running_cmds": "Running dx run commands",
         "dx_run_err": (
             "USW_FAIL - Error when setting off dx run command for run %s. "
             "Command: %s. Stderror = \n%s"
-            ),
+        ),
         "dx_run_success": "dx run commands issued without error for run %s",
         "ss_copy_success": "Samplesheet copied to runfolder: %s",
         "ss_copy_fail": "Samplesheet not copied to runfolder",
         "uploading_rf": (
             "Uploading rest of run folder to Nexus using backup_runfolder, "
             "ignoring: %s. Stdout stored in logfile: %s"
-            ),
-        "uploading_logs": (
-            "Uploading logfiles (this will not be included in DNANexus)"
-            ),
-        "uploading_log": "Uploading logfile: %s using cmd %s",
+        ),
         "upload_rf_fail": (
-            "USW_FAIL - Error in upload of rest of runfolder: %s in "
-            "runfolder %s"
-            ),
+            "USW_FAIL - Error in upload of rest of runfolder: %s in " "runfolder %s"
+        ),
         "upload_rf_success": "Rest of runfolder %s uploaded ok",
+    },
+    "rf_obj": {
+        "multiple_pipeline_names": (
+            "USW_FAIL - Multiple pipeline names detected from panel config "
+            "for sample list: %s"
+        ),
+        "fastq_identified": "Fastq identified: %s",
+        "undetermined_identified": (
+            "Undetermined file identified to exclude from processing: %s"
+        ),
+        "miseq_fastq_identified": (
+            "Fastq created by MiSeq identified to exclude from processing: %s"
+        ),
+        "unrecognised_panno": (
+            "USW_FAIL - Fastq does not contain a recognised pan number: %s"
+        ),
+        "recognised_panno": "Fastq contains recognised pan number: %s, %s",
+        "sample_match": (
+            "Sample name in samplesheet matches fastq in BaseCalls " "directory: %s, %s"
+        ),
+        "sample_mismatch": (
+            "Sample name in samplesheet does not match any fastq in the "
+            "BaseCalls directory: %s"
+        ),
+        "not_fastq": ("File is not a zipped fastq: %s"),
     },
 }

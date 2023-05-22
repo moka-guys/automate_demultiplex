@@ -117,8 +117,7 @@ class SamplesheetCheck(object):
             return True
         else:
             self.errors["sspresent_err"].append(
-                f"Samplesheet with supplied name "
-                f"not present ({self.ss_path})"
+                f"Samplesheet with supplied name " f"not present ({self.ss_path})"
             )
 
     def check_ss_name(self):
@@ -161,9 +160,7 @@ class SamplesheetCheck(object):
         with open(self.ss_path, "r", encoding="utf-8") as samplesheet_stream:
             for line in reversed(samplesheet_stream.readlines()):
                 # If line contains table headers, stop looping through the file
-                if any(
-                    header in line for header in self.expected_data_headers
-                ):
+                if any(header in line for header in self.expected_data_headers):
                     self.data_headers = line.split(",")
                     break
                 elif len(line.split(",")[0]) < 2:  # skip empty lines
@@ -194,15 +191,13 @@ class SamplesheetCheck(object):
         self.expected_data_headers list.
         """
         if not all(
-            header in self.data_headers
-            for header in self.expected_data_headers
+            header in self.data_headers for header in self.expected_data_headers
         ):
             self.missing_headers = list(
                 set(self.expected_data_headers).difference(self.data_headers)
             )
             self.errors["headers_err"].append(
-                f"Header(/s) missing from [Data] "
-                f"section: '{self.missing_headers}'"
+                f"Header(/s) missing from [Data] " f"section: '{self.missing_headers}'"
             )
 
     def comp_samplenameid(self):
@@ -232,8 +227,7 @@ class SamplesheetCheck(object):
         valid_chars = "^[A-Za-z0-9_-]+$"
         if not re.match(valid_chars, sample):
             self.errors["validchars_err"].append(
-                f"Sample name contains invalid characters "
-                f"({column}: {sample})"
+                f"Sample name contains invalid characters " f"({column}: {sample})"
             )
 
     def check_sample(self, sample, column):
@@ -281,9 +275,7 @@ class SamplesheetCheck(object):
 
 if __name__ == "__main__":
     for samplesheet in os.listdir("/home/rachel/samplesheets/samplesheets"):
-        path = os.path.join(
-            "/home/rachel/samplesheets/samplesheets/", samplesheet
-        )
+        path = os.path.join("/home/rachel/samplesheets/samplesheets/", samplesheet)
         ss_obj = SamplesheetCheck(
             path,
             ad_config.SEQUENCER_IDS,

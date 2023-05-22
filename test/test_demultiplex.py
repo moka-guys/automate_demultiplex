@@ -92,6 +92,7 @@ class TestGetRunfolders(object):
     #         for runfolders in gr_obj.demultiplex_runfolders()
     #     )
 
+
 #     def test_demultiplex_runfolders_nottoproc(
 #         self, monkeypatch, runfolders_nottoproc
 #     ):
@@ -152,13 +153,13 @@ class TestDemultiplexRunfolder(object):
             (
                 os.path.join(
                     test_config.temp_testfiles_dir, "bcl2fastq2_output_nomsg.log"
-                    )
+                )
             ),  # No success message present in logfile
             ("nonexistent.log"),  # Logfile nonexistent
             (
                 os.path.join(
                     test_config.temp_testfiles_dir, "bcl2fastq2_output_empty.log"
-                    )
+                )
             ),  # Logfile empty
         ]
 
@@ -170,7 +171,7 @@ class TestDemultiplexRunfolder(object):
         """
         return os.path.join(
             test_config.temp_testfiles_dir, "bcl2fastq2_output_success.log"
-            )
+        )
 
     @pytest.fixture(scope="function")
     def icheck_required(self):
@@ -194,7 +195,7 @@ class TestDemultiplexRunfolder(object):
         return [
             os.path.join(
                 test_config.sv_samplesheet_temp_dir,
-                "210513_M02631_0236_000000000-JFMNK_SampleSheet.csv"
+                "210513_M02631_0236_000000000-JFMNK_SampleSheet.csv",
             )
         ]
 
@@ -205,7 +206,7 @@ class TestDemultiplexRunfolder(object):
         """
         return os.path.join(
             test_config.sv_samplesheet_temp_dir,
-            "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv"
+            "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv",
         )
 
     @pytest.fixture(scope="function")
@@ -380,16 +381,15 @@ class TestDemultiplexRunfolder(object):
             "999999_A01229_0000_00000TEST7",
         ]
 
-    def test_setoff_workflow_success(
-        self, monkeypatch, demultiplexing_required
-    ):
+    def test_setoff_workflow_success(self, monkeypatch, demultiplexing_required):
         """
         Test that function sets off run processing correctly for runfolders
         that require it
         """
         monkeypatch.setitem(
-            ad_config.EXECUTABLES, 'bcl2fastq',
-            f"echo '{ad_config.DEMULTIPLEX_SUCCESS_REGEX}'"
+            ad_config.EXECUTABLES,
+            "bcl2fastq",
+            f"echo '{ad_config.DEMULTIPLEX_SUCCESS_REGEX}'",
         )
         for runfolder in demultiplexing_required:
             dr_obj = demultiplex.DemultiplexRunfolder(runfolder)
@@ -411,8 +411,7 @@ class TestDemultiplexRunfolder(object):
         required
         """
         for runfolder in demultiplexing_required:
-            assert demultiplex.DemultiplexRunfolder(
-                runfolder).demultiplexing_required()
+            assert demultiplex.DemultiplexRunfolder(runfolder).demultiplexing_required()
 
     def test_demultiplexing_required_false(self, demultiplexing_notrequired):
         """
@@ -421,7 +420,8 @@ class TestDemultiplexRunfolder(object):
         """
         for runfolder in demultiplexing_notrequired:
             assert not demultiplex.DemultiplexRunfolder(
-                runfolder).demultiplexing_required()
+                runfolder
+            ).demultiplexing_required()
 
     def test_bcl2fastqlog_absent_false(self, rf_with_bcl2fastqlog):
         """
@@ -429,8 +429,7 @@ class TestDemultiplexRunfolder(object):
         an empty file
         """
         for runfolder in rf_with_bcl2fastqlog:
-            assert not demultiplex.DemultiplexRunfolder(
-                runfolder).bcl2fastqlog_absent()
+            assert not demultiplex.DemultiplexRunfolder(runfolder).bcl2fastqlog_absent()
 
     def test_bcl2fastqlog_absent_true(self, rf_no_bcl2fastqlog):
         """
@@ -452,9 +451,7 @@ class TestDemultiplexRunfolder(object):
             valid, _ = dr_obj.valid_samplesheet()
             assert valid
 
-    def test_valid_samplesheet_fail(
-        self, monkeypatch, ss_with_disallowed_sserrs
-    ):
+    def test_valid_samplesheet_fail(self, monkeypatch, ss_with_disallowed_sserrs):
         """
         Test function fails to return valid flag as expected, using a set of
         samplesheets covering all failure cases
@@ -470,31 +467,25 @@ class TestDemultiplexRunfolder(object):
         Test sequencing_complete() can identify presence of rtacomplete file
         """
         for runfolder in rtacomplete_present:
-            assert demultiplex.DemultiplexRunfolder(
-                runfolder).sequencing_complete()
+            assert demultiplex.DemultiplexRunfolder(runfolder).sequencing_complete()
 
     def test_sequencing_complete_fail(self, rtacomplete_absent):
         """
         Provide path to nonexistent rtacompletefile
         """
         for runfolder in rtacomplete_absent:
-            assert not demultiplex.DemultiplexRunfolder(
-                runfolder).sequencing_complete()
+            assert not demultiplex.DemultiplexRunfolder(runfolder).sequencing_complete()
 
     def test_no_disallowed_sserrs_pass(self, monkeypatch, perfect_ss):
         """
         Test no_disallowed_sserrs() using a perfect samplesheet
         """
         dr_obj = demultiplex.DemultiplexRunfolder("")
-        monkeypatch.setattr(
-            dr_obj.runfolder_obj, "samplesheet_path", perfect_ss
-            )
+        monkeypatch.setattr(dr_obj.runfolder_obj, "samplesheet_path", perfect_ss)
         valid, sscheck_obj = dr_obj.valid_samplesheet()
         assert dr_obj.no_disallowed_sserrs(valid, sscheck_obj)
 
-    def test_no_disallowed_sserrs_fail(
-        self, monkeypatch, ss_with_disallowed_sserrs
-    ):
+    def test_no_disallowed_sserrs_fail(self, monkeypatch, ss_with_disallowed_sserrs):
         """
         Tests function identifies all disallowed ss errors
         """
@@ -509,8 +500,7 @@ class TestDemultiplexRunfolder(object):
         Test function correctly detects that runfolder does not require an
         integrity check
         """
-        assert demultiplex.DemultiplexRunfolder(
-            icheck_notrequired).seq_requires_no_ic()
+        assert demultiplex.DemultiplexRunfolder(icheck_notrequired).seq_requires_no_ic()
 
     def test_seq_requires_no_ic_fail(self, icheck_required):
         """
@@ -518,7 +508,8 @@ class TestDemultiplexRunfolder(object):
         check
         """
         assert not demultiplex.DemultiplexRunfolder(
-            icheck_required).seq_requires_no_ic()
+            icheck_required
+        ).seq_requires_no_ic()
 
     @pytest.mark.parametrize(
         "no_prior_ic",
@@ -541,8 +532,7 @@ class TestDemultiplexRunfolder(object):
         the script previously
         """
         for runfolder in checksumfile_present_pass_checked:
-            assert not demultiplex.DemultiplexRunfolder(
-                runfolder).no_prior_ic()
+            assert not demultiplex.DemultiplexRunfolder(runfolder).no_prior_ic()
 
     @pytest.mark.parametrize(
         "checksumfile_present",
@@ -557,8 +547,7 @@ class TestDemultiplexRunfolder(object):
         Test function correctly detects presence of checksum file
         """
         for runfolder in checksumfile_present:
-            assert demultiplex.DemultiplexRunfolder(
-                runfolder).checksumfile_present()
+            assert demultiplex.DemultiplexRunfolder(runfolder).checksumfile_present()
 
     def test_checksumfile_present_fail(self, checksumfile_absent):
         """
@@ -566,7 +555,8 @@ class TestDemultiplexRunfolder(object):
         """
         for runfolder in checksumfile_absent:
             assert not demultiplex.DemultiplexRunfolder(
-                runfolder).checksumfile_present()
+                runfolder
+            ).checksumfile_present()
 
     @pytest.mark.parametrize(
         "checksum_msg_absent",
@@ -582,18 +572,18 @@ class TestDemultiplexRunfolder(object):
         """
         for runfolder in checksum_msg_absent:
             assert demultiplex.DemultiplexRunfolder(
-                runfolder).checksum_complete_msg_absent()
+                runfolder
+            ).checksum_complete_msg_absent()
 
-    def test_checksum_complete_msg_absent_fail(
-        self, checksumfile_present_pass_checked
-    ):
+    def test_checksum_complete_msg_absent_fail(self, checksumfile_present_pass_checked):
         """
         Test function correctly identifies absence of the checksum complete
         string in the checksum file
         """
         for runfolder in checksumfile_present_pass_checked:
             assert not demultiplex.DemultiplexRunfolder(
-                runfolder).checksum_complete_msg_absent()
+                runfolder
+            ).checksum_complete_msg_absent()
 
     def test_checksums_match_pass(self, checksumfile_present_pass_notchecked):
         """
@@ -638,8 +628,7 @@ class TestDemultiplexRunfolder(object):
         """
         dr_obj = demultiplex.DemultiplexRunfolder("")
         monkeypatch.setattr(
-            dr_obj.runfolder_obj, "bcl2fastqlog_path",
-            "/path/to/nonexistent/log.log"
+            dr_obj.runfolder_obj, "bcl2fastqlog_path", "/path/to/nonexistent/log.log"
         )
         assert not dr_obj.create_bcl2fastqlog()
         assert not os.path.isfile(dr_obj.runfolder_obj.bcl2fastqlog_path)
@@ -651,9 +640,7 @@ class TestDemultiplexRunfolder(object):
         dr_obj = demultiplex.DemultiplexRunfolder("")
         assert dr_obj.add_bcl2fastqlog_tso_msg()
         assert os.path.isfile(dr_obj.runfolder_obj.bcl2fastqlog_path)
-        with open(
-            dr_obj.runfolder_obj.bcl2fastqlog_path, encoding="utf-8"
-        ) as file:
+        with open(dr_obj.runfolder_obj.bcl2fastqlog_path, encoding="utf-8") as file:
             assert ad_config.DEMULTIPLEXLOG_TSO500MSG in file.read()
 
     def test_run_demultiplexing_success(self, non_tso_runfolder):

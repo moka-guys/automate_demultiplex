@@ -59,11 +59,11 @@ Settings are imported from [ad_config.py](../ad_config.py).
 
 ## Logging
 
-| Alias | Description | Filename | Location |
-|------|----------|---------|-----------|
-|Demultiplex Log|Records the decisions made for multiple runfolders each time the script is run|`TIMESTAMP_RUNFOLDER-NAME_demultiplex_script_log.txt`| /usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files/ |
-|Bcl2fastq output| STDOUT and STDERR from bcl2fastq | `bcl2fastq2_output.log` | Within the runfolder |
-|Demultiplex output| STDERR and STDOUT from demultiplexing script. Includes errors from the cronjob | `TIMESTAMP.txt` | /usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout |
+| Alias              | Description                                                                    | Filename                                              | Location                                                                           |
+| ------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Demultiplex Log    | Records the decisions made for multiple runfolders each time the script is run | `TIMESTAMP_RUNFOLDER-NAME_demultiplex_script_log.txt` | /usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_log_files/ |
+| Bcl2fastq output   | STDOUT and STDERR from bcl2fastq                                               | `bcl2fastq2_output.log`                               | Within the runfolder                                                               |
+| Demultiplex output | STDERR and STDOUT from demultiplexing script. Includes errors from the cronjob | `TIMESTAMP.txt`                                       | /usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout     |
 
 ## Alerts
 

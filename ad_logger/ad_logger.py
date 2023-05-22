@@ -62,10 +62,7 @@ class AdLoggers(object):
         all_loggers = []
 
         for key in self.logfiles_config:
-            setattr(
-                AdLoggers, key,
-                self._get_logger(key, self.logfiles_config[key])
-            )
+            setattr(AdLoggers, key, self._get_logger(key, self.logfiles_config[key]))
             all_loggers.append(getattr(AdLoggers, key))
         return all_loggers
 
@@ -81,9 +78,7 @@ class AdLoggers(object):
             # Runfolder-specific logfiles
             logfiles_config = {
                 "usw_rf": self.runfolder_obj.upload_runfolder_logfile,
-                "demultiplex_rf": (
-                    self.runfolder_obj.demultiplex_runfolder_logfile
-                    ),
+                "demultiplex_rf": (self.runfolder_obj.demultiplex_runfolder_logfile),
                 "upload_agent": self.runfolder_obj.upload_agent_logfile,
                 "backup": self.runfolder_obj.backup_runfolder_logfile,
                 "project": self.runfolder_obj.project_creation_logfile,
@@ -92,13 +87,10 @@ class AdLoggers(object):
         else:
             logfiles_config = {
                 # Upload and setoff workflows script logfile
-                "usw_script": (
-                    ad_config.LOGFILES["upload_script"] % self.timestamp
-                    ),
+                "usw_script": (ad_config.LOGFILES["upload_script"] % self.timestamp),
                 "demultiplex_script": (
-                    ad_config.LOGFILES["demultiplex_script_logfile"] %
-                    self.timestamp
-                    ),
+                    ad_config.LOGFILES["demultiplex_script_logfile"] % self.timestamp
+                ),
             }
         return logfiles_config
 
