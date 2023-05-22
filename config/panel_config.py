@@ -16,12 +16,11 @@ Dictionary keys and values are as follows:
 
     pipeline:                     Name of pipeline
     panel_name:                   Name of capture panel
-    RPKM_bedfile_pan_number:      Pan number of RPKM bedfile, or False if RPKM
-                                  not run
+    capture_pan_num:              Pan number of capture panel bedfile (used for RPKM).
+                                  False if RPKM not run
     hsmetrics_bedfile:            bedfile filename, or None
     sambamba_bedfile:             bedfile filename, or None
     variant_calling_bedfile:      bedfile filename, or None
-    peddy:                        True or False (app run or not run)
     capture_type:                 Amplicon or Hybridisation
     multiqc_coverage_level:       Value
     clinical_coverage_depth:      Value, or False. Used as input for sambamba
@@ -52,8 +51,10 @@ import config.ad_config as ad_config  # Import ad_config file
 # TODO look into whether the 100X maximum coverage for multiqc can be raised
 # for compatibility with TSO500
 
-MOKAPIPE_HAPLOTYPE_CALLER_PADDING = 0
-FH_PRS_BEDFILE = "Pan4909.bed"  # Mokapipe FH_PRS BED file
+PIPE_HAPLOTYPE_CALLER_PADDING = 0
+
+# Mokapipe FH_PRS BED file
+FH_PRS_BEDFILE = f"{ad_config.BEDFILE_FOLDER}Pan4909.bed"
 
 POLYEDGE_INPUTS = {
     "MSH2": {
@@ -68,7 +69,7 @@ CONGENICA_CREDENTIALS = {
     "viapath": {
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
-        },
+    },
     "stg": {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -78,27 +79,27 @@ CONGENICA_CREDENTIALS = {
 # Default dictionary upon which the panel dictionary is built -
 # values are replaced within subsequent dictionaries
 DEFAULT_DICT = {
-        "panel_name": False,
-        "pipeline": False,
-        "RPKM_bedfile_pan_number": False,
-        "hsmetrics_bedfile": False,
-        "sambamba_bedfile": False,
-        "variant_calling_bedfile": False,
-        "capture_type": False,
-        "multiqc_coverage_level": False,
-        "clinical_coverage_depth": False,
-        "coverage_min_basecall_qual": False,
-        "coverage_min_mapping_qual": False,
-        "masked_reference": False,
-        "throughput": False,
-        "test_number": False,
-        "congenica_project": False,
-        "congenica_credentials": False,
-        "congenica_IR_template": False,
-        "polyedge": False,
-        "FH": False,
-        "dry_lab_only": False,
-        "drylab_dnanexus_id": False,
+    "panel_name": False,
+    "pipeline": False,
+    "capture_pan_num": False,
+    "hsmetrics_bedfile": False,
+    "sambamba_bedfile": False,
+    "variant_calling_bedfile": False,
+    "capture_type": False,
+    "multiqc_coverage_level": False,
+    "clinical_coverage_depth": False,
+    "coverage_min_basecall_qual": False,
+    "coverage_min_mapping_qual": False,
+    "masked_reference": False,
+    "throughput": False,
+    "test_number": False,
+    "congenica_project": False,
+    "congenica_credentials": False,
+    "congenica_IR_template": False,
+    "polyedge": False,
+    "FH": False,
+    "dry_lab_only": False,
+    "drylab_dnanexus_id": False,
 }
 
 
@@ -108,9 +109,9 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "vcp1",
         "pipeline": "pipe",
-        "RPKM_bedfile_pan_number": "Pan4399",
+        "capture_pan_num": "Pan4399",
         "hsmetrics_bedfile": "Pan4397data.bed",
-        "sambamba_bedfile": "Pan4397dataSambamba.bed",
+        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4397dataSambamba.bed",
         "variant_calling_bedfile": "Pan4398data.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
@@ -122,9 +123,9 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "vcp2",
         "pipeline": "pipe",
-        "RPKM_bedfile_pan_number": "Pan5109",
+        "capture_pan_num": "Pan5109",
         "hsmetrics_bedfile": "Pan5123data.bed",
-        "sambamba_bedfile": "Pan5123dataSambamba.bed",
+        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan5123dataSambamba.bed",
         "variant_calling_bedfile": "Pan5119data.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
@@ -136,9 +137,9 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "vcp3",
         "pipeline": "pipe",
-        "RPKM_bedfile_pan_number": "Pan4362",
+        "capture_pan_num": "Pan4362",
         "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
+        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
@@ -151,21 +152,21 @@ CAPTURE_PANEL_DICT = {
         "panel_name": "lrpcr",
         "pipeline": "pipe",
         "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
-        "sambamba_bedfile": "Pan5018dataSambamba.bed",
+        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan5018dataSambamba.bed",
         "variant_calling_bedfile": "Pan4767data.bed",
         "capture_type": "Amplicon",
         "multiqc_coverage_level": 30,
         "clinical_coverage_depth": 30,
         "coverage_min_basecall_qual": 10,
         "coverage_min_mapping_qual": 20,
-        "masked_reference": ad_config.NEXUS_IDS['FILES']['masked_reference'],
+        "masked_reference": ad_config.NEXUS_IDS["FILES"]["masked_reference"],
     },
     "swift_57g": {
         **DEFAULT_DICT,
         "panel_name": "swift_57g",
         "pipeline": "amp",
         "hsmetrics_bedfile": "Pan4082.bed",
-        "sambamba_bedfile": "Pan4082Sambamba.bed",
+        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4082Sambamba.bed",
         "capture_type": "Amplicon",
         "clinical_coverage_depth": 600,  # Only found in mokamp command
         "multiqc_coverage_level": 100,
@@ -174,11 +175,11 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "swift_egfr",
         "pipeline": "amp",
-        "sambamba_bedfile": "Pan4081Sambamba.bed",
+        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4081Sambamba.bed",
         "hsmetrics_bedfile": "Pan4081.bed",
         "capture_type": "Amplicon",
         "clinical_coverage_depth": 600,  # Only found in mokamp command
-        "multiqc_coverage_level": 100
+        "multiqc_coverage_level": 100,
     },
     "snp": {
         **DEFAULT_DICT,
@@ -192,7 +193,7 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "wes",
         "pipeline": "wes",
-        "sambamba_bedfile": "Pan493dataSambamba.bed",
+        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan493dataSambamba.bed",
         "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 20,
@@ -201,7 +202,7 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "wes_eb",
         "pipeline": "wes",
-        "sambamba_bedfile": "Pan493dataSambamba.bed",
+        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan493dataSambamba.bed",
         "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 20,
@@ -217,13 +218,13 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "tso500",
         "pipeline": "tso500",
-        "sambamba_bedfile": "Pan4969dataSambamba.bed",
+        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4969dataSambamba.bed",
         "capture_type": "Hybridisation",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
         "coverage_min_mapping_qual": 30,
-    }
+    },
 }
 
 # Dictionary containing pan number specific settings, arranged by workflow name
@@ -242,10 +243,11 @@ PANEL_DICT = {
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
     },
-    **dict.fromkeys([
-        "Pan4396",  # ArcherDx (Synnovis)
-        "Pan5113",  # ArcherDx (BSPS)
-        "Pan5115",  # ArcherDx (Control)
+    **dict.fromkeys(
+        [
+            "Pan4396",  # ArcherDx (Synnovis)
+            "Pan5113",  # ArcherDx (BSPS)
+            "Pan5115",  # ArcherDx (Control)
         ],
         {
             **CAPTURE_PANEL_DICT["archerdx"],
@@ -275,14 +277,6 @@ PANEL_DICT = {
         **CAPTURE_PANEL_DICT["tso500"],
         "throughput": "high",
         "drylab_dnanexus_id": "BSPS_MD",
-    },
-    "Pan4579": {  # VCP2 M1.1 - Somatic
-        **CAPTURE_PANEL_DICT["vcp2_m1.1_somatic"],
-        "test_number": "M1.1",
-    },
-    "Pan4574": {  # VCP2 M1.2 - Somatic
-        **CAPTURE_PANEL_DICT["vcp2_m1.2_somatic"],
-        "test_number": "M1.2",
     },
     "Pan5007": {  # LRPCR R207 - PMS2 (Viapath)
         **CAPTURE_PANEL_DICT["lrpcr"],
@@ -756,24 +750,20 @@ PANELS = list(PANEL_DICT.keys())
 
 # Per-capture panel numbers
 VCP_PANELS = {
-    "vcp1": [k for k, v in PANEL_DICT.items() if v['panel_name'] == "vcp1"],
-    "vcp2": [k for k, v in PANEL_DICT.items() if v['panel_name'] == "vcp2"],
-    "vcp3": [k for k, v in PANEL_DICT.items() if v['panel_name'] == "vcp3"]
-    }
+    "vcp1": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp1"],
+    "vcp2": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp2"],
+    "vcp3": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp3"],
+}
 
-TSO500_PANELS = [k for k, v in PANEL_DICT.items() if v['pipeline'] == "tso500"]
-WES_PANELS = [k for k, v in PANEL_DICT.items() if v['pipeline'] == "wes"]
-SNP_PANELS = [k for k, v in PANEL_DICT.items() if v['pipeline'] == "snp"]
-ARCHER_PANELS = [
-    k for k, v in PANEL_DICT.items() if v['pipeline'] == "archerdx"
-]
-SWIFT_57G_PANELS = [
-    k for k, v in PANEL_DICT.items() if v['panel_name'] == "swift_57g"
-]
+TSO500_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "tso500"]
+WES_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "wes"]
+SNP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "snp"]
+ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
+SWIFT_57G_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "swift_57g"]
 SWIFT_EGFR_PANELS = [
-    k for k, v in PANEL_DICT.items() if v['panel_name'] == "swift_egfr"
+    k for k, v in PANEL_DICT.items() if v["panel_name"] == "swift_egfr"
 ]
-LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v['panel_name'] == "lrpcr"]
+LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
 
 # The below lists are used by the duty_csv app
 
@@ -781,17 +771,19 @@ LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v['panel_name'] == "lrpcr"]
 # to include this as input to duty_csv as we do not want to download this to
 # the trust network
 TSO_VIAPATH_PANNUMBERS = [
-    k for k, v in PANEL_DICT.items() if v['pipeline'] == "tso500" and
-    v['dry_lab_only'] is False
+    k
+    for k, v in PANEL_DICT.items()
+    if v["pipeline"] == "tso500" and v["dry_lab_only"] is False
 ]
 
 STG_PANNUMBERS = [
-        k for k, v in PANEL_DICT.items() if v['pipeline'] == "pipe" and
-        v['congenica_credentials'] == "STG"
-        ]
+    k
+    for k, v in PANEL_DICT.items()
+    if v["pipeline"] == "pipe" and v["congenica_credentials"] == "STG"
+]
 
 CP_CAPTURE_PANNOS = [
-    CAPTURE_PANEL_DICT["vcp1"]["RPKM_bedfile_pan_number"],
-    CAPTURE_PANEL_DICT["vcp2"]["RPKM_bedfile_pan_number"],
-    CAPTURE_PANEL_DICT["vcp3"]["RPKM_bedfile_pan_number"],
+    CAPTURE_PANEL_DICT["vcp1"]["capture_pan_num"],
+    CAPTURE_PANEL_DICT["vcp2"]["capture_pan_num"],
+    CAPTURE_PANEL_DICT["vcp3"]["capture_pan_num"],
 ]

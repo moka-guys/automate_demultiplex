@@ -8,6 +8,7 @@ import logging
 import pytest
 from ad_email.ad_email import AdEmail
 import config.ad_config as ad_config  # Import config file
+
 # import inspect
 
 
@@ -43,9 +44,11 @@ class TestAdEmail:
         Return test email recipients
         """
         return [
-            [ad_config.MAIL_SETTINGS['mokaguys_recipient']],
-            [ad_config.MAIL_SETTINGS['mokaguys_recipient'],
-             ad_config.MAIL_SETTINGS["mokaguys_email"]],
+            [ad_config.MAIL_SETTINGS["binfx_recipient"]],
+            [
+                ad_config.MAIL_SETTINGS["binfx_recipient"],
+                ad_config.MAIL_SETTINGS["binfx_email"],
+            ],
         ]
 
     def test_send_email_success(
@@ -63,7 +66,10 @@ class TestAdEmail:
             ad_email_obj = AdEmail(logger=upload_script_logger)
 
             assert ad_email_obj.send_email(
-                recipients_list, email_subject, email_message, 1,
+                recipients_list,
+                email_subject,
+                email_message,
+                1,
             )
 
     def test_send_email_fail(
@@ -81,5 +87,8 @@ class TestAdEmail:
             ad_email_obj = AdEmail(logger=upload_script_logger)
             monkeypatch.setattr(ad_email_obj, "email_user", "abc")
             assert not ad_email_obj.send_email(
-                recipients_list, email_subject, email_message, 1, 
+                recipients_list,
+                email_subject,
+                email_message,
+                1,
             )

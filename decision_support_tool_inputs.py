@@ -18,8 +18,8 @@ import argparse
 import config.ad_config as ad_config  # Import ad_config file
 import config.panel_config as panel_config
 
-# TODO incorporate logging, including traceback
 
+# TODO incorporate logging, including traceback
 def get_arguments():
     """
     Uses argparse module to define and handle command line input arguments
@@ -82,43 +82,37 @@ class DecisionTooler(object):
             self.workflow = "pipe"
             self.vcf_stage = "filter_vcf"
             self.bam_stage = "gatk"
-            self.vcf = ad_config.MOKAPIPE_VCF_OUTPUT_NAME
-            self.bam = ad_config.MOKAPIPE_BAM_OUTPUT_NAME
+            self.vcf = ad_config.PIPE_VCF_OUTPUT_NAME
+            self.bam = ad_config.PIPE_BAM_OUTPUT_NAME
             self.bai = None
         else:
             self.workflow = "wes"
             # Same stage is used to produce both the BAM and VCF
             self.vcf_stage = "senteion"
             self.bam_stage = "senteion"
-            self.vcf = ad_config.MOKAWES_SENTIEON_VCF_OUTPUT_NAME
-            self.bam = ad_config.MOKAWES_SENTIEON_BAM_OUTPUT_NAME
-            self.bai = ad_config.MOKAWES_SENTIEON_BAI_OUTPUT_NAME
+            self.vcf = ad_config.WES_SENTIEON_VCF_OUTPUT_NAME
+            self.bam = ad_config.WES_SENTIEON_BAM_OUTPUT_NAME
+            self.bai = ad_config.WES_SENTIEON_BAI_OUTPUT_NAME
 
-        self.vcf_stageid = (
-            ad_config.NEXUS_IDS['STAGES'][f'moka{self.workflow}']
-            [self.vcf_stage]
-            )
-        self.bam_stageid = (
-            ad_config.NEXUS_IDS['STAGES'][f'moka{self.workflow}']
-            [self.bam_stage]
-            )
+        self.vcf_stageid = ad_config.NEXUS_IDS["STAGES"][self.workflow][self.vcf_stage]
+        self.bam_stageid = ad_config.NEXUS_IDS["STAGES"][self.workflow][self.bam_stage]
 
         # Use workflow stage ID to identify job ID of required stage
         self.vcfjobid_cmd = (
             f"{self.base_cmd} | jq '.stages[] | select(.id == "
-            f"\"{self.vcf_stageid}\")"
+            f'"{self.vcf_stageid}")'
             ".execution.id'"
-            )
+        )
         self.bamjobid_cmd = (
             f"{self.base_cmd} | jq '.stages[] | select( .id == "
-            f"\"'\"{self.bam_stageid}\"'\")"
+            f'"\'"{self.bam_stageid}"\'")'
             ".execution.id'"
-            )
+        )
 
         jobid = False
         tries = 0
 
-        for file in ('vcf', 'bam'):
+        for file in ("vcf", "bam"):
             jobid_cmd = getattr(self, f"{file}jobid_cmd")
             while not jobid:
                 try:
@@ -135,7 +129,7 @@ class DecisionTooler(object):
             f"{self.vcfjobid}:{self.vcf}"
             f"{ad_config.APP_INPUTS['congenica_upload']['bam']}"
             f"{self.bamjobid}:{self.bam}"
-            )
+        )
 
     def execute_subprocess(self, cmd):
         """
@@ -145,7 +139,7 @@ class DecisionTooler(object):
             [cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True
         )
         (out, _) = proc.communicate()
-        return out.decode("utf-8").strip("\"\n")
+        return out.decode("utf-8").strip('"\n')
 
     def printer(self):
         """
@@ -157,7 +151,7 @@ class DecisionTooler(object):
 if __name__ == "__main__":
     args = get_arguments()
     with open(
-            ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
+        ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
     ) as token_file:
         dnanexus_apikey = token_file.readline().rstrip()  # Auth token
     ajson = json.loads(
@@ -179,9 +173,8 @@ if __name__ == "__main__":
     # Print decision support tool inputs, using the analysis ID and the
     # workflow name from the ad_config panel dictionary
     tooler = DecisionTooler(
-        args.analysis_id, args.project,
-        panel_config.PANEL_DICT[pannumber]['pipeline']
-        )
+        args.analysis_id, args.project, panel_config.PANEL_DICT[pannumber]["pipeline"]
+    )
 
     # Print congenica app inputs
     tooler.printer()

@@ -82,9 +82,7 @@ def cli_arguments(args):
         "-p",
         "--project",
         default=None,
-        help=(
-            "The name of an existing DNAnexus project for the given runfolder"
-            ),
+        help=("The name of an existing DNAnexus project for the given runfolder"),
     )
     return parser.parse_args(args)  # Collect arguments and return
 
@@ -129,8 +127,7 @@ class UAcaller:
         # Set DNAnexus authentication token
         if not auth_token:
             with open(
-                ad_config.CREDENTIALS["dnanexus_authtoken"], "r",
-                encoding="utf-8"
+                ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
             ) as token_file:
                 self.auth_token = token_file.readline().rstrip()  # Auth token
         else:
@@ -141,13 +138,10 @@ class UAcaller:
             extra={"flag": self.loggers.log_flags["backup_runfolder"]["info"]},
         )
         # Set DNAnexus project
-        self.runfolder_obj.nexus_project_name = self.find_nexus_project(
-            project
-            )
+        self.runfolder_obj.nexus_project_name = self.find_nexus_project(project)
 
     def perform_backup(self):
-        """
-        """
+        """ """
         self.check_for_programs()  # Check upload agent exists in system path
         self.check_runfolder_exists()
         self.call_upload_agent()  # Call the DNAnexus upload agent
@@ -163,33 +157,25 @@ class UAcaller:
         for program in ["dx", ad_config.EXECUTABLES["upload_agent"]]:
             if find_executable(program):
                 self.loggers.backup.info(
-                    f'Found program: {program}',
-                    extra={
-                        "flag": self.loggers.log_flags["backup_runfolder"]["info"]
-                        },
+                    f"Found program: {program}",
+                    extra={"flag": self.loggers.log_flags["backup_runfolder"]["info"]},
                 )
             else:
                 self.loggers.backup.exception(
                     f"Could not find program: {program}",
-                    extra={
-                        "flag": self.loggers.log_flags["backup_runfolder"]["fail"]
-                        },
+                    extra={"flag": self.loggers.log_flags["backup_runfolder"]["fail"]},
                 )
 
     def check_runfolder_exists(self):
-        """
-        """
+        """ """
         self.loggers.backup.info(
             f"Checking the runfolder {self.runfolder_obj.runfolderpath}",
             extra={"flag": self.loggers.log_flags["backup_runfolder"]["info"]},
         )
         if not os.path.isdir(self.runfolder_obj.runfolderpath):
             self.loggers.backup.exception(
-                "The runfolder does not exist: "
-                f"{self.runfolder_obj.runfolderpath}",
-                extra={
-                    "flag": self.loggers.log_flags["backup_runfolder"]["fail"]
-                    },
+                "The runfolder does not exist: " f"{self.runfolder_obj.runfolderpath}",
+                extra={"flag": self.loggers.log_flags["backup_runfolder"]["fail"]},
             )
             raise IOError("Invalid runfolder given as input")
 
@@ -238,13 +224,10 @@ class UAcaller:
                 f"{len(project_matches)} DNAnexus projects found for pattern "
                 f"{pattern}: {project_matches}. Repeat script by giving "
                 "explicit project to -p/--project flag",
-                extra={
-                    "flag": self.loggers.log_flags["backup_runfolder"]["fail"]
-                    },
+                extra={"flag": self.loggers.log_flags["backup_runfolder"]["fail"]},
             )
             raise ValueError(
-                "Invalid DNAnexus project name. 0 or >1 "
-                "matching projects found."
+                "Invalid DNAnexus project name. 0 or >1 " "matching projects found."
             )
 
     def get_nexus_filepath(self, folder_path):
@@ -285,9 +268,9 @@ class UAcaller:
 
         # Prepend the nexus folder path to cleaned path. the nexus folder path
         # is the project name without the first four characters (002_).
-        nexus_path = os.path.join("/",
-                                  self.runfolder_obj.nexus_project_name[4:],
-                                  clean_runfolder_path)
+        nexus_path = os.path.join(
+            "/", self.runfolder_obj.nexus_project_name[4:], clean_runfolder_path
+        )
 
         # Return the nexus folder and full project filepath
         return (
@@ -324,9 +307,7 @@ class UAcaller:
         # files as the value
         file_dict = {}
         # walk through run folder
-        for root, subfolders, files in os.walk(
-            self.runfolder_obj.runfolderpath
-        ):
+        for root, subfolders, files in os.walk(self.runfolder_obj.runfolderpath):
             # for any subfolders
             for folder in subfolders:
                 # build path to the folder
@@ -377,9 +358,7 @@ class UAcaller:
                 self.loggers.backup.info(
                     f"Calling upload agent on {path} to location "
                     f"{project_filepath}",
-                    extra={
-                        "flag": self.loggers.log_flags["backup_runfolder"]["info"]
-                    },
+                    extra={"flag": self.loggers.log_flags["backup_runfolder"]["info"]},
                 )
                 # upload agent has a max number of uploads of 1000 per command.
                 # uploadingmultiple files at a time is quicker, but uploading
@@ -406,9 +385,7 @@ class UAcaller:
                     self.loggers.backup.info(
                         f"Uploading files {start} to {stop}",
                         extra={
-                            "flag": self.loggers.log_flags["backup_runfolder"][
-                                "info"
-                            ]
+                            "flag": self.loggers.log_flags["backup_runfolder"]["info"]
                         },
                     )
                     # the upload agent command can take multiple files
@@ -417,9 +394,7 @@ class UAcaller:
                     files_string = ""
                     # take a slice of list using from and to
                     for file in file_dict[path][start:stop]:
-                        files_string = (
-                            f"{files_string} '{os.path.join(path, file)}'"
-                        )
+                        files_string = f"{files_string} '{os.path.join(path, file)}'"
 
                     # increase the iteration_count and start and stop by 1000
                     # for the next iteration so second iteration will do files
@@ -444,9 +419,7 @@ class UAcaller:
                     self.loggers.backup.info(
                         masked_nexus_upload_command,
                         extra={
-                            "flag": self.loggers.log_flags["backup_runfolder"][
-                                "info"
-                            ]
+                            "flag": self.loggers.log_flags["backup_runfolder"]["info"]
                         },
                     )
                     # Call upload command redirecting stderr to stdout
@@ -462,14 +435,12 @@ class UAcaller:
                     self.loggers.backup.info(
                         out.decode(),
                         extra={
-                            "flag": self.loggers.log_flags["backup_runfolder"][
-                                "info"
-                            ]
+                            "flag": self.loggers.log_flags["backup_runfolder"]["info"]
                         },
                     )
 
     def count_uploaded_files(self):
-        """ Count the number of files to be uploaded and check if any that
+        """Count the number of files to be uploaded and check if any that
         should have been ignored are in DNAnexus
         """
         self.loggers.backup.info(
@@ -491,8 +462,7 @@ class UAcaller:
             grep_ignore = ""
 
         local_file_count = (
-            f"find {self.runfolder_obj.runfolderpath} -type f "
-            f"{grep_ignore} | wc -l"
+            f"find {self.runfolder_obj.runfolderpath} -type f " f"{grep_ignore} | wc -l"
         )
 
         # Call upload command redirecting stderr to stdout
@@ -512,9 +482,8 @@ class UAcaller:
         )
         # count number of uploaded files
         uploaded_file_count = (
-            f"dx find data --project {self.runfolder_obj.nexus_project_name} "
-            "| wc -l"
-            )
+            f"dx find data --project {self.runfolder_obj.nexus_project_name} " "| wc -l"
+        )
 
         # Call upload command redirecting stderr to stdout
         proc = subprocess.Popen(
@@ -554,14 +523,12 @@ class UAcaller:
                 "containing one of the ignore terms. NB this may not be "
                 "accurate if the ignore term is found in the result of dx "
                 "find data (eg present in project name)",
-                extra={
-                    "flag": self.loggers.log_flags["backup_runfolder"]["info"]
-                    },
+                extra={"flag": self.loggers.log_flags["backup_runfolder"]["info"]},
             )
 
 
 def main(args):
-    """ Uploads runfolder to DNAnexus by passing given arguments to the
+    """Uploads runfolder to DNAnexus by passing given arguments to the
     DNAnexus upload agent.
     """
     # Get command line arguments
