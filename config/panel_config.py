@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+# coding=utf-8
 """ PANEL NUMBERS AND PANEL PROPERTIES
 
 The PANEL_DICT is built up in stages using various other dictionaries to reduce
@@ -11,51 +13,48 @@ repetition
     These pan numbers do not necessarily refer to bed files but rather project
     configuration (e.g. DNAnexus instances, project layout etc.
 
-
-Dictionary keys and values are as follows:
-
-    pipeline:                     Name of pipeline
-    panel_name:                   Name of capture panel
-    capture_pan_num:              Pan number of capture panel bedfile (used for RPKM).
-                                  False if RPKM not run
-    hsmetrics_bedfile:            bedfile filename, or None
-    sambamba_bedfile:             bedfile filename, or None
-    variant_calling_bedfile:      bedfile filename, or None
-    capture_type:                 Amplicon or Hybridisation
-    multiqc_coverage_level:       Value
-    clinical_coverage_depth:      Value, or False. Used as input for sambamba
-                                  and mpileup
-    coverage_min_basecall_qual:   Value or False. Sambamba minimum base quality
-    coverage_min_mapping_qual:    False. Sambamba minimum mapping quality
-    masked_reference:             projectid:fileid, or False if not required
-    throughput:                   'high' or 'low', or False if unspecified
-    test_number:                  R or M number, or false if no specific number
-    congenica_project:            False = no upload. Number = normal. SFTP =
-                                  sftp upload
-    congenica_credentials:        'Viapath' or 'StG'. False = congenica app not
-                                  used
-    congenica_IR_template:        'priority' or 'non-priority'. False =
-                                  congenica app not used
-    polyedge:                     False if app not required, subdictionary
-                                  containing app inputs if it is required
-    dry_lab_only:                 Used to determine whether to include the TSO
-                                  pan number in the duty_csv pan number list
-    FH:                           False if app not required, bed file if it is
-    drylab_dnanexus_id:           False if not required to share with other
-                                  users, user ID string if needs sharing
+Dictionary keys and values are as follows. Values are False where they are not required
+for analysis of samples with that pan number
+    panel_name                      Name of capture panel
+    pipeline                        Name of pipeline
+    capture_pan_num                 Pan number of capture panel bedfile (used for RPKM).
+                                    False if RPKM not run
+    hsmetrics_bedfile               bedfile filename, or False
+    sambamba_bedfile                bedfile filename, or False. Coverage BED
+    variant_calling_bedfile         bedfile filename, or False
+    ampliconfilt_bedfile            bedfile filename, or False. Paired end BED file used
+                                    by primer clipping tool
+    FH                              True if requires PRS analysis, False if not
+    rpkm_bedfile                    bedfile filename, or False
+    capture_type                    Amplicon or Hybridisation
+    multiqc_coverage_level          Value
+    clinical_coverage_depth         Value, or False. Used as input for sambamba
+                                    and mpileup
+    coverage_min_basecall_qual      Value or False. Sambamba minimum base quality
+    coverage_min_mapping_qual       Value or False. Sambamba minimum mapping quality
+    masked_reference                projectid:fileid, or False
+    throughput                      'high' or 'low', or False if unspecified
+    test_number                     R or M number, or false if no specific number
+    congenica_project               False = no upload. Number = normal. SFTP =
+                                    sftp upload
+    congenica_credentials           'Viapath' or 'StG'. False = congenica app not used
+    congenica_IR_template           'priority' or 'non-priority'. False = congenica app
+                                    not used
+    polyedge                        False if app not required, subdictionary containing
+                                    app inputs if it is required
+    dry_lab_only                    Used to determine whether to include the TSO pan
+                                    number in the duty_csv pan number list
+    drylab_dnanexus_id              False if not required to share with other users,
+                                    user ID string if needs sharing
 """
 import config.ad_config as ad_config  # Import ad_config file
 
-# TODO check which variables are used by trend script and whether they are
-# affected
-# TODO look into whether the 100X maximum coverage for multiqc can be raised
-# for compatibility with TSO500
-
 PIPE_HAPLOTYPE_CALLER_PADDING = 0
 
-# Mokapipe FH_PRS BED file
-FH_PRS_BEDFILE = f"{ad_config.BEDFILE_FOLDER}Pan4909.bed"
+BEDFILE_FOLDER = f"{ad_config.TOOLS_PROJECT}:/Data/BED/"
+FH_PRS_BEDFILE = f"{BEDFILE_FOLDER}Pan4909.bed"
 
+# Inputs for the polyedge dnanexus app command
 POLYEDGE_INPUTS = {
     "MSH2": {
         "gene": "MSH2",
@@ -85,6 +84,9 @@ DEFAULT_DICT = {
     "hsmetrics_bedfile": False,
     "sambamba_bedfile": False,
     "variant_calling_bedfile": False,
+    "ampliconfilt_bedfile": False,  # Paired end BED file used by primer clipping tool
+    "FH": False,
+    "rpkm_bedfile": False,
     "capture_type": False,
     "multiqc_coverage_level": False,
     "clinical_coverage_depth": False,
@@ -110,9 +112,10 @@ CAPTURE_PANEL_DICT = {
         "panel_name": "vcp1",
         "pipeline": "pipe",
         "capture_pan_num": "Pan4399",
-        "hsmetrics_bedfile": "Pan4397data.bed",
-        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4397dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4398data.bed",
+        "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4397data.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4397dataSambamba.bed",
+        "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4398data.bed",
+        "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4399_RPKM.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
         "clinical_coverage_depth": 30,
@@ -124,9 +127,10 @@ CAPTURE_PANEL_DICT = {
         "panel_name": "vcp2",
         "pipeline": "pipe",
         "capture_pan_num": "Pan5109",
-        "hsmetrics_bedfile": "Pan5123data.bed",
-        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan5123dataSambamba.bed",
-        "variant_calling_bedfile": "Pan5119data.bed",
+        "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan5123data.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5123dataSambamba.bed",
+        "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan5119data.bed",
+        "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan5109_RPKM.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
         "clinical_coverage_depth": 30,
@@ -138,9 +142,10 @@ CAPTURE_PANEL_DICT = {
         "panel_name": "vcp3",
         "pipeline": "pipe",
         "capture_pan_num": "Pan4362",
-        "hsmetrics_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4995dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4995data.bed",
+        "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4995dataSambamba.bed",
+        "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
+        "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4362_RPKM.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
         "clinical_coverage_depth": 30,
@@ -151,9 +156,9 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "lrpcr",
         "pipeline": "pipe",
-        "hsmetrics_bedfile": "Pan4967_reference.bed",  # LRPCR amplicon BEDfile
-        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan5018dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4767data.bed",
+        "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4967_reference.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5018dataSambamba.bed",
+        "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4767data.bed",
         "capture_type": "Amplicon",
         "multiqc_coverage_level": 30,
         "clinical_coverage_depth": 30,
@@ -165,27 +170,27 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "swift_57g",
         "pipeline": "amp",
-        "hsmetrics_bedfile": "Pan4082.bed",
-        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4082Sambamba.bed",
+        "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4082.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4082Sambamba.bed",
         "capture_type": "Amplicon",
-        "clinical_coverage_depth": 600,  # Only found in mokamp command
+        "clinical_coverage_depth": 600,
         "multiqc_coverage_level": 100,
     },
     "swift_egfr": {
         **DEFAULT_DICT,
         "panel_name": "swift_egfr",
         "pipeline": "amp",
-        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4081Sambamba.bed",
-        "hsmetrics_bedfile": "Pan4081.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4081Sambamba.bed",
+        "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4081.bed",
         "capture_type": "Amplicon",
-        "clinical_coverage_depth": 600,  # Only found in mokamp command
+        "clinical_coverage_depth": 600,
         "multiqc_coverage_level": 100,
     },
     "snp": {
         **DEFAULT_DICT,
         "panel_name": "snp",
         "pipeline": "snp",
-        "variant_calling_bedfile": "Pan4009.bed",
+        "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4009.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
     },
@@ -193,8 +198,10 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "wes",
         "pipeline": "wes",
-        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan493dataSambamba.bed",
-        "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan493dataSambamba.bed",
+        "hsmetrics_bedfile": (
+            f"{BEDFILE_FOLDER}Twist_Exome_RefSeq_CCDS_v1.2_targets.bed"
+            ),
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 20,
     },
@@ -202,8 +209,10 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "wes_eb",
         "pipeline": "wes",
-        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan493dataSambamba.bed",
-        "hsmetrics_bedfile": "Twist_Exome_RefSeq_CCDS_v1.2_targets.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan493dataSambamba.bed",
+        "hsmetrics_bedfile": (
+            f"{BEDFILE_FOLDER}Twist_Exome_RefSeq_CCDS_v1.2_targets.bed"
+            ),
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 20,
     },
@@ -218,7 +227,7 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "tso500",
         "pipeline": "tso500",
-        "sambamba_bedfile": f"{ad_config.BEDFILE_FOLDER}Pan4969dataSambamba.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4969dataSambamba.bed",
         "capture_type": "Hybridisation",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
@@ -227,7 +236,7 @@ CAPTURE_PANEL_DICT = {
     },
 }
 
-# Dictionary containing pan number specific settings, arranged by workflow name
+# Dictionary containing pan number-specific settings, arranged by workflow name
 # These incorporate the capture dictionary settings and build upon them
 PANEL_DICT = {
     "Pan4009": {  # SNP
@@ -255,9 +264,13 @@ PANEL_DICT = {
     ),
     "Pan4081": {  # SWIFT EGFR (Viapath)
         **CAPTURE_PANEL_DICT["swift_egfr"],
+        "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4081_flat.bed",
+        "ampliconfilt_bedfile": f"{BEDFILE_FOLDER}Pan4081_PE.bed",
     },
     "Pan4082": {  # SWIFT 57G (Viapath)
         **CAPTURE_PANEL_DICT["swift_57g"],
+        "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4082_flat.bed",
+        "ampliconfilt_bedfile": f"{BEDFILE_FOLDER}Pan4082_PE.bed",
     },
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
         **CAPTURE_PANEL_DICT["tso500"],
@@ -345,7 +358,7 @@ PANEL_DICT = {
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R134",
         "congenica_project": 4664,
-        "FH": FH_PRS_BEDFILE,
+        "FH": True,
     },
     "Pan4121": {  # VCP1 R184 - CF (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
@@ -442,7 +455,7 @@ PANEL_DICT = {
         **CONGENICA_CREDENTIALS["stg"],
         "test_number": "R13",
         "congenica_project": 4203,
-        "FH": FH_PRS_BEDFILE,
+        "FH": True,
     },
     "Pan4822": {  # VCP1 R184 - CF (STG)
         **CAPTURE_PANEL_DICT["vcp1"],
@@ -658,8 +671,7 @@ PANEL_DICT = {
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
     },
-    # VCP3 R97 - Thrombophilia with a likely monogenic cause (Viapath)
-    "Pan4390": {
+    "Pan4390": {  # VCP3 R97 - Thrombophilia with a likely monogenic cause (Viapath)
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R97",
         "congenica_project": 4699,
@@ -745,10 +757,12 @@ PANEL_DICT = {
     },
 }
 
-# All panel numbers from PANEL_DICT
+# ================ PAN NUMBER LISTS ===================================================
+
+# All panel pan numbers
 PANELS = list(PANEL_DICT.keys())
 
-# Per-capture panel numbers
+# Custom Panels per-capture panel numbers
 VCP_PANELS = {
     "vcp1": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp1"],
     "vcp2": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp2"],
@@ -765,11 +779,10 @@ SWIFT_EGFR_PANELS = [
 ]
 LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
 
-# The below lists are used by the duty_csv app
+# ================ DUTY_CSV INPUTS ===================================================
 
-# tso_pannumbers should not include the dry lab pan number as we do not want
-# to include this as input to duty_csv as we do not want to download this to
-# the trust network
+# tso_pannumbers should not include the dry lab pan number as we do not want to include
+# this as input to duty_csv as we do not want to download this to the trust network
 TSO_VIAPATH_PANNUMBERS = [
     k
     for k, v in PANEL_DICT.items()
