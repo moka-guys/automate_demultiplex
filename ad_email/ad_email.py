@@ -18,18 +18,12 @@ class AdEmail(object):
     Send email to recipient via SMTP
 
     Attributes
-        logger : (logging.Logger)
-            Logger object
-        log_flags : (dict)
-            Flags used in log messages
-        log_msgs : (dict)
-            Messages used in logging
-        sender : (str)
-            Email address of sender
-        email_user : (str)
-            Email username
-        email_pw : (str)
-            Email password
+        logger (logging.Logger):    Logger object
+        log_flags (dict):           Flags used in log messages
+        log_msgs (dict):            Messages used in logging
+        sender (str):               Email address of sender
+        email_user (str):           Email username
+        email_pw (str):             Email password
 
     Methods
         generate_email_html()
@@ -61,7 +55,6 @@ class AdEmail(object):
             autoescape=True,
         ).get_template(ad_config.EMAIL_TEMPLATE)
 
-    # TODO write test for this function
     def generate_email_html(
             self, runfolder_name: str, workflows: str, queries: str, sample_count: int
             ) -> str:
