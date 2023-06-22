@@ -12,6 +12,7 @@ import ad_logger.log_config as logger_config
 import ad_logger.ad_logger as ad_logger
 from shared_functions.shared_functions import execute_subprocess_command, git_tag
 
+
 def get_arguments():
     """
     Uses argparse module to define and handle command line input arguments
@@ -41,7 +42,7 @@ def get_arguments():
         "-p",
         "--project",
         required=True,
-        help="The DNAnexus project id in which the analysis is running",
+        help="The DNAnexus project name in which the analysis is running",
     )
     return parser.parse_args()
 
@@ -146,11 +147,9 @@ class DecisionTooler(object):
             jobid_cmd = getattr(self, f"{outfile}jobid_cmd")
             while returncode != 0 and not jobid:
                 try:
-                    print(jobid_cmd)
                     jobid, err, returncode = execute_subprocess_command(
                         jobid_cmd, self.loggers.decision_support
                         )
-                    print(jobid)
                     self.loggers.decision_support.info(
                         self.loggers.msgs["decision_support"]["found_job_id"], outfile,
                         jobid,
@@ -215,7 +214,8 @@ if __name__ == "__main__":
         ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
     ) as token_file:
         dnanexus_apikey = token_file.readline().rstrip()  # Auth token
-    ajson = json.loads(
+
+    analysis_info = json.loads(
         subprocess.check_output(
             [
                 "dx",
@@ -227,15 +227,17 @@ if __name__ == "__main__":
             ]
         )
     )
-    # TODO change from using project ID to project name in the logfile
+    # Get settings for analysis panel (to determine which workflow is running)
+    pannumber = re.search(r"Pan\d+", analysis_info["name"]).group()
+
     script_loggers = ad_logger.AdLoggers(
         {"decision_support": (
             logger_config.LOGFILES['decision_support_script_logs'] % parsed_args.project
             )}
         )
-
-    # Get settings for analysis panel (to determine which workflow is running)
-    pannumber = re.search(r"Pan\d+", ajson["name"]).group()
+    # Disable the stream handler to prevent logs being sent to stdout (we only want the
+    # project and file IDs to be stored)
+    script_loggers.shutdown_streamhandler()
 
     # Print decision support tool inputs, using the analysis ID and the
     # workflow name from the ad_config panel dictionary
