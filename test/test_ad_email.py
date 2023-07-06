@@ -8,10 +8,20 @@ import logging
 import pytest
 from ad_email.ad_email import AdEmail
 import config.ad_config as ad_config  # Import config file
+import ad_logger.ad_logger as ad_logger
 
-# import inspect
+
+@pytest.fixture(autouse=True)
+def run_before_and_after_tests(monkeypatch):
+    """
+    Disable messages at level CRITICAL and below to reduce the number of log messages
+    """
+    logging.disable(logging.CRITICAL)
+    yield
+    logging.disable(logging.NOTSET)  # Re-enable logging
 
 
+# TODO add test for generate_email_html
 class TestAdEmail:
     """
     Test Email class
@@ -63,12 +73,18 @@ class TestAdEmail:
         on the workstation where the required auth details are stored
         """
         for recipients_list in email_recipients:
-            ad_email_obj = AdEmail(logger=upload_script_logger)
-
+            ad_email_obj = AdEmail(
+                logger=upload_script_logger, log_flags=ad_logger.get_log_flags()
+                )
+            email_html = ad_email_obj.generate_email_html(
+                "test_runfolder", "workflow",
+                "SQL_str", 5
+            )
+            assert email_html
             assert ad_email_obj.send_email(
                 recipients_list,
                 email_subject,
-                email_message,
+                email_html,
                 1,
             )
 
@@ -84,11 +100,17 @@ class TestAdEmail:
         Test email sending failure - incorrect credentials provided
         """
         for recipients_list in email_recipients:
-            ad_email_obj = AdEmail(logger=upload_script_logger)
+            ad_email_obj = AdEmail(
+                logger=upload_script_logger, log_flags=ad_logger.get_log_flags()
+                )
             monkeypatch.setattr(ad_email_obj, "email_user", "abc")
+            email_html = ad_email_obj.generate_email_html(
+                "test_runfolder", "workflow",
+                "SQL_str", 5
+            )
             assert not ad_email_obj.send_email(
                 recipients_list,
                 email_subject,
-                email_message,
+                email_html,
                 1,
             )
