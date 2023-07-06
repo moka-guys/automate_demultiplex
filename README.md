@@ -1,59 +1,66 @@
-# Automate Demultiplex
+# Automate Demultiplex Scripts
 
-Scripts for routine analysis of clinical next generation sequencing (NGS) data at Viapath Genetics:
+This repository contains the main scripts for routine analysis of clinical next generation sequencing (NGS) data at Viapath Genetics. These are as follows, and the documentation for each script can be found in [docs/](docs/) or using the links below:
 
 1. [demultiplex.py](demultiplex.py) - Demultiplex Illumina NGS data using `bcl2fastq2`
 [(guide)](docs/demultiplex.md)
-2. [upload_and_setoff_workflows.py](upload_and_setoff_workflows.py) - Upload NGS data to DNANexus
-and trigger in-house workflows [(guide)](docs/upload_and_setoff_workflows.md)
+2. [upload_and_setoff_workflows.py](upload_and_setoff_workflows.py) - Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](docs/upload_and_setoff_workflows.md)
+3. [decision_support_tool_inputs.py](decision_support_tool_inputs.py) - This script is called from the dx run script for samples requiring congenica upload (the dx run script is created by upload_and_setoff_workflows.py). The script prints the inputs required by the decision support tool upload apps in DNAnexus
 
-The following modules are core dependencies:
 
-* [ad_config.py](ad_config.py) - Configuration for all
-automate demultiplex scripts
-* [decision_support_tool_inputs.py](decision_support_tool_inputs.py) - Print inputs required by
-decision support tool upload applications on DNANexus
-* [samplesheet_validator.py](samplesheet_validator.py) - Validates naming and contents of
-samplesheets prior to demultiplexing. Uses the
-[seglh-naming](https://github.com/moka-guys/seglh-naming) package
-* [adlogger.py](ad_logger.py) - Logging module, currently only used by
-[upload_and_setoff_workflows.py](upload_and_setoff_workflows.py)
-* [git_tag.py](git_tag.py) - Retrieve git tag (script version) from the repository
+# Modules
 
-Please read further documentation in [docs/](docs/) to learn more about each script.
+The following modules are utilised by the above scripts, with the documentation for each within the corresponding subdirectory.
 
-## Seglh-naming installation
+* [ad_email](ad_email) - Email sending module
+* [ad_logger](ad_logger) - This module creates an AdLoggers object which is used to write messages to the syslog, stream and log files.
+* [backup_runfolder](backup_runfolder) - Uploads an Illumina runfolder to DNAnexus
+* [config] - contains configuration files
+* [samplesheet_validator](samplesheet_validator) - Validates naming and contents of samplesheets prior to demultiplexing. Uses the [seglh-naming](https://github.com/moka-guys/seglh-naming) package
+* [shared_functions](shared_functions) - Contains classes and functions shared
+across multiple scripts
+* [test][test] - Contains test data and test scripts (these use pytest)
 
-The [seglh-naming](https://github.com/moka-guys/seglh-naming) package should be installed using
-the requirements.txt file:
 
-`pip3 install -r requirements.txt`
+# Setup
 
-## Logging
+Dependencies, which include the [seglh-naming](https://github.com/moka-guys/seglh-naming) package, should be insalled using the requirements.txt file:
 
-Logfiles produced by automate demultiplex scripts are uploaded to the DNANexus project under
-`PROJECT:/RUNFOLDER/Logfiles`. See `docs/` for each script's logfile details.
+```bash
+pip3 install -r requirements.txt
+```
+
+# Pytest
+
+Tests can be executed using the following command. It is important to include the ignore flag to prevent pytest from scanning for tests through all test files, which slows down the tests considerably
+
+```bash
+python3 -m pytest -v --cov=. --ignore=test/demultiplex_test_files/
+```
+
+**N.B. Tests and test cases/files MUST be maintained and updated accordingly in conjunction with script development**
+**These tests should be run before pushing any code to ensure all tests in the GitHub Actions workflow pass.**
+
+Currently the test suite covers the following scripts/modules:
+* [ad_email](ad_email)
+* [ad_logger](ad_logger)
+* [demultiplex.py](demultiplex.py)
+* [samplesheet_validator](samplesheet_validator)
+
+Suites for the following scripts/modules still require development:
+* [upload_and_setoff_workflows.py](upload_and_setoff_workflows.py)
+* [decision_support_tool_inputs.py](decision_support_tool_inputs.py)
+* [backup_runfolder](backup_runfolder)
+* [shared_functions](shared_functions)
+
+Test datasets are stored in [/test/data](../test/data)
+
 
 ## Alerts
 
-Alerts are sent to the #moka-alerts binfx slack channel. In the event of a critical failure an
-email is sent to the moka-guys mailing list.
+In producion mode, alerts are sent to the moka-alerts binfx slack channel, whilst in testing mode they are sent to the moka-poo slack channel.
 
 ## Scheduling
 
 Scripts are triggered by a cronjob on the linux workstation which can be updated using
 `sudo crontab -e`.
-
-## License
-
-Copyright 2022 Synnovis
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
-in compliance with the License. You may obtain a copy of the License at
-
-[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
-
-Unless required by applicable law or agreed to in writing, software distributed under the License
-is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
-or implied. See the License for the specific language governing permissions and limitations under
-the License.

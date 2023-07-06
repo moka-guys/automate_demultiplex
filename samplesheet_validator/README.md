@@ -23,9 +23,10 @@ Therefore, samplesheets should conform with the following requirements:
 
 ## Configuration
 
-Settings are imported from [ad_config.py](../ad_config.py)
+Settings are imported from [ad_config.py](../config/ad_config.py)
 
 ## Logging
+
 The script itself does not perform logging, however it collects error messages as it runs. When it is imported by the 
 demultiplex.py and run, these error messages are output to a log file if there are any present.
 
@@ -37,8 +38,7 @@ N/A - see above
 
 **N.B. Tests and test cases/files MUST be maintained and updated accordingly in conjunction with script development**
 
-The script has a full test suite ([test_samplesheet_validator.py](../test/test_samplesheet_validator.py), with test 
-files stored in [/test/test_files](../test/test_files)). These tests should be run before pushing any code to ensure all tests in the GitHub Actions workflow pass. Similarly, the following
-command should be run before pushing code to identify and rectify any style inconsistencies:
+Test datasets are stored in [/test/data](../test/data). The script has a full test suite:
+* [test_samplesheet_validator.py](../test/test_samplesheet_validator.py)
 
-`flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics`
+These tests should be run before pushing any code to ensure all tests in the GitHub Actions workflow pass.
