@@ -13,7 +13,7 @@ This repository contains the main scripts for routine analysis of clinical next 
 The following modules are utilised by the above scripts, with the documentation for each within the corresponding subdirectory.
 
 * [ad_email](ad_email) - Email sending module
-* [ad_logger](ad_logger) - This module creates an AdLoggers object which is used to write messages to the syslog, stream and log files.
+* [ad_logger](ad_logger) - This module contains classes that create logging objects that write messages to the syslog, stream and log files.
 * [backup_runfolder](backup_runfolder) - Uploads an Illumina runfolder to DNAnexus
 * [config] - contains configuration files
 * [samplesheet_validator](samplesheet_validator) - Validates naming and contents of samplesheets prior to demultiplexing. Uses the [seglh-naming](https://github.com/moka-guys/seglh-naming) package

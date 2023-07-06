@@ -4,148 +4,38 @@
 Automate demultiplex configuration
 """
 import os
+import datetime
+from pygit2 import Repository
+from pathlib import Path
 
-# ================ GENERAL ===========================================================
-# Settings used across multiple scripts
+# GENERAL SETTINGS USED ACROSS MODULES
 
-TESTING = True  # Set testing mode
+# Timestamp used for naming log files with datetime
+TIMESTAMP = str(f"{datetime.datetime.now():%Y%m%d_%H%M%S}")
 
-DOCUMENT_DIR = "/".join((os.path.dirname(os.path.realpath(__file__)).split("/")[:-1]))
+# Project working directory
+PROJECT_DIR = str(Path(__file__).absolute().parent.parent)
 # Root of folder containing apps, automate_demultiplexing_logfiles and
 # development_area scripts (2 levels up from this file)
-DOCUMENT_ROOT = "/".join(DOCUMENT_DIR.split("/")[:-2])
+DOCUMENT_ROOT = "/".join(PROJECT_DIR.split("/")[:-2])
 
-# tso500 runfolder is used for testing both demultiplexing and usw script
-DEMULTIPLEX_TEST_RUNFOLDERS = [
-    "999999_NB552085_0496_DEMUXINTEG",
-    "999999_M02353_0496_000000000-DEMUX",
-    "999999_A01229_0182_AHM2TSO500",
-    '999999_M02353_0496_000000000-SWIFT'
-]
-
-CREDENTIALS = {
-    "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
-    "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
-    "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
-}
-
-if not TESTING:
-    SCRIPT_MODE = "PROD MODE"
-    JOB_NAME_STR = "--name "
-    RUNFOLDERS = "/media/data3/share"
-else:
-    SCRIPT_MODE = "TEST MODE"
-    # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
-    # determines which slack channel to send the alert to
-    JOB_NAME_STR = "--name TEST@"
-    RUNFOLDERS = "/media/data3/share/testing"
-
-DIRS = {
-    "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
-    "tso_fastqs": "analysis_folder/Logs_Intermediates/CollapsedReads/",
-    "bcl2fastq2_stats": "Data/Intensities/BaseCalls/Stats",
-}
-
-SAMPLESHEET_NAME = "%s_SampleSheet.csv"
-SAMPLESHEET_PATH = os.path.join(RUNFOLDERS, "samplesheets", SAMPLESHEET_NAME)
-
-SCRIPTS = {
-    "sdk_source": "/usr/local/src/mokaguys/apps/dx-toolkit/environment",
-    "dsptool_input_script": os.path.join(
-        DOCUMENT_DIR, "decision_support_tool_inputs.py"
-    ),
-}
-
-EXECUTABLES = {
-    "bcl2fastq": "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq",
-    "upload_agent": os.path.join(
-        DOCUMENT_ROOT, "apps/dnanexus-upload-agent-1.5.17-linux/ua"
-    ),
-    "gatk_collect_lane_metrics": (
-        "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 "
-        "./gatk CollectIlluminaLaneMetrics"
-    ),
-}
-
-FILENAMES = {
-    "rtacomplete": "RTAComplete.txt",  # Sequencing complete file
-    "md5checksum": "md5checksum.txt",  # File holding checksum results
-    "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
-    "upload_started": "DNANexus_upload_started.txt",  # Holds UA output
-    "bcl2fastq2_stats": "Stats.json",
-}
-
-RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
-
-STRINGS = {
-    "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
-    "cd_file_suffix": ".illumina_lane_metrics",
-    "phasing_metrics_file_suffix": ".illumina_phasing_metrics",
-    "cd_err": "Exception",
-    "demultiplexlog_tso500_msg": "TSO500 run. Does not need demultiplexing locally",
-    "demultiplex_success": "Processing completed with 0 errors and 0 warnings.",
-}
-STRINGS.update({"demultiplex_success_regex": rf".*{STRINGS['demultiplex_success']}$"})
-
-REF_SAMPLE_IDS = [
-    "NA12878",
-    "136819",
-]  # NA12878 identifiers to exclude from congenica upload
-
-CMDS = {
-    # N.B. n--no-lane-splitting creates a single fastq for a sample,
-    # not into one fastq per lane)
-    "bcl2fastq": (
-        f"{EXECUTABLES['bcl2fastq']} -R %s --sample-sheet %s --no-lane-splitting"
-    ),
-    # Shell command to run cluster density calculation
-    "cluster_density": (
-        f"{EXECUTABLES['gatk_collect_lane_metrics']} --RUN_DIRECTORY /input_run "
-        "--OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
-    ),
-    "sdk_source": f"#!/bin/bash\n. {SCRIPTS['sdk_source']}\n",
-    "local_file_count": "find %s -type f %s | wc -l",
-}
-
-# TODO remove repetition of the name!
-TEST_PROGRAMS_DICT = {
-    "dx_toolkit": {
-        "executable": "dx",
-        "test_cmd": f"source {SCRIPTS['sdk_source']}; dx --version",
-        },
-    "upload_agent": {
-        "executable": EXECUTABLES['upload_agent'],
-        "test_cmd": f"{EXECUTABLES['upload_agent']} --version",
-        },
-    "bcl2fastq2": {
-        "executable": EXECUTABLES['bcl2fastq'],
-        "test_cmd": f'{EXECUTABLES["bcl2fastq"]} --version',
-        },
-    "gatk_collect_lane_metrics": {
-        "executable": EXECUTABLES["gatk_collect_lane_metrics"],
-        "test_cmd": EXECUTABLES["gatk_collect_lane_metrics"],
-        },
-    }
-
-# ================ AD_EMAIL ===================================================
-
-TEMPLATE_DIR = os.path.join(DOCUMENT_DIR, "ad_email/templates")
-EMAIL_TEMPLATE = "email.html"
+branch = Repository('.').head.shorthand
 
 MAIL_SETTINGS = {
     "host": "email-smtp.eu-west-1.amazonaws.com",
     "port": 587,
     "binfx_email": "gst-tr.mokaguys@nhs.net",
     "alerts_email": "moka.alerts@gstt.nhs.uk",
-    "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
-    "binfx_recipient": "mokaguys@gmail.com",
-    # Oncology email address for email alerts
-    "oncology_ops_email": "mokaguys@gmail.com",
-    "wes_samplename_emaillist": "mokaguys@gmail.com",
 }
 
-if not TESTING:  # Overwrite test settings with prod settings
-    MAIL_SETTINGS = MAIL_SETTINGS | {
+if branch == "master":  # Prod branch
+    TESTING = False  # Set testing mode
+    SCRIPT_MODE = "PROD MODE"
+    JOB_NAME_STR = "--name "
+    RUNFOLDERS = "/media/data3/share"
+    AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
+    MAIL_SETTINGS = MAIL_SETTINGS | {  # Add prod mail recipients
+        "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
         "binfx_recipient": MAIL_SETTINGS["binfx_email"],
         # Oncology email address for email alerts
         "oncology_ops_email": "m.neat@nhs.net",
@@ -157,9 +47,27 @@ if not TESTING:  # Overwrite test settings with prod settings
             MAIL_SETTINGS["binfx_email"],
         ],
     }
+else:  # Testing branch
+    TESTING = True
+    SCRIPT_MODE = "TEST_MODE"
+    # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
+    # determines which slack channel to send the alert to
+    JOB_NAME_STR = "--name TEST@"
+    RUNFOLDERS = "/media/data3/share/testing"
+    AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
+    MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
+        "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
+        "binfx_recipient": "mokaguys@gmail.com",
+        # Oncology email address for email alerts
+        "oncology_ops_email": "mokaguys@gmail.com",
+        "wes_samplename_emaillist": ["mokaguys@gmail.com"],
+    }
 
-# ================ DEMULTIPLEXING (demultiplex.py) ============================
-# Settings unique to the demultiplex script
+CREDENTIALS = {
+    "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
+    "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
+    "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
+}
 
 # Sequencer / run identifiers
 NOVASEQ_ID = "A01229"
@@ -168,23 +76,82 @@ RUNTYPE_LIST = ["NGS", "ADX", "ONC", "SNP", "TSO", "LRPCR"]
 # Sequencers requiring md5 checksums from integrity check to be assessed
 SEQUENCERS_WITH_INTEGRITY_CHECK = ["NB551068", "NB552085", NOVASEQ_ID]
 
+RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
+
+FASTQ_DIRS = {
+    "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
+    "tso_fastqs": "analysis_folder/Logs_Intermediates/CollapsedReads/",
+}
+
+# ================ DEMULTIPLEXING (demultiplex.py) ============================
+# Settings unique to the demultiplex script
+
 # Integrity check
 CHECKSUM_COMPLETE_MSG = "Checksum result reported"  # Checksum complete statement
 CHECKSUM_MATCH_MSG = "Checksums match"  # Statement to write when checksums match
 
+# tso500 runfolder is used for testing both demultiplexing and usw script
+DEMULTIPLEX_TEST_RUNFOLDERS = [
+    "999999_NB552085_0496_DEMUXINTEG",
+    "999999_M02353_0496_000000000-DEMUX",
+    "999999_A01229_0182_AHM2TSO500",
+    '999999_M02353_0496_000000000-SWIFT'
+]
+
+SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"
+BCL2FASTQ_EXE = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
+UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
+
+STRINGS = {
+    "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
+    "lane_metrics_suffix": ".illumina_lane_metrics",
+    "phasing_metrics_suffix": ".illumina_phasing_metrics",
+    "cd_err": "Exception",
+    "demultiplexlog_tso500_msg": "TSO500 run. Does not need demultiplexing locally",
+    "demultiplex_success": "Processing completed with 0 errors and 0 warnings.",
+}
+
+TEST_PROGRAMS_DICT = {
+    "dx_toolkit": {
+        "executable": "dx",
+        "test_cmd": f"source {SDK_SOURCE}; dx --version",
+        },
+    "upload_agent": {
+        "executable": UPLOAD_AGENT_EXE,
+        "test_cmd": f"{UPLOAD_AGENT_EXE} --version",
+        },
+    "bcl2fastq2": {
+        "executable": BCL2FASTQ_EXE,
+        "test_cmd": f'{BCL2FASTQ_EXE} --version',
+        },
+    "gatk_collect_lane_metrics": {
+        "executable": "docker",
+        "test_cmd": (
+            "sudo docker run --rm broadinstitute/gatk:4.1.8.1 ./gatk "
+            "CollectIlluminaLaneMetrics --version"
+            ),
+        },
+    }
+
 # ================ UPLOAD AND SETOFF WORKFLOWS ================================
 # Settings unique to the upload and setoff workflows script
 
+REF_SAMPLE_IDS = [
+    "NA12878",
+    "136819",
+]  # NA12878 identifiers to exclude from congenica upload
+
 # General
-DNANEXUS_PROJECT_PREFIX = "002_"  # Project to upload run folder into
 PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
 
 if TESTING:
+    DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
     DNANEXUS_USERS = {  # User access level
         "viewers": [],
         "admins": [PROD_ORGANISATION],
     }
 else:
+    DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
     DNANEXUS_USERS = {  # User access level
         "viewers": [PROD_ORGANISATION, "InterpretationRequest"],
         "admins": ["mokaguys"],
@@ -276,10 +243,8 @@ APP_INPUTS = {
         "coverage_level": "-icoverage_level=",
         "sambamba_bed": "-isambamba_bed=",
         "cov_cmds": (
-            " -icoverage_commands='-imerge_overlapping_mate_reads=true"
-            "-iexclude_failed_quality_control=true"
-            "-iexclude_duplicate_reads=true"
-            "-imin_base_qual=%s -imin_mapping_qual=%s'"
+            "-imerge_overlapping_mate_reads=true -iexclude_failed_quality_control=true "
+            "-iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s"
         ),
     },
     "peddy": {"project_name": "-iproject_for_peddy="},
@@ -479,34 +444,27 @@ DX_CMDS = {
         'project_id="$(dx new project '
         '--bill-to %s "%s" --brief ' '--auth-token %s)" &&\n'
     ),
-    "find_proj_name": (
-        f"source {SCRIPTS['sdk_source']}; dx find projects --name *%s* --auth %s"
-        ),
-    "proj_name_from_id": (
-        f'source {SCRIPTS["sdk_source"]}; dx describe %s --json | jq -r .name'
-        ),
-    "find_proj_id": (
-        f'source {SCRIPTS["sdk_source"]}; dx describe %s --json | jq -r .id'
-        ),
+    "find_proj_name": f"source {SDK_SOURCE}; dx find projects --name *%s* --auth %s",
+    "proj_name_from_id": f'source {SDK_SOURCE}; dx describe %s --json | jq -r .name',
+    "find_proj_id": f'source {SDK_SOURCE}; dx describe %s --json | jq -r .id',
     "find_execution_id": (
-        f"source {SCRIPTS['sdk_source']}; dx describe %s --json --auth-token "
+        f"source {SDK_SOURCE}; dx describe %s --json --auth-token "
         "%s | jq -r '.stages[] | select( .id == \"%s\") | .execution.id'"
         ),
     "executable_name_from_id": (
-        f'source {SCRIPTS["sdk_source"]}; dx describe %s --json | jq -r .executableName'
+        f'source {SDK_SOURCE}; dx describe %s --json | jq -r .executableName'
     ),
     "find_data": (
-        "source {ad_config.SCRIPTS['sdk_source']}; dx find data --project %s "
-        "--auth %s | wc -l"
+        f"source {SDK_SOURCE}; dx find data --project %s --auth %s | wc -l"
         ),
     "invite_user": str(
         'invite_user_out="$(dx invite %s $project_id %s --no-email '
         '--auth-token %s)" &&\n'
     ),
-    "file_upload_cmd": (
-        f"{EXECUTABLES['upload_agent']} --auth-token %s --project %s "
+    "file_upload_cmd": str(
+        f"{UPLOAD_AGENT_EXE} --auth-token %s --project %s "
         "--folder /%s --do-not-compress --upload-threads 10 %s"
-        ),
+    ),
     "pipe": str(
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']}"
         f" --priority high -y {JOB_NAME_STR}"
@@ -546,10 +504,6 @@ DX_CMDS = {
     "rpkm": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['rpkm']}"
         f" --priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
-    ),
-    "decision_support_prep": (
-        "analysisid=$(conda activate python3.10.6 && python3 "
-        f"{SCRIPTS['dsptool_input_script']} -a"
     ),
     "congenica_sftp": (
         f"echo 'dx run {NEXUS_IDS['APPS']['congenica_sftp']} "
@@ -603,40 +557,4 @@ QUERIES = {
         "NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) "
         "values (%s)"
         ),
-}
-
-
-# ==================== DECISION SUPPORT TOOL INPUTS ==============================
-
-# Used by the script to build the input commands for the congenica upload app
-DECISION_SUPPORT_INPUTS = {
-    "pipe": {
-        "vcf": {
-            "stage": NEXUS_IDS['STAGES']['pipe']['filter_vcf'],
-            "name": "filtered_vcf",
-        },
-        "bam": {
-            "stage": NEXUS_IDS['STAGES']['pipe']['gatk'],
-            "name": "bam",
-        },
-        "bai": {
-            "stage": NEXUS_IDS['STAGES']['pipe']['gatk'],
-            "name": "bai",
-        },
-    },
-    # Same stage is used to produce both the BAM and VCF
-    "wes": {                    
-        "vcf": {
-            "stage": NEXUS_IDS['STAGES']['wes']['sentieon'],
-            "name": "variants_vcf",
-        },
-        "bam": {
-            "stage": NEXUS_IDS['STAGES']['wes']['sentieon'],
-            "name": "mappings_bam",
-        },
-        "bai": {
-            "stage": NEXUS_IDS['STAGES']['wes']['sentieon'],
-            "name": "mappings_bam_bai",
-        },
-    },
 }
