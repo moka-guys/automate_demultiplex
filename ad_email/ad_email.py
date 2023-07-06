@@ -3,6 +3,7 @@
 """
 Email sending module
 """
+import os
 import jinja2
 import smtplib
 import config.ad_config as ad_config
@@ -11,6 +12,7 @@ import logging
 from shared_functions.shared_functions import git_tag
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Union
 
 
 class AdEmail(object):
@@ -33,13 +35,14 @@ class AdEmail(object):
             mail settings from init
     """
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger, log_flags):
         """
         Constructor for the AdEmail class
-            :param logger:  Logger object
+            :param logger:              Logger object
+            :param log_flags (dict):    Flags used in log messages
         """
         self.logger = logger
-        self.log_flags = logger_config.LOG_FLAGS
+        self.log_flags = log_flags
         self.log_msgs = logger_config.LOG_MSGS["ad_email"]
         self.sender = ad_config.MAIL_SETTINGS["alerts_email"]
         with open(
@@ -50,10 +53,13 @@ class AdEmail(object):
             ad_config.CREDENTIALS["email_pw"], "r", encoding="utf-8"
         ) as email_pw_file:
             self.email_pw = email_pw_file.readline().rstrip()  # Get email password
+        self.template_dirpath = os.path.join(
+            ad_config.PROJECT_DIR, "ad_email/templates"
+        )
         self.template = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(ad_config.TEMPLATE_DIR),
+            loader=jinja2.FileSystemLoader(self.template_dirpath),
             autoescape=True,
-        ).get_template(ad_config.EMAIL_TEMPLATE)
+        ).get_template("email.html")
 
     def generate_email_html(
             self, runfolder_name: str, workflows: str, queries: str, sample_count: int
@@ -90,7 +96,7 @@ class AdEmail(object):
     def send_email(
         self, recipients: list, email_subject: str, email_message: str,
         email_priority: int
-    ) -> True:
+    ) -> Union[bool, None]:
         """
         Create email message object and specify settings, then send email using mail
         settings from init
@@ -98,6 +104,7 @@ class AdEmail(object):
             :param str email_subject:       Email subject string
             :param str email_message:       Email message string
             :param email_priority:          Email priority integer
+            :return True | None:            True if email successfully sent, else None
         """
         self.msg = MIMEMultipart()  # Create email message object and specify settings
         self.msg["X-Priority"] = str(email_priority)  # Set email priority. 1 is highest
