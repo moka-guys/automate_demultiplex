@@ -16,11 +16,13 @@ This script is configured to be used as a module import as per the following exa
 
 ```python
 # Create AdEmail object
-self.email = AdEmail(self.runfolder_obj.loggers.usw_rf)
+self.email = AdEmail(
+    self.rf_obj.rf_loggers.usw, self.rf_obj.rf_loggers.usw.log_flags
+    )
 
 # Render email html message
 email_html = self.email.generate_email_html(
-    self.runfolder_obj.runfolder_name, ",".join(set(self.workflows)),
+    self.rf_obj.runfolder_name, ",".join(set(self.workflows)),
     self.queries, self.sample_count
 )
 # Send email

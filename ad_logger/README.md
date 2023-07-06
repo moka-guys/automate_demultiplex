@@ -19,14 +19,15 @@ This script is configured to be used as a module import as per the following exa
 
 Example 1 - script level loggers
 ```python
+import 
 # Create script level loggers
-script_loggers = ad_logger.AdLoggers(
-    logger_config.SCRIPTLOG_CONFIG['demultiplex_script']
-)
-script_loggers.usw_script.info(
-    script_loggers.msgs["usw"]["script_start"],
+script_logger = ad_logger.return_scriptlogger("usw", ad_config.TIMESTAMP)
+
+script_logger.usw.info(
+    script_logger.usw.log_msgs["script_start"],
     git_tag(),
-    extra={"flag": script_loggers.log_flags["info"] % "usw"},
+    "script.py",
+    extra={"flag": script_logger.usw.log_flags["info"] % "usw"},
 )
 ```
 
@@ -34,18 +35,18 @@ Example 2 - runfolder level loggers
 ```python
 
 logfiles_config = {
-    "usw_rf": upload_runfolder_logfile,
-    "demultiplex_rf": demultiplex_runfolder_logfile,
+    "usw": upload_runfolder_logfile,
+    "demultiplex": demultiplex_runfolder_logfile,
     "upload_agent": upload_agent_logfile,
     "backup": backup_runfolder_logfile,
-    "project": project_creation_logfile,
+    "project": proj_creation_script,
     "dx_run": runfolder_dx_run_script,
 }
 
 loggers = ad_logger.AdLoggers(logfiles_config)
 
-runfolder_obj.loggers.usw_rf.info(
-    loggers.msgs["rf_obj"]["recognised_panno"],
+rf_obj.rf_loggers.usw.info(
+    loggers.log_msgs["recognised_panno"],
     sample_name,
     pannum,
     extra={"flag": loggers.log_flags["info"] % "usw"},
