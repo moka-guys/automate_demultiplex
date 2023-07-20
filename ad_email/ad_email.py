@@ -6,13 +6,12 @@ Email sending module
 import os
 import jinja2
 import smtplib
-import config.ad_config as ad_config
-import ad_logger.log_config as logger_config
 import logging
-from shared_functions.shared_functions import git_tag
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Union
+from config import ad_config
+from toolbox import toolbox
 
 
 class AdEmail(object):
@@ -21,7 +20,6 @@ class AdEmail(object):
 
     Attributes
         logger (logging.Logger):    Logger object
-        log_flags (dict):           Flags used in log messages
         log_msgs (dict):            Messages used in logging
         sender (str):               Email address of sender
         email_user (str):           Email username
@@ -35,15 +33,12 @@ class AdEmail(object):
             mail settings from init
     """
 
-    def __init__(self, logger: logging.Logger, log_flags):
+    def __init__(self, logger: logging.Logger):
         """
         Constructor for the AdEmail class
             :param logger:              Logger object
-            :param log_flags (dict):    Flags used in log messages
         """
         self.logger = logger
-        self.log_flags = log_flags
-        self.log_msgs = logger_config.LOG_MSGS["ad_email"]
         self.sender = ad_config.MAIL_SETTINGS["alerts_email"]
         with open(
             ad_config.CREDENTIALS["email_user"], "r", encoding="utf-8"
@@ -79,19 +74,12 @@ class AdEmail(object):
                 workflows=workflows,
                 queries=queries,
                 sample_count=sample_count,
-                git_tag=git_tag(),
+                git_tag=toolbox.git_tag(),
             )
-            self.logger.info(
-                self.log_msgs["html_success"],
-                extra={"flag": self.log_flags["info"] % "email"},
-            )
+            self.logger.info(self.logger.log_msgs["html_success"])
             return html
         except Exception as exception:
-            self.logger.exception(
-                self.log_msgs["html_error"],
-                exception,
-                extra={"flag": self.log_flags["info"] % "email"},
-            )
+            self.logger.exception(self.logger.log_msgs["html_error"], exception)
 
     def send_email(
         self, recipients: list, email_subject: str, email_message: str,
@@ -115,11 +103,7 @@ class AdEmail(object):
             self.msg["From"] = self.sender
             self.msg["To"] = recipients
             self.msg.attach(MIMEText(email_message, "html"))  # Add msg to e-mail body
-            self.logger.info(
-                self.log_msgs["sending_email"],
-                self.msg,
-                extra={"flag": self.log_flags["info"] % "email"},
-            )
+            self.logger.info(self.logger.log_msgs["sending_email"], self.msg)
             # Configure SMTP server connection for sending email
             server = smtplib.SMTP(
                 host=ad_config.MAIL_SETTINGS["host"],
@@ -131,15 +115,9 @@ class AdEmail(object):
             server.ehlo()  # Identify client to ESMTP server using EHLO commands
             server.login(self.email_user, self.email_pw)
             server.sendmail(self.sender, recipients, self.msg.as_string())
-            self.logger.info(
-                self.log_msgs["email_success"],
-                extra={"flag": self.log_flags["info"] % "email"},
-            )
+            self.logger.info(self.logger.log_msgs["email_success"])
             return True
 
         except Exception as exception:
-            self.logger.exception(
-                self.log_msgs["email_fail"],
-                exception,
-                extra={"flag": self.log_flags["fail"] % "email"},
-            )
+            self.logger.exception(self.logger.log_msgs["email_fail"], exception)
+            raise Exception  # Stop script

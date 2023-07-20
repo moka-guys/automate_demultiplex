@@ -1,7 +1,6 @@
 # Automate demultiplex logging
 
-This module creates an AdLoggers object which is used to write messages to the syslog,
-stream and log files.
+This module creates objects that are used to write messages to the syslog, stream and log files.
 
 It also has a sensitive formatter incorporated, which removes authentication keys from the both the stream and the syslog (preventing them from being entered into rapid7) using regex.
 
@@ -9,25 +8,20 @@ It also has a sensitive formatter incorporated, which removes authentication key
 
 AdLoggers object creates a SensitiveFormatter to remove auth keys, then adds all loggers specified in the input logfiles config to the AdLoggers object (file, syslog and stream handlers). AdLoggers also has a shutdown_logs function to allow loggers to be removed preventing duplication of logging handlers.
 
-## Configuration
-
-This module has is own configuration file which contains settings specific to logging: [log_config.py](log_config.py).
-
 ## Usage
 
 This script is configured to be used as a module import as per the following examples:
 
 Example 1 - script level loggers
 ```python
-import 
-# Create script level loggers
-script_logger = ad_logger.return_scriptlogger("usw", ad_config.TIMESTAMP)
+script_logger = ad_logger.AdLogger(  # Create script level loggers
+    'demultiplex', 'demultiplex', toolbox.return_scriptlogfile('demultiplex')
+).get_logger()
 
-script_logger.usw.info(
-    script_logger.usw.log_msgs["script_start"],
+script_logger.info(
+    script_logger.log_msgs["script_start"],
     git_tag(),
-    "script.py",
-    extra={"flag": script_logger.usw.log_flags["info"] % "usw"},
+    os.path.basename(os.path.dirname(__file__)),
 )
 ```
 
@@ -43,13 +37,12 @@ logfiles_config = {
     "dx_run": runfolder_dx_run_script,
 }
 
-loggers = ad_logger.AdLoggers(logfiles_config)
+loggers = ad_logger.RunfolderLoggers(logfiles_config)
 
-rf_obj.rf_loggers.usw.info(
-    loggers.log_msgs["recognised_panno"],
+loggers.usw.info(
+    loggers.usw.log_msgs["recognised_panno"],
     sample_name,
     pannum,
-    extra={"flag": loggers.log_flags["info"] % "usw"},
 )
 ```
 

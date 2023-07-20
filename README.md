@@ -17,7 +17,7 @@ The following modules are utilised by the above scripts, with the documentation 
 * [backup_runfolder](backup_runfolder) - Uploads an Illumina runfolder to DNAnexus
 * [config] - contains configuration files
 * [samplesheet_validator](samplesheet_validator) - Validates naming and contents of samplesheets prior to demultiplexing. Uses the [seglh-naming](https://github.com/moka-guys/seglh-naming) package
-* [shared_functions](shared_functions) - Contains classes and functions shared
+* [toolbox](toolbox) - Contains classes and functions shared
 across multiple scripts
 * [test][test] - Contains test data and test scripts (these use pytest)
 
@@ -35,7 +35,7 @@ pip3 install -r requirements.txt
 Tests can be executed using the following command. It is important to include the ignore flag to prevent pytest from scanning for tests through all test files, which slows down the tests considerably
 
 ```bash
-python3 -m pytest -v --cov=. --ignore=test/demultiplex_test_files/
+python3 -m pytest -v --cov=.
 ```
 
 **N.B. Tests and test cases/files MUST be maintained and updated accordingly in conjunction with script development**
@@ -51,7 +51,7 @@ Suites for the following scripts/modules still require development:
 * [upload_and_setoff_workflows.py](upload_and_setoff_workflows.py)
 * [decision_support_tool_inputs.py](decision_support_tool_inputs.py)
 * [backup_runfolder](backup_runfolder)
-* [shared_functions](shared_functions)
+* [toolbox](toolbox)
 
 Test datasets are stored in [/test/data](../test/data)
 

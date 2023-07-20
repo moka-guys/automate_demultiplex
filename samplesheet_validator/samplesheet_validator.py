@@ -9,12 +9,12 @@ an errors list (ValidSamplesheet.errors)
 import os
 import re
 from collections import defaultdict
+from typing import Union
 from seglh_naming.sample import Sample
 from seglh_naming.samplesheet import Samplesheet
-from shared_functions.shared_functions import git_tag
-import config.ad_config as ad_config
-import config.panel_config as panel_config
-from typing import Union
+from config import ad_config, panel_config
+from toolbox import toolbox
+from ad_logger import ad_logger
 
 
 class SamplesheetCheck(object):
@@ -25,6 +25,7 @@ class SamplesheetCheck(object):
 
     Attributes:
         samplesheet_path (str):         Path to samplesheet
+        runfolder_name (str):           Name of runfolder (used for naming logfile)
         logger (obj):                   Logger object
         ss_obj (False | obj):           seglh-naming samplesheet object
         pannumbers (list):              List of panel numbers in the sample sheet
@@ -76,20 +77,20 @@ class SamplesheetCheck(object):
             Returns True if TSO sample
     """
 
-    def __init__(self, samplesheet_path: str, logger: object):
+    def __init__(self, samplesheet_path: str, runfolder_name: str):
         """
         Constructor for the SamplesheetCheck class
             :param samplesheet_path (str):  Path to samplesheet
-            :param logger (obj):            Logger object
+            :param runfolder_name (str):    Name of runfolder (used for naming logfile)
         """
         self.samplesheet_path = samplesheet_path
-        self.logger = logger
+        self.runfolder_name = runfolder_name
+        self.logger = self.return_logger()
         self.ss_obj = False
         self.pannumbers = []
         self.tso = False
-        self.samples = defaultdict(
-            str
-        )  # Store sample IDs and sample names from samplesheet
+        # Store sample IDs and sample names from samplesheet
+        self.samples = defaultdict(str)
         self.errors = False  # Switches to True if samplesheet errors encountered
         self.errors_list = []
         self.data_headers = []  # Populate with headers from data section
@@ -99,19 +100,24 @@ class SamplesheetCheck(object):
         self.panel_list = panel_config.PANELS
         self.runtype_list = ad_config.RUNTYPE_LIST
         self.tso_panel_list = panel_config.TSO500_PANELS
-        self.ss_checks()
+
+    def return_logger(self):
+        """
+        Add only the required logger
+        """
+        rf_obj = toolbox.RunfolderObject(
+            self.runfolder_name, ad_config.TIMESTAMP
+        )
+        rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger
+        logger = rf_obj.rf_loggers.ss_validator
+        ad_logger.shutdown_streamhandler(logger)  # Prevents log
+        return logger
 
     def ss_checks(self) -> None:
         """
         Run checks at samplesheet and sample level. Performs required extra checks for
         checks not included in seglh-naming
         """
-        self.logger.info(
-            self.logger.log_msgs["script_start"],
-            git_tag(),
-            "samplesheet_validator.py",
-            extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-        )
         if self.check_ss_present():
             self.ss_obj = self.check_ss_name()
             if self.ss_obj:
@@ -133,12 +139,6 @@ class SamplesheetCheck(object):
                             self.check_pannos(sample, column, sample_obj)
                             self.check_runtypes(sample, column, sample_obj)
                 self.check_tso()
-        self.logger.info(
-            self.logger.log_msgs["script_end"],
-            git_tag(),
-            "samplesheet_validator.py",
-            extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-        )
 
     def check_ss_present(self) -> Union[bool, None]:
         """
@@ -148,17 +148,11 @@ class SamplesheetCheck(object):
             :return True | None:    True if samplesheet exists, else None
         """
         if os.path.isfile(self.samplesheet_path):
-            self.logger.info(
-                self.logger.log_msgs["ss_present"],
-                self.samplesheet_path,
-                extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-            )
+            self.logger.info(self.logger.log_msgs["ss_present"], self.samplesheet_path)
             return True
         else:
-            self.logger.error(
-                self.logger.log_msgs["ss_absent"],
-                self.samplesheet_path,
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
+            self.logger.warning(
+                self.logger.log_msgs["ss_absent"], self.samplesheet_path
             )
             self.errors = True
             self.errors_list.append("sspresent_err")
@@ -171,18 +165,13 @@ class SamplesheetCheck(object):
         try:
             self.ss_obj = Samplesheet.from_string(self.samplesheet_path)
             self.logger.info(
-                self.logger.log_msgs["ssname_valid"],
-                self.samplesheet_path,
-                extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
+                self.logger.log_msgs["ssname_valid"], self.samplesheet_path
             )
         except Exception as exception:
             self.errors = True
             self.errors_list.append("ssname_err")
-            self.logger.error(
-                self.logger.log_msgs["ssname_invalid"],
-                self.samplesheet_path,
-                exception,
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
+            self.logger.warning(
+                self.logger.log_msgs["ssname_invalid"], self.samplesheet_path, exception
             )
         return self.ss_obj
 
@@ -195,35 +184,25 @@ class SamplesheetCheck(object):
         if self.ss_obj.sequencerid not in self.sequencerid_list:
             self.errors = True
             self.errors_list.append("sequencerid_err")
-            self.logger.error(
+            self.logger.warning(
                 self.logger.log_msgs["sequencer_id_invalid"],
                 self.ss_obj, self.ss_obj.sequencerid,
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
             )
         else:
-            self.logger.info(
-                self.logger.log_msgs["sequencer_id_valid"],
-                extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-            )
+            self.logger.info(self.logger.log_msgs["sequencer_id_valid"])
 
     def check_ss_contents(self) -> Union[bool, None]:
         """
         Check samplesheet not empty (<10 bytes)
             :return (True | None): True if samplesheet not empty, else None
         """
-        if os.stat(self.samplesheet_path).st_size > 10:
-            self.logger.info(
-                self.logger.log_msgs["ss_not_empty"],
-                extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-            )
-            return True
-        else:
-            self.logger.error(
-                self.logger.log_msgs["ss_empty"],
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
-            )
+        if os.stat(self.samplesheet_path).st_size < 10:
+            self.logger.warning(self.logger.log_msgs["ss_empty"])
             self.errors = True
             self.errors_list.append("ssempty_err")
+        else:
+            self.logger.info(self.logger.log_msgs["ss_not_empty"])
+            return True
 
     def get_data_section(self) -> None:
         """
@@ -255,12 +234,8 @@ class SamplesheetCheck(object):
                         sample_names.append(sample_name)
                     except Exception as exception:
                         self.errors = True
-                        self.logger.error(
-                            self.logger.log_msgs["get_data_err"],
-                            exception,
-                            extra={
-                                "flag": self.logger.log_flags["ss_warning"] % "ssvalidator"
-                                },
+                        self.logger.warning(
+                            self.logger.log_msgs["get_data_err"], exception
                         )
         self.samples["Sample_ID"] = sample_ids
         self.samples["Sample_Name"] = sample_names
@@ -279,16 +254,11 @@ class SamplesheetCheck(object):
             self.missing_headers = list(
                 set(self.expected_data_headers).difference(self.data_headers)
             )
-            self.logger.error(
-                self.logger.log_msgs["headers_err"],
-                self.missing_headers,
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
+            self.logger.warning(
+                self.logger.log_msgs["headers_err"], self.missing_headers
             )
         else:
-            self.logger.info(
-                self.logger.log_msgs["headers_as_expected"],
-                extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-            )
+            self.logger.info(self.logger.log_msgs["headers_as_expected"])
 
     def comp_samplenameid(self) -> None:
         """
@@ -307,17 +277,12 @@ class SamplesheetCheck(object):
                 ),
             )
         )
-        self.logger.info(
-            self.logger.log_msgs["samplenames_match"],
-            extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-        )
+        self.logger.info(self.logger.log_msgs["samplenames_match"])
         if differences:
             self.errors = True
             self.errors_list.append("samplenamematch_err")
-            self.logger.error(
-                self.logger.log_msgs["nonmatching_samplenames"],
-                differences,
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
+            self.logger.warning(
+                self.logger.log_msgs["nonmatching_samplenames"], differences
             )
 
     def check_illegal_chars(self, sample: str, column: str) -> None:
@@ -331,22 +296,14 @@ class SamplesheetCheck(object):
         if not re.match(valid_chars, sample):
             self.errors = True
             self.errors_list.append("validchars_err")
-            self.logger.error(
-                self.logger.log_msgs["illegal_chars"],
-                column, sample,
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
-            )
+            self.logger.warning(self.logger.log_msgs["illegal_chars"], column, sample)
         else:
-            self.logger.info(
-                self.logger.log_msgs["no_illegal_chars"],
-                sample, column,
-                extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-            )
+            self.logger.info(self.logger.log_msgs["no_illegal_chars"], sample, column)
 
     def check_sample(self, sample: str, column: str) -> Union[object, None]:
         """
         Validate sample names using seglh-naming Sample module. Checks run on
-        Sample_Name and Sample_ID; Sample_Name is used by bcl2fastq and Sample_ID is
+        Sample_Name and Sample_ID; Sample_Name is used by bcl2fastq2 and Sample_ID is
         used if Sample_Name is not present
             :param sample (str):               Sample name
             :param column (str):               Column header
@@ -354,20 +311,13 @@ class SamplesheetCheck(object):
         """
         try:
             sample_obj = Sample.from_string(sample)
-            self.logger.info(
-                self.logger.log_msgs["sample_name_valid"],
-                sample, column,
-                extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-            )
+            self.logger.info(self.logger.log_msgs["sample_name_valid"], sample, column)
             return sample_obj
         except Exception as exception:
             self.errors = True
             self.errors_list.append("samplename_err")
-            self.logger.error(
-                self.logger.log_msgs["sample_name_invalid"],
-                column,
-                exception,
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
+            self.logger.warning(
+                self.logger.log_msgs["sample_name_invalid"], column, exception,
             )
 
     def check_pannos(self, sample: str, column: str, sample_obj: object) -> None:
@@ -382,18 +332,15 @@ class SamplesheetCheck(object):
         if sample_obj.panelnumber not in self.panel_list:
             self.errors = True
             self.errors_list.append("panno_err")
-            self.logger.error(
+            self.logger.warning(
                 self.logger.log_msgs["invalid_panno"],
                 sample_obj.panelnumber,
                 column,
                 sample,
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
             )
         else:
             self.logger.info(
-                self.logger.log_msgs["valid_panno"],
-                sample_obj.panelnumber,
-                extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
+                self.logger.log_msgs["valid_panno"], sample_obj.panelnumber
             )
 
     def check_runtypes(self, sample: str, column: str, sample_obj: object) -> None:
@@ -409,18 +356,9 @@ class SamplesheetCheck(object):
         if runtype.group(0) not in self.runtype_list:
             self.errors = True
             self.errors_list.append("runtype_err")
-            self.logger.error(
-                self.logger.log_msgs["runtypes_err"],
-                sample,
-                column,
-                extra={"flag": self.logger.log_flags["ss_warning"] % "ssvalidator"},
-            )
+            self.logger.warning(self.logger.log_msgs["runtypes_err"], sample, column)
         else:
-            self.logger.info(
-                self.logger.log_msgs["valid_runtype"],
-                runtype.group(0),
-                extra={"flag": self.logger.log_flags["info"] % "ssvalidator"},
-            )
+            self.logger.info(self.logger.log_msgs["valid_runtype"], runtype.group(0))
 
     def check_tso(self) -> None:
         """
@@ -429,3 +367,18 @@ class SamplesheetCheck(object):
         """
         if any(item in self.pannumbers for item in self.tso_panel_list):
             self.tso = True
+
+    def log_summary(self) -> None:
+        """
+        Write summary of validtor outcome to log
+        """
+        if self.errors:
+            self.logger.warning(
+                self.logger.log_msgs["sschecks_not_passed"],
+                self.samplesheet_path
+            )
+        else:
+            self.logger.info(
+                self.logger.log_msgs["sschecks_passed"],
+                self.samplesheet_path
+            )

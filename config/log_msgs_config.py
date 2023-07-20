@@ -3,7 +3,7 @@
 """
 Config file for logging module. Contains settings specific to logging
 """
-import config.ad_config as ad_config  # Import ad_config file
+from config import ad_config  # Import ad_config file
 
 # Messages used by individual scripts / modules for logging
 LOG_MSGS = {
@@ -16,18 +16,23 @@ LOG_MSGS = {
         "cmd_success": "Command executed successfully with returncode %s",
         "cmd_fail": "Command returned non-zero exit code %s. Stdout: %s. Stderr: %s",
         "testing_software": "Testing %s software",
-        "test_fail": "AD_FAIL - %s test failed",
+        "test_fail": "%s test failed",
         "test_pass": "%s test passed",
+        "software_fail": "Software tests did not all pass",
         "found_program": "Found program: %s",
         "program_missing": "Could not find program: %s",
+        "sschecks_not_passed": "Samplesheet did not pass checks: %s",
+        "sschecks_passed": "Samplesheet passed all checks %s",
+        "ad_version": "Automate_demultiplex release: %s",
+
     },
     "ad_email": {
         "sending_email": "Sending the email message: %s",
         "email_success": "Email sent successfully",
-        "email_fail": "AD_FAIL - Email not sent. Exception: %s",
+        "email_fail": "Email not sent. Exception: %s",
         "html_success": "Successfully generated email HTML",
         "html_error": (
-            "AD_FAIL - There was a problem generating the html file, with "
+            "There was a problem generating the html file, with "
             "the following exception: %s"
             ),
     },
@@ -35,34 +40,25 @@ LOG_MSGS = {
         "runfolder_processed": "Runfolder has been processed: %s",
         "demultiplexing_required": "Demultiplexing is required for this runfolder",
         "tso_run": "TSO500 run detected.",
-        "demux_runfolder_start": (
-            "Automate_demultiplex release: %s -------------- Assessing %s"
-        ),
         "ic_fail": (
-            "DEMUX_FAIL - Integrity check fail. Checksums do not match for " "%s see %s"
+            "Integrity check fail. Checksums do not match for " "%s see %s"
         ),
         "bcl2fastq_start": (
-            "Demultiplexing started for run %s using bcl2fastq command: %s"
+            "Demultiplexing started for run %s using bcl2fastq2 command: %s"
         ),
-        "bcl2fastq_complete": "bcl2fastq subprocess complete for run %s",
-        "bcl2fastq_failed": "DEMUX_FAIL - bcl2fastq subprocess failed for run %s",
+        "bcl2fastq_complete": "bcl2fastq2 subprocess complete for run %s",
+        "bcl2fastq_failed": "bcl2fastq2 subprocess failed for run %s",
         "demux_already_complete": (
-            "Demultiplexing already completed - bcl2fastq log found @ %s --- STOP ---"
+            "Demultiplexing already completed: %s. bcl2fastq2 log found @ %s"
         ),
         "demux_not_complete": (
-            "Demultiplexing not yet completed - no demultiplex "
-            "log found @ %s --- CONTINUE ---"
+            "Demultiplexing not yet completed: %s. No demultiplex log found @ %s"
         ),
-        "sschecks_not_passed": "Samplesheet did not pass checks: %s",
-        "sschecks_passed": "Samplesheet passed all checks %s",
         "run_finished": "Run finished - RTAComplete.txt found @ %s",
         "run_incomplete": (
-            "Sequencing not yet complete (RTAComplete.txt "
-            "file absent) @ %s --- STOP ---"
+            "Sequencing not yet complete (RTAComplete.txt file absent) @ %s"
         ),
-        "ssfail_haltdemux": (
-            "DEMUX_FAIL - Demultiplexing halted due to samplesheet errors %s: %s"
-        ),
+        "ssfail_haltdemux": "Demultiplexing halted due to samplesheet errors %s: %s",
         "ic_required": (
             "This run was sequenced on a sequencer that requires integrity checking"
         ),
@@ -79,27 +75,25 @@ LOG_MSGS = {
         "checksums_notchecked": "Checksums not yet checked for this run",
         "ic_start": "Data integrity checks starting...",
         "ic_pass": "Integrity check for runfolder %s passed",
-        "create_bcl2fastqlog_pass": "Created bcl2fastq logfile for run %s",
+        "create_bcl2fastqlog_pass": "Created bcl2fastq2 logfile for run %s",
         "create_bcl2fastqlog_fail": (
-            "DEMUX_FAIL - Failed to create bcl2fastq logfile for run %s. Exception: %s"
+            "Failed to create bcl2fastq2 logfile for run %s. Exception: %s"
         ),
         "TSO500_run": f"%s is a {ad_config.STRINGS['demultiplexlog_tso500_msg']}",
         "write_TSO_msg_to_bcl2fastqlog": (
-            "TSO500 message successfully written to "
-            "bcl2fastq2_output.log file for TSO run: %s"
+            "TSO500 message successfully written to bcl2fastq2_output.log file for "
+            "TSO run: %s"
         ),
         "demux_complete": "Demultiplexing completed successfully for run %s",
         "demux_error": (
-            "DEMUX_FAIL - DEMULTIPLEXING UNSUCCESSFUL (BCL2FastQ2 ERROR) "
-            "- Demultiplexing failed for run %s. Please see logfile %s"
+            "DEMULTIPLEXING UNSUCCESSFUL (BCL2FastQ2 ERROR) - Demultiplexing failed "
+            "for run %s. Please see logfile %s"
         ),
         "bcl2fastqlog_empty": (
-            "DEMUX_FAIL - BCL2FASTQ2 logfile is empty for run %s. "
-            "Please see logfile %s"
+            "BCL2FASTQ2 logfile is empty for run %s. Please see logfile %s"
         ),
         "bcl2fastqlog_absent": (
-            "DEMUX_FAIL - BCL2FASTQ2 logfile does not exist for "
-            "run %s. Please see logfile "
+            "BCL2FASTQ2 logfile does not exist for run %s. Please see logfile "
         ),
         "running_cd": (
             "Running the following command for cluster density calculation: %s"
@@ -108,9 +102,9 @@ LOG_MSGS = {
             "Cluster density calculation saved to "
             f"%s{ad_config.STRINGS['lane_metrics_suffix']}"
         ),
-        "cd_fail": (
-            "DEMUX_FAIL - Cluster density calculation failed for : %s. " "Error: %s"
-        ),
+        "cd_fail": "Cluster density calculation failed for : %s. " "Error: %s",
+    },
+    "ss_validator": {
         "ss_present": "Samplesheet with supplied name is present (%s)",
         "ss_absent": "Samplesheet with supplied name not present (%s)",
         "ssname_valid": "Samplesheet name is valid (%s)",
@@ -140,13 +134,11 @@ LOG_MSGS = {
     "usw": {
         "runfolder_identified": "Identified runfolder: %s",
         "runfolder_processed": "Runfolder has bee:n processed: %s",
-        "runfolder_requires_processing": "Runfolder requires processing: %s",
-        "runfolder_not_require_processing": "Runfolder does not require processing: %s",
         "no_users": "No users in user list for permissions level %s",
         "dxtoolkittest_pass": "dx toolkit source command successful",
         "dxtoolkittest_fail": "USW_FAIL - dx toolkit source command failed",
         "TSO_backup_attempt": "Attempting to backup TSO runfolder. Attempt %s",
-        "runfolder_prev_proc": "Runfolder previously processed: %s. Skipping.",
+        "runfolder_prev_proc": "Runfolder already processed: %s. Skipping.",
         "runfolder_requires_proc": "Runfolder requires processing: %s",
         "ua_file_present": "Upload started file present. Terminating.",
         "ua_file_absent": "Upload started file not found. Continuing.",

@@ -8,7 +8,7 @@ The send_email() function is called with recipients, email subject, email messag
 
 ## Configuration
 
-Settings are imported from [ad_config.py](../config/ad_config.py) and [log_config.py](../ad_logger/log_config.py).
+Settings are imported from [ad_config.py](../config/ad_config.py).
 
 ## Usage
 
@@ -16,9 +16,7 @@ This script is configured to be used as a module import as per the following exa
 
 ```python
 # Create AdEmail object
-self.email = AdEmail(
-    self.rf_obj.rf_loggers.usw, self.rf_obj.rf_loggers.usw.log_flags
-    )
+self.email = AdEmail(self.rf_obj.rf_loggers.usw)
 
 # Render email html message
 email_html = self.email.generate_email_html(

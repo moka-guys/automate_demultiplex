@@ -6,12 +6,11 @@ UACaller.py Uploads an Illumina runfolder to DNAnexus.
 import os
 import re
 import math
-import config.ad_config as ad_config
-from shared_functions.shared_functions import execute_subprocess_command, test_programs
+from config import ad_config
+from toolbox import toolbox
 from typing import Union, Tuple
 # TODO improve log messages in this script
 # TODO properly test this both on command line and within script
-# TODO condense / split some functions
 
 
 class UACaller:
@@ -29,9 +28,6 @@ class UACaller:
         upload_rest_of_runfolder()
             Call methods to upload the rest of the runfolder (the runfolder minus the
             fastqs and several QC files)
-        test_software()
-            Test the software is installed and performing, by calling the
-            test_upload_agent and test_dx_toolkit functions
         check_runfolder_exists()
             Check runfolder exists
         get_file_dict(ignore)
@@ -79,19 +75,19 @@ class UACaller:
         self.logger.info(
             self.logger.log_msgs["finding_project"],
             self.rf_obj.runfolder_name,
-            extra={"flag": self.logger.log_flags["info"] % "backup"},
         )
         try:
             # Get DNAnexus project name using runfolder name
-            project_name, err, returncode = execute_subprocess_command(
+            project_name, err, returncode = toolbox.execute_subprocess_command(
                 ad_config.DX_CMDS['find_proj_name'] % (
                     self.rf_obj.runfolder_name,
                     self.rf_obj.dnanexus_apikey
                     ), self.logger
                 )
             # Get project ID
-            project_id, err, returncode = execute_subprocess_command(
-                ad_config.DX_CMDS['find_proj_id'] % project_name, self.logger
+            project_id, err, returncode = toolbox.execute_subprocess_command(
+                ad_config.DX_CMDS['find_proj_id'] % project_name, self.nexus_project_id,
+                self.logger
                 )
             return project_name, project_id
         except Exception as exception:
@@ -103,22 +99,15 @@ class UACaller:
         fastqs and several QC files)
             :return None:
         """
-        self.test_software()
+        self.logger.info(
+            self.logger.log_msgs["ad_version"],
+            toolbox.git_tag(),
+        )
+        toolbox.test_upload_software(self.logger)
         self.check_runfolder_exists()
         file_dict = self.get_file_dict(ignore)
         self.call_upload_agent(file_dict)  # Call the DNAnexus upload agent
         self.count_uploaded_files(ignore)  # Run tests to count files
-
-    def test_software(self) -> None:
-        """
-        Test the software is installed and performing, by calling the test_upload_agent
-        and test_dx_toolkit functions
-            :return None:
-        """
-        if not test_programs("dx_toolkit", self.logger) and not test_programs(
-            "upload_agent", self.logger
-        ):
-            raise Exception("Software tests did not all pass")
 
     def check_runfolder_exists(self) -> None:
         """
@@ -128,13 +117,11 @@ class UACaller:
         self.logger.info(
             self.logger.log_msgs["checking_runfolder"],
             self.rf_obj.runfolderpath,
-            extra={"flag": self.logger.log_flags["info"] % "backup"},
         )
         if not os.path.isdir(self.rf_obj.runfolderpath):
-            self.logger.exception(
+            self.logger.error(
                 self.logger.log_msgs["nonexistent_runfolder"],
                 self.rf_obj.runfolderpath,
-                extra={"flag": self.logger.log_flags["fail"] % "backup"},
             )
             raise IOError("Invalid runfolder given as input")
 
@@ -146,7 +133,6 @@ class UACaller:
         """
         self.logger.info(
             self.logger.log_msgs["building_file_dict"],
-            extra={"flag": self.logger.log_flags["info"] % "backup"},
         )
         # Create a dictionary to hold the directories as a key, and the list of
         # files as the value
@@ -182,17 +168,16 @@ class UACaller:
                 for file in os.listdir(folderpath)
                 if os.path.isfile(os.path.join(folderpath, file))
             ]
-            # loop through this list
+            # Loop through this list
             for filepath in filepath_list:
-                # test filepath for ignore patterns
+                # Test filepath for ignore patterns
                 if not self.ignore_file(filepath, ignore):
-                    # if ignore pattern not found add filepath to list
+                    # If ignore pattern not found add filepath to list
                     file_dict[folderpath].append(filepath)
 
-        # report the folders and files to be uploaded
+        # Report the folders and files to be uploaded
         self.logger.info(
-            self.logger.log_msgs["files_for_upload"], file_dict,
-            extra={"flag": self.logger.log_flags["info"] % "backup"},
+            self.logger.log_msgs["files_for_upload"], str(file_dict.keys())
         )
         return file_dict
 
@@ -232,8 +217,7 @@ class UACaller:
                 nexus_path, project_filepath = self.get_nexus_filepath(path)
                 self.logger.info(
                     self.logger.log_msgs["call_ua"],
-                    path, project_filepath,
-                    extra={"flag": self.logger.log_flags["info"] % "backup"},
+                    path, project_filepath
                 )
                 # upload agent has a max number of uploads of 1000 per command.
                 # uploading multiple files at a time is quicker, but uploading too many
@@ -256,11 +240,7 @@ class UACaller:
                     if iteration_count == iterations_needed:
                         stop = len(file_dict[path])
                     self.logger.info(
-                        self.logger.log_msgs["uploading_file_range"],
-                        start, stop,
-                        extra={
-                            "flag": self.logger.log_flags["info"] % "backup"
-                        },
+                        self.logger.log_msgs["uploading_file_range"], start, stop,
                     )
                     # the upload agent command can take multiple files separated by a
                     # space. the full file path is required for each file
@@ -269,12 +249,7 @@ class UACaller:
                     for file in file_dict[path][start:stop]:
                         files_string = f"{files_string} '{os.path.join(path, file)}'"
 
-                    self.logger.info(
-                        self.logger.log_msgs["building_command"],
-                        extra={
-                            "flag": self.logger.log_flags["info"] % "backup"
-                            },
-                    )
+                    self.logger.info(self.logger.log_msgs["building_command"])
                     # Create DNAnexus upload command
                     nexus_upload_command = ad_config.DX_CMDS["file_upload_cmd"] % (
                         self.rf_obj.dnanexus_apikey,
@@ -288,17 +263,11 @@ class UACaller:
                     start += 100
                     stop += 100
 
-                    out, err, returncode = execute_subprocess_command(
+                    out, err, returncode = toolbox.execute_subprocess_command(
                         nexus_upload_command, self.rf_obj.rf_loggers.upload_agent
                         )
                     # Write output stream to logfile and terminal
-                    self.logger.info(
-                        self.logger.log_msgs["cmd_out"],
-                        out, err,
-                        extra={
-                            "flag": self.logger.log_flags["info"] % "backup"
-                        },
-                    )
+                    self.logger.info(self.logger.log_msgs["cmd_out"], out, err)
 
     def get_nexus_filepath(self, folder_path) -> Tuple[str, str]:
         """
@@ -333,10 +302,7 @@ class UACaller:
         ignored are in DNAnexus
             :param ignore (str): String containing files to ignore
         """
-        self.logger.info(
-            self.logger.log_msgs["counting_files"],
-            extra={"flag": self.logger.log_flags["info"] % "backup"},
-        )
+        self.logger.info(self.logger.log_msgs["counting_files"])
         # count number of files to be uploaded
         # if ignore terms given need to add a grep step
         if ignore:
@@ -351,7 +317,7 @@ class UACaller:
         local_file_count = (
             f"find {self.rf_obj.runfolderpath} -type f {grep_ignore} | wc -l"
         )
-        files_expected, err, returncode = execute_subprocess_command(
+        files_expected, err, returncode = toolbox.execute_subprocess_command(
             local_file_count, self.rf_obj.rf_loggers.upload_agent
             )
         uploaded_file_count = (
@@ -360,15 +326,12 @@ class UACaller:
                 )
         )
         # Call upload command, writing to upload agent log
-        files_present, err, returncode = execute_subprocess_command(
+        files_present, err, returncode = toolbox.execute_subprocess_command(
             uploaded_file_count, self.rf_obj.rf_loggers.upload_agent
             )
         # Write output stream to logfile and terminal
         self.logger.info(
-            self.logger.log_msgs["files_uploaded"],
-            files_expected,
-            files_present,
-            extra={"flag": self.logger.log_flags["info"] % "backup"},
+            self.logger.log_msgs["files_uploaded"], files_expected, files_present,
         )
 
         if ignore:
@@ -379,15 +342,11 @@ class UACaller:
                     self.rf_obj.dnanexus_apikey
                     )
                 )
-            out, err, returncode = execute_subprocess_command(
+            out, err, returncode = toolbox.execute_subprocess_command(
                 uploaded_file_count_ignore, self.rf_obj.rf_loggers.upload_agent
                 )
             # Write output stream to logfile and terminal
-            self.logger.info(
-                self.logger.log_msgs["check_ignore"],
-                out,
-                extra={"flag": self.logger.log_flags["info"] % "backup"},
-            )
+            self.logger.info(self.logger.log_msgs["check_ignore"], out)
 
     def upload_files(
         self, upload_cmd: str, files_list: list, upload_type: str
@@ -412,7 +371,7 @@ class UACaller:
         if all([os.path.isfile(f) for f in files_list]):
             while upload_attempts < 5:  # Attempt the upload 5 times
                 # Execute upload agent command, writing log to upload agent log file
-                out, err, returncode = execute_subprocess_command(
+                out, err, returncode = toolbox.execute_subprocess_command(
                     upload_cmd, self.rf_obj.rf_loggers.upload_agent
                     )
                 if returncode == 0:

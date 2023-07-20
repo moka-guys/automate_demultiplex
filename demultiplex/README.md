@@ -9,15 +9,15 @@ The [demultiplex.py](../demultiplex.py) script performs the following:
 
 [demultiplex.py](../demultiplex.py) collects runfolders in the config-specified runfolders directory, and runs a set of checks to determine whether demultiplexing is required for that runfolder. The checks determine that the runfolder meets the following criteria:
 
-1. The bcl2fastq logfile `bcl2fastq2_output.log` is absent (demultiplexing not yet performed). bcl2fastq stdout and stderr streams are written to this file
+1. The bcl2fastq2 logfile `bcl2fastq2_output.log` is absent (demultiplexing not yet performed). bcl2fastq2 stdout and stderr streams are written to this file
 2. Sequencing is complete (presence of `RTAComplete.txt` file created by the sequencer when sequencing is complete)
-3. bcl2fastq is installed on the workstation
+3. bcl2fastq2 is installed on the workstation
 4. Samplesheet does not contain any errors that would cause demultiplexing to fail - checks are carried out by the [samplesheet_validator.py](../samplesheet_validator/samplesheet_validator.py) module which makes use of the [seglh-naming](https://github.com/moka-guys/seglh-naming) library. The absence of error messages for specific tests is checked:
    * Sample sheet is present
    * Samplesheet name is valid (validates using the [seglh-naming](https://github.com/moka-guys/seglh-naming) library)
    * Samplesheet is not empty
    * Samplesheet contains the minimum expected `[Data]` section headers: `Sample_ID, Sample_Name, index`
-   * Sample name does not contain any illegal characters (in case this was not rectified after the early warning checks as this will cause bcl2fastq to fail)
+   * Sample name does not contain any illegal characters (in case this was not rectified after the early warning checks as this will cause bcl2fastq2 to fail)
 
 If a runfolder meets these initial criteria:
 
@@ -31,8 +31,8 @@ must be present
 
 `run_demultiplexing()` then performs demultiplexing tasks:
 
-* Create demultiplexing log file to prevent simultaneous attempt on the next run of the script (bcl2fastq is slow to create the logfile)
-* If the run is a tso run, creates a tso bcl2fastq log file but does not demultiplex
+* Create demultiplexing log file to prevent simultaneous attempt on the next run of the script (bcl2fastq2 is slow to create the logfile)
+* If the run is a tso run, creates a tso bcl2fastq2 log file but does not demultiplex
 * Otherwise, demultiplexes all other runs that get this far using `bcl2fastq2 (v2.20)`
 
 ## Usage
@@ -52,13 +52,13 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py).
 | Demultiplex output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout` |
 | demultiplex | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script_log.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
 | demultiplex | Records runfolder-level logs for the demultiplex script | `RUNFOLDERNAME_demultiplex_script_log.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
- Bcl2fastq output | STDOUT and STDERR from bcl2fastq | `bcl2fastq2_output.log` | Within the runfolder |
+ Bcl2fastq output | STDOUT and STDERR from bcl2fastq2 | `bcl2fastq2_output.log` | Within the runfolder |
 
 ## Alerts
 
 Logs from this script containing the follow strings will trigger alerts to the `moka-alerts` binfx slack channel:
 
-* DEMUX_FAIL
+* BOTH 'demultiplex' and 'fail'
 
 ## Testing
 

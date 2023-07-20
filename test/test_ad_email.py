@@ -4,35 +4,16 @@
 N.B. test_email_sending_success() will only pass when running on the
 workstation where the required auth details are stored
 """
-import logging
 import pytest
+from test.conftest import logger_obj
 from ad_email.ad_email import AdEmail
-import config.ad_config as ad_config  # Import config file
-import ad_logger.ad_logger as ad_logger
+from config import ad_config
 
 
-@pytest.fixture(autouse=True)
-def run_before_and_after_tests(monkeypatch):
-    """
-    Disable messages at level CRITICAL and below to reduce the number of log messages
-    """
-    logging.disable(logging.CRITICAL)
-    yield
-    logging.disable(logging.NOTSET)  # Re-enable logging
-
-
-# TODO add test for generate_email_html
 class TestAdEmail:
     """
     Test Email class
     """
-
-    @pytest.fixture(scope="function")
-    def upload_script_logger(self):
-        """
-        Create basic logger for testing purposes
-        """
-        return logging.getLogger("test_logger")
 
     @pytest.fixture(scope="function")
     def email_subject(self):
@@ -61,9 +42,12 @@ class TestAdEmail:
             ],
         ]
 
+    # TODO write test for generate_email_html
+    # def test_generate_email_html():
+
     def test_send_email_success(
         self,
-        upload_script_logger,
+        logger_obj,
         email_subject,
         email_message,
         email_recipients,
@@ -73,9 +57,7 @@ class TestAdEmail:
         on the workstation where the required auth details are stored
         """
         for recipients_list in email_recipients:
-            ad_email_obj = AdEmail(
-                logger=upload_script_logger, log_flags=ad_logger.get_log_flags()
-                )
+            ad_email_obj = AdEmail(logger_obj)
             email_html = ad_email_obj.generate_email_html(
                 "test_runfolder", "workflow",
                 "SQL_str", 5
@@ -91,7 +73,7 @@ class TestAdEmail:
     def test_send_email_fail(
         self,
         monkeypatch,
-        upload_script_logger,
+        logger_obj,
         email_subject,
         email_message,
         email_recipients,
@@ -100,17 +82,16 @@ class TestAdEmail:
         Test email sending failure - incorrect credentials provided
         """
         for recipients_list in email_recipients:
-            ad_email_obj = AdEmail(
-                logger=upload_script_logger, log_flags=ad_logger.get_log_flags()
-                )
+            ad_email_obj = AdEmail(logger_obj)
             monkeypatch.setattr(ad_email_obj, "email_user", "abc")
             email_html = ad_email_obj.generate_email_html(
                 "test_runfolder", "workflow",
                 "SQL_str", 5
             )
-            assert not ad_email_obj.send_email(
-                recipients_list,
-                email_subject,
-                email_html,
-                1,
-            )
+            with pytest.raises(Exception):
+                ad_email_obj.send_email(
+                    recipients_list,
+                    email_subject,
+                    email_html,
+                    1,
+                )

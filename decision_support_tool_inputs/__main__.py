@@ -1,11 +1,16 @@
+"""
+Main entry point for decision_support_tool_inputs module.
+
+Prints inputs required by decision support tool upload applications on DNAnexus.
+See README and docstrings for further details
+"""
 import subprocess
 import json
 import re
 import argparse
-import config.ad_config as ad_config
-import config.panel_config as panel_config
-import ad_logger.ad_logger as ad_logger
-from shared_functions.shared_functions import git_tag
+from config import ad_config, panel_config
+from ad_logger import ad_logger
+from toolbox import toolbox
 from decision_support_tool_inputs.decision_tooler import DecisionTooler
 
 
@@ -17,7 +22,7 @@ def get_arguments():
     """
     parser = argparse.ArgumentParser(
         description=(
-            "given an analysis-id will obtain the job ids for bam and vcf "
+            "Given an analysis-id, will obtain the job ids for bam and vcf "
             "files for upload to the specified decision support tool"
         )
     )
@@ -25,6 +30,7 @@ def get_arguments():
         "-a",
         "--analysis_id",
         required=True,
+        type=str,
         help="workflow Analysis ID in format Analysis-abc123",
     )
     parser.add_argument(
@@ -32,13 +38,22 @@ def get_arguments():
         "--tool",
         choices=["congenica"],
         required=True,
+        type=str,
         help="decision support tool (currently only supports congenica)",
     )
     parser.add_argument(
         "-p",
         "--project",
         required=True,
+        type=str,
         help="The DNAnexus project name in which the analysis is running",
+    )
+    parser.add_argument(
+        "-r",
+        "--runfolder_name",
+        required=True,
+        help="Workstation runfolder name",
+        type=str,
     )
     return parser.parse_args()
 
@@ -64,23 +79,18 @@ analysis_info = json.loads(
 # Get settings for analysis panel (to determine which workflow is running)
 pannumber = re.search(r"Pan\d+", analysis_info["name"]).group()
 
-script_logger = ad_logger.return_scriptlogger("decision_support", parsed_args.project)
-
-# Disable the stream handler to prevent logs being sent to stdout (we only want the
-# project and file IDs to be stored)
-script_logger.shutdown_streamhandler()
-
-# Print decision support tool inputs, using the analysis ID and the
-# workflow name from the ad_config panel dictionary
+# Create tooler object, using the analysis ID and the workflow name from the ad_config
+# panel dictionary
 tooler = DecisionTooler(
-    parsed_args.analysis_id, parsed_args.project,
-    panel_config.PANEL_DICT[pannumber]["pipeline"], script_logger.decision_support
+    parsed_args.analysis_id, parsed_args.project, parsed_args.runfolder_name,
+    panel_config.PANEL_DICT[pannumber]["pipeline"]
 )
-tooler.printer()  # Print congenica app inputs
 
-script_logger.decision_support.info(
-    script_logger.decision_support.log_msgs["script_end"],
-    git_tag(),
-    "decision_support_tool_inputs.py",
-    extra={"flag": script_logger.decision_support.log_flags["info"] % "dst"},
-)
+toolbox.script_start_logmsg(tooler.logger, __file__)
+
+# Get and print decision support tool inputs
+tooler.get_inputs()
+
+toolbox.script_end_logmsg(tooler.logger, __file__)
+
+ad_logger.shutdown_logs(tooler.logger)

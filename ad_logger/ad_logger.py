@@ -3,54 +3,13 @@
 """
 Automate demultiplex logging. Classes required for logging
 """
-import os
 import sys
 import re
 import logging
 import logging.handlers
-import config.ad_config as ad_config
-import ad_logger.log_config as logger_config
+from config import ad_config, log_msgs_config
 
 
-def get_log_flags():
-    """
-    Return flags used in log messages. These are script mode-dependent
-        :return (dict):     Dictionary of logging flags to add to log messages
-    """
-    if ad_config.TESTING:
-        test_str = "test"
-    else:
-        test_str = ""
-    return {
-        "info": f"%s{test_str}_info",
-        "fail": f"%s{test_str}_fail",
-        "ss_warning": f"%s{test_str}_warning",
-    }
-
-
-def return_scriptlogger(logname, identifier):
-    """"""
-    # Script-level logfile configuration
-    SCRIPTLOG_CONFIG = {
-        "demultiplex": os.path.join(  # Record demultiplex script logs
-            ad_config.AD_LOGDIR, "demultiplexing_script_logfiles",
-            f"{identifier}_demultiplex_script_log.log"
-            ),
-        # Records output of upload and setoff workflow script
-        "usw": os.path.join(
-            ad_config.AD_LOGDIR, "usw_script_logfiles", 
-            f"{identifier}_upload_and_setoff_workflow.log"
-            ),
-        # Records the logs from the backup runfolder script
-        "backup": os.path.join(
-            ad_config.AD_LOGDIR, "backup_runfolder_script_logfiles",
-            f"{identifier}_backup_runfolder.log"
-            ),
-    }
-    return AdLogger(logname, SCRIPTLOG_CONFIG[logname]).logger
-
-
-# NOT WORKING
 def shutdown_streamhandler(logger) -> None:
     """
     Shut down the stream handler only for a logging object. For when we do not want to
@@ -63,7 +22,6 @@ def shutdown_streamhandler(logger) -> None:
             handler.close()
 
 
-# NOT WORKING
 def shutdown_logs(logger) -> None:
     """
     To prevent duplicate filehandlers and system handlers close and remove
@@ -93,7 +51,7 @@ class SensitiveFormatter(logging.Formatter):
         Filter out the auth key with regex
             :return (str):  Filtered log message
         """
-        return re.sub(r'--auth-token [^ ]+ ', r'--auth-token <MASKED_KEY> ', s)
+        return re.sub(r'--auth [^ ]+ ', r'--auth <MASKED_KEY> ', s)
 
     def format(self, record: logging.LogRecord) -> str:
         """
@@ -137,11 +95,15 @@ class RunfolderLoggers(object):
             :return all_loggers (list): List of loggers
         """
         all_loggers = []
-        for key in self.logfiles_config.keys():
+        for logger_type in self.logfiles_config.keys():
+            logger_name = f"{logger_type} rf"
             setattr(
-                RunfolderLoggers, key, AdLogger(key, self.logfiles_config[key]).logger
+                RunfolderLoggers, logger_type,
+                AdLogger(
+                    logger_name, logger_type, self.logfiles_config[logger_type]
+                ).get_logger()
             )
-            all_loggers.append(getattr(RunfolderLoggers, key))
+            all_loggers.append(getattr(RunfolderLoggers, logger_type))
         return all_loggers
 
 
@@ -151,10 +113,12 @@ class AdLogger(object):
     handler and stream handler
 
     Attributes
-        logger (object):    Python logging object with custom attributes
+        logger_name (str):      Name of logger
+        logger_type (str):      Type of logger, e.g. demultiplex, usw, etc.
+        filepath (str):         Name of filepath to provide to _file_handler()
 
     Methods
-        _get_logger()
+        get_logger()
             Returns a Python logging object
         _get_file_handler()
             Get file handler for the logger
@@ -166,43 +130,44 @@ class AdLogger(object):
             Get stream handler for the logger (sends to stdout)
     """
 
-    def __init__(self, logger_name, filepath):
+    def __init__(self, logger_name, logger_type, filepath):
         """
         Constructor for the AdLogger class
             :param logger_name (str):   Name of logger
+            :param logger_type (str):   Type of logger, e.g. demultiplex, usw, etc.
             :param filepath (str):      Name of filepath to provide to _file_handler()
         """
-        self.logger = self._get_logger(logger_name, filepath)
+        self.logger_name = logger_name
+        self.logger_type = logger_type
+        self.filepath = filepath
 
-    def _get_logger(self, logger_name, filepath) -> logging.Logger:
+    def get_logger(self) -> logging.Logger:
         """
         Returns a Python logging object, and give it a name
-            :param name(str):           Logger name
-            :param filepath(str):       Logfile path
-            :return logger (object):    Logger
+            :return logger (object):    Python logging object with custom attributes
         """
-        logger = logging.getLogger(logger_name)
-        logger.filepath = filepath
+        logger = logging.getLogger(self.logger_name)
+        logger.filepath = self.filepath
         logger.setLevel(logging.DEBUG)
-        logger.addHandler(self._get_file_handler(filepath))
+        logger.addHandler(self._get_file_handler())
         logger.addHandler(self._get_stream_handler())
         logger.addHandler(self._get_syslog_handler())
         logger.timestamp = ad_config.TIMESTAMP  # Timestamp in the format %Y%m%d_%H%M%S
-        logger.log_flags = get_log_flags()
         logger.log_msgs = (
-            logger_config.LOG_MSGS['general'] | logger_config.LOG_MSGS[logger_name]
+            log_msgs_config.LOG_MSGS['general'] |
+            log_msgs_config.LOG_MSGS['ad_email'] |
+            log_msgs_config.LOG_MSGS[self.logger_type]
             )
         return logger
 
-    def _get_file_handler(self, filepath: str) -> logging.FileHandler:
+    def _get_file_handler(self) -> logging.FileHandler:
         """
         Get file handler for the logger, and give it a name
-            :param filepath (str):                      Path to log file
             :return file_handler (logging.FileHandler): FileHandler
         """
-        file_handler = logging.FileHandler(filepath, mode="a", delay=True)
+        file_handler = logging.FileHandler(self.filepath, mode="a", delay=True)
         file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(SensitiveFormatter(self.get_logging_formatter()))
+        file_handler.setFormatter(SensitiveFormatter(self._get_logging_formatter()))
         file_handler.name = "file_handler"
         return file_handler
 
@@ -212,10 +177,10 @@ class AdLogger(object):
             :return (str):  Logging formatter string
         """
         if ad_config.TESTING:
-            flag = "TEST_MODE - "
+            flag = "AUTOMATED SCRIPTS TEST_MODE - "
         else:
-            flag = ""
-        return f"%(asctime)s - {flag}%(name)s - %(flag)s - %(levelname)s - %(message)s"
+            flag = "AUTOMATED SCRIPTS PROD_MODE - "
+        return f"%(asctime)s - {flag}%(name)s - %(levelname)s - %(message)s"
 
     def _get_syslog_handler(self) -> logging.handlers.SysLogHandler:
         """
@@ -224,7 +189,7 @@ class AdLogger(object):
         """
         syslog_handler = logging.handlers.SysLogHandler(address="/dev/log")
         syslog_handler.setLevel(logging.DEBUG)
-        syslog_handler.setFormatter(SensitiveFormatter(self.get_logging_formatter()))
+        syslog_handler.setFormatter(SensitiveFormatter(self._get_logging_formatter()))
         syslog_handler.name = "syslog_handler"
         return syslog_handler
 
@@ -235,6 +200,6 @@ class AdLogger(object):
         """
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setLevel(logging.DEBUG)
-        stream_handler.setFormatter(SensitiveFormatter(self.get_logging_formatter()))
+        stream_handler.setFormatter(SensitiveFormatter(self._get_logging_formatter()))
         stream_handler.name = "stream_handler"
         return stream_handler
