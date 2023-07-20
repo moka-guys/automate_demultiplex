@@ -18,7 +18,7 @@ Logfiles produced by automate demultiplex scripts are uploaded to the DNAnexus p
 
 ## Configuration
 
-Settings are imported from [ad_config.py](../config/ad_config.py) and [log_config.py](../ad_logger/log_config.py).
+Settings are imported from [ad_config.py](../config/ad_config.py).
 
 ## Usage
 
@@ -56,7 +56,7 @@ nexus_identifiers = {
 UACaller(
     runfolder_name,
     ignore,
-    self.rf_obj.rf_loggers,  # AdLoggers object (created by ad_logger.py)
+    self.rf_obj.rf_loggers,  # RunfolderLoggers object (created by ad_logger.py)
     self.rf_obj.dnanexus_apikey,
     nexus_identifiers,  # Optional
 )

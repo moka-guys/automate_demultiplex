@@ -47,7 +47,7 @@ for analysis of samples with that pan number
     drylab_dnanexus_id              False if not required to share with other users,
                                     user ID string if needs sharing
 """
-import config.ad_config as ad_config  # Import ad_config file
+from config import ad_config  # Import ad_config file
 
 PIPE_HAPLOTYPE_CALLER_PADDING = 0
 

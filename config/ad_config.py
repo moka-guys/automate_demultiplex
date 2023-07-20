@@ -285,7 +285,7 @@ APP_INPUTS = {
 UPLOAD_ARGS = {
     "dest": "--dest=",
     "proj": "--project=",
-    "token": "--brief --auth-token %s)",
+    "token": "--brief --auth %s)",
     "depends": "$depends_list",
     "depends_gatk": "$depends_list_gatk",
     # Arguments to capture jobids. Job IDS are built into a string that can be passed
@@ -442,28 +442,26 @@ EMPTY_GATK_DEPENDS = "depends_list_gatk=''\n"
 DX_CMDS = {
     "create_proj": str(
         'project_id="$(dx new project '
-        '--bill-to %s "%s" --brief ' '--auth-token %s)" &&\n'
+        '--bill-to %s "%s" --brief ' '--auth %s)" &&\n'
     ),
     "find_proj_name": f"source {SDK_SOURCE}; dx find projects --name *%s* --auth %s",
-    "proj_name_from_id": f'source {SDK_SOURCE}; dx describe %s --json | jq -r .name',
-    "find_proj_id": f'source {SDK_SOURCE}; dx describe %s --json | jq -r .id',
-    "find_execution_id": (
-        f"source {SDK_SOURCE}; dx describe %s --json --auth-token "
-        "%s | jq -r '.stages[] | select( .id == \"%s\") | .execution.id'"
+    "proj_name_from_id": (
+        f'source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name'
         ),
-    "executable_name_from_id": (
-        f'source {SDK_SOURCE}; dx describe %s --json | jq -r .executableName'
-    ),
+    "find_proj_id": f'source {SDK_SOURCE}; dx describe --auth %s %s --json | jq -r .id',
+    "find_execution_id": (
+        f"source {SDK_SOURCE}; dx describe %s --json --auth %s | jq -r '.stages[] | "
+        "select( .id == \"%s\") | .execution.id'"
+        ),
     "find_data": (
         f"source {SDK_SOURCE}; dx find data --project %s --auth %s | wc -l"
         ),
     "invite_user": str(
-        'invite_user_out="$(dx invite %s $project_id %s --no-email '
-        '--auth-token %s)" &&\n'
+        'invite_user_out="$(dx invite %s $project_id %s --no-email --auth %s)" &&\n'
     ),
     "file_upload_cmd": str(
-        f"{UPLOAD_AGENT_EXE} --auth-token %s --project %s "
-        "--folder /%s --do-not-compress --upload-threads 10 %s"
+        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder /%s --do-not-compress "
+        "--upload-threads 10 %s"
     ),
     "pipe": str(
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']}"

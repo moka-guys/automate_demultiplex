@@ -7,16 +7,12 @@ Upload NGS data to DNAnexus and trigger analysis workflows.
 import os
 import re
 from shutil import copyfile
-from shared_functions.shared_functions import (
-    RunfolderObject, execute_subprocess_command, test_programs
-    )
-import ad_logger.ad_logger as ad_logger
-import config.ad_config as ad_config
-import config.panel_config as panel_config
+from toolbox import toolbox
+from ad_logger import ad_logger
+from config import ad_config, panel_config
 from ad_email.ad_email import AdEmail
 from backup_runfolder.UACaller import UACaller
 from itertools import chain
-import ad_logger.log_config as logger_config
 from typing import Union, Tuple
 
 
@@ -26,35 +22,51 @@ class SequencingRuns(object):
     runs requiring processing.
 
     Attributes
-        runfolders (list):              List of runfolders in config-set runfolder
-                                        directory
-        script_loggers (object):        AdLoggers object with script-level loggers
+        runs_to_process (dict):         Object containing runs that require processing
+                                        as key,value pairs
+        script_logger (object):         Script-level logger
         processed_runfolders (list):    List of runfolders processed by the script
         num_processed_runfolders (int): Number of runfolders processed during this cycle
-        processed_run_string (str):     Comma delimited string of all runfolders
-                                        processed in cycle
 
     Methods:
         set_runfolders()
             Update self.runfolders list with NGS runfolders in the runfolders directory
         requires_processing()
-            Determine whether runfolder requires processing
-        test_software()
-            Test the software is installed and performing
+            Calls other methods to determine whether the runfolder requires processing
+            (demultiplexing has finished successfully and the runfolder has not already
+            been uploaded)
+        already_uploaded()
+            Checks for presence of upload agent logfile (denotes that the runfolder has
+            already been processed).
+        has_demultiplexed()
+            Check if demultiplexing has already been performed and completed sucessfully
     """
 
     def __init__(self):
         """
         Constructor for the SequencingRuns class
         """
-        self.requires_processing = {}
+        self.runs_to_process = {}
         self.processed_runfolders = []
-        self.script_logger = ad_logger.return_scriptlogger('usw', ad_config.TIMESTAMP)
+        self.script_logger = ad_logger.AdLogger(
+            'usw', 'usw', toolbox.return_scriptlogfile('usw')
+        ).get_logger()
+
+    def setoff_processing(self) -> None:
+        """
+        Call methods to collect runfolders for processing
+            :return None:
+        """
+        self.set_runfolders()
+        if toolbox.test_upload_software(self.script_logger):
+            for runfolder, rf_obj in self.runs_to_process.items():
+                self.process_runfolder(runfolder, rf_obj)
+            self.return_num_processed_runfolders()
 
     def set_runfolders(self) -> None:
         """
-        Update self.requires_processing dict with NGS runfolders in the runfolders
-        directory that match the runfolder pattern, and require processing by the script
+        Update self.runs_to_process dict with NGS runfolders in the runfolders directory
+        that match the runfolder pattern, and require processing by the script
             :return None:
         """
         for folder in os.listdir(ad_config.RUNFOLDERS):
@@ -62,34 +74,86 @@ class SequencingRuns(object):
                 ad_config.RUNFOLDER_PATTERN
             ).match(folder):
                 self.script_logger.info(
-                    self.script_logger.log_msgs["runfolder_identified"],
-                    folder,
-                    extra={"flag": self.script_logger.log_flags["info"] % "usw"},
+                    self.script_logger.log_msgs["runfolder_identified"], folder
                 )
-                rf_obj = RunfolderObject(
-                    folder, self.script_logger, ad_config.TIMESTAMP
-                )
-                if rf_obj.requires_processing():
-                    self.requires_processing['runfolder'] = rf_obj
+                rf_obj = toolbox.RunfolderObject(folder, ad_config.TIMESTAMP)
+                if self.requires_processing(rf_obj):
+                    self.runs_to_process['runfolder'] = rf_obj
+
+    def requires_processing(self, rf_obj) -> bool:
+        """
+        Calls other methods to determine whether the runfolder requires processing
+        (demultiplexing has finished successfully and the runfolder has not already been
+        uploaded)
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
+                                    attributes)
+            :return bool:           Returns true if runfolder requires processing, else
+                                    False
+        """
+        if (self.has_demultiplexed(rf_obj) and not self.already_uploaded(rf_obj)):
+            self.script_logger.info(
+                self.script_logger.log_msgs["runfolder_requires_proc"],
+                rf_obj.runfolder_name
+            )
+            return True
+        else:
+            self.script_logger.info(
+                self.script_logger.log_msgs["runfolder_prev_proc"],
+                rf_obj.runfolder_name
+            )
+            return False
+
+    def already_uploaded(self, rf_obj) -> bool:
+        """
+        Checks for presence of upload agent logfile (denotes that the runfolder has
+        already been processed).
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
+                                    attributes)
+            :return (bool):         Returns True if runfolder already uploaded, else
+                                    False
+        """
+        if os.path.isfile(rf_obj.upload_agent_logfile):
+            self.script_logger.info(self.script_logger.log_msgs["ua_file_present"])
+            return True
+        else:
+            # If file doesn't exist return false to continue, write to log file
+            self.script_logger.info(self.script_logger.log_msgs["ua_file_absent"])
+            return False
+
+    def has_demultiplexed(self, rf_obj) -> bool:
+        """
+        Check if demultiplexing has already been performed and completed sucessfully
+        Checks the demultiplex log file exists, and if present checks the expected
+        success string is in the last line of the log file.
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
+                                    attributes)
+            :return (bool):         Return True if runfolder already demultiplexed, else
+                                    False
+        """
+        if os.path.isfile(rf_obj.bcl2fastqlog_path):
+            with open(rf_obj.bcl2fastqlog_path, "r", encoding="utf-8") as logfile:
+                logfile_list = logfile.readlines()
+                completed_strs = [
+                    ad_config.STRINGS['demultiplexlog_tso500_msg'],
+                    ad_config.STRINGS['demultiplex_success']
+                ]
+                if any(
+                    re.search(success_str, logfile_list[-1])
+                    for success_str in completed_strs
+                ):
                     self.script_logger.info(
-                        self.script_logger.log_msgs[
-                            "runfolder_requires_processing"
-                            ],
-                        folder,
-                        extra={
-                            "flag": self.script_logger.log_flags["info"] % "usw"
-                            },
+                        self.script_logger.log_msgs["demux_complete"]
                     )
+                    return True
                 else:
-                    self.script_logger.info(
-                        self.script_logger.log_msgs[
-                            "runfolder_not_require_processing"
-                            ],
-                        folder,
-                        extra={
-                            "flag": self.script_logger.log_flags["info"] % "usw"
-                            },
-                    )
+                    self.script_logger.info(self.script_logger.log_msgs["demux_failed"])
+                    return False
+        else:
+            # Write to logfile that not yet demultiplexed
+            self.script_logger.info(
+                self.script_logger.log_msgs["not_yet_demultiplexed"]
+            )
+            return False
 
     def process_runfolder(self, runfolder, rf_obj):
         """
@@ -97,43 +161,23 @@ class SequencingRuns(object):
         class for processing, shutting down logs upon completion. Append to
         self.processed_runfolders
         """
-        if self.test_software():
-            rf_obj.add_runfolder_loggers()  # Add runfolder loggers attribute
-            process_runfolder_obj = ProcessRunfolder(rf_obj)
+        rf_obj.add_runfolder_loggers()  # Add runfolder loggers attribute
+        process_runfolder_obj = ProcessRunfolder(rf_obj)
 
-            for logger in rf_obj.rf_loggers.loggers:
-                logger.shutdown_logs()  # Shut down logging
-            self.processed_runfolders.append(runfolder)
-            self.script_logger.info(
-                self.script_logger.log_msgs["runfolder_processed"],
-                process_runfolder_obj.rf_obj.runfolder_name,
-                extra={
-                    "flag": self.script_logger.log_flags["info"] % "usw"
-                    },
-            )
-
-    def get_num_processed_runfolders(self):
-        """
-        Set self.num_processed_runfolders
-        """
-        num_processed_runfolders = len(self.processed_runfolders)
-        setattr(self, 'num_processed_runfolders', num_processed_runfolders)
+        for logger in rf_obj.rf_loggers.loggers:
+            ad_logger.shutdown_logs(logger)  # Shut down logging
+        self.processed_runfolders.append(runfolder)
         self.script_logger.info(
-            self.script_logger.log_msgs["runfolders_processed"],
-            self.num_processed_runfolders,
-            ", ".join(self.processed_runfolders),
-            extra={"flag": self.script_logger.log_flags["info"] % "usw"},
+            self.script_logger.log_msgs["runfolder_processed"],
+            process_runfolder_obj.rf_obj.runfolder_name,
         )
 
-    def test_software(self) -> Union[bool, None]:
-        """
-        Test the software is installed and performing
-            :return True | None:    Return True if all software tests pass, else None
-        """
-        if test_programs(
-            "dx_toolkit", self.script_logger
-        ) and test_programs("upload_agent", self.script_logger):
-            return True
+    def return_num_processed_runfolders(self):
+        """"""
+        num_processed_runfolders = toolbox.get_num_processed_runfolders(
+            self.script_logger, "usw", self.processed_runfolders
+        )
+        setattr(self, 'num_processed_runfolders', num_processed_runfolders)
 
 
 class ProcessRunfolder(object):
@@ -145,7 +189,7 @@ class ProcessRunfolder(object):
     emails
 
     Attributes:
-        rf_obj (obj):                RunfolderObject object (contains
+        rf_obj (obj):                       RunfolderObject object (contains
                                             runfolder-specific attributes)
         dnanexus_apikey (str):              DNAnexus auth token
         samples_obj (obj):                  CollectRunfolderSamples object (contains
@@ -205,14 +249,18 @@ class ProcessRunfolder(object):
     def __init__(self, rf_obj):
         """
         Constructor for the RunfolderProcessor class
-            :param rf_obj (obj):     RunfolderObject object (contains
-                                            runfolder-specific attributes)
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
+                                    attributes)
         """
         self.rf_obj = rf_obj
         with open(
             ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
         ) as token_file:
             self.dnanexus_apikey = token_file.readline().rstrip()  # Auth token
+        self.rf_obj.rf_loggers.usw.info(
+            self.rf_obj.rf_loggers.usw.log_msgs["ad_version"],
+            toolbox.git_tag(),
+        )
         self.samples_obj = CollectRunfolderSamples(self.rf_obj)
         self.users_dict = self.get_users_dict()
         self.write_project_creation_script()
@@ -296,9 +344,6 @@ class ProcessRunfolder(object):
                     self.rf_obj.rf_loggers.usw.info(
                         self.rf_obj.rf_loggers.usw.log_msgs["no_users"],
                         permissions_level,
-                        extra={
-                            "flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"
-                            },
                     )
             project_script.write("echo $project_id")  # Capture project id
 
@@ -311,20 +356,18 @@ class ProcessRunfolder(object):
         self.rf_obj.rf_loggers.usw.info(
             self.rf_obj.rf_loggers.usw.log_msgs["creating_proj"],
             self.rf_obj.proj_creation_script,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         project_creation_cmd = f"bash {self.rf_obj.proj_creation_script}"
 
-        project_id, err, returncode = execute_subprocess_command(
+        project_id, err, returncode = toolbox.execute_subprocess_command(
             project_creation_cmd, self.rf_obj.rf_loggers.usw
             )
         if returncode == 0:
             return project_id
         else:
-            self.rf_obj.rf_loggers.usw.exception(
+            self.rf_obj.rf_loggers.usw.error(
                 self.rf_obj.rf_loggers.usw.log_msgs["proj_creation_fail"],
                 self.samples_obj.nexus_paths['proj_name'],
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["fail"] % "usw"},
             )
             raise Exception  # Stop script
 
@@ -401,7 +444,6 @@ class ProcessRunfolder(object):
         Calls the tso runfolder upload function if the runfolder is tso500
             :return None:
         """
-        self.backup_runfolder.test_software()
         for filetype in self.pre_pipeline_upload_dict.keys():
             self.upload_to_dnanexus(filetype, self.pre_pipeline_upload_dict)
         if self.samples_obj.pipeline == "tso500":
@@ -417,9 +459,7 @@ class ProcessRunfolder(object):
             :return None:
         """
         self.rf_obj.rf_loggers.usw.info(
-            self.rf_obj.rf_loggers.usw.log_msgs["uploading_files"],
-            filetype,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
+            self.rf_obj.rf_loggers.usw.log_msgs["uploading_files"], filetype
         )
         result = self.backup_runfolder.upload_files(
             file_upload_dict[filetype]["cmd"],
@@ -427,22 +467,18 @@ class ProcessRunfolder(object):
         )
         if result == "success":
             self.rf_obj.rf_loggers.usw.info(
-                self.rf_obj.rf_loggers.usw.log_msgs["upload_success"],
-                filetype,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
+                self.rf_obj.rf_loggers.usw.log_msgs["upload_success"], filetype
             )
         elif result == "fail":
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["upload_fail"],
-                filetype, self.rf_obj.upload_agent_logfile,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["fail"] % "usw"},
+                filetype, self.rf_obj.upload_agent_logfile
             )
         elif type(result) == list:
             self.rf_obj.rf_loggers.usw.error(
-                self.rf_obj.rf_loggers.usw.log_msgs["nonexistent_files"],
-                result,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["fail"] % "usw"},
+                self.rf_obj.rf_loggers.usw.log_msgs["nonexistent_files"], result
             )
+            # TODO how should the above error be handled? (i.e. upload failures)
 
     def upload_tso_runfolder(self) -> None:
         """
@@ -457,10 +493,7 @@ class ProcessRunfolder(object):
                 self.rf_obj.rf_loggers.usw.info(
                     self.rf_obj.rf_loggers.usw.log_msgs["TSO_backup_attempt"],
                     backup_attempt_count,
-                    extra={
-                        "flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"
-                        },
-                    )
+                )
                 self.upload_rest_of_runfolder()
                 backup_attempt_count += 1
             except Exception as exception:
@@ -485,12 +518,10 @@ class ProcessRunfolder(object):
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["ss_copy_success"],
                 self.rf_obj.runfolder_samplesheet_path,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
             )
         else:
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["ss_copy_fail"],
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
             )
         # Build backup_runfolder.py commands, ignoring some files
         if self.samples_obj.pipeline == "tso500":
@@ -503,7 +534,6 @@ class ProcessRunfolder(object):
                 self.rf_obj.rf_loggers.usw.log_msgs["uploading_rf"],
                 ignore,
                 self.rf_obj.backup_runfolder_logfile,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
             )
             self.backup_runfolder.upload_rest_of_runfolder(ignore)
         except Exception as exception:
@@ -512,9 +542,8 @@ class ProcessRunfolder(object):
                 exception,
                 self.rf_obj.backup_runfolder_logfile,
                 self.rf_obj.upload_agent_logfile,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["fail"] % "usw"},
             )
-            raise Exception
+            raise Exception  # Stop script
 
     def create_congenica_command_file(self) -> None:
         """
@@ -540,24 +569,19 @@ class ProcessRunfolder(object):
 
         self.rf_obj.rf_loggers.usw.info(
             self.rf_obj.rf_loggers.usw.log_msgs["running_cmds"],
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
-        out, err, returncode = execute_subprocess_command(
+        out, err, returncode = toolbox.execute_subprocess_command(
             dx_run_cmd, self.rf_obj.rf_loggers.usw
             )
         if err:
             self.rf_obj.rf_loggers.usw.error(
                 self.rf_obj.rf_loggers.usw.log_msgs["dx_run_err"],
-                self.rf_obj.runfolder_name,
-                dx_run_cmd,
-                err,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["fail"] % "usw"},
+                self.rf_obj.runfolder_name, dx_run_cmd, err
             )
         else:
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["dx_run_success"],
                 self.rf_obj.runfolder_name,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
             )
 
     def post_pipeline_upload(self) -> None:
@@ -585,7 +609,7 @@ class CollectRunfolderSamples(object):
     Collect attributes for all samples within the runfolder
 
     Attributes
-        param rf_obj (obj):      RunfolderObject object (contains
+        param rf_obj (obj):             RunfolderObject object (contains
                                         runfolder-specific attributes)
         samplename_list (list):         List of sample names identified from the
                                         samplesheet
@@ -638,8 +662,8 @@ class CollectRunfolderSamples(object):
     def __init__(self, rf_obj):
         """
         Constructor for the CollectRunfolderSamples class
-            :param rf_obj (obj):     RunfolderObject object (contains
-                                            runfolder-specific attributes)
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
+                                    attributes)
         """
         self.rf_obj = rf_obj
         self.samplename_list = self.get_samplename_list()
@@ -705,7 +729,6 @@ class CollectRunfolderSamples(object):
             self.rf_obj.rf_loggers.usw.error(
                 self.rf_obj.rf_loggers.usw.log_msgs["multiple_pipeline_names"],
                 pipelines_list,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["fail"] % "usw"},
             )
         # Get pipeline from pipelines_list
         return max(set(pipelines_list), key=pipelines_list.count)
@@ -740,14 +763,12 @@ class CollectRunfolderSamples(object):
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["library_nos_identified"],
                 ", ".join(library_numbers),
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
             )
             return list(set(library_numbers))
         else:  # Prompt a slack alert
-            self.rf_obj.rf_loggers.usw.exception(
+            self.rf_obj.rf_loggers.usw.error(
                 self.rf_obj.rf_loggers.usw.log_msgs["library_no_err"],
                 self.rf_obj.runfolder_name,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["fail"] % "usw"},
             )
             raise Exception  # Stop script
 
@@ -768,14 +789,12 @@ class CollectRunfolderSamples(object):
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["wes_batch_nos_identified"],
                 ", ".join(wes_batch_numbers_list),
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
             )
             return list(set(wes_batch_numbers_list))
         else:  # Prompt a slack alert
-            self.rf_obj.rf_loggers.usw.exception(
+            self.rf_obj.rf_loggers.usw.error(
                 self.rf_obj.rf_loggers.usw.log_msgs["wes_batch_nos_missing"],
                 self.rf_obj.runfolder_name,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["fail"] % "usw"},
             )
             raise Exception  # Stop script
 
@@ -848,10 +867,7 @@ class CollectRunfolderSamples(object):
             if fastq_dir_file.endswith("fastq.gz"):
                 self.rf_obj.rf_loggers.usw.info(
                     self.rf_obj.rf_loggers.usw.log_msgs["checking_fastq"],
-                    fastq_dir_file,
-                    extra={
-                        "flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"
-                        },
+                    fastq_dir_file
                 )
                 if self.fastq_not_undetermined(
                     fastq_dir_file
@@ -866,23 +882,11 @@ class CollectRunfolderSamples(object):
                             self.rf_obj.rf_loggers.usw.log_msgs["sample_match"],
                             fastq_dir_file,
                             sample_name,
-                            extra={
-                                "flag": self.rf_obj.rf_loggers.usw.log_flags[
-                                    "info"
-                                    ] % "usw"
-                                    },
                         )
                     else:
                         self.rf_obj.rf_loggers.usw.info(
-                            self.rf_obj.rf_loggers.usw.log_msgs[
-                                "sample_mismatch"
-                                ],
+                            self.rf_obj.rf_loggers.usw.log_msgs["sample_mismatch"],
                             fastq_dir_file,
-                            extra={
-                                "flag": self.rf_obj.rf_loggers.usw.log_flags[
-                                    "fail"
-                                    ] % "usw"
-                                    },
                         )
                         sample_name = re.sub(
                             "R[0-9]_001.fastq.gz", "", fastq_dir_file
@@ -891,11 +895,7 @@ class CollectRunfolderSamples(object):
                         # Add the sample to the sample_obj
             else:
                 self.rf_obj.rf_loggers.usw.info(
-                    self.rf_obj.rf_loggers.usw.log_msgs["not_fastq"],
-                    fastq_dir_file,
-                    extra={
-                        "flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"
-                        },
+                    self.rf_obj.rf_loggers.usw.log_msgs["not_fastq"], fastq_dir_file
                 )
         for sample_name in missing_samples:
             self.samples_dict[sample_name] = SampleObject(
@@ -912,7 +912,6 @@ class CollectRunfolderSamples(object):
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["undetermined_identified"],
                 fastq_dir_file,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
             )
             return True
 
@@ -925,7 +924,6 @@ class CollectRunfolderSamples(object):
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["miseq_fastq_identified"],
                 fastq_dir_file,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
             )
             return True
 
@@ -964,7 +962,7 @@ class SampleObject:
     Collect sample-specific attributes for a sample
 
     Attributes
-        rf_obj (obj):        RunfolderObject object (contains runfolder-specific
+        rf_obj (obj):               RunfolderObject object (contains runfolder-specific
                                     attributes)
         sample_name (str):          Sample name
         pipeline (str):             Pipeline name
@@ -1051,7 +1049,7 @@ class SampleObject:
         Constructor for the SampleObject class
             :param sample_name (str):       Sample name
             :param pipeline (str):          Pipeline name
-            :param rf_obj (obj):     RunfolderObject object (contains
+            :param rf_obj (obj):            RunfolderObject object (contains
                                             runfolder-specific attributes)
             :param nexus_paths (dict):      Dictionary of paths within the DNAnexus
                                             project that are required for building dx
@@ -1070,7 +1068,6 @@ class SampleObject:
             self.rf_obj.rf_loggers.usw.log_msgs["sample"],
             self.panel_settings['panel_name'],
             self.sample_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         self.primary_identifier, self.secondary_identifier = self.get_identifiers()
         self.fastqs_dict = self.get_fastqs_dict()
@@ -1102,8 +1099,7 @@ class SampleObject:
         ):
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["reference_sample"],
-                self.sample_name,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
+                self.sample_name
             )
             return True
 
@@ -1114,12 +1110,16 @@ class SampleObject:
             :return workflow_name (str): Workflow name
         """
         if self.pipeline == "tso500":
-            workflow_name, err, returncode = execute_subprocess_command(
+            (
+                workflow_name, err, returncode
+            ) = toolbox.execute_subprocess_command(
                 f"dx describe {ad_config.NEXUS_IDS['APPS'][self.pipeline]} "
                 "--json | jq -r '(.name)'", self.rf_obj.rf_loggers.usw
             )
         else:
-            workflow_name, err, returncode = execute_subprocess_command(
+            (
+                workflow_name, err, returncode
+            ) = toolbox.execute_subprocess_command(
                 "dx describe "
                 f"{ad_config.NEXUS_IDS['WORKFLOWS'][self.pipeline]} "
                 "--json | jq -r '\"\(.folder)/\(.name)\"'",
@@ -1146,15 +1146,13 @@ class SampleObject:
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["recognised_panno"],
                 self.sample_name,
-                pannum,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
+                pannum
             )
             return True
         else:
             self.rf_obj.rf_loggers.usw.error(
                 self.rf_obj.rf_loggers.usw.log_msgs["unrecognised_panno"],
-                self.sample_name,
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["fail"] % "usw"},
+                self.sample_name
             )
 
     def get_identifiers(self) -> Tuple[str, str]:
@@ -1292,10 +1290,7 @@ class SampleObject:
             :return (str):  Dx run command string
         """
         self.rf_obj.rf_loggers.usw.info(
-            self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
-            "WES",
-            self.sample_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
+            self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"], "WES", self.sample_name
         )
         return " ".join([
             f'{ad_config.DX_CMDS["wes"]}{self.sample_name}',
@@ -1331,13 +1326,12 @@ class SampleObject:
         self.rf_obj.rf_loggers.usw.info(
             self.rf_obj.rf_loggers.usw.log_msgs["congenica_upload_required"],
             self.nexus_paths['proj_name'],
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         if self.reference_sample:
             return None
         else:
             # If project is specified then upload via upload agent
-            if self.panel_settings["congenica_project"] == "SFTP":  # SFTP upload command
+            if self.panel_settings["congenica_project"] == "SFTP":  # SFTP upload cmd
                 congenica_upload_cmd = self.build_congenica_sftp_cmd()
             else:  # Upload agent command
                 congenica_upload_cmd = self.build_congenica_cmd()
@@ -1356,7 +1350,6 @@ class SampleObject:
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "congenica sftp",
             self.sample_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         congenica_upload_cmd = (" ".join([
             f'{ad_config.DX_CMDS["congenica_sftp"]}'
@@ -1383,7 +1376,6 @@ class SampleObject:
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "congenica",
             self.sample_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         congenica_upload_cmd = (" ".join([
             f'{ad_config.DX_CMDS["congenica_app"]}congenica_{self.sample_name}',
@@ -1413,7 +1405,6 @@ class SampleObject:
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "PIPE",
             self.sample_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         return " ".join([
             f'{ad_config.DX_CMDS["pipe"]}{self.sample_name}',
@@ -1542,7 +1533,6 @@ class SampleObject:
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "AMP",
             self.sample_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         dx_command = " ".join([
             f'{ad_config.DX_CMDS["amp"]}{self.sample_name}',
@@ -1596,7 +1586,6 @@ class SampleObject:
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "SNP",
             self.sample_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         return " ".join([
             f'{ad_config.DX_CMDS["snp"]}{self.sample_name}',
@@ -1618,7 +1607,6 @@ class SampleObject:
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "fastqc",
             self.sample_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         return " ".join([
             f'{ad_config.DX_CMDS["fastqc"]}{self.sample_name}',
@@ -1655,7 +1643,7 @@ class BuildDxCommands(object):
     samples_obj along with the run-wide commands to the dx run script.
 
     Attributes:
-        rf_obj (obj):    RunfolderObject object (contains runfolder-specific
+        rf_obj (obj):           RunfolderObject object (contains runfolder-specific
                                 attributes)
         samples_obj (obj):      CollectRunfolderSamples object (contains sample-specific
                                 attributes
@@ -1717,7 +1705,7 @@ class BuildDxCommands(object):
             ):
         """
         Constructor for the BuildDxCommands class
-            :param rf_obj (obj):     RunfolderObject object (contains
+            :param rf_obj (obj):            RunfolderObject object (contains
                                             runfolder-specific attributes)
             :param samples_obj (obj):       CollectRunfolderSamples object (contains
                                             sample-specific attributes)
@@ -1733,8 +1721,7 @@ class BuildDxCommands(object):
             self.dnanexus_apikey = token_file.readline().rstrip()  # Auth token
         # Update script log file to say what is being done.
         self.rf_obj.rf_loggers.usw.info(
-            self.rf_obj.rf_loggers.usw.log_msgs["building_cmds"],
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
+            self.rf_obj.rf_loggers.usw.log_msgs["building_cmds"]
         )
         self.dx_cmd_list = self.build_dx_cmds()
         self.write_dx_run_cmds()  # Write commands to file
@@ -1766,8 +1753,7 @@ class BuildDxCommands(object):
             dx_cmd_list.append([self.create_duty_csv_cmd()])
 
             self.rf_obj.rf_loggers.usw.info(
-                self.rf_obj.rf_loggers.usw.log_msgs["cmds_built"],
-                extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
+                self.rf_obj.rf_loggers.usw.log_msgs["cmds_built"]
             )
         return list(chain(*dx_cmd_list))
 
@@ -1847,7 +1833,6 @@ class BuildDxCommands(object):
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "TSO500",
             self.rf_obj.runfolder_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         return " ".join([
             f'{ad_config.DX_CMDS["tso500"]}{self.rf_obj.runfolder_name}',
@@ -1860,7 +1845,8 @@ class BuildDxCommands(object):
             self.get_tso_analysis_options(),
             self.get_tso_instance_type(),
             "--wait ",
-            f'{ad_config.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+            f'{ad_config.UPLOAD_ARGS["dest"]}'
+            f'{self.samples_obj.nexus_paths["proj_root"]}',
             ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_apikey,
         ])
 
@@ -1901,10 +1887,7 @@ class BuildDxCommands(object):
             :return (str):          Dx run command for sompy app
         """
         self.rf_obj.rf_loggers.usw.info(
-            self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
-            "sompy",
-            sample,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
+            self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"], "sompy", sample
         )
         return " ".join([
             f'{ad_config.DX_CMDS["sompy"]}{sample}',
@@ -1931,7 +1914,6 @@ class BuildDxCommands(object):
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "sambamba",
             self.rf_obj.runfolder_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         return " ".join([
             f'{ad_config.DX_CMDS["sambamba"]}{sample}',
@@ -1980,7 +1962,6 @@ class BuildDxCommands(object):
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "multiqc",
             self.rf_obj.runfolder_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         coverage_level = list(
             set(
@@ -2012,7 +1993,6 @@ class BuildDxCommands(object):
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "upload multiqc",
             self.rf_obj.runfolder_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         if self.samples_obj.pipeline == "tso500":
             multiqc_data_input = (
@@ -2048,12 +2028,9 @@ class BuildDxCommands(object):
         cmd_list = []
         for sample in self.samples_obj.samples_dict.keys():
             self.rf_obj.rf_loggers.usw.info(
-                    self.rf_obj.rf_loggers.usw.log_msgs["sample"],
-                    self.samples_obj.pipeline,
-                    sample,
-                    extra={
-                        "flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"
-                        },
+                self.rf_obj.rf_loggers.usw.log_msgs["sample"],
+                self.samples_obj.pipeline,
+                sample
             )
             cmd_list.append(
                 self.samples_obj.samples_dict[sample]["sample_pipeline_cmd"]
@@ -2063,13 +2040,12 @@ class BuildDxCommands(object):
             if "NTCcon" not in self.samples_obj.samples_dict[sample]['sample_name']:
                 cmd_list.append(ad_config.UPLOAD_ARGS["depends_list"])
                 if self.samples_obj.pipeline == "pipe":
-                    # Add to gatk depends list because RPKM must depend only upon the 
+                    # Add to gatk depends list because RPKM must depend only upon the
                     # sample workflows completing successfully, whilst other downstream
                     # apps depend on all prior jobs completing succesfully
                     cmd_list.append(ad_config.UPLOAD_ARGS["depends_list_gatk"])
 
             if self.samples_obj.pipeline in ["wes", "pipe"]:
-                
                 cmd_list.append(self.build_congenica_input_cmd)
                 cmd_list.append(
                     self.samples_obj.samples_dict[sample]["congenica_upload_cmd"]
@@ -2080,15 +2056,16 @@ class BuildDxCommands(object):
         """"""
         # Decision support tool python script is run after each dx run command, taking
         # analysis and project name as input, and printing the required inputs to the
-        # command line which are required by the congenica upload script $jobid is a bash
-        # variable which will be populated by when run on the command line. The python
-        # script has three inputs - the analysisID ($jobid), -t is the DSS and -p is the
-        # DNAnexus project the analysis is running in
+        # command line which are required by the congenica upload script $jobid is a
+        # bash variable which will be populated by when run on the command line. The
+        # python script has three inputs - the analysisID ($jobid), -t is the DSS and -p
+        # is the DNAnexus project the analysis is running in
         cmd = (
             "analysisid=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh; "
             "conda activate python3.10.6 && python3 -m "
             f"{os.path.join(ad_config.PROJECT_DIR,'decision_support_tool_inputs')} "
-            f"-a $jobid -t congenica -p {self.nexus_project_id})"
+            f"-a $jobid -t congenica -p {self.nexus_project_id} "
+            f"-r {self.rf_obj.runfolder_name})"
             )
         return cmd
 
@@ -2109,7 +2086,6 @@ class BuildDxCommands(object):
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "peddy",
             self.rf_obj.runfolder_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         return " ".join([
             f'{ad_config.DX_CMDS["peddy"]}Peddy',
@@ -2157,7 +2133,6 @@ class BuildDxCommands(object):
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "RPKM",
             self.rf_obj.runfolder_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         return " ".join([
             f'{ad_config.DX_CMDS["rpkm"]}RPKM_using_conifer',
@@ -2185,7 +2160,6 @@ class BuildDxCommands(object):
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
             "create_duty_csv",
             self.rf_obj.runfolder_name,
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         return " ".join([
             f"{ad_config.DX_CMDS['duty_csv']}duty_csv",
@@ -2209,7 +2183,6 @@ class BuildDxCommands(object):
         """
         self.rf_obj.rf_loggers.usw.info(
             self.rf_obj.rf_loggers.usw.log_msgs["writing_cmds"],
-            extra={"flag": self.rf_obj.rf_loggers.usw.log_flags["info"] % "usw"},
         )
         with open(
             self.rf_obj.runfolder_dx_run_script, "w", encoding="utf-8"
@@ -2232,7 +2205,7 @@ class PipelineEmails():
             defined within the config.ad_config file
 
         Attributes
-            rf_obj (obj):    RunfolderObject object (contains runfolder-specific
+            rf_obj (obj):           RunfolderObject object (contains runfolder-specific
                                     attributes)
             samples_obj (obj):      CollectRunfolderSamples object (contains
                                     sample-specific attributes)
@@ -2271,9 +2244,7 @@ class PipelineEmails():
             ad_config.MAIL_SETTINGS["pipeline_started_subj"] %
             self.rf_obj.runfolder_name
         )
-        self.email = AdEmail(
-            self.rf_obj.rf_loggers.usw, self.rf_obj.rf_loggers.usw.log_flags
-            )
+        self.email = AdEmail(self.rf_obj.rf_loggers.usw)
         self.queries = self.collect_queries()
         self.send_sql_email()
         self.send_samples_email()

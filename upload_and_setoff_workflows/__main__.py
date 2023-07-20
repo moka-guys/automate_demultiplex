@@ -5,27 +5,17 @@ CollectRunfolderSamples (which calls SampleObject per sample), BuildDxCommands w
 generates the dx run commands, and PipelineEmails which generates and sends the pipeline
 emails using AdEmail
 """
-from upload_and_setoff_workflows.upload_and_setoff_workflows import SequencingRuns
-from shared_functions.shared_functions import git_tag
+from upload_and_setoff_workflows import upload_and_setoff_workflows
+from toolbox import toolbox
+from ad_logger import ad_logger
 
-sequencing_runs = SequencingRuns()
 
-sequencing_runs.script_logger.info(
-    sequencing_runs.script_logger.log_msgs["script_start"],
-    git_tag(),
-    "upload_and_setoff_workflows.py",
-    extra={"flag": sequencing_runs.script_logger.log_flags["info"] % "usw"},
-)
+sequencing_runs = upload_and_setoff_workflows.SequencingRuns()
 
-sequencing_runs.set_runfolders()
+toolbox.script_start_logmsg(sequencing_runs.script_logger, __file__)
 
-for runfolder, rf_obj in sequencing_runs.requires_processing.items():
-    sequencing_runs.process_runfolder(runfolder, rf_obj)
-sequencing_runs.get_num_processed_runfolders()
+sequencing_runs.setoff_processing()
 
-sequencing_runs.script_logger.info(
-    sequencing_runs.script_logger.log_msgs["script_end"],
-    git_tag(),
-    "upload_and_setoff_workflows.py",
-    extra={"flag": sequencing_runs.script_logger.log_flags["info"] % "usw"},
-)
+toolbox.script_end_logmsg(sequencing_runs.script_logger, __file__)
+
+ad_logger.shutdown_logs(sequencing_runs.script_logger)

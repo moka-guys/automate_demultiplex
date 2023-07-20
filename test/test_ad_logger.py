@@ -4,36 +4,76 @@
 ad_logger.py pytest unit tests
 """
 import pytest
-from shared_functions.shared_functions import RunfolderObject
-import ad_logger.ad_logger as ad_logger
-import config.ad_config as ad_config
-import logging
-import test.conftest as test_config
-import inspect
-
+from test import conftest
+from toolbox import toolbox
+from ad_logger import ad_logger
+from config import ad_config
+# import logging
 
 # No logging disabled for this test as we are testing logging
+# No patching required
 
 # TODO add tests for SensitiveFormatter class
 # TODO add test for shutdown_logs and shutdown_streamhandler
 # TODO add test that checks that streamhandler, filehandler and syslog handler are all
 # added as expected
-class TestAdLoggers:
-    """Test Logging class"""
+
+# TODO write test for shutdown_streamhandler()
+# def test_shutdown_streamhandler():
+
+# TODO write test for shutdown_logs()
+# def test_shutdown_logs():
+#     """"""
+
+#     ad_logger.shutdown_logs(logger)
+# assert not logger.info(
+#     "Test log message. Logger %s",
+#     logger.name,
+# )
+
+# TODO write tests for SensitiveFormatter class
+# class TestSensitiveFormatter:
+#    """
+#    Tests for the SensitiveFormatter class
+#    """
+
+
+
+@pytest.fixture(scope="function", autouse=True)
+def setup(monkeypatch):
+    """
+    """
+    #  Re-enable logging as it is required for assertions
+    logging.disable(logging.NOTSET)
+    # Remove testfiles dir containing test runfolders as we don't need these files
+    # Apply patches required for test_ad_logger script. These point the paths to the
+    # temporary locations:
+    #     - Test logfiles in the temp logfiles dir and within the temp runfolder dirs
+    monkeypatch.setattr(toolbox.ad_config, "RUNFOLDERS", conftest.temp_runfolderdir)
+    monkeypatch.setattr(toolbox.ad_config, "AD_LOGDIR", conftest.temp_log_dir)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def setup(monkeypatch):
+    """
+    """
+
+
+
+
+class TestRunfolderLoggers:
+    """
+    Tests for the SamplesheetCheck class
+    """
 
     @pytest.fixture(scope="function")
-    def rf_obj(self):
+    def logfiles_config(self):
         """
         Return a runfolder object using a runfolder from the test files directory
         """
-        loggers = ad_logger.AdLoggers(
-            {"usw": ad_config.USW_SCRIPT_LOGFILE % ad_config.TIMESTAMP}
-            )
-        rf_obj = RunfolderObject(
-            "999999_A01229_0000_00000TEST1", loggers, ad_config.TIMESTAMP
-            )
-        rf_obj.add_runfolder_loggers()
-        return rf_obj
+        return toolbox.RunfolderObject(
+            "999999_A01229_0000_00000TEST1", ad_config.TIMESTAMP
+            ).logfiles_config
 
     @pytest.fixture(scope="function")
     def runfolder_logger_names(self):
@@ -46,47 +86,20 @@ class TestAdLoggers:
             "dx_run",
         ]
 
-    def test_rf_loggers(self, rf_obj, caplog, runfolder_logger_names):
+    def test_get_loggers(self, logfiles_config, caplog):
         """
         Test all runfolder-level loggers
         """
-        for logger_name in runfolder_logger_names:
-            logger = getattr(rf_obj.rf_loggers, logger_name)
+        # logging.disable(logging.NOTSET)  # Re-enable logging
+        runfolder_loggers = ad_logger.RunfolderLoggers(logfiles_config)
+        for logger in runfolder_loggers.loggers:
             # Test logging works as expected
-            logger.info(
-                "Test log message. Logger %s",
-                logger.name,
-                extra={"flag": "demultiplex_started"},
-            )
+            logger.info(f"Test log message. Logger {logger.name}")
             assert logger.name in caplog.text
 
-            # Test logging shutdown works as expected
-            for logger in rf_obj.rf_loggers.loggers:
-                logger.shutdown_logs()
-            assert not logger.info(
-                "Test log message. Logger %s",
-                logger.name,
-                extra={"flag": "demultiplex_started"},
-            )
 
-    def test_script_loggers(self, rf_obj, caplog):
-        """
-        Test all script-level loggers
-        """
-        for logger_name in rf_obj.script_loggers.logfiles_config.keys():
-            logger = getattr(rf_obj.script_loggers, logger_name)
-            # Test logging works as expected
-            logger.info(
-                "Test log message. Logger %s",
-                logger_name,
-                extra={"flag": "demultiplex_started"},
-            )
-            assert logger.name in caplog.text
-
-            # Test logging shutdown works as expected
-            rf_obj.script_loggers.shutdown_logs()
-            assert not logger.info(
-                "Test log message. Logger %s",
-                logger_name,
-                extra={"flag": "demultiplex_started"},
-            )
+# TODO write tests for AdLogger class
+# class TestAdLogger:
+    """
+    Tests for the AdLogger class
+    """

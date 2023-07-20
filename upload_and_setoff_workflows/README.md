@@ -7,7 +7,7 @@
 1. Identify runfolders in the runfolders directory which have not been processed
 2. Collect names and metadata for all samples in the runfolder
 3. Write and run the DNAnexus project creation script
-4. Carry out pre-pipeline file upload (cluster density files, bcl2fastq QC files, fastqs if not a tso run, samplesheet and entire runfolder if a tso run)
+4. Carry out pre-pipeline file upload (cluster density files, bcl2fastq2 QC files, fastqs if not a tso run, samplesheet and entire runfolder if a tso run)
 5. Build and populate dnanexus commands bash script
 6. Create congenica commands bash script (contains the commands to run the congenica upload app, this is set off later manually after QC inspection)
 7. Run dnanexus commands bash script (sets off workflows / apps in DNAnexus)
