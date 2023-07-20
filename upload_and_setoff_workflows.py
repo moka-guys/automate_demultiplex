@@ -1534,6 +1534,7 @@ class RunfolderProcessor(object):
 
         if TSO500:
             for sample in self.list_of_processed_samples:
+                pannumber = re.search(r"Pan\d+", sample).group()
                 commands_list.append(
                     self.create_sambamba_cmd(sample, pannumber)
                     )
