@@ -578,6 +578,10 @@ vcp2_panel_list = [
     "Pan4964",
     "Pan5121",
     "Pan5122",
+    "Pan5143",
+    "Pan5144",
+    "Pan5147",
+    "Pan5148"
 ]
 vcp3_panel_list = [
     "Pan4132",
@@ -742,6 +746,30 @@ panel_settings = {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
         "congenica_project": "1099",
+        "hsmetrics_bedfile": "Pan5123data.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+        "sambamba_bedfile": "Pan5123dataSambamba.bed",
+    },
+    "Pan5144": {  # VCP2 R444.1 Breast cancer (PARP treatment- STG)
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan5109",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "congenica_credentials": "STG",
+        "congenica_IR_template": "non-priority", #TO DO check if priority is enabled 
+        "congenica_project": #waiting on monogenics,
+        "hsmetrics_bedfile": "Pan5123data.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+        "sambamba_bedfile": "Pan5123dataSambamba.bed",
+    },
+    "Pan5148": {  # VCP2 R444.2 Prostate cancer (PARP treatment- STG)
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan5109",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "congenica_credentials": "STG",
+        "congenica_IR_template": "non-priority", # TO DO check if priority is enabled 
+        "congenica_project": #waiting on monogenics,
         "hsmetrics_bedfile": "Pan5123data.bed",
         "variant_calling_bedfile": "Pan5119data.bed",
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
@@ -1000,6 +1028,28 @@ panel_settings = {
         "polyedge": "MSH2",
     },
     "Pan5121": {  # VCP2 R430 prostate (Viapath)
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan5109",
+        "congenica_project": "12814",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "hsmetrics_bedfile": "Pan5123data.bed",
+        "sambamba_bedfile": "Pan5123dataSambamba.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+        "polyedge": "MSH2",
+    },
+    "Pan5143": {  # VCP2 R444.1 Breast cancer (PARP treatment- Viapath) 
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan5109",
+        "congenica_project": "12814",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "hsmetrics_bedfile": "Pan5123data.bed",
+        "sambamba_bedfile": "Pan5123dataSambamba.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+        "polyedge": "MSH2",
+    },
+    "Pan5147": {  # VCP2 R444.2 Prostate cancer (PARP treatment- Viapath) 
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan5109",
@@ -1678,7 +1728,8 @@ duty_csv_inputs = {
         "-istg_pannumbers=Pan4042,Pan4043,Pan4044,Pan4049,Pan4821,Pan4822,"
         "Pan4823,Pan4824,Pan4825,Pan4816,Pan4817,Pan4818,Pan4819,Pan4820,"
         "Pan4826,Pan4827,Pan4828,Pan4829,Pan4830,Pan4831,Pan4832,Pan4833,"
-        "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014,Pan5122"
+        "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014,Pan5122,"
+        "Pan5144,Pan5148"
     ),
     "cp_capture_pannos": "-icp_capture_pannos=Pan5109,Pan4399,Pan4362",
 }
