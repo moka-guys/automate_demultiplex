@@ -1228,7 +1228,7 @@ panel_settings = {
     },
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
         "TSO500": True,
-        "sambamba_bedfile": "Pan4969dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+        "sambamba_bedfile": "Pan5130dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1237,7 +1237,7 @@ panel_settings = {
     "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
         "TSO500": True,
         "TSO500_high_throughput": True,
-        "sambamba_bedfile": "Pan4969dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+        "sambamba_bedfile": "Pan5130dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1246,7 +1246,7 @@ panel_settings = {
     "Pan5112": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
         "TSO500": True,
         "TSO500_high_throughput": True,
-        "sambamba_bedfile": "Pan4969dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+        "sambamba_bedfile": "Pan5130dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1256,7 +1256,7 @@ panel_settings = {
     "Pan5114": {  # TSO500 High throughput Control. no UTRs. TERT promoter
         "TSO500": True,
         "TSO500_high_throughput": True,
-        "sambamba_bedfile": "Pan4969dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+        "sambamba_bedfile": "Pan5130dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
