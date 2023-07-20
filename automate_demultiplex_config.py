@@ -485,6 +485,8 @@ panel_list = [
     "Pan4964",  # VCP2 Viapath R259 (nijmegen)
     "Pan4130",  # VCP2 Viapath R211 (polyposis)
     "Pan5121",  # VCP2 Viapath R430 (prostate)
+    "Pan5143",  # VCP2 Viapath R444.1 Breast cancer (PARP treatment)
+    "Pan5147",  # VCP2 Viapath R444.2 Prostate cancer (PARP treatment)
     "Pan4132",  # VCP3 Viapath R56
     "Pan4134",  # VCP3 Viapath R57
     "Pan4136",  # VCP3 Viapath R58
@@ -508,6 +510,8 @@ panel_list = [
     "Pan4819",  # VCP2 STG R210 lynch
     "Pan4820",  # VCP2 STG R211 polyposis
     "Pan5122",  # VCP2 STG R430 prostate
+    "Pan5144",  # VCP2 STG R444.1 Breast cancer (PARP treatment)
+    "Pan5148",  # VCP2 STG R444.2 Prostate cancer (PARP treatment)
     "Pan4826",  # VCP3 STG R56
     "Pan4827",  # VCP3 STG R57
     "Pan4828",  # VCP3 STG R58
