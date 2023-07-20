@@ -164,7 +164,7 @@ mokasnp_path = "Workflows/MokaSNP_v1.2.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.17.0"
+multiqc_path = "Apps/multiqc_v1.18.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
 congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
