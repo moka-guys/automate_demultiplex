@@ -33,8 +33,13 @@ samplesheets_dir = os.path.join(runfolders, "samplesheets")
 # path to fastq files
 fastq_folder = "/Data/Intensities/BaseCalls"
 
-# path to bcl2fastq
-bcl2fastq = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
+# bcl2fastq base command
+bcl2fastq_test_cmd = "sudo docker run --rm seglh/bcl2fastq2:v2.20.0.422_25dd0c0"
+bcl2fastq_cmd = (
+    "sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s "
+    "seglh/bcl2fastq2:v2.20.0.422_25dd0c0 -R /mnt/run --sample-sheet /mnt/run/%s "
+    "--no-lane-splitting >> %s 2>&1"
+)
 
 # files for checking NGS runfolders before demultiplexing
 file_complete_run = "RTAComplete.txt"
@@ -756,8 +761,8 @@ panel_settings = {
         "RPKM_bedfile_pan_number": "Pan5109",
         "RPKM_also_analyse": vcp2_panel_list,
         "congenica_credentials": "STG",
-        "congenica_IR_template": "non-priority", #TODO check if priority is enabled 
-        "congenica_project": #waiting on monogenics,
+        "congenica_IR_template": "non-priority", #TODO check if priority is enabled
+        "congenica_project": "",#waiting on monogenics,
         "hsmetrics_bedfile": "Pan5123data.bed",
         "variant_calling_bedfile": "Pan5119data.bed",
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
@@ -768,8 +773,8 @@ panel_settings = {
         "RPKM_bedfile_pan_number": "Pan5109",
         "RPKM_also_analyse": vcp2_panel_list,
         "congenica_credentials": "STG",
-        "congenica_IR_template": "non-priority", # TO DO check if priority is enabled 
-        "congenica_project": #waiting on monogenics,
+        "congenica_IR_template": "non-priority", # TO DO check if priority is enabled
+        "congenica_project": "",#waiting on monogenics,
         "hsmetrics_bedfile": "Pan5123data.bed",
         "variant_calling_bedfile": "Pan5119data.bed",
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
@@ -1038,7 +1043,7 @@ panel_settings = {
         "variant_calling_bedfile": "Pan5119data.bed",
         "polyedge": "MSH2",
     },
-    "Pan5143": {  # VCP2 R444.1 Breast cancer (PARP treatment- Viapath) 
+    "Pan5143": {  # VCP2 R444.1 Breast cancer (PARP treatment- Viapath)
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan5109",
@@ -1048,7 +1053,7 @@ panel_settings = {
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
         "variant_calling_bedfile": "Pan5119data.bed",
     },
-    "Pan5147": {  # VCP2 R444.2 Prostate cancer (PARP treatment- Viapath) 
+    "Pan5147": {  # VCP2 R444.2 Prostate cancer (PARP treatment- Viapath)
         "mokapipe": True,
         "multiqc_coverage_level": 30,
         "RPKM_bedfile_pan_number": "Pan5109",

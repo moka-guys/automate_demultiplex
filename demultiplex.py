@@ -150,7 +150,8 @@ class ready2start_demultiplexing():
         self.processed_runfolders = []
 
         # Path to bcl2fastq
-        self.bcl2fastq = config.bcl2fastq
+        self.bcl2fastq_test = config.bcl2fastq_test_cmd
+        self.bcl2fastq_cmd = config.bcl2fastq_cmd
 
         # Set script log file path and name for this hour's cron job (script log file).
         self.script_logfile_path = config.demultiplex_logfiles
@@ -336,8 +337,7 @@ class ready2start_demultiplexing():
                         for pannum in config.tso500_panel_list:
                             if pannum in line:
                                 return True
-        return False
-                        
+        return False              
 
     def run_demultiplexing(self):
         """Run bcl2fastq using runfolder as input. Create demultiplex log file in runfolder."""
@@ -368,10 +368,13 @@ class ready2start_demultiplexing():
                 #           --no-lane-splitting >>
                 #           /media/data1/share/1111_M02353_NMNOV17_ONCTEST/bcl2fastq2_output.log 2&>1"
                 # where --no-lane-splitting creates a single fastq for a sample, not into one fastq per lane
-                command = (self.bcl2fastq + " -R " + self.runfolders + "/" + self.runfolder +
-                        " --sample-sheet " + self.samplesheet_path + " --no-lane-splitting >> " +
-                        demultiplex_log + " 2>&1")
-
+                command = (
+                    self.bcl2fastq_cmd % (
+                        os.path.join(self.runfolders, self.runfolder),
+                        self.samplesheet_path, self.samplesheet, self.samplesheet,
+                        demultiplex_log
+                    )
+                )
                 # Write progress/status to script log file
                 self.script_logfile.write("running bcl2fastq. command = " + command + "\n")
                 # Add entry to system log
@@ -453,8 +456,8 @@ class ready2start_demultiplexing():
     def test_bcl2fastq(self):
         """Raise exception if bcl2fastq is not installed."""
 
-        # call the path to bcl2fastq2 using subprocess to capture the stderr and stdout. NB the required text is in stderr not stdout
-        proc = subprocess.Popen([self.bcl2fastq], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+        # Run bcl2fastq docker image using subprocess to capture the stderr and stdout. NB the required text is in stderr not stdout
+        proc = subprocess.Popen([self.bcl2fastq_test], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
         # Capture the streams
         (out, err) = proc.communicate()
 
