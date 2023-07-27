@@ -204,10 +204,6 @@ class RunfolderProcessor(object):
             "jobid=$(dx run %s%s --priority high -y --name "
             % (config.app_project, config.mokaamp_path)
         )
-        self.mokacan_command = (
-            "jobid=$(dx run %s%s --priority high -y --name "
-            % (config.app_project, config.mokacan_path)
-        )
         self.decision_support_preperation = "analysisid=$(python %s -a " % (
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
@@ -1458,12 +1454,6 @@ class RunfolderProcessor(object):
                     )
                     commands_list.append(self.add_to_depends_list(fastq, 'depends_list'))
 
-                if self.panel_dictionary[panel]["mokacan"]:
-                    commands_list.append(
-                        self.create_mokacan_command(fastq, panel)
-                    )
-                    commands_list.append(self.add_to_depends_list(fastq, 'depends_list'))
-
                 # if panel is to be processed using mokasnp
                 if self.panel_dictionary[panel]["mokasnp"]:
                     commands_list.append(
@@ -2010,61 +2000,6 @@ class RunfolderProcessor(object):
             )
         return dx_command
 
-    def create_mokacan_command(self, fastq, pannumber):
-        """
-        Input = R1 fastq file name and pan number for a single sample
-        Returns = dx run command for MokaCAN (string)
-        """
-        # build nexus fastq paths - returns tuple for read1 and read2 and dictionary for bed files
-        fastqs = self.nexus_fastq_paths(fastq)
-        bedfiles = self.nexus_bedfiles(pannumber)
-
-        # create the MokaCAN dx command
-        dx_command_list = [
-            self.mokacan_command,
-            fastqs[2],
-            config.mokacan_fastqc_r1_stage,
-            fastqs[0],
-            config.mokacan_fastqc_r2_stage,
-            fastqs[1],
-            config.mokacan_sentieon_sample_name_stage,
-            fastqs[2],
-            config.mokacan_picard_bedfile_stage,
-            bedfiles["hsmetrics"],
-            config.mokacan_picard_capturetype_stage,
-            self.panel_dictionary[pannumber]["capture_type"],
-            config.mokacan_sambamba_coverage_level_stage,
-            self.panel_dictionary[pannumber]["clinical_coverage_depth"],
-            config.mokacan_sambamba_bedfile_stage,
-            bedfiles["sambamba"],
-            config.mokacan_vardict_bedfile_stage,
-            bedfiles["variant_calling_bedfile"],
-            config.mokacan_varscan_bedfile_stage,
-            bedfiles["variant_calling_bedfile"],
-            config.mokacan_vardict_sample_name_stage,
-            fastqs[2],
-            config.mokacan_senteion_bwa_reference_stage,
-            config.mokacan_senteion_reference_stage,
-            config.mokacan_picard_reference_stage,
-            config.mokacan_vardict_reference_stage,
-            config.mokacan_varscan_reference_stage,
-            self.dest,
-            self.dest_cmd,
-            self.token,
-        ]
-
-        # Variables from dx_command_list are read from config file as various atomic types. Convert
-        # to string and join to create dx_command.
-        dx_command = "".join(map(str, dx_command_list))
-        # remove the bit that adds the job to the depends on list for the negative control as varscan
-        # fails on near empty/-empty BAM files
-        # and this will stop multiqc etc running
-        if "NTCcon" in fastqs[0]:
-            dx_command = dx_command.replace("jobid=$(", "").replace(
-                config.Nexus_API_Key + ")", config.Nexus_API_Key
-            )
-        return dx_command
-
     def prepare_rpkm_list(self, rpkm_list):
         """
         Input = a list of panels which requires RPKM analysis
@@ -2466,14 +2401,6 @@ class RunfolderProcessor(object):
                         query.format(
                             str(fastq.split("_")[2]),
                             config.mokapipe_congenica_pipeline_ID,
-                            self.runfolder_obj.runfolder_name,
-                        )
-                    )
-                elif self.panel_dictionary[pannumber]["mokacan"]:
-                    queries.append(
-                        query.format(
-                            str(fastq.split("_")[2]),
-                            config.mokacan_pipeline_ID,
                             self.runfolder_obj.runfolder_name,
                         )
                     )

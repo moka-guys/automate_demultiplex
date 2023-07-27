@@ -133,8 +133,6 @@ mokaamp_pipeline_ID = "4851"
 archerDx_pipeline_ID = "5238"
 # MokaSNP ID
 mokasnp_pipeline_ID = "5091"
-# mokacan pipeline ID
-mokacan_pipeline_ID = "4728"
 # TSO500 pipeline ID
 TSO_pipeline_ID = "5237"
 
@@ -162,8 +160,6 @@ mokawes_path = "Workflows/MokaWES_v1.8"
 
 # path to mokaamp
 mokaamp_path = "Workflows/MokaAMP_v2.2"
-# path to mokacan
-mokacan_path = "Workflows/MokaCAN_v1.0"
 # path to mokasnp
 mokasnp_path = "Workflows/MokaSNP_v1.2.0"
 # path to paddy app
@@ -331,37 +327,6 @@ mokaamp_bwa_reference_stage = " -istage-FPzGj780jy1g3p1F4F8z4J7V.genomeindex_tar
 mokaamp_mokapicard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 mokaamp_vardict_reference_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 mokaamp_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-
-# MokaCAN - stages which may change between samples
-mokacan_fastqc_r1_stage = " -istage-FPzGj6Q0jy1fF6505zFP6zz5.reads="
-mokacan_fastqc_r2_stage = " -istage-FPzGj5j0jy1x97jg607Fg229.reads="
-mokacan_picard_bedfile_stage = (
-    " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
-)
-mokacan_picard_capturetype_stage = (
-    " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
-)
-mokacan_sambamba_bedfile_stage = (
-    " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
-)
-mokacan_vardict_bedfile_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
-mokacan_sentieon_sample_name_stage = (
-    " -istage-FgYgB2Q087fjzvxy9f4q1K8X.sample="
-)
-mokacan_sambamba_coverage_level_stage = (
-    " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
-)
-mokacan_vardict_sample_name_stage = (
-    " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.sample_name=vardict_"
-)
-mokacan_varscan_bedfile_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
-
-# mokacan stages with inputs that shouldn't change - these are specified to ensure any input files are taken from 001
-mokacan_senteion_bwa_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genomebwaindex_targz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY4942J35xX095VZyQBk0v"
-mokacan_senteion_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genome_fastagz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY7VG2J35Vfvpkj8y0KZ01"
-mokacan_picard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-mokacan_vardict_reference_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-mokacan_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 
 mokaamp_email_message = (
     "If both MokaAMP and MokaOnc (amplivar) have been run,"
@@ -621,7 +586,6 @@ SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396", "Pan5113", "Pan5115"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
-mokacan_panel_list = ["Pan4579", "Pan4574"]
 LRPCR_panel_list = [
     "Pan5007",
     "Pan5008",
@@ -651,7 +615,6 @@ default_panel_properties = {
     "joint_variant_calling": False,
     "mokaamp": False,
     "capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
-    "mokacan": False,
     "mokasnp": False,
     "mokapipe": False,
     "mokapipe_haplotype_caller_padding": 0,
@@ -1216,14 +1179,12 @@ panel_settings = {
         "congenica_upload": False,
     },
     "Pan4574": {  # somatic VCP2 M1.2
-        "mokacan": True,
         "congenica_upload": False,
         "variant_calling_bedfile": "Pan4577data.bed",
         "hsmetrics_bedfile": "Pan5123data.bed",
         "clinical_coverage_depth": 200,
     },
     "Pan4579": {  # somatic VCP2 M1.1
-        "mokacan": True,
         "congenica_upload": False,
         "variant_calling_bedfile": "Pan4578data.bed",
         "hsmetrics_bedfile": "Pan5123data.bed",
