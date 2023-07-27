@@ -799,7 +799,7 @@ panel_settings = {
     "Pan4043": {  # VCP3 STG
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1335,7 +1335,7 @@ panel_settings = {
     "Pan4826": {  # VCP3 STG R56
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1347,7 +1347,7 @@ panel_settings = {
     "Pan4827": {  # VCP3 STG R57
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1359,7 +1359,7 @@ panel_settings = {
     "Pan4828": {  # VCP3 STG R58
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1371,7 +1371,7 @@ panel_settings = {
     "Pan4829": {  # VCP3 STG R60
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1383,7 +1383,7 @@ panel_settings = {
     "Pan4830": {  # VCP3 STG R62
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1395,7 +1395,7 @@ panel_settings = {
     "Pan4831": {  # VCP3 STG R66
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1407,7 +1407,7 @@ panel_settings = {
     "Pan4832": {  # VCP3 STG R78
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1419,7 +1419,7 @@ panel_settings = {
     "Pan4833": {  # VCP3 STG R79
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1431,7 +1431,7 @@ panel_settings = {
     "Pan4834": {  # VCP3 STG R81
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1443,7 +1443,7 @@ panel_settings = {
     "Pan4835": {  # VCP3 STG R82
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1455,7 +1455,7 @@ panel_settings = {
     "Pan4836": {  # VCP3 STG R229
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
