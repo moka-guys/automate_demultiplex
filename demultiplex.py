@@ -443,7 +443,7 @@ class ready2start_demultiplexing():
             # Identify client to ESMTP server using EHLO commands
             server.ehlo()
             # Login to server with user credentials
-            server.login("abc", self.pw)
+            server.login(self.user, self.pw)
             # Send email to server. Message is a call to email.Message.as_string()
             server.sendmail(self.me, [self.you], m.as_string())
             # Write to script log file
