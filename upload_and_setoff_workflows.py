@@ -247,7 +247,7 @@ class RunfolderProcessor(object):
         self.depends_list_gatk = 'depends_list_gatk="${depends_list_gatk} -d ${jobid} "'
         self.depends_list_recombined = 'depends_list="${depends_list} ${depends_list_gatk} "'
         # Argument to define depends_list only if the job ID exists
-        self.if_jobid_exists_depends ='if ! [ -z "${jobid}" ]; then %s; fi'
+        self.if_jobid_exists_depends = 'if ! [ -z "${jobid}" ]; then %s; fi'
 
         # command to restart upload agent part 1
         self.restart_ua_1 = "ua_status=1; while [ $ua_status -ne 0 ]; do "
@@ -1507,10 +1507,16 @@ class RunfolderProcessor(object):
                 # is not empty
                 commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
 
+                commands_list.append(self.create_sambamba_cmd(sample, pannumber))
+                # Exclude negative controls from the depends list as the NTC
+                # coverage calculation can often fail. We want the coverage
+                # report for the NTC sample to help assess contamination.
+                # Only add to depends_list if job ID from previous command
+                # is not empty
+                commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
+
                 if "HD200" in sample:
-                    commands_list.append(
-                        self.create_sompy_cmd(sample, pannumber)
-                        )
+                    commands_list.append(self.create_sompy_cmd(sample, pannumber))
                     # Only add to depends_list if job ID from previous command
                     # is not empty
                     commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list("sompy", 'depends_list'))
@@ -1521,20 +1527,6 @@ class RunfolderProcessor(object):
         commands_list.append(self.add_to_depends_list("UploadMultiQC", 'depends_list'))
         # setoff the below commands later as they are not depended upon by 
         # MultiQC but are required for duty_csv
-
-        if TSO500:
-            for sample in self.list_of_processed_samples:
-                pannumber = re.search(r"Pan\d+", sample).group()
-                commands_list.append(
-                    self.create_sambamba_cmd(sample, pannumber)
-                    )
-                # Exclude negative controls from the depends list as the NTC
-                # coverage calculation can often fail. We want the coverage
-                # report for the NTC sample to help assess contamination.
-                # Only add to depends_list if job ID from previous command
-                # is not empty
-                commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
-
         if rpkm_list:
             # Create a set of RPKM numbers for one command per panel
             # pass this list into function which takes into account panels
@@ -2172,7 +2164,8 @@ class RunfolderProcessor(object):
         However, some jobs should be excluded from the depends list, eg negative controls
         Returns = command which adds jobid to the bash string (string)
         """
-        if "NTCcon" in fastq:
+        ntcon_strings = ["00000", "NTCcon", "NTC000", "NC000"]
+        if any(identifier in fastq for identifier in ntcon_strings):
             return None
         elif depends_type=='depends_list':
             return self.depends_list
