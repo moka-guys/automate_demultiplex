@@ -33,8 +33,13 @@ samplesheets_dir = os.path.join(runfolders, "samplesheets")
 # path to fastq files
 fastq_folder = "/Data/Intensities/BaseCalls"
 
-# path to bcl2fastq
-bcl2fastq = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
+# bcl2fastq base command
+bcl2fastq_test_cmd = "sudo docker run --rm seglh/bcl2fastq2:v2.20.0.422_25dd0c0"
+bcl2fastq_cmd = (
+    "sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s "
+    "seglh/bcl2fastq2:v2.20.0.422_25dd0c0 -R /mnt/run --sample-sheet /mnt/run/%s "
+    "--no-lane-splitting >> %s 2>&1"
+)
 
 # files for checking NGS runfolders before demultiplexing
 file_complete_run = "RTAComplete.txt"
@@ -128,8 +133,6 @@ mokaamp_pipeline_ID = "4851"
 archerDx_pipeline_ID = "5238"
 # MokaSNP ID
 mokasnp_pipeline_ID = "5091"
-# mokacan pipeline ID
-mokacan_pipeline_ID = "4728"
 # TSO500 pipeline ID
 TSO_pipeline_ID = "5237"
 
@@ -157,14 +160,12 @@ mokawes_path = "Workflows/MokaWES_v1.8"
 
 # path to mokaamp
 mokaamp_path = "Workflows/MokaAMP_v2.2"
-# path to mokacan
-mokacan_path = "Workflows/MokaCAN_v1.0"
 # path to mokasnp
 mokasnp_path = "Workflows/MokaSNP_v1.2.0"
 # path to paddy app
 peddy_path = "Apps/peddy_v1.5"
 # path to multiqc app
-multiqc_path = "Apps/multiqc_v1.17.0"
+multiqc_path = "Apps/multiqc_v1.18.0"
 # path to congenica upload app
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
 congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
@@ -327,37 +328,6 @@ mokaamp_mokapicard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_in
 mokaamp_vardict_reference_stage = " -istage-G0vKZk80GfYkQx86PJGGjz9Y.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 mokaamp_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
 
-# MokaCAN - stages which may change between samples
-mokacan_fastqc_r1_stage = " -istage-FPzGj6Q0jy1fF6505zFP6zz5.reads="
-mokacan_fastqc_r2_stage = " -istage-FPzGj5j0jy1x97jg607Fg229.reads="
-mokacan_picard_bedfile_stage = (
-    " -istage-FPzGjV80jy1x97jg607Fg22b.vendor_exome_bedfile="
-)
-mokacan_picard_capturetype_stage = (
-    " -istage-FPzGjV80jy1x97jg607Fg22b.Capture_panel="
-)
-mokacan_sambamba_bedfile_stage = (
-    " -istage-FPzGjfQ0jy1y01vG60K22qG1.sambamba_bed="
-)
-mokacan_vardict_bedfile_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.bedfile="
-mokacan_sentieon_sample_name_stage = (
-    " -istage-FgYgB2Q087fjzvxy9f4q1K8X.sample="
-)
-mokacan_sambamba_coverage_level_stage = (
-    " -istage-FPzGjfQ0jy1y01vG60K22qG1.coverage_level="
-)
-mokacan_vardict_sample_name_stage = (
-    " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.sample_name=vardict_"
-)
-mokacan_varscan_bedfile_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.bed_file="
-
-# mokacan stages with inputs that shouldn't change - these are specified to ensure any input files are taken from 001
-mokacan_senteion_bwa_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genomebwaindex_targz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY4942J35xX095VZyQBk0v"
-mokacan_senteion_reference_stage = " -istage-FgYgB2Q087fjzvxy9f4q1K8X.genome_fastagz=project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY7VG2J35Vfvpkj8y0KZ01"
-mokacan_picard_reference_stage = " -istage-FPzGjV80jy1x97jg607Fg22b.fasta_index=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-mokacan_vardict_reference_stage = " -istage-FPzGjgj0jy1Q2JJF2zYx5J5k.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-mokacan_varscan_reference_stage = " -istage-FPzGjp80jy1V3Jvb5z6xfpfZ.ref_genome=project-ByfFPz00jy1fk6PjpZ95F27J:file-ByYgX700b80gf4ZY1GxvF3Jv"
-
 mokaamp_email_message = (
     "If both MokaAMP and MokaOnc (amplivar) have been run,"
     "please record the version of MokaOnc used."
@@ -454,8 +424,6 @@ panel_list = [
     "Pan5085",  # TSO500 High throughput Synnovis. no UTRS TERT promoter
     "Pan5112",  # TSO500 High throughput BSPS. no UTRS TERT promoter
     "Pan5114",  # TSO500 High throughput Control. no UTRS TERT promoter
-    "Pan4579",  # VCP2 M1.1 (somatic)
-    "Pan4574",  # VCP2 M1.2 (somatic)
     "Pan4042",  # STG VCP2 BRCA - TO BE REMOVED IN FUTURE UPDATE
     "Pan4043",  # STG VCP3 - TO BE REMOVED IN FUTURE UPDATE
     "Pan4044",  # STG VCP1 - TO BE REMOVED IN FUTURE UPDATE
@@ -485,6 +453,8 @@ panel_list = [
     "Pan4964",  # VCP2 Viapath R259 (nijmegen)
     "Pan4130",  # VCP2 Viapath R211 (polyposis)
     "Pan5121",  # VCP2 Viapath R430 (prostate)
+    "Pan5143",  # VCP2 Viapath R444.1 Breast cancer (PARP treatment)
+    "Pan5147",  # VCP2 Viapath R444.2 Prostate cancer (PARP treatment)
     "Pan4132",  # VCP3 Viapath R56
     "Pan4134",  # VCP3 Viapath R57
     "Pan4136",  # VCP3 Viapath R58
@@ -508,6 +478,8 @@ panel_list = [
     "Pan4819",  # VCP2 STG R210 lynch
     "Pan4820",  # VCP2 STG R211 polyposis
     "Pan5122",  # VCP2 STG R430 prostate
+    "Pan5144",  # VCP2 STG R444.1 Breast cancer (PARP treatment)
+    "Pan5148",  # VCP2 STG R444.2 Prostate cancer (PARP treatment)
     "Pan4826",  # VCP3 STG R56
     "Pan4827",  # VCP3 STG R57
     "Pan4828",  # VCP3 STG R58
@@ -574,6 +546,10 @@ vcp2_panel_list = [
     "Pan4964",
     "Pan5121",
     "Pan5122",
+    "Pan5143",
+    "Pan5144",
+    "Pan5147",
+    "Pan5148"
 ]
 vcp3_panel_list = [
     "Pan4132",
@@ -608,7 +584,6 @@ SNP_panel_lists = ["Pan4009"]
 archer_panel_list = ["Pan4396", "Pan5113", "Pan5115"]
 swift_57G_panel_list = ["Pan4082"]
 swift_egfr_panel_list = ["Pan4081"]
-mokacan_panel_list = ["Pan4579", "Pan4574"]
 LRPCR_panel_list = [
     "Pan5007",
     "Pan5008",
@@ -638,7 +613,6 @@ default_panel_properties = {
     "joint_variant_calling": False,
     "mokaamp": False,
     "capture_type": "Hybridisation",  # "Amplicon" or "Hybridisation"
-    "mokacan": False,
     "mokasnp": False,
     "mokapipe": False,
     "mokapipe_haplotype_caller_padding": 0,
@@ -742,6 +716,30 @@ panel_settings = {
         "variant_calling_bedfile": "Pan5119data.bed",
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
     },
+    "Pan5144": {  # VCP2 R444.1 Breast cancer (PARP treatment- STG)
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan5109",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "congenica_credentials": "STG",
+        "congenica_IR_template": "non-priority",
+        "congenica_project": "14629",
+        "hsmetrics_bedfile": "Pan5123data.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+        "sambamba_bedfile": "Pan5123dataSambamba.bed",
+    },
+    "Pan5148": {  # VCP2 R444.2 Prostate cancer (PARP treatment- STG)
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan5109",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "congenica_credentials": "STG",
+        "congenica_IR_template": "non-priority",
+        "congenica_project": "14630",
+        "hsmetrics_bedfile": "Pan5123data.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+        "sambamba_bedfile": "Pan5123dataSambamba.bed",
+    },
     "Pan4009": {  # MokaSNP
         "mokasnp": True,
         "multiqc_coverage_level": 30,
@@ -762,7 +760,7 @@ panel_settings = {
     "Pan4043": {  # VCP3 STG
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1006,6 +1004,26 @@ panel_settings = {
         "variant_calling_bedfile": "Pan5119data.bed",
         "polyedge": "MSH2",
     },
+    "Pan5143": {  # VCP2 R444.1 Breast cancer (PARP treatment- Viapath)
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan5109",
+        "congenica_project": "14563",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "hsmetrics_bedfile": "Pan5123data.bed",
+        "sambamba_bedfile": "Pan5123dataSambamba.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+    },
+    "Pan5147": {  # VCP2 R444.2 Prostate cancer (PARP treatment- Viapath)
+        "mokapipe": True,
+        "multiqc_coverage_level": 30,
+        "RPKM_bedfile_pan_number": "Pan5109",
+        "congenica_project": "14564",
+        "RPKM_also_analyse": vcp2_panel_list,
+        "hsmetrics_bedfile": "Pan5123data.bed",
+        "sambamba_bedfile": "Pan5123dataSambamba.bed",
+        "variant_calling_bedfile": "Pan5119data.bed",
+    },
     "Pan4132": {  # VCP3 R56 (Viapath)
         "mokapipe": True,
         "multiqc_coverage_level": 30,
@@ -1158,23 +1176,9 @@ panel_settings = {
         "archerdx": True,
         "congenica_upload": False,
     },
-    "Pan4574": {  # somatic VCP2 M1.2
-        "mokacan": True,
-        "congenica_upload": False,
-        "variant_calling_bedfile": "Pan4577data.bed",
-        "hsmetrics_bedfile": "Pan5123data.bed",
-        "clinical_coverage_depth": 200,
-    },
-    "Pan4579": {  # somatic VCP2 M1.1
-        "mokacan": True,
-        "congenica_upload": False,
-        "variant_calling_bedfile": "Pan4578data.bed",
-        "hsmetrics_bedfile": "Pan5123data.bed",
-        "clinical_coverage_depth": 200,
-    },
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
         "TSO500": True,
-        "sambamba_bedfile": "Pan4969dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+        "sambamba_bedfile": "Pan5130dataSambamba.bed",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1183,7 +1187,7 @@ panel_settings = {
     "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
         "TSO500": True,
         "TSO500_high_throughput": True,
-        "sambamba_bedfile": "Pan4969dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+        "sambamba_bedfile": "Pan5130dataSambamba.bed",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1192,7 +1196,7 @@ panel_settings = {
     "Pan5112": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
         "TSO500": True,
         "TSO500_high_throughput": True,
-        "sambamba_bedfile": "Pan4969dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+        "sambamba_bedfile": "Pan5130dataSambamba.bed",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1202,7 +1206,7 @@ panel_settings = {
     "Pan5114": {  # TSO500 High throughput Control. no UTRs. TERT promoter
         "TSO500": True,
         "TSO500_high_throughput": True,
-        "sambamba_bedfile": "Pan4969dataSambamba.bed",  # NOTE All TSO500 output parser settings are currently taken from the first pan number listed in tso500_panel_list
+        "sambamba_bedfile": "Pan5130dataSambamba.bed",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1278,7 +1282,7 @@ panel_settings = {
     "Pan4826": {  # VCP3 STG R56
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1290,7 +1294,7 @@ panel_settings = {
     "Pan4827": {  # VCP3 STG R57
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1302,7 +1306,7 @@ panel_settings = {
     "Pan4828": {  # VCP3 STG R58
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1314,7 +1318,7 @@ panel_settings = {
     "Pan4829": {  # VCP3 STG R60
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1326,7 +1330,7 @@ panel_settings = {
     "Pan4830": {  # VCP3 STG R62
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1338,7 +1342,7 @@ panel_settings = {
     "Pan4831": {  # VCP3 STG R66
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1350,7 +1354,7 @@ panel_settings = {
     "Pan4832": {  # VCP3 STG R78
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1362,7 +1366,7 @@ panel_settings = {
     "Pan4833": {  # VCP3 STG R79
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1374,7 +1378,7 @@ panel_settings = {
     "Pan4834": {  # VCP3 STG R81
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1386,7 +1390,7 @@ panel_settings = {
     "Pan4835": {  # VCP3 STG R82
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1398,7 +1402,7 @@ panel_settings = {
     "Pan4836": {  # VCP3 STG R229
         "mokapipe": True,
         "multiqc_coverage_level": 30,
-        "RPKM_bedfile_pan_number": "Pan3974",
+        "RPKM_bedfile_pan_number": "Pan4362",
         "RPKM_also_analyse": vcp3_panel_list,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
@@ -1674,7 +1678,8 @@ duty_csv_inputs = {
         "-istg_pannumbers=Pan4042,Pan4043,Pan4044,Pan4049,Pan4821,Pan4822,"
         "Pan4823,Pan4824,Pan4825,Pan4816,Pan4817,Pan4818,Pan4819,Pan4820,"
         "Pan4826,Pan4827,Pan4828,Pan4829,Pan4830,Pan4831,Pan4832,Pan4833,"
-        "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014,Pan5122"
+        "Pan4834,Pan4835,Pan4836,Pan5008,Pan5010,Pan5012,Pan5014,Pan5122,"
+        "Pan5144,Pan5148"
     ),
     "cp_capture_pannos": "-icp_capture_pannos=Pan5109,Pan4399,Pan4362",
 }
