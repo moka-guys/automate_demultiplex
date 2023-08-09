@@ -424,8 +424,6 @@ panel_list = [
     "Pan5085",  # TSO500 High throughput Synnovis. no UTRS TERT promoter
     "Pan5112",  # TSO500 High throughput BSPS. no UTRS TERT promoter
     "Pan5114",  # TSO500 High throughput Control. no UTRS TERT promoter
-    "Pan4579",  # VCP2 M1.1 (somatic)
-    "Pan4574",  # VCP2 M1.2 (somatic)
     "Pan4042",  # STG VCP2 BRCA - TO BE REMOVED IN FUTURE UPDATE
     "Pan4043",  # STG VCP3 - TO BE REMOVED IN FUTURE UPDATE
     "Pan4044",  # STG VCP1 - TO BE REMOVED IN FUTURE UPDATE
@@ -1177,18 +1175,6 @@ panel_settings = {
     "Pan5115": {  # ArcherDx (Control)
         "archerdx": True,
         "congenica_upload": False,
-    },
-    "Pan4574": {  # somatic VCP2 M1.2
-        "congenica_upload": False,
-        "variant_calling_bedfile": "Pan4577data.bed",
-        "hsmetrics_bedfile": "Pan5123data.bed",
-        "clinical_coverage_depth": 200,
-    },
-    "Pan4579": {  # somatic VCP2 M1.1
-        "congenica_upload": False,
-        "variant_calling_bedfile": "Pan4578data.bed",
-        "hsmetrics_bedfile": "Pan5123data.bed",
-        "clinical_coverage_depth": 200,
     },
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
         "TSO500": True,
