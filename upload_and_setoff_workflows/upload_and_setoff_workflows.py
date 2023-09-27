@@ -1624,7 +1624,7 @@ class SampleObject:
         """
         return {
             "sample_name": self.sample_name,
-            "negative_control": self.neg_control,
+            "neg_control": self.neg_control,
             "identifiers": {
                 "primary": self.primary_identifier,
                 "secondary": self.secondary_identifier,
@@ -1778,7 +1778,6 @@ class BuildDxCommands(object):
         # depends_list, which will create an error/ slack alert. To solve this problem,
         # the job ID is only added to the depends list if it exits
         for sample_name in self.samples_obj.samples_dict.keys():
-            sample_obj = self.samples_obj.samples_dict[sample_name]
             # Append all fastqc commands to cmd_list
             dx_cmd_list.append(
                 self.samples_obj.samples_dict[sample_name]["sample_pipeline_cmd"]
@@ -1788,7 +1787,6 @@ class BuildDxCommands(object):
                 ad_config.UPLOAD_ARGS["if_jobid_exists_depends"]
                 % ad_config.UPLOAD_ARGS["depends_list"]
             )
-
             sambamba_cmds_list.append(
                 self.create_sambamba_cmd(
                     sample_name,
@@ -1799,7 +1797,7 @@ class BuildDxCommands(object):
             # calculation can often fail. We want the coverage report for the NTC sample
             # to help assess contamination. Only add to depends_list if job ID from
             # previous command is not empty
-            if not sample_obj['neg_control']:
+            if not self.samples_obj.samples_dict[sample_name]['neg_control']:
                 sambamba_cmds_list.append(
                     ad_config.UPLOAD_ARGS["if_jobid_exists_depends"]
                     % ad_config.UPLOAD_ARGS["depends_list"]
