@@ -227,7 +227,7 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "tso500",
         "pipeline": "tso500",
-        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4969dataSambamba.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5130dataSambamba.bed",
         "capture_type": "Hybridisation",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
