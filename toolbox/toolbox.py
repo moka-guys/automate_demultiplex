@@ -3,6 +3,7 @@
 """
 This script contains functions shared across scripts / modules
 """
+import sys
 import os
 import subprocess
 import logging
@@ -144,7 +145,7 @@ def test_processing_software(logger) -> Union[bool, None]:
     and test_dx_toolkit functions
         :return True|None:  Return true if the tests all pass
     """
-    if test_programs("bcl2fastq2", logger) and test_programs(
+    if test_docker("bcl2fastq2", logger) and test_programs(
         "gatk_collect_lane_metrics", logger
     ):
         return True
@@ -175,6 +176,22 @@ def test_programs(software_name: str, logger: object) -> Union[bool, None]:
             raise Exception  # Stop script
     else:
         logger.error(logger.log_msgs["program_missing"], software_dict['executable'])
+        raise Exception  # Stop script
+
+
+def test_docker(software_name: str, logger: object) -> Union[bool, None]:
+    """
+    """
+    test_cmd = ad_config.TEST_IMAGES_DICT[software_name]
+
+    logger.info(logger.log_msgs["testing_software"], software_name)
+
+    out, err, returncode = execute_subprocess_command(test_cmd, logger)
+    if returncode == 0:
+        logger.info(logger.log_msgs["test_pass"], software_name)
+        return True
+    else:
+        logger.error(logger.log_msgs["test_fail"], software_name)
         raise Exception  # Stop script
 
 

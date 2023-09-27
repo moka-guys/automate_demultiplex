@@ -206,10 +206,11 @@ class DemultiplexRunfolder(object):
         ]
         # N.B. --no-lane-splitting creates a single fastq for a sample,
         # not into one fastq per lane)
-        self.bcl2fastq_cmd = (
-            f"{ad_config.BCL2FASTQ_EXE} -R {self.rf_obj.runfolderpath} --sample-sheet "
-            f"{self.rf_obj.samplesheet_path} --no-lane-splitting"
-        )
+        self.bcl2fastq_cmd = ad_config.BCL2FASTQ2_CMD % (
+            self.rf_obj.runfolderpath, self.rf_obj.samplesheet_path,
+            self.rf_obj.samplesheet_name, self.rf_obj.samplesheet_name,
+            self.rf_obj.demultiplex_runfolder_logfile            
+            )
         # Shell command to run cluster density calculation
         self.cluster_density_cmd = (
             f"sudo docker run --rm -v {self.rf_obj.runfolderpath}:/input_run "

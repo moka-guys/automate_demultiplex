@@ -99,7 +99,12 @@ DEMULTIPLEX_TEST_RUNFOLDERS = [
 ]
 
 SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"
-BCL2FASTQ_EXE = "/usr/local/bcl2fastq2-v2.20.0.422/bin/bcl2fastq"
+BCL2FASTQ2_CMD = (
+    "sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s "
+    "seglh/bcl2fastq2:v2.20.0.422_25dd0c0 -R /mnt/run --sample-sheet /mnt/run/%s "
+    "--no-lane-splitting >> %s 2>&1"
+)
+
 UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 
 STRINGS = {
@@ -120,10 +125,6 @@ TEST_PROGRAMS_DICT = {
         "executable": UPLOAD_AGENT_EXE,
         "test_cmd": f"{UPLOAD_AGENT_EXE} --version",
         },
-    "bcl2fastq2": {
-        "executable": BCL2FASTQ_EXE,
-        "test_cmd": f'{BCL2FASTQ_EXE} --version',
-        },
     "gatk_collect_lane_metrics": {
         "executable": "docker",
         "test_cmd": (
@@ -131,6 +132,10 @@ TEST_PROGRAMS_DICT = {
             "CollectIlluminaLaneMetrics --version"
             ),
         },
+    }
+
+TEST_IMAGES_DICT = {
+    "bcl2fastq2": f'sudo docker run --rm seglh/bcl2fastq2:v2.20.0.422_25dd0c0 --version'
     }
 
 # ================ UPLOAD AND SETOFF WORKFLOWS ================================
