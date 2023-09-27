@@ -534,6 +534,20 @@ PANEL_DICT = {
         "congenica_IR_template": "priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
     },
+    "Pan5143" : { # VCP2 R444.1 Breast cancer (PARP treatment) (Viapath)
+        **CAPTURE_PANEL_DICT["vcp2"],
+        "test_number": "R444.1",
+        "congenica_project": 14563,
+        "congenica_credentials": "Viapath",
+        "congenica_IR_template": "priority",
+    },
+    "Pan5147" : { # VCP2 R444.2 Prostate cancer (PARP treatment) (Viapath)
+        **CAPTURE_PANEL_DICT["vcp2"],
+        "test_number": "R444.2",
+        "congenica_project": 14564,
+        "congenica_credentials": "Viapath",
+        "congenica_IR_template": "priority",
+    },
     "Pan4816": {  # VCP2 R208 - BRCA (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
         "test_number": "R208",
@@ -563,6 +577,20 @@ PANEL_DICT = {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
+    },
+    "Pan5144": {  # VCP2 R444.1 Breast cancer (PARP treatment) (STG)
+        **CAPTURE_PANEL_DICT["vcp2"],
+        "test_number": "R444.1",
+        "congenica_project": 14629,
+        "congenica_credentials": "STG",
+        "congenica_IR_template": "non-priority",
+    },
+    "Pan5148": {  # VCP2 R444.2 Prostate cancer (PARP treatment) (STG)
+        **CAPTURE_PANEL_DICT["vcp2"],
+        "test_number": "R444.2",
+        "congenica_project": 14630,
+        "congenica_credentials": "STG",
+        "congenica_IR_template": "non-priority",
     },
     "Pan4819": {  # VCP2 R210 - lynch (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
