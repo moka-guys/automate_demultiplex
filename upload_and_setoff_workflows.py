@@ -200,6 +200,14 @@ class RunfolderProcessor(object):
             "jobid=$(dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x8"
             % (config.app_project, config.RPKM_path)
         )
+        self.ED_readcount_command = (
+            "EDjobid=$(dx run %s%s --priority high -y --instance-type %s"
+            % (config.app_project, config.ED_readcount_path, config.ED_readcount_path_instance_type)
+        )
+        self.ED_cnvcalling_command = (
+            "jobid=$(dx run %s%s --priority high -y --instance-type %s"
+            % (config.app_project, config.ED_cnvcalling_path, config.ED_cnvcalling_instance_type)
+        )
         self.mokaamp_command = (
             "jobid=$(dx run %s%s --priority high -y --name "
             % (config.app_project, config.mokaamp_path)
@@ -316,21 +324,25 @@ class RunfolderProcessor(object):
                 self.runfolder_obj.runfolderpath,
                 self.runfolder_obj.runfolder_name,
             )
-            # check for TSO500 run - this is not demultiplexed locally but the entire runfolder is uploaded
-            # read samplesheet to create a list of samples
-            TSO500_sample_list = self.check_for_TSO500()
-            # if not TSO500 will return None
-            if TSO500_sample_list:
-                self.list_of_processed_samples, self.fastq_string = (
-                    TSO500_sample_list,
-                    self.runfolder_obj.runfolder_samplesheet_path,
-                )
-
+            # check for development pan number. If found self.list_of_processed_sampels will be empty and no further processing will occur
+            if self.check_for_development_run():
+                self.loggers.script.info("development pan number identified in samplesheet. Stopping any further processing")
             else:
-                (
-                    self.list_of_processed_samples,
-                    self.fastq_string,
-                ) = self.find_fastqs(self.runfolder_obj.fastq_folder_path)
+                # check for TSO500 run - this is not demultiplexed locally but the entire runfolder is uploaded
+                # read samplesheet to create a list of samples
+                TSO500_sample_list = self.check_for_TSO500()
+                # if not TSO500 will return None
+                if TSO500_sample_list:
+                    self.list_of_processed_samples, self.fastq_string = (
+                        TSO500_sample_list,
+                        self.runfolder_obj.runfolder_samplesheet_path,
+                    )
+
+                else:
+                    (
+                        self.list_of_processed_samples,
+                        self.fastq_string,
+                    ) = self.find_fastqs(self.runfolder_obj.fastq_folder_path)
 
             if self.list_of_processed_samples:
                 # build the project name using the WES batch and NGS run numbers
@@ -611,6 +623,40 @@ class RunfolderProcessor(object):
             open(self.loggers.upload_agent.filepath, "w").close()
         return sample_list
 
+    def check_for_development_run(self):
+        """
+        Read samplesheet looking for development pan number.
+        If pannumber where development_run is True is present add samplename to list
+        return sample_list (will return False if empty)
+        """
+        sample_list = []
+        # build list of development pan numbers
+        development_panel_list=[]
+        for pan in self.panel_dictionary:
+            if pan["development_run"]:
+                development_panel_list.append(pan)
+
+        with open(
+            self.runfolder_obj.runfolder_samplesheet_path, "r"
+        ) as samplesheet_stream:
+            # read the file into a list and loop through the list in reverse (bottom to top).
+            # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
+            for line in reversed(samplesheet_stream.readlines()):
+                if line.startswith("Sample_ID") or "[Data]" in line:
+                    break
+                # skip empty lines (check first element of the line, after splitting on comma)
+                elif len(line.split(",")[0]) < 2:
+                    pass
+                # if it's a line detailing a sample
+                else:
+                    for pannum in development_panel_list:
+                        if pannum in line:
+                            sample_list.append(line.split(",")[0])
+        # as it takes a long time before the upload create the file to stop further processing
+        if sample_list:
+            open(self.loggers.upload_agent.filepath, "w").close()
+        return sample_list
+    
     def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
         Inputs = runfolder name and runfolder path
@@ -1350,6 +1396,20 @@ class RunfolderProcessor(object):
                 + self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]
                 + "_RPKM.bed"
             )
+        if self.panel_dictionary[pannumber]["exome_depth_readcount_BED"]:
+            bed_dict["ED_readcount_bedfile"] = (
+                config.app_project
+                + config.bedfile_folder
+                + self.panel_dictionary[pannumber]["exome_depth_readcount_BED"]
+                + "exomedepth.bed"
+            )
+        if self.panel_dictionary[pannumber]["exome_depth_cnvcalling_BED"]:
+            bed_dict["exome_depth_cnvcalling_BED"] = (
+                config.app_project
+                + config.bedfile_folder
+                + self.panel_dictionary[pannumber]["exome_depth_cnvcalling_BED"]
+                + "_CNV.bed"
+            )
         return bed_dict
 
     def start_building_dx_run_cmds(self):
@@ -1377,6 +1437,8 @@ class RunfolderProcessor(object):
         congenica_upload = False
         joint_variant_calling = False  # not currently in use
         rpkm_list = []  # list for panels needing RPKM analysis
+        pannnumber_list= [] 
+        exome_depth = False
         TSO500 = False
 
         # loop through samples
@@ -1393,9 +1455,15 @@ class RunfolderProcessor(object):
             elif re.search(r"_R1_", fastq):
                 # extract Pan number and use this to determine which dx run commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
+                #create a list of all pan numbers in the run
+                pannnumber_list.append(panel)
                 # The order in which the modules are called here is important to ensure the order
                 # of dx run commands is correct. This affects which decision support tool data is sent to.
-
+                
+                # determine if exome depth is needed - the exact commands will be determined in the function which handles exome_depth commands
+                if self.panel_dictionary[panel]["exome_depth_cnvcalling_BED"]:
+                    exome_depth = True
+                
                 # If panel is to be processed using MokaWES
                 if self.panel_dictionary[panel]["mokawes"]:
                     # call function to build the MokaWES command and add to command list and depends list
@@ -1485,6 +1553,11 @@ class RunfolderProcessor(object):
             # to stop custom panels being analysed by peddy - may cause problems
             commands_list.append(self.run_peddy_command())
             commands_list.append(self.add_to_depends_list("peddy", 'depends_list'))
+        
+        if exome_depth:
+            # exome depth is run once per capture, and then for each capture, one per pannumber. This function returns a list of commands so need to add these to commands list
+            for cmd in self.determine_exome_depth_requirements(pannnumber_list):
+                commands_list.append(cmd)
 
         if TSO500:
             # build command for the TSO500 app and set off fastqc commands
@@ -1539,6 +1612,121 @@ class RunfolderProcessor(object):
         commands_list.append(self.create_duty_csv_command())
 
         return commands_list
+
+    def determine_exome_depth_requirements(self,pannnumber_list):
+        """
+        This function takes a list of all pan numbers found on this run. 
+        Exome depth is run in 2 stages, firstly readcounts are calculated for each capture panel (VCP1 or VCP2 etc).
+        The jobid will be saved to $EDjobid which allows the output of this stage to be used to filter CNVs with a panel specific BEDfile.
+        The CNV calling steps should be a dependancy of multiqc
+        This function controls the order these commands are built and run so the output of the readcount step can be used as an input to the cnvcalling step
+        Inputs:
+            List of Pannumbers on the run
+        Returns:
+            List of dx run commands
+        """
+        
+        VCP1=[]
+        VCP2=[]
+        VCP3=[]
+        command_list=[]
+        for pannumber in set(pannnumber_list):
+            if pannumber in config.vcp1_panel_list:
+                VCP1.append(pannumber)
+            if pannumber in config.vcp2_panel_list:
+                VCP2.append(pannumber)
+            if pannumber in config.vcp3_panel_list:
+                VCP3.append(pannumber)
+        
+        # make sure there are enough samples for that capture
+        if len(VCP1)>2:
+            # first build readcount command.
+            command_list.append(self.build_ED_readcount_cmd(set(VCP1), config.ED_readcount_normals_VCP1_file,config.ED_VCP1_readcount_BEDfile_pannum))
+            # The output of readcount can be used in multiqc so add this to the multiqc depends list
+            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list'))
+            # the cnvcalling stage can use the jobid from the readcount stage as an input so run these before the next capture panel
+            for panel in set(VCP1):# then build cnvcalling commands
+                command_list.append(self.build_ED_cnv_calling_cmd(panel))
+    
+        if len(VCP2)>2:
+            # first build readcount command
+            command_list.append(self.build_ED_readcount_cmd(set(VCP2), config.ED_readcount_normals_VCP2_file,config.ED_VCP2_readcount_BEDfile_pannum))
+            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list'))
+            for panel in set(VCP2):# then build cnvcalling commands
+                command_list.append(self.build_ED_cnv_calling_cmd(panel))
+
+        if len(VCP3)>2:
+            # first build readcount command
+            command_list.append(self.build_ED_readcount_cmd(set(VCP3), config.ED_readcount_normals_VCP3_file,config.ED_VCP3_readcount_BEDfile_pannum))
+            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list'))
+            for panel in set(VCP2):# then build cnvcalling commands
+                command_list.append(self.build_ED_cnv_calling_cmd(panel))
+
+        return command_list
+    def build_ED_readcount_cmd(self,pannumber_list, normals_file,readcount_bedfile_pannum):
+        """
+        This function builds the dx run command for the exome depth readcount app
+        This is run once per capture panel
+        Inputs:
+            pannumber_list = list of Pan numbers for this capture panel on this run. used to determine which BAM files to download
+            normals_file = predefined panel of normals data file (from config)
+            readcount bedfile pannumber = predefined capture panel wide BEDfile (from config)
+        Returns:
+            dx run cmd (string)
+        """
+        #build bedfile address from the readcount_bedfile_pannum input 
+        bedfiles = self.nexus_bedfiles(readcount_bedfile_pannum)
+        readcount_bedfile=bedfiles["exome_depth_readcount_BED"]
+    
+        dx_command_list = [
+            self.ED_readcount_command,
+            config.exomedepth_readcount_reference_genome_input,
+            config.exomedepth_readcount_bedfile_input,
+            readcount_bedfile,
+            config.exomedepth_cnvcalling_subpanel_bed_input,
+            config.exomedepth_readcount_normalsRdata_input,
+            normals_file,
+            config.exomedepth_readcount_projectname_input,
+            self.runfolder_obj.nexus_project_name,
+            config.exomedepth_readcount_pannumbers_input,
+            ",".join(pannumber_list),
+            self.depends_gatk, # use list of gatk related jobs to delay start
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
+        dx_command = "".join(map(str, dx_command_list))
+        return dx_command
+    
+    def build_ED_cnv_calling_cmd(self,pannumber):
+        """
+        This function builds the dx run command to filter the CNV calls for a specific R number using a BEDfile
+        Input:
+            pannumber = pannumber to filter CNV calls
+        Returns:
+            dx run cmd (string)
+        """
+        # build bedfile address using the given pan number extract exome_depth_cnvcalling_BED from panel config dict
+        bedfiles = self.nexus_bedfiles(pannumber)
+        ed_cnvcalling_bedfile = bedfiles["exome_depth_cnvcalling_BED"]
+
+        dx_command_list = [
+            self.ED_cnvcalling_command,
+            config.exomedepth_cnvcalling_reference_genome_input,
+            config.exomedepth_cnvcalling_readcount_file_input,
+            "$EDjobid:%s" % (config.exomedepth_readcount_rdata_output),
+            config.exomedepth_cnvcalling_subpanel_bed_input,
+            ed_cnvcalling_bedfile,
+            config.exomedepth_cnvcalling_projectname_input,
+            self.runfolder_obj.nexus_project_name,
+            config.exomedepth_cnvcalling_pannumbers_input,
+            pannumber,
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
+        dx_command = "".join(map(str, dx_command_list))
+        return dx_command
 
     def create_mokawes_command(self, fastq, pannumber):
         """
