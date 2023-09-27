@@ -277,13 +277,13 @@ ED_readcount_path_instance_type = "mem1_ssd1_v2_x8"
 ED_cnvcalling_path = "Apps/ED_cnv_calling_v1.2.0"
 ED_cnvcalling_instance_type = "mem1_ssd1_v2_x4"
 #VCP1 exome depth
-ED_readcount_normals_VCP1_file="XXX"
-ED_VCP1_readcount_BEDfile_pannum = "Pan4398" # just put pan number - full bedfile name is made in nexus_bedfiles function
+ED_readcount_normals_VCP1_file="Pan5134_normals_v1.0.0.RData"
+ED_VCP1_readcount_BEDfile_pannum = "Pan5134" # just put pan number - full bedfile name is made in nexus_bedfiles function
 #VCP2 normals data file
-ED_readcount_normals_VCP2_file="XXX"
-ED_VCP2_readcount_BEDfile_pannum = "Pan4973" # just put pan number - full bedfile name is made in nexus_bedfiles function
+ED_readcount_normals_VCP2_file="Pan5132_normals_v1.0.0.RData"
+ED_VCP2_readcount_BEDfile_pannum = "Pan5132" # just put pan number - full bedfile name is made in nexus_bedfiles function
 #VCP3 normals data file
-ED_readcount_normals_VCP3_file="XXX"
+ED_readcount_normals_VCP3_file="Pan5149_normals_v1.0.0.RData"
 ED_VCP3_readcount_BEDfile_pannum = "Pan5149" # just put pan number - full bedfile name is made in nexus_bedfiles function
 
 exomedepth_refgenome_file = "project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY7VG2J35Vfvpkj8y0KZ01" #hs37d5.fa.gz from 001
