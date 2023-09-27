@@ -115,12 +115,15 @@ class TestGetRunfolders(object):
         Pass set of runfolders expected to be successfully processed by script. Assert
         that the expected number are processed
         """
-        monkeypatch.setattr(demultiplex.ad_config, "BCL2FASTQ_EXE", "/bin/true")
         # TODO fix the below patch
         monkeypatch.setattr(
             demultiplex.ad_config, "DEMULTIPLEX_TEST_RUNFOLDERS",
             runfolders_toproc
         )
+        monkeypatch.setattr(
+            demultiplex.DemultiplexRunfolder, "bcl2fastq_cmd",
+            f"echo '{ad_config.STRINGS['demultiplex_success']}'"
+            )
         gr_obj = get_gr_obj()
         gr_obj.setoff_processing()
         assert all(
@@ -396,11 +399,6 @@ class TestDemultiplexRunfolder(object):
         """
         Test that function sets off run processing correctly for runfolders requiring it
         """
-        monkeypatch.setattr(
-            ad_config,
-            "BCL2FASTQ_EXE",
-            f"echo '{ad_config.STRINGS['demultiplex_success']}'",
-        )
         for runfolder in demultiplexing_required:
             dr_obj = get_dr_obj(runfolder)
             # Command to run in place of bcl2fastq2 command that appends processing
