@@ -1630,13 +1630,16 @@ class RunfolderProcessor(object):
         VCP2=[]
         VCP3=[]
         command_list=[]
+        # could prob do list comprehension here
         for pannumber in set(pannnumber_list):
-            if pannumber in config.vcp1_panel_list:
-                VCP1.append(pannumber)
-            if pannumber in config.vcp2_panel_list:
-                VCP2.append(pannumber)
-            if pannumber in config.vcp3_panel_list:
-                VCP3.append(pannumber)
+            # not all VCP1/2/3 pan numbers need CNV calling
+            if self.panel_dictionary[pannumber]["exome_depth_cnvcalling_BED"]:
+                if pannumber in config.vcp1_panel_list:
+                    VCP1.append(pannumber)
+                if pannumber in config.vcp2_panel_list:
+                    VCP2.append(pannumber)
+                if pannumber in config.vcp3_panel_list:
+                    VCP3.append(pannumber)
         
         # make sure there are enough samples for that capture
         if len(VCP1)>2:
