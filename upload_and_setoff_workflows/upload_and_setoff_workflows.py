@@ -78,7 +78,7 @@ class SequencingRuns(object):
                 )
                 rf_obj = toolbox.RunfolderObject(folder, ad_config.TIMESTAMP)
                 if self.requires_processing(rf_obj):
-                    self.runs_to_process['runfolder'] = rf_obj
+                    self.runs_to_process[folder] = rf_obj
 
     def requires_processing(self, rf_obj) -> bool:
         """
@@ -137,17 +137,23 @@ class SequencingRuns(object):
                     ad_config.STRINGS['demultiplexlog_tso500_msg'],
                     ad_config.STRINGS['demultiplex_success']
                 ]
-                if any(
-                    re.search(success_str, logfile_list[-1])
-                    for success_str in completed_strs
-                ):
-                    self.script_logger.info(
-                        self.script_logger.log_msgs["demux_complete"]
-                    )
-                    return True
+                if logfile_list:
+                    if any(
+                        re.search(success_str, logfile_list[-1])
+                        for success_str in completed_strs
+                    ):
+                        self.script_logger.info(
+                            self.script_logger.log_msgs["demux_complete"]
+                        )
+                        return True
+                    else:
+                        self.script_logger.info(self.script_logger.log_msgs["demux_failed"])
+                        return False
                 else:
-                    self.script_logger.info(self.script_logger.log_msgs["demux_failed"])
-                    return False
+                    # Write to logfile that not yet demultiplexed
+                    self.script_logger.info(
+                        self.script_logger.log_msgs["bcl2fastqlog_empty"]
+                    )
         else:
             # Write to logfile that not yet demultiplexed
             self.script_logger.info(
@@ -262,23 +268,24 @@ class ProcessRunfolder(object):
             toolbox.git_tag(),
         )
         self.samples_obj = CollectRunfolderSamples(self.rf_obj)
-        self.users_dict = self.get_users_dict()
-        self.write_project_creation_script()
-        self.nexus_identifiers = {
-            "proj_name": self.samples_obj.nexus_paths['proj_name'],
-            "proj_id": self.run_project_creation_script()
-            }
-        self.backup_runfolder = UACaller(self.rf_obj, self.nexus_identifiers)
-        self.upload_cmds = self.get_upload_cmds()
-        self.pre_pipeline_upload_dict = self.create_file_upload_dict()
-        self.pre_pipeline_upload()
-        BuildDxCommands(
-            self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
-            )
-        self.create_congenica_command_file()
-        self.run_dx_run_commands()
-        PipelineEmails(self.rf_obj, self.samples_obj)
-        self.post_pipeline_upload()
+        if self.samples_obj.samplename_list and self.samples_obj.samples_dict:  # If samples are present
+            self.users_dict = self.get_users_dict()
+            self.write_project_creation_script()
+            self.nexus_identifiers = {
+                "proj_name": self.samples_obj.nexus_paths['proj_name'],
+                "proj_id": self.run_project_creation_script()
+                }
+            self.backup_runfolder = UACaller(self.rf_obj, self.nexus_identifiers)
+            self.upload_cmds = self.get_upload_cmds()
+            self.pre_pipeline_upload_dict = self.create_file_upload_dict()
+            self.pre_pipeline_upload()
+            BuildDxCommands(
+                self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
+                )
+            self.create_congenica_command_file()
+            self.run_dx_run_commands()
+            PipelineEmails(self.rf_obj, self.samples_obj)
+            self.post_pipeline_upload()
 
     def get_users_dict(self) -> dict:
         """
@@ -667,19 +674,37 @@ class CollectRunfolderSamples(object):
         """
         self.rf_obj = rf_obj
         self.samplename_list = self.get_samplename_list()
-        self.pipeline = self.get_pipeline()
-        self.nexus_runfolder_suffix = self.get_nexus_runfolder_suffix()
-        self.nexus_paths = self.get_nexus_paths()
-        self.samples_dict = self.get_samples_dict()
-        if self.pipeline != "tso500":
-            # tso500 run is not demultiplexed locally so there are no fastqs
-            # All other runfolders have fastqs in the BaseCalls directory
-            # Check fastqs in fastq dir were correctly identified from the
-            # samplesheet and add any missing samples to the samples dict
-            self.check_fastqs()
-            self.fastqs_list = self.get_fastqs_list()
-            self.fastqs_str = self.get_fastqs_str()
-        self.unique_pannos = set([sample[1] for sample in self.samplename_list])
+        if self.samplename_list:
+            self.pipeline = self.get_pipeline()
+            self.nexus_runfolder_suffix = self.get_nexus_runfolder_suffix()
+            self.nexus_paths = self.get_nexus_paths()
+            self.unique_pannos = set([sample[1] for sample in self.samplename_list])     
+            self.samples_dict = self.get_samples_dict()
+            if self.pipeline != "tso500":
+                    # tso500 run is not demultiplexed locally so there are no fastqs
+                    # All other runfolders have fastqs in the BaseCalls directory
+                    # Check fastqs in fastq dir were correctly identified from the
+                    # samplesheet and add any missing samples to the samples dict
+                    self.check_fastqs()
+                    self.fastqs_list = self.get_fastqs_list()
+                    self.fastqs_str = self.get_fastqs_str()
+
+    def get_samples_dict(self) -> dict:
+        """
+        Create a SampleObject for each sample which returns a sample dictionary
+        containing the sample_name, pannum, panel_settings and fastqs paths for that
+        sample. Add each SampleObject to a larger samples_dict
+            :return samples_dict (dict):    Dictionary of SampleObject per sample,
+                                            containing sample-specific attributes
+        """
+        samples_dict = {}
+        for sample_name in self.samplename_list:
+            sample_name = sample_name[0]
+            sample_obj = SampleObject(
+                sample_name, self.pipeline, self.rf_obj, self.nexus_paths,
+            )
+            samples_dict[sample_name] = sample_obj.return_sample_dict()
+        return samples_dict
 
     def get_samplename_list(self) -> list:
         """
@@ -691,33 +716,38 @@ class CollectRunfolderSamples(object):
                                                     name and pan num for each sample
         """
         samplename_list = []
-        with open(
-            self.rf_obj.samplesheet_path, "r", encoding="utf-8"
-        ) as samplesheet_stream:
-            for line in reversed(samplesheet_stream.readlines()):
-                if line.startswith("Sample_ID") or "[Data]" in line:
-                    break
-                # Skip empty lines (check first element of the line, after
-                # splitting on comma)
-                elif len(line.split(",")[0]) < 2:
-                    pass
-                else:  # If it's a line detailing a sample, get sample name and pan num
-                    panel_number = ""
-                    sample_name = line.split(",")[0]
-                    for pannum in panel_config.PANELS:
-                        if pannum in line:
-                            panel_number = pannum
-                    samplename_list.append((sample_name, panel_number))
-        if samplename_list:  # If samples identified
-            # Create upload agent file (prevents processing by other script runs)
-            open(
-                self.rf_obj.rf_loggers.upload_agent.filepath, "w", encoding="utf-8"
-                ).close()
-        return samplename_list
+        if os.path.exists(self.rf_obj.samplesheet_path):
+            with open(
+                self.rf_obj.samplesheet_path, "r", encoding="utf-8"
+            ) as samplesheet_stream:
+                for line in reversed(samplesheet_stream.readlines()):
+                    if line.startswith("Sample_ID") or "[Data]" in line:
+                        break
+                    # Skip empty lines (check first element of the line, after
+                    # splitting on comma)
+                    elif len(line.split(",")[0]) < 2:
+                        pass
+                    else:  # If it's a line detailing a sample, get sample name and pan num
+                        panel_number = ""
+                        sample_name = line.split(",")[0]
+                        for pannum in panel_config.PANELS:
+                            if pannum in line:
+                                panel_number = pannum
+                        samplename_list.append((sample_name, panel_number))
+            if samplename_list:  # If samples identified
+                # Create upload agent file (prevents processing by other script runs)
+                open(
+                    self.rf_obj.rf_loggers.upload_agent.filepath, "w", encoding="utf-8"
+                    ).close()
+            return samplename_list
+        else:
+            self.rf_obj.rf_loggers.usw.error(
+                self.rf_obj.rf_loggers.usw.log_msgs["ss_missing"],
+            )
 
     def get_pipeline(self) -> str:
         """
-        Use self.samplename_list and the config.PANEL_DICT to get a list of pipeline
+        Use samplename_list and the config.PANEL_DICT to get a list of pipeline
         names for samples in the run. Generates error mesage if there is more than one
         piepline name in the list. Returns the most frequent pipeline name in the set
             :return (str):  Pipeline name
@@ -835,23 +865,6 @@ class CollectRunfolderSamples(object):
             )
         return nexus_paths
 
-    def get_samples_dict(self) -> dict:
-        """
-        Create a SampleObject for each sample which returns a sample dictionary
-        containing the sample_name, pannum, panel_settings and fastqs paths for that
-        sample. Add each SampleObject to a larger samples_dict
-            :return samples_dict (dict):    Dictionary of SampleObject per sample,
-                                            containing sample-specific attributes
-        """
-        samples_dict = {}
-        for sample_name in self.samplename_list:
-            sample_name = sample_name[0]
-            sample_obj = SampleObject(
-                sample_name, self.pipeline, self.rf_obj, self.nexus_paths,
-            )
-            samples_dict[sample_name] = sample_obj.return_sample_dict()
-        return samples_dict
-
     def check_fastqs(self) -> None:
         """
         Check all fastqs in fastq dir were correctly identified from the samplesheet and
@@ -909,11 +922,12 @@ class CollectRunfolderSamples(object):
         """
         # Exclude undetermined
         if not fastq_dir_file.startswith("Undetermined"):
+            return True
+        else:
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["undetermined_identified"],
                 fastq_dir_file,
             )
-            return True
 
     def fastq_not_miseq(self, fastq_dir_file: str) -> Union[bool, None]:
         """
@@ -921,11 +935,12 @@ class CollectRunfolderSamples(object):
             :return True | None:    Return True if created by MiSeq, else return None
         """
         if "-Pan" not in fastq_dir_file:
+            return True
+        else:
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["miseq_fastq_identified"],
                 fastq_dir_file,
-            )
-            return True
+            )            
 
     def get_fastqs_list(self):
         """
@@ -2027,18 +2042,18 @@ class BuildDxCommands(object):
             :return cmd_list (list):    List of per-sample commands
         """
         cmd_list = []
-        for sample in self.samples_obj.samples_dict.keys():
+        for sample_name in self.samples_obj.samples_dict.keys():
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["sample"],
                 self.samples_obj.pipeline,
-                sample
+                sample_name
             )
             cmd_list.append(
-                self.samples_obj.samples_dict[sample]["sample_pipeline_cmd"]
+                self.samples_obj.samples_dict[sample_name]["sample_pipeline_cmd"]
                 )
             # If not a negative control, add string that adds the job to the depends
             # list for downstream jobs to depend upon
-            if not self.samples_obj.neg_control:
+            if not self.samples_obj.samples_dict[sample_name]['neg_control']:
                 cmd_list.append(ad_config.UPLOAD_ARGS["depends_list"])
                 if self.samples_obj.pipeline == "pipe":
                     # Add to gatk depends list because RPKM must depend only upon the
@@ -2047,9 +2062,9 @@ class BuildDxCommands(object):
                     cmd_list.append(ad_config.UPLOAD_ARGS["depends_list_gatk"])
 
             if self.samples_obj.pipeline in ["wes", "pipe"]:
-                cmd_list.append(self.build_congenica_input_cmd)
+                cmd_list.append(self.build_congenica_input_cmd())
                 cmd_list.append(
-                    self.samples_obj.samples_dict[sample]["congenica_upload_cmd"]
+                    self.samples_obj.samples_dict[sample_name]["congenica_upload_cmd"]
                 )
         return cmd_list
 

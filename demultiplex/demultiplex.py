@@ -238,7 +238,7 @@ class DemultiplexRunfolder(object):
             if self.create_bcl2fastqlog() and self.calculate_cluster_density():
                 # TSO500 runs do not require demultiplexing
                 if self.tso:
-                    self.demux_rf_logger.usw.info(
+                    self.demux_rf_logger.info(
                         self.demux_rf_logger.log_msgs["tso_run"]
                     )
                     self.run_processed = True

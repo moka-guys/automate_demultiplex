@@ -133,7 +133,7 @@ LOG_MSGS = {
     },
     "usw": {
         "runfolder_identified": "Identified runfolder: %s",
-        "runfolder_processed": "Runfolder has bee:n processed: %s",
+        "runfolder_processed": "Runfolder has been processed: %s",
         "no_users": "No users in user list for permissions level %s",
         "dxtoolkittest_pass": "dx toolkit source command successful",
         "dxtoolkittest_fail": "USW_FAIL - dx toolkit source command failed",
@@ -145,6 +145,7 @@ LOG_MSGS = {
         "demux_complete": "Demultiplex completed succesfully.",
         "demux_failed": "Demultiplex failed.",
         "not_yet_demultiplexed": "Demultiplex has not been performed.",
+        "bcl2fastqlog_empty": "Bcl2fastq log file exists but is empty",
         "nonexistent_files": "Not all files exist: %s",
         "creating_proj": "Executing project creation script: %s",
         "proj_creation_fail": "USW_FAIL - failed to create project in DNAnexus for %s",
@@ -185,6 +186,7 @@ LOG_MSGS = {
             "An error occurred when uploading the rest of the runfolder: %s. "
             "See %s and %s for further details."
             ),
+        "ss_missing": "Samplesheet is missing and is required for sample name parsing",
         "multiple_pipeline_names": (
             "USW_FAIL - Multiple pipeline names detected from panel config "
             "for sample list: %s"
