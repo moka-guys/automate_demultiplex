@@ -213,7 +213,7 @@ class ready2start_demultiplexing():
             self.samplesheet = self.runfolder + "_SampleSheet.csv"
             self.samplesheet_path = os.path.join(config.samplesheets_dir, self.samplesheet)
             # if development run skip the samplesheet check to avoid endless alerts
-            if not self.check_for_development_run():
+            if not self.check_for_development_run(self.samplesheet_path):
                 # run samplesheet checks (uses try to ensure that should an error occur this doesn't affect the other
                 # script functionality
                 ss_verification_results = samplesheet_verifier.run_ss_checks(self.samplesheet_path)
@@ -242,7 +242,7 @@ class ready2start_demultiplexing():
         """
         sample_list = []
 
-        with open(self.runfolder_obj.runfolder_samplesheet_path, "r") as samplesheet_stream:
+        with open(samplesheet_path, "r") as samplesheet_stream:
             # read the file into a list and loop through the list in reverse (bottom to top).
             # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
             for line in reversed(samplesheet_stream.readlines()):

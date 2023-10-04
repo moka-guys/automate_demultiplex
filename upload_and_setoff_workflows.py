@@ -252,6 +252,7 @@ class RunfolderProcessor(object):
 
         # arguments to capture jobids
         self.depends_list = 'depends_list="${depends_list} -d ${jobid} "'
+        self.depends_list_ED_readcount = 'depends_list="${depends_list} -d ${EDjobid} "'
         self.depends_list_gatk = 'depends_list_gatk="${depends_list_gatk} -d ${jobid} "'
         self.depends_list_recombined = 'depends_list="${depends_list} ${depends_list_gatk} "'
         # Argument to define depends_list only if the job ID exists
@@ -632,8 +633,8 @@ class RunfolderProcessor(object):
         sample_list = []
         # build list of development pan numbers
         development_panel_list=[]
-        for pan in self.panel_dictionary:
-            if pan["development_run"]:
+        for pan in self.panel_dictionary.keys():
+            if self.panel_dictionary[pan]["development_run"]:
                 development_panel_list.append(pan)
 
         with open(
@@ -1396,13 +1397,7 @@ class RunfolderProcessor(object):
                 + self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]
                 + "_RPKM.bed"
             )
-        if self.panel_dictionary[pannumber]["exome_depth_readcount_BED"]:
-            bed_dict["ED_readcount_bedfile"] = (
-                config.app_project
-                + config.bedfile_folder
-                + self.panel_dictionary[pannumber]["exome_depth_readcount_BED"]
-                + "exomedepth.bed"
-            )
+        
         if self.panel_dictionary[pannumber]["exome_depth_cnvcalling_BED"]:
             bed_dict["exome_depth_cnvcalling_BED"] = (
                 config.app_project
@@ -1410,6 +1405,7 @@ class RunfolderProcessor(object):
                 + self.panel_dictionary[pannumber]["exome_depth_cnvcalling_BED"]
                 + "_CNV.bed"
             )
+
         return bed_dict
 
     def start_building_dx_run_cmds(self):
@@ -1626,11 +1622,12 @@ class RunfolderProcessor(object):
             List of dx run commands
         """
         
+        # generate list of pan numbers in samplenames to process in ED
         VCP1=[]
         VCP2=[]
         VCP3=[]
         command_list=[]
-        # could prob do list comprehension here
+        
         for pannumber in set(pannnumber_list):
             # not all VCP1/2/3 pan numbers need CNV calling
             if self.panel_dictionary[pannumber]["exome_depth_cnvcalling_BED"]:
@@ -1646,7 +1643,7 @@ class RunfolderProcessor(object):
             # first build readcount command.
             command_list.append(self.build_ED_readcount_cmd(set(VCP1), config.ED_readcount_normals_VCP1_file,config.ED_VCP1_readcount_BEDfile_pannum))
             # The output of readcount can be used in multiqc so add this to the multiqc depends list
-            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list'))
+            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list_ED_readcount'))
             # the cnvcalling stage can use the jobid from the readcount stage as an input so run these before the next capture panel
             for panel in set(VCP1):# then build cnvcalling commands
                 command_list.append(self.build_ED_cnv_calling_cmd(panel))
@@ -1654,14 +1651,14 @@ class RunfolderProcessor(object):
         if len(VCP2)>2:
             # first build readcount command
             command_list.append(self.build_ED_readcount_cmd(set(VCP2), config.ED_readcount_normals_VCP2_file,config.ED_VCP2_readcount_BEDfile_pannum))
-            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list'))
+            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list_ED_readcount'))
             for panel in set(VCP2):# then build cnvcalling commands
                 command_list.append(self.build_ED_cnv_calling_cmd(panel))
 
         if len(VCP3)>2:
             # first build readcount command
             command_list.append(self.build_ED_readcount_cmd(set(VCP3), config.ED_readcount_normals_VCP3_file,config.ED_VCP3_readcount_BEDfile_pannum))
-            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list'))
+            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list_ED_readcount'))
             for panel in set(VCP2):# then build cnvcalling commands
                 command_list.append(self.build_ED_cnv_calling_cmd(panel))
 
@@ -1678,15 +1675,13 @@ class RunfolderProcessor(object):
             dx run cmd (string)
         """
         #build bedfile address from the readcount_bedfile_pannum input 
-        bedfiles = self.nexus_bedfiles(readcount_bedfile_pannum)
-        readcount_bedfile=bedfiles["exome_depth_readcount_BED"]
+        readcount_bedfile = "%s%s%s" % (config.app_project,config.bedfile_folder,readcount_bedfile_pannum)
     
         dx_command_list = [
             self.ED_readcount_command,
             config.exomedepth_readcount_reference_genome_input,
             config.exomedepth_readcount_bedfile_input,
             readcount_bedfile,
-            config.exomedepth_cnvcalling_subpanel_bed_input,
             config.exomedepth_readcount_normalsRdata_input,
             normals_file,
             config.exomedepth_readcount_projectname_input,
@@ -1709,13 +1704,13 @@ class RunfolderProcessor(object):
         Returns:
             dx run cmd (string)
         """
-        # build bedfile address using the given pan number extract exome_depth_cnvcalling_BED from panel config dict
+        # pull out the appropriate bedfile for ED cnvcalling app BEDfrom panel config dict (exome_depth_cnvcalling_BED)
+        # note the Pan number for this BED will be different to that used to name the sample
         bedfiles = self.nexus_bedfiles(pannumber)
         ed_cnvcalling_bedfile = bedfiles["exome_depth_cnvcalling_BED"]
 
         dx_command_list = [
             self.ED_cnvcalling_command,
-            config.exomedepth_cnvcalling_reference_genome_input,
             config.exomedepth_cnvcalling_readcount_file_input,
             "$EDjobid:%s" % (config.exomedepth_readcount_rdata_output),
             config.exomedepth_cnvcalling_subpanel_bed_input,
@@ -2364,6 +2359,8 @@ class RunfolderProcessor(object):
             return self.depends_list_gatk
         elif depends_type=='depends_list_recombined':
             return self.depends_list_recombined
+        elif depends_type=='depends_list_ED_readcount':
+            return self.depends_list_ED_readcount
 
     def create_multiqc_command(self):
         """

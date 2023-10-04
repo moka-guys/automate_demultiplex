@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -277,31 +277,31 @@ ED_readcount_path_instance_type = "mem1_ssd1_v2_x8"
 ED_cnvcalling_path = "Apps/ED_cnv_calling_v1.2.0"
 ED_cnvcalling_instance_type = "mem1_ssd1_v2_x4"
 #VCP1 exome depth
-ED_readcount_normals_VCP1_file="Pan5134_normals_v1.0.0.RData"
-ED_VCP1_readcount_BEDfile_pannum = "Pan5134" # just put pan number - full bedfile name is made in nexus_bedfiles function
+ED_readcount_normals_VCP1_file= "project-ByfFPz00jy1fk6PjpZ95F27J:file-GZ47PPj0xygQ8z3z8yQK1qJF"#"Pan5134_normals_v1.0.0.RData"
+ED_VCP1_readcount_BEDfile_pannum = "Pan5134_exomedepth.bed" 
 #VCP2 normals data file
-ED_readcount_normals_VCP2_file="Pan5132_normals_v1.0.0.RData"
-ED_VCP2_readcount_BEDfile_pannum = "Pan5132" # just put pan number - full bedfile name is made in nexus_bedfiles function
+ED_readcount_normals_VCP2_file="project-ByfFPz00jy1fk6PjpZ95F27J:file-GZ8ybG00bx11vq9fXP1j7QQK"#"Pan5132_normals_v1.0.0.RData"
+ED_VCP2_readcount_BEDfile_pannum = "Pan5132_exomedepth.bed" 
 #VCP3 normals data file
-ED_readcount_normals_VCP3_file="Pan5149_normals_v1.0.0.RData"
-ED_VCP3_readcount_BEDfile_pannum = "Pan5149" # just put pan number - full bedfile name is made in nexus_bedfiles function
+ED_readcount_normals_VCP3_file=None#"Pan5149_normals_v1.0.0.RData"
+ED_VCP3_readcount_BEDfile_pannum = "Pan5149_exomedepth.bed" 
 
 exomedepth_refgenome_file = "project-ByfFPz00jy1fk6PjpZ95F27J:file-B6ZY7VG2J35Vfvpkj8y0KZ01" #hs37d5.fa.gz from 001
 ## readcount app inputs
-exomedepth_readcount_reference_genome_input="-ireference_genome=%s" % (exomedepth_refgenome_file)
-exomedepth_readcount_bedfile_input="-ibedfile="
-exomedepth_readcount_normalsRdata_input="-inormals_RData="
-exomedepth_readcount_projectname_input="-iproject_name="
-exomedepth_readcount_pannumbers_input="-ibamfile_pannumbers="
-exomedepth_readcount_rdata_output="rdataout"
+exomedepth_readcount_reference_genome_input=" -ireference_genome=%s" % (exomedepth_refgenome_file)
+exomedepth_readcount_bedfile_input=" -ibedfile="
+exomedepth_readcount_normalsRdata_input=" -inormals_RData="
+exomedepth_readcount_projectname_input=" -iproject_name="
+exomedepth_readcount_pannumbers_input=" -ibamfile_pannumbers="
+exomedepth_readcount_rdata_output="RData"
 
 
 ## ED CNV calling inputs
-exomedepth_cnvcalling_reference_genome_input="-ireference_genome=%s" % (exomedepth_refgenome_file)
-exomedepth_cnvcalling_readcount_file_input="-ireadcount_file="
-exomedepth_cnvcalling_subpanel_bed_input="-isubpanel_bed="
-exomedepth_cnvcalling_projectname_input="-iproject_name="
-exomedepth_cnvcalling_pannumbers_input="-ibamfile_pannumbers="
+exomedepth_cnvcalling_reference_genome_input=" -ireference_genome=%s" % (exomedepth_refgenome_file)
+exomedepth_cnvcalling_readcount_file_input=" -ireadcount_file="
+exomedepth_cnvcalling_subpanel_bed_input=" -isubpanel_bed="
+exomedepth_cnvcalling_projectname_input=" -iproject_name="
+exomedepth_cnvcalling_pannumbers_input=" -ibamfile_pannumbers="
 
 
 # MokaWES workflow_inputs
@@ -460,10 +460,10 @@ panel_list = [
     "Pan5085",  # TSO500 High throughput Synnovis. no UTRS TERT promoter
     "Pan5112",  # TSO500 High throughput BSPS. no UTRS TERT promoter
     "Pan5114",  # TSO500 High throughput Control. no UTRS TERT promoter
-    "Pan4042",  # STG VCP2 BRCA - TO BE REMOVED IN FUTURE UPDATE
-    "Pan4043",  # STG VCP3 - TO BE REMOVED IN FUTURE UPDATE
-    "Pan4044",  # STG VCP1 - TO BE REMOVED IN FUTURE UPDATE
-    "Pan4049",  # STG VCP2 CrCa - TO BE REMOVED IN FUTURE UPDATE
+    #"Pan4042",  # STG VCP2 BRCA - TO BE REMOVED IN FUTURE UPDATE
+    #"Pan4043",  # STG VCP3 - TO BE REMOVED IN FUTURE UPDATE
+    #"Pan4044",  # STG VCP1 - TO BE REMOVED IN FUTURE UPDATE
+    #"Pan4049",  # STG VCP2 CrCa - TO BE REMOVED IN FUTURE UPDATE
     "Pan4119",  # VCP1 Viapath R134 (FH)
     "Pan4121",  # VCP1 Viapath R184 (CF)
     "Pan4122",  # VCP1 Viapath R25 (FGFR)
@@ -549,7 +549,7 @@ vcp1_panel_list = [
     "Pan4122",
     "Pan4125",
     "Pan4126",
-    "Pan4044",
+    #"Pan4044",
     "Pan4821",
     "Pan4822",
     "Pan4823",
@@ -572,8 +572,8 @@ vcp2_panel_list = [
     "Pan4150",
     "Pan4129",
     "Pan4130",
-    "Pan4042",
-    "Pan4049",
+    #"Pan4042",
+    #"Pan4049",
     "Pan4816",
     "Pan4817",
     "Pan4819",
@@ -599,7 +599,7 @@ vcp3_panel_list = [
     "Pan4145",
     "Pan4146",
     "Pan4151",
-    "Pan4043",
+    #"Pan4043",
     "Pan4314",
     "Pan4351",
     "Pan4387",
@@ -847,7 +847,7 @@ panel_settings = {
         "RPKM_also_analyse": vcp1_panel_list,
         "hsmetrics_bedfile": "Pan4397data.bed",
         "sambamba_bedfile": "Pan4397dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4398data.bed",
+        "variant_calling_bedfile": "Pan4398data.bed", # CNV not required
     },
     "Pan4125": {  # VCP1 R73 DMD (Viapath)
         "mokapipe": True,
@@ -858,7 +858,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4397data.bed",
         "sambamba_bedfile": "Pan4397dataSambamba.bed",
         "variant_calling_bedfile": "Pan4398data.bed",
-        "exome_depth_cnvcalling_BED": "Pan5135"
+        "exome_depth_cnvcalling_BED": "Pan4622"
     },
     "Pan4126": {  # VCP1 R337_CADASIL Viapath
         "mokapipe": True,
@@ -868,8 +868,7 @@ panel_settings = {
         "RPKM_also_analyse": vcp1_panel_list,
         "hsmetrics_bedfile": "Pan4397data.bed",
         "sambamba_bedfile": "Pan4397dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4398data.bed",
-        "exome_depth_cnvcalling_BED":  "Pan4549"
+        "variant_calling_bedfile": "Pan4398data.bed",# cnv not required
     },
     "Pan4974": {  # VCP1 Viapath (Molecular Haemostasis) R112
         "mokapipe": True,
@@ -1036,7 +1035,7 @@ panel_settings = {
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
         "variant_calling_bedfile": "Pan5119data.bed",
         "polyedge": "MSH2",
-        "exome_depth_cnvcalling_BED": "Pan5159"
+        "exome_depth_cnvcalling_BED": "Pan5160" # use R211 CNV bedfile
     },
     "Pan4130": {  # VCP2 R211 polyposis (Viapath)
         "mokapipe": True,
@@ -1103,7 +1102,7 @@ panel_settings = {
         "RPKM_also_analyse": vcp3_panel_list,
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4995data.bed",
+        "variant_calling_bedfile": "Pan4995data.bed", # CNV not required
     },
     "Pan4134": {  # VCP3 R57 (Viapath)
         "mokapipe": True,
@@ -1113,7 +1112,7 @@ panel_settings = {
         "RPKM_also_analyse": vcp3_panel_list,
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4995data.bed",
+        "variant_calling_bedfile": "Pan4995data.bed", # CNV not required
     },
     "Pan4136": {  # VCP3 R58 (Viapath)
         "mokapipe": True,
@@ -1123,7 +1122,7 @@ panel_settings = {
         "RPKM_also_analyse": vcp3_panel_list,
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4995data.bed",
+        "variant_calling_bedfile": "Pan4995data.bed",# CNV not required
     },
     "Pan4137": {  # VCP3 R60 (Viapath)
         "mokapipe": True,
@@ -1133,7 +1132,7 @@ panel_settings = {
         "RPKM_also_analyse": vcp3_panel_list,
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4995data.bed",
+        "variant_calling_bedfile": "Pan4995data.bed",# CNV not required
     },
     "Pan4138": {  # VCP3 R62 (Viapath)
         "mokapipe": True,
@@ -1143,7 +1142,7 @@ panel_settings = {
         "RPKM_also_analyse": vcp3_panel_list,
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4995data.bed",
+        "variant_calling_bedfile": "Pan4995data.bed",# CNV not required
     },
     "Pan4143": {  # VCP3 R66 (Viapath)
         "mokapipe": True,
@@ -1154,7 +1153,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        "exome_depth_cnvcalling_BED": "Pan5174"
+        # "exome_depth_cnvcalling_BED": "Pan5174" # CNV BED not yet available
     },
     "Pan4144": {  # VCP3 R78 (Viapath)
         "mokapipe": True,
@@ -1164,7 +1163,7 @@ panel_settings = {
         "RPKM_also_analyse": vcp3_panel_list,
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4995data.bed",
+        "variant_calling_bedfile": "Pan4995data.bed",# CNV not required
     },
     "Pan4145": {  # VCP3 R79 - CMD (Viapath)
         "mokapipe": True,
@@ -1196,7 +1195,7 @@ panel_settings = {
         "RPKM_also_analyse": vcp3_panel_list,
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "variant_calling_bedfile": "Pan4995data.bed",
+        "variant_calling_bedfile": "Pan4995data.bed",# CNV not required
     },
     "Pan4351": {  # VCP3 R227 (Viapath)
         "mokapipe": True,
@@ -1240,7 +1239,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        "exome_depth_cnvcalling_BED": "Pan5179",
+        # "exome_depth_cnvcalling_BED": "Pan5179", bedfile not yet made
     },
     "Pan4396": {  # ArcherDx (Synnovis)
         "archerdx": True,
@@ -1318,7 +1317,7 @@ panel_settings = {
         "variant_calling_bedfile": "Pan4398data.bed",
         "sambamba_bedfile": "Pan4397dataSambamba.bed",
         "STG": True,
-        "exome_depth_cnvcalling_BED": "Pan4703"
+        "exome_depth_cnvcalling_BED": "Pan4703",
     },
     "Pan4823": {  # VCP1 STG R25_FGFR
         "mokapipe": True,
@@ -1331,7 +1330,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4397data.bed",
         "variant_calling_bedfile": "Pan4398data.bed",
         "sambamba_bedfile": "Pan4397dataSambamba.bed",
-        "STG": True,
+        "STG": True, # CNV not required
     },
     "Pan4824": {  # VCP1 STG R73_DMD
         "mokapipe": True,
@@ -1345,7 +1344,7 @@ panel_settings = {
         "variant_calling_bedfile": "Pan4398data.bed",
         "sambamba_bedfile": "Pan4397dataSambamba.bed",
         "STG": True,
-        "exome_depth_cnvcalling_BED": "Pan5135"
+        "exome_depth_cnvcalling_BED": "Pan4622"
     },
     "Pan4825": {  # VCP1 STG R337_cadasil
         "mokapipe": True,
@@ -1358,8 +1357,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4397data.bed",
         "variant_calling_bedfile": "Pan4398data.bed",
         "sambamba_bedfile": "Pan4397dataSambamba.bed",
-        "STG": True,
-        "exome_depth_cnvcalling_BED": "Pan4549"
+        "STG": True,# CNV not required
     },
     "Pan4826": {  # VCP3 STG R56
         "mokapipe": True,
@@ -1371,7 +1369,7 @@ panel_settings = {
         "congenica_project": "4201",
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",# CNV not required
     },
     "Pan4827": {  # VCP3 STG R57
         "mokapipe": True,
@@ -1383,7 +1381,7 @@ panel_settings = {
         "congenica_project": "4201",
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",# CNV not required
     },
     "Pan4828": {  # VCP3 STG R58
         "mokapipe": True,
@@ -1395,7 +1393,7 @@ panel_settings = {
         "congenica_project": "4201",
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",# CNV not required
     },
     "Pan4829": {  # VCP3 STG R60
         "mokapipe": True,
@@ -1407,7 +1405,7 @@ panel_settings = {
         "congenica_project": "4201",
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",# CNV not required
     },
     "Pan4830": {  # VCP3 STG R62
         "mokapipe": True,
@@ -1419,7 +1417,7 @@ panel_settings = {
         "congenica_project": "4201",
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",# CNV not required
     },
     "Pan4831": {  # VCP3 STG R66
         "mokapipe": True,
@@ -1432,7 +1430,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "exome_depth_cnvcalling_BED": "Pan5174"
+        # "exome_depth_cnvcalling_BED": "Pan5174" BEDfile not yet available
     },
     "Pan4832": {  # VCP3 STG R78
         "mokapipe": True,
@@ -1444,7 +1442,7 @@ panel_settings = {
         "congenica_project": "4201",
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",# CNV not required
     },
     "Pan4833": {  # VCP3 STG R79
         "mokapipe": True,
@@ -1457,7 +1455,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "exome_depth_cnvcalling_BED": "Pan5168"
+        "exome_depth_cnvcalling_BED": "Pan5168",
     },
     "Pan4834": {  # VCP3 STG R81
         "mokapipe": True,
@@ -1482,7 +1480,7 @@ panel_settings = {
         "congenica_project": "4201",
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        "sambamba_bedfile": "Pan4995dataSambamba.bed",
+        "sambamba_bedfile": "Pan4995dataSambamba.bed",# CNV not required
     },
     "Pan4836": {  # VCP3 STG R229
         "mokapipe": True,
@@ -1495,7 +1493,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        "exome_depth_cnvcalling_BED": "Pan5179"
+        #"exome_depth_cnvcalling_BED": "Pan5179" BEDfile not yet available
     },
     "Pan4819": {  # VCP2 STG R210
         "mokapipe": True,
@@ -1509,7 +1507,7 @@ panel_settings = {
         "variant_calling_bedfile": "Pan5119data.bed",
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
         "polyedge": "MSH2",
-        "exome_depth_cnvcalling_BED": "Pan5159"
+        "exome_depth_cnvcalling_BED": "Pan5160" # useR211 bedfile
     },
     "Pan4820": {  # VCP2 STG R211
         "mokapipe": True,
