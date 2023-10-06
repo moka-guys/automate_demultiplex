@@ -149,11 +149,11 @@ class RunfolderProcessor(object):
         self.list_of_processed_samples = []
 
         # DNA Nexus commands to be built on later
-        self.source_command = "#!/bin/bash\n. %s\n" % (
+        self.source_command = "#!/bin/bash\n. %s" % (
             config.sdk_source_cmd
         )
-        self.empty_depends = "depends_list=''\n"
-        self.empty_gatk_depends = "depends_list_gatk=''\n"
+        self.empty_depends = "depends_list=''"
+        self.empty_gatk_depends = "depends_list_gatk=''"
         self.createprojectcommand = 'project_id="$(dx new project --bill-to %s "%s" --brief --auth-token %s)"\n'
         self.mokapipe_command = (
             "jobid=$(dx run %s%s --priority high -y --name "
@@ -893,7 +893,7 @@ class RunfolderProcessor(object):
         # open bash script
         with open(self.project_bash_script_path, "w") as project_script:
             project_script.write(self.source_command + "\n")
-            project_script.write(self.empty_depends)
+            project_script.write(self.empty_depends + "\n")
             project_script.write(
                 self.createprojectcommand
                 % (
@@ -1492,6 +1492,11 @@ class RunfolderProcessor(object):
 
                 # If panel is to be processed using mokapipe
                 if self.panel_dictionary[panel]["mokapipe"]:
+                    commands_list.append("#For each sample there are 5 lines of commands. The dx run command for the workflow. and the jobid is then added to two depends_on lists.")
+                    commands_list.append("#The gatk depends on list is used for apps that only need to wait for the individual sample processes to finish (eg cnv calling")
+                    commands_list.append("#The depends_on list is used for jobs that also require run wide jobs to finish (eg peddy)")
+                    commands_list.append("#The 4th line passes the jobid to decision_support_tool_inputs.py which returns some inputs for the congenica upload command")
+                    commands_list.append("#The 5th line uses this output and echos the dx run command to a bash script to be run after QC is checked")
                     # call function to build the Mokapipe command and add to command list and depends list
                     commands_list.append(
                         self.create_mokapipe_command(fastq, panel)
@@ -1551,11 +1556,14 @@ class RunfolderProcessor(object):
             commands_list.append(self.add_to_depends_list("peddy", 'depends_list'))
         
         if exome_depth:
+            commands_list.append("# Exome depth is run once per capture and then once per Pan number within that capture")
             # exome depth is run once per capture, and then for each capture, one per pannumber. This function returns a list of commands so need to add these to commands list
             for cmd in self.determine_exome_depth_requirements(pannnumber_list):
                 commands_list.append(cmd)
 
         if TSO500:
+            commands_list.append("#The TSOapp is set off first. This utilises the --wait flag, so the bash script waits until this job finishes before running the coverage, hap.py and fastqc commands using the samplesheet to determine expected files and thier locations ")
+            commands_list.append("#All jobs apart from control samples are added to the depends on list used to delay multiqc")
             # build command for the TSO500 app and set off fastqc commands
             commands_list.append(self.create_tso500_command())
             commands_list.append(self.add_to_depends_list("TSO500", 'depends_list'))
@@ -2227,6 +2235,7 @@ class RunfolderProcessor(object):
         # return list to be used to build rpkm command(s).
         return cleaned_list
 
+    # TODO set this up so it only runs the RPKM app if there are enough samples files (minimum 3 required by the app)
     def create_rpkm_command(self, pannumber):
         """
         Input = Pannumber for a single RPKM analysis
@@ -2993,13 +3002,7 @@ class RunfolderProcessor(object):
         Returns = filepath to the logfile containing output from the command, string of files to be uploaded and name of the stage to test
         """
         # define where files to be uploaded to
-        nexus_upload_folder = (
-            "/"
-            + self.runfolder_obj.nexus_project_name.replace(
-                self.nexusproject, ""
-            )
-            + "/Logfiles/"
-        )
+        nexus_upload_folder = ("/%s/Logfiles/" % ("_".join(self.runfolder_obj.nexus_project_name.split("_")[1:])))
         # create a list of files to be used to check outputs
         files_to_upload_list = []
         # create a space delimited string of files to be uploaded defined by the logger class
