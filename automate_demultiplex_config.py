@@ -170,9 +170,9 @@ multiqc_path = "Apps/multiqc_v1.18.0"
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
 congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
 
-# TSO500 app
+# TSO500 app TODO update to new version of app v1.6.0
 tso500_app = "applet-GPgkz0j0jy1Yf4XxkXjVgKfv"  # Apps/TSO500_v1.5.1
-tso500_app_name = "TSO500_v1.5.1"
+tso500_app_name = "TSO500_v1.6.0"
 tso500_docker_image = (
     "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
 )
@@ -383,6 +383,7 @@ TSO500_docker_image_stage = " -iTSO500_ruo="
 TSO500_samplesheet_stage = " -isamplesheet="
 TSO500_analysis_options_stage = " -ianalysis_options="
 TSO500_project_name_stage = " -iproject_name="
+TSO500_runfolder_name_stage = " -irunfolder_name="
 
 # app instance types
 TSO500_analysis_instance_high_throughput = "mem1_ssd1_v2_x72"
@@ -639,7 +640,7 @@ tso500_panel_list = [
     "Pan5085",
     "Pan5112",
     "Pan5114",
-]  # note the settings from the first item in this list are used when setting off the TSO500_output_parser commands.
+]  
 
 
 default_panel_properties = {

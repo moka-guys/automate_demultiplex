@@ -114,6 +114,7 @@ class RunfolderObject(object):
             + self.runfolder_name
             + "_congenica_upload_commands.sh"
         )
+        #TODO copy lines above to create separate dx run commands output script for TSO (to be run by duty binfx)
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
@@ -147,6 +148,9 @@ class RunfolderProcessor(object):
 
         # list of fastqs to get ngs run number and WES batch
         self.list_of_processed_samples = []
+
+        #list of TSO samplesheets
+        self.TSO500_samplesheets_list = []
 
         # DNA Nexus commands to be built on later
         self.source_command = "#!/bin/bash\n. %s" % (
@@ -336,7 +340,7 @@ class RunfolderProcessor(object):
                 if TSO500_sample_list:
                     self.list_of_processed_samples, self.fastq_string = (
                         TSO500_sample_list,
-                        self.runfolder_obj.runfolder_samplesheet_path,
+                        self.runfolder_obj.runfolder_samplesheet_path, #TODO this sets the fastq_string to be the samplesheet path
                     )
 
                 else:
@@ -367,9 +371,12 @@ class RunfolderProcessor(object):
                         view_users_list, admin_users_list
                     ).rstrip()
                 )
+                # split tso samplesheet and write split versions to the runfolder
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks files were uploaded without error
                 if TSO500_sample_list:
+                    # split TSO samplesheet  to multiple sheets with <=16 samples/sheet
+                    self.TSO500_samplesheets_list = self.split_tso500_sampleheet():
                     backup_attempt_count = 1
                     while backup_attempt_count < 5:
                         self.loggers.script.info(
@@ -385,6 +392,9 @@ class RunfolderProcessor(object):
                             # increase backup count
                             backup_attempt_count += 1
 
+                #upload fastqs. if TSO500 run, this uploads the samplesheet to the project root
+                #TODO make this an else for the above if TSO500_sample_list. then split and upload TSO samplesheets separately.
+                # TODO check whether upload_fastqs() output or related variables are used elsewhere
                 self.look_for_upload_errors(self.upload_fastqs())
 
                 # upload cluster density files and check upload was successful.
@@ -623,6 +633,43 @@ class RunfolderProcessor(object):
         if sample_list:
             open(self.loggers.upload_agent.filepath, "w").close()
         return sample_list
+
+    def split_tso500_sampleheet(self):
+        """
+        take TSO500 samplesheet and split in to parts with <=16 samples/sheet
+        write samplesheets to runfolder
+        return list of samplesheet paths? or just names (if they're saved in the runfolder, 
+            they'll be uploaded to DNAnexus, can access from there for dx run cmds)
+        """
+        # samplesheet in the runfolder
+        samplesheet_file = self.runfolder_samplesheet_name
+        # Read all lines from the sample sheet
+        with open(samplesheet_file) as samplesheet:
+            all_lines = samplesheet.readlines()
+
+        # Separate header from samples. TSO samplesheet header is the first 25 lines of the file
+        samplesheet_header = all_lines[:25]
+        # sample lines start with "TSO". This excludes empty lines below the samples list, i.e. lines containing ",,,,,,,"
+        samples = [sample for sample in all_lines[25:] if sample.startswith("TSO")]
+
+        # Split samples into batches of 16
+        batches = [samples[i:i + 16] for i in range(0, len(samples), 16)]
+        
+        # Write batches to separate files named "PartXofY", and add samplesheet to list
+        samplesheet_list = []
+        number_of_batches = len(batches)
+        samplesheet_base_name = samplesheet_file.split(".csv")[0]
+        for samplesheet_count, batch in enumerate(batches, start=1):
+            #capture samplesheet file path to write samplesheet paths to the runfolder
+            samplesheet_filename = "%sPart%sof%s.csv" % (samplesheet_base_name,samplesheet_count,number_of_batches)
+            # capture samplesheet name to write to list- use runfolder name
+            samplesheet_name = "%s_SampleSheetPart%sof%s.csv" % (self.runfolder_obj.runfolder_name,samplesheet_count,number_of_batches)
+            samplesheet_list.append(samplesheet_name)
+            with open(samplesheet_filename, "a") as new_samplesheet:
+                new_samplesheet.writelines(samplesheet_header)
+                new_samplesheet.writelines(batch)
+
+        return(samplesheet_list)
 
     def check_for_development_run(self):
         """
@@ -1562,10 +1609,14 @@ class RunfolderProcessor(object):
                 commands_list.append(cmd)
 
         if TSO500:
-            commands_list.append("#The TSOapp is set off first. This utilises the --wait flag, so the bash script waits until this job finishes before running the coverage, hap.py and fastqc commands using the samplesheet to determine expected files and thier locations ")
+            commands_list.append("#The TSOapp is set off first. This utilises the --wait flag, so the bash script waits until this job finishes before running the coverage, hap.py and fastqc commands using the samplesheet to determine expected files and their locations ")
             commands_list.append("#All jobs apart from control samples are added to the depends on list used to delay multiqc")
             # build command for the TSO500 app and set off fastqc commands
-            commands_list.append(self.create_tso500_command())
+            # TODO add for loop here to loop through samplesheets and write command for each
+            for samplesheet in self.TSO500_samplesheets_list:
+                commands_list.append(self.create_tso500_command(samplesheet))
+            
+            # TODO modify this to handle creating separate file for TSO commands
             commands_list.append(self.add_to_depends_list("TSO500", 'depends_list'))
             
             # For TSO samples, the fastqs are created within DNAnexus and the
@@ -1806,7 +1857,7 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_tso500_command(self):
+    def create_tso500_command(self,samplesheet):
         """
         Build dx run command for tso500 docker app.
         Will assess if it's a novaseq or not from the runfoldername and if it's
@@ -1852,6 +1903,7 @@ class RunfolderProcessor(object):
         ## docker image (from config)
         ## runfolder_tar and samplesheet paths (from runfolder_obj class)
         ## analysis options eg --isNovaSeq flag
+        # TODO modify for new way of setting off app. WAIT removed
         dx_command_list = [
             self.tso500_dx_command,  # ends with --name so supply the runfolder name to name the job
             self.runfolder_obj.runfolder_name,
@@ -1860,13 +1912,16 @@ class RunfolderProcessor(object):
             config.TSO500_samplesheet_stage,
             self.runfolder_obj.nexus_project_id
             + ":"
-            + self.runfolder_obj.runfolder_samplesheet_name,
+            + self.#TODO not sure if this will work...find runfolder name in DNAnexus project
+            + "/"
+            + samplesheet
             config.TSO500_project_name_stage,
             self.runfolder_obj.nexus_project_name,
+            config.TSO500_runfolder_name_stage, #TODO take this out again?
+            self.#find runfolder name in DNAnexus project
             config.TSO500_analysis_options_stage,
             TSO500_analysis_options,
             instance_type,
-            "--wait ",
             self.dest,
             self.dest_cmd,
             self.token,
