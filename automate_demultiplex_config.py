@@ -277,11 +277,11 @@ ED_readcount_path_instance_type = "mem1_ssd1_v2_x8"
 ED_cnvcalling_path = "Apps/ED_cnv_calling_v1.2.0"
 ED_cnvcalling_instance_type = "mem1_ssd1_v2_x4"
 #VCP1 exome depth
-ED_readcount_normals_VCP1_file= "project-ByfFPz00jy1fk6PjpZ95F27J:file-GZ47PPj0xygQ8z3z8yQK1qJF"#"Pan5134_normals_v1.0.0.RData"
-ED_VCP1_readcount_BEDfile_pannum = "Pan5134_exomedepth.bed" 
+ED_readcount_normals_VCP1_file= "project-ByfFPz00jy1fk6PjpZ95F27J:file-GZYK6380f66PPy4kjzVQ7xj8"#"Pan5191_normals_v1.0.0.RData"
+ED_VCP1_readcount_BEDfile_pannum = "Pan5191_exomedepth.bed" 
 #VCP2 normals data file
-ED_readcount_normals_VCP2_file="project-ByfFPz00jy1fk6PjpZ95F27J:file-GZ8ybG00bx11vq9fXP1j7QQK"#"Pan5132_normals_v1.0.0.RData"
-ED_VCP2_readcount_BEDfile_pannum = "Pan5132_exomedepth.bed" 
+ED_readcount_normals_VCP2_file="project-ByfFPz00jy1fk6PjpZ95F27J:file-GZYbq400YG627Q12g1bbP440"#"Pan5188_normals_v1.0.0.RData"
+ED_VCP2_readcount_BEDfile_pannum = "Pan5188_exomedepth.bed" 
 #VCP3 normals data file
 ED_readcount_normals_VCP3_file=None#"Pan5149_normals_v1.0.0.RData"
 ED_VCP3_readcount_BEDfile_pannum = "Pan5149_exomedepth.bed" 
@@ -1035,7 +1035,7 @@ panel_settings = {
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
         "variant_calling_bedfile": "Pan5119data.bed",
         "polyedge": "MSH2",
-        "exome_depth_cnvcalling_BED": "Pan5160" # use R211 CNV bedfile
+        "exome_depth_cnvcalling_BED": "Pan5193" # use R211 CNV bedfile
     },
     "Pan4130": {  # VCP2 R211 polyposis (Viapath)
         "mokapipe": True,
@@ -1047,7 +1047,7 @@ panel_settings = {
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
         "variant_calling_bedfile": "Pan5119data.bed",
         "polyedge": "MSH2",
-        "exome_depth_cnvcalling_BED": "Pan5160"
+        "exome_depth_cnvcalling_BED": "Pan5193"
     },
     "Pan5186": {  # VCP2 R414 APC (Viapath)
         "mokapipe": True,
@@ -1507,7 +1507,7 @@ panel_settings = {
         "variant_calling_bedfile": "Pan5119data.bed",
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
         "polyedge": "MSH2",
-        "exome_depth_cnvcalling_BED": "Pan5160" # useR211 bedfile
+        "exome_depth_cnvcalling_BED": "Pan5193" # useR211 bedfile
     },
     "Pan4820": {  # VCP2 STG R211
         "mokapipe": True,
@@ -1521,7 +1521,7 @@ panel_settings = {
         "variant_calling_bedfile": "Pan5119data.bed",
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
         "polyedge": "MSH2",
-        "exome_depth_cnvcalling_BED": "Pan5160"
+        "exome_depth_cnvcalling_BED": "Pan5193"
     },
     "Pan5185": {  # VCP2 STG R414
         "mokapipe": True,
