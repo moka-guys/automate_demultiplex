@@ -56,6 +56,12 @@ demultiplex_test_folder = [
     "999999_A01229_0182_AHM2TSO500",
 ]
 
+# TSO500 batch size (for splitting samplesheet)
+if testing:
+    batch_size = 2
+else:
+    batch_size = 16
+
 # path to log file which records the output of the upload agent
 upload_and_setoff_workflow_logfile = (
     "{document_root}/automate_demultiplexing_logfiles/upload_agent_script_logfiles/"
@@ -134,7 +140,7 @@ archerDx_pipeline_ID = "5238"
 # MokaSNP ID
 mokasnp_pipeline_ID = "5091"
 # TSO500 pipeline ID
-TSO_pipeline_ID = "5237"
+TSO_pipeline_ID = "5288" #TSO v1.6
 
 # -- Moka WES test status--
 # Test Status = NextSEQ sequencing
@@ -170,8 +176,8 @@ multiqc_path = "Apps/multiqc_v1.18.0"
 congenica_app_path = "Apps/congenica_upload_v1.3.2"
 congenica_SFTP_upload_app = "applet-GFfJpj80jy1x1Bz1P1Bk3vQf"
 
-# TSO500 app TODO update to new version of app v1.6.0
-tso500_app = "applet-GPgkz0j0jy1Yf4XxkXjVgKfv"  # Apps/TSO500_v1.5.1
+# TSO500 app 
+tso500_app = "applet-GZgv0Jj0jy1Yfbx3QvqyKjzp"  # Apps/TSO500_v1.6.0
 tso500_app_name = "TSO500_v1.6.0"
 tso500_docker_image = (
     "project-ByfFPz00jy1fk6PjpZ95F27J:file-Fz9Zyx00b5j8xKVkKv4fZ6JB"
@@ -1256,7 +1262,7 @@ panel_settings = {
     },
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
         "TSO500": True,
-        "sambamba_bedfile": "Pan5130dataSambamba.bed",
+        "sambamba_bedfile": "Pan5205dataSambamba.bed",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1265,7 +1271,7 @@ panel_settings = {
     "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
         "TSO500": True,
         "TSO500_high_throughput": True,
-        "sambamba_bedfile": "Pan5130dataSambamba.bed",
+        "sambamba_bedfile": "Pan5205dataSambamba.bed",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1274,7 +1280,7 @@ panel_settings = {
     "Pan5112": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
         "TSO500": True,
         "TSO500_high_throughput": True,
-        "sambamba_bedfile": "Pan5130dataSambamba.bed",
+        "sambamba_bedfile": "Pan5205dataSambamba.bed",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1284,7 +1290,7 @@ panel_settings = {
     "Pan5114": {  # TSO500 High throughput Control. no UTRs. TERT promoter
         "TSO500": True,
         "TSO500_high_throughput": True,
-        "sambamba_bedfile": "Pan5130dataSambamba.bed",
+        "sambamba_bedfile": "Pan5205dataSambamba.bed",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
         "coverage_min_basecall_qual": 25,
@@ -1765,7 +1771,7 @@ polyedge_inputs = {
 }
 
 duty_csv_id = (
-    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GQg9J280jy1Zf79KGx9gk5K3"
+    "project-ByfFPz00jy1fk6PjpZ95F27J:applet-GZYx3Kj0kKj3YBV7qgK6VjXQ"
 )
 duty_csv_inputs = {
     # tso_pannumbers should not include the dry lab pan number
