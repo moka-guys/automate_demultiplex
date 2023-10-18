@@ -381,7 +381,7 @@ class RunfolderProcessor(object):
                 # pass path to function which checks files were uploaded without error
                 if TSO500_sample_list:
                     # split TSO samplesheet  to multiple sheets with <=16 samples/sheet
-                    self.TSO500_samplesheets_list = self.split_TSO500_sampleheet()
+                    self.TSO500_samplesheets_list = self.split_TSO500_samplesheet()
                     backup_attempt_count = 1
                     while backup_attempt_count < 5:
                         self.loggers.script.info(
@@ -637,7 +637,7 @@ class RunfolderProcessor(object):
             open(self.loggers.upload_agent.filepath, "w").close()
         return sample_list
 
-    def split_TSO500_sampleheet(self):
+    def split_TSO500_samplesheet(self):
         """
         take TSO500 samplesheet and split in to parts with <=16 samples/sheet
         write samplesheets to runfolder
@@ -657,6 +657,8 @@ class RunfolderProcessor(object):
         samples = [sample for sample in all_lines[25:] if sample.startswith("TSO")]
 
         # Split samples into batches (size specified in config)
+        # batches is a list of lists, where each list is a subset of the samples from the samplesheet
+        # e.g. if batch_size=16, each list will contain up to 16 samples
         batches = [samples[i:i + config.batch_size] for i in range(0, len(samples), config.batch_size)]
         
         # Write batches to separate files named "PartXofY", and add samplesheet to list
