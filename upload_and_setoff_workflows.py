@@ -647,14 +647,36 @@ class RunfolderProcessor(object):
         # samplesheet in the runfolder
         samplesheet_file = os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name)
         
+        samplesheet_header = []
+        samples = []
+        no_sample_lines = 0
+        expected_data_headers = ["Sample_ID", "Sample_Name", "index"]
+
         # Read all lines from the sample sheet
         with open(samplesheet_file) as samplesheet:
-            all_lines = samplesheet.readlines()
+            for line in reversed(samplesheet.readlines()):
+                # stop when get to data headers section
+                if any(header in line for header in expected_data_headers):
+                    break
+                # skip empty lines (check first element of the line, after splitting on comma)
+                elif len(line.split(",")[0]) < 2:
+                    pass
+                        # If its a line containing a sample::
+                elif line.startswith("TSO"):
+                    samples.append(line)
+                    no_sample_lines += 1
+        # get header
+        with open(samplesheet_file) as samplesheet:
+            for line in samplesheet.readlines():
+                # stop when get to data headers section- add header line to header then break
+                if any(header in line for header in expected_data_headers):
+                    samplesheet_header.append(line)
+                    break
+                else:
+                    samplesheet_header.append(line)
 
-        # Separate header from samples. TSO samplesheet header is the first 25 lines of the file
-        samplesheet_header = all_lines[:25]
-        # sample lines start with "TSO". This excludes empty lines below the samples list, i.e. lines containing ",,,,,,,"
-        samples = [sample for sample in all_lines[25:] if sample.startswith("TSO")]
+        # reverse samples list to get back in correct order (starting at sample 1)
+        samples.reverse()
 
         # Split samples into batches (size specified in config)
         # batches is a list of lists, where each list is a subset of the samples from the samplesheet
@@ -1676,23 +1698,23 @@ class RunfolderProcessor(object):
             TSOcommands_list.append(
                 self.create_fastqc_command(sample)
             )
-        # Only add to depends_list if job ID from previous command
-        # is not empty
-        TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
-
-        TSOcommands_list.append(self.create_sambamba_cmd(sample, pannumber))
-        # Exclude negative controls from the depends list as the NTC
-        # coverage calculation can often fail. We want the coverage
-        # report for the NTC sample to help assess contamination.
-        # Only add to depends_list if job ID from previous command
-        # is not empty
-        TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
-
-        if "HD200" in sample:
-            TSOcommands_list.append(self.create_sompy_cmd(sample, pannumber))
             # Only add to depends_list if job ID from previous command
             # is not empty
-            TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list("sompy", 'depends_list'))
+            TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
+
+            TSOcommands_list.append(self.create_sambamba_cmd(sample, pannumber))
+            # Exclude negative controls from the depends list as the NTC
+            # coverage calculation can often fail. We want the coverage
+            # report for the NTC sample to help assess contamination.
+            # Only add to depends_list if job ID from previous command
+            # is not empty
+            TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
+
+            if "HD200" in sample:
+                TSOcommands_list.append(self.create_sompy_cmd(sample, pannumber))
+                # Only add to depends_list if job ID from previous command
+                # is not empty
+                TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list("sompy", 'depends_list'))
 
         TSOcommands_list.append(self.create_upload_multiqc_command(TSO500))
         TSOcommands_list.append(self.add_to_depends_list("UploadMultiQC", 'depends_list'))
