@@ -1701,6 +1701,7 @@ class RunfolderProcessor(object):
             # Only add to depends_list if job ID from previous command
             # is not empty
             TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
+            TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
 
             TSOcommands_list.append(self.create_sambamba_cmd(sample, pannumber))
             # Exclude negative controls from the depends list as the NTC
@@ -1709,17 +1710,24 @@ class RunfolderProcessor(object):
             # Only add to depends_list if job ID from previous command
             # is not empty
             TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
+            TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
 
             if "HD200" in sample:
                 TSOcommands_list.append(self.create_sompy_cmd(sample, pannumber))
                 # Only add to depends_list if job ID from previous command
                 # is not empty
                 TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list("sompy", 'depends_list'))
-
+                TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
+        
+        TSOcommands_list.append(self.create_multiqc_command())
+        TSOcommands_list.append(self.add_to_depends_list("MultiQC", 'depends_list'))
+        TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
         TSOcommands_list.append(self.create_upload_multiqc_command(TSO500))
         TSOcommands_list.append(self.add_to_depends_list("UploadMultiQC", 'depends_list'))
+        TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
 
         TSOcommands_list.append(self.create_duty_csv_command())
+        TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
 
         with open(
             self.runfolder_obj.TSO500_post_run_command_script, "w"
