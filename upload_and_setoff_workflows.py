@@ -119,7 +119,7 @@ class RunfolderObject(object):
             + self.runfolder_name
             + "_TSO_post_run_commands.sh"
         )
-        #TODO copy lines above to create separate dx run commands output script for TSO (to be run by duty binfx)
+        
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
@@ -639,10 +639,9 @@ class RunfolderProcessor(object):
 
     def split_TSO500_samplesheet(self):
         """
-        take TSO500 samplesheet and split in to parts with <=16 samples/sheet
+        take TSO500 samplesheet and split in to parts with x samples per samplesheet (x defined in config.batch_size)
         write samplesheets to runfolder
-        return list of samplesheet paths? or just names (if they're saved in the runfolder, 
-            they'll be uploaded to DNAnexus, can access from there for dx run cmds)
+        returns: list of samplesheet names
         """
         # samplesheet in the runfolder
         samplesheet_file = os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name)
@@ -1793,6 +1792,7 @@ class RunfolderProcessor(object):
                 command_list.append(self.build_ED_cnv_calling_cmd(panel))
 
         return command_list
+    
     def build_ED_readcount_cmd(self,pannumber_list, normals_file,readcount_bedfile_pannum):
         """
         This function builds the dx run command for the exome depth readcount app
@@ -2360,7 +2360,7 @@ class RunfolderProcessor(object):
         # return list to be used to build rpkm command(s).
         return cleaned_list
 
-    # TODO set this up so it only runs the RPKM app if there are enough samples files (minimum 3 required by the app)
+
     def create_rpkm_command(self, pannumber):
         """
         Input = Pannumber for a single RPKM analysis
