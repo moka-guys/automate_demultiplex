@@ -644,7 +644,7 @@ class RunfolderProcessor(object):
         returns: list of samplesheet names
         """
         # samplesheet in the runfolder
-        samplesheet_file = os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name)
+        samplesheet_file = self.runfolder_obj.runfolder_samplesheet_path
         
         samplesheet_header = []
         samples = []
@@ -685,7 +685,9 @@ class RunfolderProcessor(object):
         # Write batches to separate files named "PartXofY", and add samplesheet to list
         samplesheet_list = []
         number_of_batches = len(batches)
-        samplesheet_base_name = samplesheet_file.split(".csv")[0]
+        #capture path for samplesheet in runfolder
+        runfolder_samplesheet_file = samplesheet_file = os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name)
+        samplesheet_base_name = runfolder_samplesheet_file.split(".csv")[0]
         for samplesheet_count, batch in enumerate(batches, start=1):
             #capture samplesheet file path to write samplesheet paths to the runfolder
             samplesheet_filepath = "%sPart%sof%s.csv" % (samplesheet_base_name,samplesheet_count,number_of_batches)
