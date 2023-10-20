@@ -686,7 +686,7 @@ class RunfolderProcessor(object):
         samplesheet_list = []
         number_of_batches = len(batches)
         #capture path for samplesheet in runfolder
-        runfolder_samplesheet_file = samplesheet_file = os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name)
+        runfolder_samplesheet_file = os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name)
         samplesheet_base_name = runfolder_samplesheet_file.split(".csv")[0]
         for samplesheet_count, batch in enumerate(batches, start=1):
             #capture samplesheet file path to write samplesheet paths to the runfolder
@@ -1568,11 +1568,6 @@ class RunfolderProcessor(object):
 
                 # If panel is to be processed using mokapipe
                 if self.panel_dictionary[panel]["mokapipe"]:
-                    commands_list.append("#For each sample there are 5 lines of commands. The dx run command for the workflow. and the jobid is then added to two depends_on lists.")
-                    commands_list.append("#The gatk depends on list is used for apps that only need to wait for the individual sample processes to finish (eg cnv calling")
-                    commands_list.append("#The depends_on list is used for jobs that also require run wide jobs to finish (eg peddy)")
-                    commands_list.append("#The 4th line passes the jobid to decision_support_tool_inputs.py which returns some inputs for the congenica upload command")
-                    commands_list.append("#The 5th line uses this output and echos the dx run command to a bash script to be run after QC is checked")
                     # call function to build the Mokapipe command and add to command list and depends list
                     commands_list.append(
                         self.create_mokapipe_command(fastq, panel)
