@@ -114,6 +114,12 @@ class RunfolderObject(object):
             + self.runfolder_name
             + "_congenica_upload_commands.sh"
         )
+        self.TSO500_post_run_command_script = (
+            config.DNA_Nexus_workflow_logfolder
+            + self.runfolder_name
+            + "_TSO_post_run_commands.sh"
+        )
+        
         self.nexus_project_name = ""
         self.nexus_path = ""
         self.nexus_project_id = ""
@@ -148,12 +154,15 @@ class RunfolderProcessor(object):
         # list of fastqs to get ngs run number and WES batch
         self.list_of_processed_samples = []
 
+        #list of TSO samplesheets
+        self.TSO500_samplesheets_list = []
+
         # DNA Nexus commands to be built on later
-        self.source_command = "#!/bin/bash\n. %s\n" % (
+        self.source_command = "#!/bin/bash\n. %s" % (
             config.sdk_source_cmd
         )
-        self.empty_depends = "depends_list=''\n"
-        self.empty_gatk_depends = "depends_list_gatk=''\n"
+        self.empty_depends = "depends_list=''"
+        self.empty_gatk_depends = "depends_list_gatk=''"
         self.createprojectcommand = 'project_id="$(dx new project --bill-to %s "%s" --brief --auth-token %s)"\n'
         self.mokapipe_command = (
             "jobid=$(dx run %s%s --priority high -y --name "
@@ -200,6 +209,14 @@ class RunfolderProcessor(object):
             "jobid=$(dx run %s%s --priority high -y --instance-type mem1_ssd1_v2_x8"
             % (config.app_project, config.RPKM_path)
         )
+        self.ED_readcount_command = (
+            "EDjobid=$(dx run %s%s --priority high -y --instance-type %s"
+            % (config.app_project, config.ED_readcount_path, config.ED_readcount_path_instance_type)
+        )
+        self.ED_cnvcalling_command = (
+            "jobid=$(dx run %s%s --priority high -y --instance-type %s"
+            % (config.app_project, config.ED_cnvcalling_path, config.ED_cnvcalling_instance_type)
+        )
         self.mokaamp_command = (
             "jobid=$(dx run %s%s --priority high -y --name "
             % (config.app_project, config.mokaamp_path)
@@ -244,6 +261,7 @@ class RunfolderProcessor(object):
 
         # arguments to capture jobids
         self.depends_list = 'depends_list="${depends_list} -d ${jobid} "'
+        self.depends_list_ED_readcount = 'depends_list="${depends_list} -d ${EDjobid} "'
         self.depends_list_gatk = 'depends_list_gatk="${depends_list_gatk} -d ${jobid} "'
         self.depends_list_recombined = 'depends_list="${depends_list} ${depends_list_gatk} "'
         # Argument to define depends_list only if the job ID exists
@@ -316,21 +334,25 @@ class RunfolderProcessor(object):
                 self.runfolder_obj.runfolderpath,
                 self.runfolder_obj.runfolder_name,
             )
-            # check for TSO500 run - this is not demultiplexed locally but the entire runfolder is uploaded
-            # read samplesheet to create a list of samples
-            TSO500_sample_list = self.check_for_TSO500()
-            # if not TSO500 will return None
-            if TSO500_sample_list:
-                self.list_of_processed_samples, self.fastq_string = (
-                    TSO500_sample_list,
-                    self.runfolder_obj.runfolder_samplesheet_path,
-                )
-
+            # check for development pan number. If found self.list_of_processed_sampels will be empty and no further processing will occur
+            if self.check_for_development_run():
+                self.loggers.script.info("development pan number identified in samplesheet. Stopping any further processing")
             else:
-                (
-                    self.list_of_processed_samples,
-                    self.fastq_string,
-                ) = self.find_fastqs(self.runfolder_obj.fastq_folder_path)
+                # check for TSO500 run - this is not demultiplexed locally but the entire runfolder is uploaded
+                # read samplesheet to create a list of samples
+                TSO500_sample_list = self.check_for_TSO500()
+                # if not TSO500 will return None
+                if TSO500_sample_list:
+                    self.list_of_processed_samples, self.fastq_string = (
+                        TSO500_sample_list,
+                        self.runfolder_obj.runfolder_samplesheet_path, #this sets the fastq_string to be the samplesheet path
+                    )
+
+                else:
+                    (
+                        self.list_of_processed_samples,
+                        self.fastq_string,
+                    ) = self.find_fastqs(self.runfolder_obj.fastq_folder_path)
 
             if self.list_of_processed_samples:
                 # build the project name using the WES batch and NGS run numbers
@@ -354,9 +376,12 @@ class RunfolderProcessor(object):
                         view_users_list, admin_users_list
                     ).rstrip()
                 )
+                # split tso samplesheet and write split versions to the runfolder
                 # build upload agent command for fastq upload and write stdout to ua_stdout_log
                 # pass path to function which checks files were uploaded without error
                 if TSO500_sample_list:
+                    # split TSO samplesheet  to multiple sheets with <=16 samples/sheet
+                    self.TSO500_samplesheets_list = self.split_TSO500_samplesheet()
                     backup_attempt_count = 1
                     while backup_attempt_count < 5:
                         self.loggers.script.info(
@@ -372,6 +397,7 @@ class RunfolderProcessor(object):
                             # increase backup count
                             backup_attempt_count += 1
 
+                #upload fastqs. if TSO500 run, this uploads the samplesheet to the project root
                 self.look_for_upload_errors(self.upload_fastqs())
 
                 # upload cluster density files and check upload was successful.
@@ -611,6 +637,103 @@ class RunfolderProcessor(object):
             open(self.loggers.upload_agent.filepath, "w").close()
         return sample_list
 
+    def split_TSO500_samplesheet(self):
+        """
+        take TSO500 samplesheet and split in to parts with x samples per samplesheet (x defined in config.batch_size)
+        write samplesheets to runfolder
+        returns: list of samplesheet names
+        """
+        # samplesheet in the runfolder
+        samplesheet_file = self.runfolder_obj.runfolder_samplesheet_path
+        
+        samplesheet_header = []
+        samples = []
+        no_sample_lines = 0
+        expected_data_headers = ["Sample_ID", "Sample_Name", "index"]
+
+        # Read all lines from the sample sheet
+        with open(samplesheet_file) as samplesheet:
+            for line in reversed(samplesheet.readlines()):
+                # stop when get to data headers section
+                if any(header in line for header in expected_data_headers):
+                    break
+                # skip empty lines (check first element of the line, after splitting on comma)
+                elif len(line.split(",")[0]) < 2:
+                    pass
+                        # If its a line containing a sample::
+                elif line.startswith("TSO"):
+                    samples.append(line)
+                    no_sample_lines += 1
+        # get header
+        with open(samplesheet_file) as samplesheet:
+            for line in samplesheet.readlines():
+                # stop when get to data headers section- add header line to header then break
+                if any(header in line for header in expected_data_headers):
+                    samplesheet_header.append(line)
+                    break
+                else:
+                    samplesheet_header.append(line)
+
+        # reverse samples list to get back in correct order (starting at sample 1)
+        samples.reverse()
+
+        # Split samples into batches (size specified in config)
+        # batches is a list of lists, where each list is a subset of the samples from the samplesheet
+        # e.g. if batch_size=16, each list will contain up to 16 samples
+        batches = [samples[i:i + config.batch_size] for i in range(0, len(samples), config.batch_size)]
+        
+        # Write batches to separate files named "PartXofY", and add samplesheet to list
+        samplesheet_list = []
+        number_of_batches = len(batches)
+        #capture path for samplesheet in runfolder
+        runfolder_samplesheet_file = os.path.join(self.runfolder_obj.runfolderpath, self.runfolder_obj.runfolder_samplesheet_name)
+        samplesheet_base_name = runfolder_samplesheet_file.split(".csv")[0]
+        for samplesheet_count, batch in enumerate(batches, start=1):
+            #capture samplesheet file path to write samplesheet paths to the runfolder
+            samplesheet_filepath = "%sPart%sof%s.csv" % (samplesheet_base_name,samplesheet_count,number_of_batches)
+            # capture samplesheet name to write to list- use runfolder name
+            samplesheet_name = "%s_SampleSheetPart%sof%s.csv" % (self.runfolder_obj.runfolder_name,samplesheet_count,number_of_batches)
+            samplesheet_list.append(samplesheet_name)
+            with open(samplesheet_filepath, "a") as new_samplesheet:
+                new_samplesheet.writelines(samplesheet_header)
+                new_samplesheet.writelines(batch)
+
+        return(samplesheet_list)
+
+    def check_for_development_run(self):
+        """
+        Read samplesheet looking for development pan number.
+        If pannumber where development_run is True is present add samplename to list
+        return sample_list (will return False if empty)
+        """
+        sample_list = []
+        # build list of development pan numbers
+        development_panel_list=[]
+        for pan in self.panel_dictionary.keys():
+            if self.panel_dictionary[pan]["development_run"]:
+                development_panel_list.append(pan)
+
+        with open(
+            self.runfolder_obj.runfolder_samplesheet_path, "r"
+        ) as samplesheet_stream:
+            # read the file into a list and loop through the list in reverse (bottom to top).
+            # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
+            for line in reversed(samplesheet_stream.readlines()):
+                if line.startswith("Sample_ID") or "[Data]" in line:
+                    break
+                # skip empty lines (check first element of the line, after splitting on comma)
+                elif len(line.split(",")[0]) < 2:
+                    pass
+                # if it's a line detailing a sample
+                else:
+                    for pannum in development_panel_list:
+                        if pannum in line:
+                            sample_list.append(line.split(",")[0])
+        # as it takes a long time before the upload create the file to stop further processing
+        if sample_list:
+            open(self.loggers.upload_agent.filepath, "w").close()
+        return sample_list
+    
     def calculate_cluster_density(self, runfolder_path, runfolder_name):
         """
         Inputs = runfolder name and runfolder path
@@ -846,7 +969,7 @@ class RunfolderProcessor(object):
         # open bash script
         with open(self.project_bash_script_path, "w") as project_script:
             project_script.write(self.source_command + "\n")
-            project_script.write(self.empty_depends)
+            project_script.write(self.empty_depends + "\n")
             project_script.write(
                 self.createprojectcommand
                 % (
@@ -1350,6 +1473,15 @@ class RunfolderProcessor(object):
                 + self.panel_dictionary[pannumber]["RPKM_bedfile_pan_number"]
                 + "_RPKM.bed"
             )
+        
+        if self.panel_dictionary[pannumber]["exome_depth_cnvcalling_BED"]:
+            bed_dict["exome_depth_cnvcalling_BED"] = (
+                config.app_project
+                + config.bedfile_folder
+                + self.panel_dictionary[pannumber]["exome_depth_cnvcalling_BED"]
+                + "_CNV.bed"
+            )
+
         return bed_dict
 
     def start_building_dx_run_cmds(self):
@@ -1377,6 +1509,8 @@ class RunfolderProcessor(object):
         congenica_upload = False
         joint_variant_calling = False  # not currently in use
         rpkm_list = []  # list for panels needing RPKM analysis
+        pannnumber_list= [] 
+        exome_depth = False
         TSO500 = False
 
         # loop through samples
@@ -1393,9 +1527,15 @@ class RunfolderProcessor(object):
             elif re.search(r"_R1_", fastq):
                 # extract Pan number and use this to determine which dx run commands are needed for the sample
                 panel = re.search(r"Pan\d+", fastq).group()
+                #create a list of all pan numbers in the run
+                pannnumber_list.append(panel)
                 # The order in which the modules are called here is important to ensure the order
                 # of dx run commands is correct. This affects which decision support tool data is sent to.
-
+                
+                # determine if exome depth is needed - the exact commands will be determined in the function which handles exome_depth commands
+                if self.panel_dictionary[panel]["exome_depth_cnvcalling_BED"]:
+                    exome_depth = True
+                
                 # If panel is to be processed using MokaWES
                 if self.panel_dictionary[panel]["mokawes"]:
                     # call function to build the MokaWES command and add to command list and depends list
@@ -1485,46 +1625,30 @@ class RunfolderProcessor(object):
             # to stop custom panels being analysed by peddy - may cause problems
             commands_list.append(self.run_peddy_command())
             commands_list.append(self.add_to_depends_list("peddy", 'depends_list'))
+        
+        if exome_depth:
+            commands_list.append("# Exome depth is run once per capture and then once per Pan number within that capture")
+            # exome depth is run once per capture, and then for each capture, one per pannumber. This function returns a list of commands so need to add these to commands list
+            for cmd in self.determine_exome_depth_requirements(pannnumber_list):
+                commands_list.append(cmd)
 
+        # write TSO commands if a TSO run.
         if TSO500:
-            # build command for the TSO500 app and set off fastqc commands
-            commands_list.append(self.create_tso500_command())
-            commands_list.append(self.add_to_depends_list("TSO500", 'depends_list'))
+            commands_list.append("#The TSOapp is set off once for each samplesheet made")
+            commands_list.append("#Other jobs must be set off manually by running the file once the pipeline has finished")
+            # build commands for the TSO500 app and set off fastqc commands (need a command per samplesheet)
+            for samplesheet in self.TSO500_samplesheets_list:
+                commands_list.append(self.create_tso500_command(samplesheet))
             
-            # For TSO samples, the fastqs are created within DNAnexus and the
-            # commands are generated using sample names parsed from the
-            # samplesheet. If for whatever reason those fastqs are not created
-            # by the DNAnexus app, the downstream job will not set off and
-            # therefore will produce no job ID to provide to the depends_list,
-            # which will create an error/ slack alert. To solve this problem,
-            # the job ID is only added to the depends list if it exits
-            for sample in self.list_of_processed_samples:
-                pannumber = re.search(r"Pan\d+", sample).group()
-                commands_list.append(
-                    self.create_fastqc_command(sample)
-                )
-                # Only add to depends_list if job ID from previous command
-                # is not empty
-                commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
-
-                commands_list.append(self.create_sambamba_cmd(sample, pannumber))
-                # Exclude negative controls from the depends list as the NTC
-                # coverage calculation can often fail. We want the coverage
-                # report for the NTC sample to help assess contamination.
-                # Only add to depends_list if job ID from previous command
-                # is not empty
-                commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
-
-                if "HD200" in sample:
-                    commands_list.append(self.create_sompy_cmd(sample, pannumber))
-                    # Only add to depends_list if job ID from previous command
-                    # is not empty
-                    commands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list("sompy", 'depends_list'))
-    
-        commands_list.append(self.create_multiqc_command())
-        commands_list.append(self.add_to_depends_list("MultiQC", 'depends_list'))
-        commands_list.append(self.create_upload_multiqc_command(TSO500))
-        commands_list.append(self.add_to_depends_list("UploadMultiQC", 'depends_list'))
+            self.build_TSO500_post_run_commands()
+        
+        # TSO500 multiqc commands are written to a separate file with a function called above
+        if not TSO500:
+            commands_list.append(self.create_multiqc_command())
+            commands_list.append(self.add_to_depends_list("MultiQC", 'depends_list'))
+            commands_list.append(self.create_upload_multiqc_command(TSO500))
+            commands_list.append(self.add_to_depends_list("UploadMultiQC", 'depends_list'))
+            
         # setoff the below commands later as they are not depended upon by 
         # MultiQC but are required for duty_csv
         if rpkm_list:
@@ -1536,9 +1660,198 @@ class RunfolderProcessor(object):
                 commands_list.append(self.add_to_depends_list("rpkm", 'depends_list'))
             commands_list.append(self.add_to_depends_list("depends", 'depends_list_recombined'))
 
-        commands_list.append(self.create_duty_csv_command())
+        if not TSO500:
+            commands_list.append(self.create_duty_csv_command())
 
         return commands_list
+
+    def build_TSO500_post_run_commands(self):
+        """
+        Function to build TSO500 commands to run after pipeline, i.e.
+        Fastqc, sambamba, sompy, multiqc, upload multiqc and duty_csv
+        Commands must be written to file _TSO_post_run_commands.sh 
+        which can be run manually once pipeline done.
+        For TSO samples, the fastqs are created within DNAnexus and the
+        commands are generated using sample names parsed from the
+        samplesheet. If for whatever reason those fastqs are not created
+        by the DNAnexus app, the downstream job will not set off and
+        therefore will produce no job ID to provide to the depends_list,
+        which will create an error/ slack alert. To solve this problem,
+        the job ID is only added to the depends list if it exits
+        """
+        # Update script log file to say what is being done.
+        self.loggers.script.info("Building dx run commands for TSO500 post pipeline processing")
+
+        # list to hold all commands.
+        TSO500 = True
+        TSOcommands_list = []
+        TSOcommands_list.append(self.source_command)
+        TSOcommands_list.append(self.empty_depends)
+        TSOcommands_list.append(self.empty_gatk_depends)
+
+        for sample in self.list_of_processed_samples:
+            pannumber = re.search(r"Pan\d+", sample).group()
+            TSOcommands_list.append(
+                self.create_fastqc_command(sample)
+            )
+            # Only add to depends_list if job ID from previous command
+            # is not empty
+            TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
+            TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
+
+            TSOcommands_list.append(self.create_sambamba_cmd(sample, pannumber))
+            # Exclude negative controls from the depends list as the NTC
+            # coverage calculation can often fail. We want the coverage
+            # report for the NTC sample to help assess contamination.
+            # Only add to depends_list if job ID from previous command
+            # is not empty
+            TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list(sample, 'depends_list'))
+            TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
+
+            if "HD200" in sample:
+                TSOcommands_list.append(self.create_sompy_cmd(sample, pannumber))
+                # Only add to depends_list if job ID from previous command
+                # is not empty
+                TSOcommands_list.append(self.if_jobid_exists_depends % self.add_to_depends_list("sompy", 'depends_list'))
+                TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
+        
+        TSOcommands_list.append(self.create_multiqc_command())
+        TSOcommands_list.append(self.add_to_depends_list("MultiQC", 'depends_list'))
+        TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
+        TSOcommands_list.append(self.create_upload_multiqc_command(TSO500))
+        TSOcommands_list.append(self.add_to_depends_list("UploadMultiQC", 'depends_list'))
+        TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
+
+        TSOcommands_list.append(self.create_duty_csv_command())
+        TSOcommands_list.append(self.if_jobid_exists_depends % ('echo ${jobid}'))
+
+        with open(
+            self.runfolder_obj.TSO500_post_run_command_script, "w"
+        ) as TSO500_commands:
+            # remove any None values from the command_list
+            TSO500_commands.writelines(
+                [line + "\n" for line in filter(None, TSOcommands_list)]
+            )
+
+        return TSOcommands_list
+
+    def determine_exome_depth_requirements(self,pannnumber_list):
+        """
+        This function takes a list of all pan numbers found on this run. 
+        Exome depth is run in 2 stages, firstly readcounts are calculated for each capture panel (VCP1 or VCP2 etc).
+        The jobid will be saved to $EDjobid which allows the output of this stage to be used to filter CNVs with a panel specific BEDfile.
+        The CNV calling steps should be a dependancy of multiqc
+        This function controls the order these commands are built and run so the output of the readcount step can be used as an input to the cnvcalling step
+        Inputs:
+            List of Pannumbers on the run
+        Returns:
+            List of dx run commands
+        """
+        
+        # generate list of pan numbers in samplenames to process in ED
+        VCP1=[]
+        VCP2=[]
+        VCP3=[]
+        command_list=[]
+        
+        for pannumber in set(pannnumber_list):
+            # not all VCP1/2/3 pan numbers need CNV calling
+            if self.panel_dictionary[pannumber]["exome_depth_cnvcalling_BED"]:
+                if pannumber in config.vcp1_panel_list:
+                    VCP1.append(pannumber)
+                if pannumber in config.vcp2_panel_list:
+                    VCP2.append(pannumber)
+                if pannumber in config.vcp3_panel_list:
+                    VCP3.append(pannumber)
+        
+        # make sure there are enough samples for that capture
+        if len(VCP1)>2:
+            # first build readcount command.
+            command_list.append(self.build_ED_readcount_cmd(set(VCP1), config.ED_readcount_normals_VCP1_file,config.ED_VCP1_readcount_BEDfile_pannum))
+            # The output of readcount can be used in multiqc so add this to the multiqc depends list
+            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list_ED_readcount'))
+            # the cnvcalling stage can use the jobid from the readcount stage as an input so run these before the next capture panel
+            for panel in set(VCP1):# then build cnvcalling commands
+                command_list.append(self.build_ED_cnv_calling_cmd(panel))
+    
+        if len(VCP2)>2:
+            # first build readcount command
+            command_list.append(self.build_ED_readcount_cmd(set(VCP2), config.ED_readcount_normals_VCP2_file,config.ED_VCP2_readcount_BEDfile_pannum))
+            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list_ED_readcount'))
+            for panel in set(VCP2):# then build cnvcalling commands
+                command_list.append(self.build_ED_cnv_calling_cmd(panel))
+
+        if len(VCP3)>2:
+            # first build readcount command
+            command_list.append(self.build_ED_readcount_cmd(set(VCP3), config.ED_readcount_normals_VCP3_file,config.ED_VCP3_readcount_BEDfile_pannum))
+            command_list.append(self.add_to_depends_list("exomedepth", 'depends_list_ED_readcount'))
+            for panel in set(VCP2):# then build cnvcalling commands
+                command_list.append(self.build_ED_cnv_calling_cmd(panel))
+
+        return command_list
+    
+    def build_ED_readcount_cmd(self,pannumber_list, normals_file,readcount_bedfile_pannum):
+        """
+        This function builds the dx run command for the exome depth readcount app
+        This is run once per capture panel
+        Inputs:
+            pannumber_list = list of Pan numbers for this capture panel on this run. used to determine which BAM files to download
+            normals_file = predefined panel of normals data file (from config)
+            readcount bedfile pannumber = predefined capture panel wide BEDfile (from config)
+        Returns:
+            dx run cmd (string)
+        """
+        #build bedfile address from the readcount_bedfile_pannum input 
+        readcount_bedfile = "%s%s%s" % (config.app_project,config.bedfile_folder,readcount_bedfile_pannum)
+    
+        dx_command_list = [
+            self.ED_readcount_command,
+            config.exomedepth_readcount_reference_genome_input,
+            config.exomedepth_readcount_bedfile_input,
+            readcount_bedfile,
+            config.exomedepth_readcount_normalsRdata_input,
+            normals_file,
+            config.exomedepth_readcount_projectname_input,
+            self.runfolder_obj.nexus_project_name,
+            config.exomedepth_readcount_pannumbers_input,
+            ",".join(pannumber_list),
+            self.depends_gatk, # use list of gatk related jobs to delay start
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
+        dx_command = "".join(map(str, dx_command_list))
+        return dx_command
+    
+    def build_ED_cnv_calling_cmd(self,pannumber):
+        """
+        This function builds the dx run command to filter the CNV calls for a specific R number using a BEDfile
+        Input:
+            pannumber = pannumber to filter CNV calls
+        Returns:
+            dx run cmd (string)
+        """
+        # pull out the appropriate bedfile for ED cnvcalling app BEDfrom panel config dict (exome_depth_cnvcalling_BED)
+        # note the Pan number for this BED will be different to that used to name the sample
+        bedfiles = self.nexus_bedfiles(pannumber)
+        ed_cnvcalling_bedfile = bedfiles["exome_depth_cnvcalling_BED"]
+
+        dx_command_list = [
+            self.ED_cnvcalling_command,
+            config.exomedepth_cnvcalling_readcount_file_input,
+            "$EDjobid:%s" % (config.exomedepth_readcount_rdata_output),
+            config.exomedepth_cnvcalling_subpanel_bed_input,
+            ed_cnvcalling_bedfile,
+            config.exomedepth_cnvcalling_projectname_input,
+            self.runfolder_obj.nexus_project_name,
+            config.exomedepth_cnvcalling_pannumbers_input,
+            pannumber,
+            self.dest,
+            self.dest_cmd,
+            self.token,
+        ]
+        dx_command = "".join(map(str, dx_command_list))
+        return dx_command
 
     def create_mokawes_command(self, fastq, pannumber):
         """
@@ -1612,7 +1925,7 @@ class RunfolderProcessor(object):
 
         return dx_command
 
-    def create_tso500_command(self):
+    def create_tso500_command(self,samplesheet):
         """
         Build dx run command for tso500 docker app.
         Will assess if it's a novaseq or not from the runfoldername and if it's
@@ -1666,13 +1979,16 @@ class RunfolderProcessor(object):
             config.TSO500_samplesheet_stage,
             self.runfolder_obj.nexus_project_id
             + ":"
-            + self.runfolder_obj.runfolder_samplesheet_name,
+            + self.runfolder_subdir 
+            + "/"
+            + samplesheet,
             config.TSO500_project_name_stage,
             self.runfolder_obj.nexus_project_name,
+            config.TSO500_runfolder_name_stage, 
+            self.runfolder_subdir,
             config.TSO500_analysis_options_stage,
             TSO500_analysis_options,
             instance_type,
-            "--wait ",
             self.dest,
             self.dest_cmd,
             self.token,
@@ -2041,6 +2357,7 @@ class RunfolderProcessor(object):
         # return list to be used to build rpkm command(s).
         return cleaned_list
 
+
     def create_rpkm_command(self, pannumber):
         """
         Input = Pannumber for a single RPKM analysis
@@ -2173,6 +2490,8 @@ class RunfolderProcessor(object):
             return self.depends_list_gatk
         elif depends_type=='depends_list_recombined':
             return self.depends_list_recombined
+        elif depends_type=='depends_list_ED_readcount':
+            return self.depends_list_ED_readcount
 
     def create_multiqc_command(self):
         """
@@ -2805,13 +3124,7 @@ class RunfolderProcessor(object):
         Returns = filepath to the logfile containing output from the command, string of files to be uploaded and name of the stage to test
         """
         # define where files to be uploaded to
-        nexus_upload_folder = (
-            "/"
-            + self.runfolder_obj.nexus_project_name.replace(
-                self.nexusproject, ""
-            )
-            + "/Logfiles/"
-        )
+        nexus_upload_folder = ("/%s/Logfiles/" % ("_".join(self.runfolder_obj.nexus_project_name.split("_")[1:])))
         # create a list of files to be used to check outputs
         files_to_upload_list = []
         # create a space delimited string of files to be uploaded defined by the logger class

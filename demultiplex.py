@@ -212,23 +212,52 @@ class ready2start_demultiplexing():
             self.script_logfile.write("Checking if already demultiplexed .........Run has not yet been demultiplexed\n")
             self.samplesheet = self.runfolder + "_SampleSheet.csv"
             self.samplesheet_path = os.path.join(config.samplesheets_dir, self.samplesheet)
-            # run samplesheet checks (uses try to ensure that should an error occur this doesn't affect the other
-            # script functionality
-            ss_verification_results = samplesheet_verifier.run_ss_checks(self.samplesheet_path)
-            ss_fail = ""
-            ss_pass = ""
-            # If the value is True (i.e. check has passed), append to pass list, else append to fail list
-            for key in ss_verification_results:
-                if ss_verification_results[key][0]:
-                    ss_pass += ss_verification_results[key][1]
-                else:
-                    ss_fail += ss_verification_results[key][1]
-            if ss_pass:
-                self.logger("Following samplesheet checked were passed by {}: {}".format(self.samplesheet, ss_pass),
-                            "demultiplex_success")
-            if ss_fail:
-                self.logger("SAMPLESHEET CHECKS FAILED {}: {}".format(self.samplesheet, ss_fail), "samplesheet_warning")
+            # if development run skip the samplesheet check to avoid endless alerts
+            if not self.check_for_development_run(self.samplesheet_path):
+                # run samplesheet checks (uses try to ensure that should an error occur this doesn't affect the other
+                # script functionality
+                ss_verification_results = samplesheet_verifier.run_ss_checks(self.samplesheet_path)
+                ss_fail = ""
+                ss_pass = ""
+                # If the value is True (i.e. check has passed), append to pass list, else append to fail list
+                for key in ss_verification_results:
+                    if ss_verification_results[key][0]:
+                        ss_pass += ss_verification_results[key][1]
+                    else:
+                        ss_fail += ss_verification_results[key][1]
+                if ss_pass:
+                    self.logger("Following samplesheet checked were passed by {}: {}".format(self.samplesheet, ss_pass),
+                                "demultiplex_success")
+                if ss_fail:
+                    self.logger("SAMPLESHEET CHECKS FAILED {}: {}".format(self.samplesheet, ss_fail), "samplesheet_warning")
+            else:
+                self.script_logfile.write("development pan number identified.skipping samplesheet checks\n")
             self.has_run_finished()
+    
+    def check_for_development_run(self,samplesheet_path):
+        """
+        Read samplesheet looking for development pan number.
+        If pannumber where development_run is True is present add samplename to list
+        return sample_list (will return False if empty)
+        """
+        sample_list = []
+
+        with open(samplesheet_path, "r") as samplesheet_stream:
+            # read the file into a list and loop through the list in reverse (bottom to top).
+            # this allows us to access the sample names, and stop when reach the column headers, skipping the header of the file.
+            for line in reversed(samplesheet_stream.readlines()):
+                if line.startswith("Sample_ID") or "[Data]" in line:
+                    break
+                # skip empty lines (check first element of the line, after splitting on comma)
+                elif len(line.split(",")[0]) < 2:
+                    pass
+                # if it's a line detailing a sample
+                else:
+                    for pannum in config.development_pannumber_list:
+                        if pannum in line:
+                            sample_list.append(line.split(",")[0])
+        
+        return sample_list
 
     def has_run_finished(self):
         """Check if sequencing has completed for the current runfolder. This is denoted by the
