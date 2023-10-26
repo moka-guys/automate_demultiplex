@@ -2075,16 +2075,27 @@ class BuildDxCommands(object):
             :return cmd_list (list):    List of runwide commands for PIPE runs
         """
         cmd_list = []
-        for core_panel in ["vcp1", "vcp2", "vcp3"]:
+        for core_panel in ["vcp1", "vcp2", "vcp3"]:            
             if core_panel in (
                 [
                     self.samples_obj.samples_dict[k]['panel_settings']['panel_name']
                     for k, v in self.samples_obj.samples_dict.items()
                     ]
             ):
-                # TODO check this has the desired effect of only adding RPKM command
-                # if there are enough samples
+                core_panel_pannos = [
+                    k for k, v in self.samples_obj.samples_dict.items
+                    if v['panel_name'] == core_panel
+                ]
+                
+                # Make sure there are enough samples for exome depth and RPKM
+                # TODO check this has the desired effect
                 if len(self.samples_obj.samples_dict.items()) >= 3:
+                    cmd_list.append(self.create_ed_readcount_cmd(core_panel))
+                    cmd_list.append(ad_config.UPLOAD_ARGS["depends_list_edreadcount"])
+
+                    for panno in set(core_panel_pannos):
+                        cmd_list.append(self.create_ed_cnvcalling_cmd(panno))
+
                     cmd_list.append(self.create_rpkm_cmd(core_panel))
                     cmd_list.append(ad_config.UPLOAD_ARGS["depends_list"])
 
@@ -2118,6 +2129,68 @@ class BuildDxCommands(object):
             ad_config.UPLOAD_ARGS["depends_gatk"],
             ad_config.UPLOAD_ARGS["token"] % self.dnanexus_apikey]
         )
+
+
+    def create_ed_readcount_cmd(self, core_panel_name: str) -> str:
+        """
+        Build dx run command for exomedepth readcount app
+        Exome depth is run in 2 stages, firstly readcounts are caalculated for each capture panel.
+        Job ID is saved to $ed_jobid which allows the output of this stage to be used to filter
+        CNVs with a panel-specific BEDfile
+        CNV calling steps are a dependency of MultiQC
+        This function controls the order these commands are built and run so the output of the
+        readcount step can be used as an input to the CNV calling step
+            :param core_panel_name (str):   Name of synnovis core panel
+            :return (str):                  Dx run command for ED readcount app
+
+        """
+        self.rf_obj.rf_loggers.usw.info(
+            self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
+            "ED_readcount",
+            self.rf_obj.runfolder_name,
+        )
+
+        return " ".join([
+            f'{ad_config.DX_CMDS["ed_readcount"]}ED_readcount',
+            f'{ad_config.APP_INPUTS["ed_readcount"]["ref_genome"]}'
+            f'{ad_config.NEXUS_IDS["FILES"]["hs37d5_ref_no_index"]}',
+            f'{ad_config.APP_INPUTS["ed_readcount"]["bed"]}'
+            f'{panel_config.CAPTURE_PANEL_DICT[core_panel_name]["ed_readcount_bedfile"]}',
+            f'{ad_config.APP_INPUTS["ed_readcount"]["normals_rdata"]}'
+            f'{ad_config.NEXUS_IDS["FILES"][f"ed_{core_panel_name}_readcount_normals"]}',
+            f'{ad_config.APP_INPUTS["ed_readcount"]["proj"]}'
+            f'{self.samples_obj.nexus_paths["proj_name"]}',
+            f'{ad_config.APP_INPUTS["ed_readcount"]["pannos"]}'
+            f'{",".join(panel_config.ED_PANNOS[core_panel_name])}',
+            ad_config.UPLOAD_ARGS["depends_gatk"],  # Use list of gatk related jobs to delay start
+            ad_config.UPLOAD_ARGS["token"] % self.dnanexus_apikey
+        ])
+
+
+    def create_ed_cnvcalling_cmd(self, panno: str):
+        """
+        Build dx run command for exomedepth cnv calling app
+            :param panno (str):     Pannumber to filter CNV calls
+            :return (str):          Dx run command for ED cnv calling app
+        """
+        self.rf_obj.rf_loggers.usw.info(
+            self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
+            "ED_cnvcalling",
+            self.rf_obj.runfolder_name,
+        )
+        return " ".join([
+            f'{ad_config.DX_CMDS["ed_cnvcalling"]}ED_cnvcalling',
+            f'{ad_config.APP_INPUTS["ed_cnvcalling"]["readcount"]}'
+            f'$EDjobid:{ad_config.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
+            f'{ad_config.APP_INPUTS["ed_cnvcalling"]["bed"]}'
+            f'{panel_config.BEDFILE_FOLDER}{panno}_CNV.bed',
+            f'{ad_config.APP_INPUTS["ed_cnvcalling"]["proj"]}'
+            f'{self.samples_obj.nexus_paths["proj_name"]}',
+            f'{ad_config.APP_INPUTS["ed_cnvcalling"]["pannos"]}{panno}',
+            ad_config.UPLOAD_ARGS["depends_gatk"],  # Use list of gatk related jobs to delay start
+            ad_config.UPLOAD_ARGS["token"] % self.dnanexus_apikey
+        ])
+
 
     def create_duty_csv_cmd(self) -> str:
         """

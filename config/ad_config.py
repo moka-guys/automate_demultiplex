@@ -168,9 +168,11 @@ NEXUS_IDS = {
     "FILES": {
         "tso500_docker": f"{TOOLS_PROJECT}:file-Fz9Zyx00b5j8xKVkKv4fZ6JB",
         "hs37d5_bwa_index": f"{TOOLS_PROJECT}:file-B6ZY4942J35xX095VZyQBk0v",
-        "hs37d5_ref_with_index": (f"{TOOLS_PROJECT}:file-ByYgX700b80gf4ZY1GxvF3Jv"),
-        "hs37d5_ref_no_index": (f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01"),
+        "hs37d5_ref_with_index": f"{TOOLS_PROJECT}:file-ByYgX700b80gf4ZY1GxvF3Jv",
+        "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01",
         "masked_reference": f"{TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q",
+        "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-GZYK6380f66PPy4kjzVQ7xj8",
+        "ed_vcp2_readcount_normals": f"{TOOLS_PROJECT}:file-GZYbq400YG627Q12g1bbP440",
     },
     "APPS": {
         "tso500": f"{TOOLS_PROJECT}:applet-GZgv0Jj0jy1Yfbx3QvqyKjzp",
@@ -183,6 +185,8 @@ NEXUS_IDS = {
         "fastqc": f"{TOOLS_PROJECT}:applet-GKXqZV80jy1QxF4yKYB4Y3Kz",
         "gatk": f"{TOOLS_PROJECT}:applet-FYZ097j0jy1ZZPx30GykP63J",
         "peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",
+        "ed_readcount": f"{TOOLS_PROJECT}:applet-GZJK5kj0jy1V5Qx4G7j6kb92",
+        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-GZJK2J80jy1k14ZkYjjZ5qKp",
         "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",
         "duty_csv": f"{TOOLS_PROJECT}:applet-GZYx3Kj0kKj3YBV7qgK6VjXQ",
     },
@@ -249,6 +253,20 @@ APP_INPUTS = {
         "tso": "-iTSO=true",
         "skip": "-iskip=false",
     },
+    "ed_readcount": {
+        "ref_genome": "-ireference_genome=",
+        "bed": "-ibedfile=",
+        "normals_rdata": "-inormals_RData=",
+        "proj": "-iproject_name=",
+        "pannos": "-ibamfile_pannumbers=",
+    },
+    "ed_cnvcalling": {
+        "readcount_rdata": "RData",
+        "readcount": "-ireadcount_file=",
+        "bed": "-isubpanel_bed=",
+        "proj": "-iproject_name=",
+        "pannos": "-ibamfile_pannumbers=",
+    },
     "rpkm": {
         "bed": "-ibedfile=",
         "proj": "-iproject_name=",
@@ -287,6 +305,7 @@ UPLOAD_ARGS = {
     "depends_list": 'depends_list="${depends_list} -d ${jobid} "',
     "depends_list_gatk": 'depends_list_gatk="${depends_list_gatk} -d ${jobid} "',
     "depends_list_recombined": 'depends_list="${depends_list} ${depends_list_gatk} "',
+    "depends_list_edreadcount": 'depends_list="${depends_list} -d ${ed_jobid} "',
     # Argument to define depends_list only if the job ID exists
     "if_jobid_exists_depends": 'if ! [ -z "${jobid}" ]; then %s; fi',
 }
@@ -439,6 +458,14 @@ DX_CMDS = {
     "upload_multiqc": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
+    ),
+    "ed_readcount": (
+        f"ed_jobid=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
+        "--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
+    ),
+    "ed_cnvcalling": (
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} "
+        "--priority high -y --instance-type mem1_ssd1_v2_x4 {JOB_NAME_STR}"
     ),
     "rpkm": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['rpkm']}"

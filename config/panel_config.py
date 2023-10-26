@@ -39,10 +39,13 @@ for analysis of samples with that pan number
                                     not used
     polyedge                        False if app not required, subdictionary containing
                                     app inputs if it is required
+    ed_readcount_bedfile            False if app not required, panel bed file if required
     dry_lab_only                    Used to determine whether to include the TSO pan
                                     number in the duty_csv pan number list
     drylab_dnanexus_id              False if not required to share with other users,
                                     user ID string if needs sharing
+    development_run                 False if pan number is not a development pan number,
+                                    else True
 """
 from config import ad_config  # Import ad_config file
 
@@ -95,6 +98,8 @@ DEFAULT_DICT = {
     "congenica_credentials": False,
     "congenica_IR_template": False,
     "polyedge": False,
+    "ed_readcount_bedfile": False,
+    "ed_cnvcalling_bedfile": False,
     "FH": False,
     "dry_lab_only": False,
     "drylab_dnanexus_id": False,
@@ -112,6 +117,7 @@ CAPTURE_PANEL_DICT = {
         "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4397data.bed",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4397dataSambamba.bed",
         "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4398data.bed",
+        "ed_readcount_bedfile": "Pan5191_exomedepth.bed",
         "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4399_RPKM.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
@@ -127,6 +133,7 @@ CAPTURE_PANEL_DICT = {
         "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan5123data.bed",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5123dataSambamba.bed",
         "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan5119data.bed",
+        "ed_readcount_bedfile": "Pan5188_exomedepth.bed",
         "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan5109_RPKM.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
@@ -204,7 +211,7 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "tso500",
         "pipeline": "tso500",
-        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5130dataSambamba.bed",
+        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5205dataSambamba.bed",
         "capture_type": "Hybridisation",
         "clinical_coverage_depth": 100,
         "multiqc_coverage_level": 100,
@@ -329,96 +336,112 @@ PANEL_DICT = {
         "test_number": "R134",
         "congenica_project": 4664,
         "FH": True,
+        "ed_cnvcalling_bedfile": "Pan4702",
     },
     "Pan4121": {  # VCP1 R184 - CF (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R184",
         "congenica_project": 4862,
+        "ed_cnvcalling_bedfile": "Pan4703",
     },
     "Pan4122": {  # VCP1 R25 - FGFR (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R25",
         "congenica_project": 5291,
+        # CNV calling not required
     },
     "Pan4125": {  # VCP1 R73 - DMD (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R73",
         "congenica_project": 4861,
+        "ed_cnvcalling_bedfile": "Pan4622",
     },
     "Pan4126": {  # VCP1 R337 - CADASIL (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R337",
         "congenica_project": 4865,
+        # CNV calling not required
     },
     "Pan4974": {  # VCP1 R112 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R112",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4985",
     },
     "Pan4975": {  # VCP1 R115 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R115",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile":  "Pan4986",
     },
     "Pan4976": {  # VCP1 R116 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R116",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4987",
     },
     "Pan4977": {  # VCP1 R117 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R117",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4988",
     },
     "Pan4978": {  # VCP1 R118 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R118",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4989",
     },
     "Pan4979": {  # VCP1 R119 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R119",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4990",
     },
     "Pan4980": {  # VCP1 R120 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R120",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4991",
     },
     "Pan4981": {  # VCP1 R121 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R121",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4708",
     },
     "Pan4982": {  # VCP1 R122 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R122",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4992",
     },
     "Pan4983": {  # VCP1 R123 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R123",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4993",
     },
     "Pan4984": {  # VCP1 R124 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R124",
         "congenica_project": 4699,
+        "ed_cnvcalling_bedfile": "Pan4994",
     },
     "Pan4821": {  # VCP1 R13 - FH (STG)
         **CAPTURE_PANEL_DICT["vcp1"],
@@ -426,18 +449,21 @@ PANEL_DICT = {
         "test_number": "R13",
         "congenica_project": 4203,
         "FH": True,
+        "ed_cnvcalling_bedfile": "Pan4702",
     },
     "Pan4822": {  # VCP1 R184 - CF (STG)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["stg"],
         "test_number": "R184",
         "congenica_project": 4203,
+        "ed_cnvcalling_bedfile": "Pan4703",
     },
     "Pan4823": {  # VCP1 R25 - FGFR (STG)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["stg"],
         "test_number": "R25",
         "congenica_project": 4203,
+        # CNV not required
     },
     "Pan4824": {  # VCP1 R73 - DMD (STG)
         **CAPTURE_PANEL_DICT["vcp1"],
@@ -445,18 +471,21 @@ PANEL_DICT = {
         "congenica_project": 4203,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
+        "ed_cnvcalling_bedfile": "Pan4622",
     },
     "Pan4825": {  # VCP1 R337 - cadasil (STG)
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["stg"],
         "test_number": "R337",
         "congenica_project": 4203,
+        # CNV not required
     },
     "Pan4149": {  # VCP2 R208 - BRCA (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R208",
         "congenica_project": 4665,
+        "ed_cnvcalling_bedfile": "Pan5158",
     },
     "Pan4150": {  # VCP2 R207 - ovarian cancer (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -465,6 +494,7 @@ PANEL_DICT = {
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
+        "ed_cnvcalling_bedfile": "Pan5152",
     },
     "Pan4129": {  # VCP2 R210 - Lynch syndrome (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -473,6 +503,7 @@ PANEL_DICT = {
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
+        "ed_cnvcalling_bedfile": "Pan5193", # use R211 CNV bedfile
     },
     "Pan4964": {  # VCP2 R259 - nijmegen breakage (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -480,6 +511,7 @@ PANEL_DICT = {
         "congenica_project": 9118,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5161",
     },
     "Pan4130": {  # VCP2 R211 - polyposis (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -488,6 +520,7 @@ PANEL_DICT = {
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
+        "ed_cnvcalling_bedfile": "Pan5193",
     },
     "Pan5121": {  # VCP2 R430 prostate (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -496,6 +529,7 @@ PANEL_DICT = {
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
+        "ed_cnvcalling_bedfile": "Pan5165",
     },
     "Pan5185": {  # VCP2 R414 APC (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -503,6 +537,7 @@ PANEL_DICT = {
         "congenica_project": 4202,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
+        "ed_cnvcalling_bedfile": "Pan5162",
     },
     "Pan5186": {  # VCP2 R414 APC (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -510,6 +545,7 @@ PANEL_DICT = {
         "congenica_project": "5095",
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5162",
     },
     "Pan5143" : { # VCP2 R444.1 Breast cancer (PARP treatment) (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -517,6 +553,7 @@ PANEL_DICT = {
         "congenica_project": 14563,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5183",
     },
     "Pan5147" : { # VCP2 R444.2 Prostate cancer (PARP treatment) (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -524,6 +561,7 @@ PANEL_DICT = {
         "congenica_project": 14564,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile":  "Pan5184",
     },
     "Pan4816": {  # VCP2 R208 - BRCA (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -531,6 +569,7 @@ PANEL_DICT = {
         "congenica_project": 12915,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
+        "ed_cnvcalling_bedfile": "Pan5158",
     },
     "Pan4817": {  # VCP2 R207 - ovarian (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -539,6 +578,7 @@ PANEL_DICT = {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
+        "ed_cnvcalling_bedfile": "Pan5152",
     },
     "Pan5122": {  # VCP2 R430 - prostate (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -547,6 +587,7 @@ PANEL_DICT = {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
+        "ed_cnvcalling_bedfile": "Pan5165",
     },
     "Pan5144": {  # VCP2 R444.1 Breast cancer (PARP treatment) (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -554,6 +595,7 @@ PANEL_DICT = {
         "congenica_project": 14629,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
+        "ed_cnvcalling_bedfile": "Pan5183",
     },
     "Pan5148": {  # VCP2 R444.2 Prostate cancer (PARP treatment) (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -561,6 +603,7 @@ PANEL_DICT = {
         "congenica_project": 14630,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
+        "ed_cnvcalling_bedfile":  "Pan5184",
     },
     "Pan4819": {  # VCP2 R210 - lynch (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -569,6 +612,7 @@ PANEL_DICT = {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
+        "ed_cnvcalling_bedfile": "Pan5193",  # Use R211 bedfile
     },
     "Pan4820": {  # VCP2 R211 - polyposis (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -577,6 +621,7 @@ PANEL_DICT = {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
+        "ed_cnvcalling_bedfile": "Pan5193",
     },
     "Pan4145": {  # VCP3 R79 - CMD (Viapath)
         **CAPTURE_PANEL_DICT["vcp3"],
@@ -765,6 +810,12 @@ VCP_PANELS = {
     "vcp1": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp1"],
     "vcp2": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp2"],
     "vcp3": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp3"],
+}
+
+ED_PANNOS = {
+    "vcp1": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp1" and v["ed_cnvcalling_bedfile"]],
+    "vcp2": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp2" and v["ed_cnvcalling_bedfile"]],
+    "vcp3": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp3" and v["ed_cnvcalling_bedfile"]],
 }
 
 TSO500_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "tso500"]
