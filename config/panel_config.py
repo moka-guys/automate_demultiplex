@@ -504,6 +504,20 @@ PANEL_DICT = {
         "congenica_IR_template": "priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
     },
+    "Pan5185": {  # VCP2 R414 APC (STG)
+        **CAPTURE_PANEL_DICT["vcp2"],
+        "test_number": "R414",
+        "congenica_project": 4202,
+        "congenica_credentials": "STG",
+        "congenica_IR_template": "non-priority",
+    },
+    "Pan5186": {  # VCP2 R414 APC (Viapath)
+        **CAPTURE_PANEL_DICT["vcp2"],
+        "test_number": "R414",
+        "congenica_project": "5095",
+        "congenica_credentials": "Viapath",
+        "congenica_IR_template": "priority",
+    },
     "Pan5143" : { # VCP2 R444.1 Breast cancer (PARP treatment) (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
         "test_number": "R444.1",
