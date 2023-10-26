@@ -7,7 +7,7 @@ repetition
 
 - SNP does not have R numbers (test_number) as it is an identity check for the
     GMS SMS
-- Panels for WES (analysed in Congenica), SWIFT and TSO500 (analysed in QCII),
+- Panels for WES (analysed in Congenica) and TSO500 (analysed in QCII),
     and ArcherDX (analysed in Archer software), are applied at the point of
     analysis, so R and M numbers (test_number) for these are not listed below.
     These pan numbers do not necessarily refer to bed files but rather project
@@ -22,14 +22,11 @@ for analysis of samples with that pan number
     hsmetrics_bedfile               bedfile filename, or False
     sambamba_bedfile                bedfile filename, or False. Coverage BED
     variant_calling_bedfile         bedfile filename, or False
-    ampliconfilt_bedfile            bedfile filename, or False. Paired end BED file used
-                                    by primer clipping tool
     FH                              True if requires PRS analysis, False if not
     rpkm_bedfile                    bedfile filename, or False
     capture_type                    Amplicon or Hybridisation
     multiqc_coverage_level          Value
     clinical_coverage_depth         Value, or False. Used as input for sambamba
-                                    and mpileup
     coverage_min_basecall_qual      Value or False. Sambamba minimum base quality
     coverage_min_mapping_qual       Value or False. Sambamba minimum mapping quality
     masked_reference                projectid:fileid, or False
@@ -84,7 +81,6 @@ DEFAULT_DICT = {
     "hsmetrics_bedfile": False,
     "sambamba_bedfile": False,
     "variant_calling_bedfile": False,
-    "ampliconfilt_bedfile": False,  # Paired end BED file used by primer clipping tool
     "FH": False,
     "rpkm_bedfile": False,
     "capture_type": False,
@@ -166,26 +162,6 @@ CAPTURE_PANEL_DICT = {
         "coverage_min_mapping_qual": 20,
         "masked_reference": ad_config.NEXUS_IDS["FILES"]["masked_reference"],
     },
-    "swift_57g": {
-        **DEFAULT_DICT,
-        "panel_name": "swift_57g",
-        "pipeline": "amp",
-        "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4082.bed",
-        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4082Sambamba.bed",
-        "capture_type": "Amplicon",
-        "clinical_coverage_depth": 600,
-        "multiqc_coverage_level": 100,
-    },
-    "swift_egfr": {
-        **DEFAULT_DICT,
-        "panel_name": "swift_egfr",
-        "pipeline": "amp",
-        "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4081Sambamba.bed",
-        "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4081.bed",
-        "capture_type": "Amplicon",
-        "clinical_coverage_depth": 600,
-        "multiqc_coverage_level": 100,
-    },
     "snp": {
         **DEFAULT_DICT,
         "panel_name": "snp",
@@ -262,16 +238,6 @@ PANEL_DICT = {
             **CAPTURE_PANEL_DICT["archerdx"],
         },
     ),
-    "Pan4081": {  # SWIFT EGFR (Viapath)
-        **CAPTURE_PANEL_DICT["swift_egfr"],
-        "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4081_flat.bed",
-        "ampliconfilt_bedfile": f"{BEDFILE_FOLDER}Pan4081_PE.bed",
-    },
-    "Pan4082": {  # SWIFT 57G (Viapath)
-        **CAPTURE_PANEL_DICT["swift_57g"],
-        "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4082_flat.bed",
-        "ampliconfilt_bedfile": f"{BEDFILE_FOLDER}Pan4082_PE.bed",
-    },
     "Pan4969": {  # TSO500 no UTRs. TERT promoter
         **CAPTURE_PANEL_DICT["tso500"],
         "throughput": "low",
@@ -801,10 +767,6 @@ TSO500_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "tso500"]
 WES_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "wes"]
 SNP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "snp"]
 ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
-SWIFT_57G_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "swift_57g"]
-SWIFT_EGFR_PANELS = [
-    k for k, v in PANEL_DICT.items() if v["panel_name"] == "swift_egfr"
-]
 LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
 
 # ================ DUTY_CSV INPUTS ===================================================

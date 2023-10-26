@@ -1050,8 +1050,6 @@ class SampleObject:
         get_masked_reference_cmd_string()
             Get input string for masked reference input for BWA stage of PIPE workflow,
             if specified for the pan number in the config
-        create_amp_cmd()
-            Construct dx run command for AMP workflow
         create_snp_cmd()
             Construct dx run command for SNP workflow
         create_fastqc_cmd()
@@ -1286,9 +1284,6 @@ class SampleObject:
         elif self.pipeline == "pipe":
             workflow_cmd = self.create_pipe_cmd()
             congenica_upload_cmd = self.return_congenica_cmd()
-        elif self.pipeline == "amp":
-            workflow_cmd = self.create_amp_cmd()
-            congenica_upload_cmd = False, False
         elif self.pipeline == "snp":
             workflow_cmd = self.create_snp_cmd()
             congenica_upload_cmd = False, False
@@ -1539,59 +1534,6 @@ class SampleObject:
         else:
             masked_reference_cmd_string = ""
         return masked_reference_cmd_string
-
-    def create_amp_cmd(self) -> str:
-        """
-        Construct dx run command for AMP workflow
-            :return (str):  Dx run command string
-        """
-        self.rf_obj.rf_loggers.usw.info(
-            self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
-            "AMP",
-            self.sample_name,
-        )
-        dx_command = " ".join([
-            f'{ad_config.DX_CMDS["amp"]}{self.sample_name}',
-            f'{ad_config.STAGE_INPUTS["amp"]["fastqc1_reads"]}'
-            f'{self.fastqs_dict["R1"]["nexus_path"]}',
-            f'{ad_config.STAGE_INPUTS["amp"]["fastqc2_reads"]}'
-            f'{self.fastqs_dict["R2"]["nexus_path"]}',
-            f'{ad_config.STAGE_INPUTS["amp"]["bwa_rg_sample"]}{self.sample_name}',
-            f'{ad_config.STAGE_INPUTS["amp"]["picard_bed"]}'
-            f'{self.panel_settings["hsmetrics_bedfile"]}',
-            f'{ad_config.STAGE_INPUTS["amp"]["picard_capturetype"]}'
-            f'{self.panel_settings["capture_type"]}',
-            f'{ad_config.STAGE_INPUTS["amp"]["ampliconfilt_bed"]}'
-            f'{self.panel_settings["ampliconfilt_bedfile"]}',
-            f'{ad_config.STAGE_INPUTS["amp"]["sambamba_cov_level"]}'
-            f'{str(self.panel_settings["clinical_coverage_depth"])}',
-            f'{ad_config.STAGE_INPUTS["amp"]["mpileup_covlevel"]}'
-            f'{str(self.panel_settings["clinical_coverage_depth"])}',
-            f'{ad_config.STAGE_INPUTS["amp"]["sambamba_bed"]}'
-            f'{self.panel_settings["sambamba_bedfile"]}',
-            f'{ad_config.STAGE_INPUTS["amp"]["vardict_bed"]}'
-            f'{self.panel_settings["variant_calling_bedfile"]}',
-            f'{ad_config.STAGE_INPUTS["amp"]["varscan_bed"]}'
-            f'{self.panel_settings["variant_calling_bedfile"]}',
-            ad_config.STAGE_INPUTS["amp"]["bwa_ref"],
-            f'{ad_config.STAGE_INPUTS["amp"]["vardict_samplename"]}{self.sample_name}',
-            f'{ad_config.STAGE_INPUTS["amp"]["varscan_samplename"]}{self.sample_name}',
-            ad_config.STAGE_INPUTS["amp"]["picard_ref"],
-            ad_config.STAGE_INPUTS["amp"]["vardict_ref"],
-            ad_config.STAGE_INPUTS["amp"]["varscan_ref"],
-            f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
-            ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_apikey,
-        ])
-        # TODO improve the below in future
-        # Remove the bit that adds the job to the depends on list for the negative
-        # control as varscan fails on nearempty/-empty BAM files and this will stop
-        # multiqc etc running
-        if self.neg_control:
-            dx_command = dx_command.replace("jobid=$(", "").replace(
-                f"{self.rf_obj.dnanexus_apikey})",
-                self.rf_obj.dnanexus_apikey
-            )
-        return dx_command
 
     def create_snp_cmd(self) -> str:
         """
