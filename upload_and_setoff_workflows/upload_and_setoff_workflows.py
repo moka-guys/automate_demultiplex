@@ -103,6 +103,7 @@ class SequencingRuns(object):
             )
             return False
 
+
     def already_uploaded(self, rf_obj) -> bool:
         """
         Checks for presence of upload agent logfile (denotes that the runfolder has
@@ -268,24 +269,35 @@ class ProcessRunfolder(object):
             toolbox.git_tag(),
         )
         self.samples_obj = CollectRunfolderSamples(self.rf_obj)
+
         if self.samples_obj.samplename_list and self.samples_obj.samples_dict:  # If samples are present
-            self.users_dict = self.get_users_dict()
-            self.write_project_creation_script()
-            self.nexus_identifiers = {
-                "proj_name": self.samples_obj.nexus_paths['proj_name'],
-                "proj_id": self.run_project_creation_script()
-                }
-            self.backup_runfolder = UACaller(self.rf_obj, self.nexus_identifiers)
-            self.upload_cmds = self.get_upload_cmds()
-            self.pre_pipeline_upload_dict = self.create_file_upload_dict()
-            self.pre_pipeline_upload()
-            BuildDxCommands(
-                self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
+            if not any(panno in ad_config.DEVELOPMENT_PANELS for panno in self.samples_obj.unique_pannos):
+                self.rf_obj.rf_loggers.usw.info(
+                    self.rf_obj.rf_loggers.usw.log_msgs["not_dev_run"],
+                    self.rf_obj.samplesheet_path,
                 )
-            self.create_congenica_command_file()
-            self.run_dx_run_commands()
-            PipelineEmails(self.rf_obj, self.samples_obj)
-            self.post_pipeline_upload()
+                self.users_dict = self.get_users_dict()
+                self.write_project_creation_script()
+                self.nexus_identifiers = {
+                    "proj_name": self.samples_obj.nexus_paths['proj_name'],
+                    "proj_id": self.run_project_creation_script()
+                    }
+                self.backup_runfolder = UACaller(self.rf_obj, self.nexus_identifiers)
+                self.upload_cmds = self.get_upload_cmds()
+                self.pre_pipeline_upload_dict = self.create_file_upload_dict()
+                self.pre_pipeline_upload()
+                BuildDxCommands(
+                    self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
+                    )
+                self.create_congenica_command_file()
+                self.run_dx_run_commands()
+                PipelineEmails(self.rf_obj, self.samples_obj)
+                self.post_pipeline_upload()
+            else:
+                self.rf_obj.rf_loggers.usw.info(
+                    self.rf_obj.rf_loggers.usw.log_msgs["dev_run"],
+                    self.rf_obj.samplesheet_path,
+                )
 
     def get_users_dict(self) -> dict:
         """
