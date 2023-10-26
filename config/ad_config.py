@@ -95,7 +95,6 @@ DEMULTIPLEX_TEST_RUNFOLDERS = [
     "999999_NB552085_0496_DEMUXINTEG",
     "999999_M02353_0496_000000000-DEMUX",
     "999999_A01229_0182_AHM2TSO500",
-    '999999_M02353_0496_000000000-SWIFT'
 ]
 
 SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"
@@ -190,7 +189,6 @@ NEXUS_IDS = {
     "WORKFLOWS": {
         "pipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",
         "wes": f"{TOOLS_PROJECT}:workflow-FjjbQ5Q0jy1ZgyjQ3g1zgx9k",
-        "amp": f"{TOOLS_PROJECT}:workflow-G6F70180jy1gGK38FYXk618g",
         "snp": f"{TOOLS_PROJECT}:workflow-GB3kyJj0jy1j06704fxX9J7j",
     },
     "STAGES": {
@@ -216,17 +214,6 @@ NEXUS_IDS = {
             "fastqc1": "stage-FgPp4V00YkVJVjKF4kYkBF8v",
             "fastqc2": "stage-FgPp4V00YkVJVjKF4kYkBF90",
             "sentieon": "stage-FgPp4XQ0YkV48jZG4Py6F55k",
-        },
-        "amp": {
-            "fastqc1": "stage-FPzGj780jy1g3p1F4F8z4J7V",
-            "fastqc2": "stage-FPzGj780jy1g3p1F4F8z4J7V",
-            "bwa": "stage-FPzGj780jy1g3p1F4F8z4J7V",
-            "picard": "stage-FPzGjV80jy1x97jg607Fg22b",
-            "ampliconfilt": "stage-FPzGjJQ0jy1fF6505zFP6zz9",
-            "sambamba": "stage-FPzGjfQ0jy1y01vG60K22qG1",
-            "vardict": "stage-G0vKZk80GfYkQx86PJGGjz9Y",
-            "varscan": "stage-FPzGjp80jy1V3Jvb5z6xfpfZ",
-            "mpileup": "stage-FxypXb807p1zj3g8Jv45Y54P",
         },
     },
 }
@@ -389,54 +376,6 @@ STAGE_INPUTS = {
         "sentieon_bed": f"-i{NEXUS_IDS['STAGES']['snp']['sentieon']}.targets_bed=",
         # Prevents incorrect parsing from fastq filename
         "sentieon_samplename": f"-i{NEXUS_IDS['STAGES']['snp']['sentieon']}.sample=",
-    },
-    "amp": {
-        "fastqc1_reads": f"-i{NEXUS_IDS['STAGES']['amp']['fastqc1']}.reads_fastqgz=",
-        "fastqc2_reads": f"-i{NEXUS_IDS['STAGES']['amp']['fastqc1']}.reads2_fastqgz=",
-        "bwa_rg_sample": f"-i{NEXUS_IDS['STAGES']['amp']['bwa']}.read_group_sample=",
-        "bwa_ref": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['bwa']}"
-            f".genomeindex_targz={NEXUS_IDS['FILES']['hs37d5_bwa_index']}"
-        ),
-        "picard_bed": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['picard']}.vendor_exome_bedfile="
-        ),
-        "picard_capturetype": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['picard']}.Capture_panel="
-        ),
-        "picard_ref": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['picard']}."
-            f"fasta_index={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
-        ),
-        "ampliconfilt_bed": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['ampliconfilt']}.PE_BED="
-        ),
-        "sambamba_cov_level": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['sambamba']}.coverage_level="
-        ),
-        "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['amp']['sambamba']}.sambamba_bed=",
-        "vardict_ref": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['vardict']}."
-            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
-        ),
-        "vardict_bed": f"-i{NEXUS_IDS['STAGES']['amp']['vardict']}.bedfile=",
-        "vardict_samplename": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['vardict']}.sample_name=vardict_"
-        ),
-        "varscan_ref": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['varscan']}."
-            f"ref_genome={NEXUS_IDS['FILES']['hs37d5_ref_with_index']}"
-        ),
-        "varscan_bed": f"-i{NEXUS_IDS['STAGES']['amp']['varscan']}.bed_file=",
-        "varscan_samplename": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['varscan']}.samplename=varscan_"
-        ),
-        "varscan_strandfilter": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['varscan']}.strand_filter="
-        ),
-        "mpileup_covlevel": (
-            f"-i{NEXUS_IDS['STAGES']['amp']['mpileup']}.min_coverage="
-        ),
     },
 }
 
