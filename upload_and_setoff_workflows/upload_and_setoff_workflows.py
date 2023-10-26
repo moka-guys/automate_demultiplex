@@ -1800,6 +1800,8 @@ class BuildDxCommands(object):
             f'{self.nexus_project_id}:{self.samples_obj.nexus_paths["samplesheet"]}',
             f'{ad_config.APP_INPUTS["tso500"]["project_name"]}'
             f'{self.samples_obj.nexus_paths["proj_name"]}',
+            f'{ad_config.APP_INPUTS["tso500"]["runfolder_name"]}',
+            f'{self.samples_obj.nexus_paths["runfolder_name"]}',
             self.get_tso_analysis_options(),
             self.get_tso_instance_type(),
             "--wait ",
