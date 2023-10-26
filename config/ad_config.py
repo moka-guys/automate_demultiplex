@@ -226,6 +226,7 @@ APP_INPUTS = {
         "samplesheet": "-isamplesheet=",
         "analysis_options": "-ianalysis_options=",
         "project_name": "-iproject_name=",
+        "runfolder_name": "-irunfolder_name=",
         "ht_instance": "mem1_ssd1_v2_x72",
         "lt_instance": "mem1_ssd1_v2_x36",
     },
