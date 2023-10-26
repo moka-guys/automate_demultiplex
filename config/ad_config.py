@@ -419,10 +419,6 @@ DX_CMDS = {
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']}"
         f" -y --priority high {JOB_NAME_STR}"
     ),
-    "amp": str(
-        f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['amp']}"
-        f" --priority high -y {JOB_NAME_STR}"
-    ),
     "tso500": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['tso500']}"
         f" --priority high -y {JOB_NAME_STR}"
@@ -475,10 +471,9 @@ SQL_IDS = {
     "WORKFLOWS": {
         "pipe": 5229,
         "wes": 5078,
-        "amp": 4851,
         "archerdx": 5238,
         "snp": 5091,
-        "tso500": 5237,
+        "tso500": 5288,
     },
     "WES_TEST_STATUS": {
         "nextseq_sequencing": 1202218804,  # Test Status = NextSEQ sequencing
