@@ -184,7 +184,7 @@ NEXUS_IDS = {
         "gatk": f"{TOOLS_PROJECT}:applet-FYZ097j0jy1ZZPx30GykP63J",
         "peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",
         "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",
-        "duty_csv": f"{TOOLS_PROJECT}:applet-GQg9J280jy1Zf79KGx9gk5K3",
+        "duty_csv": f"{TOOLS_PROJECT}:applet-GZYx3Kj0kKj3YBV7qgK6VjXQ",
     },
     "WORKFLOWS": {
         "pipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",
