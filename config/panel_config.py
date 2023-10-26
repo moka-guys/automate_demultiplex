@@ -466,13 +466,6 @@ PANEL_DICT = {
         "congenica_IR_template": "priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
     },
-    "Pan4127": {  # VCP2 R209 - colorectal cancer (Viapath)
-        **CAPTURE_PANEL_DICT["vcp2"],
-        "test_number": "R209",
-        "congenica_project": 5093,
-        "congenica_credentials": "Viapath",
-        "congenica_IR_template": "priority",
-    },
     "Pan4129": {  # VCP2 R210 - Lynch syndrome (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
         "test_number": "R210",
@@ -546,13 +539,6 @@ PANEL_DICT = {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
-    },
-    "Pan4818": {  # VCP2 R209 - colorectal (STG)
-        **CAPTURE_PANEL_DICT["vcp2"],
-        "test_number": "R209",
-        "congenica_project": 4202,
-        "congenica_credentials": "STG",
-        "congenica_IR_template": "non-priority",
     },
     "Pan5122": {  # VCP2 R430 - prostate (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
