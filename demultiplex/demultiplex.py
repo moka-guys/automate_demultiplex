@@ -288,20 +288,30 @@ class DemultiplexRunfolder(object):
             self.rf_obj.samplesheet_path,
             self.rf_obj.runfolder_name,
         )
-        sscheck_obj.ss_checks()
-        ad_logger.shutdown_logs(sscheck_obj.logger)
-        if sscheck_obj.errors:
-            self.demux_rf_logger.warning(
-                self.demux_rf_logger.log_msgs["sschecks_not_passed"],
-                self.rf_obj.samplesheet_path,
-            )
-            return False, sscheck_obj
-        else:
+        if not any(panno in ad_config.DEVELOPMENT_PANELS for panno in sscheck_obj.pannumbers):
             self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["sschecks_passed"],
+                self.demux_rf_logger.log_msgs["not_dev_run"],
                 self.rf_obj.samplesheet_path,
             )
-            return True, sscheck_obj
+            sscheck_obj.ss_checks()
+            ad_logger.shutdown_logs(sscheck_obj.logger)
+            if sscheck_obj.errors:
+                self.demux_rf_logger.warning(
+                    self.demux_rf_logger.log_msgs["sschecks_not_passed"],
+                    self.rf_obj.samplesheet_path,
+                )
+                return False, sscheck_obj
+            else:
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["sschecks_passed"],
+                    self.rf_obj.samplesheet_path,
+                )
+                return True, sscheck_obj
+        else:
+            self.demux_rf_logger.warning(
+                self.demux_rf_logger.log_msgs["dev_run"],
+                self.rf_obj.samplesheet_path,
+            )
 
     def sequencing_complete(self) -> Union[bool, None]:
         """

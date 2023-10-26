@@ -98,6 +98,7 @@ DEFAULT_DICT = {
     "FH": False,
     "dry_lab_only": False,
     "drylab_dnanexus_id": False,
+    "development_run": False,
 }
 
 
@@ -215,6 +216,9 @@ CAPTURE_PANEL_DICT = {
 # Dictionary containing pan number-specific settings, arranged by workflow name
 # These incorporate the capture dictionary settings and build upon them
 PANEL_DICT = {
+    "Pan5180": {  # Development runs (stops warning messages)
+        "development_run": True,
+    },
     "Pan4009": {  # SNP
         **CAPTURE_PANEL_DICT["snp"],
     },
@@ -768,6 +772,8 @@ WES_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "wes"]
 SNP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "snp"]
 ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
 LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
+
+DEVELOPMENT_PANELS = [k for k, v in PANEL_DICT.items() if v["development_run"]]
 
 # ================ DUTY_CSV INPUTS ===================================================
 

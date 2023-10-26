@@ -21,10 +21,11 @@ LOG_MSGS = {
         "software_fail": "Software tests did not all pass",
         "found_program": "Found program: %s",
         "program_missing": "Could not find program: %s",
+        "not_dev_run": "Samplesheet is not from a development run: %s",
+        "dev_run": "Samplesheet is from a development run: %s",
         "sschecks_not_passed": "Samplesheet did not pass checks: %s",
         "sschecks_passed": "Samplesheet passed all checks %s",
         "ad_version": "Automate_demultiplex release: %s",
-
     },
     "ad_email": {
         "sending_email": "Sending the email message: %s",
