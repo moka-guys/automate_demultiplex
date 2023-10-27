@@ -269,4 +269,5 @@ LOG_MSGS = {
     "upload_agent": {},
     "project": {},
     "dx_run": {},
+    "post_run_cmds": {},
 }

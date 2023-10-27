@@ -276,23 +276,23 @@ class ProcessRunfolder(object):
                     self.rf_obj.rf_loggers.usw.log_msgs["not_dev_run"],
                     self.rf_obj.samplesheet_path,
                 )
-                self.users_dict = self.get_users_dict()
-                self.write_project_creation_script()
-                self.nexus_identifiers = {
-                    "proj_name": self.samples_obj.nexus_paths['proj_name'],
-                    "proj_id": self.run_project_creation_script()
-                    }
-                self.backup_runfolder = UACaller(self.rf_obj, self.nexus_identifiers)
-                self.upload_cmds = self.get_upload_cmds()
-                self.pre_pipeline_upload_dict = self.create_file_upload_dict()
-                self.pre_pipeline_upload()
+                # self.users_dict = self.get_users_dict()
+                # self.write_project_creation_script()
+                # self.nexus_identifiers = {
+                #     "proj_name": self.samples_obj.nexus_paths['proj_name'],
+                #     "proj_id": self.run_project_creation_script()
+                #     }
+                # self.backup_runfolder = UACaller(self.rf_obj, self.nexus_identifiers)
+                # self.upload_cmds = self.get_upload_cmds()
+                # self.pre_pipeline_upload_dict = self.create_file_upload_dict()
+                # self.pre_pipeline_upload()
                 BuildDxCommands(
-                    self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
+                    self.rf_obj, self.samples_obj, "project-GZJGzK803j4XxpfBJXKzPFP3"#self.nexus_identifiers["proj_id"]
                     )
                 self.create_congenica_command_file()
-                self.run_dx_run_commands()
-                PipelineEmails(self.rf_obj, self.samples_obj)
-                self.post_pipeline_upload()
+                # self.run_dx_run_commands()
+                # PipelineEmails(self.rf_obj, self.samples_obj)
+                # self.post_pipeline_upload()
             else:
                 self.rf_obj.rf_loggers.usw.info(
                     self.rf_obj.rf_loggers.usw.log_msgs["dev_run"],
@@ -869,7 +869,7 @@ class CollectRunfolderSamples(object):
             )
         nexus_paths["proj_root"] = f"{nexus_paths['proj_name']}:/"
         nexus_paths["runfolder_subdir"] = (
-            f"{nexus_paths['proj_root']}{nexus_paths['proj_name']}"
+            f"{nexus_paths['proj_root']}{nexus_paths['runfolder_name']}"
             )
         nexus_paths["logfiles_dir"] = f"/{nexus_paths['runfolder_name']}/Logfiles/"
         nexus_paths["samplesheet"] = (
@@ -1212,14 +1212,10 @@ class SampleObject:
         fastqs_dict = {"R1": {}, "R2": {}}
         for read in ["R1", "R2"]:
             if self.pipeline == "tso500":
-                nexus_path = os.path.join(
-                    self.rf_obj.tso_fastq_dir_path, self.sample_name,
-                    f"{self.sample_name}_{read}.fastq.gz"
-                )
                 fastqs_dict[read] = {
                     "name": None,
                     "path": None,
-                    "nexus_path": nexus_path,
+                    "nexus_path": f"{self.nexus_paths['proj_root']}{ad_config.FASTQ_DIRS['tso_fastqs']}{self.sample_name}/{self.sample_name}_R1.fastq.gz",
                 }
             else:
                 # TODO add improved error logging here
@@ -1305,7 +1301,7 @@ class SampleObject:
             workflow_cmd = self.create_fastqc_cmd()
             congenica_upload_cmd = False, False
         elif self.pipeline == "tso500":
-            workflow_cmd = False  # Pipeline cmd is built at whole-run level
+            workflow_cmd = self.create_fastqc_cmd()  # Pipeline cmd is built at whole-run level
             congenica_upload_cmd = False, False
         return workflow_cmd, congenica_upload_cmd
 
@@ -1615,14 +1611,16 @@ class BuildDxCommands(object):
     samples_obj along with the run-wide commands to the dx run script.
 
     Attributes:
-        rf_obj (obj):           RunfolderObject object (contains runfolder-specific
-                                attributes)
-        samples_obj (obj):      CollectRunfolderSamples object (contains sample-specific
-                                attributes
-        nexus_project_id (str): Project ID, generated when the DNAnexus project is
-                                created
-        dnanexus_apikey (str):  DNAnexus auth token
-        dx_cmd_list (list):     List of dx run commands for the project
+        rf_obj (obj):                   RunfolderObject object (contains runfolder-specific
+                                        attributes)
+        samples_obj (obj):              CollectRunfolderSamples object (contains sample-specific
+                                        attributes
+        nexus_project_id (str):         Project ID, generated when the DNAnexus project is
+                                        created
+        dnanexus_apikey (str):          DNAnexus auth token
+        dx_cmd_list (list):             List of dx run commands for the project
+        dx_postprocessing_cmds (list):  List of dx run commands to run after the TSO app. TSO
+                                        runs only
 
     Methods:
         build_dx_cmds()
@@ -1633,6 +1631,9 @@ class BuildDxCommands(object):
             Collect runwide commands for tso500 runs. Includes tso500 app, fastqc,
             sompy, sambamba, multiqc and duty_csv. TSO commands are all generated within
             this function as the dependency order is different for this pipeline
+        split_tso500_samplesheet()
+            Split tso500 samplesheet into parts with x samples per samplesheet (no. 
+            defined in ad_config.TSO_BATCH_SIZE) and write to runfolder
         create_tso500_cmd()
             Build dx run command for tso500 docker app
         get_tso_analysis_options()
@@ -1671,6 +1672,7 @@ class BuildDxCommands(object):
         create_duty_csv_cmd()
             Build dx run command to run create_duty_csv app for the run
         write_dx_run_cmds()
+            Write dx run commands to the dx run script for the runfolder
     """
     def __init__(
         self, rf_obj: object, samples_obj: object, nexus_project_id: str
@@ -1695,69 +1697,66 @@ class BuildDxCommands(object):
         self.rf_obj.rf_loggers.usw.info(
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmds"]
         )
-        self.dx_cmd_list = self.build_dx_cmds()
-        self.write_dx_run_cmds()  # Write commands to file
+        self.build_dx_cmds()
+        self.write_dx_run_cmds(  # Write commands to file
+            self.dx_cmd_list, self.rf_obj.runfolder_dx_run_script
+        )
+        if self.samples_obj.pipeline == "tso500":
+            self.write_dx_run_cmds(  # Write commands to TSO post-processing file
+                self.dx_postprocessing_cmds, self.rf_obj.post_run_dx_run_script
+            )
 
     def build_dx_cmds(self) -> list:
         """
         Build dx run commands (pipeline-dependent) by calling the relevant functions and
         appending to the dx_cmd_list. This includes both sample workflow-level commands
         (self.return_sample_workflow_cmds()), and runwide commands
-            :return (list):     List of all runwide commands
+            :return None:
         """
-        dx_cmd_list = []
-
         # Get sample workflow-level commands
         if self.samples_obj.pipeline == "tso500":
-            dx_cmd_list.append(self.return_tso_runwide_cmds())
+            self.dx_cmd_list, self.dx_postprocessing_cmds = self.return_tso_runwide_cmds()
         else:
-            dx_cmd_list.append(self.return_sample_workflow_cmds())
+            self.dx_cmd_list.append(self.return_sample_workflow_cmds())
 
             # Get pipeline-specific run-wide commands. SNP, ADX and ONC do not have
             # pipeline-specific run-wide commands
             if self.samples_obj.pipeline == "wes":
-                dx_cmd_list.append(self.return_wes_runwide_cmds())
+                self.dx_cmd_list.append(self.return_wes_runwide_cmds())
             if self.samples_obj.pipeline == "pipe":
-                dx_cmd_list.append(self.return_pipe_runwide_cmds())
+                self.dx_cmd_list.append(self.return_pipe_runwide_cmds())
 
             # Get run-wide commands that apply to all sequencing runs
-            dx_cmd_list.append(self.return_multiqc_cmds())
-            dx_cmd_list.append([self.create_duty_csv_cmd()])
+            self.dx_cmd_list.append(self.return_multiqc_cmds())
+            self.dx_cmd_list.append([self.create_duty_csv_cmd()])
 
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["cmds_built"]
             )
-        return list(chain(*dx_cmd_list))
 
     def return_tso_runwide_cmds(self):
         """
         Collect runwide commands for tso500 runs as a list. This includes tso500 app,
         fastqc, sompy, sambamba, multiqc and duty_csv. TSO commands are all generated
         within this function as the dependency order is different for this pipeline
-            :return cmd_list (list):    List of runwide commands for tso runs
+            :return dx_cmd_list (list):     List of runwide commands for tso runs
+            :dx_postprocessing_cmds (list): Post-processing commands for tso runs
         """
         dx_cmd_list = []
+        dx_postprocessing_cmds = []
         sambamba_cmds_list = []
 
-        dx_cmd_list.append(self.create_tso500_cmd())
-        dx_cmd_list.append(ad_config.UPLOAD_ARGS["depends_list"])
+        tso_ss_list = self.split_tso500_samplesheet()
+        for tso_ss in tso_ss_list:
+            print(tso_ss)
+            dx_cmd_list.append(self.create_tso500_cmd(tso_ss))
 
-        # For TSO samples, the fastqs are created within DNAnexus and the commands are
-        # generated using sample names parsed from the  samplesheet. If for whatever
-        # reason those fastqs are not created by the DNAnexus app, the downstream job
-        # will not set off and therefore will produce no job ID to provide to the
-        # depends_list, which will create an error/ slack alert. To solve this problem,
-        # the job ID is only added to the depends list if it exits
         for sample_name in self.samples_obj.samples_dict.keys():
             # Append all fastqc commands to cmd_list
-            dx_cmd_list.append(
+            dx_postprocessing_cmds.append(
                 self.samples_obj.samples_dict[sample_name]["sample_pipeline_cmd"]
             )
-            # Only add to depends_list if job ID from previous command is not empty
-            dx_cmd_list.append(
-                ad_config.UPLOAD_ARGS["if_jobid_exists_depends"]
-                % ad_config.UPLOAD_ARGS["depends_list"]
-            )
+            dx_postprocessing_cmds.append(ad_config.UPLOAD_ARGS["depends_list"])
             sambamba_cmds_list.append(
                 self.create_sambamba_cmd(
                     sample_name,
@@ -1769,13 +1768,10 @@ class BuildDxCommands(object):
             # to help assess contamination. Only add to depends_list if job ID from
             # previous command is not empty
             if not self.samples_obj.samples_dict[sample_name]['neg_control']:
-                sambamba_cmds_list.append(
-                    ad_config.UPLOAD_ARGS["if_jobid_exists_depends"]
-                    % ad_config.UPLOAD_ARGS["depends_list"]
-                )
+                sambamba_cmds_list.append(ad_config.UPLOAD_ARGS["depends_list"])
 
             if "HD200" in sample_name:
-                dx_cmd_list.append(
+                dx_postprocessing_cmds.append(
                     self.create_sompy_cmd(
                         sample_name,
                         self.samples_obj.samples_dict[sample_name]['pannum']
@@ -1783,23 +1779,66 @@ class BuildDxCommands(object):
                     )
                 # Only add to depends_list if job ID from previous command
                 # is not empty
-                dx_cmd_list.append(
-                    ad_config.UPLOAD_ARGS["if_jobid_exists_depends"]
-                    % ad_config.UPLOAD_ARGS["depends_list"]
-                )
+                dx_postprocessing_cmds.append(ad_config.UPLOAD_ARGS["depends_list"])
 
-        dx_cmd_list.extend(self.return_multiqc_cmds())
+        dx_postprocessing_cmds.extend(self.return_multiqc_cmds())
         # Set off after as they are not depended upon by MultiQC but are required for
         # duty_csv
-        dx_cmd_list.extend(sambamba_cmds_list)
-        dx_cmd_list.append(self.create_duty_csv_cmd())
+        dx_postprocessing_cmds.extend(sambamba_cmds_list)
+        dx_postprocessing_cmds.append(self.create_duty_csv_cmd())
 
-        return dx_cmd_list
+        return dx_cmd_list, dx_postprocessing_cmds
 
-    def create_tso500_cmd(self) -> str:
+    def split_tso500_samplesheet(self):
+        """
+        Split tso500 samplesheet into parts with x samples per samplesheet (no. 
+        defined in ad_config.TSO_BATCH_SIZE) and write to runfolder
+            :return (list):     Samplesheet names
+        """    
+        samplesheet_header = []
+        samples = []
+        no_sample_lines = 0
+        expected_data_headers = ["Sample_ID", "Sample_Name", "index"]
+        header_identified = False
+        samplesheet_list = []
+
+        # Read all lines from the sample sheet
+        with open(self.rf_obj.runfolder_samplesheet_path) as samplesheet:
+            for line in samplesheet.readlines():
+                # stop when get to data headers section
+                if any(header in line for header in expected_data_headers):
+                    samplesheet_header.append(line)  # Extract header
+                    header_identified = True
+                elif not header_identified:  # Extract lines above the header
+                    samplesheet_header.append(line)
+                # skip empty lines (check first element of the line, after splitting on comma)
+                elif header_identified and len(line.split(",")[0]) < 2:
+                    samples.append(line)
+                    no_sample_lines += 1
+
+        # Split samples into batches (size specified in config)
+        batches = [
+            samples[i:i + ad_config.TSO_BATCH_SIZE]
+            for i in range(0, len(samples), ad_config.TSO_BATCH_SIZE)
+        ]
+        # Create new samplesheets named "PartXofY", add samplesheet to list
+        # Capture path for samplesheet in runfolder
+        for samplesheet_count, batch in enumerate(batches, start=1):
+            #capture samplesheet file path to write samplesheet paths to the runfolder
+            samplesheet_filepath = f'{self.rf_obj.runfolder_samplesheet_path.split(".csv")[0]}Part{samplesheet_count}of{len(batches)}.csv'
+            # capture samplesheet name to write to list- use runfolder name
+            samplesheet_name = f"{self.rf_obj.runfolder_name}_SampleSheetPart{samplesheet_count}of{len(batches)}.csv"
+            samplesheet_list.append(samplesheet_name)
+            with open(samplesheet_filepath, "a") as new_samplesheet:
+                new_samplesheet.writelines(samplesheet_header)
+                new_samplesheet.writelines(batch)
+        return samplesheet_list
+
+    def create_tso500_cmd(self, tso_ss) -> str:
         """
         Build dx run command for tso500 docker app
-            :return dx_run_cmd (str):    Dx run command for tso500 app
+            :param tso_ss (str):        TSO samplesheet
+            :return dx_run_cmd (str):   Dx run command for tso500 app
         """
         self.rf_obj.rf_loggers.usw.info(
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmd"],
@@ -1811,7 +1850,7 @@ class BuildDxCommands(object):
             f'{ad_config.APP_INPUTS["tso500"]["docker"]}'
             f'{ad_config.NEXUS_IDS["FILES"]["tso500_docker"]}',
             f'{ad_config.APP_INPUTS["tso500"]["samplesheet"]}'
-            f'{self.nexus_project_id}:{self.samples_obj.nexus_paths["samplesheet"]}',
+            f'{self.nexus_project_id}:{self.samples_obj.nexus_paths["proj_root"]}{tso_ss}',
             f'{ad_config.APP_INPUTS["tso500"]["project_name"]}'
             f'{self.samples_obj.nexus_paths["proj_name"]}',
             f'{ad_config.APP_INPUTS["tso500"]["runfolder_name"]}',
@@ -2225,20 +2264,21 @@ class BuildDxCommands(object):
             ad_config.UPLOAD_ARGS["token"] % self.dnanexus_apikey
         ])
 
-    def write_dx_run_cmds(self) -> None:
+    def write_dx_run_cmds(self, cmds, script) -> None:
         """
         Write dx run commands to the dx run script for the runfolder
+            :param cmds (list): List of commands to write
+            :script (str):      Path of script to write commands to
             :return None:
         """
         self.rf_obj.rf_loggers.usw.info(
             self.rf_obj.rf_loggers.usw.log_msgs["writing_cmds"],
         )
-        with open(
-            self.rf_obj.runfolder_dx_run_script, "w", encoding="utf-8"
-        ) as dx_run_script:
+        print(script)
+        with open(script, "w", encoding="utf-8") as cmds_script:
             # remove any None values from the command_list
-            dx_run_script.writelines(
-                [f"{line}\n" for line in filter(None, self.dx_cmd_list)]
+            cmds_script.writelines(
+                [f"{line}\n" for line in filter(None, cmds)]
             )
 
 

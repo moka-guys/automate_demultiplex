@@ -235,6 +235,10 @@ def return_rflog_config(runfoldername):
             ad_config.AD_LOGDIR, "dx_run_commands",
             f"{runfoldername}_dx_run_commands.sh"
             ),
+        "post_run_dx_run_script": os.path.join(
+            ad_config.AD_LOGDIR, "dx_run_commands",
+            f"{runfoldername}_post_run_commands.sh"
+            ),
         "congenica_dx_run_script": os.path.join(  # DNAnexus run command script
             ad_config.AD_LOGDIR, "dx_run_commands",
             f"{runfoldername}_congenica.sh"
@@ -304,6 +308,8 @@ class RunfolderObject(object):
                                                 logfiles dir)
         runfolder_dx_run_script (str):          Workflow dx run commands for runfolder
                                                 (within logfiles dir)
+        post_run_dx_run_script (str):           Separate DX run script for downstream
+                                                processing apps (TSO only)
         congenica_dx_run_script (str):          Congenica upload commands for runfolder
                                                 (within logfiles dir)
         proj_creation_script (str):             DNAnexus project creation bash script
@@ -394,6 +400,7 @@ class RunfolderObject(object):
             "backup": self.backup_runfolder_logfile,
             "project": self.proj_creation_script,
             "dx_run": self.runfolder_dx_run_script,
+            "post_run_cmds": self.post_run_dx_run_script,
             "decision_support": self.decision_support_tool_logfile,
             "ss_validator": self.samplesheet_validator_logfile,
         }
@@ -403,6 +410,7 @@ class RunfolderObject(object):
             self.backup_runfolder_logfile,
             self.proj_creation_script,
             self.runfolder_dx_run_script,
+            self.post_run_dx_run_script,
             self.decision_support_tool_logfile,
             self.samplesheet_validator_logfile,
             self.bcl2fastqlog_path,
