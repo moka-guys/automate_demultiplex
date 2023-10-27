@@ -47,6 +47,7 @@ if branch == "master":  # Prod branch
             MAIL_SETTINGS["binfx_email"],
         ],
     }
+    TSO_BATCH_SIZE = 16
 else:  # Testing branch
     TESTING = True
     SCRIPT_MODE = "TEST_MODE"
@@ -62,6 +63,7 @@ else:  # Testing branch
         "oncology_ops_email": "mokaguys@gmail.com",
         "wes_samplename_emaillist": ["mokaguys@gmail.com"],
     }
+    TSO_BATCH_SIZE = 2
 
 CREDENTIALS = {
     "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
@@ -306,8 +308,6 @@ UPLOAD_ARGS = {
     "depends_list_gatk": 'depends_list_gatk="${depends_list_gatk} -d ${jobid} "',
     "depends_list_recombined": 'depends_list="${depends_list} ${depends_list_gatk} "',
     "depends_list_edreadcount": 'depends_list="${depends_list} -d ${ed_jobid} "',
-    # Argument to define depends_list only if the job ID exists
-    "if_jobid_exists_depends": 'if ! [ -z "${jobid}" ]; then %s; fi',
 }
 
 # Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
