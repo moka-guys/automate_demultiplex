@@ -117,7 +117,7 @@ CAPTURE_PANEL_DICT = {
         "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4397data.bed",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4397dataSambamba.bed",
         "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4398data.bed",
-        "ed_readcount_bedfile": "Pan5191_exomedepth.bed",
+        "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5191_exomedepth.bed",
         "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4399_RPKM.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
@@ -133,7 +133,7 @@ CAPTURE_PANEL_DICT = {
         "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan5123data.bed",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5123dataSambamba.bed",
         "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan5119data.bed",
-        "ed_readcount_bedfile": "Pan5188_exomedepth.bed",
+        "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5188_exomedepth.bed",
         "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan5109_RPKM.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
@@ -224,6 +224,7 @@ CAPTURE_PANEL_DICT = {
 # These incorporate the capture dictionary settings and build upon them
 PANEL_DICT = {
     "Pan5180": {  # Development runs (stops warning messages)
+        **DEFAULT_DICT,
         "development_run": True,
     },
     "Pan4009": {  # SNP

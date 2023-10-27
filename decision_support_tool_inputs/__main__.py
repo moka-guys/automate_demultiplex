@@ -11,7 +11,7 @@ import argparse
 from config import ad_config, panel_config
 from ad_logger import ad_logger
 from toolbox import toolbox
-from decision_support_tool_inputs.decision_tooler import DecisionTooler
+from decision_support_tool_inputs.decision_support_tool_inputs import DecisionTooler
 
 
 def get_arguments():

@@ -461,11 +461,11 @@ DX_CMDS = {
     ),
     "ed_readcount": (
         f"ed_jobid=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
-        "--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
+        f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
     "ed_cnvcalling": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} "
-        "--priority high -y --instance-type mem1_ssd1_v2_x4 {JOB_NAME_STR}"
+        f"--priority high -y --instance-type mem1_ssd1_v2_x4 {JOB_NAME_STR}"
     ),
     "rpkm": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['rpkm']}"

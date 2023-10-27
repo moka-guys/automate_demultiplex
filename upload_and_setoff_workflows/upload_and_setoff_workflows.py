@@ -271,7 +271,7 @@ class ProcessRunfolder(object):
         self.samples_obj = CollectRunfolderSamples(self.rf_obj)
 
         if self.samples_obj.samplename_list and self.samples_obj.samples_dict:  # If samples are present
-            if not any(panno in ad_config.DEVELOPMENT_PANELS for panno in self.samples_obj.unique_pannos):
+            if not any(panno in panel_config.DEVELOPMENT_PANELS for panno in self.samples_obj.unique_pannos):
                 self.rf_obj.rf_loggers.usw.info(
                     self.rf_obj.rf_loggers.usw.log_msgs["not_dev_run"],
                     self.rf_obj.samplesheet_path,
@@ -1222,12 +1222,14 @@ class SampleObject:
                     "nexus_path": nexus_path,
                 }
             else:
+                # TODO add improved error logging here
                 matches = [self.sample_name, f"_{read}_"]
                 fastq_name = list(
                     fastq_path for fastq_path
                     in os.listdir(self.rf_obj.fastq_dir_path)
                     if all([substring in fastq_path for substring in matches])
-                )[0]
+                )
+                fastq_name = fastq_name[0]
                 nexus_path = os.path.join(
                     self.nexus_paths["proj_root"],
                     self.nexus_paths['fastqs_dir'],
@@ -2083,21 +2085,21 @@ class BuildDxCommands(object):
                     ]
             ):
                 core_panel_pannos = [
-                    k for k, v in self.samples_obj.samples_dict.items
-                    if v['panel_name'] == core_panel
+                    self.samples_obj.samples_dict[k]['pannum']
+                    for k, v in self.samples_obj.samples_dict.items()
+                    if self.samples_obj.samples_dict[k]['panel_settings']['panel_name'] == core_panel
                 ]
-                
+
                 # Make sure there are enough samples for exome depth and RPKM
                 # TODO check this has the desired effect
                 if len(self.samples_obj.samples_dict.items()) >= 3:
-                    cmd_list.append(self.create_ed_readcount_cmd(core_panel))
-                    cmd_list.append(ad_config.UPLOAD_ARGS["depends_list_edreadcount"])
+                    if panel_config.CAPTURE_PANEL_DICT[core_panel]["ed_readcount_bedfile"]:
+                        cmd_list.append(self.create_ed_readcount_cmd(core_panel))
 
-                    for panno in set(core_panel_pannos):
-                        cmd_list.append(self.create_ed_cnvcalling_cmd(panno))
+                        for panno in set(core_panel_pannos):
+                            cmd_list.append(self.create_ed_cnvcalling_cmd(panno))
 
                     cmd_list.append(self.create_rpkm_cmd(core_panel))
-                    cmd_list.append(ad_config.UPLOAD_ARGS["depends_list"])
 
         cmd_list.append(ad_config.UPLOAD_ARGS["depends_list_recombined"])
         return cmd_list
@@ -2162,6 +2164,7 @@ class BuildDxCommands(object):
             f'{self.samples_obj.nexus_paths["proj_name"]}',
             f'{ad_config.APP_INPUTS["ed_readcount"]["pannos"]}'
             f'{",".join(panel_config.ED_PANNOS[core_panel_name])}',
+            f'{ad_config.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
             ad_config.UPLOAD_ARGS["depends_gatk"],  # Use list of gatk related jobs to delay start
             ad_config.UPLOAD_ARGS["token"] % self.dnanexus_apikey
         ])
@@ -2181,12 +2184,13 @@ class BuildDxCommands(object):
         return " ".join([
             f'{ad_config.DX_CMDS["ed_cnvcalling"]}ED_cnvcalling',
             f'{ad_config.APP_INPUTS["ed_cnvcalling"]["readcount"]}'
-            f'$EDjobid:{ad_config.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
+            f'$ed_jobid:{ad_config.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
             f'{ad_config.APP_INPUTS["ed_cnvcalling"]["bed"]}'
-            f'{panel_config.BEDFILE_FOLDER}{panno}_CNV.bed',
+            f'{panel_config.BEDFILE_FOLDER}{panel_config.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]}_CNV.bed',
             f'{ad_config.APP_INPUTS["ed_cnvcalling"]["proj"]}'
             f'{self.samples_obj.nexus_paths["proj_name"]}',
             f'{ad_config.APP_INPUTS["ed_cnvcalling"]["pannos"]}{panno}',
+            f'{ad_config.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
             ad_config.UPLOAD_ARGS["depends_gatk"],  # Use list of gatk related jobs to delay start
             ad_config.UPLOAD_ARGS["token"] % self.dnanexus_apikey
         ])
