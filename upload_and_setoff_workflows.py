@@ -2223,7 +2223,7 @@ class RunfolderProcessor(object):
             self.congenica_upload_command_script_path, "w"
         ) as congenica_script:
             congenica_script.write(self.source_command + "\n")
-            congenica_script.write(self.empty_depends)
+            congenica_script.write(self.empty_depends + "\n")
 
     def build_congenica_input_command(self):
         """
