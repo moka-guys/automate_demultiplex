@@ -225,6 +225,9 @@ class ProcessRunfolder(object):
             Set off the project creation script using subprocess, return project ID
         get_upload_cmds()
             Build file upload commands
+        split_tso500_samplesheet()
+            Split tso500 samplesheet into parts with x samples per samplesheet (no. 
+            defined in ad_config.TSO_BATCH_SIZE) and write to runfolder
         create_file_upload_dict()
             Create dictionary of files to upload prior to setting off the pipeline, and
             the upload commands required
@@ -276,23 +279,23 @@ class ProcessRunfolder(object):
                     self.rf_obj.rf_loggers.usw.log_msgs["not_dev_run"],
                     self.rf_obj.samplesheet_path,
                 )
-                # self.users_dict = self.get_users_dict()
-                # self.write_project_creation_script()
-                # self.nexus_identifiers = {
-                #     "proj_name": self.samples_obj.nexus_paths['proj_name'],
-                #     "proj_id": self.run_project_creation_script()
-                #     }
-                # self.backup_runfolder = UACaller(self.rf_obj, self.nexus_identifiers)
-                # self.upload_cmds = self.get_upload_cmds()
-                # self.pre_pipeline_upload_dict = self.create_file_upload_dict()
-                # self.pre_pipeline_upload()
+                self.users_dict = self.get_users_dict()
+                self.write_project_creation_script()
+                self.nexus_identifiers = {
+                    "proj_name": self.samples_obj.nexus_paths['proj_name'],
+                    "proj_id": self.run_project_creation_script()
+                    }
+                self.backup_runfolder = UACaller(self.rf_obj, self.nexus_identifiers)
+                self.upload_cmds = self.get_upload_cmds()
+                self.pre_pipeline_upload_dict = self.create_file_upload_dict()
+                self.pre_pipeline_upload()
                 BuildDxCommands(
-                    self.rf_obj, self.samples_obj, "project-GZJGzK803j4XxpfBJXKzPFP3"#self.nexus_identifiers["proj_id"]
+                    self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
                     )
                 self.create_congenica_command_file()
-                # self.run_dx_run_commands()
-                # PipelineEmails(self.rf_obj, self.samples_obj)
-                # self.post_pipeline_upload()
+                self.run_dx_run_commands()
+                PipelineEmails(self.rf_obj, self.samples_obj)
+                self.post_pipeline_upload()
             else:
                 self.rf_obj.rf_loggers.usw.info(
                     self.rf_obj.rf_loggers.usw.log_msgs["dev_run"],
@@ -397,11 +400,6 @@ class ProcessRunfolder(object):
                                         the DNAnexus project
         """
         upload_cmds = {
-            "runfolder_samplesheet": ad_config.DX_CMDS['file_upload_cmd'] % (
-                self.rf_obj.dnanexus_apikey, self.nexus_identifiers["proj_id"],
-                self.samples_obj.nexus_paths['fastqs_dir'],
-                self.rf_obj.runfolder_samplesheet_path
-            ),
             "cd": ad_config.DX_CMDS['file_upload_cmd'] % (
                 self.rf_obj.dnanexus_apikey, self.nexus_identifiers["proj_id"],
                 "/QC",
@@ -419,14 +417,75 @@ class ProcessRunfolder(object):
             ),
         }
         if self.samples_obj.pipeline == "tso500":
-            upload_cmds["fastqs"] = False
+            self.rf_obj.tso_ss_list = self.split_tso500_samplesheet()
+            samplesheet_paths = [os.path.join(self.rf_obj.runfolderpath, ss) for ss in self.rf_obj.tso_ss_list]
+            # TODO amend the upload directory for this cmd
+            upload_cmds["runfolder_samplesheet"] = ad_config.DX_CMDS['file_upload_cmd'] % (
+                self.rf_obj.dnanexus_apikey, self.nexus_identifiers["proj_id"],
+                self.samples_obj.nexus_paths['runfolder_name'],
+                ' '.join(samplesheet_paths)
+            )
         else:
             upload_cmds["fastqs"] = ad_config.DX_CMDS['file_upload_cmd'] % (
                 self.rf_obj.dnanexus_apikey, self.nexus_identifiers["proj_id"],
                 self.samples_obj.nexus_paths['fastqs_dir'],
                 self.samples_obj.fastqs_str
                 )
+            upload_cmds["runfolder_samplesheet"] = ad_config.DX_CMDS['file_upload_cmd'] % (
+                self.rf_obj.dnanexus_apikey, self.nexus_identifiers["proj_id"],
+                self.samples_obj.nexus_paths['fastqs_dir'],
+                self.rf_obj.runfolder_samplesheet_path
+            )
         return upload_cmds
+
+    # TODO streamline this
+    def split_tso500_samplesheet(self):
+        """
+        Split tso500 samplesheet into parts with x samples per samplesheet (no. 
+        defined in ad_config.TSO_BATCH_SIZE) and write to runfolder
+            :return (list):     Samplesheet names
+        """    
+        samplesheet_header = []
+        samples = []
+        no_sample_lines = 0
+        expected_data_headers = ["Sample_ID", "Sample_Name", "index"]
+        header_identified = False
+        samplesheet_list = []
+
+        # Read all lines from the sample sheet
+        with open(self.rf_obj.runfolder_samplesheet_path) as samplesheet:
+            for line in samplesheet.readlines():
+                if any(header in line for header in expected_data_headers):
+                    samplesheet_header.append(line)  # Extract header and add to list
+                    header_identified = True
+                elif not header_identified:  # Extract lines above the header and add to list
+                    samplesheet_header.append(line)
+                # skip empty lines (check first element of the line, after splitting on comma)
+                elif header_identified and len(line.split(",")[0]) > 2:
+                    samples.append(line)
+                    no_sample_lines += 1
+                # Skip empty lines
+                elif len(line.split(",")[0]) < 2:
+                    pass
+
+        # Split samples into batches (size specified in config)
+        batches = [
+            samples[i:i + ad_config.TSO_BATCH_SIZE]
+            for i in range(0, len(samples), ad_config.TSO_BATCH_SIZE)
+        ]
+        # Create new samplesheets named "PartXofY", add samplesheet to list
+        # Capture path for samplesheet in runfolder
+        for samplesheet_count, batch in enumerate(batches, start=1):
+            #capture samplesheet file path to write samplesheet paths to the runfolder
+            samplesheet_filepath = f'{self.rf_obj.runfolder_samplesheet_path.split(".csv")[0]}Part{samplesheet_count}of{len(batches)}.csv'
+            # capture samplesheet name to write to list- use runfolder name
+            samplesheet_name = f"{self.rf_obj.runfolder_name}_SampleSheetPart{samplesheet_count}of{len(batches)}.csv"
+            samplesheet_list.append(samplesheet_name)
+            with open(samplesheet_filepath, "w") as new_samplesheet:
+                new_samplesheet.writelines(samplesheet_header)
+                new_samplesheet.writelines(batch)
+        samplesheet_list.append(self.rf_obj.samplesheet_name)
+        return samplesheet_list
 
     def create_file_upload_dict(self) -> dict:
         """
@@ -441,10 +500,10 @@ class ProcessRunfolder(object):
                 "files_list": self.rf_obj.cluster_density_files,
             },
         }
-        if self.samples_obj.pipeline == "tso500":  # Add samplesheet entry
+        if self.samples_obj.pipeline == "tso500":  # Add samplesheet entry       
             pre_pipeline_upload_dict['runfolder_samplesheet'] = {
                 "cmd": self.upload_cmds["runfolder_samplesheet"],
-                "files_list": [self.rf_obj.runfolder_samplesheet_path]
+                "files_list": [os.path.join(self.rf_obj.runfolderpath, ss) for ss in self.rf_obj.tso_ss_list],
             }
         else:
             pre_pipeline_upload_dict["fastqs"] = {
@@ -862,14 +921,14 @@ class CollectRunfolderSamples(object):
             f"{self.rf_obj.runfolder_name}_{self.nexus_runfolder_suffix}"
             )
         nexus_paths["fastqs_dir"] = (
-            f"{nexus_paths['runfolder_name']}/{ad_config.FASTQ_DIRS[fastq_type]}"
+            f"/{nexus_paths['runfolder_name']}/{ad_config.FASTQ_DIRS[fastq_type]}/"
             )
         nexus_paths["proj_name"] = (
                 f"{ad_config.DNANEXUS_PROJECT_PREFIX}{nexus_paths['runfolder_name']}"
             )
         nexus_paths["proj_root"] = f"{nexus_paths['proj_name']}:/"
         nexus_paths["runfolder_subdir"] = (
-            f"{nexus_paths['proj_root']}{nexus_paths['runfolder_name']}"
+            f"{nexus_paths['proj_root']}{nexus_paths['runfolder_name']}/"
             )
         nexus_paths["logfiles_dir"] = f"/{nexus_paths['runfolder_name']}/Logfiles/"
         nexus_paths["samplesheet"] = (
@@ -1226,11 +1285,7 @@ class SampleObject:
                     if all([substring in fastq_path for substring in matches])
                 )
                 fastq_name = fastq_name[0]
-                nexus_path = os.path.join(
-                    self.nexus_paths["proj_root"],
-                    self.nexus_paths['fastqs_dir'],
-                    fastq_name
-                )
+                nexus_path = f"{self.nexus_paths['proj_root']}{self.nexus_paths['fastqs_dir']}{fastq_name}"
                 fastqs_dict[read] = {
                     "name": fastq_name,
                     "path": os.path.join(
@@ -1577,7 +1632,7 @@ class SampleObject:
             self.sample_name,
         )
         return " ".join([
-            f'{ad_config.DX_CMDS["fastqc"]}{self.sample_name}',
+            f'{ad_config.DX_CMDS["fastqc"]}FASTQC-{self.sample_name}',
             f'-ireads={self.fastqs_dict["R1"]["nexus_path"]}',
             f'-ireads={self.fastqs_dict["R2"]["nexus_path"]}',
             f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
@@ -1631,9 +1686,6 @@ class BuildDxCommands(object):
             Collect runwide commands for tso500 runs. Includes tso500 app, fastqc,
             sompy, sambamba, multiqc and duty_csv. TSO commands are all generated within
             this function as the dependency order is different for this pipeline
-        split_tso500_samplesheet()
-            Split tso500 samplesheet into parts with x samples per samplesheet (no. 
-            defined in ad_config.TSO_BATCH_SIZE) and write to runfolder
         create_tso500_cmd()
             Build dx run command for tso500 docker app
         get_tso_analysis_options()
@@ -1697,7 +1749,7 @@ class BuildDxCommands(object):
         self.rf_obj.rf_loggers.usw.info(
             self.rf_obj.rf_loggers.usw.log_msgs["building_cmds"]
         )
-        self.build_dx_cmds()
+        self.dx_cmd_list, self.dx_postprocessing_cmds = self.build_dx_cmds()
         self.write_dx_run_cmds(  # Write commands to file
             self.dx_cmd_list, self.rf_obj.runfolder_dx_run_script
         )
@@ -1713,26 +1765,29 @@ class BuildDxCommands(object):
         (self.return_sample_workflow_cmds()), and runwide commands
             :return None:
         """
+        dx_cmd_list = []
+        dx_postprocessing_cmds = []
         # Get sample workflow-level commands
         if self.samples_obj.pipeline == "tso500":
-            self.dx_cmd_list, self.dx_postprocessing_cmds = self.return_tso_runwide_cmds()
+            dx_cmd_list, dx_postprocessing_cmds = self.return_tso_runwide_cmds()
         else:
-            self.dx_cmd_list.append(self.return_sample_workflow_cmds())
+            dx_cmd_list.extend(self.return_sample_workflow_cmds())
 
             # Get pipeline-specific run-wide commands. SNP, ADX and ONC do not have
             # pipeline-specific run-wide commands
             if self.samples_obj.pipeline == "wes":
-                self.dx_cmd_list.append(self.return_wes_runwide_cmds())
+                dx_cmd_list.extend(self.return_wes_runwide_cmds())
             if self.samples_obj.pipeline == "pipe":
-                self.dx_cmd_list.append(self.return_pipe_runwide_cmds())
+                dx_cmd_list.extend(self.return_pipe_runwide_cmds())
 
             # Get run-wide commands that apply to all sequencing runs
-            self.dx_cmd_list.append(self.return_multiqc_cmds())
-            self.dx_cmd_list.append([self.create_duty_csv_cmd()])
+            dx_cmd_list.extend(self.return_multiqc_cmds())
+            dx_cmd_list.append(self.create_duty_csv_cmd())
 
             self.rf_obj.rf_loggers.usw.info(
                 self.rf_obj.rf_loggers.usw.log_msgs["cmds_built"]
             )
+        return dx_cmd_list, dx_postprocessing_cmds
 
     def return_tso_runwide_cmds(self):
         """
@@ -1745,12 +1800,11 @@ class BuildDxCommands(object):
         dx_cmd_list = []
         dx_postprocessing_cmds = []
         sambamba_cmds_list = []
-
-        tso_ss_list = self.split_tso500_samplesheet()
-        for tso_ss in tso_ss_list:
-            print(tso_ss)
-            dx_cmd_list.append(self.create_tso500_cmd(tso_ss))
-
+        # Remove base samplesheet as we only want to use split samplesheets
+        for tso_ss in self.rf_obj.tso_ss_list:
+            if tso_ss != self.rf_obj.samplesheet_name:
+                dx_cmd_list.append(self.create_tso500_cmd(tso_ss))
+                        
         for sample_name in self.samples_obj.samples_dict.keys():
             # Append all fastqc commands to cmd_list
             dx_postprocessing_cmds.append(
@@ -1789,51 +1843,6 @@ class BuildDxCommands(object):
 
         return dx_cmd_list, dx_postprocessing_cmds
 
-    def split_tso500_samplesheet(self):
-        """
-        Split tso500 samplesheet into parts with x samples per samplesheet (no. 
-        defined in ad_config.TSO_BATCH_SIZE) and write to runfolder
-            :return (list):     Samplesheet names
-        """    
-        samplesheet_header = []
-        samples = []
-        no_sample_lines = 0
-        expected_data_headers = ["Sample_ID", "Sample_Name", "index"]
-        header_identified = False
-        samplesheet_list = []
-
-        # Read all lines from the sample sheet
-        with open(self.rf_obj.runfolder_samplesheet_path) as samplesheet:
-            for line in samplesheet.readlines():
-                # stop when get to data headers section
-                if any(header in line for header in expected_data_headers):
-                    samplesheet_header.append(line)  # Extract header
-                    header_identified = True
-                elif not header_identified:  # Extract lines above the header
-                    samplesheet_header.append(line)
-                # skip empty lines (check first element of the line, after splitting on comma)
-                elif header_identified and len(line.split(",")[0]) < 2:
-                    samples.append(line)
-                    no_sample_lines += 1
-
-        # Split samples into batches (size specified in config)
-        batches = [
-            samples[i:i + ad_config.TSO_BATCH_SIZE]
-            for i in range(0, len(samples), ad_config.TSO_BATCH_SIZE)
-        ]
-        # Create new samplesheets named "PartXofY", add samplesheet to list
-        # Capture path for samplesheet in runfolder
-        for samplesheet_count, batch in enumerate(batches, start=1):
-            #capture samplesheet file path to write samplesheet paths to the runfolder
-            samplesheet_filepath = f'{self.rf_obj.runfolder_samplesheet_path.split(".csv")[0]}Part{samplesheet_count}of{len(batches)}.csv'
-            # capture samplesheet name to write to list- use runfolder name
-            samplesheet_name = f"{self.rf_obj.runfolder_name}_SampleSheetPart{samplesheet_count}of{len(batches)}.csv"
-            samplesheet_list.append(samplesheet_name)
-            with open(samplesheet_filepath, "a") as new_samplesheet:
-                new_samplesheet.writelines(samplesheet_header)
-                new_samplesheet.writelines(batch)
-        return samplesheet_list
-
     def create_tso500_cmd(self, tso_ss) -> str:
         """
         Build dx run command for tso500 docker app
@@ -1850,14 +1859,13 @@ class BuildDxCommands(object):
             f'{ad_config.APP_INPUTS["tso500"]["docker"]}'
             f'{ad_config.NEXUS_IDS["FILES"]["tso500_docker"]}',
             f'{ad_config.APP_INPUTS["tso500"]["samplesheet"]}'
-            f'{self.nexus_project_id}:{self.samples_obj.nexus_paths["proj_root"]}{tso_ss}',
+            f'{self.nexus_project_id}:{self.samples_obj.nexus_paths["runfolder_name"]}/{tso_ss}',
             f'{ad_config.APP_INPUTS["tso500"]["project_name"]}'
             f'{self.samples_obj.nexus_paths["proj_name"]}',
-            f'{ad_config.APP_INPUTS["tso500"]["runfolder_name"]}',
+            f'{ad_config.APP_INPUTS["tso500"]["runfolder_name"]}'
             f'{self.samples_obj.nexus_paths["runfolder_name"]}',
             self.get_tso_analysis_options(),
             self.get_tso_instance_type(),
-            "--wait ",
             f'{ad_config.UPLOAD_ARGS["dest"]}'
             f'{self.samples_obj.nexus_paths["proj_root"]}',
             ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_apikey,
@@ -1907,7 +1915,7 @@ class BuildDxCommands(object):
             ad_config.APP_INPUTS["sompy"]["truth_vcf"],
             # Get inputs based on output location within project
             f'{ad_config.APP_INPUTS["sompy"]["query_vcf"]}'
-            f"{self.samples_obj.nexus_paths['proj_root']}analysis_folder/Results/"
+            f"{self.nexus_project_id}:analysis_folder/Results/"
             f"{sample}/{sample}_MergedSmallVariants.genome.vcf",
             ad_config.APP_INPUTS["sompy"]["tso"],
             ad_config.APP_INPUTS["sompy"]["skip"],
@@ -2010,7 +2018,6 @@ class BuildDxCommands(object):
         if self.samples_obj.pipeline == "tso500":
             multiqc_data_input = (
                 f"{self.samples_obj.nexus_paths['runfolder_subdir']}/"
-                f"{self.rf_obj.runfolder_name}"
                 f"{ad_config.STRINGS['lane_metrics_suffix']}"
             )
         else:
@@ -2075,8 +2082,8 @@ class BuildDxCommands(object):
         # is the DNAnexus project the analysis is running in
         cmd = (
             "analysisid=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh; "
-            "conda activate python3.10.6 && python3 -m "
-            f"{os.path.join(ad_config.PROJECT_DIR,'decision_support_tool_inputs')} "
+            f"&& cd {ad_config.PROJECT_DIR} && "
+            "conda activate python3.10.6 && python3 -m decision_support_tool_inputs "
             f"-a $jobid -t congenica -p {self.nexus_project_id} "
             f"-r {self.rf_obj.runfolder_name})"
             )
@@ -2274,7 +2281,6 @@ class BuildDxCommands(object):
         self.rf_obj.rf_loggers.usw.info(
             self.rf_obj.rf_loggers.usw.log_msgs["writing_cmds"],
         )
-        print(script)
         with open(script, "w", encoding="utf-8") as cmds_script:
             # remove any None values from the command_list
             cmds_script.writelines(
@@ -2403,17 +2409,11 @@ class PipelineEmails():
             self.rf_obj.runfolder_name, ",".join(set(self.workflows)),
             False, self.sample_count
         )
+        recipients = [ad_config.MAIL_SETTINGS['binfx_recipient']]
         if self.samples_obj.pipeline == 'wes':
-            recipients = ad_config.MAIL_SETTINGS['wes_samplename_emaillist'].append(
-                ad_config.MAIL_SETTINGS['binfx_recipient']
-                )
+            recipients.extend(ad_config.MAIL_SETTINGS['wes_samplename_emaillist'])
         elif self.samples_obj.pipeline in ['amp', 'tso500', 'archerdx']:
-            recipients = [
-                ad_config.MAIL_SETTINGS['oncology_ops_email'],
-                ad_config.MAIL_SETTINGS['binfx_recipient']
-            ]
-        else:
-            recipients = [ad_config.MAIL_SETTINGS['binfx_recipient']]
+            recipients.append(ad_config.MAIL_SETTINGS['oncology_ops_email'])
         self.email.send_email(
             recipients=recipients,
             email_subject=self.email_subj,

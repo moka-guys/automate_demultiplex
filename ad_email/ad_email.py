@@ -20,7 +20,6 @@ class AdEmail(object):
 
     Attributes
         logger (logging.Logger):    Logger object
-        log_msgs (dict):            Messages used in logging
         sender (str):               Email address of sender
         email_user (str):           Email username
         email_pw (str):             Email password
