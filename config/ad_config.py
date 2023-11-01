@@ -424,7 +424,7 @@ DX_CMDS = {
         'invite_user_out="$(dx invite %s $project_id %s --no-email --auth %s)" &&\n'
     ),
     "file_upload_cmd": str(
-        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder /%s --do-not-compress "
+        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder %s --do-not-compress "
         "--upload-threads 10 %s"
     ),
     "pipe": str(
