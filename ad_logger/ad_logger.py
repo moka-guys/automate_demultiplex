@@ -3,6 +3,7 @@
 """
 Automate demultiplex logging. Classes required for logging
 """
+import os
 import sys
 import re
 import logging
@@ -10,10 +11,11 @@ import logging.handlers
 from config import ad_config, log_msgs_config
 
 
-def shutdown_streamhandler(logger) -> None:
+def shutdown_streamhandler(logger: object) -> None:
     """
     Shut down the stream handler only for a logging object. For when we do not want to
     capture log messages in stdout
+        :param logger (object): Logger
         :return (None):
     """
     for handler in logger.handlers[:]:
@@ -22,7 +24,7 @@ def shutdown_streamhandler(logger) -> None:
             handler.close()
 
 
-def shutdown_logs(logger) -> None:
+def shutdown_logs(logger: object) -> None:
     """
     To prevent duplicate filehandlers and system handlers close and remove
     all handlers for a logging object
@@ -31,7 +33,6 @@ def shutdown_logs(logger) -> None:
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
         handler.close()
-
 
 class SensitiveFormatter(logging.Formatter):
     """
@@ -42,21 +43,23 @@ class SensitiveFormatter(logging.Formatter):
         _filter()
             Filter out the auth key with regex
         format()
-            Format the the record using _filter
+            Format the the record using logging.Formatter and _filter
     """
 
     @staticmethod
-    def _filter(s: str) -> str:
+    def _filter(message: str) -> str:
         """
         Filter out the auth key with regex
-            :return (str):  Filtered log message
+            :param message (str):   Message to be filtered
+            :return (str):          Filtered log message
         """
-        return re.sub(r'--auth [^ ]+ ', r'--auth <MASKED_KEY> ', s)
+        return re.sub(r"--auth [^ ]+ ", r"--auth <MASKED_KEY> ", message)
 
     def format(self, record: logging.LogRecord) -> str:
         """
         Format the the record using _filter
-            :return (str):  Formatted filtered log message
+            :param record (logging.LogRecord):  Object to be logged
+            :return (str):                      Formatted filtered log message
         """
         original = logging.Formatter.format(self, record)  # Call parent method
         return self._filter(original)
@@ -64,17 +67,17 @@ class SensitiveFormatter(logging.Formatter):
 
 class RunfolderLoggers(object):
     """
-    Creates an RunfolderLoggers object that contains various loggers required by th
+    Creates an RunfolderLoggers object that contains various loggers required by the
     script that calls it. The loggers created are dictated by the logfiles_config dict
-    provided
+    provided as a parameter
 
     Attributes
         logfiles_config (dict): Dictionary of paths for each logfile
         loggers (list):         List of loggers
-        logger (object):        Logger object created by AdLogger class, with custom
-                                attributes. Various exist each with their own name as
-                                per logfiles_config
-
+        ** (logging.Logger):    Logger object created by AdLogger class, with custom
+                                attributes. These are added as class attributes by
+                                self.get_loggers(). Various exist each with their own
+                                name as per logfiles_config
     Methods
         get_loggers()
             Assign loggers using AdLogger class and logfiles_config
@@ -92,16 +95,17 @@ class RunfolderLoggers(object):
     def get_loggers(self) -> list:
         """
         Assign loggers using logfiles_config
-            :return all_loggers (list): List of loggers
+            :return all_loggers (list): List of logger types
         """
         all_loggers = []
         for logger_type in self.logfiles_config.keys():
             logger_name = f"{logger_type} rf"
             setattr(
-                RunfolderLoggers, logger_type,
+                RunfolderLoggers,
+                logger_type,
                 AdLogger(
                     logger_name, logger_type, self.logfiles_config[logger_type]
-                ).get_logger()
+                ).get_logger(),
             )
             all_loggers.append(getattr(RunfolderLoggers, logger_type))
         return all_loggers
@@ -154,10 +158,10 @@ class AdLogger(object):
         logger.addHandler(self._get_syslog_handler())
         logger.timestamp = ad_config.TIMESTAMP  # Timestamp in the format %Y%m%d_%H%M%S
         logger.log_msgs = (
-            log_msgs_config.LOG_MSGS['general'] |
-            log_msgs_config.LOG_MSGS['ad_email'] |
-            log_msgs_config.LOG_MSGS[self.logger_type]
-            )
+            log_msgs_config.LOG_MSGS["general"]
+            | log_msgs_config.LOG_MSGS["ad_email"]
+            | log_msgs_config.LOG_MSGS[self.logger_type]
+        )
         return logger
 
     def _get_file_handler(self) -> logging.FileHandler:

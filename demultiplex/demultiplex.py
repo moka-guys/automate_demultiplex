@@ -42,7 +42,7 @@ class GetRunfolders(object):
         """
         self.runfolder_names = []
         self.script_logger = ad_logger.AdLogger(
-            'demultiplex', 'demultiplex', toolbox.return_scriptlogfile('demultiplex')
+            'demultiplex', 'demultiplex', toolbox.return_scriptlog_config()['demultiplex']
         ).get_logger()
         self.timestamp = self.script_logger.timestamp
         self.processed_runfolders = []

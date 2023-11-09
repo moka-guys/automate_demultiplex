@@ -23,6 +23,8 @@ class AdEmail(object):
         sender (str):               Email address of sender
         email_user (str):           Email username
         email_pw (str):             Email password
+        template_dirpath (str):     Path to the email template
+        template (obj):             Loaded template
 
     Methods
         generate_email_html()
@@ -56,8 +58,8 @@ class AdEmail(object):
         ).get_template("email.html")
 
     def generate_email_html(
-            self, runfolder_name: str, workflows: str, queries: str, sample_count: int
-            ) -> str:
+        self, runfolder_name: str, workflows: str, queries: str, sample_count: int
+    ) -> str:
         """
         Generate HTML
             :param runfolder_name (str):    Name of runfolder
@@ -81,16 +83,19 @@ class AdEmail(object):
             self.logger.exception(self.logger.log_msgs["html_error"], exception)
 
     def send_email(
-        self, recipients: list, email_subject: str, email_message: str,
-        email_priority: int
+        self,
+        recipients: list,
+        email_subject: str,
+        email_message: str,
+        email_priority: int,
     ) -> Union[bool, None]:
         """
         Create email message object and specify settings, then send email using mail
         settings from init
-            :param (list|str) recipients:   List or string of recipient email addresses
-            :param str email_subject:       Email subject string
-            :param str email_message:       Email message string
-            :param email_priority:          Email priority integer
+            :param recipients (list|str):   List or string of recipient email addresses
+            :param email_subject (str):     Email subject string
+            :param email_message (str):     Email message string
+            :param email_priority (int):    Email priority integer
             :return True | None:            True if email successfully sent, else None
         """
         self.msg = MIMEMultipart()  # Create email message object and specify settings
