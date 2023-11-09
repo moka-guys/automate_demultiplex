@@ -9,6 +9,7 @@ import math
 from config import ad_config
 from toolbox import toolbox
 from typing import Union, Tuple
+
 # TODO improve log messages in this script
 # TODO properly test this both on command line and within script
 
@@ -51,6 +52,7 @@ class UACaller:
             Uploads files when provided with an upload command, files list, and upload
             type
     """
+
     def __init__(self, rf_obj: object, nexus_identifiers=False):
         """
         Constructor for the UACaller class
@@ -60,8 +62,8 @@ class UACaller:
         self.rf_obj = rf_obj
         self.logger = self.rf_obj.rf_loggers.backup
         if nexus_identifiers:
-            self.nexus_project_name = nexus_identifiers['proj_name']
-            self.nexus_project_id = nexus_identifiers['proj_id']
+            self.nexus_project_name = nexus_identifiers["proj_name"]
+            self.nexus_project_id = nexus_identifiers["proj_id"]
         else:
             self.nexus_project_name, self.nexus_project_id = self.find_nexus_project()
 
@@ -79,16 +81,16 @@ class UACaller:
         try:
             # Get DNAnexus project name using runfolder name
             project_name, err, returncode = toolbox.execute_subprocess_command(
-                ad_config.DX_CMDS['find_proj_name'] % (
-                    self.rf_obj.runfolder_name,
-                    self.rf_obj.dnanexus_apikey
-                    ), self.logger
-                )
+                ad_config.DX_CMDS["find_proj_name"]
+                % (self.rf_obj.runfolder_name, self.rf_obj.dnanexus_apikey),
+                self.logger,
+            )
             # Get project ID
             project_id, err, returncode = toolbox.execute_subprocess_command(
-                ad_config.DX_CMDS['find_proj_id'] % project_name, self.nexus_project_id,
-                self.logger
-                )
+                ad_config.DX_CMDS["find_proj_id"] % project_name,
+                self.nexus_project_id,
+                self.logger,
+            )
             return project_name, project_id
         except Exception as exception:
             raise Exception(exception)
@@ -216,8 +218,7 @@ class UACaller:
                 # create the nexus path for each dir
                 nexus_path, project_filepath = self.get_nexus_filepath(path)
                 self.logger.info(
-                    self.logger.log_msgs["call_ua"],
-                    path, project_filepath
+                    self.logger.log_msgs["call_ua"], path, project_filepath
                 )
                 # upload agent has a max number of uploads of 1000 per command.
                 # uploading multiple files at a time is quicker, but uploading too many
@@ -240,7 +241,9 @@ class UACaller:
                     if iteration_count == iterations_needed:
                         stop = len(file_dict[path])
                     self.logger.info(
-                        self.logger.log_msgs["uploading_file_range"], start, stop,
+                        self.logger.log_msgs["uploading_file_range"],
+                        start,
+                        stop,
                     )
                     # the upload agent command can take multiple files separated by a
                     # space. the full file path is required for each file
@@ -255,7 +258,7 @@ class UACaller:
                         self.rf_obj.dnanexus_apikey,
                         self.nexus_project_name,
                         nexus_path,
-                        f'--tries 100 {files_string}'
+                        f"--tries 100 {files_string}",
                     )
                     # Increase the iteration_count and start and stop by 1000 for the
                     # next iteration so second iteration will do files 1000-1999
@@ -265,7 +268,7 @@ class UACaller:
 
                     out, err, returncode = toolbox.execute_subprocess_command(
                         nexus_upload_command, self.rf_obj.rf_loggers.upload_agent
-                        )
+                    )
                     # Write output stream to logfile and terminal
                     self.logger.info(self.logger.log_msgs["cmd_out"], out, err)
 
@@ -319,32 +322,31 @@ class UACaller:
         )
         files_expected, err, returncode = toolbox.execute_subprocess_command(
             local_file_count, self.rf_obj.rf_loggers.upload_agent
-            )
-        uploaded_file_count = (
-            ad_config.DX_CMDS['find_data'] % (
-                self.nexus_project_name, self.rf_obj.dnanexus_apikey
-                )
+        )
+        uploaded_file_count = ad_config.DX_CMDS["find_data"] % (
+            self.nexus_project_name,
+            self.rf_obj.dnanexus_apikey,
         )
         # Call upload command, writing to upload agent log
         files_present, err, returncode = toolbox.execute_subprocess_command(
             uploaded_file_count, self.rf_obj.rf_loggers.upload_agent
-            )
+        )
         # Write output stream to logfile and terminal
         self.logger.info(
-            self.logger.log_msgs["files_uploaded"], files_expected, files_present,
+            self.logger.log_msgs["files_uploaded"],
+            files_expected,
+            files_present,
         )
 
         if ignore:
             # test for presense of any ignore strings in project
-            uploaded_file_count_ignore = (
-                ad_config.DX_CMDS['find_data'] % (
-                    f"{self.nexus_project_name} {grep_ignore.replace('-v','')}",
-                    self.rf_obj.dnanexus_apikey
-                    )
-                )
+            uploaded_file_count_ignore = ad_config.DX_CMDS["find_data"] % (
+                f"{self.nexus_project_name} {grep_ignore.replace('-v','')}",
+                self.rf_obj.dnanexus_apikey,
+            )
             out, err, returncode = toolbox.execute_subprocess_command(
                 uploaded_file_count_ignore, self.rf_obj.rf_loggers.upload_agent
-                )
+            )
             # Write output stream to logfile and terminal
             self.logger.info(self.logger.log_msgs["check_ignore"], out)
 
@@ -373,7 +375,7 @@ class UACaller:
                 # Execute upload agent command, writing log to upload agent log file
                 out, err, returncode = toolbox.execute_subprocess_command(
                     upload_cmd, self.rf_obj.rf_loggers.upload_agent
-                    )
+                )
                 if returncode == 0:
                     return "success"
                     break

@@ -1,31 +1,46 @@
 # Automate demultiplex logging
 
-This module creates objects that are used to write messages to the syslog, stream and log files.
+This module creates objects that are used to write messages to the syslog, stream and log files. It is imported by other scripts within the repository.
 
-It also has a sensitive formatter incorporated, which removes authentication keys from the both the stream and the syslog (preventing them from being entered into rapid7) using regex.
 
 ## Protocol
 
-AdLoggers object creates a SensitiveFormatter to remove auth keys, then adds all loggers specified in the input logfiles config to the AdLoggers object (file, syslog and stream handlers). AdLoggers also has a shutdown_logs function to allow loggers to be removed preventing duplication of logging handlers.
+The script has some standalone functions:
+
+* shutdown_streamhandler(logger) shuts down the stream handler only for a logging object. This can be used when we need a logger but do not want to capture log messages in stdout.
+* shutdown_logs(logger) is used to close and remove all handlers for a logging object, to prevent duplicate filehandlers and system handlers.
+
+### AdLogger Class
+
+The AdLogger class creates a Python logging object with custom attributes and a file handler, syslog handler and stream handler.
+
+### SensitiveFormatter Class
+
+This removes sensitive information (authentication keys) in log messages (preventing them from being entered into rapid7) using regex. It inherits the properties and methods from logging.Formatter. It is used by the AdLogger class. 
+
+
+### RunfolderLoggers Class
+
+Creates an RunfolderLoggers object that contains various loggers required by the script that calls it. The loggers created are dictated by the logfiles_config dict provided as input. The class adds an AdLogger object for each logger specified in the logfiles_config and assigns it as an attribute. In this way the RunfolderLoggers object attributes can be used to write to the log files.
+
 
 ## Usage
 
 This script is configured to be used as a module import as per the following examples:
 
-Example 1 - script level loggers
+### Example 1 - script-level loggers
 ```python
-script_logger = ad_logger.AdLogger(  # Create script level loggers
-    'demultiplex', 'demultiplex', toolbox.return_scriptlogfile('demultiplex')
+self.script_logger = ad_logger.AdLogger(  # Create script level loggers
+    "usw", "usw", toolbox.return_scriptlog_config()['usw']
 ).get_logger()
 
-script_logger.info(
-    script_logger.log_msgs["script_start"],
-    git_tag(),
-    os.path.basename(os.path.dirname(__file__)),
+self.script_logger.info(
+    self.script_logger.log_msgs["runfolder_identified"], folder
 )
 ```
 
-Example 2 - runfolder level loggers
+# TODO rewrite below
+### Example 2 - runfolder-level loggers
 ```python
 
 logfiles_config = {

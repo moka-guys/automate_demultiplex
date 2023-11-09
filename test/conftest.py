@@ -37,12 +37,13 @@ def logger_obj():
     return ad_logger.AdLogger('demultiplex', 'demultiplex', temp_log).get_logger()
 
 
+# TODO fix below function
 def create_logdirs():
     """
     Create temporary log directories for testing purposes
     """
     os.makedirs(temp_log_dir)
-    for logfile in toolbox.return_rflog_config("").values():
+    for logfile in ad_logger.return_rflog_config("").values():
         parent_dir = os.path.dirname(logfile)
         if not os.path.isdir(parent_dir):
             os.makedirs(parent_dir)

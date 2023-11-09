@@ -3,7 +3,6 @@
 """
 This script contains functions shared across scripts / modules
 """
-import sys
 import os
 import subprocess
 import logging
@@ -16,6 +15,21 @@ from ad_logger import ad_logger
 
 # TODO improve README documentation
 
+def return_scriptlog_config():
+    """
+    Return script-level logfile configuration
+        :return (dict): Dictionary containing logger names and logfile paths
+    """
+    return {
+        'demultiplex': os.path.join(  # Record demultiplex script logs
+            ad_config.AD_LOGDIR, "demultiplexing_script_logfiles",
+            f"{ad_config.TIMESTAMP}_demultiplex_script_log.log"
+            ),
+        'usw': os.path.join(  # Record usw script logs
+            ad_config.AD_LOGDIR, "usw_script_logfiles",
+            f"{ad_config.TIMESTAMP}_upload_and_setoff_workflow.log"
+        ),
+    }
 
 def script_start_logmsg(logger, file):
     """"""
@@ -157,7 +171,7 @@ def test_programs(software_name: str, logger: object) -> Union[bool, None]:
     (return code 0).
         :param software_name (str):     Name of the sofware being tested
         :param logger (object):         Logger
-        :return True | None:              Return True if test passes, else return None
+        :return True | None:            Return True if test passes, else return None
     """
     software_dict = ad_config.TEST_PROGRAMS_DICT[software_name]
 
@@ -193,70 +207,6 @@ def test_docker(software_name: str, logger: object) -> Union[bool, None]:
     else:
         logger.error(logger.log_msgs["test_fail"], software_name)
         raise Exception  # Stop script
-
-
-def return_scriptlogfile(logger_name):
-    """
-    Return 
-    """
-    SCRIPT_LOGS = {
-        'demultiplex': os.path.join(  # Record demultiplex script logs
-            ad_config.AD_LOGDIR, "demultiplexing_script_logfiles",
-            f"{ad_config.TIMESTAMP}_demultiplex_script_log.log"
-            ),
-        'usw': os.path.join(  # Record usw script logs
-            ad_config.AD_LOGDIR, "usw_script_logfiles",
-            f"{ad_config.TIMESTAMP}_upload_and_setoff_workflow.log"
-        ),
-    }
-    return SCRIPT_LOGS[logger_name]
-
-
-def return_rflog_config(runfoldername):
-    """
-    Return runfolder-level logfile configuration
-    """
-    return {
-        "demultiplex_runfolder_logfile": os.path.join(  # Record demultiplex script logs
-            ad_config.AD_LOGDIR, "demultiplexing_script_logfiles",
-            f"{runfoldername}_demultiplex_script_log.log"
-            ),
-        # Records output of upload and setoff workflow script
-        "upload_runfolder_logfile": os.path.join(
-            ad_config.AD_LOGDIR, "usw_script_logfiles",
-            f"{runfoldername}_upload_and_setoff_workflow.log"
-            ),
-        # Records the logs from the backup runfolder script
-        "backup_runfolder_logfile": os.path.join(
-            ad_config.AD_LOGDIR, "backup_runfolder_script_logfiles",
-            f"{runfoldername}_backup_runfolder.log"
-            ),
-        "runfolder_dx_run_script": os.path.join(
-            ad_config.AD_LOGDIR, "dx_run_commands",
-            f"{runfoldername}_dx_run_commands.sh"
-            ),
-        "post_run_dx_run_script": os.path.join(
-            ad_config.AD_LOGDIR, "dx_run_commands",
-            f"{runfoldername}_post_run_commands.sh"
-            ),
-        "congenica_dx_run_script": os.path.join(  # DNAnexus run command script
-            ad_config.AD_LOGDIR, "dx_run_commands",
-            f"{runfoldername}_congenica.sh"
-            ),
-        # Script containing dnanexus project creation command
-        "proj_creation_script": os.path.join(
-            ad_config.AD_LOGDIR, "nexus_project_creation_scripts",
-            f"{runfoldername}_create_nexus_project.sh"
-            ),
-        "decision_support_tool_logfile": os.path.join(
-            ad_config.AD_LOGDIR, "decision_support_script_logfiles",
-            f"{runfoldername}_decision_support_script_log.log"
-            ),
-        "samplesheet_validator_logfile": os.path.join(
-            ad_config.AD_LOGDIR, "samplesheet_validator_script_logfiles",
-            f"{runfoldername}_samplesheet_validator_script_log.log"
-        )
-    }
 
 
 def get_num_processed_runfolders(logger, script_name, processed_runfolders):
@@ -310,7 +260,7 @@ class RunfolderObject(object):
                                                 (within logfiles dir)
         post_run_dx_run_script (str):           Separate DX run script for downstream
                                                 processing apps (TSO only)
-        congenica_dx_run_script (str):          Congenica upload commands for runfolder
+        congenica_cmds (str):                   Congenica upload commands for runfolder
                                                 (within logfiles dir)
         proj_creation_script (str):             DNAnexus project creation bash script
                                                 (within logfiles dir)
@@ -372,14 +322,10 @@ class RunfolderObject(object):
         self.tso_fastq_dir_path = os.path.join(
             self.runfolderpath, ad_config.FASTQ_DIRS["tso_fastqs"]
         )
-        self.upload_agent_logfile = os.path.join(
-            self.runfolderpath, "DNANexus_upload_started.txt",  # Holds UA output
-        )
         self.bcl2fastqstats_file = os.path.join(
             self.runfolderpath,
             "Data/Intensities/BaseCalls/Stats/Stats.json",
         )
-        self.set_rf_logfiles()
         self.cluster_density_files = [
             os.path.join(
                 self.runfolderpath,
@@ -393,8 +339,47 @@ class RunfolderObject(object):
                 )
             ),
         ]
+        self.demultiplex_runfolder_logfile = os.path.join(  # Record demultiplex script logs
+            ad_config.AD_LOGDIR, "demultiplexing_script_logfiles",
+            f"{self.runfolder_name}_demultiplex_script_log.log"
+        )
+        self.usw_runfolder_logfile = os.path.join(  # Records output of upload and setoff workflow script
+            ad_config.AD_LOGDIR, "usw_script_logfiles",
+            f"{self.runfolder_name}_upload_and_setoff_workflow.log"
+        )
+        self.upload_agent_logfile = os.path.join(  # Holds UA output
+            self.runfolderpath, "DNANexus_upload_started.txt",  
+        )
+        self.backup_runfolder_logfile = os.path.join(  # Records the logs from the backup runfolder script
+            ad_config.AD_LOGDIR, "backup_runfolder_script_logfiles",
+            f"{self.runfolder_name}_backup_runfolder.log"
+        )
+        self.runfolder_dx_run_script = os.path.join(
+            ad_config.AD_LOGDIR, "dx_run_commands",
+            f"{self.runfolder_name}_dx_run_commands.sh"
+        )
+        self.post_run_dx_run_script = os.path.join(
+            ad_config.AD_LOGDIR, "dx_run_commands",
+            f"{self.runfolder_name}_post_run_commands.sh"
+        )
+        self.congenica_cmds = os.path.join(
+            ad_config.AD_LOGDIR, "dx_run_commands",
+            f"{self.runfolder_name}_congenica.sh"
+        )
+        self.proj_creation_script = os.path.join(  # Script containing dnanexus project creation command
+            ad_config.AD_LOGDIR, "nexus_project_creation_scripts",
+            f"{self.runfolder_name}_create_nexus_project.sh"
+        )
+        self.decision_support_tool_logfile = os.path.join(
+            ad_config.AD_LOGDIR, "decision_support_script_logfiles",
+            f"{self.runfolder_name}_decision_support_script_log.log"
+        )
+        self.samplesheet_validator_logfile = os.path.join(
+            ad_config.AD_LOGDIR, "samplesheet_validator_script_logfiles",
+            f"{self.runfolder_name}_samplesheet_validator_script_log.log"
+        )
         self.logfiles_config = {
-            "usw": self.upload_runfolder_logfile,
+            "usw": self.usw_runfolder_logfile,
             "demultiplex": self.demultiplex_runfolder_logfile,
             "upload_agent": self.upload_agent_logfile,
             "backup": self.backup_runfolder_logfile,
@@ -405,7 +390,7 @@ class RunfolderObject(object):
             "ss_validator": self.samplesheet_validator_logfile,
         }
         self.logfiles_to_upload = [
-            self.upload_runfolder_logfile,
+            self.usw_runfolder_logfile,
             self.demultiplex_runfolder_logfile,
             self.backup_runfolder_logfile,
             self.proj_creation_script,
@@ -416,19 +401,12 @@ class RunfolderObject(object):
             self.bcl2fastqlog_path,
         ]
 
-    def set_rf_logfiles(self) -> None:
-        """
-        Add runfolder log files as class atributes
-            :return None:
-        """
-        for logfile, path in return_rflog_config(self.runfolder_name).items():
-            setattr(self, logfile, path)
-
     def add_runfolder_loggers(self) -> None:
         """
         Add runfolder loggers to runfolder object
             :return None:
         """
+        
         setattr(self, 'rf_loggers', ad_logger.RunfolderLoggers(self.logfiles_config))
 
     def add_runfolder_logger(self, logger_name) -> None:
