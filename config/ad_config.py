@@ -190,7 +190,7 @@ NEXUS_IDS = {
         "ed_readcount": f"{TOOLS_PROJECT}:applet-GZJK5kj0jy1V5Qx4G7j6kb92",
         "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-GZJK2J80jy1k14ZkYjjZ5qKp",
         "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",
-        "duty_csv": f"{TOOLS_PROJECT}:applet-GZYx3Kj0kKj3YBV7qgK6VjXQ",
+        "duty_csv": f"{TOOLS_PROJECT}:applet-Gb6QKf00v09JV7KBVJqFVxX6",
     },
     "WORKFLOWS": {
         "pipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",
