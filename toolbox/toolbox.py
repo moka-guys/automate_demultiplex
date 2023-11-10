@@ -260,8 +260,8 @@ class RunfolderObject(object):
                                                 (within logfiles dir)
         post_run_dx_run_script (str):           Separate DX run script for downstream
                                                 processing apps (TSO only)
-        congenica_cmds (str):                   Congenica upload commands for runfolder
-                                                (within logfiles dir)
+        decision_support_upload_cmds (str):     Decision support upload commands for
+                                                runfolder (within logfiles dir)
         proj_creation_script (str):             DNAnexus project creation bash script
                                                 (within logfiles dir)
         decision_support_tool_logfile (str):    Decision support tool inputs script
@@ -362,9 +362,9 @@ class RunfolderObject(object):
             ad_config.AD_LOGDIR, "dx_run_commands",
             f"{self.runfolder_name}_post_run_commands.sh"
         )
-        self.congenica_cmds = os.path.join(
+        self.decision_support_upload_cmds = os.path.join(
             ad_config.AD_LOGDIR, "dx_run_commands",
-            f"{self.runfolder_name}_congenica.sh"
+            f"{self.runfolder_name}_decision_support.sh"
         )
         self.proj_creation_script = os.path.join(  # Script containing dnanexus project creation command
             ad_config.AD_LOGDIR, "nexus_project_creation_scripts",

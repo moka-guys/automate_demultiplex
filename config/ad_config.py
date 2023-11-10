@@ -180,6 +180,7 @@ NEXUS_IDS = {
         "tso500": f"{TOOLS_PROJECT}:applet-GZgv0Jj0jy1Yfbx3QvqyKjzp",
         "congenica_app": f"{TOOLS_PROJECT}:applet-G8QGBK80jy1zJK6g9yVP7P8V",
         "congenica_sftp": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",
+        "qiagen_upload": f"{TOOLS_PROJECT}:applet-Gb6G4k00v09KXfq8f6BP7f23",
         "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",
         "multiqc": f"{TOOLS_PROJECT}:applet-GXqBzg00jy1pXkQVkY027QqV",
         "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",
@@ -283,9 +284,13 @@ APP_INPUTS = {
         "multiqc_html": "-imultiqc_html=$jobid:multiqc_report",
     },
     "congenica_upload": {
+        "samplename": "-ianalysis_name=",
         "vcf": "-ivcf=",
         "bam": "-ibam=",
-        "samplename": "-ianalysis_name=",
+    },
+    "qiagen_upload": {
+        "sample_name": "-isample_name=",
+        "sample_zip_folder": "-isample_zip_folder=",
     },
     "duty_csv": {
         "project_name": "-iproject_name=",
@@ -479,6 +484,10 @@ DX_CMDS = {
         f"echo 'dx run {NEXUS_IDS['APPS']['congenica_app']} --priority high -y "
         f"--instance-type mem1_ssd1_v2_x2 ' $analysisid ' {JOB_NAME_STR}"
     ),
+    "qiagen_upload": (
+        f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y "
+        f"{JOB_NAME_STR}"
+    ), 
     "sompy": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}"
     ),
