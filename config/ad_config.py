@@ -102,7 +102,7 @@ DEMULTIPLEX_TEST_RUNFOLDERS = [
 SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"
 BCL2FASTQ2_CMD = (
     "sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s "
-    "seglh/bcl2fastq2:v2.20.0.422_25dd0c0 -R /mnt/run --sample-sheet /mnt/run/%s "
+    "seglh/bcl2fastq2:v2.20.0.422_60dbb5a -R /mnt/run --sample-sheet /mnt/run/%s "
     "--no-lane-splitting >> %s 2>&1"
 )
 
@@ -333,8 +333,7 @@ STAGE_INPUTS = {
         "bwa_reads2": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads2_fastqgz=",
         "bwa_rg_sample": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.read_group_sample=",
         "bwa_ref": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.genomeindex_targz=",
-        # HSMetrics Bedfile
-        "picard_bed": (
+        "picard_bed": (  # HSMetrics Bedfile
             f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.vendor_exome_bedfile="
         ),
         "picard_capturetype": (
