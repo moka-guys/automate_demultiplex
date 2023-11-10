@@ -31,7 +31,7 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py).
 | usw (script_loggers) | Records runfolder-level logs for the upload and setoff workflows script | `RUNFOLDERNAME_upload_and_setoff_workflow.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/usw_script_logfiles/` |
 | upload_agent | Records upload agent logs (stdout and stderr of the upload agent) | `DNANexus_upload_started.txt` |  Within the runfolder |
 | dx_run_script | Records the dx run commands for processing the run. N.B. this is not written to by logging | `RUNFOLDERNAME_dx_run_commands.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
-| congenica_cmds | Records the dx run commands to set off the congenica upload apps. N.B. this is not written to by logging | `RUNFOLDERNAME_congenica.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
+| decision_support_upload_cmds | Records the dx run commands to set off the congenica upload apps. N.B. this is not written to by logging | `RUNFOLDERNAME_congenica.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
 | proj_creation_script | Records the commands for creating the DNAnexus project. N.B. this is not written to by logging | `create_nexus_project_RUNFOLDERNAME.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/nexus_project_creation_scripts` |
 
 ## Alerts

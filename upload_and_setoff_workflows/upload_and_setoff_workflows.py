@@ -246,8 +246,8 @@ class ProcessRunfolder(object):
         upload_rest_of_runfolder()
             Backs up the rest of the runfolder, ignoring files dependent upon the type
             of run
-        create_congenica_command_file()
-            If there is a congenica upload required, create the congenica upload bash"
+        create_decision_support_command_file()
+            If there is a decision support tool upload required, create the upload bash
             script, which  is run manually after QC has passed
         run_dx_run_commands()
             Execute the dx run bash script
@@ -298,7 +298,7 @@ class ProcessRunfolder(object):
                 BuildDxCommands(
                     self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
                 )
-                self.create_congenica_command_file()
+                self.create_decision_support_command_file()
                 self.run_dx_run_commands()
                 PipelineEmails(self.rf_obj, self.samples_obj)
                 self.post_pipeline_upload()
@@ -441,7 +441,7 @@ class ProcessRunfolder(object):
             ] % (
                 self.rf_obj.dnanexus_apikey,
                 self.nexus_identifiers["proj_id"],
-                self.samples_obj.nexus_paths["runfolder_name"],
+                f'/{self.samples_obj.nexus_paths["runfolder_name"]}',
                 " ".join(samplesheet_paths),
             )
         else:
@@ -653,9 +653,9 @@ class ProcessRunfolder(object):
             )
             raise Exception  # Stop script
 
-    def create_congenica_command_file(self) -> None:
+    def create_decision_support_command_file(self) -> None:
         """
-        If there is a congenica upload required, create the congenica upload bash file,
+        If there is a decision support tool upload required, create the upload bash file,
         which is run manually after QC has passed. Writes the source command, activating
         the environment (the sdk). Specific upload commands are echoed into this file
         at a later point when the pipeline run script is executed
@@ -663,7 +663,7 @@ class ProcessRunfolder(object):
         """
         if self.samples_obj.pipeline in ("pipe", "wes"):
             with open(
-                self.rf_obj.congenica_cmds, "w", encoding="utf-8"
+                self.rf_obj.decision_support_upload_cmds, "w", encoding="utf-8"
             ) as congenica_script:
                 congenica_script.write(f"{ad_config.SDK_SOURCE}\n")
                 congenica_script.write(ad_config.EMPTY_DEPENDS)
@@ -1086,25 +1086,25 @@ class SampleObject:
     Collect sample-specific attributes for a sample
 
     Attributes
-        rf_obj (obj):               RunfolderObject object (contains runfolder-specific
-                                    attributes)
-        sample_name (str):          Sample name
-        pipeline (str):             Pipeline name
-        nexus_paths (dict):         Dictionary of paths within the DNAnexus project that
-                                    are required for building dx commands
-        neg_control (bool):         True if sample is a negative control, else False
-        workflow_name (str):        Workflow name
-        pannum (str):               Panel number that matches a config-defined panel
-                                    number, or None if pannum not valid
-        panel_settings (dict):      Config defined panel settings specific to the sample
-                                    panel number
-        primary_identifier (str):   Primary sample identifier
-        secondary_identifier (str): Secondary sample identifier
-        fastqs_dict (dict):         Dictionary containing R1 and R2 fastqs and their
-                                    local and cloud paths
-        query (str):                Return sample SQL query (sample-level query)
-        sample_pipeline_cmd (str):  Dx run command for the sample workflow
-        congenica_upload_cmd (str): Dx run command for the congenica upload
+        rf_obj (obj):                       RunfolderObject object (contains runfolder-specific
+                                            attributes)
+        sample_name (str):                  Sample name
+        pipeline (str):                     Pipeline name
+        nexus_paths (dict):                 Dictionary of paths within the DNAnexus project that
+                                            are required for building dx commands
+        neg_control (bool):                 True if sample is a negative control, else False
+        workflow_name (str):                Workflow name
+        pannum (str):                       Panel number that matches a config-defined panel
+                                            number, or None if pannum not valid
+        panel_settings (dict):              Config defined panel settings specific to the sample
+                                            panel number
+        primary_identifier (str):           Primary sample identifier
+        secondary_identifier (str):         Secondary sample identifier
+        fastqs_dict (dict):                 Dictionary containing R1 and R2 fastqs and their
+                                            local and cloud paths
+        query (str):                        Return sample SQL query (sample-level query)
+        sample_pipeline_cmd (str):          Dx run command for the sample workflow
+        decision_support_upload_cmd (str):  Dx run command for the decision support tool upload
 
     Methods
         check_negative_control()
@@ -1136,18 +1136,18 @@ class SampleObject:
             Build sample-level dx run commands for the workflow and congenica upload
         create_wes_cmd()
             Construct dx run command for WES workflow
-        return_congenica_cmd()
-            Construct dx run command for congenica upload where required by calling
-            build_congenica_sftp_cmd or build_congenica_cmd
+        return_decision_support_cmd()
+            Construct dx run command for decision support tool upload where required by
+            calling build_congenica_sftp_cmd, build_congenica_cmd or build_qiagen_upload_cmd
         build_congenica_sftp_cmd()
             Construct dx run command for congenica upload for samples requiring upload
             using the SFTP app
-        build_congenica_input_cmd()
-            Build command to run decision_support_tool_inputs.py to generate the inputs
-            for the upload cmd
         build_congenica_cmd()
             Construct dx run command for congenica upload for samples requiring upload
             using the standard congenica upload app
+        build_qiagen_upload_cmd()
+            Build the command to write the qiagen upload command to the decisions support
+            tool upload bash script
         create_pipe_cmd()
             Construct dx run command for PIPE workflow
         get_vcfeval_cmd_string()
@@ -1197,7 +1197,7 @@ class SampleObject:
         self.query = self.get_sample_SQL_query()
         (
             self.sample_pipeline_cmd,
-            self.congenica_upload_cmd,
+            self.decision_support_upload_cmd,
         ) = self.build_sample_dx_run_cmd()
 
     def check_negative_control(self) -> bool:
@@ -1373,28 +1373,29 @@ class SampleObject:
     def build_sample_dx_run_cmd(self) -> Tuple[str, str]:
         """
         Build sample-level dx run commands for the workflow and congenica upload
-            :return workflow_cmd (str):         Dx run command for the sample workflow
-            :return congenica_upload_cmd (str): Cmd for running the script to generate
-                                                inputs to the congenica upload commands
+            :return workflow_cmd (str):                 Dx run command for the sample workflow
+            :return decision_support_upload_cmd (str):  Cmd for running the script to generate
+                                                        inputs to the decision support tool upload app
+                                                        inputs to the congenica upload commands
         """
         if self.pipeline == "wes":
             workflow_cmd = self.create_wes_cmd()
-            congenica_upload_cmd = self.return_congenica_cmd()
+            decision_support_upload_cmd = self.return_decision_support_cmd()
         elif self.pipeline == "pipe":
             workflow_cmd = self.create_pipe_cmd()
-            congenica_upload_cmd = self.return_congenica_cmd()
+            decision_support_upload_cmd = self.return_decision_support_cmd()
         elif self.pipeline == "snp":
             workflow_cmd = self.create_snp_cmd()
-            congenica_upload_cmd = False, False
+            decision_support_upload_cmd = False, False
         elif self.pipeline == "archerdx":
             workflow_cmd = self.create_fastqc_cmd()
-            congenica_upload_cmd = False, False
+            decision_support_upload_cmd = False, False
         elif self.pipeline == "tso500":
             workflow_cmd = (
                 self.create_fastqc_cmd()
             )  # Pipeline cmd is built at whole-run level
-            congenica_upload_cmd = False, False
-        return workflow_cmd, congenica_upload_cmd
+            decision_support_upload_cmd = self.return_decision_support_cmd()
+        return workflow_cmd, decision_support_upload_cmd
 
     def create_wes_cmd(self) -> str:
         """
@@ -1422,9 +1423,9 @@ class SampleObject:
             ]
         )
 
-    def return_congenica_cmd(self) -> Union[str, None]:
+    def return_decision_support_cmd(self) -> Union[str, None]:
         """
-        Construct dx run command for congenica upload for non-reference samples by
+        Construct dx run command for non-reference samples by
         calling build_congenica_sftp_cmd or build_congenica_cmd. If a sample requires
         congenica upload, there are 2 methods. If congenica project ID is specified as
         'SFTP' within the config it means the sample requires upload via SFTP, else if
@@ -1437,26 +1438,44 @@ class SampleObject:
                                             congenica upload command), or None if sample
                                             is a reference sample
         """
-        self.rf_obj.rf_loggers.usw.info(
-            self.rf_obj.rf_loggers.usw.log_msgs["congenica_upload_required"],
-            self.nexus_paths["proj_name"],
-        )
         if self.reference_sample:
             return None
         else:
+            self.rf_obj.rf_loggers.usw.info(
+                self.rf_obj.rf_loggers.usw.log_msgs["decision_support_upload_required"],
+                self.nexus_paths["proj_name"],
+            )
+
             # If project is specified then upload via upload agent
             if self.panel_settings["congenica_project"] == "SFTP":  # SFTP upload cmd
-                congenica_upload_cmd = self.build_congenica_sftp_cmd()
-            else:  # Upload agent command
-                congenica_upload_cmd = self.build_congenica_cmd()
-            return congenica_upload_cmd
+                self.rf_obj.rf_loggers.usw.info(
+                    self.rf_obj.rf_loggers.usw.log_msgs["congenica_upload_required"],
+                    self.nexus_paths["proj_name"],
+                )
+                decision_support_cmd = self.build_congenica_sftp_cmd()
+            elif type(self.panel_settings["congenica_project"]) == int:
+                self.rf_obj.rf_loggers.usw.info(
+                    self.rf_obj.rf_loggers.usw.log_msgs["congenica_upload_required"],
+                    self.nexus_paths["proj_name"],
+                )
+                decision_support_cmd = self.build_congenica_cmd()
+            elif self.panel_settings["panel_name"] == "tso500":
+                self.rf_obj.rf_loggers.usw.info(
+                    self.rf_obj.rf_loggers.usw.log_msgs["qiagen_upload_required"],
+                    self.nexus_paths["proj_name"],
+                )
+                decision_support_cmd = self.build_qiagen_upload_cmd()
+
+            return decision_support_cmd
 
     def build_congenica_sftp_cmd(self) -> str:
         """
-        Construct dx run command for congenica upload for samples requiring upload
-        using the SFTP app. Samples requiring upload by SFTP require patient-specific
-        info to be pre-added into Congenica by the scientists. Takes BAM and VCF inputs,
-        and does not require project IDs, IR templates or name
+        Build the command to write the congenica upload dx run command to the decision
+        support tool upload bash script. This command is used to upload the sample to
+        congenica using the SFTP congenica upload app. Samples requiring upload by
+        SFTP require patient-specific info to be pre-added into Congenica by the
+        scientists. Takes BAM and VCF inputs, and does not require project IDs, IR
+        templates or name
             :return congenica_upload_cmd (str): Dx run command for the congenica upload
                                                 (SFTP app)
         """
@@ -1471,7 +1490,7 @@ class SampleObject:
                 f"congenica_SFTP_upload_{self.sample_name}",
                 f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
                 (ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_apikey).replace(
-                    ")", f"' >> {self.rf_obj.congenica_cmds}"
+                    ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
                 ),
             ]
         )
@@ -1479,10 +1498,11 @@ class SampleObject:
 
     def build_congenica_cmd(self) -> str:
         """
-        Construct dx run command for congenica upload for samples requiring upload
-        using the standard congenica upload app. Takes BAM and VCF inputs, along with
-        config-specified inputs congenica project ID, credentials, IR template and
-        sample name
+        Build the command to write the congenica upload dx run command to the decision
+        support tool upload bash script. This command is used to upload the sample to
+        congenica using the standard congenica upload app. Takes BAM and VCF inputs,
+        along with config-specified inputs congenica project ID, credentials, IR
+        template and sample name
             :return congenica_upload_cmd (str): Dx run command for the congenica upload
                                                 (standard congenica upload app)
         """
@@ -1498,14 +1518,35 @@ class SampleObject:
                 f'-icredentials={self.panel_settings["congenica_credentials"]}',
                 f'-iIR_template={self.panel_settings["congenica_IR_template"]}',
                 f'{ad_config.APP_INPUTS["congenica_upload"]["samplename"]}'
-                f"{self.sample_name}",
+                f'{self.sample_name}',
                 f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
                 (ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_apikey).replace(
-                    ")", f"' >> {self.rf_obj.congenica_cmds}"
+                    ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
                 ),
             ]
         )
         return congenica_upload_cmd
+    
+    def build_qiagen_upload_cmd(self) -> str:
+        """
+        Build the command to write the qiagen upload dx run command to the decision
+        support tool upload bash script. This command is used to upload the sample
+        to QCII. The command takes sample_name and sample_zip_folder as inputs
+            :return qiagen_upload_cmd (str):    Dx run command for the qiagen_upload
+                                                app
+        """
+        return " ".join(
+            [
+                f'{ad_config.DX_CMDS["qiagen_upload"]}{self.sample_name}',
+                f'{ad_config.APP_INPUTS["qiagen_upload"]["sample_name"]}'
+                f"{self.sample_name}",
+                f'{ad_config.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}'
+                f"$PROJECT_ID:/results/{self.pannum}{self.sample_name}.zip",
+                (ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_apikey).replace(
+                    ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
+                ),
+            ]
+        )
 
     def create_pipe_cmd(self) -> str:
         """
@@ -1706,7 +1747,7 @@ class SampleObject:
             "fastqs": self.fastqs_dict,
             "SQL_query": self.query,
             "sample_pipeline_cmd": self.sample_pipeline_cmd,
-            "congenica_upload_cmd": self.congenica_upload_cmd,
+            "decision_support_upload_cmd": self.decision_support_upload_cmd,
         }
 
 
@@ -1761,6 +1802,8 @@ class BuildDxCommands(object):
         return_sample_workflow_cmds()
             Return sample-level commands. This includes the sample workflow command,
             and congenica input and upload commands if required for the sample type
+        return_analysis_id_cmd()
+
         return_wes_runwide_cmds()
             Collect runwide commands for WES runs as a list. This includes peddy
         create_peddy_cmd()
@@ -1814,13 +1857,12 @@ class BuildDxCommands(object):
         (self.return_sample_workflow_cmds()), and runwide commands
             :return None:
         """
-        dx_cmd_list = []
-        dx_postprocessing_cmds = []
         # Get sample workflow-level commands
         if self.samples_obj.pipeline == "tso500":
             dx_cmd_list, dx_postprocessing_cmds = self.return_tso_runwide_cmds()
         else:
-            dx_cmd_list.extend(self.return_sample_workflow_cmds())
+            dx_postprocessing_cmds = []
+            dx_cmd_list = self.return_sample_workflow_cmds()
 
             # Get pipeline-specific run-wide commands. SNP, ADX and ONC do not have
             # pipeline-specific run-wide commands
@@ -1854,7 +1896,16 @@ class BuildDxCommands(object):
             if tso_ss != self.rf_obj.samplesheet_name:
                 dx_cmd_list.append(self.create_tso500_cmd(tso_ss))
 
+        dx_cmd_list.append(
+            (
+                f"echo 'PROJECT_ID={self.nexus_project_id}"
+                f"' >> {self.rf_obj.decision_support_upload_cmds}"
+            )
+        )
         for sample_name in self.samples_obj.samples_dict.keys():
+            dx_cmd_list.append(
+                self.samples_obj.samples_dict[sample_name]["decision_support_upload_cmd"]
+            )
             # Append all fastqc commands to cmd_list
             dx_postprocessing_cmds.append(
                 self.samples_obj.samples_dict[sample_name]["sample_pipeline_cmd"]
@@ -2126,20 +2177,24 @@ class BuildDxCommands(object):
                     cmd_list.append(ad_config.UPLOAD_ARGS["depends_list_gatk"])
 
             if self.samples_obj.pipeline in ["wes", "pipe"]:
-                cmd_list.append(self.build_congenica_input_cmd())
+                cmd_list.append(self.return_analysis_id_cmd())
                 cmd_list.append(
-                    self.samples_obj.samples_dict[sample_name]["congenica_upload_cmd"]
+                    self.samples_obj.samples_dict[sample_name]["decision_support_upload_cmd"]
                 )
         return cmd_list
 
-    def build_congenica_input_cmd(self) -> str:
-        """"""
-        # Decision support tool python script is run after each dx run command, taking
-        # analysis and project name as input, and printing the required inputs to the
-        # command line which are required by the congenica upload script $jobid is a
-        # bash variable which will be populated by when run on the command line. The
-        # python script has three inputs - the analysisID ($jobid), -t is the DSS and -p
-        # is the DNAnexus project the analysis is running in
+    def return_analysis_id_cmd(self) -> str:
+        """
+        Generates the analysis ID cmd which runs the decision support tool python script
+        to obtain the analysis ID for the analysis that the prior job in the bash
+        script belongs to.
+        Decision support tool python script is run after each dx run command, taking
+        analysis and project name as input, and printing the required inputs to the
+        command line which are required by the congenica upload script $jobid is a
+        bash variable which will be populated by when run on the command line. The
+        python script has three inputs - the analysisID ($jobid), -t is the DSS and -p
+        is the DNAnexus project the analysis is running in
+        """
         cmd = (
             "analysisid=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh; "
             f"&& cd {ad_config.PROJECT_DIR} && "

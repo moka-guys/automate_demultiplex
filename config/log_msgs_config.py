@@ -155,8 +155,14 @@ LOG_MSGS = {
         "upload_fail": "%s upload failed. See %s for detailed error log",
         "building_cmds": "Building dx run commands",
         "sample": "Identified %s sample: %s",
+        "decision_support_upload_required": (
+            "Samples in project %s require upload to decision support tool"
+        ),
         "congenica_upload_required": (
             "Samples in project %s require upload to congenica"
+        ),
+        "qiagen_upload_required": (
+            "Samples in project %s required upload to QCII"
         ),
         "unrecognised_panno": (
             "USW_FAIL - Sample in samplesheet does not contain a recognised pan "
