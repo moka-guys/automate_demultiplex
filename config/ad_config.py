@@ -408,11 +408,14 @@ EMPTY_DEPENDS = "depends_list=''\n"
 EMPTY_GATK_DEPENDS = "depends_list_gatk=''\n"
 
 DX_CMDS = {
-    "create_proj": str(
+    "create_proj": (
         'project_id="$(dx new project '
         '--bill-to %s "%s" --brief ' '--auth %s)" &&\n'
     ),
-    "find_proj_name": f"source {SDK_SOURCE}; dx find projects --name *%s* --auth %s",
+    "find_proj_name": (
+        f"source {SDK_SOURCE}; dx find projects --name *%s* "
+        "--auth %s | awk '{print $3}'"
+        ),
     "proj_name_from_id": (
         f'source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name'
         ),
@@ -424,22 +427,22 @@ DX_CMDS = {
     "find_data": (
         f"source {SDK_SOURCE}; dx find data --project %s --auth %s | wc -l"
         ),
-    "invite_user": str(
+    "invite_user": (
         'invite_user_out="$(dx invite %s $project_id %s --no-email --auth %s)" &&\n'
     ),
-    "file_upload_cmd": str(
+    "file_upload_cmd": (
         f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder %s --do-not-compress "
         "--upload-threads 10 %s"
     ),
-    "pipe": str(
+    "pipe": (
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']}"
         f" --priority high -y {JOB_NAME_STR}"
     ),
-    "wes": str(
+    "wes": (
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']}"
         f" --priority high -y {JOB_NAME_STR}"
     ),
-    "snp": str(
+    "snp": (
         f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']}"
         f" -y --priority high {JOB_NAME_STR}"
     ),

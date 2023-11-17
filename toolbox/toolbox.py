@@ -402,7 +402,6 @@ class RunfolderObject(object):
             self.proj_creation_script,
             self.runfolder_dx_run_script,
             self.post_run_dx_run_script,
-            self.decision_support_tool_logfile,
             self.samplesheet_validator_logfile,
             self.bcl2fastqlog_path,
         ]
@@ -412,7 +411,6 @@ class RunfolderObject(object):
         Add runfolder loggers to runfolder object
             :return None:
         """
-        
         setattr(self, 'rf_loggers', ad_logger.RunfolderLoggers(self.logfiles_config))
 
     def add_runfolder_logger(self, logger_name) -> None:

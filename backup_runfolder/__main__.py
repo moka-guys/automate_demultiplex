@@ -5,6 +5,7 @@ Uploads runfolder to DNAnexus by passing given arguments to the DNAnexus upload 
 See README and docstrings for further details
 """
 import os
+import inspect
 import argparse
 from config import ad_config
 from backup_runfolder.UACaller import UACaller
@@ -89,7 +90,6 @@ if parsed_args.project_id:
 else:
     nexus_identifiers = False
 
-
 toolbox.script_start_logmsg(rf_obj.rf_loggers.backup, __file__)
 
 # Create an object to set up the upload agent command
@@ -99,6 +99,4 @@ backup_runfolder = UACaller(
 )
 backup_runfolder.upload_rest_of_runfolder(parsed_args.ignore)
 
-
 toolbox.script_end_logmsg(rf_obj.rf_loggers.backup, __file__)
-ad_logger.shutdown_logs(rf_obj.rf_loggers)
