@@ -94,6 +94,10 @@ class UACaller:
             self.logger, "exit_on_fail",
         )
         self.logger.info(
+            self.logger.log_msgs["project_name"],
+            project_name,
+        )
+        self.logger.info(
             self.logger.log_msgs["finding_project_id"],
             self.rf_obj.runfolder_name,
         )
@@ -101,6 +105,10 @@ class UACaller:
             ad_config.DX_CMDS["find_proj_id"]
             % (project_name, self.rf_obj.dnanexus_apikey),
             self.logger, "exit_on_fail",
+        )
+        self.logger.info(
+            self.logger.log_msgs["project_id"],
+            project_id,
         )
         return {
             "proj_name": project_name,
@@ -127,9 +135,10 @@ class UACaller:
             self.logger.info(
                 self.logger.log_msgs["uploading_files"], folderpath
             )
-            for upload_cmd in self.file_dict[folderpath]["upload_cmds"]:
-                filepath_list = self.file_dict[folderpath]["upload_cmds"][upload_cmd]
-                self.upload_files(upload_cmd, filepath_list)
+            if "upload_cmds" in self.file_dict[folderpath].keys():
+                for upload_cmd in self.file_dict[folderpath]["upload_cmds"]:
+                    filepath_list = self.file_dict[folderpath]["upload_cmds"][upload_cmd]
+                    self.upload_files(upload_cmd, filepath_list)
         self.count_uploaded_files(ignore)  # Run tests to count files
 
     def check_runfolder_exists(self) -> None:
@@ -169,8 +178,8 @@ class UACaller:
                                         the runfolder        
         """
         self.logger.info(self.logger.log_msgs["getting_folder_paths"])
+        folderpaths = [self.rf_obj.runfolderpath]  # Add root folder path
         for root, subfolders, _ in os.walk(self.rf_obj.runfolderpath):            
-            folderpaths = [os.path.join(root)]  # Add root folder path
             for folder in subfolders:  # Add subfolder paths
                 folderpaths.append(os.path.join(root, folder))
         return folderpaths
@@ -218,7 +227,7 @@ class UACaller:
         if ignore:
             for pattern in ignore.split(","):
                 if pattern.upper() in filepath.upper():
-                    self.logger.info(self.logger.log_msgs["ignoring_file"], filepath)
+                    self.logger.info(self.logger.log_msgs["ignoring_files"], filepath)
                     return True
         else:
             return False

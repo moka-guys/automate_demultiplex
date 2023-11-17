@@ -229,9 +229,11 @@ LOG_MSGS = {
         "checking_runfolder": "Checking the runfolder exists: %s",
         "nonexistent_runfolder": "BR_FAIL - The runfolder does not exist: %s",
         "finding_project": "Searching for DNAnexus project: %s",
+        "project_name": "Project name is: %s",
         "finding_project_id": (
-            "Searching for DNAnexus project ID using the runfolder name"
+            "Searching for DNAnexus project ID using the runfolder name %s"
         ),
+        "project_id": "Project id is: %s",
         "building_command": "Building upload command",
         "added_command": "Added command to upload commands dictionary",
         "building_file_dict": "Adding the files contained within each folder to the file dictionary",
