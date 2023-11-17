@@ -229,12 +229,24 @@ LOG_MSGS = {
         "checking_runfolder": "Checking the runfolder exists: %s",
         "nonexistent_runfolder": "BR_FAIL - The runfolder does not exist: %s",
         "finding_project": "Searching for DNAnexus project: %s",
+        "finding_project_id": (
+            "Searching for DNAnexus project ID using the runfolder name"
+        ),
         "building_command": "Building upload command",
-        "building_file_dict": "Building the dictionary of files for upload",
+        "added_command": "Added command to upload commands dictionary",
+        "building_file_dict": "Adding the files contained within each folder to the file dictionary",
+        "getting_folder_paths": "Walking through the runfolder and creating a list of all folder paths within the runfolder",
+        "getting_file_paths": "Walking through the folder paths and getting a list of files",
         "files_for_upload": "Files for upload: %s",
+        "uploading_files": "Uploading files in folder: %s",
+        "ignoring_files": "Disincluding file from upload as it contains an ignore string: %s",
         "cmd_out": "Stdout: %s. Stderr: %s",
-        "call_ua": "Calling upload agent on %s to location %s",
-        "uploading_file_range": "Uploading files %s to %s",
+        "files_exist": "All files in files_list exist as expected",
+        "nonexistent_files": "The following files are expected to be present but do not exist: %s",
+        "call_ua": "Calling upload agent on %s",
+        "iterations_needed": "%s upload iterations needed to upload the files in the folder %s",
+        "command_iteration": "Building command for iteration %s of %s",
+        "nexus_project_subdirectory": "DNAnexus project runfolder subdirectory is: %s",
         "counting_files": (
             "Counting the number of files that need to be uploaded, have been uploaded "
             "and check if any that should have been ignored are in DNAnexus"

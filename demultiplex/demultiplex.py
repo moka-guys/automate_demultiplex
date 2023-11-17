@@ -497,7 +497,7 @@ class DemultiplexRunfolder(object):
         )
         # Runs bcl2fastq2 and checks if completed successfully
         out, err, returncode = toolbox.execute_subprocess_command(
-            self.bcl2fastq_cmd, self.demux_rf_logger
+            self.bcl2fastq_cmd, self.demux_rf_logger, "exit_on_fail"
             )
         if returncode == 0:
             self.demux_rf_logger.info(
@@ -582,7 +582,8 @@ class DemultiplexRunfolder(object):
             self.cluster_density_cmd,
         )
         out, err, returncode = toolbox.execute_subprocess_command(
-            self.cluster_density_cmd, self.demux_rf_logger
+            self.cluster_density_cmd, self.demux_rf_logger,
+            "exit_on_fail"
             )
 
         if returncode == 0:

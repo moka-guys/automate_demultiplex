@@ -3,6 +3,7 @@
 """
 This script contains functions shared across scripts / modules
 """
+import sys
 import os
 import subprocess
 import logging
@@ -90,15 +91,13 @@ def git_tag():
     return out.rstrip().decode("utf-8")
 
 
-# TODO amend the log flags script references - need to decide what to do here
-def execute_subprocess_command(command: str, logger: logging.Logger) -> (str, str, int):
+def execute_subprocess_command(command: str, logger: logging.Logger, exit_on_fail=False) -> (str, str, int):
     """
     Execute a subprocess
         :param command(str):            Input command
         :param logger(logging.Logger):  Logger
         :return (stdout(str),
-        stderr(str),
-        returncode(int))(tuple):        Outputs from the command
+        stderr(str)) (tuple):           Outputs from the command
     """
     logger.info(logger.log_msgs["executing_command"], command)
     proc = subprocess.Popen(
@@ -109,9 +108,16 @@ def execute_subprocess_command(command: str, logger: logging.Logger) -> (str, st
         executable="/bin/bash",
     )
     out, err, returncode = check_returncode(proc, logger)
-
-    # Capture the streams and return returncode
+    if exit_on_fail == "exit_on_fail":
+        exit_on_returncode(returncode)
     return out, err, returncode
+
+
+def exit_on_returncode(returncode):
+    """
+    """
+    if returncode != 0:
+        sys.exit(1)
 
 
 def check_returncode(proc: subprocess.Popen, logger: object) -> (str, str, int):
@@ -130,10 +136,10 @@ def check_returncode(proc: subprocess.Popen, logger: object) -> (str, str, int):
 
     if returncode == 0:
         logger.info(logger.log_msgs["cmd_success"], returncode)
+        return out, err, returncode
     else:
         logger.error(logger.log_msgs["cmd_fail"], returncode, out, err)
-    return out, err, returncode
-
+        return out, err, returncode
 
 def get_runfolder_path(runfolder_name):
     """
@@ -180,7 +186,7 @@ def test_programs(software_name: str, logger: object) -> Union[bool, None]:
     if find_executable(software_dict["executable"]):
         logger.info(logger.log_msgs["found_program"], software_dict['executable'])
         out, err, returncode = execute_subprocess_command(
-            software_dict["test_cmd"], logger
+            software_dict["test_cmd"], logger, "exit_on_fail"
             )
         if returncode == 0:
             logger.info(logger.log_msgs["test_pass"], software_name)
@@ -200,7 +206,7 @@ def test_docker(software_name: str, logger: object) -> Union[bool, None]:
 
     logger.info(logger.log_msgs["testing_software"], software_name)
 
-    out, err, returncode = execute_subprocess_command(test_cmd, logger)
+    out, err, returncode = execute_subprocess_command(test_cmd, logger, "exit_on_fail")
     if returncode == 0:
         logger.info(logger.log_msgs["test_pass"], software_name)
         return True
