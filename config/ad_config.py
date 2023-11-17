@@ -416,7 +416,7 @@ DX_CMDS = {
     "proj_name_from_id": (
         f'source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name'
         ),
-    "find_proj_id": f'source {SDK_SOURCE}; dx describe --auth %s %s --json | jq -r .id',
+    "find_proj_id": f'source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id',
     "find_execution_id": (
         f"source {SDK_SOURCE}; dx describe %s --json --auth %s | jq -r '.stages[] | "
         "select( .id == \"%s\") | .execution.id'"

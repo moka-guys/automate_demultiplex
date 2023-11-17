@@ -80,7 +80,7 @@ if parsed_args.project_id:
         parsed_args.project_id, parsed_args.auth_token
         )
     project_name, err, returncode = toolbox.execute_subprocess_command(
-        project_name_cmd, rf_obj.rf_loggers.backup
+        project_name_cmd, rf_obj.rf_loggers.backup, "exit_on_fail"
         )
     nexus_identifiers = {
         "proj_name": project_name,

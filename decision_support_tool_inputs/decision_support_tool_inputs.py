@@ -172,9 +172,9 @@ class DecisionTooler(object):
             while returncode != 0 and not jobid:
                 try:
                     (
-                        jobid, err, returncode
+                        jobid, _, returncode
                     ) = toolbox.execute_subprocess_command(
-                        jobid_cmd, self.logger
+                        jobid_cmd, self.logger, "exit_on_fail"
                     )
                     self.logger.info(
                         self.logger.log_msgs["found_job_id"], outfile, jobid

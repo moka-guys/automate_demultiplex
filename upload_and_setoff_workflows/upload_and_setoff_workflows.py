@@ -389,7 +389,7 @@ class ProcessRunfolder(object):
         project_creation_cmd = f"bash {self.rf_obj.proj_creation_script}"
 
         project_id, err, returncode = toolbox.execute_subprocess_command(
-            project_creation_cmd, self.rf_obj.rf_loggers.usw
+            project_creation_cmd, self.rf_obj.rf_loggers.usw, "exit_on_fail"
         )
         if returncode == 0:
             return project_id
@@ -570,7 +570,6 @@ class ProcessRunfolder(object):
         result = self.backup_runfolder.upload_files(
             file_upload_dict[filetype]["cmd"],
             file_upload_dict[filetype]["files_list"],
-            filetype,
         )
         if result == "success":
             self.rf_obj.rf_loggers.usw.info(
@@ -609,7 +608,7 @@ class ProcessRunfolder(object):
 
     def upload_rest_of_runfolder(self) -> None:
         """
-        Backs up the rest of the runfolder. First copies the samplesheet intto the
+        Backs up the rest of the runfolder. First copies the samplesheet into the
         project, then specifies which files to ignore (excludes BCL files for all runs
         except tso500 runs for which they are needed for demultiplexing on DNAnexus).
         Calls backup_runfolder.upload_rest_of_runfolder(ignore), passing a run-dependent
@@ -679,7 +678,7 @@ class ProcessRunfolder(object):
             self.rf_obj.rf_loggers.usw.log_msgs["running_cmds"],
         )
         out, err, returncode = toolbox.execute_subprocess_command(
-            dx_run_cmd, self.rf_obj.rf_loggers.usw
+            dx_run_cmd, self.rf_obj.rf_loggers.usw, "exit_on_fail"
         )
         if err:
             self.rf_obj.rf_loggers.usw.error(
@@ -1237,14 +1236,14 @@ class SampleObject:
             (workflow_name, err, returncode) = toolbox.execute_subprocess_command(
                 f"dx describe {ad_config.NEXUS_IDS['APPS'][self.pipeline]} "
                 "--json | jq -r '(.name)'",
-                self.rf_obj.rf_loggers.usw,
+                self.rf_obj.rf_loggers.usw, "exit_on_fail"
             )
         else:
             (workflow_name, err, returncode) = toolbox.execute_subprocess_command(
                 "dx describe "
                 f"{ad_config.NEXUS_IDS['WORKFLOWS'][self.pipeline]} "
                 "--json | jq -r '\"\(.folder)/\(.name)\"'",
-                self.rf_obj.rf_loggers.usw,
+                self.rf_obj.rf_loggers.usw, "exit_on_fail"
             )
         return workflow_name
 
