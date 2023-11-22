@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = False
+testing = True
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -34,10 +34,10 @@ samplesheets_dir = os.path.join(runfolders, "samplesheets")
 fastq_folder = "/Data/Intensities/BaseCalls"
 
 # bcl2fastq base command
-bcl2fastq_test_cmd = "sudo docker run --rm seglh/bcl2fastq2:v2.20.0.422_25dd0c0"
+bcl2fastq_test_cmd = "sudo docker run --rm seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
 bcl2fastq_cmd = (
     "sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s "
-    "seglh/bcl2fastq2:v2.20.0.422_25dd0c0 -R /mnt/run --sample-sheet /mnt/run/%s "
+    "seglh/bcl2fastq2:v2.20.0.422_60dbb5a -R /mnt/run --sample-sheet /mnt/run/%s "
     "--no-lane-splitting >> %s 2>&1"
 )
 
@@ -91,16 +91,16 @@ demultiplex_logfiles = (
 
 # path to upload agent
 upload_agent_path = (
-    "{document_root}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
+    "{document_root}/apps/dnanexus-upload-agent-1.5.33-linux/ua"
 ).format(document_root=document_root)
 
 upload_agent_test_command = " --version"
 ua_error = "Error Message: 'Could not resolve: api.dnanexus.com"
 
 # path to backup_runfolder script
-backup_runfolder_script = (
-    "/usr/local/src/mokaguys/apps/workstation_housekeeping/backup_runfolder.py"
-)
+backup_runfolder_script = ("/usr/local/src/mokaguys/apps/workstation_housekeeping/backup_runfolder.py")
+# delete the above when 
+backup_runfolder_script = ("/usr/local/src/mokaguys/development_area/workstation_housekeeping/backup_runfolder.py")
 
 # backup runfolder folder
 backup_runfolder_logfile = (
@@ -115,7 +115,7 @@ sdk_source_cmd = "/etc/profile.d/dnanexus.environment.sh"
 # command to test dx toolkit
 dx_sdk_test = "source %s;dx --version" % (sdk_source_cmd)
 # expected result from testing
-dx_sdk_test_expected_stdout = "dx v0.2"
+dx_sdk_test_expected_stdout = "dx v0."
 
 # command and output to test agilent connector
 agilent_connector_cmd = "/opt/agilent/agilentserviceconnector status"
