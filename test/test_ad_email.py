@@ -49,7 +49,6 @@ class TestAdEmail:
         self,
         logger_obj,
         email_subject,
-        email_message,
         email_recipients,
     ):
         """
@@ -75,7 +74,6 @@ class TestAdEmail:
         monkeypatch,
         logger_obj,
         email_subject,
-        email_message,
         email_recipients,
     ):
         """

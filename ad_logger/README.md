@@ -31,7 +31,7 @@ This script is configured to be used as a module import as per the following exa
 ### Example 1 - script-level loggers
 ```python
 self.script_logger = ad_logger.AdLogger(  # Create script level loggers
-    "usw", "usw", toolbox.return_scriptlog_config()['usw']
+    "sw", "sw", toolbox.return_scriptlog_config()['sw']
 ).get_logger()
 
 self.script_logger.info(
@@ -39,23 +39,25 @@ self.script_logger.info(
 )
 ```
 
-# TODO rewrite below
 ### Example 2 - runfolder-level loggers
 ```python
 
 logfiles_config = {
-    "usw": upload_runfolder_logfile,
+    "sw": sw_runfolder_logfile,
     "demultiplex": demultiplex_runfolder_logfile,
     "upload_agent": upload_agent_logfile,
-    "backup": backup_runfolder_logfile,
+    "backup": upload_runfolder_logfile,
     "project": proj_creation_script,
     "dx_run": runfolder_dx_run_script,
+    "post_run_cmds": post_run_dx_run_script,
+    "decision_support": decision_support_tool_logfile,
+    "ss_validator": samplesheet_validator_logfile,
 }
 
 loggers = ad_logger.RunfolderLoggers(logfiles_config)
 
-loggers.usw.info(
-    loggers.usw.log_msgs["recognised_panno"],
+loggers.sw.info(
+    loggers.sw.log_msgs["recognised_panno"],
     sample_name,
     pannum,
 )
@@ -67,7 +69,7 @@ No log is written to as this module is creating the logger.
 
 ## Alerts
 
-No alerts are triggered by this module, as it is creating the logger that sends the alerts to rapid7.
+No alerts are triggered by this module, as it is creating the logger that sends the alerts to Rapid7.
 
 ## Testing
 

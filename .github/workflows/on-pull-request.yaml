@@ -29,17 +29,17 @@ jobs:
           echo "dummytoken" > /home/runner/work/.dnanexus_auth_token
           echo "dummypw" > /home/runner/work/.amazon_email_pw
           echo "dummyuser" > /home/runner/work/.amazon_email_username
-      # - name: Lint with flake8
-      #   run: |
-      #     # stop the build if there are:
-      #     # - syntax errors (E9)
-      #     # - common assertion and comparison gotchas (F63)
-      #     # - control flow gotchas (F7)
-      #     # - undefined names (F82)
-      #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-      #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-      #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are:
+          # - syntax errors (E9)
+          # - common assertion and comparison gotchas (F63)
+          # - control flow gotchas (F7)
+          # - undefined names (F82)
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
       # We do not want it to run the email tests because the credentials are not stored in GitHub
         run: |
-          python3 -m pytest -v -k 'not email and not test_bcl2fastq_installed_pass'
+          python3 -m pytest -v -k 'not email and not test_bcl2fastq_installed_pass' --ignore=test/demultiplex_test_files/

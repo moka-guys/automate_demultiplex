@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # coding=utf-8
 """
-This script contains functions shared across scripts / modules
+This script contains functions shared across scripts / modules, including the
+RunfolderObject class
 """
 import sys
 import os
@@ -14,9 +15,7 @@ from config import ad_config
 from ad_logger import ad_logger
 
 
-# TODO improve README documentation
-
-def return_scriptlog_config():
+def return_scriptlog_config() -> dict:
     """
     Return script-level logfile configuration
         :return (dict): Dictionary containing logger names and logfile paths
@@ -26,22 +25,35 @@ def return_scriptlog_config():
             ad_config.AD_LOGDIR, "demultiplexing_script_logfiles",
             f"{ad_config.TIMESTAMP}_demultiplex_script_log.log"
             ),
-        'usw': os.path.join(  # Record usw script logs
-            ad_config.AD_LOGDIR, "usw_script_logfiles",
+        'sw': os.path.join(  # Record sw script logs
+            ad_config.AD_LOGDIR, "sw_script_logfiles",
             f"{ad_config.TIMESTAMP}_upload_and_setoff_workflow.log"
         ),
     }
 
-def script_start_logmsg(logger, file):
-    """"""
+
+def script_start_logmsg(logger: object, file: str) -> None:
+    """
+    Adds the log message that denotes the start of the script
+    running to the logfile
+        :param logger (object): Logger
+        :param file (str):      Path to logfile
+        :return None:
+    """
     logger.info(
         logger.log_msgs["script_start"], git_tag(),
         os.path.basename(os.path.dirname(file))
     )
 
 
-def script_end_logmsg(logger, file):
-    """"""
+def script_end_logmsg(logger: object, file: str) -> None:
+    """
+    Adds the log message that denotes the end of the script
+    runnign to the logfile
+        :param logger (object): Logger
+        :param file (str):      Path to logfile
+        :return None:
+    """
     logger.info(
         logger.log_msgs["script_end"],
         git_tag(),
@@ -49,33 +61,33 @@ def script_end_logmsg(logger, file):
     )
 
 
-def is_valid_dir(parser: argparse.ArgumentParser, arg: str) -> str:
+def is_valid_dir(parser: argparse.ArgumentParser, file: str) -> str:
     """
     Check directory path is valid
         :param parser (argparse.ArgumentParser):    Holds necessary info to parse cmd
                                                     line into Python data types
-        :param arg (str):                           Input argument
+        :param file (str):                          Input argument
     """
-    if not os.path.isdir(arg):
-        parser.error(f"The directory {arg} does not exist!")
+    if not os.path.isdir(file):
+        parser.error(f"The directory {file} does not exist!")
     else:
-        return arg  # Return argument
+        return file
 
 
-def is_valid_file(parser: argparse.ArgumentParser, arg: str) -> str:
+def is_valid_file(parser: argparse.ArgumentParser, file: str) -> str:
     """
     Check file path is valid
         :param parser (argparse.ArgumentParser):    Holds necessary info to parse cmd
                                                     line into Python data types
-        :param arg (str):                           Input argument
+        :param file (str):                          Input argument
     """
-    if not os.path.exists(arg):
-        parser.error(f"The file {arg} does not exist!")
+    if not os.path.exists(file):
+        parser.error(f"The file {file} does not exist!")
     else:
-        return arg  # Return argument
+        return file
 
 
-def git_tag():
+def git_tag() -> str:
     """
     Obtain the git tag of the current commit
         :return (str):  Git tag
@@ -113,8 +125,9 @@ def execute_subprocess_command(command: str, logger: logging.Logger, exit_on_fai
     return out, err, returncode
 
 
-def exit_on_returncode(returncode):
+def exit_on_returncode(returncode: int) -> None:
     """
+    Exit the script if the returncode is not 0 (success)
     """
     if returncode != 0:
         sys.exit(1)
@@ -141,22 +154,27 @@ def check_returncode(proc: subprocess.Popen, logger: object) -> (str, str, int):
         logger.error(logger.log_msgs["cmd_fail"], returncode, out, err)
         return out, err, returncode
 
-def get_runfolder_path(runfolder_name):
+
+def get_runfolder_path(runfolder_name: str) -> str:
     """
+    Return the path of the runfolder based on the runfolder_name input
+        :param runfolder_name (str):    Runfolder name string
+        :return (str):                  Runfolder path
     """
     return os.path.join(ad_config.RUNFOLDERS, runfolder_name)
 
 
-def test_upload_software(logger) -> Union[bool, None]:
+def test_upload_software(logger) -> True:
     """
-    Test the required software is installed and performing
+    Test the required software is installed and performing. If not, exit
+    the script
         :return True | None:    Return True if all software tests pass, else None
     """
     if test_programs("dx_toolkit", logger) and test_programs("upload_agent", logger):
         return True
     else:
         logger.error(logger.log_msgs["software_fail"])
-        raise Exception
+        sys.exit(1)
 
 
 def test_processing_software(logger) -> Union[bool, None]:
@@ -171,13 +189,13 @@ def test_processing_software(logger) -> Union[bool, None]:
         return True
 
 
-def test_programs(software_name: str, logger: object) -> Union[bool, None]:
+def test_programs(software_name: str, logger: object) -> True:
     """
     Check software exists in path, and that the test command executes successfully
     (return code 0).
         :param software_name (str):     Name of the sofware being tested
         :param logger (object):         Logger
-        :return True | None:            Return True if test passes, else return None
+        :return True:                   Return True if test passes, else exit script
     """
     software_dict = ad_config.TEST_PROGRAMS_DICT[software_name]
 
@@ -192,15 +210,19 @@ def test_programs(software_name: str, logger: object) -> Union[bool, None]:
             logger.info(logger.log_msgs["test_pass"], software_name)
             return True
         else:
-            logger.error(logger.log_msgs["test_fail"], software_name)
-            raise Exception  # Stop script
+            logger.error(logger.log_msgs["test_fail"], software_name, out, err)
+            sys.exit(1)
     else:
         logger.error(logger.log_msgs["program_missing"], software_dict['executable'])
-        raise Exception  # Stop script
+        sys.exit(1)
 
 
-def test_docker(software_name: str, logger: object) -> Union[bool, None]:
+def test_docker(software_name: str, logger: object) -> True:
     """
+    Check docker is correctly installed and outputs return code 0 (success)
+        :param software_name (str): Name of the software being tested
+        :param logger (object):     Logger
+        :return True:               Return True if test passes, else exit script
     """
     test_cmd = ad_config.TEST_IMAGES_DICT[software_name]
 
@@ -211,13 +233,15 @@ def test_docker(software_name: str, logger: object) -> Union[bool, None]:
         logger.info(logger.log_msgs["test_pass"], software_name)
         return True
     else:
-        logger.error(logger.log_msgs["test_fail"], software_name)
-        raise Exception  # Stop script
+        logger.error(logger.log_msgs["test_fail"], software_name, out, err)
+        sys.exit(1)
 
 
-def get_num_processed_runfolders(logger, script_name, processed_runfolders):
+def get_num_processed_runfolders(logger: object, processed_runfolders: list) -> int:
     """
     Set self.num_processed_runfolders
+        :param logger (object):                 Logger
+        :param processed_runfolders (list):     List of names of processed runfolders
         :return num_processed_runfolders (int): Number of processed runfolders
     """
     num_processed_runfolders = len(processed_runfolders)
@@ -243,6 +267,7 @@ class RunfolderObject(object):
         samplesheet_name (str):                 Name of runfolder samplesheet
         rtacompletefile_path (str):             Sequencing finished filepath (within
                                                 runfolder)
+        samplesheet_path (str):                 Path to samplesheet in samplesheets dir
         runfolder_samplesheet_path (str):       Runfolder samplesheet path (within
                                                 runfolder)
         checksumfile_path (str):                md5 checksum (integrity check) file path
@@ -254,14 +279,13 @@ class RunfolderObject(object):
         upload_agent_logfile (str):             Upload agent logfile (within runfolder).
                                                 Stores runfolder upload logs
         bcl2fastqstats_file (str):              Bcl2fastq stats file (within runfolder)
-        samplesheet_path (str):                 Runfolder samplesheet (within
-                                                samplesheets dir)
+        cluster_density_files (list):           List containing runfolder lane metrics
+                                                and phasing metrics file paths
         demultiplex_runfolder_logfile (str):    Runfolder demultiplex logfile (within
                                                 logfiles dir)
-        upload_runfolder_logfile (str):         Runfolder upload and setoff workflows
-                                                logfile (within logfiles dir)
-        backup_runfolder_logfile (str):         Backup runfolder logfile (within
-                                                logfiles dir)
+        sw_runfolder_logfile (str):             Records output of setoff workflow script
+        upload_runfolder_logfile (str):         Records the logs from the upload_runfolder
+                                                script
         runfolder_dx_run_script (str):          Workflow dx run commands for runfolder
                                                 (within logfiles dir)
         post_run_dx_run_script (str):           Separate DX run script for downstream
@@ -274,8 +298,6 @@ class RunfolderObject(object):
                                                 logfile (within logfiles dir)
         samplesheet_validator_logfile (str):    Samplesheet validator script logfile
                                                 (within logfiles dir)
-        cluster_density_files (list):           List containing runfolder lane metrics
-                                                and phasing metrics file paths
         logfiles_config (dict):                 Contains all runfolder log files
         logfiles_to_upload (list):              All logfiles that require upload to
                                                 DNAnexus
@@ -284,10 +306,10 @@ class RunfolderObject(object):
                                                 runfolder-specific loggers
 
     Methods
-        set_rf_logfiles()
-            Add runfolder log files as class atributes
         add_runfolder_loggers()
             Add runfolder loggers to runfolder object
+        add_runfolder_logger()
+            Add a single runfolder logger to runfolder object
     """
 
     def __init__(self, runfolder_name: str, timestamp: str):
@@ -321,12 +343,11 @@ class RunfolderObject(object):
         self.bcl2fastqlog_path = os.path.join(
             self.runfolderpath, "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
         )
-        # TODO change so that this is one variable decided by runfolder type
         self.fastq_dir_path = os.path.join(
             self.runfolderpath, ad_config.FASTQ_DIRS["fastqs"]
             )
-        self.tso_fastq_dir_path = os.path.join(
-            self.runfolderpath, ad_config.FASTQ_DIRS["tso_fastqs"]
+        self.upload_agent_logfile = os.path.join(  # Holds UA output
+            self.runfolderpath, "DNANexus_upload_started.txt",  
         )
         self.bcl2fastqstats_file = os.path.join(
             self.runfolderpath,
@@ -349,16 +370,13 @@ class RunfolderObject(object):
             ad_config.AD_LOGDIR, "demultiplexing_script_logfiles",
             f"{self.runfolder_name}_demultiplex_script_log.log"
         )
-        self.usw_runfolder_logfile = os.path.join(  # Records output of upload and setoff workflow script
-            ad_config.AD_LOGDIR, "usw_script_logfiles",
+        self.sw_runfolder_logfile = os.path.join(
+            ad_config.AD_LOGDIR, "sw_script_logfiles",
             f"{self.runfolder_name}_upload_and_setoff_workflow.log"
         )
-        self.upload_agent_logfile = os.path.join(  # Holds UA output
-            self.runfolderpath, "DNANexus_upload_started.txt",  
-        )
-        self.backup_runfolder_logfile = os.path.join(  # Records the logs from the backup runfolder script
-            ad_config.AD_LOGDIR, "backup_runfolder_script_logfiles",
-            f"{self.runfolder_name}_backup_runfolder.log"
+        self.upload_runfolder_logfile = os.path.join(
+            ad_config.AD_LOGDIR, "upload_runfolder_script_logfiles",
+            f"{self.runfolder_name}_upload_runfolder.log"
         )
         self.runfolder_dx_run_script = os.path.join(
             ad_config.AD_LOGDIR, "dx_run_commands",
@@ -372,7 +390,7 @@ class RunfolderObject(object):
             ad_config.AD_LOGDIR, "dx_run_commands",
             f"{self.runfolder_name}_decision_support.sh"
         )
-        self.proj_creation_script = os.path.join(  # Script containing dnanexus project creation command
+        self.proj_creation_script = os.path.join(
             ad_config.AD_LOGDIR, "nexus_project_creation_scripts",
             f"{self.runfolder_name}_create_nexus_project.sh"
         )
@@ -385,10 +403,10 @@ class RunfolderObject(object):
             f"{self.runfolder_name}_samplesheet_validator_script_log.log"
         )
         self.logfiles_config = {
-            "usw": self.usw_runfolder_logfile,
+            "sw": self.sw_runfolder_logfile,
             "demultiplex": self.demultiplex_runfolder_logfile,
             "upload_agent": self.upload_agent_logfile,
-            "backup": self.backup_runfolder_logfile,
+            "backup": self.upload_runfolder_logfile,
             "project": self.proj_creation_script,
             "dx_run": self.runfolder_dx_run_script,
             "post_run_cmds": self.post_run_dx_run_script,
@@ -396,12 +414,11 @@ class RunfolderObject(object):
             "ss_validator": self.samplesheet_validator_logfile,
         }
         self.logfiles_to_upload = [
-            self.usw_runfolder_logfile,
+            self.sw_runfolder_logfile,
             self.demultiplex_runfolder_logfile,
-            self.backup_runfolder_logfile,
+            self.upload_runfolder_logfile,
             self.proj_creation_script,
             self.runfolder_dx_run_script,
-            self.post_run_dx_run_script,
             self.samplesheet_validator_logfile,
             self.bcl2fastqlog_path,
         ]
@@ -413,9 +430,10 @@ class RunfolderObject(object):
         """
         setattr(self, 'rf_loggers', ad_logger.RunfolderLoggers(self.logfiles_config))
 
-    def add_runfolder_logger(self, logger_name) -> None:
+    def add_runfolder_logger(self, logger_name: str) -> None:
         """
         Add a single runfolder logger to runfolder object
+            :param logger_name (str):   Name of the logger
             :return None:
         """
         logfile_config = {logger_name: self.logfiles_config[logger_name]}

@@ -1,5 +1,5 @@
 """
-Print inputs required by decision support tool upload applications on DNAnexus.
+Print inputs required by congenica upload applications on DNAnexus.
 See Readme and doctrings for further details
 """
 from config import ad_config
@@ -43,7 +43,7 @@ DECISION_SUPPORT_INPUTS = {
 
 class DecisionTooler(object):
     """
-    Builds decision support tool command line inputs
+    Builds congenica upload DNAnexus app command line inputs
 
     Attributes
         dnanexus_apikey(str):       DNAnexus auth token
@@ -51,8 +51,6 @@ class DecisionTooler(object):
         project(str):               DNAnexus project ID
         runfolder_name (str):       Name of runfolder (used for naming logfile)
         workflow (str):             Name of pipeline used to process the sample
-        rf_obj (obj):               RunfolderObject object (contains runfolder-specific
-                                    attributes)
         logger (object):            Runfolder-level logger
         file_dict(dict):            Dictionary containing strings required for building
                                     the congenica upload app input string
@@ -66,18 +64,20 @@ class DecisionTooler(object):
 
     Methods
         get_inputs()
-            Call methods to generate the decision support tool input string
+            Call methods to generate the congenica upload DNAnexus app input string
         get_file_dict()
-            Get file dict of congenica upload inputs if workflow is valid (requires
+            Get file dict of DNAnexus app inputs if workflow is valid (requires
             congenica upload), else raise exception
         set_jobid_cmds()
             Set commands for retrieving the job ID for the vcf and bam workflow stages
         get_jobids()
-            Get job ids for bam and vcf jobs within the workflow
+            Get job ids for bam and vcf jobs within the workflow and set as class
+            attributes
         set_app_input_string()
-            Set the input string for the congenica app
+            Set the input string for the congenica app as class attribute
         printer()
-            Print inputs to decision support upload app (congenica upload)
+            Print inputs to congenica upload app (bam and vcf congenica app inputs
+            in string format)
     """
     def __init__(
         self, analysis_id: str, project: str, runfolder_name: str, workflow: str
@@ -100,9 +100,10 @@ class DecisionTooler(object):
         self.workflow = workflow
         self.logger = self.return_logger()
 
-    def return_logger(self):
+    def return_logger(self) -> object:
         """
         Add only the required logger
+            :return logger (object):    Runfolder-level logger
         """
         rf_obj = toolbox.RunfolderObject(
             self.runfolder_name, ad_config.TIMESTAMP
@@ -114,7 +115,7 @@ class DecisionTooler(object):
 
     def get_inputs(self) -> None:
         """
-        Call methods to generate the decision support tool input string
+        Call methods to generate the congenica upload DNAnexus app input string
             :return None:
         """
         self.get_file_dict()
@@ -125,9 +126,9 @@ class DecisionTooler(object):
 
     def get_file_dict(self) -> dict:
         """
-        Get file dict of congenica upload inputs if workflow is valid (requires
+        Get file dict of DNAnexus app inputs if workflow is valid (requires
         congenica upload), else raise exception
-            :return (dict): Dictionary of congenica upload inputs
+            :return (dict): Dictionary of congenica upload app inputs
         """
         if self.workflow in ["wes", "pipe"]:
             self.logger.info(
@@ -165,35 +166,34 @@ class DecisionTooler(object):
         """
         for outfile in self.file_dict.keys():
             self.logger.info(self.logger.log_msgs["get_job_id"], outfile)
-            jobid = False
-            returncode = 1
-            tries = 0
+            tries, returncode = 0, 1
             jobid_cmd = getattr(self, f"{outfile}jobid_cmd")
-            while returncode != 0 and not jobid:
-                try:
-                    (
-                        jobid, _, returncode
-                    ) = toolbox.execute_subprocess_command(
-                        jobid_cmd, self.logger, "exit_on_fail"
-                    )
+            # Can take a while for job to set off
+            while tries < 1000 and returncode != 0:
+                (
+                    jobid, err, returncode
+                ) = toolbox.execute_subprocess_command(
+                    jobid_cmd, self.logger,
+                )
+                if returncode == 0:
                     self.logger.info(
                         self.logger.log_msgs["found_job_id"], outfile, jobid
                     )
                     setattr(self, f"{outfile}jobid", jobid)
-                except Exception as exception:
-                    self.logger.warning(
-                        self.logger.log_msgs["get_job_id_err"], outfile, exception
-                    )
+                else: 
                     tries += 1
-                    if tries == 1000:  # Can take a while for job to set off
-                        self.logger.exception(
-                            self.logger.log_msgs["get_job_id_fail"], outfile, exception
-                        )
-                        raise Exception  # Stop script
+                    self.logger.warning(
+                        self.logger.log_msgs["get_job_id_err"], outfile, err
+                    )
+            if tries > 1000:
+                self.logger.exception(
+                        self.logger.log_msgs["get_job_id_fail"], outfile
+                    )
+                raise Exception
 
     def set_app_input_string(self) -> None:
         """
-        Set the input string for the congenica app
+        Set the input string for the congenica app as class attribute
             :return None:
         """
         try:
@@ -209,10 +209,11 @@ class DecisionTooler(object):
             self.logger.exception(self.logger.log_msgs["app_input_str_err"], exception)
             raise Exception  # Stop script
 
-    def printer(self) -> str:
+    def printer(self) -> None:
         """
-        Print inputs to decision support upload app (congenica upload)
-            :return (str):  Bam and vcf congenica app inputs in string format
+        Print inputs to congenica upload app (bam and vcf congenica
+        app inputs in string format)
+            :return None:  
         """
         self.logger.info(self.logger.log_msgs["printing_app_input_str"])
         print(self.congenica_app_inputs)

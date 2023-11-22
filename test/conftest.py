@@ -12,6 +12,8 @@ from demultiplex import demultiplex
 from test import test_demultiplex
 from test import test_ad_logger
 from ad_logger import ad_logger
+from toolbox import toolbox
+from config import ad_config
 
 # Variables used across test classes
 
@@ -43,7 +45,8 @@ def create_logdirs():
     Create temporary log directories for testing purposes
     """
     os.makedirs(temp_log_dir)
-    for logfile in ad_logger.return_rflog_config("").values():
+    rf_obj = toolbox.RunfolderObject("TEST_FOLDER", ad_config.TIMESTAMP)
+    for logfile in rf_obj.logfiles_config.values():
         parent_dir = os.path.dirname(logfile)
         if not os.path.isdir(parent_dir):
             os.makedirs(parent_dir)

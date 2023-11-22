@@ -1,14 +1,14 @@
 """
-Main entry point for backup_runfolder module.
+Main entry point for upload_runfolder module.
 
-Uploads runfolder to DNAnexus by passing given arguments to the DNAnexus upload agent.
+Uploads runfolder to DNAnexus by passing given arguments to the UploadRunfolder script.
 See README and docstrings for further details
 """
 import os
 import inspect
 import argparse
 from config import ad_config
-from backup_runfolder.UACaller import UACaller
+from upload_runfolder.upload_runfolder import UploadRunfolder
 from toolbox import toolbox
 from ad_logger import ad_logger
 
@@ -19,15 +19,19 @@ def get_arguments():
         :return argparse.Namespace(object):    With attributes named after long-option
                                                command-line arguments
     """
-    parser = argparse.ArgumentParser()
-
+    parser = argparse.ArgumentParser(
+        description="Uploads runfolder to DNAnexus",
+        usage=(
+            "Upload user-specified runfolder to DNAnexus, providing an auth token, "
+            "project ID to upload to, and any file patterns that should be ignored"
+        ),
+    )
     with open(
         ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
     ) as token_file:
         dnanexus_apikey = token_file.readline().rstrip()  # Auth token
 
-    # Define arguments
-    parser.add_argument(
+    parser.add_argument(  # Define arguments
         "-r",
         "--runfolder_name",
         required=True,
@@ -93,10 +97,10 @@ else:
 toolbox.script_start_logmsg(rf_obj.rf_loggers.backup, __file__)
 
 # Create an object to set up the upload agent command
-backup_runfolder = UACaller(
+upload_runfolder = UploadRunfolder(
     rf_obj=rf_obj,
     nexus_identifiers=nexus_identifiers,
 )
-backup_runfolder.upload_rest_of_runfolder(parsed_args.ignore)
+upload_runfolder.upload_rest_of_runfolder(parsed_args.ignore)
 
 toolbox.script_end_logmsg(rf_obj.rf_loggers.backup, __file__)

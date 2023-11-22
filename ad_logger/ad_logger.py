@@ -118,7 +118,7 @@ class AdLogger(object):
 
     Attributes
         logger_name (str):      Name of logger
-        logger_type (str):      Type of logger, e.g. demultiplex, usw, etc.
+        logger_type (str):      Type of logger, e.g. demultiplex, sw, etc.
         filepath (str):         Name of filepath to provide to _file_handler()
 
     Methods
@@ -134,11 +134,11 @@ class AdLogger(object):
             Get stream handler for the logger (sends to stdout)
     """
 
-    def __init__(self, logger_name, logger_type, filepath):
+    def __init__(self, logger_name: str, logger_type: str, filepath: str):
         """
         Constructor for the AdLogger class
             :param logger_name (str):   Name of logger
-            :param logger_type (str):   Type of logger, e.g. demultiplex, usw, etc.
+            :param logger_type (str):   Type of logger, e.g. demultiplex, sw, etc.
             :param filepath (str):      Name of filepath to provide to _file_handler()
         """
         self.logger_name = logger_name
@@ -160,8 +160,9 @@ class AdLogger(object):
         logger.log_msgs = (
             log_msgs_config.LOG_MSGS["general"]
             | log_msgs_config.LOG_MSGS["ad_email"]
-            | log_msgs_config.LOG_MSGS[self.logger_type]
         )
+        if self.logger_type in log_msgs_config.LOG_MSGS.keys():
+            logger.log_msgs.update(log_msgs_config.LOG_MSGS[self.logger_type])            
         return logger
 
     def _get_file_handler(self) -> logging.FileHandler:
@@ -175,7 +176,7 @@ class AdLogger(object):
         file_handler.name = "file_handler"
         return file_handler
 
-    def _get_logging_formatter(self):
+    def _get_logging_formatter(self) -> str:
         """
         Get formatter for logging. This is script mode-dependent
             :return (str):  Logging formatter string

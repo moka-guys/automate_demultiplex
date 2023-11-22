@@ -38,27 +38,18 @@ from config import ad_config
 #    """
 
 
-
-@pytest.fixture(scope="function", autouse=True)
-def setup(monkeypatch):
-    """
-    """
-    #  Re-enable logging as it is required for assertions
-    logging.disable(logging.NOTSET)
-    # Remove testfiles dir containing test runfolders as we don't need these files
-    # Apply patches required for test_ad_logger script. These point the paths to the
-    # temporary locations:
-    #     - Test logfiles in the temp logfiles dir and within the temp runfolder dirs
-    monkeypatch.setattr(toolbox.ad_config, "RUNFOLDERS", conftest.temp_runfolderdir)
-    monkeypatch.setattr(toolbox.ad_config, "AD_LOGDIR", conftest.temp_log_dir)
-
-
-@pytest.fixture(scope="function", autouse=True)
-def setup(monkeypatch):
-    """
-    """
-
-
+# @pytest.fixture(scope="function", autouse=True)
+# def setup(monkeypatch):
+#     """
+#     """
+#     #  Re-enable logging as it is required for assertions
+#     logging.disable(logging.NOTSET)
+#     # Remove testfiles dir containing test runfolders as we don't need these files
+#     # Apply patches required for test_ad_logger script. These point the paths to the
+#     # temporary locations:
+#     #     - Test logfiles in the temp logfiles dir and within the temp runfolder dirs
+#     monkeypatch.setattr(toolbox.ad_config, "RUNFOLDERS", conftest.temp_runfolderdir)
+#     monkeypatch.setattr(toolbox.ad_config, "AD_LOGDIR", conftest.temp_log_dir)
 
 
 class TestRunfolderLoggers:
@@ -78,7 +69,7 @@ class TestRunfolderLoggers:
     @pytest.fixture(scope="function")
     def runfolder_logger_names(self):
         return [
-            "usw",
+            "sw",
             "demultiplex",
             "upload_agent",
             "backup",

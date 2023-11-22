@@ -3,14 +3,14 @@ Collect sequencing runs and initiate runfolder processing for those sequencing r
 requiring processing. SequencingRuns calls further classes ProcessRunfolder which calls
 CollectRunfolderSamples (which calls SampleObject per sample), BuildDxCommands which
 generates the dx run commands, and PipelineEmails which generates and sends the pipeline
-emails using AdEmail
+emails using ad_email.AdEmail
 """
-from upload_and_setoff_workflows import upload_and_setoff_workflows
+from setoff_workflows import setoff_workflows
 from toolbox import toolbox
 from ad_logger import ad_logger
 
 
-sequencing_runs = upload_and_setoff_workflows.SequencingRuns()
+sequencing_runs = setoff_workflows.SequencingRuns()
 
 toolbox.script_start_logmsg(sequencing_runs.script_logger, __file__)
 

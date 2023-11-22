@@ -7,7 +7,7 @@ import argparse
 import toolbox.toolbox as toolbox
 import ad_logger.ad_logger as ad_logger
 import samplesheet_validator.samplesheet_validator as samplesheet_validator
-# TODO test command line usage
+from config import ad_config
 
 
 def get_arguments():
@@ -20,6 +20,9 @@ def get_arguments():
         description=(
             "Given an input samplesheet, will validate the samplesheet using "
             "seglh-naming conventions and output a logfile"
+        ),
+        usage=(
+            "Used to validate a samplesheet using the seglh-naming conventions"
         )
     )
     parser.add_argument(
@@ -42,9 +45,15 @@ def get_arguments():
 
 parsed_args = get_arguments()
 
-sscheck_obj = samplesheet_validator.SamplesheetCheck(
-    parsed_args.samplesheet_path, parsed_args.runfolder_name
+rf_obj = toolbox.RunfolderObject(
+    parsed_args.runfolder_name, ad_config.TIMESTAMP
     )
+rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger
+logger = rf_obj.rf_loggers.ss_validator
+
+sscheck_obj = samplesheet_validator.SamplesheetCheck(
+    parsed_args.samplesheet_path, parsed_args.runfolder_name, logger
+)
 
 toolbox.script_start_logmsg(sscheck_obj.logger, __file__)
 
