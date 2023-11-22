@@ -16,7 +16,7 @@ This script is configured to be used as a module import as per the following exa
 
 ```python
 # Create AdEmail object
-self.email = AdEmail(self.rf_obj.rf_loggers.usw)
+self.email = AdEmail(self.rf_obj.rf_loggers.sw)
 
 # Render email html message
 email_html = self.email.generate_email_html(
@@ -35,12 +35,6 @@ self.email.send_email(
 ## Logging
 
 The AdEmail class takes a logger as input.
-
-## Alerts
-
-Logs from this script containing the follow strings will trigger alerts to the #moka-alerts binfx slack channel:
-
-* AD_FAIL
 
 ## Testing
 

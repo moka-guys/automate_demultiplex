@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # coding=utf-8
 """
-UACaller.py Uploads an Illumina runfolder to DNAnexus.
+upload_runfolder.py Uploads an Illumina runfolder to DNAnexus.
 """
 import os
 import re
@@ -10,8 +10,7 @@ from config import ad_config
 from toolbox import toolbox
 from typing import Union, Tuple
 
-# TODO properly test on command line and within script
-class UACaller:
+class UploadRunfolder:
     """
     Uploads a runfolder to DNAnexus.
 
@@ -48,7 +47,7 @@ class UACaller:
             agent command can take multiple files separated by a space, with the
             full path required for each file, and it has a max number of uploads
             of 1000 per command. This function generates per-folder upload commands,
-            with maximum 1000 files being uploaded per command
+            with maximum 100 files being uploaded per command
         get_nexus_project_subdirectory(folderpath)
             Get the corresponding DNAnexus subdirectory name for the folderpath.
             This is used in the upload agent's '--folder' argument
@@ -65,7 +64,7 @@ class UACaller:
 
     def __init__(self, rf_obj: object, nexus_identifiers=False):
         """
-        Constructor for the UACaller class
+        Constructor for the UploadRunfolder class
             :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific
                                         attributes)
             :param nexus_identifiers    Dictionary of proj_name and proj_id, or False
@@ -238,13 +237,13 @@ class UACaller:
         agent command can take multiple files separated by a space, with the
         full path required for each file, and it has a max number of uploads
         of 1000 per command. This function generates per-folder upload commands,
-        wiht maximum 1000 files being uploaded per command
+        providing 100 files maximum per upload command
             :return None:
         """
         for folderpath in self.file_dict:
             if self.file_dict[folderpath]['filepaths']:
                 nexus_project_subdirectory = self.get_nexus_project_subdirectory(folderpath)
-                # Used as indices to pass a slice of the file list (0-999) to the upload agent
+                # Used as indices to pass a slice of the file list (0-100) to the upload agent
                 start_index, stop_index = 0, 100
                 iterations_needed = self.get_required_iterations(folderpath)
                 iteration_count = 1
@@ -273,8 +272,8 @@ class UACaller:
                     )
                     self.file_dict[folderpath]['upload_cmds'] = {nexus_upload_cmd: files_list}
                     self.logger.info(self.logger.log_msgs["added_command"])
-                    # Increase iteration_count and start and stop by 1000 for the next iteration
-                    # so second iteration will do next batch of up to 1000 files
+                    # Increase iteration_count and start and stop by 100 for the next iteration
+                    # so second iteration will do next batch of up to 100 files
                     iteration_count += 1
                     start_index += 100
                     stop_index += 100
@@ -313,9 +312,10 @@ class UACaller:
         """
         Upload agent has a max number of uploads of 1000 per command. Uploading multiple
         files at a time is quicker, but uploading too many at a time has caused it to hang.
-        Count number of files in list and divide by 100.0 eg 20/100.0 = 0.02. ceil rounds
-        up to the nearest integer (0.02->1). If there are 100, ceil(100/100.0)=1.0 if
-        there are 750 ceil(750/100.0)=8.0
+        Therefore the maximum number per upload command created by these sripts is set at
+        100. Counts the number of files in list and divide by 100.0 eg 20/100.0 = 0.02.
+        ceil rounds up to the nearest integer (0.02->1). If there are 100,
+        ceil(100/100.0)=1.0 iteration if there are 750 ceil(750/100.0)=8.0 iterations
             :param folderpath (str):            Path of a local folder containing
                                                 files to be uploaded to DNAnexus
             :return iterations_needed (int):    The required number of upload commands to

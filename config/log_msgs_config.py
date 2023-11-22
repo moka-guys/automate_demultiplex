@@ -1,7 +1,15 @@
 #!/usr/bin/python3
 # coding=utf-8
 """
-Config file for logging module. Contains settings specific to logging
+Config file for logging module. Contains settings specific to logging. The LOG_MSGS
+dictionary contains both general messages which are used across multiple modules, and
+also logfile-specific messages:
+- Ad_email
+- Demultiplex
+- ss_validator
+- sw
+- backup
+- decision_support
 """
 from config import ad_config  # Import ad_config file
 
@@ -16,7 +24,7 @@ LOG_MSGS = {
         "cmd_success": "Command executed successfully with returncode %s",
         "cmd_fail": "Command returned non-zero exit code %s. Stdout: %s. Stderr: %s",
         "testing_software": "Testing %s software",
-        "test_fail": "%s test failed",
+        "test_fail": "%s test failed: Stdout: %s. Stderr: %s",
         "test_pass": "%s test passed",
         "software_fail": "Software tests did not all pass",
         "found_program": "Found program: %s",
@@ -48,7 +56,7 @@ LOG_MSGS = {
             "Demultiplexing started for run %s using bcl2fastq2 command: %s"
         ),
         "bcl2fastq_complete": "bcl2fastq2 subprocess complete for run %s",
-        "bcl2fastq_failed": "bcl2fastq2 subprocess failed for run %s",
+        "bcl2fastq_failed": "bcl2fastq2 subprocess failed for run %s. Stdout: %s. Stderr: %s",
         "demux_already_complete": (
             "Demultiplexing already completed: %s. bcl2fastq2 log found @ %s"
         ),
@@ -76,7 +84,7 @@ LOG_MSGS = {
         "checksums_notchecked": "Checksums not yet checked for this run",
         "ic_start": "Data integrity checks starting...",
         "ic_pass": "Integrity check for runfolder %s passed",
-        "create_bcl2fastqlog_pass": "Created bcl2fastq2 logfile for run %s",
+        "create_bcl2fastqlog_pass": "Created bcl2fastq2 logfile for run %s: %s",
         "create_bcl2fastqlog_fail": (
             "Failed to create bcl2fastq2 logfile for run %s. Exception: %s"
         ),
@@ -132,13 +140,13 @@ LOG_MSGS = {
         "valid_runtype": "Run type is valid: %s",
         "runtypes_err": "Runtype not in allowed list (%s, %s)",
     },
-    "usw": {
+    "sw": {
         "runfolder_identified": "Identified runfolder: %s",
         "runfolder_processed": "Runfolder has been processed: %s",
         "no_users": "No users in user list for permissions level %s",
         "dxtoolkittest_pass": "dx toolkit source command successful",
-        "dxtoolkittest_fail": "USW_FAIL - dx toolkit source command failed",
-        "TSO_backup_attempt": "Attempting to backup TSO runfolder. Attempt %s",
+        "dxtoolkittest_fail": "dx toolkit source command failed",
+        "tso_backup": "Backing up TSO runfolder",
         "runfolder_prev_proc": "Runfolder already processed: %s. Skipping.",
         "runfolder_requires_proc": "Runfolder requires processing: %s",
         "ua_file_present": "Upload started file present. Terminating.",
@@ -149,7 +157,7 @@ LOG_MSGS = {
         "bcl2fastqlog_empty": "Bcl2fastq log file exists but is empty",
         "nonexistent_files": "Not all files exist: %s",
         "creating_proj": "Executing project creation script: %s",
-        "proj_creation_fail": "USW_FAIL - failed to create project in DNAnexus for %s",
+        "proj_creation_fail": "Failed to create project in DNAnexus for %s. Stderr: %s",
         "uploading_files": "Uploading %s files",
         "upload_success": "%s files uploaded successfully",
         "upload_fail": "%s upload failed. See %s for detailed error log",
@@ -165,12 +173,16 @@ LOG_MSGS = {
             "Samples in project %s required upload to QCII"
         ),
         "unrecognised_panno": (
-            "USW_FAIL - Sample in samplesheet does not contain a recognised pan "
+            "Sample in samplesheet does not contain a recognised pan "
             "number: %s"
         ),
         "recognised_panno": (
             "Sample in samplesheet contains a recognised pan number: %s, %s"
-            ),
+        ),
+        "fastq_identified": (
+            "The following fastq has been identified in the runfolder %s "
+            "as matching the following strings: %s"
+        ),
         "cmds_built": "Finished building dx run commands",
         "building_cmd": "Building %s cmd for %s",
         "reference_sample": (
@@ -179,14 +191,14 @@ LOG_MSGS = {
         "writing_cmds": "Writing dx run commands",
         "running_cmds": "Running dx run commands",
         "dx_run_err": (
-            "USW_FAIL - Error when setting off dx run command for run %s. "
-            "Command: %s. Stderror = \n%s"
+            "Error when setting off dx run command for run %s. "
+            "Command: %s. Stdout: %s. Stderr: %s"
         ),
         "dx_run_success": "dx run commands issued successfully for run %s",
         "ss_copy_success": "Samplesheet copied to runfolder: %s",
         "ss_copy_fail": "Samplesheet not copied to runfolder",
         "uploading_rf": (
-            "Uploading rest of run folder to Nexus using backup_runfolder, "
+            "Uploading rest of run folder to Nexus using upload_runfolder, "
             "ignoring: %s. Stdout stored in logfile: %s"
         ),
         "upload_rf_error": (
@@ -195,17 +207,17 @@ LOG_MSGS = {
             ),
         "ss_missing": "Samplesheet is missing and is required for sample name parsing",
         "multiple_pipeline_names": (
-            "USW_FAIL - Multiple pipeline names detected from panel config "
+            "Multiple pipeline names detected from panel config "
             "for sample list: %s"
         ),
         "wes_batch_nos_identified": "WES batch numbers %s identified",
         "wes_batch_nos_missing": (
-            'USW_FAIL - WES batch numbers missing for run %s. Check for errors '
+            'WES batch numbers missing for run %s. Check for errors '
             'in the sample names'
         ),
         "library_nos_identified": "Library numbers %s identified",
         "library_no_err": (
-            "USW_FAIL '%s - Unable to identify library numbers. Check "
+            "%s - Unable to identify library numbers. Check "
             "for underscores in the sample names."
         ),
         "checking_fastq": "Checking fastq has been collected: %s",
@@ -221,13 +233,10 @@ LOG_MSGS = {
         "undetermined_identified": (
             "Undetermined file identified to exclude from processing: %s"
         ),
-        "miseq_fastq_identified": (
-            "Fastq created by MiSeq identified to exclude from processing: %s"
-        ),
     },
     "backup": {
         "checking_runfolder": "Checking the runfolder exists: %s",
-        "nonexistent_runfolder": "BR_FAIL - The runfolder does not exist: %s",
+        "nonexistent_runfolder": "The runfolder does not exist: %s",
         "finding_project": "Searching for DNAnexus project: %s",
         "project_name": "Project name is: %s",
         "finding_project_id": (
@@ -268,26 +277,21 @@ LOG_MSGS = {
         "incorrect_workflow": "Workflow type %s does not require congenica upload",
         "setting_job_id_cmds": "Setting job ID retrieval commands",
         "setting_job_id_cmds_err":  (
-            "DST_FAIL - Exception encountered when setting the job ID retrieval "
-            "commands: %s"
+            "Exception encountered when setting the job ID retrieval commands: %s"
             ),
         "get_job_id": "Getting job ID for file %s",
         "found_job_id": "Found job ID for file %s: %s",
         "get_job_id_err": "Error getting job ID for file %s: %s",
         "get_job_id_fail": (
-            "DST_FAIL - Exceeded max no. retries to retrieve job ID for file %s: %s"
+            "Exceeded max no. retries to retrieve job ID for file %s"
             ),
         "setting_app_input_str": (
-            "Setting the decision support tool upload app input string"),
+            "Setting the congenica upload app input string"),
         "app_input_str_err": (
-            "DST_FAIL - Exception encountered when setting the app input string: %s"
+            "Exception encountered when setting the app input string: %s"
             ),
         "printing_app_input_str": (
-            "Printing the decision support tool upload app input string"
+            "Printing the congenica upload app input string"
             ),
     },
-    "upload_agent": {},
-    "project": {},
-    "dx_run": {},
-    "post_run_cmds": {},
 }

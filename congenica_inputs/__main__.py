@@ -1,7 +1,7 @@
 """
-Main entry point for decision_support_tool_inputs module.
+Main entry point for congenica_inputs module.
 
-Prints inputs required by decision support tool upload applications on DNAnexus.
+Prints inputs required by congenica upload apps on DNAnexus.
 See README and docstrings for further details
 """
 import subprocess
@@ -11,7 +11,7 @@ import argparse
 from config import ad_config, panel_config
 from ad_logger import ad_logger
 from toolbox import toolbox
-from decision_support_tool_inputs.decision_support_tool_inputs import DecisionTooler
+from congenica_inputs.congenica_inputs import DecisionTooler
 
 
 def get_arguments():
@@ -23,7 +23,11 @@ def get_arguments():
     parser = argparse.ArgumentParser(
         description=(
             "Given an analysis-id, will obtain the job ids for bam and vcf "
-            "files for upload to the specified decision support tool"
+            "files for upload to congenica"
+        ),
+        usage=(
+            "Called from within the dx run commands to produce part of the "
+            "dx run string for the congenica uploads"
         )
     )
     parser.add_argument(
@@ -32,14 +36,6 @@ def get_arguments():
         required=True,
         type=str,
         help="workflow Analysis ID in format Analysis-abc123",
-    )
-    parser.add_argument(
-        "-t",
-        "--tool",
-        choices=["congenica"],
-        required=True,
-        type=str,
-        help="decision support tool (currently only supports congenica)",
     )
     parser.add_argument(
         "-p",

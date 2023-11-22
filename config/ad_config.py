@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 # coding=utf-8
 """
-Automate demultiplex configuration
+Automate demultiplex configuration. Contains the following settings:
+- General settings used across modules
+- Demultiplexing script-specific settings
+- Setoff workflows script-specific settings
 """
 import os
 import datetime
@@ -19,7 +22,7 @@ PROJECT_DIR = str(Path(__file__).absolute().parent.parent)
 # development_area scripts (2 levels up from this file)
 DOCUMENT_ROOT = "/".join(PROJECT_DIR.split("/")[:-2])
 
-branch = Repository('.').head.shorthand
+BRANCH = Repository('.').head.shorthand
 
 MAIL_SETTINGS = {
     "host": "email-smtp.eu-west-1.amazonaws.com",
@@ -28,7 +31,7 @@ MAIL_SETTINGS = {
     "alerts_email": "moka.alerts@gstt.nhs.uk",
 }
 
-if branch == "master":  # Prod branch
+if BRANCH == "master":  # Prod branch
     TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD MODE"
     JOB_NAME_STR = "--name "
@@ -92,7 +95,7 @@ FASTQ_DIRS = {
 CHECKSUM_COMPLETE_MSG = "Checksum result reported"  # Checksum complete statement
 CHECKSUM_MATCH_MSG = "Checksums match"  # Statement to write when checksums match
 
-# tso500 runfolder is used for testing both demultiplexing and usw script
+# tso500 runfolder is used for testing both demultiplexing and sw script
 DEMULTIPLEX_TEST_RUNFOLDERS = [
     "999999_NB552085_0496_DEMUXINTEG",
     "999999_M02353_0496_000000000-DEMUX",
@@ -104,6 +107,12 @@ BCL2FASTQ2_CMD = (
     "sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s "
     "seglh/bcl2fastq2:v2.20.0.422_60dbb5a -R /mnt/run --sample-sheet /mnt/run/%s "
     "--no-lane-splitting >> %s 2>&1"
+)
+CD_CMD = (
+    "sudo docker run --rm -v %s:/input_run "
+    "broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics "
+    f"--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX "
+    f"%s"
 )
 
 UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
@@ -139,8 +148,8 @@ TEST_IMAGES_DICT = {
     "bcl2fastq2": f'sudo docker run --rm seglh/bcl2fastq2:v2.20.0.422_25dd0c0 --version'
     }
 
-# ================ UPLOAD AND SETOFF WORKFLOWS ================================
-# Settings unique to the upload and setoff workflows script
+# ================ SETOFF WORKFLOWS ================================
+# Settings unique to the setoff workflows script
 
 REF_SAMPLE_IDS = [
     "NA12878",

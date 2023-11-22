@@ -4,7 +4,7 @@ Script for checking sample sheet naming and contents.
 
 Uses the seglh-naming library. And adds further lab-specific checks e.g. whether
 sequencer IDs and runtypes match those in lists of allowed IDs. Collects all errors in
-an errors list (ValidSamplesheet.errors)
+an errors list (SamplesheetCheck.errors_list)
 """
 import os
 import re
@@ -14,7 +14,6 @@ from seglh_naming.sample import Sample
 from seglh_naming.samplesheet import Samplesheet
 from config import ad_config, panel_config
 from toolbox import toolbox
-from ad_logger import ad_logger
 
 
 class SamplesheetCheck(object):
@@ -40,9 +39,9 @@ class SamplesheetCheck(object):
         missing_headers (list):         Populated with missing data headers
         expected_data_headers (list):   Headers expected to be present in samplesheet
         sequencerid_list (list):        List of valid sequencer IDs
-        panel_list (list):
-        runtype_list (list):
-        tso_panel_list (list):
+        panel_list (list):              List of all valid pan numbers from config
+        runtype_list (list):            List of all valid runtypes from config
+        tso_panel_list (list):          List of all valid TSO pannumbers from config
 
     Methods:
         ss_checks()
@@ -77,7 +76,7 @@ class SamplesheetCheck(object):
             Returns True if TSO sample
     """
 
-    def __init__(self, samplesheet_path: str, runfolder_name: str):
+    def __init__(self, samplesheet_path: str, runfolder_name: str, logger: object):
         """
         Constructor for the SamplesheetCheck class
             :param samplesheet_path (str):  Path to samplesheet
@@ -85,7 +84,7 @@ class SamplesheetCheck(object):
         """
         self.samplesheet_path = samplesheet_path
         self.runfolder_name = runfolder_name
-        self.logger = self.return_logger()
+        self.logger = logger
         self.ss_obj = False
         self.pannumbers = []
         self.tso = False
@@ -100,18 +99,6 @@ class SamplesheetCheck(object):
         self.panel_list = panel_config.PANELS
         self.runtype_list = ad_config.RUNTYPE_LIST
         self.tso_panel_list = panel_config.TSO500_PANELS
-
-    def return_logger(self):
-        """
-        Add only the required logger
-        """
-        rf_obj = toolbox.RunfolderObject(
-            self.runfolder_name, ad_config.TIMESTAMP
-        )
-        rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger
-        logger = rf_obj.rf_loggers.ss_validator
-        ad_logger.shutdown_streamhandler(logger)  # Prevents log
-        return logger
 
     def ss_checks(self) -> None:
         """

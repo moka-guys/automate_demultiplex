@@ -1,7 +1,8 @@
 # Samplesheet Validator
-Checks sample sheet naming and contents. Carries out a series of checks on the sample sheet and collecting any errors 
-that it identifies (ValidSamplesheet.errors). It also identifies whether or not a run is a TSO run from the sample 
-sheet (ValidSamplesheet.tso).
+
+Checks sample sheet naming and contents. Carries out a series of checks on the sample sheet and collects any errors 
+that it identifies (SamplesheetCheck.errors_list). It also identifies whether or not a run is a TSO run from the sample 
+sheet (SamplesheetCheck.tso).
 
 Script is called by [demultiplex.py](../demultiplex.py)
 
@@ -18,21 +19,47 @@ Runs a series of checks on the sample sheet, collects any errors identified. Che
 * Sample name is valid (validates using the [seglh-naming](https://github.com/moka-guys/seglh-naming/) library)
 * Pan numbers are in the list of allowed pan numbers in the config file (`panel_list`)
 * Runtypes in the sample name are in the list of allowed runtypes in config file (`runtype_list`)
-
-Therefore, samplesheets should conform with the following requirements:
+* Samplesheet contains any TSO samples
 
 ## Configuration
 
-Settings are imported from [ad_config.py](../config/ad_config.py)
+Settings are imported from [ad_config.py](../config/ad_config.py) and [panel_config](../config/panel_config.py).
+
+## Usage
+
+### Command line
+
+```bash
+usage: Used to validate a samplesheet using the seglh-naming conventions
+
+Given an input samplesheet, will validate the samplesheet using seglh-naming conventions and output a logfile
+
+options:
+  -h, --help            show this help message and exit
+  -s SAMPLESHEET_PATH, --samplesheet_path SAMPLESHEET_PATH
+                        Path to samplesheet requiring validation
+  -r RUNFOLDER_NAME, --runfolder_name RUNFOLDER_NAME
+                        Name of runfolder, required for naming logfile
+```
+### Module import
+
+```python
+from samplesheet_validator import samplesheet_validator
+
+sscheck_obj = samplesheet_validator.SamplesheetCheck(
+    samplesheet_path, runfolder_name, ss_validator_logger
+)
+```
 
 ## Logging
 
-The script itself does not perform logging, however it collects error messages as it runs. When it is imported by the 
-demultiplex.py and run, these error messages are output to a log file if there are any present.
+Logging is performed using [ad_logger](../ad_logger/ad_logger.py). The following logs are written to:
 
-## Alerts
+| Alias | Description | Filename | Location |
+| ------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| ss_validator | Records runfolder-level logs for the samplesheet_validator script | `RUNFOLDERNAME_samplesheet_validator_script_log.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/samplesheet_validator_script_logfiles/` |
 
-N/A - see above
+The script also collects the error messages as it runs, which can be used by other modules when this script is used as an import.
 
 ## Testing
 

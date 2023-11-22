@@ -1,6 +1,6 @@
 # Decision Support Tool Inputs
 
-[decision_support_tool_inputs.py](../decision_support_tool_inputs.py) prints the required inputs for the congenica upload app for a sample workflow in a string format.
+[congenica_inputs.py](../congenica_inputs.py) prints the required inputs for the congenica upload app for a sample workflow in a string format.
 
 Inputs are specified in the format executionid.output_name. The execution IDs for the relevant workflow stages are retrieved using dx describe with the workflow analysis ID and stage ID. 
 
@@ -8,6 +8,11 @@ The script is currently configured to return the IDs for the BAM and VCF files f
 
 ## Protocol
 
+1. Creates a file dictionary of congenica upload inputs if the workflow is a workflow that required congenica upload
+2. Sets the commands for retrieving the job ID for the VCF and BAM workflow stages
+3. Gets the job IDs for the VCF and BAM workflow stages using the created commands 
+4. Creates the input string for the congenica app using the obtained job IDs and DNAnexus job output names
+5. Prints the input string
 
 ## Configuration
 
@@ -15,37 +20,34 @@ Settings are imported from [ad_config.py](../config/ad_config.py) and [panel_con
 
 ## Usage
 
+This tool requires the `ua` (upload agent) and `dx` (DNAnexus toolkit) utility to be available in the system PATH. Python3 is required, and this tool uses packages from the standard library.
+
+The script can be either imported as a module, or run directly from the command line.
+
 ### Command line
 
 ```bash
-usage: decision_support_tool_inputs.py [-h] -a ANALYSIS_ID -t {congenica} -p PROJECT
+usage: Called from within the dx run commands to produce part of the dx run string for the congenica uploads
 
-given an analysis-id will obtain the job ids for bam and vcf files for upload to the specified decision support tool
+Given an analysis-id, will obtain the job ids for bam and vcf files for upload to congenica
 
 options:
   -h, --help            show this help message and exit
   -a ANALYSIS_ID, --analysis_id ANALYSIS_ID
                         workflow Analysis ID in format Analysis-abc123
-  -t {congenica}, --tool {congenica}
-                        decision support tool (currently only supports congenica)
   -p PROJECT, --project PROJECT
-                        The DNAnexus project id in which the analysis is running
+                        The DNAnexus project name in which the analysis is running
+  -r RUNFOLDER_NAME, --runfolder_name RUNFOLDER_NAME
+                        Workstation runfolder name
 ```
 
-
-
 ## Logging
+
+Logging is performed using [ad_logger](../ad_logger/ad_logger.py). The following logs are written to:
 
 | Alias | Description | Filename | Location |
 | ------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | decision_support | Records the logs from the script to a logfile specific to that DNAnexus project | `decision_support_script_log_RUNFOLDERNAME.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/decision_support_script_logfiles/` |
-
-
-## Alerts
-
-Logs from this script containing the follow strings will trigger alerts to the `moka-alerts` binfx slack channel:
-
-* DST_FAIL
 
 ## Testing
 
