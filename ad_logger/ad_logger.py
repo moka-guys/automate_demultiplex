@@ -3,7 +3,6 @@
 """
 Automate demultiplex logging. Classes required for logging
 """
-import os
 import sys
 import re
 import logging
@@ -33,6 +32,7 @@ def shutdown_logs(logger: object) -> None:
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
         handler.close()
+
 
 class SensitiveFormatter(logging.Formatter):
     """
@@ -158,11 +158,10 @@ class AdLogger(object):
         logger.addHandler(self._get_syslog_handler())
         logger.timestamp = ad_config.TIMESTAMP  # Timestamp in the format %Y%m%d_%H%M%S
         logger.log_msgs = (
-            log_msgs_config.LOG_MSGS["general"]
-            | log_msgs_config.LOG_MSGS["ad_email"]
+            log_msgs_config.LOG_MSGS["general"] | log_msgs_config.LOG_MSGS["ad_email"]
         )
         if self.logger_type in log_msgs_config.LOG_MSGS.keys():
-            logger.log_msgs.update(log_msgs_config.LOG_MSGS[self.logger_type])            
+            logger.log_msgs.update(log_msgs_config.LOG_MSGS[self.logger_type])
         return logger
 
     def _get_file_handler(self) -> logging.FileHandler:

@@ -11,30 +11,30 @@ import ad_logger.ad_logger as ad_logger
 DECISION_SUPPORT_INPUTS = {
     "pipe": {
         "vcf": {
-            "stage": ad_config.NEXUS_IDS['STAGES']['pipe']['filter_vcf'],
+            "stage": ad_config.NEXUS_IDS["STAGES"]["pipe"]["filter_vcf"],
             "name": "filtered_vcf",
         },
         "bam": {
-            "stage": ad_config.NEXUS_IDS['STAGES']['pipe']['gatk'],
+            "stage": ad_config.NEXUS_IDS["STAGES"]["pipe"]["gatk"],
             "name": "bam",
         },
         "bai": {
-            "stage": ad_config.NEXUS_IDS['STAGES']['pipe']['gatk'],
+            "stage": ad_config.NEXUS_IDS["STAGES"]["pipe"]["gatk"],
             "name": "bai",
         },
     },
     # Same stage is used to produce both the BAM and VCF
     "wes": {
         "vcf": {
-            "stage": ad_config.NEXUS_IDS['STAGES']['wes']['sentieon'],
+            "stage": ad_config.NEXUS_IDS["STAGES"]["wes"]["sentieon"],
             "name": "variants_vcf",
         },
         "bam": {
-            "stage": ad_config.NEXUS_IDS['STAGES']['wes']['sentieon'],
+            "stage": ad_config.NEXUS_IDS["STAGES"]["wes"]["sentieon"],
             "name": "mappings_bam",
         },
         "bai": {
-            "stage": ad_config.NEXUS_IDS['STAGES']['wes']['sentieon'],
+            "stage": ad_config.NEXUS_IDS["STAGES"]["wes"]["sentieon"],
             "name": "mappings_bam_bai",
         },
     },
@@ -79,6 +79,7 @@ class DecisionTooler(object):
             Print inputs to congenica upload app (bam and vcf congenica app inputs
             in string format)
     """
+
     def __init__(
         self, analysis_id: str, project: str, runfolder_name: str, workflow: str
     ):
@@ -105,10 +106,8 @@ class DecisionTooler(object):
         Add only the required logger
             :return logger (object):    Runfolder-level logger
         """
-        rf_obj = toolbox.RunfolderObject(
-            self.runfolder_name, ad_config.TIMESTAMP
-        )
-        rf_obj.add_runfolder_logger('decision_support')  # Add decision_support logger
+        rf_obj = toolbox.RunfolderObject(self.runfolder_name, ad_config.TIMESTAMP)
+        rf_obj.add_runfolder_logger("decision_support")  # Add decision_support logger
         logger = rf_obj.rf_loggers.decision_support
         ad_logger.shutdown_streamhandler(logger)  # Prevents log
         return logger
@@ -131,10 +130,8 @@ class DecisionTooler(object):
             :return (dict): Dictionary of congenica upload app inputs
         """
         if self.workflow in ["wes", "pipe"]:
-            self.logger.info(
-                self.logger.log_msgs["workflow_type"], self.workflow
-            )
-            setattr(self, 'file_dict', DECISION_SUPPORT_INPUTS[self.workflow])
+            self.logger.info(self.logger.log_msgs["workflow_type"], self.workflow)
+            setattr(self, "file_dict", DECISION_SUPPORT_INPUTS[self.workflow])
         else:
             self.logger.error(self.logger.log_msgs["incorrect_workflow"], self.workflow)
             raise Exception
@@ -147,14 +144,16 @@ class DecisionTooler(object):
         self.logger.info(self.logger.log_msgs["setting_job_id_cmds"])
         try:
             for file_name in self.file_dict.keys():
-                find_execution_id_cmd = ad_config.DX_CMDS['find_execution_id'] % (
+                find_execution_id_cmd = ad_config.DX_CMDS["find_execution_id"] % (
                     f"{self.project}:{self.analysis_id}",
-                    self.dnanexus_apikey, self.file_dict[file_name]['stage']
-                    )
+                    self.dnanexus_apikey,
+                    self.file_dict[file_name]["stage"],
+                )
                 setattr(self, f"{file_name}jobid_cmd", find_execution_id_cmd)
         except Exception as exception:
             self.logger.exception(
-                self.logger.log_msgs["setting_job_id_cmds_err"], exception,
+                self.logger.log_msgs["setting_job_id_cmds_err"],
+                exception,
             )
             raise Exception  # Stop script
 
@@ -170,25 +169,22 @@ class DecisionTooler(object):
             jobid_cmd = getattr(self, f"{outfile}jobid_cmd")
             # Can take a while for job to set off
             while tries < 1000 and returncode != 0:
-                (
-                    jobid, err, returncode
-                ) = toolbox.execute_subprocess_command(
-                    jobid_cmd, self.logger,
+                (jobid, err, returncode) = toolbox.execute_subprocess_command(
+                    jobid_cmd,
+                    self.logger,
                 )
                 if returncode == 0:
                     self.logger.info(
                         self.logger.log_msgs["found_job_id"], outfile, jobid
                     )
                     setattr(self, f"{outfile}jobid", jobid)
-                else: 
+                else:
                     tries += 1
                     self.logger.warning(
                         self.logger.log_msgs["get_job_id_err"], outfile, err
                     )
             if tries > 1000:
-                self.logger.exception(
-                        self.logger.log_msgs["get_job_id_fail"], outfile
-                    )
+                self.logger.exception(self.logger.log_msgs["get_job_id_fail"], outfile)
                 raise Exception
 
     def set_app_input_string(self) -> None:
@@ -204,7 +200,7 @@ class DecisionTooler(object):
                 f"{ad_config.APP_INPUTS['congenica_upload']['bam']}"
                 f"{self.bamjobid}:{self.file_dict['bam']['name']}"
             )
-            setattr(self, 'congenica_app_inputs', congenica_app_inputs)
+            setattr(self, "congenica_app_inputs", congenica_app_inputs)
         except Exception as exception:
             self.logger.exception(self.logger.log_msgs["app_input_str_err"], exception)
             raise Exception  # Stop script
@@ -213,7 +209,7 @@ class DecisionTooler(object):
         """
         Print inputs to congenica upload app (bam and vcf congenica
         app inputs in string format)
-            :return None:  
+            :return None:
         """
         self.logger.info(self.logger.log_msgs["printing_app_input_str"])
         print(self.congenica_app_inputs)

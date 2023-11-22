@@ -13,7 +13,6 @@ from typing import Union
 from seglh_naming.sample import Sample
 from seglh_naming.samplesheet import Samplesheet
 from config import ad_config, panel_config
-from toolbox import toolbox
 
 
 class SamplesheetCheck(object):
@@ -31,8 +30,7 @@ class SamplesheetCheck(object):
         tso (bool):                     True if samplesheet contains any TSO samples
         samples (dict):                 Dictionary of sample IDs and sample names from
                                         the samplesheet
-        errors (bool):                  True if samplesheet errors encountered, False if
-                                        not
+        errors (bool):                  True if samplesheet errors encountered, False if not
         errors_list (bool):             Stores identifiers for any types of errors
                                         encountered
         data_headers (list):            Populated with headers from data section
@@ -173,7 +171,8 @@ class SamplesheetCheck(object):
             self.errors_list.append("sequencerid_err")
             self.logger.warning(
                 self.logger.log_msgs["sequencer_id_invalid"],
-                self.ss_obj, self.ss_obj.sequencerid,
+                self.ss_obj,
+                self.ss_obj.sequencerid,
             )
         else:
             self.logger.info(self.logger.log_msgs["sequencer_id_valid"])
@@ -304,7 +303,9 @@ class SamplesheetCheck(object):
             self.errors = True
             self.errors_list.append("samplename_err")
             self.logger.warning(
-                self.logger.log_msgs["sample_name_invalid"], column, exception,
+                self.logger.log_msgs["sample_name_invalid"],
+                column,
+                exception,
             )
 
     def check_pannos(self, sample: str, column: str, sample_obj: object) -> None:
@@ -361,11 +362,9 @@ class SamplesheetCheck(object):
         """
         if self.errors:
             self.logger.warning(
-                self.logger.log_msgs["sschecks_not_passed"],
-                self.samplesheet_path
+                self.logger.log_msgs["sschecks_not_passed"], self.samplesheet_path
             )
         else:
             self.logger.info(
-                self.logger.log_msgs["sschecks_passed"],
-                self.samplesheet_path
+                self.logger.log_msgs["sschecks_passed"], self.samplesheet_path
             )

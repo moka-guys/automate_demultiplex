@@ -44,7 +44,9 @@ class GetRunfolders(object):
         """
         self.runfolder_names = []
         self.script_logger = ad_logger.AdLogger(
-            'demultiplex', 'demultiplex', toolbox.return_scriptlog_config()['demultiplex']
+            "demultiplex",
+            "demultiplex",
+            toolbox.return_scriptlog_config()["demultiplex"],
         ).get_logger()
         self.timestamp = self.script_logger.timestamp
         self.processed_runfolders = []
@@ -62,10 +64,9 @@ class GetRunfolders(object):
             folders = os.listdir(ad_config.RUNFOLDERS)
 
         for folder_name in folders:
-            if (
-                toolbox.get_runfolder_path(folder_name)
-                and re.compile(ad_config.RUNFOLDER_PATTERN).match(folder_name)
-            ):
+            if toolbox.get_runfolder_path(folder_name) and re.compile(
+                ad_config.RUNFOLDER_PATTERN
+            ).match(folder_name):
                 runfolder_names.append(folder_name)
         return runfolder_names
 
@@ -93,7 +94,8 @@ class GetRunfolders(object):
             # If runfolder has been processed during this script run
             if demultiplex_obj.run_processed:
                 self.script_logger.info(
-                    self.script_logger.log_msgs["runfolder_processed"], folder_name,
+                    self.script_logger.log_msgs["runfolder_processed"],
+                    folder_name,
                 )
                 # Add runfolder to processed runfolder list
                 self.processed_runfolders.append(folder_name)
@@ -128,7 +130,7 @@ class GetRunfolders(object):
         num_processed_runfolders = toolbox.get_num_processed_runfolders(
             self.script_logger, self.processed_runfolders
         )
-        setattr(self, 'num_processed_runfolders', num_processed_runfolders)
+        setattr(self, "num_processed_runfolders", num_processed_runfolders)
 
 
 class DemultiplexRunfolder(object):
@@ -191,6 +193,7 @@ class DemultiplexRunfolder(object):
         check_bcl2fastqlogfile()
             Read last 10 lines of demultiplex logfile and search for success statement
     """
+
     def __init__(self, folder_name: str, timestamp: str):
         """
         Constructor for the DemultiplexRunfolder class
@@ -212,15 +215,16 @@ class DemultiplexRunfolder(object):
         # N.B. --no-lane-splitting creates a single fastq for a sample,
         # not into one fastq per lane)
         self.bcl2fastq2_cmd = ad_config.BCL2FASTQ2_CMD % (
-            self.rf_obj.runfolderpath, self.rf_obj.samplesheet_path,
+            self.rf_obj.runfolderpath,
+            self.rf_obj.samplesheet_path,
             self.rf_obj.samplesheet_name,
             self.rf_obj.samplesheet_name,
-            self.rf_obj.bcl2fastqlog_path        
-            )
+            self.rf_obj.bcl2fastqlog_path,
+        )
         # Shell command to run cluster density calculation
         self.cluster_density_cmd = ad_config.CD_CMD % (
             self.rf_obj.runfolderpath,
-            self.rf_obj.runfolder_name
+            self.rf_obj.runfolder_name,
         )
         self.tso = False
         self.run_processed = False
@@ -242,9 +246,7 @@ class DemultiplexRunfolder(object):
             if self.create_bcl2fastqlog() and self.calculate_cluster_density():
                 # TSO500 runs do not require demultiplexing
                 if self.tso:
-                    self.demux_rf_logger.info(
-                        self.demux_rf_logger.log_msgs["tso_run"]
-                    )
+                    self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["tso_run"])
                     self.run_processed = True
                 elif self.run_demultiplexing():  # All other runs require demultiplexing
                     self.run_processed = True
@@ -292,7 +294,7 @@ class DemultiplexRunfolder(object):
         sscheck_obj = samplesheet_validator.SamplesheetCheck(
             self.rf_obj.samplesheet_path,
             self.rf_obj.runfolder_name,
-            self.ss_validator_logger
+            self.ss_validator_logger,
         )
         if not self.development_run(sscheck_obj):
             sscheck_obj.ss_checks()
@@ -322,7 +324,9 @@ class DemultiplexRunfolder(object):
             :param sscheck_obj (object):    Object created by
                                             samplesheet_validator.SampleheetCheck
         """
-        if any(panno in ad_config.DEVELOPMENT_PANELS for panno in sscheck_obj.pannumbers):
+        if any(
+            panno in ad_config.DEVELOPMENT_PANELS for panno in sscheck_obj.pannumbers
+        ):
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["not_dev_run"],
                 self.rf_obj.samplesheet_path,
@@ -460,13 +464,11 @@ class DemultiplexRunfolder(object):
             :return True|None:  True if logfile is successfully created
         """
         try:
-            open(
-                self.rf_obj.bcl2fastqlog_path, "w", encoding="utf-8"
-            ).close()
+            open(self.rf_obj.bcl2fastqlog_path, "w", encoding="utf-8").close()
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["create_bcl2fastqlog_pass"],
                 self.rf_obj.runfolder_name,
-                self.rf_obj.bcl2fastqlog_path
+                self.rf_obj.bcl2fastqlog_path,
             )
             if self.tso:
                 self.add_bcl2fastqlog_tso_msg()
@@ -488,14 +490,10 @@ class DemultiplexRunfolder(object):
             self.demux_rf_logger.log_msgs["TSO500_run"],
             self.rf_obj.runfolder_name,
         )
-        with open(
-            self.rf_obj.bcl2fastqlog_path, "w+", encoding="utf-8"
-        ) as log:
+        with open(self.rf_obj.bcl2fastqlog_path, "w+", encoding="utf-8") as log:
             log.write(f"\n{ad_config.STRINGS['demultiplexlog_tso500_msg']}")
             self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs[
-                    "write_TSO_msg_to_bcl2fastqlog"
-                ],
+                self.demux_rf_logger.log_msgs["write_TSO_msg_to_bcl2fastqlog"],
                 self.rf_obj.runfolder_name,
             )
             return True
@@ -513,8 +511,9 @@ class DemultiplexRunfolder(object):
         )
         # Runs bcl2fastq2 and checks if completed successfully
         out, err, returncode = toolbox.execute_subprocess_command(
-            self.bcl2fastq2_cmd, self.demux_rf_logger,
-            )
+            self.bcl2fastq2_cmd,
+            self.demux_rf_logger,
+        )
         if returncode == 0:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
@@ -526,7 +525,8 @@ class DemultiplexRunfolder(object):
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["bcl2fastq_failed"],
                 self.rf_obj.runfolder_name,
-                out, err
+                out,
+                err,
             )
             sys.exit(1)
 
@@ -540,16 +540,11 @@ class DemultiplexRunfolder(object):
             :return True|None:  True if success statement in bcl2fastq2 logfile
         """
         if os.path.isfile(self.rf_obj.bcl2fastqlog_path):
-            with open(
-                self.rf_obj.bcl2fastqlog_path, "r", encoding="utf-8"
-            ) as logfile:
+            with open(self.rf_obj.bcl2fastqlog_path, "r", encoding="utf-8") as logfile:
                 bcl2fastq2_log_tail = "".join(logfile.readlines()[-10:])
 
             if bcl2fastq2_log_tail:
-                if (
-                    ad_config.STRINGS['demultiplex_success'] in
-                    str(bcl2fastq2_log_tail)
-                ):
+                if ad_config.STRINGS["demultiplex_success"] in str(bcl2fastq2_log_tail):
                     self.demux_rf_logger.info(
                         self.demux_rf_logger.log_msgs["demux_complete"],
                         self.rf_obj.runfolder_name,
@@ -598,7 +593,7 @@ class DemultiplexRunfolder(object):
         )
         out, err, returncode = toolbox.execute_subprocess_command(
             self.cluster_density_cmd, self.demux_rf_logger
-            )
+        )
 
         if returncode == 0:
             # Assess stderr , looking for expected success statement
