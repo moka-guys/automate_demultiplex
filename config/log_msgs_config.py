@@ -43,15 +43,13 @@ LOG_MSGS = {
         "html_error": (
             "There was a problem generating the html file, with "
             "the following exception: %s"
-            ),
+        ),
     },
     "demultiplex": {
         "runfolder_processed": "Runfolder has been processed: %s",
         "demultiplexing_required": "Demultiplexing is required for this runfolder",
         "tso_run": "TSO500 run detected.",
-        "ic_fail": (
-            "Integrity check fail. Checksums do not match for " "%s see %s"
-        ),
+        "ic_fail": ("Integrity check fail. Checksums do not match for " "%s see %s"),
         "bcl2fastq_start": (
             "Demultiplexing started for run %s using bcl2fastq2 command: %s"
         ),
@@ -128,10 +126,10 @@ LOG_MSGS = {
         "samplenames_match": "All sample names and sample IDS match",
         "nonmatching_samplenames": (
             "The following Sample IDs do not match the corresponding Sample Name: (%s)"
-            ),
+        ),
         "no_illegal_chars": (
             "Sample name %s contains no illegal characters in column %s"
-            ),
+        ),
         "illegal_chars": "Sample name contains invalid characters (%s: %s)",
         "sample_name_valid": "Sample name valid: %s (%s)",
         "sample_name_invalid": "Sample name invalid (%s). Exception: %s",
@@ -169,12 +167,9 @@ LOG_MSGS = {
         "congenica_upload_required": (
             "Samples in project %s require upload to congenica"
         ),
-        "qiagen_upload_required": (
-            "Samples in project %s required upload to QCII"
-        ),
+        "qiagen_upload_required": ("Samples in project %s required upload to QCII"),
         "unrecognised_panno": (
-            "Sample in samplesheet does not contain a recognised pan "
-            "number: %s"
+            "Sample in samplesheet does not contain a recognised pan " "number: %s"
         ),
         "recognised_panno": (
             "Sample in samplesheet contains a recognised pan number: %s, %s"
@@ -204,16 +199,15 @@ LOG_MSGS = {
         "upload_rf_error": (
             "An error occurred when uploading the rest of the runfolder: %s. "
             "See %s and %s for further details."
-            ),
+        ),
         "ss_missing": "Samplesheet is missing and is required for sample name parsing",
         "multiple_pipeline_names": (
-            "Multiple pipeline names detected from panel config "
-            "for sample list: %s"
+            "Multiple pipeline names detected from panel config " "for sample list: %s"
         ),
         "wes_batch_nos_identified": "WES batch numbers %s identified",
         "wes_batch_nos_missing": (
-            'WES batch numbers missing for run %s. Check for errors '
-            'in the sample names'
+            "WES batch numbers missing for run %s. Check for errors "
+            "in the sample names"
         ),
         "library_nos_identified": "Library numbers %s identified",
         "library_no_err": (
@@ -246,7 +240,9 @@ LOG_MSGS = {
         "building_command": "Building upload command",
         "added_command": "Added command to upload commands dictionary",
         "building_file_dict": "Adding the files contained within each folder to the file dictionary",
-        "getting_folder_paths": "Walking through the runfolder and creating a list of all folder paths within the runfolder",
+        "getting_folder_paths": (
+            "Walking through the runfolder and creating a list of all folder paths within the runfolder"
+        ),
         "getting_file_paths": "Walking through the folder paths and getting a list of files",
         "files_for_upload": "Files for upload: %s",
         "uploading_files": "Uploading files in folder: %s",
@@ -261,37 +257,32 @@ LOG_MSGS = {
         "counting_files": (
             "Counting the number of files that need to be uploaded, have been uploaded "
             "and check if any that should have been ignored are in DNAnexus"
-            ),
+        ),
         "files_uploaded": (
             "%s files should have been uploaded (excluding any with ignore terms in "
             "filename or path). %s files present in DNAnexus project."
-            ),
+        ),
         "check_ignore": (
             "%s files present in DNAnexus project containing one of the ignore terms. "
             "NB this may not be accurate if the ignore term is found in the result of "
             "dx find data (eg present in project name)"
-            ),
+        ),
     },
     "decision_support": {
         "workflow_type": "Workflow is a %s workflow",
         "incorrect_workflow": "Workflow type %s does not require congenica upload",
         "setting_job_id_cmds": "Setting job ID retrieval commands",
-        "setting_job_id_cmds_err":  (
+        "setting_job_id_cmds_err": (
             "Exception encountered when setting the job ID retrieval commands: %s"
-            ),
+        ),
         "get_job_id": "Getting job ID for file %s",
         "found_job_id": "Found job ID for file %s: %s",
         "get_job_id_err": "Error getting job ID for file %s: %s",
-        "get_job_id_fail": (
-            "Exceeded max no. retries to retrieve job ID for file %s"
-            ),
-        "setting_app_input_str": (
-            "Setting the congenica upload app input string"),
+        "get_job_id_fail": ("Exceeded max no. retries to retrieve job ID for file %s"),
+        "setting_app_input_str": ("Setting the congenica upload app input string"),
         "app_input_str_err": (
             "Exception encountered when setting the app input string: %s"
-            ),
-        "printing_app_input_str": (
-            "Printing the congenica upload app input string"
-            ),
+        ),
+        "printing_app_input_str": ("Printing the congenica upload app input string"),
     },
 }

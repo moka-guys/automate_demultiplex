@@ -28,7 +28,7 @@ def get_arguments():
         usage=(
             "Called from within the dx run commands to produce part of the "
             "dx run string for the congenica uploads"
-        )
+        ),
     )
     parser.add_argument(
         "-a",
@@ -78,8 +78,10 @@ pannumber = re.search(r"Pan\d+", analysis_info["name"]).group()
 # Create tooler object, using the analysis ID and the workflow name from the ad_config
 # panel dictionary
 tooler = DecisionTooler(
-    parsed_args.analysis_id, parsed_args.project, parsed_args.runfolder_name,
-    panel_config.PANEL_DICT[pannumber]["pipeline"]
+    parsed_args.analysis_id,
+    parsed_args.project,
+    parsed_args.runfolder_name,
+    panel_config.PANEL_DICT[pannumber]["pipeline"],
 )
 
 toolbox.script_start_logmsg(tooler.logger, __file__)

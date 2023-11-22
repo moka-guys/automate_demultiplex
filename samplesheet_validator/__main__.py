@@ -21,9 +21,7 @@ def get_arguments():
             "Given an input samplesheet, will validate the samplesheet using "
             "seglh-naming conventions and output a logfile"
         ),
-        usage=(
-            "Used to validate a samplesheet using the seglh-naming conventions"
-        )
+        usage=("Used to validate a samplesheet using the seglh-naming conventions"),
     )
     parser.add_argument(
         "-s",
@@ -37,18 +35,15 @@ def get_arguments():
         "--runfolder_name",
         type=str,
         required=True,
-        help="Name of runfolder, required for naming logfile"
-
+        help="Name of runfolder, required for naming logfile",
     )
     return parser.parse_args()
 
 
 parsed_args = get_arguments()
 
-rf_obj = toolbox.RunfolderObject(
-    parsed_args.runfolder_name, ad_config.TIMESTAMP
-    )
-rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger
+rf_obj = toolbox.RunfolderObject(parsed_args.runfolder_name, ad_config.TIMESTAMP)
+rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
 logger = rf_obj.rf_loggers.ss_validator
 
 sscheck_obj = samplesheet_validator.SamplesheetCheck(

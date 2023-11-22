@@ -8,6 +8,7 @@ from test import conftest
 from toolbox import toolbox
 from ad_logger import ad_logger
 from config import ad_config
+
 # import logging
 
 # No logging disabled for this test as we are testing logging
@@ -64,7 +65,7 @@ class TestRunfolderLoggers:
         """
         return toolbox.RunfolderObject(
             "999999_A01229_0000_00000TEST1", ad_config.TIMESTAMP
-            ).logfiles_config
+        ).logfiles_config
 
     @pytest.fixture(scope="function")
     def runfolder_logger_names(self):
@@ -88,9 +89,8 @@ class TestRunfolderLoggers:
             logger.info(f"Test log message. Logger {logger.name}")
             assert logger.name in caplog.text
 
-
-# TODO write tests for AdLogger class
-# class TestAdLogger:
+    # TODO write tests for AdLogger class
+    # class TestAdLogger:
     """
     Tests for the AdLogger class
     """
