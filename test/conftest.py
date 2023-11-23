@@ -32,11 +32,10 @@ temp_log_dir = os.path.join(tempdir, "automate_demultiplexing_logfiles")
 sv_samplesheet_temp_dir = os.path.join(tempdir, "samplesheets")
 
 
-
 @pytest.fixture(scope="function")
 def logger_obj():
-    temp_log = os.path.join(tempdir, 'temp.log')
-    return ad_logger.AdLogger('demultiplex', 'demultiplex', temp_log).get_logger()
+    temp_log = os.path.join(tempdir, "temp.log")
+    return ad_logger.AdLogger("demultiplex", "demultiplex", temp_log).get_logger()
 
 
 # TODO fix below function
@@ -80,6 +79,7 @@ def patch_test_demultiplex(monkeypatch):
     """
     monkeypatch.setattr(toolbox.ad_config, "RUNFOLDERS", temp_runfolderdir)
     monkeypatch.setattr(ad_logger.ad_config, "AD_LOGDIR", temp_log_dir)
+
 
 # TODO fix patching of script loggers as this is not set up correctly !!
 @pytest.fixture(scope="function", autouse=True)

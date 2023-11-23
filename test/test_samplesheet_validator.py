@@ -3,7 +3,6 @@ This script contains pytest tests for the samplesheet_validator.py script
 """
 import os
 import pytest
-import shutil
 import logging
 from samplesheet_validator.samplesheet_validator import SamplesheetCheck
 from test import conftest
@@ -21,20 +20,34 @@ def valid_samplesheets():
         nos, valid runtypes
     """
     return [
-        ("210408_M02631_0186_000000000-JFMNK", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '210408_M02631_0186_000000000-JFMNK_SampleSheet.csv'
-            )),
-        ("210917_NB551068_0409_AH3YNFAFX3", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '210917_NB551068_0409_AH3YNFAFX3_SampleSheet.csv'
-            )),
-        ("221021_A01229_0145_BHGGTHDMXY", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv')),
-        ("221024_A01229_0146_BHKGG2DRX2", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '221024_A01229_0146_BHKGG2DRX2_SampleSheet.csv'))
+        (
+            "210408_M02631_0186_000000000-JFMNK",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv",
+            ),
+        ),
+        (
+            "210917_NB551068_0409_AH3YNFAFX3",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "210917_NB551068_0409_AH3YNFAFX3_SampleSheet.csv",
+            ),
+        ),
+        (
+            "221021_A01229_0145_BHGGTHDMXY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv",
+            ),
+        ),
+        (
+            "221024_A01229_0146_BHKGG2DRX2",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "221024_A01229_0146_BHKGG2DRX2_SampleSheet.csv",
+            ),
+        ),
     ]
 
 
@@ -44,16 +57,27 @@ def invalid_paths():
     Collection of nonexistent samplesheets
     """
     return [
-        ("210408_M02631_0186_000000000-JFMNN", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '210408_M02631_0186_000000000-JFMNN_SampleSheet.csv'
-            )),
-        ("210918_NB551068_551068_0409_AH3YNFAFX3", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '210918_NB551068_551068_0409_AH3YNFAFX3_SampleSheet.csv')),
-        ("221021_A01229_0143_BHGGTHDMXY", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '221021_A01229_0143_BHGGTHDMXY_SampleSheet.csv')),
+        (
+            "210408_M02631_0186_000000000-JFMNN",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "210408_M02631_0186_000000000-JFMNN_SampleSheet.csv",
+            ),
+        ),
+        (
+            "210918_NB551068_551068_0409_AH3YNFAFX3",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "210918_NB551068_551068_0409_AH3YNFAFX3_SampleSheet.csv",
+            ),
+        ),
+        (
+            "221021_A01229_0143_BHGGTHDMXY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "221021_A01229_0143_BHGGTHDMXY_SampleSheet.csv",
+            ),
+        ),
     ]
 
 
@@ -63,16 +87,27 @@ def invalid_names():
     Collection of samplesheets with invalid names
     """
     return [
-        ("21108_A01229_0040_AHKGTFDRXY", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '21108_A01229_0040_AHKGTFDRXY_SampleSheet.csv')),
-        ("21aA08_A01229_0040_AHKGTFDRXY", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '21aA08_A01229_0040_AHKGTFDRXY_SampleSheet.csv')),
-        ("2110915_M02353_0632_000000000-K242J", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '2110915_M02353_0632_000000000-K242J_SampleSheet.csv'
-            )),
+        (
+            "21108_A01229_0040_AHKGTFDRXY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "21108_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
+            ),
+        ),
+        (
+            "21aA08_A01229_0040_AHKGTFDRXY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "21aA08_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
+            ),
+        ),
+        (
+            "2110915_M02353_0632_000000000-K242J",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "2110915_M02353_0632_000000000-K242J_SampleSheet.csv",
+            ),
+        ),
     ]
 
 
@@ -82,9 +117,13 @@ def empty_file():
     Empty file with an invalid sequencer ID
     """
     return [
-        ("220413_A01229_0032_AHGKBIEKFR", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '220413_A01229_0032_AHGKBIEKFR_SampleSheet.csv')),
+        (
+            "220413_A01229_0032_AHGKBIEKFR",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "220413_A01229_0032_AHGKBIEKFR_SampleSheet.csv",
+            ),
+        ),
     ]
 
 
@@ -95,16 +134,27 @@ def invalid_contents():
     sample names, non-matching samplenames, invalid panel number, invalid runtype
     """
     return [
-        ("220404_B01229_0348_HFGIFEIOPY", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv')),
-        ("220408_A02631_0186_000000000-JLJFE", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '220408_A02631_0186_000000000-JLJFE_SampleSheet.csv'
-            )),
-        ("200817_NB068_0009_AH3YERAFX3", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '200817_NB068_0009_AH3YERAFX3_SampleSheet.csv')),
+        (
+            "220404_B01229_0348_HFGIFEIOPY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
+            ),
+        ),
+        (
+            "220408_A02631_0186_000000000-JLJFE",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "220408_A02631_0186_000000000-JLJFE_SampleSheet.csv",
+            ),
+        ),
+        (
+            "200817_NB068_0009_AH3YERAFX3",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
+            ),
+        ),
     ]
 
 
@@ -114,9 +164,13 @@ def tso_samplesheet_valid():
     Valid TSO samplesheets
     """
     return [
-        ("221021_A01229_0145_BHGGTHDMXY", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv'))
+        (
+            "221021_A01229_0145_BHGGTHDMXY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv",
+            ),
+        )
     ]
 
 
@@ -126,10 +180,13 @@ def tso_samplesheet_invalid():
     Samplesheet not from TSO run
     """
     return [
-        ("220408_A02631_0186_000000000-JLJFE", os.path.join(
-            conftest.sv_samplesheet_temp_dir,
-            '220408_A02631_0186_000000000-JLJFE_SampleSheet.csv'
-            ))
+        (
+            "220408_A02631_0186_000000000-JLJFE",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "220408_A02631_0186_000000000-JLJFE_SampleSheet.csv",
+            ),
+        )
     ]
 
 
@@ -137,14 +194,17 @@ class TestSamplesheetCheck(object):
     """
     Tests for the SamplesheetCheck class
     """
+
     def test_check_ss_present_valid(self, valid_samplesheets, caplog):
         """
         Test function is able to correctly identify that the samplesheet is present
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger            
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -155,8 +215,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in invalid_paths:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert "Samplesheet with supplied name not present" in caplog.text
@@ -168,8 +230,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -180,8 +244,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in invalid_names:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert "Samplesheet name is invalid" in caplog.text
@@ -193,8 +259,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -205,8 +273,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in invalid_contents:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert "Sequencer id not in allowed list" in caplog.text
@@ -218,8 +288,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -230,8 +302,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in empty_file:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert "Samplesheet empty (<10 bytes)" in caplog.text
@@ -243,8 +317,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -255,8 +331,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in invalid_contents:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert "Header(/s) missing from [Data] section:" in caplog.text
@@ -268,8 +346,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -281,8 +361,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in invalid_contents:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert (
@@ -298,8 +380,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -311,8 +395,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in invalid_contents:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert "Sample name contains invalid characters" in caplog.text
@@ -324,8 +410,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -336,8 +424,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in invalid_contents:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert "Sample name invalid" in caplog.text
@@ -349,8 +439,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -361,8 +453,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in invalid_contents:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert "Pan no is invalid" in caplog.text
@@ -374,8 +468,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in valid_samplesheets:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.errors
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -386,8 +482,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in invalid_contents:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert "Runtype not in allowed list" in caplog.text
@@ -399,8 +497,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in tso_samplesheet_valid:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.tso
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -411,8 +511,10 @@ class TestSamplesheetCheck(object):
         """
         for runfoldername, samplesheet in tso_samplesheet_invalid:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert not sscheck_obj.tso
             ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -424,16 +526,19 @@ class TestSamplesheetCheck(object):
         invalid runtype
         """
         msgs = [
-            'Sequencer id not in allowed list',
-            'Header(/s) missing from [Data] section',
-            'The following Sample IDs do not match the corresponding Sample Name',
-            'Sample name invalid',
-            'Pan no is invalid', 'Runtype not in allowed list',
-            ]
+            "Sequencer id not in allowed list",
+            "Header(/s) missing from [Data] section",
+            "The following Sample IDs do not match the corresponding Sample Name",
+            "Sample name invalid",
+            "Pan no is invalid",
+            "Runtype not in allowed list",
+        ]
         for runfoldername, samplesheet in invalid_contents:
             rf_obj = toolbox.RunfolderObject(runfoldername, ad_config.TIMESTAMP)
-            rf_obj.add_runfolder_logger('ss_validator')  # Add ss_validator logger  
-            sscheck_obj = SamplesheetCheck(samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator)
+            rf_obj.add_runfolder_logger("ss_validator")  # Add ss_validator logger
+            sscheck_obj = SamplesheetCheck(
+                samplesheet, runfoldername, rf_obj.rf_loggers.ss_validator
+            )
             sscheck_obj.ss_checks()
             assert sscheck_obj.errors
             assert all(msg in caplog.text for msg in msgs)

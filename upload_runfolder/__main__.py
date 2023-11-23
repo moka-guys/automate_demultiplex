@@ -63,16 +63,14 @@ def get_arguments():
         "--project_id",
         default=None,
         help=("The ID of an existing DNAnexus project for the given runfolder"),
-        )
+    )
 
     return parser.parse_args()  # Collect arguments and return
 
 
 parsed_args = get_arguments()  # Get command line arguments
 
-rf_obj = toolbox.RunfolderObject(
-    parsed_args.runfolder_name, ad_config.TIMESTAMP
-)
+rf_obj = toolbox.RunfolderObject(parsed_args.runfolder_name, ad_config.TIMESTAMP)
 rf_obj.add_runfolder_loggers()
 
 # If a different auth token is supplied on command line, replace the attribute in the
@@ -82,11 +80,12 @@ if parsed_args.auth_token:
 
 if parsed_args.project_id:
     project_name_cmd = ad_config.DX_CMDS["proj_name_from_id"] % (
-        parsed_args.project_id, parsed_args.auth_token
-        )
+        parsed_args.project_id,
+        parsed_args.auth_token,
+    )
     project_name, err, returncode = toolbox.execute_subprocess_command(
         project_name_cmd, rf_obj.rf_loggers.backup, "exit_on_fail"
-        )
+    )
     nexus_identifiers = {
         "proj_name": project_name,
         "proj_id": parsed_args.project_id,

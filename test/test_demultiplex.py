@@ -60,10 +60,14 @@ class TestGetRunfolders(object):
         List of runfolders requiring processing
         """
         return [
-            # "999999_M02631_0000_00000TEST4",  # TODO fix test case - Barcodes in sample sheet are longer than the index length found in RunInfo.xml
-            # "999999_A01229_0000_00000TEST7",  # TODO fix test case - Unable to find BCL file for 's_1_1101' in: /mnt/run/Data/Intensities/BaseCalls/L001/C1.1
-            # "999999_A01229_0000_00000TEST9",  # TODO fix test case - Cannot read non-existent file: file:///input_run/RunInfo.xml
-            # "999999_A01229_0000_0000TEST11",  # TODO fix test case - Cannot read non-existent file: file:///input_run/RunInfo.xml
+            # "999999_M02631_0000_00000TEST4",  # TODO fix test case
+            # Barcodes in sample sheet are longer than the index length found in RunInfo.xml
+            # "999999_A01229_0000_00000TEST7",  # TODO fix test case
+            # Unable to find BCL file for 's_1_1101' in: /mnt/run/Data/Intensities/BaseCalls/L001/C1.1
+            # "999999_A01229_0000_00000TEST9",  # TODO fix test case
+            # Cannot read non-existent file: file:///input_run/RunInfo.xml
+            # "999999_A01229_0000_0000TEST11",  # TODO fix test case
+            # Cannot read non-existent file: file:///input_run/RunInfo.xml
         ]
 
     @pytest.fixture(scope="function")
@@ -137,9 +141,8 @@ class TestGetRunfolders(object):
         that none have been processed
         """
         monkeypatch.setattr(
-            demultiplex.ad_config, "DEMULTIPLEX_TEST_RUNFOLDERS",
-            runfolders_nottoproc
-            )
+            demultiplex.ad_config, "DEMULTIPLEX_TEST_RUNFOLDERS", runfolders_nottoproc
+        )
         gr_obj = get_gr_obj()
         with pytest.raises(SystemExit) as pytest_wrapped_e:
             gr_obj.setoff_processing()
@@ -182,15 +185,11 @@ class TestDemultiplexRunfolder(object):
         """
         return [
             (
-                os.path.join(
-                    conftest.temp_testfiles_dir, "bcl2fastq2_output_nomsg.log"
-                )
+                os.path.join(conftest.temp_testfiles_dir, "bcl2fastq2_output_nomsg.log")
             ),  # No success message present in logfile
             ("nonexistent.log"),  # Logfile nonexistent
             (
-                os.path.join(
-                    conftest.temp_testfiles_dir, "bcl2fastq2_output_empty.log"
-                )
+                os.path.join(conftest.temp_testfiles_dir, "bcl2fastq2_output_empty.log")
             ),  # Logfile empty
         ]
 
@@ -228,7 +227,7 @@ class TestDemultiplexRunfolder(object):
                 os.path.join(
                     conftest.sv_samplesheet_temp_dir,
                     "210513_M02631_0236_000000000-JFMNK_SampleSheet.csv",
-                )
+                ),
             )
         ]
 
@@ -355,8 +354,11 @@ class TestDemultiplexRunfolder(object):
         ]
 
     fixture_union(
-        'no_prior_ic_rfs',
-        ['checksumfile_present_pass_notchecked', 'checksumfile_present_fail_notchecked']
+        "no_prior_ic_rfs",
+        [
+            "checksumfile_present_pass_notchecked",
+            "checksumfile_present_fail_notchecked",
+        ],
     )
 
     @pytest.fixture(scope="function")
@@ -403,10 +405,11 @@ class TestDemultiplexRunfolder(object):
             # Command to run in place of bcl2fastq2 command that appends processing
             # complete string to bcl2fastq2 logfile
             monkeypatch.setattr(
-                dr_obj, "bcl2fastq2_cmd",
+                dr_obj,
+                "bcl2fastq2_cmd",
                 f"echo '{ad_config.STRINGS['demultiplex_success']}' >> "
-                f"{dr_obj.rf_obj.bcl2fastqlog_path}"
-                )
+                f"{dr_obj.rf_obj.bcl2fastqlog_path}",
+            )
             assert dr_obj.setoff_workflow() and dr_obj.run_processed
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
@@ -603,7 +606,7 @@ class TestDemultiplexRunfolder(object):
         assert dr_obj.add_bcl2fastqlog_tso_msg()
         assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_path)
         with open(dr_obj.rf_obj.bcl2fastqlog_path, encoding="utf-8") as file:
-            assert ad_config.STRINGS['demultiplexlog_tso500_msg'] in file.read()
+            assert ad_config.STRINGS["demultiplexlog_tso500_msg"] in file.read()
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     def test_run_demultiplexing_success(self, non_tso_runfolder):
@@ -662,7 +665,7 @@ class TestDemultiplexRunfolder(object):
         for logpath in bcl2fastqlog_fail:
             dr_obj.rf_obj.bcl2fastqlog_path = (
                 logpath  # Reset path to that from test case
-            )            
+            )
             with pytest.raises(SystemExit) as pytest_wrapped_e:
                 dr_obj.check_bcl2fastqlogfile()
                 ad_logger.shutdown_logs(dr_obj.demux_rf_logger)

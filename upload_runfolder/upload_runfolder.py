@@ -8,7 +8,7 @@ import re
 import math
 from config import ad_config
 from toolbox import toolbox
-from typing import Union, Tuple
+
 
 class UploadRunfolder:
     """
@@ -90,7 +90,8 @@ class UploadRunfolder:
         project_name, _, _ = toolbox.execute_subprocess_command(
             ad_config.DX_CMDS["find_proj_name"]
             % (self.rf_obj.runfolder_name, self.rf_obj.dnanexus_apikey),
-            self.logger, "exit_on_fail",
+            self.logger,
+            "exit_on_fail",
         )
         self.logger.info(
             self.logger.log_msgs["project_name"],
@@ -103,7 +104,8 @@ class UploadRunfolder:
         project_id, _, _ = toolbox.execute_subprocess_command(
             ad_config.DX_CMDS["find_proj_id"]
             % (project_name, self.rf_obj.dnanexus_apikey),
-            self.logger, "exit_on_fail",
+            self.logger,
+            "exit_on_fail",
         )
         self.logger.info(
             self.logger.log_msgs["project_id"],
@@ -112,7 +114,7 @@ class UploadRunfolder:
         return {
             "proj_name": project_name,
             "proj_id": project_id,
-            }
+        }
 
     def upload_rest_of_runfolder(self, ignore: str) -> None:
         """
@@ -131,12 +133,12 @@ class UploadRunfolder:
         # It is quicker to upload files in parallel so files in each folder
         # are uploaded as separate commands
         for folderpath in self.file_dict:
-            self.logger.info(
-                self.logger.log_msgs["uploading_files"], folderpath
-            )
+            self.logger.info(self.logger.log_msgs["uploading_files"], folderpath)
             if "upload_cmds" in self.file_dict[folderpath].keys():
                 for upload_cmd in self.file_dict[folderpath]["upload_cmds"]:
-                    filepath_list = self.file_dict[folderpath]["upload_cmds"][upload_cmd]
+                    filepath_list = self.file_dict[folderpath]["upload_cmds"][
+                        upload_cmd
+                    ]
                     self.upload_files(upload_cmd, filepath_list)
         self.count_uploaded_files(ignore)  # Run tests to count files
 
@@ -168,17 +170,17 @@ class UploadRunfolder:
         folderpaths = self.get_folderpaths()
         file_dict = self.get_filepaths(folderpaths, ignore)
         return file_dict
-    
+
     def get_folderpaths(self) -> list:
         """
         Walk through runfolder and create a list of all folder paths within
         the runfolder
             :return folderpaths (list): Return a list of folder paths within
-                                        the runfolder        
+                                        the runfolder
         """
         self.logger.info(self.logger.log_msgs["getting_folder_paths"])
         folderpaths = [self.rf_obj.runfolderpath]  # Add root folder path
-        for root, subfolders, _ in os.walk(self.rf_obj.runfolderpath):            
+        for root, subfolders, _ in os.walk(self.rf_obj.runfolderpath):
             for folder in subfolders:  # Add subfolder paths
                 folderpaths.append(os.path.join(root, folder))
         return folderpaths
@@ -196,7 +198,7 @@ class UploadRunfolder:
         self.logger.info(self.logger.log_msgs["getting_file_paths"])
         file_dict = {}
         for folderpath in folderpaths:
-            file_dict[folderpath] = {'filepaths': []}
+            file_dict[folderpath] = {"filepaths": []}
             filepath_list = [
                 os.path.join(folderpath, file)
                 for file in os.listdir(folderpath)
@@ -204,9 +206,9 @@ class UploadRunfolder:
             ]
             for filepath in filepath_list:
                 if not self.ignore_file(filepath, ignore):
-                    file_dict[folderpath]['filepaths'].append(filepath)
+                    file_dict[folderpath]["filepaths"].append(filepath)
         self.logger.info(  # Report the folders and files to be uploaded
-            self.logger.log_msgs["files_for_upload"], file_dict[folderpath]['filepaths']
+            self.logger.log_msgs["files_for_upload"], file_dict[folderpath]["filepaths"]
         )
         return file_dict
 
@@ -241,26 +243,38 @@ class UploadRunfolder:
             :return None:
         """
         for folderpath in self.file_dict:
-            if self.file_dict[folderpath]['filepaths']:
-                nexus_project_subdirectory = self.get_nexus_project_subdirectory(folderpath)
+            if self.file_dict[folderpath]["filepaths"]:
+                nexus_project_subdirectory = self.get_nexus_project_subdirectory(
+                    folderpath
+                )
                 # Used as indices to pass a slice of the file list (0-100) to the upload agent
                 start_index, stop_index = 0, 100
                 iterations_needed = self.get_required_iterations(folderpath)
                 iteration_count = 1
-                while iteration_count <= iterations_needed:  # While we haven't finished the iterations
-                    self.logger.info(self.logger.log_msgs["command_iteration"], iteration_count, iterations_needed)
+                while (
+                    iteration_count <= iterations_needed
+                ):  # While we haven't finished the iterations
+                    self.logger.info(
+                        self.logger.log_msgs["command_iteration"],
+                        iteration_count,
+                        iterations_needed,
+                    )
                     files_string = ""
                     # If last iteration, set stop as list length (only includes indices of elements)
                     # that exist in the list (e.g. if 4 elements, slice is 0:4)
                     if iteration_count == iterations_needed:
-                        stop_index = len(self.file_dict[folderpath]['filepaths'])
-                        
+                        stop_index = len(self.file_dict[folderpath]["filepaths"])
+
                     files_list = []
                     # Take a slice of list using from and to
-                    for file in self.file_dict[folderpath]['filepaths'][start_index:stop_index]:
+                    for file in self.file_dict[folderpath]["filepaths"][
+                        start_index:stop_index
+                    ]:
                         # Upload agent command can take multiple space-separated files
                         # Full file path is required for each file
-                        files_string = f"{files_string} '{os.path.join(folderpath, file)}'"
+                        files_string = (
+                            f"{files_string} '{os.path.join(folderpath, file)}'"
+                        )
                         files_list.append(os.path.join(folderpath, file))
 
                     self.logger.info(self.logger.log_msgs["building_command"])
@@ -270,7 +284,9 @@ class UploadRunfolder:
                         nexus_project_subdirectory,
                         f"--tries 100 {files_string}",
                     )
-                    self.file_dict[folderpath]['upload_cmds'] = {nexus_upload_cmd: files_list}
+                    self.file_dict[folderpath]["upload_cmds"] = {
+                        nexus_upload_cmd: files_list
+                    }
                     self.logger.info(self.logger.log_msgs["added_command"])
                     # Increase iteration_count and start and stop by 100 for the next iteration
                     # so second iteration will do next batch of up to 100 files
@@ -304,7 +320,7 @@ class UploadRunfolder:
         )
         self.logger.info(
             self.logger.log_msgs["nexus_project_subdirectory"],
-            nexus_project_subdirectory
+            nexus_project_subdirectory,
         )
         return nexus_project_subdirectory
 
@@ -321,8 +337,12 @@ class UploadRunfolder:
             :return iterations_needed (int):    The required number of upload commands to
                                                 upload all the files in the folder
         """
-        iterations_needed = math.ceil(len(self.file_dict[folderpath]['filepaths']) / 100.0)
-        self.logger.info(self.logger.log_msgs["iterations_needed"], iterations_needed, folderpath)
+        iterations_needed = math.ceil(
+            len(self.file_dict[folderpath]["filepaths"]) / 100.0
+        )
+        self.logger.info(
+            self.logger.log_msgs["iterations_needed"], iterations_needed, folderpath
+        )
         return iterations_needed
 
     def upload_files(self, upload_cmd: str, files_list: list) -> list:
@@ -360,7 +380,9 @@ class UploadRunfolder:
             for file in files_list:
                 if not os.path.isfile(file):
                     nonexistent_files.append(file)
-            self.logger.error(self.logger.log_msgs["nonexistent_files"], nonexistent_files)
+            self.logger.error(
+                self.logger.log_msgs["nonexistent_files"], nonexistent_files
+            )
             return nonexistent_files
 
     def count_uploaded_files(self, ignore: str) -> None:
@@ -384,16 +406,14 @@ class UploadRunfolder:
             f"find {self.rf_obj.runfolderpath} -type f {grep_ignore} | wc -l"
         )
         files_expected, _, _ = toolbox.execute_subprocess_command(
-            local_file_count, self.rf_obj.rf_loggers.upload_agent,
-            "exit_on_fail"
+            local_file_count, self.rf_obj.rf_loggers.upload_agent, "exit_on_fail"
         )
         uploaded_file_count = ad_config.DX_CMDS["find_data"] % (
             self.nexus_identifiers["proj_name"],
             self.rf_obj.dnanexus_apikey,
         )
         files_present, _, _ = toolbox.execute_subprocess_command(
-            uploaded_file_count, self.rf_obj.rf_loggers.upload_agent,
-            "exit_on_fail"
+            uploaded_file_count, self.rf_obj.rf_loggers.upload_agent, "exit_on_fail"
         )
         self.logger.info(
             self.logger.log_msgs["files_uploaded"],
@@ -406,7 +426,8 @@ class UploadRunfolder:
                 self.rf_obj.dnanexus_apikey,
             )
             out, _, _ = toolbox.execute_subprocess_command(
-                uploaded_file_count_ignore, self.rf_obj.rf_loggers.upload_agent,
-                "exit_on_fail"
+                uploaded_file_count_ignore,
+                self.rf_obj.rf_loggers.upload_agent,
+                "exit_on_fail",
             )
             self.logger.info(self.logger.log_msgs["check_ignore"], out)

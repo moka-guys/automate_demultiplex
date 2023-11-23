@@ -22,7 +22,7 @@ PROJECT_DIR = str(Path(__file__).absolute().parent.parent)
 # development_area scripts (2 levels up from this file)
 DOCUMENT_ROOT = "/".join(PROJECT_DIR.split("/")[:-2])
 
-BRANCH = Repository('.').head.shorthand
+BRANCH = Repository(".").head.shorthand
 
 MAIL_SETTINGS = {
     "host": "email-smtp.eu-west-1.amazonaws.com",
@@ -103,16 +103,17 @@ DEMULTIPLEX_TEST_RUNFOLDERS = [
 ]
 
 SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"
+BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
 BCL2FASTQ2_CMD = (
     "sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s "
-    "seglh/bcl2fastq2:v2.20.0.422_60dbb5a -R /mnt/run --sample-sheet /mnt/run/%s "
+    f"{BCL2FASTQ_DOCKER} -R /mnt/run --sample-sheet /mnt/run/%s "
     "--no-lane-splitting >> %s 2>&1"
 )
 CD_CMD = (
     "sudo docker run --rm -v %s:/input_run "
     "broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics "
-    f"--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX "
-    f"%s"
+    "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX "
+    "%s"
 )
 
 UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
@@ -130,23 +131,21 @@ TEST_PROGRAMS_DICT = {
     "dx_toolkit": {
         "executable": "dx",
         "test_cmd": f"source {SDK_SOURCE}; dx --version",
-        },
+    },
     "upload_agent": {
         "executable": UPLOAD_AGENT_EXE,
         "test_cmd": f"{UPLOAD_AGENT_EXE} --version",
-        },
+    },
     "gatk_collect_lane_metrics": {
         "executable": "docker",
         "test_cmd": (
             "sudo docker run --rm broadinstitute/gatk:4.1.8.1 ./gatk "
             "CollectIlluminaLaneMetrics --version"
-            ),
-        },
-    }
+        ),
+    },
+}
 
-TEST_IMAGES_DICT = {
-    "bcl2fastq2": f'sudo docker run --rm seglh/bcl2fastq2:v2.20.0.422_25dd0c0 --version'
-    }
+TEST_IMAGES_DICT = {"bcl2fastq2": f"sudo docker run --rm {BCL2FASTQ_DOCKER} --version"}
 
 # ================ SETOFF WORKFLOWS ================================
 # Settings unique to the setoff workflows script
@@ -418,24 +417,21 @@ EMPTY_GATK_DEPENDS = "depends_list_gatk=''\n"
 
 DX_CMDS = {
     "create_proj": (
-        'project_id="$(dx new project '
-        '--bill-to %s "%s" --brief ' '--auth %s)" &&\n'
+        'project_id="$(dx new project ' '--bill-to %s "%s" --brief ' '--auth %s)" &&\n'
     ),
     "find_proj_name": (
         f"source {SDK_SOURCE}; dx find projects --name *%s* "
         "--auth %s | awk '{print $3}'"
-        ),
+    ),
     "proj_name_from_id": (
-        f'source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name'
-        ),
-    "find_proj_id": f'source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id',
+        f"source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name"
+    ),
+    "find_proj_id": f"source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id",
     "find_execution_id": (
         f"source {SDK_SOURCE}; dx describe %s --json --auth %s | jq -r '.stages[] | "
-        "select( .id == \"%s\") | .execution.id'"
-        ),
-    "find_data": (
-        f"source {SDK_SOURCE}; dx find data --project %s --auth %s | wc -l"
-        ),
+        'select( .id == "%s") | .execution.id\''
+    ),
+    "find_data": (f"source {SDK_SOURCE}; dx find data --project %s --auth %s | wc -l"),
     "invite_user": (
         'invite_user_out="$(dx invite %s $project_id %s --no-email --auth %s)" &&\n'
     ),
@@ -498,7 +494,7 @@ DX_CMDS = {
     "qiagen_upload": (
         f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y "
         f"{JOB_NAME_STR}"
-    ), 
+    ),
     "sompy": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}"
     ),
@@ -532,14 +528,14 @@ SQL_IDS = {
 QUERIES = {
     "customrun": (
         "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values (%s)"
-        ),
+    ),
     "wes": (
         "update NGSTest set PipelineVersion = %s, StatusID = %s where dna in ('%s') "
         "and StatusID = %s"
-        ),
+    ),
     "oncology": (
         "insert into "
         "NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) "
         "values (%s)"
-        ),
+    ),
 }

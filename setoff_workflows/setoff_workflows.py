@@ -52,7 +52,7 @@ class SequencingRuns(object):
         self.runs_to_process = {}
         self.processed_runfolders = []
         self.script_logger = ad_logger.AdLogger(
-            "sw", "sw", toolbox.return_scriptlog_config()['sw']
+            "sw", "sw", toolbox.return_scriptlog_config()["sw"]
         ).get_logger()
 
     def setoff_processing(self) -> None:
@@ -161,7 +161,6 @@ class SequencingRuns(object):
         else:
             # If file doesn't exist return false to continue, write to log file
             self.script_logger.info(self.script_logger.log_msgs["ua_file_absent"])
-
 
     def process_runfolder(self, rf_obj: object) -> None:
         """
@@ -293,7 +292,9 @@ class ProcessRunfolder(object):
                     "proj_name": self.samples_obj.nexus_paths["proj_name"],
                     "proj_id": self.run_project_creation_script(),
                 }
-                self.upload_runfolder = UploadRunfolder(self.rf_obj, self.nexus_identifiers)
+                self.upload_runfolder = UploadRunfolder(
+                    self.rf_obj, self.nexus_identifiers
+                )
                 self.upload_cmds = self.get_upload_cmds()
                 self.pre_pipeline_upload_dict = self.create_file_upload_dict()
                 self.pre_pipeline_upload()
@@ -399,7 +400,7 @@ class ProcessRunfolder(object):
             self.rf_obj.rf_loggers.sw.error(
                 self.rf_obj.rf_loggers.sw.log_msgs["proj_creation_fail"],
                 self.samples_obj.nexus_paths["proj_name"],
-                err
+                err,
             )
             sys.exit(1)
 
@@ -474,7 +475,7 @@ class ProcessRunfolder(object):
         samples, samplesheet_header = self.read_tso_samplesheet
         # Split samples into batches (size specified in config)
         batches = [
-            samples[i : i + ad_config.TSO_BATCH_SIZE]
+            samples[i: i + ad_config.TSO_BATCH_SIZE]
             for i in range(0, len(samples), ad_config.TSO_BATCH_SIZE)
         ]
         # Create new samplesheets named "PartXofY", add samplesheet to list
@@ -482,8 +483,8 @@ class ProcessRunfolder(object):
         for samplesheet_count, batch in enumerate(batches, start=1):
             # Capture samplesheet file path to write samplesheet paths to the runfolder
             samplesheet_filepath = (
-                f'{self.rf_obj.runfolder_samplesheet_path.split(".csv")[0]}"
-                f"Part{samplesheet_count}of{len(batches)}.csv'
+                f'{self.rf_obj.runfolder_samplesheet_path.split(".csv")[0]}'
+                f"Part{samplesheet_count}of{len(batches)}.csv"
             )
             # Capture samplesheet name to write to list- use runfolder name
             samplesheet_name = (
@@ -524,7 +525,7 @@ class ProcessRunfolder(object):
                 elif len(line.split(",")[0]) < 2:  # Skip empty lines
                     pass
         return samples, samplesheet_header
-    
+
     def create_file_upload_dict(self) -> dict:
         """
         Create dictionary of files to upload prior to setting off the pipeline,
@@ -597,7 +598,7 @@ class ProcessRunfolder(object):
                 filetype,
                 self.rf_obj.upload_agent_logfile,
             )
-        elif type(result) == list:
+        elif result is list:
             self.rf_obj.rf_loggers.sw.error(
                 self.rf_obj.rf_loggers.sw.log_msgs["nonexistent_files"], result
             )
@@ -939,7 +940,9 @@ class CollectRunfolderSamples(object):
         nexus_paths[
             "runfolder_subdir"
         ] = f"{nexus_paths['proj_root']}{nexus_paths['runfolder_name']}/"
-        nexus_paths["logfiles_dir"] = f"/{nexus_paths['runfolder_name']}/automated_scripts_logfiles/"
+        nexus_paths[
+            "logfiles_dir"
+        ] = f"/{nexus_paths['runfolder_name']}/automated_scripts_logfiles/"
         nexus_paths[
             "samplesheet"
         ] = f"/{nexus_paths['proj_root']}/{self.rf_obj.samplesheet_name}"
@@ -1146,7 +1149,9 @@ class SampleObject:
             Return sample dictionary with all collected information about the sample
     """
 
-    def __init__(self, sample_name: str, pipeline: str, rf_obj: object, nexus_paths: dict):
+    def __init__(
+        self, sample_name: str, pipeline: str, rf_obj: object, nexus_paths: dict
+    ):
         """
         Constructor for the SampleObject class
             :param sample_name (str):       Sample name
@@ -1218,14 +1223,16 @@ class SampleObject:
             (workflow_name, err, returncode) = toolbox.execute_subprocess_command(
                 f"dx describe {ad_config.NEXUS_IDS['APPS'][self.pipeline]} "
                 "--json | jq -r '(.name)'",
-                self.rf_obj.rf_loggers.sw, "exit_on_fail"
+                self.rf_obj.rf_loggers.sw,
+                "exit_on_fail",
             )
         else:
             (workflow_name, err, returncode) = toolbox.execute_subprocess_command(
                 "dx describe "
                 f"{ad_config.NEXUS_IDS['WORKFLOWS'][self.pipeline]} "
                 "--json | jq -r '\"\(.folder)/\(.name)\"'",
-                self.rf_obj.rf_loggers.sw, "exit_on_fail"
+                self.rf_obj.rf_loggers.sw,
+                "exit_on_fail",
             )
         return workflow_name
 
@@ -1306,7 +1313,8 @@ class SampleObject:
                 )
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["fastq_identified"],
-                    ", ".join(fastq_name), ", ".join(matches)
+                    ", ".join(fastq_name),
+                    ", ".join(matches),
                 )
                 fastq_name = fastq_name[0]
                 nexus_path = (
@@ -1443,7 +1451,7 @@ class SampleObject:
                     self.nexus_paths["proj_name"],
                 )
                 decision_support_cmd = self.build_congenica_sftp_cmd()
-            elif type(self.panel_settings["congenica_project"]) == int:
+            elif self.panel_settings["congenica_project"] is int:
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["congenica_upload_required"],
                     self.nexus_paths["proj_name"],
@@ -1506,7 +1514,7 @@ class SampleObject:
                 f'-icredentials={self.panel_settings["congenica_credentials"]}',
                 f'-iIR_template={self.panel_settings["congenica_IR_template"]}',
                 f'{ad_config.APP_INPUTS["congenica_upload"]["samplename"]}'
-                f'{self.sample_name}',
+                f"{self.sample_name}",
                 f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
                 (ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_apikey).replace(
                     ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
@@ -1892,7 +1900,9 @@ class BuildDxCommands(object):
         )
         for sample_name in self.samples_obj.samples_dict.keys():
             dx_cmd_list.append(
-                self.samples_obj.samples_dict[sample_name]["decision_support_upload_cmd"]
+                self.samples_obj.samples_dict[sample_name][
+                    "decision_support_upload_cmd"
+                ]
             )
             # Append all fastqc commands to cmd_list
             dx_postprocessing_cmds.append(
@@ -2167,7 +2177,9 @@ class BuildDxCommands(object):
             if self.samples_obj.pipeline in ["wes", "pipe"]:
                 cmd_list.append(self.return_analysis_id_cmd())
                 cmd_list.append(
-                    self.samples_obj.samples_dict[sample_name]["decision_support_upload_cmd"]
+                    self.samples_obj.samples_dict[sample_name][
+                        "decision_support_upload_cmd"
+                    ]
                 )
         return cmd_list
 
