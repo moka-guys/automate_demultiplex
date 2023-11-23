@@ -3,6 +3,7 @@
 """
 Email sending module
 """
+import sys
 import os
 import jinja2
 import smtplib
@@ -27,17 +28,17 @@ class AdEmail(object):
         template (obj):             Loaded template
 
     Methods
-        generate_email_html()
+        generate_email_html(runfolder_name, workflows, queries, sample_count)
             Renders the html string for the email message
-        send_email()
-            Create email message object and specify settings, then send email using
-            mail settings from init
+        send_email(recipients, email_subject, email_message, email_priority)
+            Create email message object and specify settings, then
+            send email using mail settings from init
     """
 
     def __init__(self, logger: logging.Logger):
         """
         Constructor for the AdEmail class
-            :param logger:              Logger object
+            :param logger:  Logger object
         """
         self.logger = logger
         self.sender = ad_config.MAIL_SETTINGS["alerts_email"]
@@ -61,7 +62,7 @@ class AdEmail(object):
         self, runfolder_name: str, workflows: str, queries: str, sample_count: int
     ) -> str:
         """
-        Generate HTML
+        Generate HTML. If unsuccessful, exit script
             :param runfolder_name (str):    Name of runfolder
             :workflows (str):               Comma separated string of workflow names
             :queries (str):                 \n separated string of SQL queries
@@ -81,6 +82,7 @@ class AdEmail(object):
             return html
         except Exception as exception:
             self.logger.exception(self.logger.log_msgs["html_error"], exception)
+            sys.exit(1)
 
     def send_email(
         self,
@@ -91,7 +93,7 @@ class AdEmail(object):
     ) -> Union[bool, None]:
         """
         Create email message object and specify settings, then send email using mail
-        settings from init
+        settings from init. If unsuccessful, exit script
             :param recipients (list|str):   List or string of recipient email addresses
             :param email_subject (str):     Email subject string
             :param email_message (str):     Email message string
@@ -124,4 +126,4 @@ class AdEmail(object):
 
         except Exception as exception:
             self.logger.exception(self.logger.log_msgs["email_fail"], exception)
-            raise Exception  # Stop script
+            sys.exit(1)

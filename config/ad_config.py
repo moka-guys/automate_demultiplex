@@ -105,15 +105,12 @@ DEMULTIPLEX_TEST_RUNFOLDERS = [
 SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
 BCL2FASTQ2_CMD = (
-    "sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s "
-    f"{BCL2FASTQ_DOCKER} -R /mnt/run --sample-sheet /mnt/run/%s "
-    "--no-lane-splitting >> %s 2>&1"
+    f"sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
+    "--sample-sheet /mnt/run/%s --no-lane-splitting >> %s 2>&1"
 )
 CD_CMD = (
-    "sudo docker run --rm -v %s:/input_run "
-    "broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics "
-    "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX "
-    "%s"
+    "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics "
+    "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
 )
 
 UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
@@ -139,8 +136,7 @@ TEST_PROGRAMS_DICT = {
     "gatk_collect_lane_metrics": {
         "executable": "docker",
         "test_cmd": (
-            "sudo docker run --rm broadinstitute/gatk:4.1.8.1 ./gatk "
-            "CollectIlluminaLaneMetrics --version"
+            "sudo docker run --rm broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics --version"
         ),
     },
 }
@@ -257,9 +253,7 @@ APP_INPUTS = {
     },
     "peddy": {"project_name": "-iproject_for_peddy="},
     "sompy": {
-        "truth_vcf": (
-            "-itruthVCF=project-ByfFPz00jy1fk6PjpZ95F27J:file-G7g9Pfj0jy1f87k1J1qqX83X"
-        ),
+        "truth_vcf": "-itruthVCF=project-ByfFPz00jy1fk6PjpZ95F27J:file-G7g9Pfj0jy1f87k1J1qqX83X",
         "query_vcf": "-iqueryVCF=",
         "tso": "-iTSO=true",
         "skip": "-iskip=false",
@@ -329,8 +323,7 @@ UPLOAD_ARGS = {
 PIPE_FH_GATK_TIMEOUT_ARGS = (
     '--extra-args \'{"timeoutPolicyByExecutable": {"'
     f'{NEXUS_IDS["APPS"]["gatk"].split(":")[1]}'
-    '": {"*":{"hours": 12}}}, "executionPolicy": {"restartOn": '
-    '{"JobTimeoutExceeded":1, "JMInternalError":'
+    '": {"*":{"hours": 12}}}, "executionPolicy": {"restartOn": {"JobTimeoutExceeded":1, "JMInternalError":'
     ' 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
 )
 
@@ -341,62 +334,37 @@ STAGE_INPUTS = {
         "bwa_reads2": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads2_fastqgz=",
         "bwa_rg_sample": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.read_group_sample=",
         "bwa_ref": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.genomeindex_targz=",
-        "picard_bed": (  # HSMetrics Bedfile
-            f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.vendor_exome_bedfile="
-        ),
-        "picard_capturetype": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.Capture_panel="
-        ),
+        "picard_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.vendor_exome_bedfile=",  # HSMetrics Bedfile
+        "picard_capturetype": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.Capture_panel=",
         "gatk_padding": (f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.padding="),
-        "gatk_vcf_format": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.output_format=both"
-        ),
+        "gatk_vcf_format": f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.output_format=both",
         "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['filter_vcf']}.bedfile=",
         "happy_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.skip=",
         "happy_prefix": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.prefix=",
         "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.sambamba_bed=",
-        "sambamba_min_base_qual": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_base_qual="
-        ),
-        "sambamba_min_mapping_qual": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_mapping_qual="
-        ),
-        "sambamba_cov_level": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.coverage_level="
-        ),
+        "sambamba_min_base_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_base_qual=",
+        "sambamba_min_mapping_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_mapping_qual=",
+        "sambamba_cov_level": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.coverage_level=",
         "sambamba_filter_cmds": (
             f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}"
             ".additional_filter_commands='not (unmapped or secondary_alignment)'"
         ),
-        "sambamba_excl_dups": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.exclude_duplicate_reads=true"
-        ),
-        "sambamba_excl_failed_qual": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}"
-            ".exclude_failed_quality_control=true"
-        ),
-        "sambamba_count_overl_mates": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}"
-            ".merge_overlapping_mate_reads=true"
-        ),
+        "sambamba_excl_dups": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.exclude_duplicate_reads=true",
+        "sambamba_excl_failed_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.exclude_failed_quality_control=true",
+        "sambamba_count_overl_mates": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.merge_overlapping_mate_reads=true",
         "fhprs_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.skip=false",
         "fhprs_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.BEDfile=",
         "fhprs_instance": "mem3_ssd1_v2_x8",  # Required when creating gVCFs
         "polyedge_gene": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.gene=",
         "polyedge_chrom": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.chrom=",
-        "polyedge_poly_start": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_start="
-        ),
+        "polyedge_poly_start": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_start=",
         "polyedge_poly_end": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_end=",
         "polyedge_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.skip=false",
     },
     "wes": {
         "fastqc1_reads": f"-i{NEXUS_IDS['STAGES']['wes']['fastqc1']}.reads=",
         "fastqc2_reads": f"-i{NEXUS_IDS['STAGES']['wes']['fastqc2']}.reads=",
-        # HSmetrics bedfile
-        "picard_bed": (
-            f"-i{NEXUS_IDS['STAGES']['wes']['picard']}.vendor_exome_bedfile="
-        ),
+        "picard_bed": f"-i{NEXUS_IDS['STAGES']['wes']['picard']}.vendor_exome_bedfile=",  # HSmetrics bedfile
         "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['wes']['sambamba']}.sambamba_bed=",
         # Prevents incorrect parsing from fastq filename
         "sentieon_samplename": f"-i{NEXUS_IDS['STAGES']['wes']['sentieon']}.sample=",
@@ -416,52 +384,31 @@ EMPTY_DEPENDS = "depends_list=''\n"
 EMPTY_GATK_DEPENDS = "depends_list_gatk=''\n"
 
 DX_CMDS = {
-    "create_proj": (
-        'project_id="$(dx new project ' '--bill-to %s "%s" --brief ' '--auth %s)" &&\n'
-    ),
+    "create_proj": 'project_id="$(dx new project '
+    '--bill-to %s "%s" --brief '
+    '--auth %s)" &&\n',
     "find_proj_name": (
         f"source {SDK_SOURCE}; dx find projects --name *%s* "
         "--auth %s | awk '{print $3}'"
     ),
-    "proj_name_from_id": (
-        f"source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name"
-    ),
+    "proj_name_from_id": f"source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name",
     "find_proj_id": f"source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id",
     "find_execution_id": (
         f"source {SDK_SOURCE}; dx describe %s --json --auth %s | jq -r '.stages[] | "
         'select( .id == "%s") | .execution.id\''
     ),
     "find_data": (f"source {SDK_SOURCE}; dx find data --project %s --auth %s | wc -l"),
-    "invite_user": (
-        'invite_user_out="$(dx invite %s $project_id %s --no-email --auth %s)" &&\n'
-    ),
+    "invite_user": 'invite_user_out="$(dx invite %s $project_id %s --no-email --auth %s)" &&\n',
     "file_upload_cmd": (
-        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder %s --do-not-compress "
-        "--upload-threads 10 %s"
+        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder %s --do-not-compress --upload-threads 10 %s"
     ),
-    "pipe": (
-        f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']}"
-        f" --priority high -y {JOB_NAME_STR}"
-    ),
-    "wes": (
-        f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']}"
-        f" --priority high -y {JOB_NAME_STR}"
-    ),
-    "snp": (
-        f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']}"
-        f" -y --priority high {JOB_NAME_STR}"
-    ),
-    "tso500": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['tso500']}"
-        f" --priority high -y {JOB_NAME_STR}"
-    ),
-    "fastqc": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['fastqc']} "
-        f"--priority high -y {JOB_NAME_STR}"
-    ),
+    "pipe": f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
+    "wes": f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
+    "snp": f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} -y --priority high {JOB_NAME_STR}",
+    "tso500": f"jobid=$(dx run {NEXUS_IDS['APPS']['tso500']} --priority high -y {JOB_NAME_STR}",
+    "fastqc": f"jobid=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
     "peddy": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['peddy']} "
-        f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
+        f"jobid=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
     "multiqc": (
         f"jobid=$(dx run {NEXUS_IDS['APPS']['multiqc']} "
@@ -484,28 +431,16 @@ DX_CMDS = {
         f" --priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
     "congenica_sftp": (
-        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_sftp']} "
-        f"--priority high -y ' $analysisid ' {JOB_NAME_STR}"
+        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y ' $analysisid ' {JOB_NAME_STR}"
     ),
     "congenica_app": (
         f"echo 'dx run {NEXUS_IDS['APPS']['congenica_app']} --priority high -y "
         f"--instance-type mem1_ssd1_v2_x2 ' $analysisid ' {JOB_NAME_STR}"
     ),
-    "qiagen_upload": (
-        f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y "
-        f"{JOB_NAME_STR}"
-    ),
-    "sompy": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}"
-    ),
-    "sambamba": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['sambamba']} "
-        f"--priority high -y {JOB_NAME_STR}"
-    ),
-    "duty_csv": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y "
-        f"{JOB_NAME_STR}"
-    ),
+    "qiagen_upload": f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",
+    "sompy": f"jobid=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
+    "sambamba": f"jobid=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
+    "duty_csv": f"jobid=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y {JOB_NAME_STR}",
 }
 
 # ---- Moka settings ----------------------------------------------------------
@@ -526,16 +461,7 @@ SQL_IDS = {
 }
 
 QUERIES = {
-    "customrun": (
-        "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values (%s)"
-    ),
-    "wes": (
-        "update NGSTest set PipelineVersion = %s, StatusID = %s where dna in ('%s') "
-        "and StatusID = %s"
-    ),
-    "oncology": (
-        "insert into "
-        "NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) "
-        "values (%s)"
-    ),
+    "customrun": "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values (%s)",
+    "wes": "update NGSTest set PipelineVersion = %s, StatusID = %s where dna in ('%s') and StatusID = %s",
+    "oncology": "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values (%s)",
 }

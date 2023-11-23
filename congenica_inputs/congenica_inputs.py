@@ -2,6 +2,7 @@
 Print inputs required by congenica upload applications on DNAnexus.
 See Readme and doctrings for further details
 """
+import sys
 from config import ad_config
 import toolbox.toolbox as toolbox
 import ad_logger.ad_logger as ad_logger
@@ -67,7 +68,7 @@ class DecisionTooler(object):
             Call methods to generate the congenica upload DNAnexus app input string
         get_file_dict()
             Get file dict of DNAnexus app inputs if workflow is valid (requires
-            congenica upload), else raise exception
+            congenica upload), else exit script
         set_jobid_cmds()
             Set commands for retrieving the job ID for the vcf and bam workflow stages
         get_jobids()
@@ -126,7 +127,7 @@ class DecisionTooler(object):
     def get_file_dict(self) -> dict:
         """
         Get file dict of DNAnexus app inputs if workflow is valid (requires
-        congenica upload), else raise exception
+        congenica upload), else exit script
             :return (dict): Dictionary of congenica upload app inputs
         """
         if self.workflow in ["wes", "pipe"]:
@@ -134,11 +135,12 @@ class DecisionTooler(object):
             setattr(self, "file_dict", DECISION_SUPPORT_INPUTS[self.workflow])
         else:
             self.logger.error(self.logger.log_msgs["incorrect_workflow"], self.workflow)
-            raise Exception
+            sys.exit(1)
 
     def set_jobid_cmds(self) -> None:
         """
-        Set the commands for retrieving the job ID for the vcf and bam workflow stages
+        Set the commands for retrieving the job ID for the vcf and bam workflow stages.
+        If unsuccessful, exit script
             :return None:
         """
         self.logger.info(self.logger.log_msgs["setting_job_id_cmds"])
@@ -155,12 +157,12 @@ class DecisionTooler(object):
                 self.logger.log_msgs["setting_job_id_cmds_err"],
                 exception,
             )
-            raise Exception  # Stop script
+            sys.exit(1)
 
     def get_jobids(self) -> None:
         """
         Get job ids for bam and vcf jobs within the workflow by executing the job id
-        retrieval commands. Set as class attributes.
+        retrieval commands. Set as class attributes. If unsuccessful, exit script
             :return None:
         """
         for outfile in self.file_dict.keys():
@@ -185,11 +187,12 @@ class DecisionTooler(object):
                     )
             if tries > 1000:
                 self.logger.exception(self.logger.log_msgs["get_job_id_fail"], outfile)
-                raise Exception
+                sys.exit(1)
 
     def set_app_input_string(self) -> None:
         """
-        Set the input string for the congenica app as class attribute
+        Set the input string for the congenica app as class attribute. If
+        unsuccessful, exit script
             :return None:
         """
         try:
@@ -203,7 +206,7 @@ class DecisionTooler(object):
             setattr(self, "congenica_app_inputs", congenica_app_inputs)
         except Exception as exception:
             self.logger.exception(self.logger.log_msgs["app_input_str_err"], exception)
-            raise Exception  # Stop script
+            sys.exit(1)
 
     def printer(self) -> None:
         """

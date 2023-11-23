@@ -2,9 +2,8 @@
 """
 Script for checking sample sheet naming and contents.
 
-Uses the seglh-naming library. And adds further lab-specific checks e.g. whether
-sequencer IDs and runtypes match those in lists of allowed IDs. Collects all errors in
-an errors list (SamplesheetCheck.errors_list)
+Uses the seglh-naming library. And adds further lab-specific checks e.g. whether sequencer IDs and runtypes match
+those in lists of allowed IDs. Collects all errors in an errors list (SamplesheetCheck.errors_list)
 """
 import os
 import re
@@ -17,9 +16,8 @@ from config import ad_config, panel_config
 
 class SamplesheetCheck(object):
     """
-    Runs the checks. Called by webapp for uploaded samplesheets (uses name of file being
-    uploaded), and called for runs not yet demultiplexed (uses path of expected
-    samplesheet from demultiplex script)
+    Runs the checks. Called by webapp for uploaded samplesheets (uses name of file being uploaded), and
+    called for runs not yet demultiplexed (uses path of expected samplesheet from demultiplex script)
 
     Attributes:
         samplesheet_path (str):         Path to samplesheet
@@ -28,11 +26,9 @@ class SamplesheetCheck(object):
         ss_obj (False | obj):           seglh-naming samplesheet object
         pannumbers (list):              List of panel numbers in the sample sheet
         tso (bool):                     True if samplesheet contains any TSO samples
-        samples (dict):                 Dictionary of sample IDs and sample names from
-                                        the samplesheet
+        samples (dict):                 Dictionary of sample IDs and sample names from the samplesheet
         errors (bool):                  True if samplesheet errors encountered, False if not
-        errors_list (bool):             Stores identifiers for any types of errors
-                                        encountered
+        errors_list (bool):             Stores identifiers for any types of errors encountered
         data_headers (list):            Populated with headers from data section
         missing_headers (list):         Populated with missing data headers
         expected_data_headers (list):   Headers expected to be present in samplesheet
@@ -56,22 +52,23 @@ class SamplesheetCheck(object):
         get_data_section()
             Parse data section of samplesheet from file
         check_expected_headers()
-            Check [Data] section has expected headers, against
-            self.expected_data_headers list
+            Check [Data] section has expected headers, against self.expected_data_headers list
         comp_samplenameid()
             Check whether names match between Sample_ID and Sample_Name in data section
             of samplesheet
-        check_illegal_chars()
+        check_illegal_chars(sample, column)
             Returns true if illegal characters present
-        check_sample()
+        check_sample(sample, column)
             Validate sample names using seglh-naming Sample module.
-        check_pannos()
+        check_pannos(sample, column, sample_obj)
             Check sample names contain allowed pan numbers from self.panel_list number
             list
-        check_runtypes()
+        check_runtypes(sample, column, sample_obj)
             Check sample names contain allowed runtypes from self.runtype_list
         check_tso()
             Returns True if TSO sample
+        log_summary()
+            Write summary of validator outcome to log
     """
 
     def __init__(self, samplesheet_path: str, runfolder_name: str, logger: object):
@@ -293,7 +290,7 @@ class SamplesheetCheck(object):
         used if Sample_Name is not present
             :param sample (str):               Sample name
             :param column (str):               Column header
-            :return sample_obj (obj) | None:   seglh-naming sample object
+            :return sample_obj (obj):   seglh-naming sample object
         """
         try:
             sample_obj = Sample.from_string(sample)
@@ -358,7 +355,8 @@ class SamplesheetCheck(object):
 
     def log_summary(self) -> None:
         """
-        Write summary of validtor outcome to log
+        Write summary of validator outcome to log
+            :return None:
         """
         if self.errors:
             self.logger.warning(

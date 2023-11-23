@@ -4,14 +4,14 @@ This module contains python configuration files, which are imported by other mod
 
 ## Protocol
 
-## Ad_config
+### Ad_config
 
 Automate demultiplex configuration. Contains the following settings:
 - General settings used across modules
 - Demultiplexing script-specific settings
 - Setoff workflows script-specific settings
 
-## Log_msgs_config
+### Log_msgs_config
 
 Config file for logging module. Contains settings specific to logging. The LOG_MSGS
 dictionary contains both general messages which are used across multiple modules, and
@@ -23,7 +23,7 @@ also logfile-specific messages:
 - backup
 - decision_support
 
-## Panel_config
+### Panel_config
 
 The panel config file contains the panel numbers and panel properties, which
 are used by the setoff_workflows script.

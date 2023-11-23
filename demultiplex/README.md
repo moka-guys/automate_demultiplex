@@ -1,6 +1,6 @@
 # Demultiplexing
 
-The [demultiplex.py](../demultiplex.py) script performs the following:
+The [demultiplex.py](demultiplex.py) script performs the following:
 
 1. Demultiplexing
 2. Cluster density calculation
@@ -59,8 +59,8 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py).
 | Alias | Description | Filename | Location |
 | ------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | Demultiplex output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout` |
-| script_logger | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script_log.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
-| demux_rf_logger | Records runfolder-level logs for the demultiplex script | `RUNFOLDERNAME_demultiplex_script_log.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
+| demultiplex (script_logger) | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
+| demultiplex (demux_rf_logger) | Records runfolder-level logs for the demultiplex script | `RUNFOLDERNAME_demultiplex_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
  Bcl2fastq output | STDOUT and STDERR from bcl2fastq2 | `bcl2fastq2_output.log` | Within the runfolder |
 
 ## Testing

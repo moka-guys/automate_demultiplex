@@ -2,28 +2,23 @@
 # coding=utf-8
 """ PANEL NUMBERS AND PANEL PROPERTIES
 
-The panel config file contains the panel numbers and panel properties, which
-are used by the setoff_workflows script.
+The panel config file contains the panel numbers and panel properties, which are used by the setoff_workflows script.
 
-The PANEL_DICT is built up in stages using various other dictionaries to reduce
-repetition. The base dictionary is the DEFAULT_DICT, which is incorporated into
-the CAPTURE_PANEL_DICT, which are then imported into the PANEL_DICT. The
-dictionaries POLYEDGE_INPUTS and CONGENICA_CREDENTIALS are also imported into
-the PANEL_DICT.
+The PANEL_DICT is built up in stages using various other dictionaries to reduce repetition. The base dictionary is the
+DEFAULT_DICT, which is incorporated into the CAPTURE_PANEL_DICT, which are then imported into the PANEL_DICT. The
+dictionaries POLYEDGE_INPUTS and CONGENICA_CREDENTIALS are also imported into the PANEL_DICT.
 
-Panel number lists are created from the PANEL_DICT, assimilating pan numbers
-from the PANEL_DICT which meet the required criteria to be included in that list.
+Panel number lists are created from the PANEL_DICT, assimilating pan numbers from the PANEL_DICT which meet the
+required criteria to be included in that list.
 
-- SNP does not have R numbers (test_number) as it is an identity check for the
-    GMS SMS
-- Panels for WES (analysed in Congenica) and TSO500 (analysed in QCII),
-    and ArcherDX (analysed in Archer software), are applied at the point of
-    analysis, so R and M numbers (test_number) for these are not listed below.
-    These pan numbers do not necessarily refer to bed files but rather project
-    configuration (e.g. DNAnexus instances, project layout etc.)
+- SNP does not have R numbers (test_number) as it is an identity check for the GMS SMS
+- Panels for WES (analysed in Congenica) and TSO500 (analysed in QCII), and ArcherDX (analysed in Archer software),
+    are applied at the point of analysis, so R and M numbers (test_number) for these are not listed below. These
+    pan numbers do not necessarily refer to bed files but rather project configuration (e.g. DNAnexus instances,
+    project layout etc.)
 
-Dictionary keys and values are as follows. Values are False where they are not required
-for analysis of samples with that pan number
+Dictionary keys and values are as follows. Values are False where they are not
+required for analysis of samples with that pan number
     panel_name                      Name of capture panel
     pipeline                        Name of pipeline
     capture_pan_num                 Pan number of capture panel bedfile (used for RPKM).

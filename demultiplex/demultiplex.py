@@ -32,7 +32,7 @@ class GetRunfolders(object):
             Call methods to set off runfolder processing
         demultiplex_runfolder(folder_name)
             Pass NGS runfolder to instance of DemultiplexRunfolder() for processing
-        bcl2fastqlog_absent()
+        bcl2fastqlog_absent(folder_name)
             Check presence of demultiplex logfile (bcl2fastq2_output.log)
         return_num_processed_runfolders()
             Add number of total processed runfolders as attribute
@@ -168,7 +168,7 @@ class DemultiplexRunfolder(object):
         sequencing_complete()
             Check if sequencing has completed for the current runfolder (presence of
             RTAComplete.txt)
-        no_disallowed_sserrs()
+        no_disallowed_sserrs(valid, sscheck_obj)
             Check for specific errors that would cause bcl2fastq2 to fail and whose
             presence should stop demultiplexing
         seq_requires_no_ic()
@@ -460,7 +460,7 @@ class DemultiplexRunfolder(object):
         """
         Create file to prevent demultiplexing starting again. bl2fastq2 v2.20 doesn't
         produce stdout for a while after starting so the file is created and the
-        bcl2fastq2 stdout is written to the file later
+        bcl2fastq2 stdout is written to the file later. If unsuccessful, exit script
             :return True|None:  True if logfile is successfully created
         """
         try:
@@ -479,6 +479,7 @@ class DemultiplexRunfolder(object):
                 self.rf_obj.runfolder_name,
                 exception,
             )
+            sys.exit(1)
 
     def add_bcl2fastqlog_tso_msg(self) -> Union[bool, None]:
         """
@@ -500,7 +501,7 @@ class DemultiplexRunfolder(object):
 
     def run_demultiplexing(self) -> Union[bool, None]:
         """
-        Run demultiplexing command
+        Run demultiplexing command. If unsuccessful, exit script
             :return True|None:  True if command executed succesfully and output is
                                 successfully written to the logfile
         """
@@ -536,7 +537,7 @@ class DemultiplexRunfolder(object):
         Read last x lines of bcl2fastqlog logfile, search for success statement
         The last 10 lines of the demultiplex logfile detail the success of the
         bcl2fastq2 command. If success statement not present, report last few
-        lines to demultiplex log
+        lines to demultiplex log, then exit script
             :return True|None:  True if success statement in bcl2fastq2 logfile
         """
         if os.path.isfile(self.rf_obj.bcl2fastqlog_path):
@@ -576,8 +577,8 @@ class DemultiplexRunfolder(object):
         Run dockerised GATK to run Picard CollectIlluminaLaneMetrics - this calculates
         cluster density and saves files (runfolder.illumina_phasing_metrics and
         runfolder.illumina_lane_metrics) to the runfolder. If the success statement is
-        seen in the stderr, record in the log file else raise a slack alert but don't
-        stop the run. If run was sequenced on novaseq, an extra argument is provided
+        seen in the stderr, record in the log file else raise a slack alert and exit
+        script. If run was sequenced on novaseq, an extra argument is provided
             :return True|None:  True if success statement seen
         """
         if ad_config.NOVASEQ_ID in self.rf_obj.runfolder_name:
@@ -603,7 +604,7 @@ class DemultiplexRunfolder(object):
                     self.rf_obj.runfolder_name,
                 )
                 return True
-        else:  # Raise slack alert
+        else:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["cd_fail"],
                 self.rf_obj.runfolder_name,

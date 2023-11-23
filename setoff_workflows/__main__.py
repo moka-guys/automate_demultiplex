@@ -1,9 +1,8 @@
 """
-Collect sequencing runs and initiate runfolder processing for those sequencing runs
-requiring processing. SequencingRuns calls further classes ProcessRunfolder which calls
-CollectRunfolderSamples (which calls SampleObject per sample), BuildDxCommands which
-generates the dx run commands, and PipelineEmails which generates and sends the pipeline
-emails using ad_email.AdEmail
+Collect sequencing runs and initiate runfolder processing for those sequencing runs requiring processing.
+SequencingRuns calls further classes ProcessRunfolder which calls CollectRunfolderSamples (which calls SampleObject
+per sample), BuildDxCommands which generates the dx run commands, and PipelineEmails which generates
+and sends the pipeline emails using ad_email.AdEmail
 """
 from setoff_workflows import setoff_workflows
 from toolbox import toolbox

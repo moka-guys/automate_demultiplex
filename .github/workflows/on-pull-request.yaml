@@ -42,8 +42,9 @@ jobs:
           # - undefined names (F82)
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
       - name: Test with pytest
       # We do not want it to run the email tests because the credentials are not stored in GitHub
         run: |
-          python3 -m pytest -v -k 'not email and not test_bcl2fastq_installed_pass' --ignore=test/demultiplex_test_files/
+          python3 -m pytest -v -k 'not email and not test_bcl2fastq_installed_pass'
+      # TODO can the bcl2fastq tests be included if the docker image is pulled as part of the tests, or included in the repo as a tar?

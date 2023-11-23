@@ -5,12 +5,10 @@ Uploads runfolder to DNAnexus by passing given arguments to the UploadRunfolder 
 See README and docstrings for further details
 """
 import os
-import inspect
 import argparse
 from config import ad_config
 from upload_runfolder.upload_runfolder import UploadRunfolder
 from toolbox import toolbox
-from ad_logger import ad_logger
 
 
 def get_arguments():
@@ -42,9 +40,8 @@ def get_arguments():
         "-a",
         "--auth_token",
         help=(
-            "A string or file containing a DNAnexus authorisation key used to "
-            "access the DNAnexus project. If not specified, the config-specified auth"
-            "token will be used by default"
+            "A string or file containing a DNAnexus authorisation key used to access the DNAnexus "
+            "project. If not specified, the config-specified auth token will be used by default"
         ),
         default=dnanexus_apikey,
         type=os.path.expanduser,
@@ -53,16 +50,15 @@ def get_arguments():
         "--ignore",
         default=None,
         help=(
-            "Comma-separated list of patterns which prevents the file "
-            "from being uploaded if any pattern is present in filename "
-            "or filepath."
+            "Comma-separated list of patterns which prevents the file from being uploaded "
+            "if any pattern is present in filename or filepath."
         ),
     )
     parser.add_argument(
         "-p",
         "--project_id",
         default=None,
-        help=("The ID of an existing DNAnexus project for the given runfolder"),
+        help="The ID of an existing DNAnexus project for the given runfolder",
     )
 
     return parser.parse_args()  # Collect arguments and return
@@ -73,8 +69,7 @@ parsed_args = get_arguments()  # Get command line arguments
 rf_obj = toolbox.RunfolderObject(parsed_args.runfolder_name, ad_config.TIMESTAMP)
 rf_obj.add_runfolder_loggers()
 
-# If a different auth token is supplied on command line, replace the attribute in the
-# runfolder object
+# If a different auth token is supplied on command line, replace the attribute in the runfolder object
 if parsed_args.auth_token:
     rf_obj.dnanexus_apikey = parsed_args.auth_token
 

@@ -1,6 +1,6 @@
 # Decision Support Tool Inputs
 
-[congenica_inputs.py](../congenica_inputs.py) prints the required inputs for the congenica upload app for a sample workflow in a string format.
+[congenica_inputs.py](congenica_inputs.py) prints the required inputs for the congenica upload app for a sample workflow in a string format.
 
 Inputs are specified in the format executionid.output_name. The execution IDs for the relevant workflow stages are retrieved using dx describe with the workflow analysis ID and stage ID. 
 
@@ -47,7 +47,7 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py). The following
 
 | Alias | Description | Filename | Location |
 | ------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| decision_support | Records the logs from the script to a logfile specific to that DNAnexus project | `decision_support_script_log_RUNFOLDERNAME.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/decision_support_script_logfiles/` |
+| decision_support | Records the logs from the script to a logfile specific to that DNAnexus project | `RUNFOLDERNAME_decision_support_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/decision_support_script_logfiles/` |
 
 ## Testing
 

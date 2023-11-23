@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 # coding=utf-8
 """
-This script contains functions shared across scripts / modules, including the
-RunfolderObject class
+This script contains functions shared across scripts / modules,
+including the RunfolderObject class
 """
 import sys
 import os
@@ -24,12 +24,12 @@ def return_scriptlog_config() -> dict:
         "demultiplex": os.path.join(  # Record demultiplex script logs
             ad_config.AD_LOGDIR,
             "demultiplexing_script_logfiles",
-            f"{ad_config.TIMESTAMP}_demultiplex_script_log.log",
+            f"{ad_config.TIMESTAMP}_demultiplex_script.log",
         ),
         "sw": os.path.join(  # Record sw script logs
             ad_config.AD_LOGDIR,
             "sw_script_logfiles",
-            f"{ad_config.TIMESTAMP}_upload_and_setoff_workflow.log",
+            f"{ad_config.TIMESTAMP}_setoff_workflow.log",
         ),
     }
 
@@ -171,8 +171,7 @@ def get_runfolder_path(runfolder_name: str) -> str:
 
 def test_upload_software(logger) -> True:
     """
-    Test the required software is installed and performing. If not, exit
-    the script
+    Test the required software is installed and performing. If not, exit the script
         :return True | None:    Return True if all software tests pass, else None
     """
     if test_programs("dx_toolkit", logger) and test_programs("upload_agent", logger):
@@ -197,7 +196,7 @@ def test_processing_software(logger) -> Union[bool, None]:
 def test_programs(software_name: str, logger: object) -> True:
     """
     Check software exists in path, and that the test command executes successfully
-    (return code 0).
+    (return code 0). If it does not, exit script
         :param software_name (str):     Name of the sofware being tested
         :param logger (object):         Logger
         :return True:                   Return True if test passes, else exit script
@@ -224,7 +223,8 @@ def test_programs(software_name: str, logger: object) -> True:
 
 def test_docker(software_name: str, logger: object) -> True:
     """
-    Check docker is correctly installed and outputs return code 0 (success)
+    Check docker is correctly installed and outputs return code 0 (success).
+    Else, exit script
         :param software_name (str): Name of the software being tested
         :param logger (object):     Logger
         :return True:               Return True if test passes, else exit script
@@ -264,56 +264,40 @@ class RunfolderObject(object):
 
     Attributes
         dnanexus_apikey (str):                  DNAnexus auth token
-        timestamp (str):                        Timestamp in the format
-                                                str(f"{datetime.datetime.now():
+        timestamp (str):                        Timestamp in the format str(f"{datetime.datetime.now():
                                                 %Y%m%d_%H%M%S}")
         runfolder_name (str):                   Runfolder name string
         runfolderpath (str):                    Runfolder path
         samplesheet_name (str):                 Name of runfolder samplesheet
-        rtacompletefile_path (str):             Sequencing finished filepath (within
-                                                runfolder)
+        rtacompletefile_path (str):             Sequencing finished filepath (within runfolder)
         samplesheet_path (str):                 Path to samplesheet in samplesheets dir
-        runfolder_samplesheet_path (str):       Runfolder samplesheet path (within
-                                                runfolder)
-        checksumfile_path (str):                md5 checksum (integrity check) file path
-                                                (within runfolder)
-        bcl2fastqlog_path (str):                bcl2fastq2 logfile path (within
-                                                runfolder)
-        fastq_dir_path (str):                   Runfolder fastq directory path (within
-                                                runfolder)
+        runfolder_samplesheet_path (str):       Runfolder samplesheet path (within runfolder)
+        checksumfile_path (str):                md5 checksum (integrity check) file path (within runfolder)
+        bcl2fastqlog_path (str):                bcl2fastq2 logfile path (within runfolder)
+        fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
         upload_agent_logfile (str):             Upload agent logfile (within runfolder).
                                                 Stores runfolder upload logs
         bcl2fastqstats_file (str):              Bcl2fastq stats file (within runfolder)
         cluster_density_files (list):           List containing runfolder lane metrics
                                                 and phasing metrics file paths
-        demultiplex_runfolder_logfile (str):    Runfolder demultiplex logfile (within
-                                                logfiles dir)
+        demultiplex_runfolder_logfile (str):    Runfolder demultiplex logfile (within logfiles dir)
         sw_runfolder_logfile (str):             Records output of setoff workflow script
-        upload_runfolder_logfile (str):         Records the logs from the upload_runfolder
-                                                script
-        runfolder_dx_run_script (str):          Workflow dx run commands for runfolder
-                                                (within logfiles dir)
-        post_run_dx_run_script (str):           Separate DX run script for downstream
-                                                processing apps (TSO only)
-        decision_support_upload_cmds (str):     Decision support upload commands for
-                                                runfolder (within logfiles dir)
-        proj_creation_script (str):             DNAnexus project creation bash script
-                                                (within logfiles dir)
-        decision_support_tool_logfile (str):    Decision support tool inputs script
-                                                logfile (within logfiles dir)
-        samplesheet_validator_logfile (str):    Samplesheet validator script logfile
-                                                (within logfiles dir)
+        upload_runfolder_logfile (str):         Records the logs from the upload_runfolder script
+        runfolder_dx_run_script (str):          Workflow dx run commands for runfolder (within logfiles dir)
+        post_run_dx_run_script (str):           Separate DX run script for downstream processing apps (TSO only)
+        decision_support_upload_cmds (str):     Decision support upload commands for runfolder (within logfiles dir)
+        proj_creation_script (str):             DNAnexus project creation bash script (within logfiles dir)
+        decision_support_tool_logfile (str):    Decision support tool inputs script logfile (within logfiles dir)
+        samplesheet_validator_logfile (str):    Samplesheet validator script logfile (within logfiles dir)
         logfiles_config (dict):                 Contains all runfolder log files
-        logfiles_to_upload (list):              All logfiles that require upload to
-                                                DNAnexus
+        logfiles_to_upload (list):              All logfiles that require upload tozzzDNAnexus
         logfile (path):                         One per runfolder logfile
         rf_loggers (object):                    RunfolderLoggers object containing
                                                 runfolder-specific loggers
-
     Methods
         add_runfolder_loggers()
             Add runfolder loggers to runfolder object
-        add_runfolder_logger()
+        add_runfolder_logger(logger_name)
             Add a single runfolder logger to runfolder object
     """
 
@@ -321,9 +305,7 @@ class RunfolderObject(object):
         """
         Constructor for the RunfolderObject class
             :param runfolder_name (str):    Name of runfolder
-            :param timestamp (str):         Timestamp in the format
-                                            str(f"{datetime.datetime.now():
-                                            %Y%m%d_%H%M%S}")
+            :param timestamp (str):         Timestamp in the format str(f"{datetime.datetime.now():%Y%m%d_%H%M%S}")
         """
         with open(
             ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
@@ -354,9 +336,9 @@ class RunfolderObject(object):
         self.fastq_dir_path = os.path.join(
             self.runfolderpath, ad_config.FASTQ_DIRS["fastqs"]
         )
-        self.upload_agent_logfile = os.path.join(  # Holds UA output
+        self.upload_agent_logfile = os.path.join(
             self.runfolderpath,
-            "DNANexus_upload_started.txt",
+            "DNANexus_upload_started.txt",  # Holds UA output
         )
         self.bcl2fastqstats_file = os.path.join(
             self.runfolderpath,
@@ -379,13 +361,13 @@ class RunfolderObject(object):
             os.path.join(  # Record demultiplex script logs
                 ad_config.AD_LOGDIR,
                 "demultiplexing_script_logfiles",
-                f"{self.runfolder_name}_demultiplex_script_log.log",
+                f"{self.runfolder_name}_demultiplex_runfolder.log",
             )
         )
         self.sw_runfolder_logfile = os.path.join(
             ad_config.AD_LOGDIR,
             "sw_script_logfiles",
-            f"{self.runfolder_name}_upload_and_setoff_workflow.log",
+            f"{self.runfolder_name}_setoff_workflow.log",
         )
         self.upload_runfolder_logfile = os.path.join(
             ad_config.AD_LOGDIR,
@@ -409,18 +391,18 @@ class RunfolderObject(object):
         )
         self.proj_creation_script = os.path.join(
             ad_config.AD_LOGDIR,
-            "nexus_project_creation_scripts",
+            "dx_run_commands",
             f"{self.runfolder_name}_create_nexus_project.sh",
         )
         self.decision_support_tool_logfile = os.path.join(
             ad_config.AD_LOGDIR,
             "decision_support_script_logfiles",
-            f"{self.runfolder_name}_decision_support_script_log.log",
+            f"{self.runfolder_name}_decision_support_script.log",
         )
         self.samplesheet_validator_logfile = os.path.join(
             ad_config.AD_LOGDIR,
             "samplesheet_validator_script_logfiles",
-            f"{self.runfolder_name}_samplesheet_validator_script_log.log",
+            f"{self.runfolder_name}_samplesheet_validator_script.log",
         )
         self.logfiles_config = {
             "sw": self.sw_runfolder_logfile,

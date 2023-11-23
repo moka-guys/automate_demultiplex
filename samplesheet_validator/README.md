@@ -57,7 +57,7 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py). The following
 
 | Alias | Description | Filename | Location |
 | ------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| ss_validator | Records runfolder-level logs for the samplesheet_validator script | `RUNFOLDERNAME_samplesheet_validator_script_log.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/samplesheet_validator_script_logfiles/` |
+| ss_validator | Records runfolder-level logs for the samplesheet_validator script | `RUNFOLDERNAME_samplesheet_validator_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/samplesheet_validator_script_logfiles/` |
 
 The script also collects the error messages as it runs, which can be used by other modules when this script is used as an import.
 

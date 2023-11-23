@@ -2,7 +2,6 @@
 
 This module creates objects that are used to write messages to the syslog, stream and log files. It is imported by other scripts within the repository.
 
-
 ## Protocol
 
 The script has some standalone functions:
@@ -18,11 +17,9 @@ The AdLogger class creates a Python logging object with custom attributes and a 
 
 This removes sensitive information (authentication keys) in log messages (preventing them from being entered into rapid7) using regex. It inherits the properties and methods from logging.Formatter. It is used by the AdLogger class. 
 
-
 ### RunfolderLoggers Class
 
 Creates an RunfolderLoggers object that contains various loggers required by the script that calls it. The loggers created are dictated by the logfiles_config dict provided as input. The class adds an AdLogger object for each logger specified in the logfiles_config and assigns it as an attribute. In this way the RunfolderLoggers object attributes can be used to write to the log files.
-
 
 ## Usage
 

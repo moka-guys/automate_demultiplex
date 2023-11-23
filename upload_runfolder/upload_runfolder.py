@@ -3,6 +3,7 @@
 """
 upload_runfolder.py Uploads an Illumina runfolder to DNAnexus.
 """
+import sys
 import os
 import re
 import math
@@ -15,8 +16,7 @@ class UploadRunfolder:
     Uploads a runfolder to DNAnexus.
 
     Attributes:
-        rf_obj (obj):               RunfolderObject object (contains runfolder-specific
-                                    attributes)
+        rf_obj (obj):               RunfolderObject object (contains runfolder-specific attributes)
         logger (obj):               Logger object
         nexus_identifiers (dict):   Dictionary containing project name and ID
 
@@ -34,8 +34,7 @@ class UploadRunfolder:
             files specified in the ignore string. Folders as key and files in the
             folder as the value in list format
         get_folderpaths()
-            Walk through runfolder and create a list of all folder paths within
-            the runfolder
+            Walk through runfolder and create a list of all folder paths within the runfolder
         get_filepaths(folderpaths, ignore)
             Add the files contained within each folder to the file_dict, ignoring
             any files in the filepath_list that are specified in the ignore string
@@ -65,8 +64,7 @@ class UploadRunfolder:
     def __init__(self, rf_obj: object, nexus_identifiers=False):
         """
         Constructor for the UploadRunfolder class
-            :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific
-                                        attributes)
+            :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific attributes)
             :param nexus_identifiers    Dictionary of proj_name and proj_id, or False
             (dict | False):
         """
@@ -118,8 +116,8 @@ class UploadRunfolder:
 
     def upload_rest_of_runfolder(self, ignore: str) -> None:
         """
-        Call methods to upload the rest of the runfolder (the runfolder
-        minus the fastqs and several QC files)
+        Call methods to upload the rest of the runfolder (the
+        runfolder minus the fastqs and several QC files)
             :return None:
         """
         self.logger.info(
@@ -130,8 +128,8 @@ class UploadRunfolder:
         self.check_runfolder_exists()
         self.file_dict = self.get_file_dict(ignore)
         self.build_upload_cmds()
-        # It is quicker to upload files in parallel so files in each folder
-        # are uploaded as separate commands
+        # It is quicker to upload files in parallel so files in each
+        # folder are uploaded as separate commands
         for folderpath in self.file_dict:
             self.logger.info(self.logger.log_msgs["uploading_files"], folderpath)
             if "upload_cmds" in self.file_dict[folderpath].keys():
@@ -144,7 +142,7 @@ class UploadRunfolder:
 
     def check_runfolder_exists(self) -> None:
         """
-        Check runfolder exists
+        Check runfolder exists. If it does not, exit script
             :return None:
         """
         self.logger.info(
@@ -156,7 +154,7 @@ class UploadRunfolder:
                 self.logger.log_msgs["nonexistent_runfolder"],
                 self.rf_obj.runfolderpath,
             )
-            raise IOError("Invalid runfolder given as input")
+            sys.exit(1)
 
     def get_file_dict(self, ignore: str) -> dict:
         """
@@ -173,10 +171,8 @@ class UploadRunfolder:
 
     def get_folderpaths(self) -> list:
         """
-        Walk through runfolder and create a list of all folder paths within
-        the runfolder
-            :return folderpaths (list): Return a list of folder paths within
-                                        the runfolder
+        Walk through runfolder and create a list of all folder paths within the runfolder
+            :return folderpaths (list): Return a list of folder paths within the runfolder
         """
         self.logger.info(self.logger.log_msgs["getting_folder_paths"])
         folderpaths = [self.rf_obj.runfolderpath]  # Add root folder path
@@ -214,13 +210,11 @@ class UploadRunfolder:
 
     def ignore_file(self, filepath: str, ignore: str) -> bool:
         """
-        Determine whether a file should be ignored by parsing the ignore string
-        and comparing to the filepath. If an ignore pattern was specified,
-        split the string on the comma and loop through the list, searching
-        for the pattern in the filepath with standardised case. If the pattern
-        is present, return True (file should not be uploaded), else return False
-        if no pattern was given or the pattern was not found in the filepath (file
-        should be uploaded)
+        Determine whether a file should be ignored by parsing the ignore string and comparing
+        to the filepath. If an ignore pattern was specified, split the string on the comma and
+        loop through the list, searching for the pattern in the filepath with standardised case.
+        If the pattern is present, return True (file should not be uploaded), else return False
+        if no pattern was given or the pattern was not found in the filepath (file should be uploaded)
             :param filepath (str):  Path of file for comparison
             :param ignore (str):    String containing files to ignore
             :return bool:           True if file should be ignored, False if not
@@ -235,11 +229,10 @@ class UploadRunfolder:
 
     def build_upload_cmds(self) -> None:
         """
-        Build upload commands to upload the rest of the runfolder. The upload
-        agent command can take multiple files separated by a space, with the
-        full path required for each file, and it has a max number of uploads
-        of 1000 per command. This function generates per-folder upload commands,
-        providing 100 files maximum per upload command
+        Build upload commands to upload the rest of the runfolder. The upload agent command can take
+        multiple files separated by a space, with the full path required for each file, and it has a
+        max number of uploads of 1000 per command. This function generates per-folder upload
+        commands, providing 100 files maximum per upload command
             :return None:
         """
         for folderpath in self.file_dict:
@@ -298,15 +291,12 @@ class UploadRunfolder:
         """
         Get the corresponding DNAnexus subdirectory name for the folderpath.
         This is used in the upload agent's '--folder' argument
-            :param folder_path (str):           Path of a local folder containing
-                                                files to be uploaded to DNAnexus
-            :return
-            nexus_project_subdirectory (str):   DNAnexus folder name e.g.
-                                                runfolder/RTALogs
+            :param folder_path (str):                   Path of a local folder containing
+                                                        files to be uploaded to DNAnexus
+            :returnnexus_project_subdirectory (str):    DNAnexus folder name e.g. runfolder/RTALogs
         """
-        # Files in the root of a runfolder do not require cleaning, while
-        # files not in the root require removal of the runfolder name and
-        # parent folders from the input filepath
+        # Files in the root of a runfolder do not require cleaning, while files not in the root
+        # require removal of the runfolder name and parent folders from the input filepath
         if folderpath == self.rf_obj.runfolderpath:
             clean_runfolder_path = ""
         else:

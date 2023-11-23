@@ -19,12 +19,10 @@ from typing import Union, Tuple
 
 class SequencingRuns(object):
     """
-    Collects sequencing runs and initiates runfolder processing for those sequencing
-    runs requiring processing.
+    Collects sequencing runs and initiates runfolder processing for those sequencing runs requiring processing
 
     Attributes
-        runs_to_process (dict):         Object containing runs that require processing
-                                        as key,value pairs
+        runs_to_process (dict):         Object containing runs that require processing as key,value pairs
         processed_runfolders (list):    List of runfolders processed by the script
         script_logger (object):         Script-level logger
         num_processed_runfolders (int): Number of runfolders processed during this cycle
@@ -34,15 +32,19 @@ class SequencingRuns(object):
             Call methods to collect runfolders for processing
         set_runfolders()
             Update self.runfolders list with NGS runfolders in the runfolders directory
-        requires_processing()
-            Calls other methods to determine whether the runfolder requires processing
-            (demultiplexing has finished successfully and the runfolder has not already
-            been uploaded)
-        has_demultiplexed()
+        requires_processing(rf_obj)
+            Calls other methods to determine whether the runfolder requires processing (demultiplexing
+            has finished successfully and the runfolder has not already been uploaded)
+        has_demultiplexed(rf_obj)
             Check if demultiplexing has already been performed and completed sucessfully
-        already_uploaded()
+        already_uploaded(rf_obj)
             Checks for presence of upload agent logfile (denotes that the runfolder has
             already been processed)
+        process_runfolder(rf_obj)
+            If software tests pass, set up logging and pass rf_obj to the ProcessRunfolder class for
+            processing, shutting down logs upon completion
+        return_num_processed_runfolders()
+            Set the total number of processed runfolders as a class attribute
     """
 
     def __init__(self):
@@ -85,13 +87,10 @@ class SequencingRuns(object):
 
     def requires_processing(self, rf_obj: object) -> Union[bool, None]:
         """
-        Calls other methods to determine whether the runfolder requires processing
-        (demultiplexing has finished successfully and the runfolder has not already been
-        uploaded)
-            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
-                                    attributes)
-            :return True | None:    Returns true if runfolder requires processing, else
-                                    None
+        Calls other methods to determine whether the runfolder requires processing (demultiplexing
+        has finished successfully and the runfolder has not already been uploaded)
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
+            :return True | None:    Returns true if runfolder requires processing, else None
         """
         if self.has_demultiplexed(rf_obj) and not self.already_uploaded(rf_obj):
             self.script_logger.info(
@@ -107,13 +106,11 @@ class SequencingRuns(object):
 
     def has_demultiplexed(self, rf_obj: object) -> Union[bool, None]:
         """
-        Check if demultiplexing has already been performed and completed sucessfully.
-        Checks the demultiplex log file exists, and if present checks the expected
-        success string is in the last line of the log file.
-            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
-                                    attributes)
-            :return True | None:    Return True if runfolder already demultiplexed,
-                                    else None
+        Check if demultiplexing has already been performed and completed sucessfully. Checks the
+        demultiplex log file exists, and if present checks the expected success string is in the
+        last line of the log file.
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
+            :return True | None:    Return True if runfolder already demultiplexed, else None
         """
         if os.path.isfile(rf_obj.bcl2fastqlog_path):
             with open(rf_obj.bcl2fastqlog_path, "r", encoding="utf-8") as logfile:
@@ -148,12 +145,9 @@ class SequencingRuns(object):
 
     def already_uploaded(self, rf_obj: object) -> Union[bool, None]:
         """
-        Checks for presence of upload agent logfile (denotes that the runfolder has
-        already been processed).
-            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
-                                    attributes)
-            :return True | None:    Returns True if runfolder already uploaded, else
-                                    None
+        Checks for presence of upload agent logfile (denotes that the runfolder has already been processed)
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
+            :return True | None:    Returns True if runfolder already uploaded, else None
         """
         if os.path.isfile(rf_obj.upload_agent_logfile):
             self.script_logger.info(self.script_logger.log_msgs["ua_file_present"])
@@ -164,11 +158,9 @@ class SequencingRuns(object):
 
     def process_runfolder(self, rf_obj: object) -> None:
         """
-        if software tests pass, set up logging and pass rf_obj to the ProcessRunfolder
-        class for processing, shutting down logs upon completion. Append to
-        self.processed_runfolders
-            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
-                                    attributes)
+        If software tests pass, set up logging and pass rf_obj to the ProcessRunfolder class for processing,
+        shutting down logs upon completion. Append to self.processed_runfolders
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
             :return None:
         """
         rf_obj.add_runfolder_loggers()  # Add runfolder loggers attribute
@@ -195,33 +187,25 @@ class SequencingRuns(object):
 
 class ProcessRunfolder(object):
     """
-    A new instance of this class is initiated for each runfolder being assessed. Calls
-    methods to process and upload a runfolder including creation of DNAnexus project,
-    upload of data using upload_runfolder, building and execution of dx run commands
-    to set off sample workflows and apps, creation of decision support tool upload
-    scripts, and sending of pipeline emails
+    A new instance of this class is initiated for each runfolder being assessed. Calls methods to process and
+    upload a runfolder including creation of DNAnexus project, upload of data using upload_runfolder,
+    building and execution of dx run commands to set off sample workflows and apps, creation of decision
+    support tool upload scripts, and sending of pipeline emails
 
     Attributes:
-        rf_obj (obj):                       RunfolderObject() object (contains
-                                            runfolder-specific attributes)
+        rf_obj (obj):                       RunfolderObject() object (contains runfolder-specific attributes)
         dnanexus_apikey (str):              DNAnexus auth token
-        samples_obj (obj):                  CollectRunfolderSamples() object (contains
-                                            sample-specific attributes)
-        users_dict (dict):                  Dictionary of users and admins requiring
-                                            access to the DNAnexus project
+        samples_obj (obj):                  CollectRunfolderSamples() object (contains sample-specific attributes)
+        users_dict (dict):                  Dictionary of users and admins requiring access to the DNAnexus project
         nexus_identifiers (dict):           Dictionary containing project name and ID
-        upload_runfolder (obj):             UploadRunfolder() object with methods
-                                            that can be called to upload files to
-                                            the DNAnexus project
-        upload_cmds (dict):                 Dictionary of commands for uploading files
-                                            to the DNAnexus project
-        pre_pipeline_upload_dict (dict):    Dict of files to upload prior to pipeline
-                                            setoff, and commands
+        upload_runfolder (obj):             UploadRunfolder() object with methods that can be called to upload
+                                            files to the DNAnexus project
+        upload_cmds (dict):                 Dictionary of commands for uploading files to the DNAnexus project
+        pre_pipeline_upload_dict (dict):    Dict of files to upload prior to pipeline setoff, and commands
 
     Methods:
         get_users_dict()
-            Create a dictionary of users and admins that require access to the DNAnexus
-            project
+            Create a dictionary of users and admins that require access to the DNAnexus project
         write_project_creation_script()
             Write the script that creates the DNAnexus project and shares it with the
             required users with the required access level
@@ -241,12 +225,10 @@ class ProcessRunfolder(object):
             Uploads the files in the samples_obj.pre_pipeline_upload_dict for the
             runfolder. Calls the tso runfolder upload function if the runfolder is tso
         upload_to_dnanexus(filetype, file_upload_dict)
-            Passes the command and file list in file_upload_dict to
-            upload_runfolder.upload_files() which writes log messages to the upload
-            agent log within the runfolder
+            Passes the command and file list in file_upload_dict to upload_runfolder.upload_files()
+            which writes log messages to the upload agent log within the runfolder
         upload_rest_of_runfolder()
-            Backs up the rest of the runfolder, ignoring files dependent upon the type
-            of run
+            Backs up the rest of the runfolder, ignoring files dependent upon the type of run
         create_decision_support_command_file()
             If there is a decision support tool upload required, create the upload bash
             script, which  is run manually after QC has passed
@@ -313,14 +295,12 @@ class ProcessRunfolder(object):
 
     def get_users_dict(self) -> dict:
         """
-        Create a dictionary of users and admins that require access to the DNAnexus
-        project. This also includes dry lab dnanexus IDs if applicable for the samples
-        in the runfolder. These are taken from the per-sample panel_stettings in the
-        samples_dict. This is required because some samples are analysed at dry labs,
-        with access to projects only given where there is a sample for that dry lab on
-        the run
-            :return (dict):     Dictionary of users and admins requiring access to the
-                                DNAnexus project
+        Create a dictionary of users and admins that require access to the DNAnexus project. This also
+        includes dry lab dnanexus IDs if applicable for the samples in the runfolder. These are taken
+        from the per-sample panel_stettings in the samples_dict. This is required because some samples
+        are analysed at dry labs, with access to projects only given where there is a sample for that
+        dry lab on the run
+            :return (dict):     Dictionary of users and admins requiring access to the DNAnexus project
         """
         dry_lab_list = set(
             [
@@ -381,8 +361,8 @@ class ProcessRunfolder(object):
 
     def run_project_creation_script(self) -> str:
         """
-        Set off the project creation script using subprocess. The output of this command
-        is checked to ensure it meets the expected success pattern
+        Set off the project creation script using subprocess. The output of this command is checked to
+        ensure it meets the expected success pattern. If unsuccessful, exit script
             :return projectid (str):    Project ID of the created project
         """
         self.rf_obj.rf_loggers.sw.info(
@@ -407,8 +387,8 @@ class ProcessRunfolder(object):
     def get_upload_cmds(self) -> dict:
         """
         Build file upload commands
-            :return upload_cmds (dict): Dictionary of commands for uploading files to
-                                        the DNAnexus project
+            :return upload_cmds (dict): Dictionary of commands for uploading
+                                        files to the DNAnexus project
         """
         upload_cmds = {
             "cd": ad_config.DX_CMDS["file_upload_cmd"]
@@ -475,7 +455,7 @@ class ProcessRunfolder(object):
         samples, samplesheet_header = self.read_tso_samplesheet
         # Split samples into batches (size specified in config)
         batches = [
-            samples[i: i + ad_config.TSO_BATCH_SIZE]
+            samples[i : i + ad_config.TSO_BATCH_SIZE]
             for i in range(0, len(samples), ad_config.TSO_BATCH_SIZE)
         ]
         # Create new samplesheets named "PartXofY", add samplesheet to list
@@ -574,9 +554,8 @@ class ProcessRunfolder(object):
 
     def upload_to_dnanexus(self, filetype: str, file_upload_dict: dict) -> None:
         """
-        Passes the command and file list in file_upload_dict to
-        upload_runfolder.upload_files() which writes log messages to the upload agent
-        log within the runfolder
+        Passes the command and file list in file_upload_dict to upload_runfolder.upload_files()
+        which writes log messages to the upload agent log within the runfolder
             :param filetype (str):          Name of the file upload type
             :param file_upload_dict (dict): Dictionary of files for upload
             :return None:
@@ -610,11 +589,13 @@ class ProcessRunfolder(object):
         except tso500 runs for which they are needed for demultiplexing on DNAnexus).
         Calls upload_runfolder.upload_rest_of_runfolder(ignore), passing a run-dependent
         ignore string, and the this handles the runfolder upload. upload_runfolder
-        writes log messages to the upload agent log within the runfolder
+        writes log messages to the upload agent log within the runfolder. If unsuccessful,
+        exit script
             :return None:
         """
-        # Try to copy samplesheet into project
-        if os.path.exists(self.rf_obj.samplesheet_path):
+        if os.path.exists(
+            self.rf_obj.samplesheet_path
+        ):  # Try to copy samplesheet into project
             copyfile(
                 self.rf_obj.samplesheet_path,
                 self.rf_obj.runfolder_samplesheet_path,
@@ -647,6 +628,7 @@ class ProcessRunfolder(object):
                 self.rf_obj.upload_runfolder_logfile,
                 self.rf_obj.upload_agent_logfile,
             )
+            sys.exit(1)
 
     def create_decision_support_command_file(self) -> None:
         """
@@ -736,8 +718,7 @@ class CollectRunfolderSamples(object):
             Read samplesheet to create a list of samples for the run
         get_pipeline()
             Use self.samplename_list and the config.PANEL_DICT to get a list of pipeline
-            names for samples in the run. Returns the most frequent pipeline name in the
-            set
+            names for samples in the run. Returns the most frequent pipeline name in the set
         get_nexus_runfolder_suffix()
             Get runfolder suffix for the DNAnexus project name. This consists of the
             library number, followed by the WES batch if the run is a WES run
@@ -746,22 +727,19 @@ class CollectRunfolderSamples(object):
         capture_wes_batch_numbers()
             Parse the names in self.samplename_list to identify the WES batch numbers
         get_nexus_paths()
-            Build nexus paths, using NGS run numbers (and batch numbers in the case of
-            WES)
+            Build nexus paths, using NGS run numbers (and batch numbers in the case of WES)
         get_samples_dict()
             Create a SampleObject per sample, containing sample-specific properties, and
             add each SampleObject to a larger samples_dict
         check_fastqs()
             Check all fastqs in fastq dir were correctly identified from the samplesheet
-            and stored in the sample dict, and add any missing samples to the samples
-            dict
-        fastq_not_undetermined()
+            and stored in the sample dict, and add any missing samples to the samples dict
+        fastq_not_undetermined(fastq_dir_file)
             Determine whether the fastq is an undetermined fastq
         get_fastqs_list()
             Return a list of sample fastqs for the run
         get_fastqs_str()
-            Return a space separated string of sample fastqs with each fastq encased in
-            quotation marks
+            Return a space separated string of sample fastqs with each fastq encased in quotation marks
     """
 
     def __init__(self, rf_obj: object):
@@ -862,7 +840,7 @@ class CollectRunfolderSamples(object):
         These are the first elements in the sample names (before the first underscore).
         These numbers are used as the suffix for the DNAnexus project name (along with
         the WES batch number in the case of WES runs). If no library prep numbers are
-        found, raise an error
+        found, exit the script
             :return (list) | None:   List of unique library numbers
         """
         library_numbers = []
@@ -881,12 +859,13 @@ class CollectRunfolderSamples(object):
                 self.rf_obj.rf_loggers.sw.log_msgs["library_no_err"],
                 self.rf_obj.runfolder_name,
             )
-            raise Exception  # Stop script
+            sys.exit(1)
 
     def capture_wes_batch_numbers(self) -> list:
         """
         Parse the names in self.samplename_list to identify the WES batch numbers. This
-        along with the library prep number is used as the DNAnexus project name suffix
+        along with the library prep number is used as the DNAnexus project name suffix.
+        If unsuccessful, exit the script
             :return wes_batch_numbers_list (list):  List of unique WES batch numbers
         """
         wes_batch_numbers_list = []
@@ -907,19 +886,17 @@ class CollectRunfolderSamples(object):
                 self.rf_obj.rf_loggers.sw.log_msgs["wes_batch_nos_missing"],
                 self.rf_obj.runfolder_name,
             )
-            raise Exception  # Stop script
+            sys.exit(1)
 
     def get_nexus_paths(self) -> dict:
         """
         Build nexus paths, using NGS run numbers (and batch numbers in the case of WES).
-        Builds the DNAnexus project name using the config-defined project prefix
-        (denoting status of the DNAnexus project), followed by the runfolder name and
-        the and self.nexus_runfolder_suffix as the suffix (library prep / WES batch
-        numbers). Uses the DNAnexus project name to build additional paths required for
-        later dx run commands
-            :return nexus_paths (dict):     Dictionary of paths within the DNAnexus
-                                            project that are required for building dx
-                                            commands
+        Builds the DNAnexus project name using the config-defined project prefix (denoting
+        status of the DNAnexus project), followed by the runfolder name and the and
+        self.nexus_runfolder_suffix as the suffix (library prep / WES batch numbers). Uses
+        the DNAnexus project name to build additional paths required for later dx run commands
+            :return nexus_paths (dict): Dictionary of paths within the DNAnexus project
+                                        that are required for building dx commands
         """
         nexus_paths = {}
         if self.pipeline == "tso500":
@@ -971,11 +948,10 @@ class CollectRunfolderSamples(object):
     def check_fastqs(self) -> None:
         """
         Check all fastqs in fastq dir were correctly identified from the samplesheet and
-        stored in the sample dict, and add any missing samples to the samples dict.
-        Loops through all the files in the given folder, identifies if each file is a
-        fastq, and checks it is not an undetermined fastq. Then checks whether the
-        fastq matches a sample in the sample_dict and if not, adds it as a sample to
-        self.samples_dict
+        stored in the sample dict, and add any missing samples to the samples dict. Loops
+        through all the files in the given folder, identifies if each file is a fastq, and
+        checks it is not an undetermined fastq. Then checks whether the fastq matches a
+        sample in the sample_dict and if not, adds it as a sample to self.samples_dict
             :return None:
         """
         missing_samples = []
@@ -1035,7 +1011,7 @@ class CollectRunfolderSamples(object):
     def get_fastqs_list(self) -> list:
         """
         Return a list of sample fastqs for the run
-            :return fastqs_list (list):     List of all sample fastqs in the run
+            :return fastqs_list (list): List of all sample fastqs in the run
         """
         fastqs_list = []
         for sample_name in self.samples_dict.keys():
@@ -1049,8 +1025,8 @@ class CollectRunfolderSamples(object):
 
     def get_fastqs_str(self) -> str:
         """
-        Return a space separated string of sample fastqs with each fastq encased in
-        quotation marks
+        Return a space separated string of sample fastqs with each fastq
+        encased in quotation marks
             :return fastqs_str (str):   Space separated string of sample fastqs with
                                         each fastq encased in quotation marks
         """
@@ -1067,8 +1043,7 @@ class SampleObject:
     Collect sample-specific attributes for a sample
 
     Attributes
-        rf_obj (obj):                       RunfolderObject object (contains runfolder-specific
-                                            attributes)
+        rf_obj (obj):                       RunfolderObject object (contains runfolder-specific attributes)
         sample_name (str):                  Sample name
         pipeline (str):                     Pipeline name
         nexus_paths (dict):                 Dictionary of paths within the DNAnexus project that
@@ -1078,12 +1053,10 @@ class SampleObject:
         workflow_name (str):                Workflow name
         pannum (str):                       Panel number that matches a config-defined panel
                                             number, or None if pannum not valid
-        panel_settings (dict):              Config defined panel settings specific to the sample
-                                            panel number
+        panel_settings (dict):              Config defined panel settings specific to the sample panel number
         primary_identifier (str):           Primary sample identifier
         secondary_identifier (str):         Secondary sample identifier
-        fastqs_dict (dict):                 Dictionary containing R1 and R2 fastqs and their
-                                            local and cloud paths
+        fastqs_dict (dict):                 Dictionary containing R1 and R2 fastqs and their local and cloud paths
         query (str):                        Return sample SQL query (sample-level query)
         sample_pipeline_cmd (str):          Dx run command for the sample workflow
         decision_support_upload_cmd (str):  Dx run command for the decision support tool upload
@@ -1112,8 +1085,7 @@ class SampleObject:
         return_rd_query()
             Create a query per sample using the DNA number
         return_oncology_query()
-            Create a query per sample using IDs from the samplename (3rd and 4th)
-            elements
+            Create a query per sample using IDs from the samplename (3rd and 4th) elements
         build_sample_dx_run_cmd()
             Build sample-level dx run commands for the workflow and congenica upload
         create_wes_cmd()
@@ -1126,7 +1098,7 @@ class SampleObject:
             app to the decision support tool upload bash script
         build_congenica_cmd()
             Build the command to write the congenica upload dx run command to the decision
-            support tool upload bash script.
+            support tool upload bash script
         build_qiagen_upload_cmd()
             Build the command to write the qiagen upload command to the decisions support
             tool upload bash script
@@ -1156,11 +1128,9 @@ class SampleObject:
         Constructor for the SampleObject class
             :param sample_name (str):       Sample name
             :param pipeline (str):          Pipeline name
-            :param rf_obj (obj):            RunfolderObject object (contains
-                                            runfolder-specific attributes)
-            :param nexus_paths (dict):      Dictionary of paths within the DNAnexus
-                                            project that are required for building dx
-                                            commands
+            :param rf_obj (obj):            RunfolderObject object (contains runfolder-specific attributes)
+            :param nexus_paths (dict):      Dictionary of paths within the DNAnexus project that are
+                                            required for building dx commands
         """
         self.rf_obj = rf_obj
         self.sample_name = sample_name
@@ -1423,18 +1393,15 @@ class SampleObject:
 
     def return_decision_support_cmd(self) -> Union[str, None]:
         """
-        Construct decision support tool command for non-reference samples by calling
-        build_congenica_sftp_cmd or build_congenica_cmd. If a sample requires
-        congenica upload, there are 2 methods. If congenica project ID is specified as
-        'SFTP' within the config it means the sample requires upload via SFTP, else if
-        congenica_project ID is specified it means it can be uploaded using the upload
-        agent. Both congenica apps app take inputs in the format jobid.outputname which
-        ensures the job doesn't run until the vcfs have been created. App inputs are
-        created by a python script, which is called immediately before the app is set
-        off, and the script output (app inputs) is captured by the variable $analysisid
-            :return (str | None):   Dx run commands (congenica input command, congenica
-                                    upload command), or None if sample is a reference
-                                    sample
+        Construct decision support tool command for non-reference samples by calling build_congenica_sftp_cmd
+        or build_congenica_cmd. If a sample requires congenica upload, there are 2 methods. If congenica
+        project ID is specified as 'SFTP' within the config it means the sample requires upload via SFTP,
+        else if congenica_project ID is specified it means it can be uploaded using the upload agent. Both
+        congenica apps app take inputs in the format jobid.outputname which ensures the job doesn't run until
+        the vcfs have been created. App inputs are created by a python script, which is called immediately
+        before the app is set off, and the script output (app inputs) is captured by the variable $analysisid
+            :return (str | None):   Dx run commands (congenica input command, congenica upload command),
+                                    or None if sample is a reference sample
         """
         if self.reference_sample:
             return None
@@ -1443,7 +1410,6 @@ class SampleObject:
                 self.rf_obj.rf_loggers.sw.log_msgs["decision_support_upload_required"],
                 self.nexus_paths["proj_name"],
             )
-
             # If project is specified then upload via upload agent
             if self.panel_settings["congenica_project"] == "SFTP":  # SFTP upload cmd
                 self.rf_obj.rf_loggers.sw.info(
@@ -1463,17 +1429,15 @@ class SampleObject:
                     self.nexus_paths["proj_name"],
                 )
                 decision_support_cmd = self.build_qiagen_upload_cmd()
-
             return decision_support_cmd
 
     def build_congenica_sftp_cmd(self) -> str:
         """
-        Build the command to write the congenica upload dx run command for the SFTP
-        app to the decision support tool upload bash script. This command is used
-        to upload the sample to congenica using the SFTP congenica upload app.
-        Samples requiring upload by SFTP require patient-specific info to be
-        pre-added into Congenica by the scientists. Takes BAM and VCF inputs,
-        and does not require project IDs, IR templates or name
+        Build the command to write the congenica upload dx run command for the SFTP app to the decision
+        support tool upload bash script. This command is used to upload the sample to congenica using
+        the SFTP congenica upload app. Samples requiring upload by SFTP require patient-specific info
+        to be pre-added into Congenica by the scientists. Takes BAM and VCF inputs, and does not require
+        project IDs, IR templates or name
             :return (str):  Dx run command for the congenica upload (SFTP app)
         """
         self.rf_obj.rf_loggers.sw.info(
@@ -1494,13 +1458,11 @@ class SampleObject:
 
     def build_congenica_cmd(self) -> str:
         """
-        Build the command to write the congenica upload dx run command to the decision
-        support tool upload bash script. This command is used to upload the sample to
-        congenica using the standard congenica upload app. Takes BAM and VCF inputs,
-        along with config-specified inputs congenica project ID, credentials, IR
-        template and sample name
-            :return (str):  Dx run command for the congenica upload (standard
-                            congenica upload app)
+        Build the command to write the congenica upload dx run command to the decision support tool
+        upload bash script. This command is used to upload the sample to congenica using the standard
+        congenica upload app. Takes BAM and VCF inputs, along with config-specified inputs congenica
+        project ID, credentials, IR template and sample name
+            :return (str):  Dx run command for the congenica upload (standard congenica upload app)
         """
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
@@ -1619,14 +1581,13 @@ class SampleObject:
 
     def get_fhprs_cmd_string(self) -> str:
         """
-        Get command string for input FH_PRS stage of PIPE workflow. If sample is
-        specified as requiring FH analysis in the config, set skip to False (the app
-        default is skip=True), and specify instance type for human exome app and specify
-        outptut as both VCF and GVCF
+        Get command string for input FH_PRS stage of PIPE workflow. If sample is specified as
+        requiring FH analysis in the config, set skip to False (the app default is skip=True),
+        and specify instance type for human exome app and specify outptut as both VCF and GVCF
             :return fh_prs_cmd_string: App input string
         """
         if self.panel_settings["FH"]:
-            fh_prs_cmd_string = " ".join(
+            return " ".join(
                 [
                     ad_config.STAGE_INPUTS["pipe"]["fhprs_skip"],
                     "--instance-type",
@@ -1637,8 +1598,7 @@ class SampleObject:
                 ]
             )
         else:
-            fh_prs_cmd_string = ""
-        return fh_prs_cmd_string
+            return ""
 
     def get_polyedge_cmd_string(self) -> str:
         """
@@ -1648,7 +1608,7 @@ class SampleObject:
             :return polyedge_cmd_string (str):  App input string
         """
         if self.panel_settings["polyedge"]:
-            polyedge_cmd_string = " ".join(
+            return " ".join(
                 [
                     f'{ad_config.STAGE_INPUTS["pipe"]["polyedge_gene"]}'
                     f'{self.panel_settings["polyedge"]["gene"]}',
@@ -1662,8 +1622,7 @@ class SampleObject:
                 ]
             )
         else:
-            polyedge_cmd_string = ""
-        return polyedge_cmd_string
+            return ""
 
     def get_masked_reference_cmd_string(self) -> str:
         """
@@ -1672,13 +1631,9 @@ class SampleObject:
             :return masked_reference_cmd_string (str):  Masked reference input string
         """
         if self.panel_settings["masked_reference"]:
-            masked_reference_cmd_string = (
-                f"{ad_config.STAGE_INPUTS['pipe']['bwa_ref']}"
-                f"{self.panel_settings['masked_reference']}"
-            )
+            return f"{ad_config.STAGE_INPUTS['pipe']['bwa_ref']}{self.panel_settings['masked_reference']}"
         else:
-            masked_reference_cmd_string = ""
-        return masked_reference_cmd_string
+            return ""
 
     def create_snp_cmd(self) -> str:
         """
@@ -1747,19 +1702,15 @@ class SampleObject:
 class BuildDxCommands(object):
     """
     Build run-wide commands for runfolder, and write sample-level commands from the
-    samples_obj along with the run-wide commands to the dx run script.
+    samples_obj along with the run-wide commands to the dx run script
 
     Attributes:
-        rf_obj (obj):                   RunfolderObject object (contains runfolder-specific
-                                        attributes)
-        samples_obj (obj):              CollectRunfolderSamples object (contains sample-specific
-                                        attributes
-        nexus_project_id (str):         Project ID, generated when the DNAnexus project is
-                                        created
+        rf_obj (obj):                   RunfolderObject object (contains runfolder-specific attributes)
+        samples_obj (obj):              CollectRunfolderSamples object (contains sample-specific attributes
+        nexus_project_id (str):         Project ID, generated when the DNAnexus project is created
         dnanexus_apikey (str):          DNAnexus auth token
         dx_cmd_list (list):             List of dx run commands for the project
-        dx_postprocessing_cmds (list):  List of dx run commands to run after the TSO app. TSO
-                                        runs only
+        dx_postprocessing_cmds (list):  List of dx run commands to run after the TSO app. TSO runs only
 
     Methods:
         build_dx_cmds()
@@ -1806,23 +1757,24 @@ class BuildDxCommands(object):
         return_pipe_runwide_cmds()
             Collect runwide commands for PIPE runs as a list. This includes RPKM (single
             command per vcp panel)
-        create_rpkm_cmd()
+        create_rpkm_cmd(core_panel_name)
             Build dx run command to run RPKM for a core panel
+        create_ed_readcount_cmd(core_panel_name)
+            Build dx run command for exomedepth readcount app
+        create_ed_cnvcalling_cmd(panno)
+            Build dx run command for exomedepth cnv calling app
         create_duty_csv_cmd()
             Build dx run command to run create_duty_csv app for the run
-        write_dx_run_cmds()
+        write_dx_run_cmds(cmds, script)
             Write dx run commands to the dx run script for the runfolder
     """
 
     def __init__(self, rf_obj: object, samples_obj: object, nexus_project_id: str):
         """
         Constructor for the BuildDxCommands class
-            :param rf_obj (obj):            RunfolderObject object (contains
-                                            runfolder-specific attributes)
-            :param samples_obj (obj):       CollectRunfolderSamples object (contains
-                                            sample-specific attributes)
-            :param nexus_project_id (str):  Project ID, generated when the DNAnexus
-                                            project is created
+            :param rf_obj (obj):            RunfolderObject object (contains runfolder-specific attributes)
+            :param samples_obj (obj):       CollectRunfolderSamples object (contains sample-specific attributes)
+            :param nexus_project_id (str):  Project ID, generated when the DNAnexus project is created
         """
         self.rf_obj = rf_obj
         self.samples_obj = samples_obj
@@ -1839,8 +1791,10 @@ class BuildDxCommands(object):
         self.write_dx_run_cmds(  # Write commands to file
             self.dx_cmd_list, self.rf_obj.runfolder_dx_run_script
         )
-        if self.samples_obj.pipeline == "tso500":
-            self.write_dx_run_cmds(  # Write commands to TSO post-processing file
+        if (
+            self.samples_obj.pipeline == "tso500"
+        ):  # Write commands to TSO post-processing file
+            self.write_dx_run_cmds(
                 self.dx_postprocessing_cmds, self.rf_obj.post_run_dx_run_script
             )
 
@@ -2080,10 +2034,9 @@ class BuildDxCommands(object):
 
     def create_multiqc_cmd(self) -> str:
         """
-        Build dx run command to run MultiQC for the run. MultiQC is run after all QC
-        tools have been run. Requires a project to download data from, and a coverage
-        level. Coverage level differs between panels. The lowest value for the panels on
-        the run is used.
+        Build dx run command to run MultiQC for the run. MultiQC is run after all QC tools have been
+        run. Requires a project to download data from, and a coverage level. Coverage level differs
+        between panels. The lowest value for the panels on the run is used
             :return (str): Dx run command for MultiQC app
         """
         self.rf_obj.rf_loggers.sw.info(
@@ -2185,16 +2138,14 @@ class BuildDxCommands(object):
 
     def return_analysis_id_cmd(self) -> str:
         """
-        Generates the command that runs the congenica_upload python script, and captures
-        the script output (the congenica upload app input string)
-        congenica_upload support tool python script is run after each dx run command, taking
-        analysis and project name as input, and printing the required inputs to the
-        command line which are required by the congenica upload script $jobid is a
-        bash variable which will be populated by when run on the command line. The
-        python script has three inputs - the analysisID ($jobid), and -p
-        is the DNAnexus project the analysis is running in
-            :return (str):  Command that runs the congenica_upload python script and
-                            obtains some of the inputs for the upload app dx run command
+        Generates the command that runs the congenica_upload python script, and captures the script
+        output (the congenica upload app input string) congenica_upload support tool python script is run
+        after each dx run command, taking analysis and project name as input, and printing the required
+        inputs to the command line which are required by the congenica upload script $jobid is a bash
+        variable which will be populated by when run on the command line. The python script has three
+        inputs - the analysisID ($jobid), and -p is the DNAnexus project the analysis is running in
+            :return (str):  Command that runs the congenica_upload python script and obtains
+                            some of the inputs for the upload app dx run command
         """
         return (
             "analysisid=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh; "
@@ -2212,8 +2163,8 @@ class BuildDxCommands(object):
 
     def create_peddy_cmd(self) -> str:
         """
-        Build dx run command to run peddy for the project. Run once at the end of a WES
-        run and downloads required files from the project
+        Build dx run command to run peddy for the project. Run once at the
+        end of a WES run and downloads required files from the project
             :return (str):  Dx run command for peddy app
         """
         self.rf_obj.rf_loggers.sw.info(
@@ -2234,8 +2185,8 @@ class BuildDxCommands(object):
 
     def return_pipe_runwide_cmds(self) -> list:
         """
-        Collect runwide commands for PIPE runs as a list. This includes RPKM (single
-        command per vcp panel)
+        Collect runwide commands for PIPE runs as a list. This includes RPKM
+        (single command per vcp panel)
             :return cmd_list (list):    List of runwide commands for PIPE runs
         """
         cmd_list = []
@@ -2252,15 +2203,14 @@ class BuildDxCommands(object):
                     if self.samples_obj.samples_dict[k]["panel_settings"]["panel_name"]
                     == core_panel
                 ]
-
                 # Make sure there are enough samples for exome depth and RPKM
                 # TODO check this has the desired effect
                 if len(self.samples_obj.samples_dict.items()) >= 3:
                     if panel_config.CAPTURE_PANEL_DICT[core_panel][
                         "ed_readcount_bedfile"
                     ]:
+                        # CNV calling steps are a dependency of MultiQC
                         cmd_list.append(self.create_ed_readcount_cmd(core_panel))
-
                         for panno in set(core_panel_pannos):
                             cmd_list.append(self.create_ed_cnvcalling_cmd(panno))
 
@@ -2272,10 +2222,9 @@ class BuildDxCommands(object):
     def create_rpkm_cmd(self, core_panel_name: str) -> str:
         """
         Build dx run command to run RPKM for a core panel. RPKM app requires project id,
-        bedfile and string containing the pannumber(s) of all files that should be
-        included in this analysis (input list is pulled from ad_config.VCP_PANELS using
-        the core_panel_name). App takes pan numbers as string, and will separate on
-        commas when passed multiple pan numbers
+        bedfile and string containing the pannumber(s) of all files that should be included
+        in this analysis (input list is pulled from ad_config.VCP_PANELS using the core_panel_name).
+        App takes pan numbers as string, and will separate on commas when passed multiple pan numbers
             :param core_panel_name (str):   Name of synnovis core panel
             :return (str):                  Dx run command for RPKM app
         """
@@ -2301,13 +2250,9 @@ class BuildDxCommands(object):
 
     def create_ed_readcount_cmd(self, core_panel_name: str) -> str:
         """
-        Build dx run command for exomedepth readcount app
-        Exome depth is run in 2 stages, firstly readcounts are caalculated for each capture panel.
-        Job ID is saved to $ed_jobid which allows the output of this stage to be used to filter
-        CNVs with a panel-specific BEDfile
-        CNV calling steps are a dependency of MultiQC
-        This function controls the order these commands are built and run so the output of the
-        readcount step can be used as an input to the CNV calling step
+        Build dx run command for exomedepth readcount app. Exome depth is run in 2 stages,
+        firstly readcounts are caalculated for each capture panel. Job ID is saved to $ed_jobid
+        which allows the output of this stage to be used to filter CNVs with a panel-specific BEDfile
             :param core_panel_name (str):   Name of synnovis core panel
             :return (str):                  Dx run command for ED readcount app
 
@@ -2317,7 +2262,6 @@ class BuildDxCommands(object):
             "ED_readcount",
             self.rf_obj.runfolder_name,
         )
-
         return " ".join(
             [
                 f'{ad_config.DX_CMDS["ed_readcount"]}ED_readcount',
@@ -2420,22 +2364,18 @@ class PipelineEmails:
     sending. The following emails are sent:
 
         - SQL emails for all pipelines. These are sent to binfx. This is because
-                samples processed using each workflow are recorded in Moka using an
-                insert query per sample
+            samples processed using each workflow are recorded in Moka using an
+            insert query per sample
         - Emails with details of the samples being processed. These are sent to binfx
-                for all runs, plus to additional recijpients as defined within the
-                config.ad_config file
+            for all runs, plus to additional recijpients as defined within the
+            config.ad_config file
 
         Attributes
-            rf_obj (obj):           RunfolderObject object (contains runfolder-specific
-                                    attributes)
-            samples_obj (obj):      CollectRunfolderSamples object (contains
-                                    sample-specific attributes)
-            workflows (list):       List of names of all workflows used to process
-                                    samples within the run
+            rf_obj (obj):           RunfolderObject object (contains runfolder-specific attributes)
+            samples_obj (obj):      CollectRunfolderSamples object (contains sample-specific attributes)
+            workflows (list):       List of names of all workflows used to process samples within the run
             sample_count (int):     Number of samples in the run
-            email_subj (str):       Email subject used by all emails sent within this
-                                    class
+            email_subj (str):       Email subject used by all emails sent within this class
             email (obj):            AdEmail object (contains methods for sending emails)
             queries (str):          Newline-separated string of SQL queries
 
@@ -2473,9 +2413,8 @@ class PipelineEmails:
 
     def collect_queries(self) -> str:
         """
-        Collect queries from the samples_dict (for all runs with
-        per-sample queries). For those with run-level queries (wes),
-        call return_wes_query()
+        Collect queries from the samples_dict (for all runs with per-sample queries).
+        For those with run-level queries (wes), call return_wes_query()
             :return (str):  Newline-separated string of SQL queries
         """
         if self.samples_obj.pipeline == "wes":
@@ -2489,14 +2428,14 @@ class PipelineEmails:
 
     def return_wes_query(self) -> str:
         """
-        Return WES SQL query. This is a single update query per-run.
+        Return WES SQL query. This is a single update query per-run
             :return query (str):    Single update query for the WES run
         """
         wes_dnanumbers = [
             self.samples_obj.samples_dict[k]["identifiers"]["primary"]
             for k in self.samples_obj.samples_dict.keys()
         ]
-        query = [
+        return [
             ad_config.QUERIES["wes"]
             % (
                 str(ad_config.SQL_IDS["WORKFLOWS"]["wes"]),
@@ -2505,7 +2444,6 @@ class PipelineEmails:
                 str(ad_config.SQL_IDS["WES_TEST_STATUS"]["nextseq_sequencing"]),
             )
         ]
-        return query
 
     def send_sql_email(self) -> None:
         """

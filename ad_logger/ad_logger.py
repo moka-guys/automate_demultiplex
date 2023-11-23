@@ -12,8 +12,8 @@ from config import ad_config, log_msgs_config
 
 def shutdown_streamhandler(logger: object) -> None:
     """
-    Shut down the stream handler only for a logging object. For when we do not want to
-    capture log messages in stdout
+    Shut down the stream handler only for a logging object. For when
+    we do not want to capture log messages in stdout
         :param logger (object): Logger
         :return (None):
     """
@@ -25,8 +25,8 @@ def shutdown_streamhandler(logger: object) -> None:
 
 def shutdown_logs(logger: object) -> None:
     """
-    To prevent duplicate filehandlers and system handlers close and remove
-    all handlers for a logging object
+    To prevent duplicate filehandlers and system handlers close
+    and remove all handlers for a logging object
         :return (None):
     """
     for handler in logger.handlers[:]:
@@ -36,13 +36,13 @@ def shutdown_logs(logger: object) -> None:
 
 class SensitiveFormatter(logging.Formatter):
     """
-    Formatter that removes sensitive information in logs. Inherits the properties and
-    methods from logging.Formatter
+    Formatter that removes sensitive information in logs. Inherits
+    the properties and methods from logging.Formatter
 
     Methods
-        _filter()
+        _filter(message)
             Filter out the auth key with regex
-        format()
+        format(record)
             Format the the record using logging.Formatter and _filter
     """
 
@@ -86,8 +86,8 @@ class RunfolderLoggers(object):
     def __init__(self, logfiles_config: dict):
         """
         Constructor for the RunfolderLoggers class
-            :param logfiles_config (dict):  Dictionary containing the configuration for
-                                            the required loggers
+            :param logfiles_config (dict):  Dictionary containing the configuration
+                                            for the required loggers
         """
         self.logfiles_config = logfiles_config
         self.loggers = self.get_loggers()  # Collect all loggers
@@ -113,8 +113,8 @@ class RunfolderLoggers(object):
 
 class AdLogger(object):
     """
-    Creates a python logging object with custom attributes and a file handler, syslog
-    handler and stream handler
+    Creates a python logging object with custom attributes and a
+    file handler, syslog handler and stream handler
 
     Attributes
         logger_name (str):      Name of logger
