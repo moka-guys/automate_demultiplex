@@ -9,6 +9,9 @@ import logging
 import logging.handlers
 from config import ad_config, log_msgs_config
 
+def shutdown_syshandler()  -> None:
+    """"""
+
 
 def shutdown_streamhandler(logger: object) -> None:
     """

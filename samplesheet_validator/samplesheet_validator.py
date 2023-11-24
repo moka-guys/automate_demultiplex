@@ -24,6 +24,7 @@ class SamplesheetCheck(object):
         runfolder_name (str):           Name of runfolder (used for naming logfile)
         logger (obj):                   Logger object
         ss_obj (False | obj):           seglh-naming samplesheet object
+        development_run (bool):         True if run is a development run, else False
         pannumbers (list):              List of panel numbers in the sample sheet
         tso (bool):                     True if samplesheet contains any TSO samples
         samples (dict):                 Dictionary of sample IDs and sample names from the samplesheet
@@ -51,6 +52,9 @@ class SamplesheetCheck(object):
             Check samplesheet not empty (<10 bytes)
         get_data_section()
             Parse data section of samplesheet from file
+        development_run()
+            Check if the run is a development run, by determining if the run contains
+            any development pan numbers from the config file
         check_expected_headers()
             Check [Data] section has expected headers, against self.expected_data_headers list
         comp_samplenameid()
@@ -61,8 +65,7 @@ class SamplesheetCheck(object):
         check_sample(sample, column)
             Validate sample names using seglh-naming Sample module.
         check_pannos(sample, column, sample_obj)
-            Check sample names contain allowed pan numbers from self.panel_list number
-            list
+            Check sample names contain allowed pan numbers from self.panel_list number list
         check_runtypes(sample, column, sample_obj)
             Check sample names contain allowed runtypes from self.runtype_list
         check_tso()
@@ -101,26 +104,27 @@ class SamplesheetCheck(object):
         checks not included in seglh-naming
         """
         if self.check_ss_present():
-            self.ss_obj = self.check_ss_name()
+            setattr(self, "ss_obj", self.check_ss_name())
             if self.ss_obj:
                 self.check_sequencer_id()
-            if self.check_ss_contents():
-                self.get_data_section()
-                self.check_expected_headers()
-                # Check sample id or sample name columns are not missing before
-                # doing sample validation
-                self.comp_samplenameid()
-                for (
-                    column,
-                    samples,
-                ) in self.samples.items():  # Run checks at the sample level
-                    for sample in samples:
-                        self.check_illegal_chars(sample, column)
-                        sample_obj = self.check_sample(sample, column)
-                        if sample_obj:
-                            self.check_pannos(sample, column, sample_obj)
-                            self.check_runtypes(sample, column, sample_obj)
-                self.check_tso()
+                if self.check_ss_contents():
+                    self.get_data_section()
+                    if not self.development_run():
+                        self.check_expected_headers()
+                        # Check sample id or sample name columns are not missing before
+                        # doing sample validation
+                        self.comp_samplenameid()
+                        for (
+                            column,
+                            samples,
+                        ) in self.samples.items():  # Run checks at the sample level
+                            for sample in samples:
+                                self.check_illegal_chars(sample, column)
+                                sample_obj = self.check_sample(sample, column)
+                                if sample_obj:
+                                    self.check_pannos(sample, column, sample_obj)
+                                    self.check_runtypes(sample, column, sample_obj)
+                        self.check_tso()
 
     def check_ss_present(self) -> Union[bool, None]:
         """
@@ -156,6 +160,30 @@ class SamplesheetCheck(object):
                 self.logger.log_msgs["ssname_invalid"], self.samplesheet_path, exception
             )
         return self.ss_obj
+
+    def development_run(self) -> Union[bool, None]:
+        """
+        Check if the run is a development run, by de    termining if the samplesheet contains
+        any development pan numbers from the config file
+            :param sscheck_obj (object):    Object created by
+                                            samplesheet_validator.SampleheetCheck
+            :return True | None:            True if contains dev pan numbers, false if does not
+        """
+        strings_to_check = self.samples["Sample_ID"] + self.samples["Sample_Name"]
+        for panno in panel_config.DEVELOPMENT_PANELS:
+            if any(panno in sample_name for sample_name in strings_to_check):
+                self.logger.warning(
+                    self.logger.log_msgs["dev_run"],
+                    self.samplesheet_path,
+                )
+                setattr(self, "development_run", True)
+                return True
+        else:
+            self.logger.info(
+                self.logger.log_msgs["not_dev_run"],
+                self.samplesheet_path,
+            )
+            setattr(self, "development_run", False)
 
     def check_sequencer_id(self) -> None:
         """

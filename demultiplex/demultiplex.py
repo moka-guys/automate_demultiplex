@@ -51,10 +51,12 @@ class GetRunfolders(object):
         self.timestamp = self.script_logger.timestamp
         self.processed_runfolders = []
 
-    def get_runfolder_names(self) -> list:
+    def get_runfolder_names(self, runfolder_names=False) -> list:
         """
         Get test-mode-dependent runfolder names
-            :return runfolder_names (list):  List of runfolder names
+            :param runfolder_names (list| False):   Runfolder names. If provided, uses this list.
+                                                    If not, obtains list from config file
+            :return runfolder_names (list):         List of runfolder names
         """
         runfolder_names = []
 
@@ -149,6 +151,7 @@ class DemultiplexRunfolder(object):
         bcl2fastq2_cmd (str):       Shell command to run demultiplexing
         cluster_density_cmd (str):  Shell command to run cluster density calculation
         tso (bool):                 Denotes whether the run is a tso500 run
+        development_run (bool):     True if run is a development run, else False
         run_processed (bool):       Denotes whether the run has been successfully
                                     processed
 
@@ -162,12 +165,13 @@ class DemultiplexRunfolder(object):
         valid_samplesheet()
             Check samplesheet is present and naming and contents are valid, using the
             samplesheet_validator module
-        development_run(sscheck_obj)
-            Check if the run is a development run, by determining if the run contains
-            any development pan numbers from the config file
         sequencing_complete()
             Check if sequencing has completed for the current runfolder (presence of
             RTAComplete.txt)
+        check_dev_run()
+            Check whether the development run is ready for further manual processing
+        integrity_check_success()
+            Check whether the integrity checking was successful
         no_disallowed_sserrs(valid, sscheck_obj)
             Check for specific errors that would cause bcl2fastq2 to fail and whose
             presence should stop demultiplexing
@@ -260,35 +264,53 @@ class DemultiplexRunfolder(object):
 
     def demultiplexing_required(self) -> Union[bool, None]:
         """
-        Carries out per-runfolder pre-demultiplexing tasks to determine whether
-        demultiplexing is required. Carries out the early warning samplesheet
-        checks. If sequencing is complete (RTAComplete.txt present), the
-        samplesheet contains no disallowed errors, and either 1) the sequencer
-        does not require an integrity check or 2) there has not previously been
-        an integrity check and the checksums match, returns True as
-        demultiplexing is required
+        Carries out per-runfolder pre-demultiplexing tasks to determine whether demultiplexing is
+        required. Carries out the early warning samplesheet checks. If sequencing is complete and
+        the run is a development run, creates the bcl2fastq logfile to prevent further processing.
+        Else, if sequencing is complete (RTAComplete.txt present) and the run is not a development
+        run, the samplesheet contains no disallowed errors, and either 1) the sequencer does not
+        require an integrity check or 2) there has not previously been an integrity check and the
+        checksums match, returns True as demultiplexing is required
             :return True|None:  Return true if demultiplexing is required
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["ad_version"],
             toolbox.git_tag(),
         )
-            
-        if not self.development_run(sscheck_obj):
-            valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
-            self.tso = sscheck_obj.tso
-            if self.sequencing_complete():
+        valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
+        self.tso = sscheck_obj.tso
+        self.development_run = sscheck_obj.development_run
+        if self.sequencing_complete():
+            if self.development_run:  # Do not want samplesheet checks to be performed on dev runs
+                self.check_dev_run()  
+            else:
                 if self.no_disallowed_sserrs(valid, sscheck_obj):
-                    if self.seq_requires_no_ic():
+                    if self.integrity_check_success():
                         return True
-                    if self.no_prior_ic():
-                        if self.checksums_match():
-                            return True
-        else:
+
+    def check_dev_run(self) -> None:
+        """
+        Check whether the development run is ready for further manual processing
+        (integrity check was successful and bcl2fastqlog was created successfully
+        to stop further processing by the scripts). Send alert to slack if so
+            :return None:
+        """
+        if self.integrity_check_success() and self.create_bcl2fastqlog():
             self.demux_rf_logger.warning(
-                self.demux_rf_logger.log_msgs["dev_run"],
-                self.rf_obj.samplesheet_path,
+                self.demux_rf_logger.log_msgs["dev_run_needs_processing"],
+                self.rf_obj.runfolder_name,
             )
+
+    def integrity_check_success(self) -> Union[bool, None]:
+        """
+        Check whether the integrity checking was successful
+            :return (True | None):  True if successful, None if unsuccessful
+        """
+        if self.seq_requires_no_ic():
+            return True
+        if self.no_prior_ic():
+            if self.checksums_match():
+                return True
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
         """
@@ -317,22 +339,6 @@ class DemultiplexRunfolder(object):
                 self.rf_obj.samplesheet_path,
             )
             return True, sscheck_obj
-
-    def development_run(self, sscheck_obj: object) -> Union[bool, None]:
-        """
-        Check if the run is a development run, by determining if the run contains
-        any development pan numbers from the config file
-            :param sscheck_obj (object):    Object created by
-                                            samplesheet_validator.SampleheetCheck
-        """
-        if any(
-            panno in ad_config.DEVELOPMENT_PANELS for panno in sscheck_obj.pannumbers
-        ):
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["not_dev_run"],
-                self.rf_obj.samplesheet_path,
-            )
-            return True
 
     def sequencing_complete(self) -> Union[bool, None]:
         """
@@ -437,11 +443,11 @@ class DemultiplexRunfolder(object):
                                 checksum file
         """
         self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ic_start"])
-        
+
         with open(self.rf_obj.checksumfile_path, "r") as f: checksums = f.readlines()
 
         toolbox.write_lines(self.rf_obj.checksumfile_path, "a", ad_config.CHECKSUM_COMPLETE_MSG)
-        
+
         if ad_config.CHECKSUM_MATCH_MSG in checksums[0]:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["ic_pass"],

@@ -60,6 +60,7 @@ LOG_MSGS = {
         "csumfile_absent": (
             "Demultiplexing halted: Integrity check not yet performed on sequencer (checksum file absent)"
         ),
+        "dev_run_needs_processing": "Development run %s requires processing",
         "checksums_checked": "Checksums already checked for this run",
         "checksums_notchecked": "Checksums not yet checked for this run",
         "ic_start": "Data integrity checks starting...",
