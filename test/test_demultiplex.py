@@ -25,7 +25,7 @@ from pytest_cases import fixture_union
 
 def get_dr_obj(runfolder):
     """"""
-    dr_obj = demultiplex.DemultiplexRunfolder(runfolder, ad_config.TIMESTAMP)
+    dr_obj = demultiplex.DemultiplexRunfolder(runfolder, ad_config.TIMESTAMP, False)
     return dr_obj
 
 
