@@ -42,14 +42,8 @@ class AdEmail(object):
         """
         self.logger = logger
         self.sender = ad_config.MAIL_SETTINGS["alerts_email"]
-        with open(
-            ad_config.CREDENTIALS["email_user"], "r", encoding="utf-8"
-        ) as email_user_file:
-            self.email_user = email_user_file.readline().rstrip()  # Get email username
-        with open(
-            ad_config.CREDENTIALS["email_pw"], "r", encoding="utf-8"
-        ) as email_pw_file:
-            self.email_pw = email_pw_file.readline().rstrip()  # Get email password
+        self.email_user = toolbox.get_credential(ad_config.CREDENTIALS["email_user"])
+        self.email_pw = toolbox.get_credential(ad_config.CREDENTIALS["email_pw"])
         self.template_dirpath = os.path.join(
             ad_config.PROJECT_DIR, "ad_email/templates"
         )
@@ -65,7 +59,7 @@ class AdEmail(object):
         Generate HTML. If unsuccessful, exit script
             :param runfolder_name (str):    Name of runfolder
             :workflows (str):               Comma separated string of workflow names
-            :queries (str):                 \n separated string of SQL queries
+            :queries (list):                List of SQL queries
             :sample_count (int):            Total number of samples processed
             :return html (str):             Rendered html as a string
         """

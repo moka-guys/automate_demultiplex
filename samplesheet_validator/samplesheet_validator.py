@@ -195,7 +195,7 @@ class SamplesheetCheck(object):
         """
         sample_ids = []
         sample_names = []
-        with open(self.samplesheet_path, "r", encoding="utf-8") as samplesheet_stream:
+        with open(self.samplesheet_path, "r") as samplesheet_stream:
             for line in reversed(samplesheet_stream.readlines()):
                 # If line contains table headers, stop looping through the file
                 if any(header in line for header in self.expected_data_headers):

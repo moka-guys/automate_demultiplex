@@ -47,7 +47,7 @@ class DecisionTooler(object):
     Builds congenica upload DNAnexus app command line inputs
 
     Attributes
-        dnanexus_apikey(str):       DNAnexus auth token
+        dnanexus_auth (str):        DNAnexus auth token
         analysis_id (str):          Workflow analysis ID
         project(str):               DNAnexus project ID
         runfolder_name (str):       Name of runfolder (used for naming logfile)
@@ -91,11 +91,7 @@ class DecisionTooler(object):
             :param runfolder_name (str):    Name of runfolder (used for naming logfile)
             :param workflow (str):          Workflow used to analyse the sample
         """
-        with open(
-            ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
-        ) as token_file:
-            self.dnanexus_apikey = token_file.readline().rstrip()  # Auth token
-
+        self.dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])  # Auth token
         self.analysis_id = analysis_id
         self.project = project
         self.runfolder_name = runfolder_name
@@ -148,7 +144,7 @@ class DecisionTooler(object):
             for file_name in self.file_dict.keys():
                 find_execution_id_cmd = ad_config.DX_CMDS["find_execution_id"] % (
                     f"{self.project}:{self.analysis_id}",
-                    self.dnanexus_apikey,
+                    self.dnanexus_auth,
                     self.file_dict[file_name]["stage"],
                 )
                 setattr(self, f"{file_name}jobid_cmd", find_execution_id_cmd)

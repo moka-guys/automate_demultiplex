@@ -87,7 +87,7 @@ class UploadRunfolder:
         )
         project_name, _, _ = toolbox.execute_subprocess_command(
             ad_config.DX_CMDS["find_proj_name"]
-            % (self.rf_obj.runfolder_name, self.rf_obj.dnanexus_apikey),
+            % (self.rf_obj.runfolder_name, self.rf_obj.dnanexus_auth),
             self.logger,
             "exit_on_fail",
         )
@@ -101,7 +101,7 @@ class UploadRunfolder:
         )
         project_id, _, _ = toolbox.execute_subprocess_command(
             ad_config.DX_CMDS["find_proj_id"]
-            % (project_name, self.rf_obj.dnanexus_apikey),
+            % (project_name, self.rf_obj.dnanexus_auth),
             self.logger,
             "exit_on_fail",
         )
@@ -272,7 +272,7 @@ class UploadRunfolder:
 
                     self.logger.info(self.logger.log_msgs["building_command"])
                     nexus_upload_cmd = ad_config.DX_CMDS["file_upload_cmd"] % (
-                        self.rf_obj.dnanexus_apikey,
+                        self.rf_obj.dnanexus_auth,
                         self.nexus_identifiers["proj_name"],
                         nexus_project_subdirectory,
                         f"--tries 100 {files_string}",
@@ -357,7 +357,7 @@ class UploadRunfolder:
             while upload_attempts < 5:  # Attempt the upload 5 times
                 # Execute upload agent command, writing log to upload agent log file
                 _, _, returncode = toolbox.execute_subprocess_command(
-                    upload_cmd, self.rf_obj.rf_loggers.upload_agent, "exit_on_fail"
+                    upload_cmd, self.rf_obj.rf_loggers.backup, "exit_on_fail"
                 )
                 if returncode == 0:
                     return "success"
@@ -396,14 +396,14 @@ class UploadRunfolder:
             f"find {self.rf_obj.runfolderpath} -type f {grep_ignore} | wc -l"
         )
         files_expected, _, _ = toolbox.execute_subprocess_command(
-            local_file_count, self.rf_obj.rf_loggers.upload_agent, "exit_on_fail"
+            local_file_count, self.rf_obj.rf_loggers.backup, "exit_on_fail"
         )
         uploaded_file_count = ad_config.DX_CMDS["find_data"] % (
             self.nexus_identifiers["proj_name"],
-            self.rf_obj.dnanexus_apikey,
+            self.rf_obj.dnanexus_auth,
         )
         files_present, _, _ = toolbox.execute_subprocess_command(
-            uploaded_file_count, self.rf_obj.rf_loggers.upload_agent, "exit_on_fail"
+            uploaded_file_count, self.rf_obj.rf_loggers.backup, "exit_on_fail"
         )
         self.logger.info(
             self.logger.log_msgs["files_uploaded"],
@@ -413,11 +413,11 @@ class UploadRunfolder:
         if ignore:  # Test for presense of ignore strings in project
             uploaded_file_count_ignore = ad_config.DX_CMDS["find_data"] % (
                 f"{self.nexus_identifiers['proj_name']} {grep_ignore.replace('-v','')}",
-                self.rf_obj.dnanexus_apikey,
+                self.rf_obj.dnanexus_auth,
             )
             out, _, _ = toolbox.execute_subprocess_command(
                 uploaded_file_count_ignore,
-                self.rf_obj.rf_loggers.upload_agent,
+                self.rf_obj.rf_loggers.backup,
                 "exit_on_fail",
             )
             self.logger.info(self.logger.log_msgs["check_ignore"], out)

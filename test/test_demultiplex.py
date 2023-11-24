@@ -277,6 +277,7 @@ class TestDemultiplexRunfolder(object):
             # "999999_A01229_0000_00000TEST9",  # TODO fix test case
         ]
 
+    # TODO add a development run to this fixture
     @pytest.fixture(scope="function")
     def demultiplexing_notrequired(self):
         """
@@ -552,9 +553,7 @@ class TestDemultiplexRunfolder(object):
         for runfolder in checksumfile_present_pass_notchecked:
             dr_obj = get_dr_obj(runfolder)
             assert dr_obj.checksums_match()
-            with open(
-                dr_obj.rf_obj.checksumfile_path, "r", encoding="utf-8"
-            ) as checksumfile:
+            with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
                 assert ad_config.CHECKSUM_COMPLETE_MSG in checksumfile.read()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
@@ -568,9 +567,7 @@ class TestDemultiplexRunfolder(object):
         for runfolder in checksumfile_present_pass_notchecked:
             dr_obj = get_dr_obj(runfolder)
             assert dr_obj.checksums_match()
-            with open(
-                dr_obj.rf_obj.checksumfile_path, "r", encoding="utf-8"
-            ) as checksumfile:
+            with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
                 assert ad_config.CHECKSUM_COMPLETE_MSG in checksumfile.read()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
@@ -594,9 +591,12 @@ class TestDemultiplexRunfolder(object):
         monkeypatch.setattr(
             dr_obj.rf_obj, "bcl2fastqlog_path", "/path/to/nonexistent/log.log"
         )
-        assert not dr_obj.create_bcl2fastqlog()
-        assert not os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_path)
-        ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
+        with pytest.raises(SystemExit) as pytest_wrapped_e:
+            dr_obj.create_bcl2fastqlog()
+            assert not os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_path)
+            ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
+            assert pytest_wrapped_e.type == SystemExit
+            assert pytest_wrapped_e.value.code == 1
 
     def test_add_bcl2fastqlog_tso_msg(self):
         """
@@ -605,7 +605,7 @@ class TestDemultiplexRunfolder(object):
         dr_obj = get_dr_obj("")
         assert dr_obj.add_bcl2fastqlog_tso_msg()
         assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_path)
-        with open(dr_obj.rf_obj.bcl2fastqlog_path, encoding="utf-8") as file:
+        with open(dr_obj.rf_obj.bcl2fastqlog_path, "r") as file:
             assert ad_config.STRINGS["demultiplexlog_tso500_msg"] in file.read()
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 

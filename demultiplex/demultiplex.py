@@ -273,15 +273,22 @@ class DemultiplexRunfolder(object):
             self.demux_rf_logger.log_msgs["ad_version"],
             toolbox.git_tag(),
         )
-        valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
-        self.tso = sscheck_obj.tso
-        if self.sequencing_complete():
-            if self.no_disallowed_sserrs(valid, sscheck_obj):
-                if self.seq_requires_no_ic():
-                    return True
-                if self.no_prior_ic():
-                    if self.checksums_match():
+            
+        if not self.development_run(sscheck_obj):
+            valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
+            self.tso = sscheck_obj.tso
+            if self.sequencing_complete():
+                if self.no_disallowed_sserrs(valid, sscheck_obj):
+                    if self.seq_requires_no_ic():
                         return True
+                    if self.no_prior_ic():
+                        if self.checksums_match():
+                            return True
+        else:
+            self.demux_rf_logger.warning(
+                self.demux_rf_logger.log_msgs["dev_run"],
+                self.rf_obj.samplesheet_path,
+            )
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
         """
@@ -296,26 +303,20 @@ class DemultiplexRunfolder(object):
             self.rf_obj.runfolder_name,
             self.ss_validator_logger,
         )
-        if not self.development_run(sscheck_obj):
-            sscheck_obj.ss_checks()
-            ad_logger.shutdown_logs(sscheck_obj.logger)
-            if sscheck_obj.errors:
-                self.demux_rf_logger.warning(
-                    self.demux_rf_logger.log_msgs["sschecks_not_passed"],
-                    self.rf_obj.samplesheet_path,
-                )
-                return False, sscheck_obj
-            else:
-                self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["sschecks_passed"],
-                    self.rf_obj.samplesheet_path,
-                )
-                return True, sscheck_obj
-        else:
+        sscheck_obj.ss_checks()
+        ad_logger.shutdown_logs(sscheck_obj.logger)
+        if sscheck_obj.errors:
             self.demux_rf_logger.warning(
-                self.demux_rf_logger.log_msgs["dev_run"],
+                self.demux_rf_logger.log_msgs["sschecks_not_passed"],
                 self.rf_obj.samplesheet_path,
             )
+            return False, sscheck_obj
+        else:
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["sschecks_passed"],
+                self.rf_obj.samplesheet_path,
+            )
+            return True, sscheck_obj
 
     def development_run(self, sscheck_obj: object) -> Union[bool, None]:
         """
@@ -410,19 +411,18 @@ class DemultiplexRunfolder(object):
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["csumfile_absent"])
         else:
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["csumfile_present"])
-            with open(
-                self.rf_obj.checksumfile_path, "r", encoding="utf-8"
-            ) as checksumfile:
-                checksums = checksumfile.readlines()
-                if ad_config.CHECKSUM_COMPLETE_MSG in checksums[-1]:
-                    self.demux_rf_logger.info(
-                        self.demux_rf_logger.log_msgs["checksums_checked"]
-                    )
-                else:
-                    self.demux_rf_logger.info(
-                        self.demux_rf_logger.log_msgs["checksums_notchecked"]
-                    )
-                    return True
+            
+            checksums = toolbox.read_lines(self.rf_obj.checksumfile_path)
+
+            if ad_config.CHECKSUM_COMPLETE_MSG in checksums[-1]:
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["checksums_checked"]
+                )
+            else:
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["checksums_notchecked"]
+                )
+                return True
 
     def checksums_match(self) -> Union[bool, None]:
         """
@@ -437,24 +437,23 @@ class DemultiplexRunfolder(object):
                                 checksum file
         """
         self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ic_start"])
-        with open(
-            self.rf_obj.checksumfile_path, "r+", encoding="utf-8"
-        ) as checksumfile:
-            checksums = checksumfile.readlines()
-            checksumfile.write(f"\n{ad_config.CHECKSUM_COMPLETE_MSG}")
+        
+        with open(self.rf_obj.checksumfile_path, "r") as f: checksums = f.readlines()
 
-            if ad_config.CHECKSUM_MATCH_MSG in checksums[0]:
-                self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["ic_pass"],
-                    self.rf_obj.runfolder_name,
-                )
-                return True
-            else:
-                self.demux_rf_logger.error(
-                    self.demux_rf_logger.log_msgs["ic_fail"],
-                    self.rf_obj.runfolder_name,
-                    self.rf_obj.checksumfile_path,
-                )
+        toolbox.write_lines(self.rf_obj.checksumfile_path, "a", ad_config.CHECKSUM_COMPLETE_MSG)
+        
+        if ad_config.CHECKSUM_MATCH_MSG in checksums[0]:
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["ic_pass"],
+                self.rf_obj.runfolder_name,
+            )
+            return True
+        else:
+            self.demux_rf_logger.error(
+                self.demux_rf_logger.log_msgs["ic_fail"],
+                self.rf_obj.runfolder_name,
+                self.rf_obj.checksumfile_path,
+            )
 
     def create_bcl2fastqlog(self) -> Union[bool, None]:
         """
@@ -491,13 +490,13 @@ class DemultiplexRunfolder(object):
             self.demux_rf_logger.log_msgs["TSO500_run"],
             self.rf_obj.runfolder_name,
         )
-        with open(self.rf_obj.bcl2fastqlog_path, "w+", encoding="utf-8") as log:
-            log.write(f"\n{ad_config.STRINGS['demultiplexlog_tso500_msg']}")
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["write_TSO_msg_to_bcl2fastqlog"],
-                self.rf_obj.runfolder_name,
-            )
-            return True
+        toolbox.write_lines(self.rf_obj.bcl2fastqlog_path, "w+", ad_config.STRINGS['demultiplexlog_tso500_msg'])
+
+        self.demux_rf_logger.info(
+            self.demux_rf_logger.log_msgs["write_TSO_msg_to_bcl2fastqlog"],
+            self.rf_obj.runfolder_name,
+        )
+        return True
 
     def run_demultiplexing(self) -> Union[bool, None]:
         """
@@ -541,8 +540,7 @@ class DemultiplexRunfolder(object):
             :return True|None:  True if success statement in bcl2fastq2 logfile
         """
         if os.path.isfile(self.rf_obj.bcl2fastqlog_path):
-            with open(self.rf_obj.bcl2fastqlog_path, "r", encoding="utf-8") as logfile:
-                bcl2fastq2_log_tail = "".join(logfile.readlines()[-10:])
+            bcl2fastq2_log_tail = "".join(toolbox.read_lines(self.rf_obj.checksumfile_path)[-10])
 
             if bcl2fastq2_log_tail:
                 if ad_config.STRINGS["demultiplex_success"] in str(bcl2fastq2_log_tail):

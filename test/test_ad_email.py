@@ -84,10 +84,12 @@ class TestAdEmail:
             email_html = ad_email_obj.generate_email_html(
                 "test_runfolder", "workflow", "SQL_str", 5
             )
-            with pytest.raises(Exception):
+            with pytest.raises(SystemExit) as pytest_wrapped_e:
                 ad_email_obj.send_email(
                     recipients_list,
                     email_subject,
                     email_html,
                     1,
                 )
+                assert pytest_wrapped_e.type == SystemExit
+                assert pytest_wrapped_e.value.code == 1

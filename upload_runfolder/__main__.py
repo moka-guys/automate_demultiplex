@@ -24,11 +24,7 @@ def get_arguments():
             "project ID to upload to, and any file patterns that should be ignored"
         ),
     )
-    with open(
-        ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
-    ) as token_file:
-        dnanexus_apikey = token_file.readline().rstrip()  # Auth token
-
+    dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])
     parser.add_argument(  # Define arguments
         "-r",
         "--runfolder_name",
@@ -43,7 +39,7 @@ def get_arguments():
             "A string or file containing a DNAnexus authorisation key used to access the DNAnexus "
             "project. If not specified, the config-specified auth token will be used by default"
         ),
-        default=dnanexus_apikey,
+        default=dnanexus_auth,
         type=os.path.expanduser,
     )
     parser.add_argument(
@@ -71,7 +67,7 @@ rf_obj.add_runfolder_loggers()
 
 # If a different auth token is supplied on command line, replace the attribute in the runfolder object
 if parsed_args.auth_token:
-    rf_obj.dnanexus_apikey = parsed_args.auth_token
+    rf_obj.dnanexus_auth = parsed_args.auth_token
 
 if parsed_args.project_id:
     project_name_cmd = ad_config.DX_CMDS["proj_name_from_id"] % (

@@ -94,6 +94,7 @@ FASTQ_DIRS = {
 # Integrity check
 CHECKSUM_COMPLETE_MSG = "Checksum result reported"  # Checksum complete statement
 CHECKSUM_MATCH_MSG = "Checksums match"  # Statement to write when checksums match
+UPLOAD_STARTED_MSG = "Upload started"  # Statement to write to DNAnexus upload started file
 
 # tso500 runfolder is used for testing both demultiplexing and sw script
 DEMULTIPLEX_TEST_RUNFOLDERS = [
@@ -283,7 +284,7 @@ APP_INPUTS = {
     },
     "upload_multiqc": {
         "data_input": "-imultiqc_data_input=",
-        "multiqc_html": "-imultiqc_html=$jobid:multiqc_report",
+        "multiqc_html": "-imultiqc_html=$JOB_ID:multiqc_report",
     },
     "congenica_upload": {
         "samplename": "-ianalysis_name=",
@@ -306,15 +307,15 @@ UPLOAD_ARGS = {
     "dest": "--dest=",
     "proj": "--project=",
     "token": "--brief --auth %s)",
-    "depends": "$depends_list",
-    "depends_gatk": "$depends_list_gatk",
+    "depends": "$DEPENDS_LIST",
+    "depends_gatk": "$DEPENDS_LIST_GATK",
     # Arguments to capture jobids. Job IDS are built into a string that can be passed
     # to downstream apps to ensure the jobs don't start until those job ids have
     # completed successfully
-    "depends_list": 'depends_list="${depends_list} -d ${jobid} "',
-    "depends_list_gatk": 'depends_list_gatk="${depends_list_gatk} -d ${jobid} "',
-    "depends_list_recombined": 'depends_list="${depends_list} ${depends_list_gatk} "',
-    "depends_list_edreadcount": 'depends_list="${depends_list} -d ${ed_jobid} "',
+    "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
+    "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOBID} "',
+    "depends_list_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
+    "depends_list_edreadcount": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${ed_jobid} "',
 }
 
 # Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
@@ -380,13 +381,11 @@ STAGE_INPUTS = {
 }
 
 # Command strings
-EMPTY_DEPENDS = "depends_list=''\n"
-EMPTY_GATK_DEPENDS = "depends_list_gatk=''\n"
+EMPTY_DEPENDS = "DEPENDS_LIST=''"
+EMPTY_GATK_DEPENDS = "DEPENDS_LIST_GATK=''"
 
 DX_CMDS = {
-    "create_proj": 'project_id="$(dx new project '
-    '--bill-to %s "%s" --brief '
-    '--auth %s)" &&\n',
+    "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth %s)"',
     "find_proj_name": (
         f"source {SDK_SOURCE}; dx find projects --name *%s* "
         "--auth %s | awk '{print $3}'"
@@ -397,37 +396,38 @@ DX_CMDS = {
         f"source {SDK_SOURCE}; dx describe %s --json --auth %s | jq -r '.stages[] | "
         'select( .id == "%s") | .execution.id\''
     ),
-    "find_data": (f"source {SDK_SOURCE}; dx find data --project %s --auth %s | wc -l"),
-    "invite_user": 'invite_user_out="$(dx invite %s $project_id %s --no-email --auth %s)" &&\n',
+    "find_data": f"source {SDK_SOURCE}; dx find data {UPLOAD_ARGS['proj']}%s --auth %s | wc -l",
+    "invite_user": 'USER_INVITE_OUT=$(dx invite %s $PROJECT_ID %s --no-email --auth %s)',
     "file_upload_cmd": (
-        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder %s --do-not-compress --upload-threads 10 %s"
+        f"{UPLOAD_AGENT_EXE} --auth %s {UPLOAD_ARGS['proj']}%s --folder %s --do-not-compress --upload-threads 10 %s"
     ),
-    "pipe": f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
-    "wes": f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
-    "snp": f"jobid=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} -y --priority high {JOB_NAME_STR}",
-    "tso500": f"jobid=$(dx run {NEXUS_IDS['APPS']['tso500']} --priority high -y {JOB_NAME_STR}",
-    "fastqc": f"jobid=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
+    "pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
+    "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
+    "snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} -y --priority high {JOB_NAME_STR}",
+    "tso500": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --priority high -y {JOB_NAME_STR}",
+    "fastqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
     "peddy": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high "
+        f"-y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
     "multiqc": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['multiqc']} "
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['multiqc']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x4 {JOB_NAME_STR}"
     ),
     "upload_multiqc": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} "
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
     "ed_readcount": (
-        f"ed_jobid=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
+        f"ED_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
     "ed_cnvcalling": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} "
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x4 {JOB_NAME_STR}"
     ),
     "rpkm": (
-        f"jobid=$(dx run {NEXUS_IDS['APPS']['rpkm']}"
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['rpkm']}"
         f" --priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
     "congenica_sftp": (
@@ -438,9 +438,9 @@ DX_CMDS = {
         f"--instance-type mem1_ssd1_v2_x2 ' $analysisid ' {JOB_NAME_STR}"
     ),
     "qiagen_upload": f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",
-    "sompy": f"jobid=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
-    "sambamba": f"jobid=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
-    "duty_csv": f"jobid=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y {JOB_NAME_STR}",
+    "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
+    "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
+    "duty_csv": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y {JOB_NAME_STR}",
 }
 
 # ---- Moka settings ----------------------------------------------------------

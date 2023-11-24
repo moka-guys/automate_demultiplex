@@ -17,7 +17,7 @@ LOG_MSGS = {
     # Generic messages used across scripts
     "general": {
         "script_start": "Automate demultiplex release: %s. Start of %s script",
-        "script_end": "Automate demultiplex release %s: %s complete.",
+        "script_end": "Automate demultiplex release %s: %s complete",
         "runfolders_processed": "%s runfolders processed: %s",
         "executing_command": "Executing the following command: %s",
         "cmd_success": "Command executed successfully with returncode %s",
@@ -44,7 +44,7 @@ LOG_MSGS = {
     "demultiplex": {
         "runfolder_processed": "Runfolder has been processed: %s",
         "demultiplexing_required": "Demultiplexing is required for this runfolder",
-        "tso_run": "TSO500 run detected.",
+        "tso_run": "TSO500 run detected",
         "ic_fail": "Integrity check fail. Checksums do not match for " "%s see %s",
         "bcl2fastq_start": "Demultiplexing started for run %s using bcl2fastq2 command: %s",
         "bcl2fastq_complete": "bcl2fastq2 subprocess complete for run %s",
@@ -110,13 +110,13 @@ LOG_MSGS = {
         "dxtoolkittest_pass": "dx toolkit source command successful",
         "dxtoolkittest_fail": "dx toolkit source command failed",
         "tso_backup": "Backing up TSO runfolder",
-        "runfolder_prev_proc": "Runfolder already processed: %s. Skipping.",
+        "runfolder_prev_proc": "Runfolder already processed: %s. Skipping",
         "runfolder_requires_proc": "Runfolder requires processing: %s",
-        "ua_file_present": "Upload started file present. Terminating.",
-        "ua_file_absent": "Upload started file not found. Continuing.",
-        "demux_complete": "Demultiplex completed succesfully.",
-        "demux_failed": "Demultiplex failed.",
-        "not_yet_demultiplexed": "Demultiplex has not been performed.",
+        "ua_file_present": "Upload started file present. Terminating",
+        "ua_file_absent": "Upload started file not found. Continuing",
+        "demux_complete": "Run has been previously successfully demultiplexed",
+        "demux_failed": "Run has previously been demultiplexed but demultiplexing failed",
+        "not_yet_demultiplexed": "Demultiplex has not been performed",
         "bcl2fastqlog_empty": "Bcl2fastq log file exists but is empty",
         "nonexistent_files": "Not all files exist: %s",
         "creating_proj": "Executing project creation script: %s",
@@ -138,8 +138,8 @@ LOG_MSGS = {
         "building_cmd": "Building %s cmd for %s",
         "reference_sample": "NA12878 sample detected, not building congenica upload command "
         "for %s",
-        "writing_cmds": "Writing dx run commands",
-        "running_cmds": "Running dx run commands",
+        "writing_cmds": "Writing dx run commands to %s",
+        "running_cmds": "Running dx run commands using dx run bash script",
         "dx_run_err": "Error when setting off dx run command for run %s. Command: %s. Stdout: %s. Stderr: %s",
         "dx_run_success": "dx run commands issued successfully for run %s",
         "ss_copy_success": "Samplesheet copied to runfolder: %s",
@@ -148,14 +148,14 @@ LOG_MSGS = {
             "Uploading rest of run folder to Nexus using upload_runfolder, ignoring: %s. Stdout stored in logfile: %s"
         ),
         "upload_rf_error": (
-            "An error occurred when uploading the rest of the runfolder: %s. See %s and %s for further details."
+            "An error occurred when uploading the rest of the runfolder: %s. See %s and %s for further details"
         ),
         "ss_missing": "Samplesheet is missing and is required for sample name parsing",
         "multiple_pipeline_names": "Multiple pipeline names detected from panel config for sample list: %s",
         "wes_batch_nos_identified": "WES batch numbers %s identified",
         "wes_batch_nos_missing": "WES batch numbers missing for run %s. Check for errors in the sample names",
         "library_nos_identified": "Library numbers %s identified",
-        "library_no_err": "%s - Unable to identify library numbers. Check for underscores in the sample names.",
+        "library_no_err": "%s - Unable to identify library numbers. Check for underscores in the sample names",
         "checking_fastq": "Checking fastq has been collected: %s",
         "sample_match": "Fastq in the BaseCalls directory matches the sample name in the samplesheet: %s, %s",
         "sample_mismatch": "Fastq in the BaseCalls directory does not match any sample name in the samplesheet: %s",
@@ -192,7 +192,7 @@ LOG_MSGS = {
         ),
         "files_uploaded": (
             "%s files should have been uploaded (excluding any with ignore terms in "
-            "filename or path). %s files present in DNAnexus project."
+            "filename or path). %s files present in DNAnexus project"
         ),
         "check_ignore": (
             "%s files present in DNAnexus project containing one of the ignore terms. NB this may not be accurate if "

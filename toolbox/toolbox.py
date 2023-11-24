@@ -13,6 +13,40 @@ from distutils.spawn import find_executable
 from typing import Union
 from config import ad_config
 from ad_logger import ad_logger
+from toolbox import toolbox
+
+
+def get_credential(file):
+    """
+    File from which to read credential
+    """
+    with open(file, "r") as to_read:
+        credential = to_read.readline().rstrip()
+        return credential
+
+
+def write_lines(file: str, mode: str, lines: str):
+    """
+    Write line to newline of file
+        :param file (str):          Filepath
+        :param mode (str):          Mode to open the file in
+        :param lines (str | list):  Line (/s)
+    """
+    if isinstance(lines, str):
+        lines = [lines]
+    with open(file, mode) as open_file:
+        for line in lines:
+            open_file.write(f"{line}\n")
+
+
+def read_lines(file: str):
+    """
+    Read lines from file
+        :param file (str):      Filepath
+        :return lines (list):   List of lines
+    """
+    with open(file, "r") as f:
+        return f.readlines()
 
 
 def return_scriptlog_config() -> dict:
@@ -263,7 +297,7 @@ class RunfolderObject(object):
     An object with runfolder-specific properties.
 
     Attributes
-        dnanexus_apikey (str):                  DNAnexus auth token
+        dnanexus_auth (str):                    DNAnexus auth token
         timestamp (str):                        Timestamp in the format str(f"{datetime.datetime.now():
                                                 %Y%m%d_%H%M%S}")
         runfolder_name (str):                   Runfolder name string
@@ -276,7 +310,6 @@ class RunfolderObject(object):
         bcl2fastqlog_path (str):                bcl2fastq2 logfile path (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
         upload_agent_logfile (str):             Upload agent logfile (within runfolder).
-                                                Stores runfolder upload logs
         bcl2fastqstats_file (str):              Bcl2fastq stats file (within runfolder)
         cluster_density_files (list):           List containing runfolder lane metrics
                                                 and phasing metrics file paths
@@ -307,10 +340,7 @@ class RunfolderObject(object):
             :param runfolder_name (str):    Name of runfolder
             :param timestamp (str):         Timestamp in the format str(f"{datetime.datetime.now():%Y%m%d_%H%M%S}")
         """
-        with open(
-            ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
-        ) as token_file:
-            self.dnanexus_apikey = token_file.readline().rstrip()
+        self.dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])
         self.timestamp = timestamp
         self.runfolder_name = runfolder_name
         self.runfolderpath = get_runfolder_path(self.runfolder_name)
@@ -415,14 +445,13 @@ class RunfolderObject(object):
             "decision_support": self.decision_support_tool_logfile,
             "ss_validator": self.samplesheet_validator_logfile,
         }
+        # Log files that sit outside the runfolder that require uploading
         self.logfiles_to_upload = [
             self.sw_runfolder_logfile,
             self.demultiplex_runfolder_logfile,
-            self.upload_runfolder_logfile,
             self.proj_creation_script,
             self.runfolder_dx_run_script,
             self.samplesheet_validator_logfile,
-            self.bcl2fastqlog_path,
         ]
 
     def add_runfolder_loggers(self) -> None:

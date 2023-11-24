@@ -55,10 +55,7 @@ def get_arguments():
 
 
 parsed_args = get_arguments()
-with open(
-    ad_config.CREDENTIALS["dnanexus_authtoken"], "r", encoding="utf-8"
-) as token_file:
-    dnanexus_apikey = token_file.readline().rstrip()  # Auth token
+dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])
 
 analysis_info = json.loads(
     subprocess.check_output(
@@ -67,7 +64,7 @@ analysis_info = json.loads(
             "describe",
             parsed_args.analysis_id,
             "--auth",
-            dnanexus_apikey,
+            dnanexus_auth,
             "--json",
         ]
     )
