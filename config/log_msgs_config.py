@@ -42,6 +42,9 @@ LOG_MSGS = {
         "html_error": "There was a problem generating the html file, with the following exception: %s",
     },
     "demultiplex": {
+        "cmd_line_runfolder": "Runfolder %s has been supplied on the command line",
+        "programmatic_runfolders": "Runfolders were gathered programmatically",
+        "runfolder_names": "Runfolders identified for processing: %s",
         "runfolder_processed": "Runfolder has been processed: %s",
         "demultiplexing_required": "Demultiplexing is required for this runfolder",
         "tso_run": "TSO500 run detected",
