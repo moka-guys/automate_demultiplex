@@ -1,3 +1,10 @@
+#!/usr/bin/python3
+# coding=utf-8
+""" toolbox.py pytest unit tests
+
+# TODO to write
+"""
+
 # import pytest
 # from test.conftest import logger_obj
 # from toolbox import toolbox

@@ -1,5 +1,13 @@
-"""
-This script contains pytest tests for the samplesheet_validator.py script
+#!/usr/bin/python3
+# coding=utf-8
+""" samplesheet_validator.py pytest unit tests
+
+# TODO to write or complete the following tests:
+- test_ss_checks_pass
+- test_ss_checks_fail
+- test_get_data_section_pass
+- get_data_section_fail
+- test_log_summary
 """
 import os
 import pytest
@@ -194,6 +202,8 @@ class TestSamplesheetCheck(object):
     """
     Tests for the SamplesheetCheck class
     """
+    # TODO write test_ss_checks_pass
+    # TODO write test_ss_checks_fail
 
     def test_check_ss_present_valid(self, valid_samplesheets, caplog):
         """
@@ -310,6 +320,9 @@ class TestSamplesheetCheck(object):
             assert sscheck_obj.errors
             assert "Samplesheet empty (<10 bytes)" in caplog.text
             ad_logger.shutdown_logs(sscheck_obj.logger)
+            
+    # TODO write test_get_data_section_pass
+    # TODO write get_data_section_fail
 
     def test_expected_headers_valid(self, valid_samplesheets, caplog):
         """
@@ -491,7 +504,7 @@ class TestSamplesheetCheck(object):
             assert "Runtype not in allowed list" in caplog.text
             ad_logger.shutdown_logs(sscheck_obj.logger)
 
-    def check_tso_true(self, tso_samplesheet_valid):
+    def test_check_tso_true(self, tso_samplesheet_valid):
         """
         Test function is able to correctly identify that runtypes are TSO500
         """
@@ -505,7 +518,7 @@ class TestSamplesheetCheck(object):
             assert sscheck_obj.tso
             ad_logger.shutdown_logs(sscheck_obj.logger)
 
-    def check_tso_false(self, tso_samplesheet_invalid, caplog):
+    def test_check_tso_false(self, tso_samplesheet_invalid, caplog):
         """
         Test function is able to correctly identify that runtypes are not TSO500
         """
@@ -518,6 +531,8 @@ class TestSamplesheetCheck(object):
             sscheck_obj.ss_checks()
             assert not sscheck_obj.tso
             ad_logger.shutdown_logs(sscheck_obj.logger)
+
+    # TODO write test_log_summary
 
     def test_multiple_errors(self, invalid_contents, caplog):
         """

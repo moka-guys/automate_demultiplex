@@ -1,7 +1,18 @@
 #!/usr/bin/python3
 # coding=utf-8
-"""
-ad_logger.py pytest unit tests
+""" ad_logger.py pytest unit tests
+
+# TODO write the following unit tests which are currently missing or incomplete:
+- shutdown_streamhandler
+- shutdown_logs
+- SensitiveFormatter
+    - format
+- AdLogger
+    - get_logger
+    - _get_file_handler
+    - _get_logging_formatter
+    - _get_syslog_handler
+    - _get_stream_handler
 """
 import pytest
 from test import conftest

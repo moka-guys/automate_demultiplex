@@ -3,6 +3,9 @@
 
 N.B. test_email_sending_success() will only pass when running on the
 workstation where the required auth details are stored
+
+# TODO write the below tests which are currently missing or incomplete:
+- AdEmail.generate_email_html
 """
 import pytest
 from test.conftest import logger_obj
