@@ -141,17 +141,17 @@ class GetRunfolders(object):
         """
         rf_obj = toolbox.RunfolderObject(folder_name, self.timestamp)
 
-        if os.path.isfile(rf_obj.bcl2fastqlog_path):
+        if os.path.isfile(rf_obj.bcl2fastqlog_file):
             self.script_logger.info(
                 self.script_logger.log_msgs["demux_already_complete"],
                 rf_obj.runfolder_name,
-                rf_obj.bcl2fastqlog_path,
+                rf_obj.bcl2fastqlog_file,
             )
         else:
             self.script_logger.info(
                 self.script_logger.log_msgs["demux_not_complete"],
                 rf_obj.runfolder_name,
-                rf_obj.bcl2fastqlog_path,
+                rf_obj.bcl2fastqlog_file,
             )
             return True
 
@@ -181,6 +181,8 @@ class DemultiplexRunfolder(object):
         demux_rf_logger (object):           Demultiplex runfolder-level logger, extracted from
                                             the RunfolderObject containing runfolder-level
                                             loggers
+        bcl2fastq2_rf_logger (object):      Bcl2fastq2 runfolder-level logger, extracted from the
+                                            RunfolderObject containing runfolder-level loggers
         disallowed_sserrs (list):           List of disallowed samplesheet error strings
         bcl2fastq2_cmd (str):               Shell command to run demultiplexing
         cluster_density_cmd (str):          Shell command to run cluster density calculation
@@ -204,7 +206,7 @@ class DemultiplexRunfolder(object):
             RTAComplete.txt)
         check_dev_run()
             Check whether the development run is ready for further manual processing
-        integrity_check_success()
+        pass_integrity_check()
             Check whether the integrity checking was successful
         no_disallowed_sserrs(valid, sscheck_obj)
             Check for specific errors that would cause bcl2fastq2 to fail and whose
@@ -228,8 +230,6 @@ class DemultiplexRunfolder(object):
             calculation
         run_demultiplexing()
             Run demultiplexing command
-        check_bcl2fastqlogfile()
-            Read last 10 lines of demultiplex logfile and search for success statement
     """
 
     def __init__(self, folder_name: str, timestamp: str, cmd_line_supplied_runfolder: bool):
@@ -246,6 +246,7 @@ class DemultiplexRunfolder(object):
         self.rf_obj = toolbox.RunfolderObject(folder_name, self.timestamp)
         self.rf_obj.add_runfolder_loggers()  # Add rf loggers to runfolder object
         self.demux_rf_logger = self.rf_obj.rf_loggers.demultiplex
+        self.bcl2fastq2_rf_logger = self.rf_obj.rf_loggers.bcl2fastq2
         self.ss_validator_logger = self.rf_obj.rf_loggers.ss_validator
         self.disallowed_sserrs = [
             "sspresent_err",
@@ -261,7 +262,6 @@ class DemultiplexRunfolder(object):
             self.rf_obj.samplesheet_path,
             self.rf_obj.samplesheet_name,
             self.rf_obj.samplesheet_name,
-            self.rf_obj.bcl2fastqlog_path,
         )
         # Shell command to run cluster density calculation
         self.cluster_density_cmd = ad_config.CD_CMD % (
@@ -324,11 +324,11 @@ class DemultiplexRunfolder(object):
                 self.check_dev_run()
                 return False
             if self.development_run and self.cmd_line_supplied_runfolder:
-                if self.integrity_check_success():
+                if self.pass_integrity_check():
                     return True
             else:
                 if self.no_disallowed_sserrs(valid, sscheck_obj):
-                    if self.integrity_check_success():
+                    if self.pass_integrity_check():
                         return True
 
     def check_dev_run(self) -> None:
@@ -338,13 +338,13 @@ class DemultiplexRunfolder(object):
         to stop further processing by the scripts). Send alert to slack if so
             :return None:
         """
-        if self.integrity_check_success() and self.create_bcl2fastqlog():
+        if self.pass_integrity_check() and self.create_bcl2fastqlog():
             self.demux_rf_logger.warning(
                 self.demux_rf_logger.log_msgs["dev_run_needs_processing"],
                 self.rf_obj.runfolder_name,
             )
 
-    def integrity_check_success(self) -> Union[bool, None]:
+    def pass_integrity_check(self) -> Union[bool, None]:
         """
         Check whether the integrity checking was successful
             :return (True | None):  True if successful, None if unsuccessful
@@ -512,17 +512,17 @@ class DemultiplexRunfolder(object):
             :return True|None:  True if logfile is successfully created
         """
         try:
-            open(self.rf_obj.bcl2fastqlog_path, "w", encoding="utf-8").close()
+            open(self.rf_obj.bcl2fastqlog_file, "w", encoding="utf-8").close()
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["create_bcl2fastqlog_pass"],
                 self.rf_obj.runfolder_name,
-                self.rf_obj.bcl2fastqlog_path,
+                self.rf_obj.bcl2fastqlog_file,
             )
             if self.tso:
                 self.add_bcl2fastqlog_tso_msg()
             return True
         except Exception as exception:
-            self.demux_rf_logger.exception(
+            self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["create_bcl2fastqlog_fail"],
                 self.rf_obj.runfolder_name,
                 exception,
@@ -539,7 +539,7 @@ class DemultiplexRunfolder(object):
             self.demux_rf_logger.log_msgs["TSO500_run"],
             self.rf_obj.runfolder_name,
         )
-        toolbox.write_lines(self.rf_obj.bcl2fastqlog_path, "w+", ad_config.STRINGS['demultiplexlog_tso500_msg'])
+        toolbox.write_lines(self.rf_obj.bcl2fastqlog_file, "w+", ad_config.STRINGS['demultiplexlog_tso500_msg'])
 
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["write_TSO_msg_to_bcl2fastqlog"],
@@ -559,6 +559,7 @@ class DemultiplexRunfolder(object):
             self.bcl2fastq2_cmd,
         )
         # Runs bcl2fastq2 and checks if completed successfully
+        # Bcl2fastq2 returncode 0 upon success. Outputs info logs to stderr
         out, err, returncode = toolbox.execute_subprocess_command(
             self.bcl2fastq2_cmd,
             self.demux_rf_logger,
@@ -568,7 +569,10 @@ class DemultiplexRunfolder(object):
                 self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
                 self.rf_obj.runfolder_name,
             )
-            self.check_bcl2fastqlogfile()  # Check for success statement
+            # Write stderr to bcl2fastq2 runfolder logfile
+            self.bcl2fastq2_rf_logger.info(
+                err               
+            )
             return True
         else:
             self.demux_rf_logger.error(
@@ -576,46 +580,6 @@ class DemultiplexRunfolder(object):
                 self.rf_obj.runfolder_name,
                 out,
                 err,
-            )
-            sys.exit(1)
-
-    # TODO investigate whether this is needed if we are checking the returncode
-    def check_bcl2fastqlogfile(self) -> Union[bool, None]:
-        """
-        Read last x lines of bcl2fastqlog logfile, search for success statement
-        The last 10 lines of the demultiplex logfile detail the success of the
-        bcl2fastq2 command. If success statement not present, report last few
-        lines to demultiplex log, then exit script
-            :return True|None:  True if success statement in bcl2fastq2 logfile
-        """
-        if os.path.isfile(self.rf_obj.bcl2fastqlog_path):
-            bcl2fastq2_log_tail = " ".join(toolbox.read_lines(self.rf_obj.bcl2fastqlog_path)[-10:])
-
-            if bcl2fastq2_log_tail:
-                if ad_config.STRINGS["demultiplex_success"] in str(bcl2fastq2_log_tail):
-                    self.demux_rf_logger.info(
-                        self.demux_rf_logger.log_msgs["demux_complete"],
-                        self.rf_obj.runfolder_name,
-                    )
-                    return True
-                else:
-                    self.demux_rf_logger.error(
-                        self.demux_rf_logger.log_msgs["demux_error"],
-                        self.rf_obj.runfolder_name,
-                        self.rf_obj.bcl2fastqlog_path,
-                    )
-                    sys.exit(1)
-            else:
-                self.demux_rf_logger.error(
-                    self.demux_rf_logger.log_msgs["bcl2fastqlog_empty"],
-                    self.rf_obj.runfolder_name,
-                    self.rf_obj.bcl2fastqlog_path,
-                )
-                sys.exit(1)
-        else:
-            self.demux_rf_logger.error(
-                self.demux_rf_logger.log_msgs["bcl2fastqlog_absent"],
-                self.rf_obj.runfolder_name,
             )
             sys.exit(1)
 

@@ -112,8 +112,8 @@ class SequencingRuns(object):
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
             :return True | None:    Return True if runfolder already demultiplexed, else None
         """
-        if os.path.isfile(rf_obj.bcl2fastqlog_path):
-            logfile_list = toolbox.read_lines(rf_obj.bcl2fastqlog_path)
+        if os.path.isfile(rf_obj.bcl2fastqlog_file):
+            logfile_list = toolbox.read_lines(rf_obj.bcl2fastqlog_file)
             completed_strs = [
                 ad_config.STRINGS["demultiplexlog_tso500_msg"],
                 ad_config.STRINGS["demultiplex_success"],
@@ -413,7 +413,6 @@ class ProcessRunfolder(object):
                 os.path.join(self.rf_obj.runfolderpath, ss)
                 for ss in self.rf_obj.tso_ss_list
             ]
-            # TODO amend the upload directory for this cmd
             upload_cmds["runfolder_samplesheet"] = ad_config.DX_CMDS[
                 "file_upload_cmd"
             ] % (
@@ -614,7 +613,7 @@ class ProcessRunfolder(object):
             )
             self.upload_runfolder.upload_rest_of_runfolder(ignore)
         except Exception as exception:
-            self.rf_obj.rf_loggers.sw.exception(
+            self.rf_obj.rf_loggers.sw.error(
                 self.rf_obj.rf_loggers.sw.log_msgs["upload_rf_error"],
                 exception,
                 self.rf_obj.sw_runfolder_logfile,
@@ -720,8 +719,14 @@ class CollectRunfolderSamples(object):
             Create a SampleObject per sample, containing sample-specific properties, and
             add each SampleObject to a larger samples_dict
         check_fastqs()
-            Check all fastqs in fastq dir were correctly identified from the samplesheet
-            and stored in the sample dict, and add any missing samples to the samples dict
+            Call functions that check the fastqs, self.identify_missing_fastqs() and
+            self.validate_fastqs()
+        validate_fastqs()
+            Validate the fastqs in the BaseCalls directory by checking that all sample fastqs
+            match a sample name from the self.samplename_list
+        identify_missing_fastqs()
+            Check all sample names in self.samplename_list are in the BaseCalls directory, and
+            that the undetermined file is in the BaseCalls directory. If not, raise an error
         fastq_not_undetermined(fastq_dir_file)
             Determine whether the fastq is an undetermined fastq
         get_fastqs_list()
@@ -931,11 +936,19 @@ class CollectRunfolderSamples(object):
 
     def check_fastqs(self) -> None:
         """
-        Check all fastqs in fastq dir were correctly identified from the samplesheet and
-        stored in the sample dict, and add any missing samples to the samples dict. Loops
-        through all the files in the given folder, identifies if each file is a fastq, and
-        checks it is not an undetermined fastq. Then checks whether the fastq matches a
-        sample in the sample_dict and if not, adds it as a sample to self.samples_dict
+        Call functions that check the fastqs, self.identify_missing_fastqs() and
+        self.validate_fastqs()
+            :return None:
+        """
+        self.validate_fastqs()
+        self.identify_missing_fastqs()
+
+    def validate_fastqs(self) -> None:
+        """
+        Validate the fastqs in the BaseCalls directory by checking that all sample fastqs
+        match a sample name from the self.samplename_list. If they do not, log an error
+        and add to a missing_samples list. Add all samples in the missing samples list to
+        the samples_dict so that they are processed
             :return None:
         """
         missing_samples = []
@@ -949,7 +962,7 @@ class CollectRunfolderSamples(object):
                     # Check if fastq matches a sample in the sample_dict, if not add it
                     sample_name = [
                         sample_name
-                        for sample_name in self.samples_dict.keys()
+                        for sample_name in self.samplename_list
                         if sample_name in fastq_dir_file
                     ]
                     if sample_name:
@@ -959,18 +972,21 @@ class CollectRunfolderSamples(object):
                             sample_name,
                         )
                     else:
-                        self.rf_obj.rf_loggers.sw.info(
+                        self.rf_obj.rf_loggers.sw.error(
                             self.rf_obj.rf_loggers.sw.log_msgs["sample_mismatch"],
                             fastq_dir_file,
                         )
                         sample_name = re.sub("R[0-9]_001.fastq.gz", "", fastq_dir_file)
                         missing_samples.append(fastq_dir_file)
-                        # Add the sample to the sample_obj
             else:
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["not_fastq"], fastq_dir_file
                 )
-        for sample_name in missing_samples:
+        for sample_name in missing_samples:  # Add the sample to the sample_obj
+            self.rf_obj.rf_loggers.sw.info(
+                self.rf_obj.rf_loggers.sw.log_msgs["add_missing_sample"],
+                sample_name
+            )
             self.samples_dict[sample_name] = SampleObject(
                 sample_name,
                 self.pipeline,
@@ -978,13 +994,31 @@ class CollectRunfolderSamples(object):
                 self.nexus_paths,
             ).return_sample_dict()
 
+    def identify_missing_fastqs(self) -> None:
+        """
+        Check all sample names in self.samplename_list are in the BaseCalls directory, and
+        that the undetermined file is in the BaseCalls directory. If not, raise an error
+            :return None:
+        """
+        fastqs = os.listdir(self.rf_obj.fastq_dir_path)
+        for sample_name in self.samplename_list:
+            if any(sample_name in fastq for fastq in fastqs):
+                self.rf_obj.rf_loggers.sw.info(
+                    self.rf_obj.rf_loggers.sw.log_msgs["existent_fastq"],
+                    sample_name,
+                )
+            else:
+                self.rf_obj.rf_loggers.sw.info(
+                    self.rf_obj.rf_loggers.sw.log_msgs["nonexistent_fastq"],
+                    sample_name,
+                )
+
     def fastq_not_undetermined(self, fastq_dir_file: str) -> Union[bool, None]:
         """
         Determine whether the fastq is an undetermined fastq
             :return True | None:    Return True if undetermined, else return None
         """
-        # Exclude undetermined
-        if not fastq_dir_file.startswith("Undetermined"):
+        if not fastq_dir_file.startswith("Undetermined"):  # Exclude undetermined
             return True
         else:
             self.rf_obj.rf_loggers.sw.info(
@@ -1408,13 +1442,11 @@ class SampleObject:
                 )
                 decision_support_cmd = self.build_congenica_cmd()
             elif self.panel_settings["panel_name"] == "tso500":
-                print("TSO RUN")
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["qiagen_upload_required"],
                     self.nexus_paths["proj_name"],
                 )
                 decision_support_cmd = self.build_qiagen_upload_cmd()
-                print(decision_support_cmd)
             return decision_support_cmd
 
     def build_congenica_sftp_cmd(self) -> str:
@@ -2187,7 +2219,6 @@ class BuildDxCommands(object):
                     == core_panel
                 ]
                 # Make sure there are enough samples for exome depth and RPKM
-                # TODO check this has the desired effect
                 if len(self.samples_obj.samples_dict.items()) >= 3:
                     if panel_config.CAPTURE_PANEL_DICT[core_panel][
                         "ed_readcount_bedfile"

@@ -108,7 +108,7 @@ SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
 BCL2FASTQ2_CMD = (
     f"sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
-    "--sample-sheet /mnt/run/%s --no-lane-splitting >> %s 2>&1"
+    "--sample-sheet /mnt/run/%s --no-lane-splitting"
 )
 CD_CMD = (
     "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics "
@@ -141,9 +141,11 @@ TEST_PROGRAMS_DICT = {
             "sudo docker run --rm broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics --version"
         ),
     },
+    "bcl2fastq2": {
+        "executable": "docker",
+        "test_cmd": f"sudo docker run --rm {BCL2FASTQ_DOCKER} --version",
+    }
 }
-
-TEST_IMAGES_DICT = {"bcl2fastq2": f"sudo docker run --rm {BCL2FASTQ_DOCKER} --version"}
 
 # ================ SETOFF WORKFLOWS ================================
 # Settings unique to the setoff workflows script

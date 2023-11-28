@@ -9,3 +9,5 @@ seglh-naming/
 seglh_naming.egg-info/
 ss_exceptions/
 venv/
+test/temp
+.coverage

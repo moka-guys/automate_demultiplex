@@ -221,7 +221,7 @@ def test_processing_software(logger) -> Union[bool, None]:
     and test_dx_toolkit functions
         :return True|None:  Return true if the tests all pass
     """
-    if test_docker("bcl2fastq2", logger) and test_programs(
+    if test_programs("bcl2fastq2", logger) and test_programs(
         "gatk_collect_lane_metrics", logger
     ):
         return True
@@ -252,27 +252,6 @@ def test_programs(software_name: str, logger: object) -> True:
             sys.exit(1)
     else:
         logger.error(logger.log_msgs["program_missing"], software_dict["executable"])
-        sys.exit(1)
-
-
-def test_docker(software_name: str, logger: object) -> True:
-    """
-    Check docker is correctly installed and outputs return code 0 (success).
-    Else, exit script
-        :param software_name (str): Name of the software being tested
-        :param logger (object):     Logger
-        :return True:               Return True if test passes, else exit script
-    """
-    test_cmd = ad_config.TEST_IMAGES_DICT[software_name]
-
-    logger.info(logger.log_msgs["testing_software"], software_name)
-
-    out, err, returncode = execute_subprocess_command(test_cmd, logger, "exit_on_fail")
-    if returncode == 0:
-        logger.info(logger.log_msgs["test_pass"], software_name)
-        return True
-    else:
-        logger.error(logger.log_msgs["test_fail"], software_name, out, err)
         sys.exit(1)
 
 
@@ -307,7 +286,7 @@ class RunfolderObject(object):
         samplesheet_path (str):                 Path to samplesheet in samplesheets dir
         runfolder_samplesheet_path (str):       Runfolder samplesheet path (within runfolder)
         checksumfile_path (str):                md5 checksum (integrity check) file path (within runfolder)
-        bcl2fastqlog_path (str):                bcl2fastq2 logfile path (within runfolder)
+        bcl2fastqlog_file (str):                bcl2fastq2 logfile path (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
         upload_agent_logfile (str):             Upload agent logfile (within runfolder).
         bcl2fastqstats_file (str):              Bcl2fastq stats file (within runfolder)
@@ -359,7 +338,7 @@ class RunfolderObject(object):
             self.runfolderpath,
             "md5checksum.txt",  # File holding checksum results
         )
-        self.bcl2fastqlog_path = os.path.join(
+        self.bcl2fastqlog_file = os.path.join(
             self.runfolderpath,
             "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
         )
@@ -444,6 +423,7 @@ class RunfolderObject(object):
             "post_run_cmds": self.post_run_dx_run_script,
             "decision_support": self.decision_support_tool_logfile,
             "ss_validator": self.samplesheet_validator_logfile,
+            "bcl2fastq2": self.bcl2fastqlog_file,
         }
         # Log files that sit outside the runfolder that require uploading
         self.logfiles_to_upload = [

@@ -54,9 +54,3 @@ gr_obj.setoff_processing()
 
 toolbox.script_end_logmsg(gr_obj.script_logger, __file__)
 ad_logger.shutdown_logs(gr_obj.script_logger)
-
-
-# TODO add command line args
-# TODO make it so that if it is run on cmd line it doesn't bypass dev runs
-# TODO set up rapid7 alert for development run alerts
-# TODO add to overall readme that it is an assumption that each runfolder must be discrete per workflow
