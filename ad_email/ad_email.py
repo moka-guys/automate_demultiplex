@@ -75,7 +75,7 @@ class AdEmail(object):
             self.logger.info(self.logger.log_msgs["html_success"])
             return html
         except Exception as exception:
-            self.logger.exception(self.logger.log_msgs["html_error"], exception)
+            self.logger.error(self.logger.log_msgs["html_error"], exception)
             sys.exit(1)
 
     def send_email(
@@ -119,5 +119,5 @@ class AdEmail(object):
             return True
 
         except Exception as exception:
-            self.logger.exception(self.logger.log_msgs["email_fail"], exception)
+            self.logger.error(self.logger.log_msgs["email_fail"], exception)
             sys.exit(1)

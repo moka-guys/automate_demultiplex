@@ -149,7 +149,7 @@ class DecisionTooler(object):
                 )
                 setattr(self, f"{file_name}jobid_cmd", find_execution_id_cmd)
         except Exception as exception:
-            self.logger.exception(
+            self.logger.error(
                 self.logger.log_msgs["setting_job_id_cmds_err"],
                 exception,
             )
@@ -182,7 +182,7 @@ class DecisionTooler(object):
                         self.logger.log_msgs["get_job_id_err"], outfile, err
                     )
             if tries > 1000:
-                self.logger.exception(self.logger.log_msgs["get_job_id_fail"], outfile)
+                self.logger.error(self.logger.log_msgs["get_job_id_fail"], outfile)
                 sys.exit(1)
 
     def set_app_input_string(self) -> None:
@@ -201,7 +201,7 @@ class DecisionTooler(object):
             )
             setattr(self, "congenica_app_inputs", congenica_app_inputs)
         except Exception as exception:
-            self.logger.exception(self.logger.log_msgs["app_input_str_err"], exception)
+            self.logger.error(self.logger.log_msgs["app_input_str_err"], exception)
             sys.exit(1)
 
     def printer(self) -> None:
