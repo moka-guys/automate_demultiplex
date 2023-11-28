@@ -1489,7 +1489,7 @@ class SampleObject:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["congenica_app"]}congenica_{self.sample_name}',
+                f'{ad_config.DX_CMDS["congenica_upload"]}congenica_{self.sample_name}',
                 f'-icongenica_project={str(self.panel_settings["congenica_project"])}',
                 f'-icredentials={self.panel_settings["congenica_credentials"]}',
                 f'-iIR_template={self.panel_settings["congenica_IR_template"]}',

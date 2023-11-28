@@ -51,6 +51,7 @@ required for analysis of samples with that pan number
     development_run                 False if pan number is not a development pan number,
                                     else True
 """
+# TODO in future do we want to swap physical paths for file IDs
 from config import ad_config
 
 PIPE_HAPLOTYPE_CALLER_PADDING = 0
