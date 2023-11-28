@@ -7,6 +7,14 @@ This repository contains the main scripts for routine analysis of clinical next 
 2. [setoff_workflows.py](setoff_workflows.py) - Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md)
 3. [congenica_inputs.py](congenica_inputs.py) - This script is called from the dx run script for samples requiring congenica upload (the dx run script is created by setoff_workflows.py). The script prints the inputs required by the congenica upload apps in DNAnexus [(guide)](congenica_inputs/README.md)
 
+# Assumptions / Requirements
+
+Each runfolder must be discrete per workflow, therefore must consist of only one of the following types:
+* TSO500
+* ADX
+* SNP
+* WES
+* Custom Panels + LRPCR
 
 # Modules
 
