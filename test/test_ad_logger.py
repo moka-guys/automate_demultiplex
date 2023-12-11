@@ -66,7 +66,7 @@ from config import ad_config
 
 class TestRunfolderLoggers:
     """
-    Tests for the SamplesheetCheck class
+    Tests for the RunfolderLoggers class
     """
 
     @pytest.fixture(scope="function")

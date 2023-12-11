@@ -1,7 +1,11 @@
 #!/usr/bin/python3
 # coding=utf-8
 """
-Email sending module
+Email sending module. See Readme and docstrings for further details.
+Contains the following classes:
+
+- AdEmail
+    Send email to recipient via SMTP
 """
 import sys
 import os
@@ -15,7 +19,7 @@ from config import ad_config
 from toolbox import toolbox
 
 
-class AdEmail(object):
+class AdEmail:
     """
     Send email to recipient via SMTP
 

@@ -59,16 +59,6 @@ def patch_test_ad_logger(monkeypatch):
     monkeypatch.setattr(toolbox.ad_config, "RUNFOLDERS", temp_runfolderdir)
     monkeypatch.setattr(toolbox.ad_config, "AD_LOGDIR", temp_log_dir)
 
-
-def patch_test_samplesheet_validator(monkeypatch):
-    """
-    Apply patches required for test_samplesheet_validator script. These point the paths
-    to the temporary locations:
-        - Test logfiles in the temp logfiles dir
-    """
-    monkeypatch.setattr(toolbox.ad_config, "AD_LOGDIR", temp_log_dir)
-
-
 def patch_test_demultiplex(monkeypatch):
     """
     Apply patches required for test_demultiplex script. These point the paths to the
@@ -91,8 +81,8 @@ def run_before_and_after_tests(monkeypatch):
     """
     # PATCH MODULES THAT NEED PATCHING FOR TESTING (test_ad_email and test_toolbox do
     # not require any patching)
+    monkeypatch.setattr(ad_logger.ad_config, "SCRIPT_MODE", "PYTEST_TESTS")
     patch_test_ad_logger(monkeypatch)
-    patch_test_samplesheet_validator(monkeypatch)
     patch_test_demultiplex(monkeypatch)
 
     # SETUP - cleanup after each test

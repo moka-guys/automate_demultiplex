@@ -1,19 +1,26 @@
 #!/usr/bin/python3
 # coding=utf-8
 """
-Demultiplexes NGS Run Folders. See Readme and docstrings for further details
+Demultiplexes NGS Run Folders. See Readme and docstrings for further details.
+Contains the following classes:
+
+- GetRunfolders
+    Loop through and process NGS runfolders in a given directory
+- DemultiplexRunfolder
+    Call bcl2fastq2 on runfolders after asserting that runfolder has not been
+    demultiplexed and a valid samplesheet is present
+
 """
 import sys
 import os
 import re
 from typing import Union, Tuple
-from config import ad_config
+from config import ad_config, panel_config
 from ad_logger import ad_logger
 from toolbox import toolbox
-from samplesheet_validator import samplesheet_validator
+import samplesheet_validator.samplesheet_validator as samplesheet_validator
 
-
-class GetRunfolders(object):
+class GetRunfolders:
     """
     Loop through and process NGS runfolders in a given directory
 
@@ -166,7 +173,7 @@ class GetRunfolders(object):
         setattr(self, "num_processed_runfolders", num_processed_runfolders)
 
 
-class DemultiplexRunfolder(object):
+class DemultiplexRunfolder:
     """
     Call bcl2fastq2 on runfolders after asserting that runfolder has not been
     demultiplexed and a valid samplesheet is present.
@@ -365,8 +372,12 @@ class DemultiplexRunfolder(object):
         """
         sscheck_obj = samplesheet_validator.SamplesheetCheck(
             self.rf_obj.samplesheet_path,
-            self.rf_obj.runfolder_name,
-            self.ss_validator_logger,
+            ad_config.SEQUENCER_IDS.keys(),
+            panel_config.PANELS,
+            panel_config.LIBRARY_PREP_NAMES,
+            panel_config.TSO_PANELS,
+            panel_config.DEVELOPMENT_PANEL,
+            os.path.dirname(self.rf_obj.samplesheet_validator_logfile)
         )
         sscheck_obj.ss_checks()
         ad_logger.shutdown_logs(sscheck_obj.logger)
@@ -416,9 +427,9 @@ class DemultiplexRunfolder(object):
         """
         if not valid:
             if any(
-                error in sscheck_obj.errors_list for error in self.disallowed_sserrs
+                error in list(sscheck_obj.errors_dict.values()) for error in self.disallowed_sserrs
             ):
-                err_str = ", ".join(sscheck_obj.errors_list)
+                err_str = ", ".join(list(sscheck_obj.errors_dict.values()))
                 self.demux_rf_logger.error(
                     self.demux_rf_logger.log_msgs["ssfail_haltdemux"],
                     self.rf_obj.samplesheet_path,
@@ -437,8 +448,8 @@ class DemultiplexRunfolder(object):
         """
         if any(
             item in self.rf_obj.runfolder_name
-            for item in ad_config.SEQUENCERS_WITH_INTEGRITY_CHECK
-        ):
+            for item in ad_config.SEQ_REQUIRE_IC
+        ):            
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ic_required"])
         else:
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ic_notrequired"])
@@ -536,13 +547,13 @@ class DemultiplexRunfolder(object):
             :return True|None:  True if log file successfully created and written to
         """
         self.demux_rf_logger.info(
-            self.demux_rf_logger.log_msgs["TSO500_run"],
+            self.demux_rf_logger.log_msgs["tso500_run"],
             self.rf_obj.runfolder_name,
         )
         toolbox.write_lines(self.rf_obj.bcl2fastqlog_file, "w+", ad_config.STRINGS['demultiplexlog_tso500_msg'])
 
         self.demux_rf_logger.info(
-            self.demux_rf_logger.log_msgs["write_TSO_msg_to_bcl2fastqlog"],
+            self.demux_rf_logger.log_msgs["write_tso_msg_to_bcl2fastqlog"],
             self.rf_obj.runfolder_name,
         )
         return True
@@ -569,9 +580,8 @@ class DemultiplexRunfolder(object):
                 self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
                 self.rf_obj.runfolder_name,
             )
-            # Write stderr to bcl2fastq2 runfolder logfile
             self.bcl2fastq2_rf_logger.info(
-                err               
+                err  # Write stderr to bcl2fastq2 runfolder logfile        
             )
             return True
         else:

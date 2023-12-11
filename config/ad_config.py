@@ -33,7 +33,7 @@ MAIL_SETTINGS = {
 
 if BRANCH == "master":  # Prod branch
     TESTING = False  # Set testing mode
-    SCRIPT_MODE = "PROD MODE"
+    SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
     RUNFOLDERS = "/media/data3/share"
     AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
@@ -56,7 +56,7 @@ else:  # Testing branch
     SCRIPT_MODE = "TEST_MODE"
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
-    JOB_NAME_STR = "--name TEST@"
+    JOB_NAME_STR = "--name TEST_MODE@"
     RUNFOLDERS = "/media/data3/share/testing"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
@@ -76,10 +76,16 @@ CREDENTIALS = {
 
 # Sequencer / run identifiers
 NOVASEQ_ID = "A01229"
-SEQUENCER_IDS = ["NB551068", "NB552085", "M02353", "M02631", NOVASEQ_ID]
-RUNTYPE_LIST = ["NGS", "ADX", "ONC", "SNP", "TSO", "LRPCR"]
-# Sequencers requiring md5 checksums from integrity check to be assessed
-SEQUENCERS_WITH_INTEGRITY_CHECK = ["NB551068", "NB552085", NOVASEQ_ID]
+
+# requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed
+SEQUENCER_IDS = {
+    "NB551068": {"requires_ic": True},
+    "NB552085": {"requires_ic": True},
+    "M02353": {"requires_ic": False},
+    "M02631": {"requires_ic": False},
+    NOVASEQ_ID: {"requires_ic": True},
+}
+SEQ_REQUIRE_IC = [k for k, v in SEQUENCER_IDS.items() if SEQUENCER_IDS[k]["requires_ic"]]
 
 RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 
@@ -407,18 +413,15 @@ DX_CMDS = {
     ),
     "pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
     "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
-    "snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} -y --priority high {JOB_NAME_STR}",
+    "snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} --priority high -y {JOB_NAME_STR}",
     "tso500": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --priority high -y {JOB_NAME_STR}",
     "fastqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
-    "peddy": (
+    "peddy": (  # TODO move instance type into app itself
         f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high "
         f"-y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
-    "multiqc": (
-        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['multiqc']} "
-        f"--priority high -y --instance-type mem1_ssd1_v2_x4 {JOB_NAME_STR}"
-    ),
-    "upload_multiqc": (
+    "multiqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['multiqc']} --priority high -y {JOB_NAME_STR}",
+    "upload_multiqc": (  # TODO move instance type into app itself
         f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
@@ -426,19 +429,16 @@ DX_CMDS = {
         f"ED_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
-    "ed_cnvcalling": (
-        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} "
-        f"--priority high -y --instance-type mem1_ssd1_v2_x4 {JOB_NAME_STR}"
-    ),
-    "rpkm": (
-        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['rpkm']}"
-        f" --priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
+    "ed_cnvcalling": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} --priority high -y {JOB_NAME_STR}",
+    "rpkm": (  # TODO soon to be removed
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['rpkm']} "
+        f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
     "congenica_sftp": (
         f"echo 'dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y ' $analysisid ' {JOB_NAME_STR}"
     ),
-    "congenica_upload": (
-        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_upload_v1.3.2']} --priority high -y "
+    "congenica_upload": (  # TODO move instance type into app itself
+        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
         f"--instance-type mem1_ssd1_v2_x2 ' $analysisid ' {JOB_NAME_STR}"
     ),
     "qiagen_upload": f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",

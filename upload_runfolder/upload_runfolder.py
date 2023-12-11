@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 # coding=utf-8
 """
-upload_runfolder.py Uploads an Illumina runfolder to DNAnexus.
+upload_runfolder.py Uploads an Illumina runfolder to DNAnexus. Contains the following classes:
+
+- UploadRunfolder
+    Uploads a runfolder to DNAnexus
 """
 import sys
 import os
@@ -370,9 +373,14 @@ class UploadRunfolder:
             for file in files_list:
                 if not os.path.isfile(file):
                     nonexistent_files.append(file)
-            self.logger.error(
-                self.logger.log_msgs["nonexistent_files"], nonexistent_files
-            )
+            if nonexistent_files:
+                self.logger.error(
+                    self.logger.log_msgs["nonexistent_files"], nonexistent_files
+                )
+            else:
+                self.logger.error(
+                    self.logger.log_msgs["files_exist"],
+                )
             return nonexistent_files
 
     def count_uploaded_files(self, ignore: str) -> None:

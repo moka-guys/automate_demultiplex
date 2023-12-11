@@ -21,6 +21,7 @@ Dictionary keys and values are as follows. Values are False where they are not
 required for analysis of samples with that pan number
     panel_name                      Name of capture panel
     pipeline                        Name of pipeline
+    sample_prefix                   Expected string at front of sample name
     capture_pan_num                 Pan number of capture panel bedfile (used for RPKM).
                                     False if RPKM not run
     hsmetrics_bedfile               bedfile filename, or False
@@ -85,6 +86,7 @@ CONGENICA_CREDENTIALS = {
 DEFAULT_DICT = {
     "panel_name": None,
     "pipeline": None,
+    "sample_prefix": None,
     "capture_pan_num": None,
     "hsmetrics_bedfile": None,
     "sambamba_bedfile": None,
@@ -118,6 +120,8 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "vcp1",
         "pipeline": "pipe",
+        "sample_prefix": "NGS",
+        "runtype": "CP",
         "capture_pan_num": "Pan4399",
         "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4397data.bed",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4397dataSambamba.bed",
@@ -134,6 +138,8 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "vcp2",
         "pipeline": "pipe",
+        "sample_prefix": "NGS",
+        "runtype": "CP",
         "capture_pan_num": "Pan5109",
         "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan5123data.bed",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5123dataSambamba.bed",
@@ -150,6 +156,8 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "vcp3",
         "pipeline": "pipe",
+        "sample_prefix": "NGS",
+        "runtype": "CP",
         "capture_pan_num": "Pan4362",
         "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4995dataSambamba.bed",
@@ -165,6 +173,8 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "lrpcr",
         "pipeline": "pipe",
+        "sample_prefix": "NGS",
+        "runtype": "LRPCR",
         "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4967_reference.bed",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5018dataSambamba.bed",
         "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4767data.bed",
@@ -179,6 +189,8 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "snp",
         "pipeline": "snp",
+        "sample_prefix": "SNP",
+        "runtype": "SNP",
         "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4009.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
@@ -187,6 +199,8 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "wes",
         "pipeline": "wes",
+        "sample_prefix": "NGS",
+        "runtype": "WES",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan493dataSambamba.bed",
         "hsmetrics_bedfile": (
             f"{BEDFILE_FOLDER}Twist_Exome_RefSeq_CCDS_v1.2_targets.bed"
@@ -198,6 +212,8 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "wes_eb",
         "pipeline": "wes",
+        "sample_prefix": "NGS",
+        "runtype": "EB",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan493dataSambamba.bed",
         "hsmetrics_bedfile": (
             f"{BEDFILE_FOLDER}Twist_Exome_RefSeq_CCDS_v1.2_targets.bed"
@@ -209,6 +225,8 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "archerdx",
         "pipeline": "archerdx",
+        "sample_prefix": "ADX",
+        "runtype": "ADX",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,  # We don't align for Archer
     },
@@ -216,6 +234,8 @@ CAPTURE_PANEL_DICT = {
         **DEFAULT_DICT,
         "panel_name": "tso500",
         "pipeline": "tso500",
+        "sample_prefix": "TSO",
+        "runtype": "TSO",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5205dataSambamba.bed",
         "capture_type": "Hybridisation",
         "clinical_coverage_depth": 100,
@@ -836,13 +856,15 @@ ED_PANNOS = {
     ],
 }
 
-TSO500_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "tso500"]
+LIBRARY_PREP_NAMES = list(set([CAPTURE_PANEL_DICT[k]['sample_prefix'] for k, v in CAPTURE_PANEL_DICT.items()]))
+
+TSO_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "tso500"]
 WES_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "wes"]
 SNP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "snp"]
 ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
 LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
 
-DEVELOPMENT_PANELS = [k for k, v in PANEL_DICT.items() if v["development_run"]]
+DEVELOPMENT_PANEL = str([k for k, v in PANEL_DICT.items() if v["development_run"]])
 
 # ================ DUTY_CSV INPUTS ===================================================
 

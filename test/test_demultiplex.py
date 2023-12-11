@@ -18,13 +18,6 @@ demultiplex.py pytest unit tests
 import os
 import itertools
 import pytest
-from test.test_samplesheet_validator import (
-    valid_samplesheets,
-    invalid_paths,
-    invalid_names,
-    empty_file,
-    invalid_contents,
-)
 from demultiplex import demultiplex
 from config import ad_config
 from test import conftest
@@ -42,6 +35,154 @@ def get_gr_obj():
     """"""
     gr_obj = demultiplex.GetRunfolders()
     return gr_obj
+
+
+@pytest.fixture(scope="function")
+def valid_samplesheets():
+    """
+    Test cases with valid paths, files are populated, and valid samplesheet names, and
+    contain:
+        Expected headers, matching Sample_IDs and Sample_Names, valid samples, valid pan
+        nos, valid runtypes
+    """
+    return [
+        (
+            "210408_M02631_0186_000000000-JFMNK",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv",
+            ),
+        ),
+        (
+            "210917_NB551068_0409_AH3YNFAFX3",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "210917_NB551068_0409_AH3YNFAFX3_SampleSheet.csv",
+            ),
+        ),
+        (
+            "221021_A01229_0145_BHGGTHDMXY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv",
+            ),
+        ),
+        (
+            "221024_A01229_0146_BHKGG2DRX2",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "221024_A01229_0146_BHKGG2DRX2_SampleSheet.csv",
+            ),
+        ),
+    ]
+
+
+@pytest.fixture(scope="function")
+def invalid_paths():
+    """
+    Collection of nonexistent samplesheets
+    """
+    return [
+        (
+            "210408_M02631_0186_000000000-JFMNN",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "210408_M02631_0186_000000000-JFMNN_SampleSheet.csv",
+            ),
+        ),
+        (
+            "210918_NB551068_551068_0409_AH3YNFAFX3",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "210918_NB551068_551068_0409_AH3YNFAFX3_SampleSheet.csv",
+            ),
+        ),
+        (
+            "221021_A01229_0143_BHGGTHDMXY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "221021_A01229_0143_BHGGTHDMXY_SampleSheet.csv",
+            ),
+        ),
+    ]
+
+
+@pytest.fixture(scope="function")
+def invalid_names():
+    """
+    Collection of samplesheets with invalid names
+    """
+    return [
+        (
+            "21108_A01229_0040_AHKGTFDRXY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "21108_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
+            ),
+        ),
+        (
+            "21aA08_A01229_0040_AHKGTFDRXY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "21aA08_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
+            ),
+        ),
+        (
+            "2110915_M02353_0632_000000000-K242J",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "2110915_M02353_0632_000000000-K242J_SampleSheet.csv",
+            ),
+        ),
+    ]
+
+
+
+@pytest.fixture(scope="function")
+def empty_file():
+    """
+    Empty file with an invalid sequencer ID
+    """
+    return [
+        (
+            "220413_A01229_0032_AHGKBIEKFR",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "220413_A01229_0032_AHGKBIEKFR_SampleSheet.csv",
+            ),
+        ),
+    ]
+
+
+@pytest.fixture(scope="function")
+def invalid_contents():
+    """
+    Test cases with all the following: invalid sequencer id, invalid headers, invalid
+    sample names, non-matching samplenames, invalid panel number, invalid runtype
+    """
+    return [
+        (
+            "220404_B01229_0348_HFGIFEIOPY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
+            ),
+        ),
+        (
+            "220408_A02631_0186_000000000-JLJFE",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "220408_A02631_0186_000000000-JLJFE_SampleSheet.csv",
+            ),
+        ),
+        (
+            "200817_NB068_0009_AH3YERAFX3",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
+            ),
+        ),
+    ]
 
 
 class TestGetRunfolders(object):
@@ -263,8 +404,7 @@ class TestDemultiplexRunfolder(object):
     ):
         """
         Samplesheets with disallowed errors in the more stringent set of requirements
-        than the base samplesheet validator check. These lists have been imported from
-        the test_samplesheet_validator test suite
+        than the base samplesheet validator check
         """
         return list(
             itertools.chain(

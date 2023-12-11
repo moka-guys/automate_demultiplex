@@ -180,11 +180,10 @@ class AdLogger(object):
         Get formatter for logging. This is script mode-dependent
             :return (str):  Logging formatter string
         """
-        if ad_config.TESTING:
-            flag = "AUTOMATED SCRIPTS TEST_MODE - "
-        else:
-            flag = "AUTOMATED SCRIPTS PROD_MODE - "
-        return f"%(asctime)s - {flag}%(name)s - %(levelname)s - %(message)s"
+        return (
+            f"%(asctime)s - AUTOMATED SCRIPTS {ad_config.SCRIPT_MODE} "
+            "- %(name)s - %(levelname)s - %(message)s"
+            )
 
     def _get_syslog_handler(self) -> logging.handlers.SysLogHandler:
         """

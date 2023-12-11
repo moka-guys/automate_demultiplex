@@ -1,6 +1,9 @@
 """
 Print inputs required by congenica upload applications on DNAnexus.
-See Readme and doctrings for further details
+See Readme and doctrings for further details. Contains the following classes:
+
+- DecisionTooler
+    Builds congenica upload DNAnexus app command line inputs
 """
 import sys
 from config import ad_config
@@ -42,7 +45,7 @@ DECISION_SUPPORT_INPUTS = {
 }
 
 
-class DecisionTooler(object):
+class DecisionTooler:
     """
     Builds congenica upload DNAnexus app command line inputs
 

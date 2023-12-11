@@ -26,9 +26,11 @@ The following modules are utilised by the above scripts, with the documentation 
     - [ad_config](config/ad_config.py) - Contains general configuration
     - [log_msgs_config](config/log_msgs_config.py) - Contains messages used by [ad_logger](ad_logger)
     - [panel_config](config/panel_config.py) - Contains panel specific configuration
-* [samplesheet_validator](samplesheet_validator) - Validates naming and contents of samplesheets prior to demultiplexing. Uses the [seglh-naming](https://github.com/moka-guys/seglh-naming) package [(guide)](samplesheet_validator/README.md)
 * [toolbox](toolbox) - Contains classes and functions shared [(guide)](toolbox/README.md)
 * [upload_runfolder](upload_runfolder) - Uploads an Illumina runfolder to DNAnexus [(guide)](upload_runfolder/README.md)
+
+External imports:
+* [samplesheet_validator](https://github.com/moka-guys/samplesheet_validator) - Validates naming and contents of samplesheets prior to demultiplexing. Uses the [seglh-naming](https://github.com/moka-guys/seglh-naming) package [(guide)](samplesheet_validator/README.md)
 
 # Logfile Heirarchy
 
@@ -81,7 +83,6 @@ Currently the test suite covers the following scripts/modules:
 * [ad_email](ad_email)
 * [ad_logger](ad_logger)
 * [demultiplex.py](demultiplex.py)
-* [samplesheet_validator](samplesheet_validator)
 
 Suites for the following scripts/modules still require development:
 * [setoff_workflows.py](setoff_workflows.py)

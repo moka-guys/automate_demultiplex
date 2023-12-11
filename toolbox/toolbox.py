@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 # coding=utf-8
 """
-This script contains functions shared across scripts / modules,
-including the RunfolderObject class
+This script contains functions shared across scripts / modules. Contains the following classes:
+
+- RunfolderObject:
+    An object with runfolder-specific properties
 """
 import sys
 import os
@@ -271,7 +273,7 @@ def get_num_processed_runfolders(logger: object, processed_runfolders: list) -> 
     return num_processed_runfolders
 
 
-class RunfolderObject(object):
+class RunfolderObject:
     """
     An object with runfolder-specific properties.
 
