@@ -173,7 +173,7 @@ if TESTING:
 else:
     DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
     DNANEXUS_USERS = {  # User access level
-        "viewers": [PROD_ORGANISATION, "InterpretationRequest"],
+        "viewers": [PROD_ORGANISATION, "InterpretationRequest", "org-seglh_read"],
         "admins": ["mokaguys"],
     }
 
