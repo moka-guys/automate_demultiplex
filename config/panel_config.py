@@ -162,6 +162,7 @@ CAPTURE_PANEL_DICT = {
         "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
         "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4995dataSambamba.bed",
         "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
+        "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5192_exomedepth.bed",
         "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4362_RPKM.bed",
         "capture_type": "Hybridisation",
         "multiqc_coverage_level": 30,
@@ -371,12 +372,11 @@ PANEL_DICT = {
         "congenica_project": 4862,
         "ed_cnvcalling_bedfile": "Pan4703",
     },
-    "Pan4122": {  # VCP1 R25 - FGFR (Viapath)
+    "Pan4122": {  # VCP1 R25 - FGFR (Viapath). CNV not required
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R25",
         "congenica_project": 5291,
-        # CNV calling not required
     },
     "Pan4125": {  # VCP1 R73 - DMD (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
@@ -385,12 +385,11 @@ PANEL_DICT = {
         "congenica_project": 4861,
         "ed_cnvcalling_bedfile": "Pan4622",
     },
-    "Pan4126": {  # VCP1 R337 - CADASIL (Viapath)
+    "Pan4126": {  # VCP1 R337 - CADASIL (Viapath). CNV not required
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["viapath"],
         "test_number": "R337",
         "congenica_project": 4865,
-        # CNV calling not required
     },
     "Pan4974": {  # VCP1 R112 - Molecular Haemostasis (Viapath)
         **CAPTURE_PANEL_DICT["vcp1"],
@@ -484,12 +483,11 @@ PANEL_DICT = {
         "congenica_project": 4203,
         "ed_cnvcalling_bedfile": "Pan4703",
     },
-    "Pan4823": {  # VCP1 R25 - FGFR (STG)
+    "Pan4823": {  # VCP1 R25 - FGFR (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["stg"],
         "test_number": "R25",
         "congenica_project": 4203,
-        # CNV not required
     },
     "Pan4824": {  # VCP1 R73 - DMD (STG)
         **CAPTURE_PANEL_DICT["vcp1"],
@@ -499,12 +497,11 @@ PANEL_DICT = {
         "congenica_IR_template": "non-priority",
         "ed_cnvcalling_bedfile": "Pan4622",
     },
-    "Pan4825": {  # VCP1 R337 - cadasil (STG)
+    "Pan4825": {  # VCP1 R337 - cadasil (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp1"],
         **CONGENICA_CREDENTIALS["stg"],
         "test_number": "R337",
         "congenica_project": 4203,
-        # CNV not required
     },
     "Pan4149": {  # VCP2 R208 - BRCA (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -529,7 +526,7 @@ PANEL_DICT = {
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
-        "ed_cnvcalling_bedfile": "Pan5193",  # Use R211 CNV bedfile
+        "ed_cnvcalling_bedfile": "Pan5206",
     },
     "Pan4964": {  # VCP2 R259 - nijmegen breakage (Viapath)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -638,7 +635,7 @@ PANEL_DICT = {
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
         "polyedge": POLYEDGE_INPUTS["MSH2"],
-        "ed_cnvcalling_bedfile": "Pan5193",  # Use R211 bedfile
+        "ed_cnvcalling_bedfile": "Pan5206",
     },
     "Pan4820": {  # VCP2 R211 - polyposis (STG)
         **CAPTURE_PANEL_DICT["vcp2"],
@@ -655,6 +652,7 @@ PANEL_DICT = {
         "congenica_project": 4666,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5168",
     },
     "Pan4146": {  # VCP3 R81 - CM (Viapath)
         **CAPTURE_PANEL_DICT["vcp3"],
@@ -662,36 +660,37 @@ PANEL_DICT = {
         "congenica_project": 4666,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5170",
     },
-    "Pan4132": {  # VCP3 R56 (Viapath)
+    "Pan4132": {  # VCP3 R56 (Viapath). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R56",
         "congenica_project": 5092,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
     },
-    "Pan4134": {  # VCP3 R57 (Viapath)
+    "Pan4134": {  # VCP3 R57 (Viapath). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R57",
         "congenica_project": 5092,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
     },
-    "Pan4136": {  # VCP3 R58 (Viapath)
+    "Pan4136": {  # VCP3 R58 (Viapath). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R58",
         "congenica_project": 5092,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
     },
-    "Pan4137": {  # VCP3 R60 (Viapath)
+    "Pan4137": {  # VCP3 R60 (Viapath). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R60",
         "congenica_project": 5092,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
     },
-    "Pan4138": {  # VCP3 R62 (Viapath)
+    "Pan4138": {  # VCP3 R62 (Viapath). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R62",
         "congenica_project": 5092,
@@ -704,15 +703,16 @@ PANEL_DICT = {
         "congenica_project": 5092,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5174",
     },
-    "Pan4144": {  # VCP3 R78 (Viapath)
+    "Pan4144": {  # VCP3 R78 (Viapath). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R78",
         "congenica_project": 5092,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
     },
-    "Pan4151": {  # VCP3 R82 - limb girdle (Viapath)
+    "Pan4151": {  # VCP3 R82 - limb girdle (Viapath). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R82",
         "congenica_project": 5092,
@@ -725,6 +725,7 @@ PANEL_DICT = {
         "congenica_project": 5290,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5179",
     },
     "Pan4351": {  # VCP3 R227 (Viapath)
         **CAPTURE_PANEL_DICT["vcp3"],
@@ -732,6 +733,7 @@ PANEL_DICT = {
         "congenica_project": 5522,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5177",
     },
     "Pan4387": {  # VCP3 R90 - Bleeding and platelet disorders (Viapath)
         **CAPTURE_PANEL_DICT["vcp3"],
@@ -739,6 +741,7 @@ PANEL_DICT = {
         "congenica_project": 4699,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5171",
     },
     "Pan4390": {  # VCP3 R97 - Thrombophilia with a likely monogenic cause (Viapath)
         **CAPTURE_PANEL_DICT["vcp3"],
@@ -746,36 +749,37 @@ PANEL_DICT = {
         "congenica_project": 4699,
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
+        "ed_cnvcalling_bedfile": "Pan5173",
     },
-    "Pan4826": {  # VCP3 R56 - (STG)
+    "Pan4826": {  # VCP3 R56 - (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R56",
         "congenica_project": 4201,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
     },
-    "Pan4827": {  # VCP3 R57 - (STG)
+    "Pan4827": {  # VCP3 R57 - (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R57",
         "congenica_project": 4201,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
     },
-    "Pan4828": {  # VCP3 R58 - (STG)
+    "Pan4828": {  # VCP3 R58 - (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R58",
         "congenica_project": 4201,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
     },
-    "Pan4829": {  # VCP3 R60 - (STG)
+    "Pan4829": {  # VCP3 R60 - (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R60",
         "congenica_project": 4201,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
     },
-    "Pan4830": {  # VCP3 R62 - (STG)
+    "Pan4830": {  # VCP3 R62 - (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R62",
         "congenica_project": 4201,
@@ -788,8 +792,9 @@ PANEL_DICT = {
         "congenica_project": 4201,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
+        "ed_cnvcalling_bedfile": "Pan5174",
     },
-    "Pan4832": {  # VCP3 R78 - (STG)
+    "Pan4832": {  # VCP3 R78 - (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R78",
         "congenica_project": 4201,
@@ -802,6 +807,7 @@ PANEL_DICT = {
         "congenica_project": 4201,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
+        "ed_cnvcalling_bedfile": "Pan5168",
     },
     "Pan4834": {  # VCP3 R81 - CM (STG)
         **CAPTURE_PANEL_DICT["vcp3"],
@@ -809,15 +815,16 @@ PANEL_DICT = {
         "congenica_project": 4201,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
+        "ed_cnvcalling_bedfile": "Pan5170",
     },
-    "Pan4835": {  # VCP3 R82 - limb girdle (STG)
+    "Pan4835": {  # VCP3 R82 - limb girdle (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R82",
         "congenica_project": 4201,
         "congenica_credentials": "STG",
         "congenica_IR_template": "non-priority",
     },
-    "Pan4836": {  # VCP3 R229 - (STG)
+    "Pan4836": {  # VCP3 R229 - (STG). CNV not required
         **CAPTURE_PANEL_DICT["vcp3"],
         "test_number": "R229",
         "congenica_project": 4201,
