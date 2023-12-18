@@ -981,7 +981,7 @@ panel_settings = {
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
         "variant_calling_bedfile": "Pan5119data.bed",
         "polyedge": "MSH2",
-        "exome_depth_cnvcalling_BED": "Pan5193" # use R211 CNV bedfile
+        "exome_depth_cnvcalling_BED": "Pan5206"
     },
     "Pan4130": {  # VCP2 R211 polyposis (Viapath)
         "mokapipe": True,
@@ -1185,7 +1185,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
-        #"exome_depth_cnvcalling_BED": "Pan5179",
+        "exome_depth_cnvcalling_BED": "Pan5179",
     },
     "Pan4396": {  # ArcherDx (Synnovis)
         "archerdx": True,
@@ -1439,7 +1439,7 @@ panel_settings = {
         "hsmetrics_bedfile": "Pan4995data.bed",
         "variant_calling_bedfile": "Pan4995data.bed",
         "sambamba_bedfile": "Pan4995dataSambamba.bed",
-        #"exome_depth_cnvcalling_BED": "Pan5179" BEDfile not yet available
+        "exome_depth_cnvcalling_BED": "Pan5179"
     },
     "Pan4819": {  # VCP2 STG R210
         "mokapipe": True,
@@ -1453,7 +1453,7 @@ panel_settings = {
         "variant_calling_bedfile": "Pan5119data.bed",
         "sambamba_bedfile": "Pan5123dataSambamba.bed",
         "polyedge": "MSH2",
-        "exome_depth_cnvcalling_BED": "Pan5193" # useR211 bedfile
+        "exome_depth_cnvcalling_BED": "Pan5206"
     },
     "Pan4820": {  # VCP2 STG R211
         "mokapipe": True,
