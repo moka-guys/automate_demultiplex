@@ -8,7 +8,7 @@ The variables defined in this module are required by the "demultiplex.py",
 import os
 
 # Set debug mode
-testing = True
+testing = False
 
 # =====location of input/output files=====
 # root of folder that contains the apps, automate_demultiplexing_logfiles and
@@ -54,8 +54,6 @@ demultiplex_test_folder = [
     "999999_NB552085_0496_DEMUXINTEG",
     "999999_M02353_0496_000000000-DEMUX",
     "999999_A01229_0182_AHM2TSO500",
-    "999999_A01229_0243_BHJNJYDRX3VCP3ED",
-    "999999_A01229_0271_BHT3G2DVCP12ED",
 ]
 
 # TSO500 batch size (for splitting samplesheet)
