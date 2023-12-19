@@ -187,8 +187,8 @@ NEXUS_IDS = {
         "hs37d5_ref_with_index": f"{TOOLS_PROJECT}:file-ByYgX700b80gf4ZY1GxvF3Jv",  # hs37d5.fasta-index.tar.gz
         "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01",  # hs37d5.fa.gz
         "masked_reference": f"{TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q",  # hs37d5_Pan4967.bwa-index.tar.gz
-        "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-Gbv7Yb80v8Q40f8v140QBPQv",  # Pan5191_normals_v1.0.0.RData
-        "ed_vcp2_readcount_normals": f"{TOOLS_PROJECT}:file-Gbkgyq00ZpxpFKx03zVPJ9GX",  # Pan5188_normals_v1.0.0.RData
+        "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-Gbv7Yb80v8Q40f8v140QBPQv",  # Pan5191_normals_v1.1.0.RData
+        "ed_vcp2_readcount_normals": f"{TOOLS_PROJECT}:file-Gbkgyq00ZpxpFKx03zVPJ9GX",  # Pan5188_normals_v1.1.0.RData
         "ed_vcp3_readcount_normals": f"{TOOLS_PROJECT}:file-GbkY5v80jjgjkJqPXbgFpYzF",  # Pan5192_normals_v1.0.0.RData
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
     },
@@ -204,8 +204,8 @@ NEXUS_IDS = {
         "fastqc": f"{TOOLS_PROJECT}:applet-GKXqZV80jy1QxF4yKYB4Y3Kz",  # fastqc_v1.4.0
         "gatk": f"{TOOLS_PROJECT}:applet-FYZ097j0jy1ZZPx30GykP63J",  # gatk3_human_exome_pipeline_v1.5
         "peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",  # peddy_v1.5
-        "ed_readcount": f"{TOOLS_PROJECT}:applet-GZJK5kj0jy1V5Qx4G7j6kb92",  # ED_readcount_analysis_v1.2.0
-        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-GZJK2J80jy1k14ZkYjjZ5qKp",  # ED_cnv_calling_v1.2.0
+        "ed_readcount": f"{TOOLS_PROJECT}:applet-GbkVzbQ0jy1zBZf5k6Xk6QP7",  # ED_readcount_analysis_v1.3.0
+        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-GbkVyQ80jy1Xf1p6jpPK6p1x",  # ED_cnv_calling_v1.3.0
         "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",  # RPKM_using_conifer_v1.6
         "duty_csv": f"{TOOLS_PROJECT}:applet-Gb6QKf00v09JV7KBVJqFVxX6",  # duty_csv_v1.3.0
     },
