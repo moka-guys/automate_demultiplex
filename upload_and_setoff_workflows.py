@@ -1785,7 +1785,7 @@ class RunfolderProcessor(object):
             # first build readcount command
             command_list.append(self.build_ED_readcount_cmd(set(VCP3), config.ED_readcount_normals_VCP3_file,config.ED_VCP3_readcount_BEDfile_pannum))
             command_list.append(self.add_to_depends_list("exomedepth", 'depends_list_ED_readcount'))
-            for panel in set(VCP2):# then build cnvcalling commands
+            for panel in set(VCP3):# then build cnvcalling commands
                 command_list.append(self.build_ED_cnv_calling_cmd(panel))
 
         return command_list
