@@ -27,6 +27,36 @@ and GetRunfolders.loop_through_runs().
 
 The test cases are described below.
 
+
+### Test SampleSheets
+
+Lone samplesheet test cases are detailed below. These have been created for the purpose of testing samplesheet related functions in the demultiplex script (valid_samplesheet and no_disallowed_sserrs). The test cases are as follows:
+
+#### Valid SampleSheets
+# TODO add link to directory
+
+| SampleSheet name | Run Type |
+| ---- | -------- |
+| 210408_M02631_0186_000000000-JFMNK_SampleSheet.csv | SNP |  # DONE
+| 210917_NB551068_0409_AH3YNFAFX3_SampleSheet.csv | Custom Panel |  # DONE
+| 221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv | TSO500 |  # DONE
+| 221024_A01229_0146_BHKGG2DRX2_SampleSheet.csv | WES Skin |  # DONE
+
+#### Invalid SampleSheets
+# TODO add link to directory
+# TODO check if these cover all cases
+
+| SampleSheet Name | Details | Expected behaviour |
+| ---- | ------- | ------------------ |
+| 21aA08_A01229_0040_AHKGTFDRXY_SampleSheet.csv | Empty SampleSheet with invalid name (letter in date) |
+| 21108_A01229_0040_AHKGTFDRXY_SampleSheet.csv | Empty SampleSheet with invalid name (date too short) |
+| 220413_A01229_0032_AHGKBIEKFR_SampleSheet.csv | Empty SampleSheet |
+| 200817_NB068_0009_AH3YERAFX3_SampleSheet.csv | Custom Panel SampleSheet with invalid name (invalid sequencer ID), invalid contents (invalid header, invalid sample names, non-matching sample names, invalid pan number, invalid runtype) |  # DONE
+| 210513_M02631_0236_000000000-JFMNK_SampleSheet.csv | SNP SampleSheet with invalid characters in the sample name |
+| 220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv | TSO SampleSheet with invalid name (invalid sequencer ID), invalid contents (invalid header, invalid sample names, non-matching sample names, invalid pan number, invalid runtype) | # DONE
+| 220408_A02631_0186_000000000-JLJFE_SampleSheet.csv | SNP SampleSheet with invalid contents (invalid header, invalid sample names, non-matching sample names, invalid pan number, invalid runtype) |  # DONE
+| 2110915_M02353_0632_000000000-K242J_SampleSheet.csv | SNP  SampleSheet with invalid name (date too long), invalid contents (invalid header, invalid sample names, non-matching sample names, invalid pan number, invalid runtype) |  # DONE
+
 ### test_runfolders
 | Runfolder                     | Details                                                                                                                                                                                                                                                                                                                                                                        | Expected behaviour                                                                                          |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
