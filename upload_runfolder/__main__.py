@@ -6,9 +6,9 @@ See README and docstrings for further details
 """
 import os
 import argparse
-from config import ad_config
-from upload_runfolder.upload_runfolder import UploadRunfolder
-from toolbox import toolbox
+from ..config import ad_config
+from ..upload_runfolder.upload_runfolder import UploadRunfolder
+from ..toolbox import toolbox
 
 
 def get_arguments():

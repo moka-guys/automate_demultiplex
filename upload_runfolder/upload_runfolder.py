@@ -10,8 +10,8 @@ import sys
 import os
 import re
 import math
-from config import ad_config
-from toolbox import toolbox
+from ..config import ad_config
+from ..toolbox import toolbox
 
 
 class UploadRunfolder:

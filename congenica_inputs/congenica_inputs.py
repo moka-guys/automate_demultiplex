@@ -7,8 +7,8 @@ See Readme and doctrings for further details. Contains the following classes:
 """
 import sys
 from config import ad_config
-import toolbox.toolbox as toolbox
-import ad_logger.ad_logger as ad_logger
+from ..toolbox import toolbox
+from ..ad_logger import ad_logger
 
 
 # Used by the script to build the input commands for the congenica upload app

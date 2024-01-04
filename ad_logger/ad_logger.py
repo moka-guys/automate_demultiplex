@@ -7,7 +7,7 @@ import sys
 import re
 import logging
 import logging.handlers
-from config import ad_config, log_msgs_config
+from ..config import ad_config, log_msgs_config
 
 
 def shutdown_streamhandler(logger: object) -> None:
@@ -65,7 +65,7 @@ class SensitiveFormatter(logging.Formatter):
         return self._filter(original)
 
 
-class RunfolderLoggers(object):
+class RunfolderLoggers(object):  # TODO not linking in diagram
     """
     Creates an RunfolderLoggers object that contains various loggers required by the
     script that calls it. The loggers created are dictated by the logfiles_config dict
@@ -120,6 +120,7 @@ class AdLogger(object):
         logger_name (str):      Name of logger
         logger_type (str):      Type of logger, e.g. demultiplex, sw, etc.
         filepath (str):         Name of filepath to provide to _file_handler()
+        formatter (object):     Sensitive formatter object
 
     Methods
         get_logger()
@@ -144,6 +145,7 @@ class AdLogger(object):
         self.logger_name = logger_name
         self.logger_type = logger_type
         self.filepath = filepath
+        self.formatter = SensitiveFormatter(self._get_logging_formatter())
 
     def get_logger(self) -> logging.Logger:
         """
@@ -171,7 +173,7 @@ class AdLogger(object):
         """
         file_handler = logging.FileHandler(self.filepath, mode="a", delay=True)
         file_handler.setLevel(logging.DEBUG)
-        file_handler.setFormatter(SensitiveFormatter(self._get_logging_formatter()))
+        file_handler.setFormatter(self.formatter)
         file_handler.name = "file_handler"
         return file_handler
 
@@ -192,7 +194,7 @@ class AdLogger(object):
         """
         syslog_handler = logging.handlers.SysLogHandler(address="/dev/log")
         syslog_handler.setLevel(logging.DEBUG)
-        syslog_handler.setFormatter(SensitiveFormatter(self._get_logging_formatter()))
+        syslog_handler.setFormatter(self.formatter)
         syslog_handler.name = "syslog_handler"
         return syslog_handler
 
@@ -203,6 +205,6 @@ class AdLogger(object):
         """
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setLevel(logging.DEBUG)
-        stream_handler.setFormatter(SensitiveFormatter(self._get_logging_formatter()))
+        stream_handler.setFormatter(self.formatter)
         stream_handler.name = "stream_handler"
         return stream_handler

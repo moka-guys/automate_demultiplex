@@ -15,8 +15,8 @@ import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Union
-from config import ad_config
-from toolbox import toolbox
+from ..config import ad_config
+from ..toolbox import toolbox
 
 
 class AdEmail:

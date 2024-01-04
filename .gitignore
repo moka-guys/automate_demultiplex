@@ -1,13 +1,8 @@
-DNANexus_upload_agent_single_folder.py
 *.pyc
 *.pytest_cache
 .vscode
-share/
-make_panel_fastqs/
-test.log
 seglh-naming/
 seglh_naming.egg-info/
-ss_exceptions/
 venv/
 test/temp
 .coverage

@@ -27,12 +27,12 @@ import sys
 import os
 import re
 from shutil import copyfile
-from toolbox import toolbox
-from ad_logger import ad_logger
-from config import ad_config, panel_config
-from ad_email.ad_email import AdEmail
-from upload_runfolder.upload_runfolder import UploadRunfolder
 from typing import Union, Tuple
+from ..toolbox import toolbox
+from ..ad_logger.ad_logger import AdLogger
+from ..config import ad_config, panel_config
+from ad_email import ad_email
+from ..upload_runfolder.upload_runfolder import UploadRunfolder
 
 
 class SequencingRuns:
@@ -71,16 +71,16 @@ class SequencingRuns:
         """
         self.runs_to_process = {}
         self.processed_runfolders = []
-        self.script_logger = ad_logger.AdLogger(
+        self.script_logger = AdLogger(
             "sw", "sw", toolbox.return_scriptlog_config()["sw"]
         ).get_logger()
+        self.runs_to_process = self.set_runfolders()
 
     def setoff_processing(self) -> None:
         """
         Call methods to collect runfolders for processing
             :return None:
         """
-        self.set_runfolders()
         if toolbox.test_upload_software(self.script_logger):
             for runfolder, rf_obj in self.runs_to_process.items():
                 self.process_runfolder(rf_obj)
@@ -92,6 +92,7 @@ class SequencingRuns:
         that match the runfolder pattern, and require processing by the script
             :return None:
         """
+        runs_to_process = {}
         for folder in os.listdir(ad_config.RUNFOLDERS):
             if os.path.isdir(os.path.join(ad_config.RUNFOLDERS, folder)) and re.compile(
                 ad_config.RUNFOLDER_PATTERN
@@ -101,7 +102,8 @@ class SequencingRuns:
                 )
                 rf_obj = toolbox.RunfolderObject(folder, ad_config.TIMESTAMP)
                 if self.requires_processing(rf_obj):
-                    self.runs_to_process[folder] = rf_obj
+                    runs_to_process[folder] = rf_obj
+        return runs_to_process
 
     def requires_processing(self, rf_obj: object) -> Union[bool, None]:
         """
@@ -291,9 +293,10 @@ class ProcessRunfolder:
                 )
                 self.upload_cmds = self.get_upload_cmds()
                 self.pre_pipeline_upload_dict = self.create_file_upload_dict()
-                BuildDxCommands(
+                self.build_dx_commands = BuildDxCommands(  # TODO add to docstring
                     self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
                 )
+                self.build_dx_commands.create_dx_cmds()
                 self.create_decision_support_command_file()
                 self.pre_pipeline_upload()
                 self.run_dx_run_commands()
@@ -1864,6 +1867,10 @@ class BuildDxCommands:
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmds"]
         )
+
+    def create_dx_cmds(self):  # TODO tidy and add to docstrings
+        """
+        """
         self.dx_cmd_list, self.dx_postprocessing_cmds = self.build_dx_cmds()
         self.write_dx_run_cmds(  # Write commands to file
             self.dx_cmd_list, self.rf_obj.runfolder_dx_run_script,
@@ -1876,7 +1883,7 @@ class BuildDxCommands:
                 self.dx_postprocessing_cmds, self.rf_obj.post_run_dx_run_script,
                 "tso500 postprocessing script"
             )
-
+        
     def build_dx_cmds(self) -> Union[list, list]:
         """
         Build dx run commands (pipeline-dependent) by calling the relevant functions and
@@ -2484,7 +2491,7 @@ class PipelineEmails:
             ad_config.MAIL_SETTINGS["pipeline_started_subj"]
             % self.rf_obj.runfolder_name
         )
-        self.email = AdEmail(self.rf_obj.rf_loggers.sw)
+        self.email = ad_email.AdEmail(self.rf_obj.rf_loggers.sw)
         self.queries = self.collect_queries()
         self.send_sql_email()
         self.send_samples_email()

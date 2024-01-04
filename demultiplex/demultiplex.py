@@ -15,10 +15,10 @@ import sys
 import os
 import re
 from typing import Union, Tuple
-from config import ad_config, panel_config
-from ad_logger import ad_logger
-from toolbox import toolbox
 import samplesheet_validator.samplesheet_validator as samplesheet_validator
+from ..config import ad_config, panel_config
+from ..ad_logger import ad_logger
+from ..toolbox import toolbox
 
 class GetRunfolders:
     """

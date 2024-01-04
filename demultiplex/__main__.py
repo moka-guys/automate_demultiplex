@@ -4,9 +4,9 @@ Main entry point for demultiplex module.
 Demultiplexes NGS Run Folders. See README and docstrings for further details
 """
 import argparse
-from demultiplex import demultiplex
-import toolbox.toolbox as toolbox
-import ad_logger.ad_logger as ad_logger
+from ..demultiplex import demultiplex
+from ..toolbox import toolbox
+from ..ad_logger import ad_logger
 
 
 def get_arguments():

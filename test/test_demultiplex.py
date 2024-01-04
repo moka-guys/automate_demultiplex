@@ -134,14 +134,26 @@ def invalid_names():
                 "2110915_M02353_0632_000000000-K242J_SampleSheet.csv",
             ),
         ),
+        (
+            "200817_NB068_0009_AH3YERAFX3_SampleSheet",
+            os.path.join(
+                "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
+            ),
+        ),
+        (
+            "220404_B01229_0348_HFGIFEIOPY",
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
+            ),
+        ),
     ]
-
 
 
 @pytest.fixture(scope="function")
 def empty_file():
     """
-    Empty file with an invalid sequencer ID
+    Empty file
     """
     return [
         (
@@ -584,9 +596,7 @@ class TestDemultiplexRunfolder(object):
             assert dr_obj.demultiplexing_required()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    def test_demultiplexing_required_false(
-        self, demultiplexing_notrequired, monkeypatch
-    ):
+    def test_demultiplexing_required_false(self, demultiplexing_notrequired):
         """
         Test demultiplexing_required() returns none when demultiplexing not required
         """
@@ -699,9 +709,7 @@ class TestDemultiplexRunfolder(object):
             assert not dr_obj.no_prior_ic()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    def test_checksums_match_pass(
-        self, checksumfile_present_pass_notchecked, monkeypatch
-    ):
+    def test_checksums_match_pass(self, checksumfile_present_pass_notchecked):
         """
         Test function correctly identifies presence of checksum match string in checksum
         file. Also test function adds line to denote integrity check has been assessed
@@ -713,9 +721,7 @@ class TestDemultiplexRunfolder(object):
                 assert ad_config.CHECKSUM_COMPLETE_MSG in checksumfile.read()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    def test_checksums_match_fail(
-        self, checksumfile_present_pass_notchecked, monkeypatch
-    ):
+    def test_checksums_match_fail(self, checksumfile_present_pass_notchecked):
         """
         Test function correctly identifies absence of checksum match string in checksum
         file. Also test function adds line to denote integrity check has been assessed
@@ -812,9 +818,7 @@ class TestDemultiplexRunfolder(object):
             assert dr_obj.calculate_cluster_density()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    def test_calculate_cluster_density_fail(
-        self, demultiplexing_notrequired, monkeypatch
-    ):
+    def test_calculate_cluster_density_fail(self, demultiplexing_notrequired):
         """
         Test calculate_cluster_density() returns None for runfolders where RunInfo.xml
         file is not present

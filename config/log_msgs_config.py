@@ -10,7 +10,7 @@ both general messages which are used across multiple modules, and also logfile-s
 - backup
 - decision_support
 """
-from config import ad_config  # Import ad_config file
+from . import ad_config  # Import ad_config file
 
 # Messages used by individual scripts / modules for logging
 LOG_MSGS = {

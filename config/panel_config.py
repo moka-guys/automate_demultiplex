@@ -53,7 +53,7 @@ required for analysis of samples with that pan number
                                     else True
 """
 # TODO in future do we want to swap physical paths for file IDs
-from config import ad_config
+from . import ad_config
 
 PIPE_HAPLOTYPE_CALLER_PADDING = 0
 
