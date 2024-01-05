@@ -46,34 +46,26 @@ def valid_samplesheets():
         nos, valid runtypes
     """
     return [
-        (
-            "210408_M02631_0186_000000000-JFMNK",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "valid",
+            "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv",
         ),
-        (
-            "210917_NB551068_0409_AH3YNFAFX3",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "210917_NB551068_0409_AH3YNFAFX3_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "valid",
+            "210917_NB551068_0409_AH3YNFAFX3_SampleSheet.csv",
         ),
-        (
-            "221021_A01229_0145_BHGGTHDMXY",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "valid",
+            "221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv",
         ),
-        (
-            "221024_A01229_0146_BHKGG2DRX2",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "221024_A01229_0146_BHKGG2DRX2_SampleSheet.csv",
-            ),
-        ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "valid",
+            "221024_A01229_0146_BHKGG2DRX2_SampleSheet.csv",
+        )
     ]
 
 
@@ -83,27 +75,18 @@ def invalid_paths():
     Collection of nonexistent samplesheets
     """
     return [
-        (
-            "210408_M02631_0186_000000000-JFMNN",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "210408_M02631_0186_000000000-JFMNN_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "210408_M02631_0186_000000000-JFMNN_SampleSheet.csv",
         ),
-        (
-            "210918_NB551068_551068_0409_AH3YNFAFX3",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "210918_NB551068_551068_0409_AH3YNFAFX3_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "210918_NB551068_551068_0409_AH3YNFAFX3_SampleSheet.csv",
         ),
-        (
-            "221021_A01229_0143_BHGGTHDMXY",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "221021_A01229_0143_BHGGTHDMXY_SampleSheet.csv",
-            ),
-        ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "221021_A01229_0143_BHGGTHDMXY_SampleSheet.csv",
+        )
     ]
 
 
@@ -113,40 +96,31 @@ def invalid_names():
     Collection of samplesheets with invalid names
     """
     return [
-        (
-            "21108_A01229_0040_AHKGTFDRXY",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "21108_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "invalid",
+            "21108_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
         ),
-        (
-            "21aA08_A01229_0040_AHKGTFDRXY",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "21aA08_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "invalid",
+            "21aA08_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
         ),
-        (
-            "2110915_M02353_0632_000000000-K242J",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "2110915_M02353_0632_000000000-K242J_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "invalid",
+            "2110915_M02353_0632_000000000-K242J_SampleSheet.csv",
         ),
-        (
-            "200817_NB068_0009_AH3YERAFX3_SampleSheet",
-            os.path.join(
-                "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "invalid",
+            "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
         ),
-        (
-            "220404_B01229_0348_HFGIFEIOPY",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
-            ),
-        ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "invalid",
+            "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
+        )
     ]
 
 
@@ -156,13 +130,11 @@ def empty_file():
     Empty file
     """
     return [
-        (
-            "220413_A01229_0032_AHGKBIEKFR",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "220413_A01229_0032_AHGKBIEKFR_SampleSheet.csv",
-            ),
-        ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "invalid",
+            "220413_A01229_0032_AHGKBIEKFR_SampleSheet.csv",
+        )
     ]
 
 
@@ -173,27 +145,21 @@ def invalid_contents():
     sample names, non-matching samplenames, invalid panel number, invalid runtype
     """
     return [
-        (
-            "220404_B01229_0348_HFGIFEIOPY",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "invalid",
+            "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
         ),
-        (
-            "220408_A02631_0186_000000000-JLJFE",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "220408_A02631_0186_000000000-JLJFE_SampleSheet.csv",
-            ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "invalid",
+            "220408_A02631_0186_000000000-JLJFE_SampleSheet.csv",
         ),
-        (
-            "200817_NB068_0009_AH3YERAFX3",
-            os.path.join(
-                conftest.sv_samplesheet_temp_dir,
-                "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
-            ),
-        ),
+        os.path.join(
+            conftest.sv_samplesheet_temp_dir,
+            "invalid",
+            "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
+        )
     ]
 
 
@@ -386,13 +352,11 @@ class TestDemultiplexRunfolder(object):
         Samplesheet containing invalid characters in sample name
         """
         return [
-            (
-                "210513_M02631_0236_000000000-JFMNK",
-                os.path.join(
-                    conftest.sv_samplesheet_temp_dir,
-                    "210513_M02631_0236_000000000-JFMNK_SampleSheet.csv",
-                ),
-            )
+            os.path.join(
+                conftest.sv_samplesheet_temp_dir,
+                "invalid",
+                "210513_M02631_0236_000000000-JFMNK_SampleSheet.csv",
+            ),
         ]
 
     @pytest.fixture(scope="function")
@@ -402,6 +366,7 @@ class TestDemultiplexRunfolder(object):
         """
         return os.path.join(
             conftest.sv_samplesheet_temp_dir,
+            "valid",
             "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv",
         )
 
@@ -610,7 +575,8 @@ class TestDemultiplexRunfolder(object):
         Test function correctly returns valid flag, using a set of representative
         samplesheets
         """
-        for runfoldername, sspath in valid_samplesheets:
+        for sspath in valid_samplesheets:
+            print(sspath)
             dr_obj = get_dr_obj("")
             monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", sspath)
             valid, _ = dr_obj.valid_samplesheet()
@@ -622,7 +588,7 @@ class TestDemultiplexRunfolder(object):
         Test function fails to return valid flag as expected, using a set of
         samplesheets covering all failure cases
         """
-        for runfoldername, sspath in ss_with_disallowed_sserrs:
+        for sspath in ss_with_disallowed_sserrs:
             dr_obj = get_dr_obj("")
             monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", sspath)
             valid, _ = dr_obj.valid_samplesheet()
@@ -666,7 +632,7 @@ class TestDemultiplexRunfolder(object):
         """
         Tests function identifies all disallowed ss errors
         """
-        for runfoldername, sspath in ss_with_disallowed_sserrs:
+        for sspath in ss_with_disallowed_sserrs:
             dr_obj = get_dr_obj("")
             monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", sspath)
             valid, sscheck_obj = dr_obj.valid_samplesheet()

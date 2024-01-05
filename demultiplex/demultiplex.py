@@ -345,7 +345,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         )
         valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
         self.tso = sscheck_obj.tso
-        self.development_run = sscheck_obj.development_run
+        self.development_run = sscheck_obj.development_run()
         if self.sequencing_complete():
             # Do not want samplesheet checks to be performed on dev runs
             if self.development_run and not self.cmd_line_supplied_runfolder:
@@ -399,7 +399,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             DemultiplexConfig.TSO_PANELS,
             DemultiplexConfig.DEVELOPMENT_PANEL,
             os.path.dirname(self.rf_obj.samplesheet_validator_logfile),
-        )
+        )        
         sscheck_obj.ss_checks()
         shutdown_logs(sscheck_obj.logger)
         if sscheck_obj.errors:
