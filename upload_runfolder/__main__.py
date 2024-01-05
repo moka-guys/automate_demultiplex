@@ -6,9 +6,15 @@ See README and docstrings for further details
 """
 import os
 import argparse
-from ..config import ad_config
+from ..config.ad_config import URConfig
 from ..upload_runfolder.upload_runfolder import UploadRunfolder
-from ..toolbox import toolbox
+from ..toolbox.toolbox import (
+    get_credential,
+    RunfolderObject,
+    execute_subprocess_command,
+    script_start_logmsg,
+    script_end_logmsg,
+)
 
 
 def get_arguments():
@@ -24,7 +30,7 @@ def get_arguments():
             "project ID to upload to, and any file patterns that should be ignored"
         ),
     )
-    dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])
+    dnanexus_auth = get_credential(URConfig.CREDENTIALS["dnanexus_authtoken"])
     parser.add_argument(  # Define arguments
         "-r",
         "--runfolder_name",
@@ -62,7 +68,7 @@ def get_arguments():
 
 parsed_args = get_arguments()  # Get command line arguments
 
-rf_obj = toolbox.RunfolderObject(parsed_args.runfolder_name, ad_config.TIMESTAMP)
+rf_obj = RunfolderObject(parsed_args.runfolder_name, URConfig.TIMESTAMP)
 rf_obj.add_runfolder_loggers()
 
 # If a different auth token is supplied on command line, replace the attribute in the runfolder object
@@ -70,11 +76,11 @@ if parsed_args.auth_token:
     rf_obj.dnanexus_auth = parsed_args.auth_token
 
 if parsed_args.project_id:
-    project_name_cmd = ad_config.DX_CMDS["proj_name_from_id"] % (
+    project_name_cmd = URConfig.DX_CMDS["proj_name_from_id"] % (
         parsed_args.project_id,
         parsed_args.auth_token,
     )
-    project_name, err, returncode = toolbox.execute_subprocess_command(
+    project_name, err, returncode = execute_subprocess_command(
         project_name_cmd, rf_obj.rf_loggers.backup, "exit_on_fail"
     )
     nexus_identifiers = {
@@ -84,13 +90,13 @@ if parsed_args.project_id:
 else:
     nexus_identifiers = False
 
-toolbox.script_start_logmsg(rf_obj.rf_loggers.backup, __file__)
+script_start_logmsg(rf_obj.rf_loggers.backup, __file__)
 
 # Create an object to set up the upload agent command
-upload_runfolder = UploadRunfolder(
+ur_obj = UploadRunfolder(
     rf_obj=rf_obj,
     nexus_identifiers=nexus_identifiers,
 )
-upload_runfolder.upload_rest_of_runfolder(parsed_args.ignore)
+ur_obj.upload_rest_of_runfolder(parsed_args.ignore)
 
-toolbox.script_end_logmsg(rf_obj.rf_loggers.backup, __file__)
+script_end_logmsg(rf_obj.rf_loggers.backup, __file__)

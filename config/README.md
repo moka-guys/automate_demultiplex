@@ -6,14 +6,18 @@ This module contains python configuration files, which are imported by other mod
 
 ### Ad_config
 
-Automate demultiplex configuration. Contains the following settings:
-- General settings used across modules
-- Demultiplexing script-specific settings
-- Setoff workflows script-specific settings
+Automate demultiplex general configuration. Contains settings specific to each module contained in individual classes:
+- AdEmailConfig
+- AdLoggerConfig
+- CongenicaInputsConfig - inherits attributes from panel_config.PanelConfig
+- DemultiplexConfig - inherits attributes from panel_config.PanelConfig
+- SWConfig - inherits attributes from panel_config.Panel_config
+- ToolboxConfig
+- URConfig
 
 ### Log_msgs_config
 
-Config file for logging module. Contains settings specific to logging. The LOG_MSGS
+Config file for logging module (imported by ad_logger module). Contains settings specific to logging. The LOG_MSGS
 dictionary contains both general messages which are used across multiple modules, and
 also logfile-specific messages:
 - Ad_email
@@ -80,8 +84,6 @@ for analysis of samples with that pan number
 This script is configured to be used as a module import as per the following examples:
 ```python
 from config import ad_config
-from config import log_msgs_config
-from config import panel_config
 ```
 
 ## Logging

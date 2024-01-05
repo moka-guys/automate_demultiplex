@@ -7,13 +7,11 @@ that is run before and after every test
 import os
 import shutil
 import pytest
-from toolbox import toolbox
-from demultiplex import demultiplex
-from test import test_demultiplex
-from test import test_ad_logger
-from ad_logger import ad_logger
-from toolbox import toolbox
-from config import ad_config
+import sys
+sys.path.append("..")
+from ..ad_logger import ad_logger
+from ..toolbox import toolbox
+from ..config import ad_config
 
 # Variables used across test classes
 
@@ -50,24 +48,14 @@ def create_logdirs():
             os.makedirs(parent_dir)
 
 
-def patch_test_ad_logger(monkeypatch):
+def patch_toolbox(monkeypatch):
     """
-    Apply patches required for test_ad_logger script. These point the paths to the
+    Apply patches required for toolbox script. These point the paths to the
     temporary locations:
         - Test logfiles in the temp logfiles dir and within the temp runfolder dirs
     """
-    monkeypatch.setattr(toolbox.ad_config, "RUNFOLDERS", temp_runfolderdir)
-    monkeypatch.setattr(toolbox.ad_config, "AD_LOGDIR", temp_log_dir)
-
-def patch_test_demultiplex(monkeypatch):
-    """
-    Apply patches required for test_demultiplex script. These point the paths to the
-    temporary locations:
-        - Test runfolders in the temp dir
-        - Test logfiles in the temp logfiles dir and within the temp runfolder dirs
-    """
-    monkeypatch.setattr(toolbox.ad_config, "RUNFOLDERS", temp_runfolderdir)
-    monkeypatch.setattr(ad_logger.ad_config, "AD_LOGDIR", temp_log_dir)
+    monkeypatch.setattr(toolbox.ToolboxConfig, "RUNFOLDERS", temp_runfolderdir)
+    monkeypatch.setattr(toolbox.ToolboxConfig, "AD_LOGDIR", temp_log_dir)
 
 
 # TODO fix patching of script loggers as this is not set up correctly !!
@@ -81,9 +69,8 @@ def run_before_and_after_tests(monkeypatch):
     """
     # PATCH MODULES THAT NEED PATCHING FOR TESTING (test_ad_email and test_toolbox do
     # not require any patching)
-    monkeypatch.setattr(ad_logger.ad_config, "SCRIPT_MODE", "PYTEST_TESTS")
-    patch_test_ad_logger(monkeypatch)
-    patch_test_demultiplex(monkeypatch)
+    monkeypatch.setattr(ad_logger.AdLoggerConfig, "SCRIPT_MODE", "PYTEST_TESTS")
+    patch_toolbox(monkeypatch)
 
     # SETUP - cleanup after each test
     if os.path.isdir(tempdir):

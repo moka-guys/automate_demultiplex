@@ -13,8 +13,8 @@ import logging
 import argparse
 from distutils.spawn import find_executable
 from typing import Union
-from ..config import ad_config
-from ..ad_logger import ad_logger
+from ..config.ad_config import ToolboxConfig
+from ..ad_logger.ad_logger import RunfolderLoggers
 
 
 def get_credential(file):
@@ -57,14 +57,14 @@ def return_scriptlog_config() -> dict:
     """
     return {
         "demultiplex": os.path.join(  # Record demultiplex script logs
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "demultiplexing_script_logfiles",
-            f"{ad_config.TIMESTAMP}_demultiplex_script.log",
+            f"{ToolboxConfig.TIMESTAMP}_demultiplex_script.log",
         ),
         "sw": os.path.join(  # Record sw script logs
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "sw_script_logfiles",
-            f"{ad_config.TIMESTAMP}_setoff_workflow.log",
+            f"{ToolboxConfig.TIMESTAMP}_setoff_workflow.log",
         ),
     }
 
@@ -201,7 +201,7 @@ def get_runfolder_path(runfolder_name: str) -> str:
         :param runfolder_name (str):    Runfolder name string
         :return (str):                  Runfolder path
     """
-    return os.path.join(ad_config.RUNFOLDERS, runfolder_name)
+    return os.path.join(ToolboxConfig.RUNFOLDERS, runfolder_name)
 
 
 def test_upload_software(logger) -> True:
@@ -236,7 +236,7 @@ def test_programs(software_name: str, logger: object) -> True:
         :param logger (object):         Logger
         :return True:                   Return True if test passes, else exit script
     """
-    software_dict = ad_config.TEST_PROGRAMS_DICT[software_name]
+    software_dict = ToolboxConfig.TEST_PROGRAMS_DICT[software_name]
 
     logger.info(logger.log_msgs["testing_software"], software_name)
 
@@ -272,7 +272,7 @@ def get_num_processed_runfolders(logger: object, processed_runfolders: list) -> 
     return num_processed_runfolders
 
 
-class RunfolderObject:
+class RunfolderObject(ToolboxConfig):
     """
     An object with runfolder-specific properties.
 
@@ -320,7 +320,7 @@ class RunfolderObject:
             :param runfolder_name (str):    Name of runfolder
             :param timestamp (str):         Timestamp in the format str(f"{datetime.datetime.now():%Y%m%d_%H%M%S}")
         """
-        self.dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])
+        self.dnanexus_auth = get_credential(ToolboxConfig.CREDENTIALS["dnanexus_authtoken"])
         self.timestamp = timestamp
         self.runfolder_name = runfolder_name
         self.runfolderpath = get_runfolder_path(self.runfolder_name)
@@ -330,7 +330,7 @@ class RunfolderObject:
             "RTAComplete.txt",  # Sequencing complete file
         )
         self.samplesheet_path = os.path.join(
-            ad_config.RUNFOLDERS, "samplesheets", self.samplesheet_name
+            ToolboxConfig.RUNFOLDERS, "samplesheets", self.samplesheet_name
         )
         self.runfolder_samplesheet_path = os.path.join(
             self.runfolderpath, self.samplesheet_name
@@ -344,7 +344,7 @@ class RunfolderObject:
             "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
         )
         self.fastq_dir_path = os.path.join(
-            self.runfolderpath, ad_config.FASTQ_DIRS["fastqs"]
+            self.runfolderpath, ToolboxConfig.FASTQ_DIRS["fastqs"]
         )
         self.upload_agent_logfile = os.path.join(
             self.runfolderpath,
@@ -357,60 +357,60 @@ class RunfolderObject:
         self.cluster_density_files = [
             os.path.join(
                 self.runfolderpath,
-                f"{self.runfolder_name}{ad_config.STRINGS['lane_metrics_suffix']}",
+                f"{self.runfolder_name}{ToolboxConfig.STRINGS['lane_metrics_suffix']}",
             ),
             os.path.join(
                 self.runfolderpath,
                 (
                     f"{self.runfolder_name}"
-                    f"{ad_config.STRINGS['phasing_metrics_suffix']}"
+                    f"{ToolboxConfig.STRINGS['phasing_metrics_suffix']}"
                 ),
             ),
         ]
         self.demultiplex_runfolder_logfile = (
             os.path.join(  # Record demultiplex script logs
-                ad_config.AD_LOGDIR,
+                ToolboxConfig.AD_LOGDIR,
                 "demultiplexing_script_logfiles",
                 f"{self.runfolder_name}_demultiplex_runfolder.log",
             )
         )
         self.sw_runfolder_logfile = os.path.join(
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "sw_script_logfiles",
             f"{self.runfolder_name}_setoff_workflow.log",
         )
         self.upload_runfolder_logfile = os.path.join(
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "upload_runfolder_script_logfiles",
             f"{self.runfolder_name}_upload_runfolder.log",
         )
         self.runfolder_dx_run_script = os.path.join(
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "dx_run_commands",
             f"{self.runfolder_name}_dx_run_commands.sh",
         )
         self.post_run_dx_run_script = os.path.join(
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "dx_run_commands",
             f"{self.runfolder_name}_post_run_commands.sh",
         )
         self.decision_support_upload_cmds = os.path.join(
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "dx_run_commands",
             f"{self.runfolder_name}_decision_support.sh",
         )
         self.proj_creation_script = os.path.join(
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "dx_run_commands",
             f"{self.runfolder_name}_create_nexus_project.sh",
         )
         self.decision_support_tool_logfile = os.path.join(
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "decision_support_script_logfiles",
             f"{self.runfolder_name}_decision_support_script.log",
         )
         self.samplesheet_validator_logfile = os.path.join(
-            ad_config.AD_LOGDIR,
+            ToolboxConfig.AD_LOGDIR,
             "samplesheet_validator_script_logfiles",
             f"{self.runfolder_name}_samplesheet_validator_script.log",
         )
@@ -440,7 +440,7 @@ class RunfolderObject:
         Add runfolder loggers to runfolder object
             :return None:
         """
-        setattr(self, "rf_loggers", ad_logger.RunfolderLoggers(self.logfiles_config))
+        self.rf_loggers = RunfolderLoggers(self.logfiles_config)
 
     def add_runfolder_logger(self, logger_name: str) -> None:
         """
@@ -449,4 +449,4 @@ class RunfolderObject:
             :return None:
         """
         logfile_config = {logger_name: self.logfiles_config[logger_name]}
-        setattr(self, "rf_loggers", ad_logger.RunfolderLoggers(logfile_config))
+        self.rf_loggers = RunfolderLoggers(logfile_config)

@@ -6,24 +6,25 @@ Automate demultiplex configuration. Contains the following settings:
 - Demultiplexing script-specific settings
 - Setoff workflows script-specific settings
 """
+# TODO group into classes?
+
 import os
 import datetime
 from pygit2 import Repository
 from pathlib import Path
+from .log_msgs_config import LOG_MSGS
+from .panel_config import TOOLS_PROJECT, MASKED_REFERENCE, PanelConfig
 
-# GENERAL SETTINGS USED ACROSS MODULES
+
+# =========== GENERAL SETTINGS USED ACROSS MODULES ====================================
 
 # Timestamp used for naming log files with datetime
 TIMESTAMP = str(f"{datetime.datetime.now():%Y%m%d_%H%M%S}")
-
-# Project working directory
-PROJECT_DIR = str(Path(__file__).absolute().parent.parent)
+PROJECT_DIR = str(Path(__file__).absolute().parent.parent)  # Project working directory
 # Root of folder containing apps, automate_demultiplexing_logfiles and
 # development_area scripts (2 levels up from this file)
 DOCUMENT_ROOT = "/".join(PROJECT_DIR.split("/")[:-2])
-
 BRANCH = Repository(".").head.shorthand
-
 MAIL_SETTINGS = {
     "host": "email-smtp.eu-west-1.amazonaws.com",
     "port": 587,
@@ -50,7 +51,6 @@ if BRANCH == "master":  # Prod branch
             MAIL_SETTINGS["binfx_email"],
         ],
     }
-    TSO_BATCH_SIZE = 16
 else:  # Testing branch
     TESTING = True
     SCRIPT_MODE = "TEST_MODE"
@@ -66,130 +66,41 @@ else:  # Testing branch
         "oncology_ops_email": "mokaguys@gmail.com",
         "wes_samplename_emaillist": ["mokaguys@gmail.com"],
     }
-    TSO_BATCH_SIZE = 2
 
 CREDENTIALS = {
     "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
     "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
     "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
 }
-
-# Sequencer / run identifiers
-NOVASEQ_ID = "A01229"
-
-# requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed
-SEQUENCER_IDS = {
-    "NB551068": {"requires_ic": True},
-    "NB552085": {"requires_ic": True},
-    "M02353": {"requires_ic": False},
-    "M02631": {"requires_ic": False},
-    NOVASEQ_ID: {"requires_ic": True},
-}
-SEQ_REQUIRE_IC = [k for k, v in SEQUENCER_IDS.items() if SEQUENCER_IDS[k]["requires_ic"]]
-
+NOVASEQ_ID = "A01229"  # Nofaseq sequencer ID
 RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
-
 FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
     "tso_fastqs": "analysis_folder/Logs_Intermediates/CollapsedReads/",
 }
-
-# ================ DEMULTIPLEXING (demultiplex.py) ============================
-# Settings unique to the demultiplex script
-
-# Integrity check
-CHECKSUM_COMPLETE_MSG = "Checksum result reported"  # Checksum complete statement
-CHECKSUM_MATCH_MSG = "Checksums match"  # Statement to write when checksums match
-UPLOAD_STARTED_MSG = "Upload started"  # Statement to write to DNAnexus upload started file
-
-# tso500 runfolder is used for testing both demultiplexing and sw script
-DEMULTIPLEX_TEST_RUNFOLDERS = [
-    "999999_NB552085_0496_DEMUXINTEG",
-    "999999_M02353_0496_000000000-DEMUX",
-    "999999_A01229_0182_AHM2TSO500",
-    "231012_M02631_0285_000000000-DEVOO",
-]
-
-SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"
-BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
-BCL2FASTQ2_CMD = (
-    f"sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
-    "--sample-sheet /mnt/run/%s --no-lane-splitting"
-)
-CD_CMD = (
-    "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics "
-    "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
-)
-
+SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
+# DNAnexus upload agent path
 UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
+BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
+LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
+DEMULTIPLEXLOG_TSO500_MSG = "TSO500 run. Does not need demultiplexing locally"
+DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
 
-STRINGS = {
-    "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
-    "lane_metrics_suffix": ".illumina_lane_metrics",
-    "phasing_metrics_suffix": ".illumina_phasing_metrics",
-    "cd_err": "Exception",
-    "demultiplexlog_tso500_msg": "TSO500 run. Does not need demultiplexing locally",
-    "demultiplex_success": "Processing completed with 0 errors and 0 warnings.",
-}
-
-TEST_PROGRAMS_DICT = {
-    "dx_toolkit": {
-        "executable": "dx",
-        "test_cmd": f"source {SDK_SOURCE}; dx --version",
-    },
-    "upload_agent": {
-        "executable": UPLOAD_AGENT_EXE,
-        "test_cmd": f"{UPLOAD_AGENT_EXE} --version",
-    },
-    "gatk_collect_lane_metrics": {
-        "executable": "docker",
-        "test_cmd": (
-            "sudo docker run --rm broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics --version"
-        ),
-    },
-    "bcl2fastq2": {
-        "executable": "docker",
-        "test_cmd": f"sudo docker run --rm {BCL2FASTQ_DOCKER} --version",
-    }
-}
-
-# ================ SETOFF WORKFLOWS ================================
-# Settings unique to the setoff workflows script
-
-REF_SAMPLE_IDS = [
-    "NA12878",
-    "136819",
-]  # NA12878 identifiers to exclude from congenica upload
-
-# General
-PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
-
-if TESTING:
-    DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
-    DNANEXUS_USERS = {  # User access level
-        "viewers": [],
-        "admins": [PROD_ORGANISATION],
-    }
-else:
-    DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
-    DNANEXUS_USERS = {  # User access level
-        "viewers": [PROD_ORGANISATION, "InterpretationRequest", "org-seglh_read"],
-        "admins": ["mokaguys"],
-    }
-
-# Paths / IDs for apps in 001_Tools
-TOOLS_PROJECT = "project-ByfFPz00jy1fk6PjpZ95F27J"  # 001_ToolsReferenceData
+# -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
 
 NEXUS_IDS = {
+    # Paths / IDs for data items in 001_Tools
     "FILES": {
         "tso500_docker": f"{TOOLS_PROJECT}:file-Fz9Zyx00b5j8xKVkKv4fZ6JB",  # trusight-oncology-500-ruo-2.2.0.zip
         "hs37d5_bwa_index": f"{TOOLS_PROJECT}:file-B6ZY4942J35xX095VZyQBk0v",  # hs37d5.bwa-index.tar.gz
         "hs37d5_ref_with_index": f"{TOOLS_PROJECT}:file-ByYgX700b80gf4ZY1GxvF3Jv",  # hs37d5.fasta-index.tar.gz
         "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01",  # hs37d5.fa.gz
-        "masked_reference": f"{TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q",  # hs37d5_Pan4967.bwa-index.tar.gz
+        "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
         "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-Gbv7Yb80v8Q40f8v140QBPQv",  # Pan5191_normals_v1.1.0.RData
         "ed_vcp2_readcount_normals": f"{TOOLS_PROJECT}:file-Gbkgyq00ZpxpFKx03zVPJ9GX",  # Pan5188_normals_v1.1.0.RData
-        "ed_vcp3_readcount_normals": f"{TOOLS_PROJECT}:file-GbkY5v80jjgjkJqPXbgFpYzF",  # Pan5192_normals_v1.0.0.RData
+        "ed_vcp3_readcount_normals": (
+            f"{TOOLS_PROJECT}:file-GbkYMASKED_REFERENCE5v80jjgjkJqPXbgFpYzF"
+        ),  # Pan5192_normals_v1.0.0.RData
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
     },
     "APPS": {
@@ -242,8 +153,8 @@ NEXUS_IDS = {
 }
 NEXUS_IDS["WORKFLOWS"]["archerdx"] = NEXUS_IDS["APPS"]["fastqc"]
 
-# Inputs for apps run outside of workflows
 APP_INPUTS = {
+    # Inputs for apps run outside of workflows
     "tso500": {
         "docker": "-iTSO500_ruo=",
         "samplesheet": "-isamplesheet=",
@@ -313,87 +224,20 @@ APP_INPUTS = {
         "cp_capture_pannos": "-icp_capture_pannos=",
     },
 }
-
 UPLOAD_ARGS = {
     "dest": "--dest=",
     "proj": "--project=",
     "token": "--brief --auth %s)",
     "depends": "$DEPENDS_LIST",
     "depends_gatk": "$DEPENDS_LIST_GATK",
-    # Arguments to capture jobids. Job IDS are built into a string that can be passed
-    # to downstream apps to ensure the jobs don't start until those job ids have
-    # completed successfully
+    # Arguments to capture jobids. Job IDS are built into a string that can be passed to
+    # downstream apps to ensure the jobs don't start until those job ids have completed successfully
     "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
     "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOBID} "',
     "depends_list_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
     "depends_list_edreadcount": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${ed_jobid} "',
 }
-
-# Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
-# reason to auto restart list
-# TODO move this to the DXAPP.JSON file for FH app
-PIPE_FH_GATK_TIMEOUT_ARGS = (
-    '--extra-args \'{"timeoutPolicyByExecutable": {"'
-    f'{NEXUS_IDS["APPS"]["gatk"].split(":")[1]}'
-    '": {"*":{"hours": 12}}}, "executionPolicy": {"restartOn": {"JobTimeoutExceeded":1, "JMInternalError":'
-    ' 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
-)
-
-STAGE_INPUTS = {
-    "pipe": {
-        "fastqc_reads": f"-i{NEXUS_IDS['STAGES']['pipe']['fastqc']}.reads=",
-        "bwa_reads1": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads_fastqgz=",
-        "bwa_reads2": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads2_fastqgz=",
-        "bwa_rg_sample": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.read_group_sample=",
-        "bwa_ref": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.genomeindex_targz=",
-        "picard_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.vendor_exome_bedfile=",
-        "picard_capturetype": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.Capture_panel=",
-        "gatk_padding": (f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.padding="),
-        "gatk_vcf_format": f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.output_format=both",
-        "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['filter_vcf']}.bedfile=",
-        "happy_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.skip=",
-        "happy_prefix": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.prefix=",
-        "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.sambamba_bed=",
-        "sambamba_min_base_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_base_qual=",
-        "sambamba_min_mapping_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_mapping_qual=",
-        "sambamba_cov_level": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.coverage_level=",
-        "sambamba_filter_cmds": (
-            f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}"
-            ".additional_filter_commands='not (unmapped or secondary_alignment)'"
-        ),
-        "sambamba_excl_dups": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.exclude_duplicate_reads=true",
-        "sambamba_excl_failed_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.exclude_failed_quality_control=true",
-        "sambamba_count_overl_mates": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.merge_overlapping_mate_reads=true",
-        "fhprs_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.skip=false",
-        "fhprs_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.BEDfile=",
-        "fhprs_instance": "mem3_ssd1_v2_x8",  # Required when creating gVCFs
-        "polyedge_gene": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.gene=",
-        "polyedge_chrom": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.chrom=",
-        "polyedge_poly_start": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_start=",
-        "polyedge_poly_end": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_end=",
-        "polyedge_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.skip=false",
-    },
-    "wes": {
-        "fastqc1_reads": f"-i{NEXUS_IDS['STAGES']['wes']['fastqc1']}.reads=",
-        "fastqc2_reads": f"-i{NEXUS_IDS['STAGES']['wes']['fastqc2']}.reads=",
-        "picard_bed": f"-i{NEXUS_IDS['STAGES']['wes']['picard']}.vendor_exome_bedfile=",
-        "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['wes']['sambamba']}.sambamba_bed=",
-        # Prevents incorrect parsing from fastq filename
-        "sentieon_samplename": f"-i{NEXUS_IDS['STAGES']['wes']['sentieon']}.sample=",
-        "sentieon_bed": f"-i{NEXUS_IDS['STAGES']['wes']['sentieon']}.targets_bed=",
-    },
-    "snp": {
-        "fastqc1_reads": f"-i{NEXUS_IDS['STAGES']['snp']['fastqc1']}.reads=",
-        "fastqc2_reads": f"-i{NEXUS_IDS['STAGES']['snp']['fastqc2']}.reads=",
-        "sentieon_bed": f"-i{NEXUS_IDS['STAGES']['snp']['sentieon']}.targets_bed=",
-        # Prevents incorrect parsing from fastq filename
-        "sentieon_samplename": f"-i{NEXUS_IDS['STAGES']['snp']['sentieon']}.sample=",
-    },
-}
-
-# Command strings
-EMPTY_DEPENDS = "DEPENDS_LIST=''"
-EMPTY_GATK_DEPENDS = "DEPENDS_LIST_GATK=''"
+EMPTY_GATK_DEPENDS = "DEPENDS_LIST_GATK=''"  # TODO not currently used anywhere!!
 
 DX_CMDS = {
     "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth %s)"',
@@ -408,7 +252,7 @@ DX_CMDS = {
         'select( .id == "%s") | .execution.id\''
     ),
     "find_data": f"source {SDK_SOURCE}; dx find data {UPLOAD_ARGS['proj']}%s --auth %s | wc -l",
-    "invite_user": 'USER_INVITE_OUT=$(dx invite %s $PROJECT_ID %s --no-email --auth %s)',
+    "invite_user": "USER_INVITE_OUT=$(dx invite %s $PROJECT_ID %s --no-email --auth %s)",
     "file_upload_cmd": (
         f"{UPLOAD_AGENT_EXE} --auth %s {UPLOAD_ARGS['proj']}%s --folder %s --do-not-compress --upload-threads 10 %s"
     ),
@@ -448,25 +292,291 @@ DX_CMDS = {
     "duty_csv": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y {JOB_NAME_STR}",
 }
 
-# ---- Moka settings ----------------------------------------------------------
+# =========== Classes for config import by other modules settings ========================================
 
-# Moka IDs for generating SQLs to update the Mokadatabase (audit trail)
-SQL_IDS = {
-    "WORKFLOWS": {
-        "pipe": 5229,
-        "wes": 5078,
-        "archerdx": 5238,
-        "snp": 5091,
-        "tso500": 5288,
-    },
-    "WES_TEST_STATUS": {
-        "nextseq_sequencing": 1202218804,  # Test Status = NextSEQ sequencing
-        "data_processing": 1202218805,  # Test Status = Data Processing
-    },
-}
 
-QUERIES = {
-    "customrun": "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values (%s)",
-    "wes": "update NGSTest set PipelineVersion = %s, StatusID = %s where dna in ('%s') and StatusID = %s",
-    "oncology": "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values (%s)",
-}
+class AdEmailConfig:
+    """
+    Ad Email configuration
+    """
+    CREDENTIALS = CREDENTIALS
+    MAIL_SETTINGS = MAIL_SETTINGS
+    PROJECT_DIR = PROJECT_DIR
+    TESTING = TESTING
+
+
+class AdLoggerConfig:
+    """
+    Ad Logger configuration
+    """
+
+    LOG_MSGS = LOG_MSGS
+    SCRIPT_MODE = SCRIPT_MODE
+    TIMESTAMP = TIMESTAMP
+
+
+class CongenicaInputsConfig(PanelConfig):
+    """
+    Congenica Inputs configuration
+    """
+    pass
+    APP_INPUTS = APP_INPUTS
+    CREDENTIALS = CREDENTIALS
+    DX_CMDS = DX_CMDS
+    NEXUS_IDS = NEXUS_IDS
+    TIMESTAMP = TIMESTAMP
+    DECISION_SUPPORT_INPUTS = {
+        # Used by the script to build the input commands for the congenica upload app
+        "pipe": {
+            "vcf": {
+                "stage": NEXUS_IDS["STAGES"]["pipe"]["filter_vcf"],
+                "name": "filtered_vcf",
+            },
+            "bam": {
+                "stage": NEXUS_IDS["STAGES"]["pipe"]["gatk"],
+                "name": "bam",
+            },
+            "bai": {
+                "stage": NEXUS_IDS["STAGES"]["pipe"]["gatk"],
+                "name": "bai",
+            },
+        },
+        # Same stage is used to produce both the BAM and VCF
+        "wes": {
+            "vcf": {
+                "stage": NEXUS_IDS["STAGES"]["wes"]["sentieon"],
+                "name": "variants_vcf",
+            },
+            "bam": {
+                "stage": NEXUS_IDS["STAGES"]["wes"]["sentieon"],
+                "name": "mappings_bam",
+            },
+            "bai": {
+                "stage": NEXUS_IDS["STAGES"]["wes"]["sentieon"],
+                "name": "mappings_bam_bai",
+            },
+        },
+    }
+
+
+class DemultiplexConfig(PanelConfig):
+    """
+    Demultiplex configuration
+    """
+
+    NOVASEQ_ID = NOVASEQ_ID
+    RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
+    RUNFOLDERS = RUNFOLDERS
+    STRINGS = {
+        "demultiplexlog_tso500_msg": DEMULTIPLEXLOG_TSO500_MSG,
+        "lane_metrics_suffix": LANE_METRICS_SUFFIX,
+        "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
+    }
+    TESTING = TESTING
+    BCL2FASTQ2_CMD = (
+        f"sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
+        "--sample-sheet /mnt/run/%s --no-lane-splitting"
+    )
+    CD_CMD = (
+        "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics "
+        "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
+    )
+    CHECKSUM_COMPLETE_MSG = "Checksum result reported"  # Checksum complete statement
+    CHECKSUM_MATCH_MSG = "Checksums match"  # Statement to write when checksums match
+    DEMULTIPLEX_TEST_RUNFOLDERS = [
+        "999999_NB552085_0496_DEMUXINTEG",
+        "999999_M02353_0496_000000000-DEMUX",
+        # tso500 runfolder is used for testing both demultiplexing and sw script
+        "999999_A01229_0182_AHM2TSO500",
+        "231012_M02631_0285_000000000-DEVOO",
+    ]
+    SEQUENCER_IDS = {
+        # Requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed
+        "NB551068": {"requires_ic": True},
+        "NB552085": {"requires_ic": True},
+        "M02353": {"requires_ic": False},
+        "M02631": {"requires_ic": False},
+        NOVASEQ_ID: {"requires_ic": True},
+    }
+    SEQ_REQUIRE_IC = [
+        k for k, v in SEQUENCER_IDS.items() if v["requires_ic"]
+    ]
+
+
+class SWConfig(PanelConfig):
+    """
+    Setoff Workflows configuration
+    """
+
+    APP_INPUTS = APP_INPUTS
+    CREDENTIALS = CREDENTIALS
+    DX_CMDS = DX_CMDS
+    FASTQ_DIRS = FASTQ_DIRS
+    MAIL_SETTINGS = MAIL_SETTINGS
+    NEXUS_IDS = NEXUS_IDS
+    NOVASEQ_ID = NOVASEQ_ID
+    TIMESTAMP = TIMESTAMP
+    PROJECT_DIR = PROJECT_DIR
+    RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
+    SDK_SOURCE = SDK_SOURCE
+    UPLOAD_ARGS = UPLOAD_ARGS
+    RUNFOLDERS = RUNFOLDERS
+    PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
+    if BRANCH == "master":  # Prod branch
+        DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
+        DNANEXUS_USERS = {  # User access level
+            "viewers": [PROD_ORGANISATION, "InterpretationRequest", "org-seglh_read"],
+            "admins": ["mokaguys"],
+        }
+        TSO_BATCH_SIZE = 16
+    else:
+        DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
+        DNANEXUS_USERS = {  # User access level
+            "viewers": [],
+            "admins": [PROD_ORGANISATION],
+        }
+        TSO_BATCH_SIZE = 2
+    EMPTY_DEPENDS = "DEPENDS_LIST=''"
+    STRINGS = {
+        "demultiplexlog_tso500_msg": DEMULTIPLEXLOG_TSO500_MSG,
+        "lane_metrics_suffix": LANE_METRICS_SUFFIX,
+        "demultiplex_success": DEMULTIPLEX_SUCCESS,
+    }
+    UPLOAD_STARTED_MSG = (
+        "Upload started"  # Statement to write to DNAnexus upload started file
+    )
+    # TODO move this to the DXAPP.JSON file for FH app
+    PIPE_FH_GATK_TIMEOUT_ARGS = (
+        # Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
+        # reason to auto restart list
+        '--extra-args \'{"timeoutPolicyByExecutable": {"'
+        f'{NEXUS_IDS["APPS"]["gatk"].split(":")[1]}'
+        '": {"*":{"hours": 12}}}, "executionPolicy": {"restartOn": {"JobTimeoutExceeded":1, "JMInternalError":'
+        ' 1, "UnresponsiveWorker": 2, "ExecutionError":1}}}\''
+    )
+    QUERIES = {
+        # SQL queries for updating the Moka database (audit trail)
+        "customrun": "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values (%s)",
+        "wes": "update NGSTest set PipelineVersion = %s, StatusID = %s where dna in ('%s') and StatusID = %s",
+        "oncology": "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values (%s)",
+    }
+    REF_SAMPLE_IDS = [
+        # NA12878 identifiers to exclude from congenica upload
+        "NA12878",
+        "136819",
+    ]
+    SQL_IDS = {
+        # Moka IDs for generating SQLs to update the Moka database (audit trail)
+        "WORKFLOWS": {
+            "pipe": 5229,
+            "wes": 5078,
+            "archerdx": 5238,
+            "snp": 5091,
+            "tso500": 5288,
+        },
+        "WES_TEST_STATUS": {
+            "nextseq_sequencing": 1202218804,  # Test Status = NextSEQ sequencing
+            "data_processing": 1202218805,  # Test Status = Data Processing
+        },
+    }
+    STAGE_INPUTS = {
+        "pipe": {
+            "fastqc_reads": f"-i{NEXUS_IDS['STAGES']['pipe']['fastqc']}.reads=",
+            "bwa_reads1": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads_fastqgz=",
+            "bwa_reads2": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads2_fastqgz=",
+            "bwa_rg_sample": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.read_group_sample=",
+            "bwa_ref": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.genomeindex_targz=",
+            "picard_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.vendor_exome_bedfile=",
+            "picard_capturetype": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.Capture_panel=",
+            "gatk_padding": (f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.padding="),
+            "gatk_vcf_format": f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.output_format=both",
+            "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['filter_vcf']}.bedfile=",
+            "happy_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.skip=",
+            "happy_prefix": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.prefix=",
+            "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.sambamba_bed=",
+            "sambamba_min_base_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_base_qual=",
+            "sambamba_min_mapping_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_mapping_qual=",
+            "sambamba_cov_level": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.coverage_level=",
+            "sambamba_filter_cmds": (
+                f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}"
+                ".additional_filter_commands='not (unmapped or secondary_alignment)'"
+            ),
+            "sambamba_excl_dups": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.exclude_duplicate_reads=true",
+            "sambamba_excl_failed_qual": (
+                f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.exclude_failed_quality_control=true"
+            ),
+            "sambamba_count_overl_mates": (
+                f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.merge_overlapping_mate_reads=true"
+            ),
+            "fhprs_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.skip=false",
+            "fhprs_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.BEDfile=",
+            "fhprs_instance": "mem3_ssd1_v2_x8",  # Required when creating gVCFs
+            "polyedge_gene": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.gene=",
+            "polyedge_chrom": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.chrom=",
+            "polyedge_poly_start": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_start=",
+            "polyedge_poly_end": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_end=",
+            "polyedge_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.skip=false",
+        },
+        "wes": {
+            "fastqc1_reads": f"-i{NEXUS_IDS['STAGES']['wes']['fastqc1']}.reads=",
+            "fastqc2_reads": f"-i{NEXUS_IDS['STAGES']['wes']['fastqc2']}.reads=",
+            "picard_bed": f"-i{NEXUS_IDS['STAGES']['wes']['picard']}.vendor_exome_bedfile=",
+            "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['wes']['sambamba']}.sambamba_bed=",
+            # Prevents incorrect parsing from fastq filename
+            "sentieon_samplename": f"-i{NEXUS_IDS['STAGES']['wes']['sentieon']}.sample=",
+            "sentieon_bed": f"-i{NEXUS_IDS['STAGES']['wes']['sentieon']}.targets_bed=",
+        },
+        "snp": {
+            "fastqc1_reads": f"-i{NEXUS_IDS['STAGES']['snp']['fastqc1']}.reads=",
+            "fastqc2_reads": f"-i{NEXUS_IDS['STAGES']['snp']['fastqc2']}.reads=",
+            "sentieon_bed": f"-i{NEXUS_IDS['STAGES']['snp']['sentieon']}.targets_bed=",
+            # Prevents incorrect parsing from fastq filename
+            "sentieon_samplename": f"-i{NEXUS_IDS['STAGES']['snp']['sentieon']}.sample=",
+        },
+    }
+
+
+class ToolboxConfig:
+    """
+    Toolbox configuration
+    """
+
+    AD_LOGDIR = AD_LOGDIR
+    CREDENTIALS = CREDENTIALS
+    FASTQ_DIRS = FASTQ_DIRS
+    RUNFOLDERS = RUNFOLDERS
+    TIMESTAMP = TIMESTAMP
+    STRINGS = {
+        "phasing_metrics_suffix": ".illumina_phasing_metrics",
+        "lane_metrics_suffix": LANE_METRICS_SUFFIX,
+    }
+    TEST_PROGRAMS_DICT = {
+        "dx_toolkit": {
+            "executable": "dx",
+            "test_cmd": f"source {SDK_SOURCE}; dx --version",
+        },
+        "upload_agent": {
+            "executable": UPLOAD_AGENT_EXE,
+            "test_cmd": f"{UPLOAD_AGENT_EXE} --version",
+        },
+        "gatk_collect_lane_metrics": {
+            "executable": "docker",
+            "test_cmd": (
+                "sudo docker run --rm broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics --version"
+            ),
+        },
+        "bcl2fastq2": {
+            "executable": "docker",
+            "test_cmd": f"sudo docker run --rm {BCL2FASTQ_DOCKER} --version",
+        },
+    }
+
+
+class URConfig:
+    """
+    Upload Runfolder configuration
+    """
+
+    CREDENTIALS = CREDENTIALS
+    DX_CMDS = DX_CMDS
+    TIMESTAMP = TIMESTAMP

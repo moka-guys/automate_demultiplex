@@ -10,7 +10,6 @@ both general messages which are used across multiple modules, and also logfile-s
 - backup
 - decision_support
 """
-from . import ad_config  # Import ad_config file
 
 # Messages used by individual scripts / modules for logging
 LOG_MSGS = {
@@ -67,14 +66,14 @@ LOG_MSGS = {
         "ic_pass": "Integrity check for runfolder %s passed",
         "create_bcl2fastqlog_pass": "Created bcl2fastq2 logfile for run %s: %s",
         "create_bcl2fastqlog_fail": "Failed to create bcl2fastq2 logfile for run %s. Exception: %s",
-        "tso500_run": f"%s is a {ad_config.STRINGS['demultiplexlog_tso500_msg']}",
+        "tso500_run": "%s is a %s",
         "write_tso_msg_to_bcl2fastqlog": (
             "TSO500 message successfully written to bcl2fastq2_output.log file for TSO run: %s"
         ),
         "bcl2fastqlog_empty": "BCL2FASTQ2 logfile is empty for run %s. Please see logfile %s",
         "bcl2fastqlog_absent": "BCL2FASTQ2 logfile does not exist for run %s. Please see logfile",
         "running_cd": "Running the following command for cluster density calculation: %s",
-        "cd_success": f"Cluster density calculation saved to %s{ad_config.STRINGS['lane_metrics_suffix']}",
+        "cd_success": f"Cluster density calculation saved to %s%s",
         "cd_fail": "Cluster density calculation failed for : %s. " "Error: %s",
     },
     "sw": {

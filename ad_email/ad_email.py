@@ -15,11 +15,11 @@ import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Union
-from ..config import ad_config
-from ..toolbox import toolbox
+from ..config.ad_config import AdEmailConfig
+from ..toolbox.toolbox import get_credential, git_tag
 
 
-class AdEmail:
+class AdEmail(AdEmailConfig):
     """
     Send email to recipient via SMTP
 
@@ -45,11 +45,11 @@ class AdEmail:
             :param logger:  Logger object
         """
         self.logger = logger
-        self.sender = ad_config.MAIL_SETTINGS["alerts_email"]
-        self.email_user = toolbox.get_credential(ad_config.CREDENTIALS["email_user"])
-        self.email_pw = toolbox.get_credential(ad_config.CREDENTIALS["email_pw"])
+        self.sender = AdEmailConfig.MAIL_SETTINGS["alerts_email"]
+        self.email_user = get_credential(AdEmailConfig.CREDENTIALS["email_user"])
+        self.email_pw = get_credential(AdEmailConfig.CREDENTIALS["email_pw"])
         self.template_dirpath = os.path.join(
-            ad_config.PROJECT_DIR, "ad_email/templates"
+            AdEmailConfig.PROJECT_DIR, "ad_email/templates"
         )
         self.template = jinja2.Environment(
             loader=jinja2.FileSystemLoader(self.template_dirpath),
@@ -69,12 +69,12 @@ class AdEmail:
         """
         try:
             html = self.template.render(
-                test_mode=ad_config.TESTING,
+                test_mode=AdEmailConfig.TESTING,
                 runfolder_name=runfolder_name,
                 workflows=workflows,
                 queries=queries,
                 sample_count=sample_count,
-                git_tag=toolbox.git_tag(),
+                git_tag=git_tag(),
             )
             self.logger.info(self.logger.log_msgs["html_success"])
             return html
@@ -110,8 +110,8 @@ class AdEmail:
             self.logger.info(self.logger.log_msgs["sending_email"], self.msg)
             # Configure SMTP server connection for sending email
             server = smtplib.SMTP(
-                host=ad_config.MAIL_SETTINGS["host"],
-                port=ad_config.MAIL_SETTINGS["port"],
+                host=AdEmailConfig.MAIL_SETTINGS["host"],
+                port=AdEmailConfig.MAIL_SETTINGS["port"],
                 timeout=10,
             )
             server.set_debuglevel(False)  # Output connection debug messages

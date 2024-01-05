@@ -8,10 +8,10 @@ import subprocess
 import json
 import re
 import argparse
-from ..config import ad_config, panel_config
-from ..ad_logger import ad_logger
-from ..toolbox import toolbox
-from ..congenica_inputs.congenica_inputs import DecisionTooler
+from ..config.ad_config import CongenicaInputsConfig
+from ..ad_logger.ad_logger import shutdown_logs
+from ..toolbox.toolbox import get_credential, script_start_logmsg, script_end_logmsg
+from ..congenica_inputs.congenica_inputs import CongenicaInputs
 
 
 def get_arguments():
@@ -55,7 +55,7 @@ def get_arguments():
 
 
 parsed_args = get_arguments()
-dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])
+dnanexus_auth = get_credential(CongenicaInputsConfig.CREDENTIALS["dnanexus_authtoken"])
 
 analysis_info = json.loads(
     subprocess.check_output(
@@ -72,20 +72,20 @@ analysis_info = json.loads(
 # Get settings for analysis panel (to determine which workflow is running)
 pannumber = re.search(r"Pan\d+", analysis_info["name"]).group()
 
-# Create tooler object, using the analysis ID and the workflow name from the ad_config
+# Create CongenicaInputs object, using the analysis ID and the workflow name from the ad_config
 # panel dictionary
-tooler = DecisionTooler(
+ci_obj = CongenicaInputs(
     parsed_args.analysis_id,
     parsed_args.project,
     parsed_args.runfolder_name,
-    panel_config.PANEL_DICT[pannumber]["pipeline"],
+    CongenicaInputsConfig.PANEL_DICT[pannumber]["pipeline"],
 )
 
-toolbox.script_start_logmsg(tooler.logger, __file__)
+script_start_logmsg(ci_obj.logger, __file__)
 
 # Get and print decision support tool inputs
-tooler.get_inputs()
+ci_obj.get_inputs()
 
-toolbox.script_end_logmsg(tooler.logger, __file__)
+script_end_logmsg(ci_obj.logger, __file__)
 
-ad_logger.shutdown_logs(tooler.logger)
+shutdown_logs(ci_obj.logger)

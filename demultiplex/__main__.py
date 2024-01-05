@@ -4,9 +4,9 @@ Main entry point for demultiplex module.
 Demultiplexes NGS Run Folders. See README and docstrings for further details
 """
 import argparse
-from ..demultiplex import demultiplex
-from ..toolbox import toolbox
-from ..ad_logger import ad_logger
+from ..demultiplex.demultiplex import GetRunfolders
+from ..toolbox.toolbox import script_start_logmsg, script_end_logmsg
+from ..ad_logger.ad_logger import shutdown_logs
 
 
 def get_arguments():
@@ -42,15 +42,15 @@ def get_arguments():
 parsed_args = get_arguments()
 
 if parsed_args.runfolder_name:  # If run with runfolder name provided as input
-    gr_obj = demultiplex.GetRunfolders(parsed_args.runfolder_name)
+    gr_obj = GetRunfolders(parsed_args.runfolder_name)
 
 else:
-    gr_obj = demultiplex.GetRunfolders()
+    gr_obj = GetRunfolders()
 
 
-toolbox.script_start_logmsg(gr_obj.script_logger, __file__)
+script_start_logmsg(gr_obj.script_logger, __file__)
 
 gr_obj.setoff_processing()
 
-toolbox.script_end_logmsg(gr_obj.script_logger, __file__)
-ad_logger.shutdown_logs(gr_obj.script_logger)
+script_end_logmsg(gr_obj.script_logger, __file__)
+shutdown_logs(gr_obj.script_logger)

@@ -2,50 +2,16 @@
 Print inputs required by congenica upload applications on DNAnexus.
 See Readme and doctrings for further details. Contains the following classes:
 
-- DecisionTooler
+- CongenicaInputs
     Builds congenica upload DNAnexus app command line inputs
 """
 import sys
-from config import ad_config
-from ..toolbox import toolbox
-from ..ad_logger import ad_logger
+from ..config.ad_config import CongenicaInputsConfig
+from ..toolbox.toolbox import get_credential, RunfolderObject, execute_subprocess_command
+from ..ad_logger.ad_logger import shutdown_streamhandler
 
 
-# Used by the script to build the input commands for the congenica upload app
-DECISION_SUPPORT_INPUTS = {
-    "pipe": {
-        "vcf": {
-            "stage": ad_config.NEXUS_IDS["STAGES"]["pipe"]["filter_vcf"],
-            "name": "filtered_vcf",
-        },
-        "bam": {
-            "stage": ad_config.NEXUS_IDS["STAGES"]["pipe"]["gatk"],
-            "name": "bam",
-        },
-        "bai": {
-            "stage": ad_config.NEXUS_IDS["STAGES"]["pipe"]["gatk"],
-            "name": "bai",
-        },
-    },
-    # Same stage is used to produce both the BAM and VCF
-    "wes": {
-        "vcf": {
-            "stage": ad_config.NEXUS_IDS["STAGES"]["wes"]["sentieon"],
-            "name": "variants_vcf",
-        },
-        "bam": {
-            "stage": ad_config.NEXUS_IDS["STAGES"]["wes"]["sentieon"],
-            "name": "mappings_bam",
-        },
-        "bai": {
-            "stage": ad_config.NEXUS_IDS["STAGES"]["wes"]["sentieon"],
-            "name": "mappings_bam_bai",
-        },
-    },
-}
-
-
-class DecisionTooler:
+class CongenicaInputs(CongenicaInputsConfig):
     """
     Builds congenica upload DNAnexus app command line inputs
 
@@ -55,6 +21,7 @@ class DecisionTooler:
         project(str):               DNAnexus project ID
         runfolder_name (str):       Name of runfolder (used for naming logfile)
         workflow (str):             Name of pipeline used to process the sample
+        rf_obj (object):            RunfolderObject() object (contains runfolder-specific attributes)
         logger (object):            Runfolder-level logger
         file_dict(dict):            Dictionary containing strings required for building
                                     the congenica upload app input string
@@ -88,17 +55,18 @@ class DecisionTooler:
         self, analysis_id: str, project: str, runfolder_name: str, workflow: str
     ):
         """
-        Constructor for the DecisionTooler class
+        Constructor for the CongenicaInputs class
             :param analysis_id (str):       Workflow analysis ID
             :param project (str):           DNAnexus project ID
             :param runfolder_name (str):    Name of runfolder (used for naming logfile)
             :param workflow (str):          Workflow used to analyse the sample
         """
-        self.dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])  # Auth token
+        self.dnanexus_auth = get_credential(CongenicaInputsConfig.CREDENTIALS["dnanexus_authtoken"])  # Auth token
         self.analysis_id = analysis_id
         self.project = project
         self.runfolder_name = runfolder_name
         self.workflow = workflow
+        self.rf_obj = RunfolderObject(self.runfolder_name, CongenicaInputsConfig.TIMESTAMP)
         self.logger = self.return_logger()
 
     def return_logger(self) -> object:
@@ -106,10 +74,9 @@ class DecisionTooler:
         Add only the required logger
             :return logger (object):    Runfolder-level logger
         """
-        rf_obj = toolbox.RunfolderObject(self.runfolder_name, ad_config.TIMESTAMP)
-        rf_obj.add_runfolder_logger("decision_support")  # Add decision_support logger
-        logger = rf_obj.rf_loggers.decision_support
-        ad_logger.shutdown_streamhandler(logger)  # Prevents log
+        self.rf_obj.add_runfolder_logger("decision_support")  # Add decision_support logger
+        logger = self.rf_obj.rf_loggers.decision_support
+        shutdown_streamhandler(logger)  # Prevents log
         return logger
 
     def get_inputs(self) -> None:
@@ -131,7 +98,7 @@ class DecisionTooler:
         """
         if self.workflow in ["wes", "pipe"]:
             self.logger.info(self.logger.log_msgs["workflow_type"], self.workflow)
-            setattr(self, "file_dict", DECISION_SUPPORT_INPUTS[self.workflow])
+            setattr(self, "file_dict", CongenicaInputsConfig.DECISION_SUPPORT_INPUTS[self.workflow])
         else:
             self.logger.error(self.logger.log_msgs["incorrect_workflow"], self.workflow)
             sys.exit(1)
@@ -145,7 +112,7 @@ class DecisionTooler:
         self.logger.info(self.logger.log_msgs["setting_job_id_cmds"])
         try:
             for file_name in self.file_dict.keys():
-                find_execution_id_cmd = ad_config.DX_CMDS["find_execution_id"] % (
+                find_execution_id_cmd = CongenicaInputsConfig.DX_CMDS["find_execution_id"] % (
                     f"{self.project}:{self.analysis_id}",
                     self.dnanexus_auth,
                     self.file_dict[file_name]["stage"],
@@ -170,7 +137,7 @@ class DecisionTooler:
             jobid_cmd = getattr(self, f"{outfile}jobid_cmd")
             # Can take a while for job to set off
             while tries < 1000 and returncode != 0:
-                (jobid, err, returncode) = toolbox.execute_subprocess_command(
+                (jobid, err, returncode) = execute_subprocess_command(
                     jobid_cmd,
                     self.logger,
                 )
@@ -197,9 +164,9 @@ class DecisionTooler:
         try:
             self.logger.info(self.logger.log_msgs["setting_app_input_str"])
             congenica_app_inputs = (
-                f"{ad_config.APP_INPUTS['congenica_upload']['vcf']}"
+                f"{CongenicaInputsConfig.APP_INPUTS['congenica_upload']['vcf']}"
                 f"{self.vcfjobid}:{self.file_dict['vcf']['name']} "
-                f"{ad_config.APP_INPUTS['congenica_upload']['bam']}"
+                f"{CongenicaInputsConfig.APP_INPUTS['congenica_upload']['bam']}"
                 f"{self.bamjobid}:{self.file_dict['bam']['name']}"
             )
             setattr(self, "congenica_app_inputs", congenica_app_inputs)

@@ -18,10 +18,10 @@ demultiplex.py pytest unit tests
 import os
 import itertools
 import pytest
-from demultiplex import demultiplex
-from config import ad_config
-from test import conftest
-from ad_logger import ad_logger
+from ..demultiplex import demultiplex
+from ..config import ad_config
+from . import conftest
+from ..ad_logger import ad_logger
 from pytest_cases import fixture_union
 
 
@@ -286,12 +286,12 @@ class TestGetRunfolders(object):
         """
         # TODO fix the below patch
         monkeypatch.setattr(
-            demultiplex.ad_config, "DEMULTIPLEX_TEST_RUNFOLDERS",
+            demultiplex.DemultiplexConfig, "DEMULTIPLEX_TEST_RUNFOLDERS",
             runfolders_toproc
         )
         gr_obj = get_gr_obj()
         demultiplex.DemultiplexRunfolder.bcl2fastq2_cmd = (
-            f"echo '{ad_config.STRINGS['demultiplex_success']}"
+            f"echo '{ad_config.DEMULTIPLEX_SUCCESS}"
             )
         gr_obj.setoff_processing()
         assert all(
@@ -305,7 +305,7 @@ class TestGetRunfolders(object):
     #     that none have been processed
     #     """
     #     monkeypatch.setattr(
-    #         demultiplex.ad_config, "DEMULTIPLEX_TEST_RUNFOLDERS", runfolders_nottoproc
+    #         demultiplex.DemultiplexConfig, "DEMULTIPLEX_TEST_RUNFOLDERS", runfolders_nottoproc
     #     )
     #     gr_obj = get_gr_obj()
     #     with pytest.raises(SystemExit) as pytest_wrapped_e:
@@ -571,7 +571,7 @@ class TestDemultiplexRunfolder(object):
             monkeypatch.setattr(
                 dr_obj,
                 "bcl2fastq2_cmd",
-                f"echo '{ad_config.STRINGS['demultiplex_success']}' >> "
+                f"echo '{ad_config.DEMULTIPLEX_SUCCESS}' >> "
                 f"{dr_obj.rf_obj.bcl2fastqlog_file}",
             )
             assert dr_obj.setoff_workflow() and dr_obj.run_processed
@@ -646,7 +646,7 @@ class TestDemultiplexRunfolder(object):
             dr_obj = get_dr_obj(runfolder)
             assert not dr_obj.sequencing_complete()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
-    
+
     # TODO write test_check_dev_run_pass
     # TODO write test_check_dev_run_fail
     # TODO write test_pass_integrity_check_pass
@@ -718,7 +718,7 @@ class TestDemultiplexRunfolder(object):
             dr_obj = get_dr_obj(runfolder)
             assert dr_obj.checksums_match()
             with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
-                assert ad_config.CHECKSUM_COMPLETE_MSG in checksumfile.read()
+                assert ad_config.DemultiplexConfig.CHECKSUM_COMPLETE_MSG in checksumfile.read()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     def test_checksums_match_fail(self, checksumfile_present_pass_notchecked):
@@ -730,10 +730,10 @@ class TestDemultiplexRunfolder(object):
             dr_obj = get_dr_obj(runfolder)
             assert dr_obj.checksums_match()
             with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
-                assert ad_config.CHECKSUM_COMPLETE_MSG in checksumfile.read()
+                assert ad_config.DemultiplexConfig.CHECKSUM_COMPLETE_MSG in checksumfile.read()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    @pytest.mark.nodisableloggers
+    # @pytest.mark.nodisableloggers
     def test_create_bcl2fastqlog_success(self):
         """
         Test function can successfully create a bcl2fastq2 log file
@@ -743,7 +743,7 @@ class TestDemultiplexRunfolder(object):
         assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_file)
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    @pytest.mark.nodisableloggers
+    # @pytest.mark.nodisableloggers
     def test_create_bcl2fastqlog_fail(self, monkeypatch):
         """
         Test function fails when expected using dummy bcl2fastq2 log path with
@@ -768,9 +768,9 @@ class TestDemultiplexRunfolder(object):
         assert dr_obj.add_bcl2fastqlog_tso_msg()
         assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_file)
         with open(dr_obj.rf_obj.bcl2fastqlog_file, "r") as file:
-            assert ad_config.STRINGS["demultiplexlog_tso500_msg"] in file.read()
+            assert ad_config.DEMULTIPLEXLOG_TSO500_MSG in file.read()
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
-    
+
     # TODO write test_add_bcl2fastqlog_tso_msg_fail
 
     def test_run_demultiplexing_success(self, non_tso_runfolder):
@@ -785,7 +785,7 @@ class TestDemultiplexRunfolder(object):
             # complete string to bcl2fastq2 logfile
             # TODO swap below to a patch
             dr_obj.bcl2fastq2_cmd = (
-                f"echo '{ad_config.STRINGS['demultiplex_success']}' >> "
+                f"echo '{ad_config.DEMULTIPLEX_SUCCESS}' >> "
                 f"{dr_obj.rf_obj.bcl2fastqlog_file}"
             )
             assert dr_obj.run_demultiplexing()

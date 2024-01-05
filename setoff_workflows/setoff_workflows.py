@@ -28,20 +28,31 @@ import os
 import re
 from shutil import copyfile
 from typing import Union, Tuple
-from ..toolbox import toolbox
-from ..ad_logger.ad_logger import AdLogger
-from ..config import ad_config, panel_config
-from ad_email import ad_email
+from ..ad_logger.ad_logger import AdLogger, shutdown_logs
+from ..config.ad_config import SWConfig
+from ..ad_email.ad_email import AdEmail
 from ..upload_runfolder.upload_runfolder import UploadRunfolder
+from ..toolbox.toolbox import (
+    return_scriptlog_config,
+    test_upload_software,
+    RunfolderObject,
+    read_lines,
+    get_num_processed_runfolders,
+    get_credential,
+    git_tag,
+    write_lines,
+    execute_subprocess_command,
+)
 
 
-class SequencingRuns:
+class SequencingRuns(SWConfig):
     """
     Collects sequencing runs and initiates runfolder processing for those sequencing runs requiring processing
 
     Attributes
         runs_to_process (dict):         Object containing runs that require processing as key,value pairs
         processed_runfolders (list):    List of runfolders processed by the script
+        ad_logger_obj (object):         AdLogger object
         script_logger (object):         Script-level logger
         num_processed_runfolders (int): Number of runfolders processed during this cycle
 
@@ -71,9 +82,8 @@ class SequencingRuns:
         """
         self.runs_to_process = {}
         self.processed_runfolders = []
-        self.script_logger = AdLogger(
-            "sw", "sw", toolbox.return_scriptlog_config()["sw"]
-        ).get_logger()
+        self.ad_logger_obj = AdLogger("sw", "sw", return_scriptlog_config()["sw"])
+        self.script_logger = self.ad_logger_obj.get_logger()
         self.runs_to_process = self.set_runfolders()
 
     def setoff_processing(self) -> None:
@@ -81,7 +91,7 @@ class SequencingRuns:
         Call methods to collect runfolders for processing
             :return None:
         """
-        if toolbox.test_upload_software(self.script_logger):
+        if test_upload_software(self.script_logger):
             for runfolder, rf_obj in self.runs_to_process.items():
                 self.process_runfolder(rf_obj)
             self.return_num_processed_runfolders()
@@ -93,35 +103,36 @@ class SequencingRuns:
             :return None:
         """
         runs_to_process = {}
-        for folder in os.listdir(ad_config.RUNFOLDERS):
-            if os.path.isdir(os.path.join(ad_config.RUNFOLDERS, folder)) and re.compile(
-                ad_config.RUNFOLDER_PATTERN
+        for folder in os.listdir(SWConfig.RUNFOLDERS):
+            if os.path.isdir(os.path.join(SWConfig.RUNFOLDERS, folder)) and re.compile(
+                SWConfig.RUNFOLDER_PATTERN
             ).match(folder):
                 self.script_logger.info(
                     self.script_logger.log_msgs["runfolder_identified"], folder
                 )
-                rf_obj = toolbox.RunfolderObject(folder, ad_config.TIMESTAMP)
-                if self.requires_processing(rf_obj):
-                    runs_to_process[folder] = rf_obj
+                self.rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
+                if self.requires_processing():
+                    runs_to_process[folder] = self.rf_obj
         return runs_to_process
 
-    def requires_processing(self, rf_obj: object) -> Union[bool, None]:
+    def requires_processing(self) -> Union[bool, None]:
         """
         Calls other methods to determine whether the runfolder requires processing (demultiplexing
         has finished successfully and the runfolder has not already been uploaded)
-            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
             :return True | None:    Returns true if runfolder requires processing, else None
         """
-        if self.has_demultiplexed(rf_obj) and not self.already_uploaded(rf_obj):
+        if self.has_demultiplexed(self.rf_obj) and not self.already_uploaded(
+            self.rf_obj
+        ):
             self.script_logger.info(
                 self.script_logger.log_msgs["runfolder_requires_proc"],
-                rf_obj.runfolder_name,
+                self.rf_obj.runfolder_name,
             )
             return True
         else:
             self.script_logger.info(
                 self.script_logger.log_msgs["runfolder_prev_proc"],
-                rf_obj.runfolder_name,
+                self.rf_obj.runfolder_name,
             )
 
     def has_demultiplexed(self, rf_obj: object) -> Union[bool, None]:
@@ -133,10 +144,10 @@ class SequencingRuns:
             :return True | None:    Return True if runfolder already demultiplexed, else None
         """
         if os.path.isfile(rf_obj.bcl2fastqlog_file):
-            logfile_list = toolbox.read_lines(rf_obj.bcl2fastqlog_file)
+            logfile_list = read_lines(rf_obj.bcl2fastqlog_file)
             completed_strs = [
-                ad_config.STRINGS["demultiplexlog_tso500_msg"],
-                ad_config.STRINGS["demultiplex_success"],
+                SWConfig.STRINGS["demultiplexlog_tso500_msg"],
+                SWConfig.STRINGS["demultiplex_success"],
             ]
             if logfile_list:
                 if any(
@@ -148,9 +159,7 @@ class SequencingRuns:
                     )
                     return True
                 else:
-                    self.script_logger.info(
-                        self.script_logger.log_msgs["demux_failed"]
-                    )
+                    self.script_logger.info(self.script_logger.log_msgs["demux_failed"])
             else:
                 # Write to logfile that not yet demultiplexed
                 self.script_logger.info(
@@ -183,14 +192,14 @@ class SequencingRuns:
             :return None:
         """
         rf_obj.add_runfolder_loggers()  # Add runfolder loggers attribute
-        process_runfolder_obj = ProcessRunfolder(rf_obj)
+        self.process_runfolder_obj = ProcessRunfolder(rf_obj)
 
         for logger in rf_obj.rf_loggers.loggers:
-            ad_logger.shutdown_logs(logger)  # Shut down logging
+            shutdown_logs(logger)  # Shut down logging
         self.processed_runfolders.append(rf_obj.runfolder_name)
         self.script_logger.info(
             self.script_logger.log_msgs["runfolder_processed"],
-            process_runfolder_obj.rf_obj.runfolder_name,
+            self.process_runfolder_obj.rf_obj.runfolder_name,
         )
 
     def return_num_processed_runfolders(self) -> None:
@@ -198,13 +207,13 @@ class SequencingRuns:
         Set the total number of processed runfolders as a class attribute
             :return None:
         """
-        num_processed_runfolders = toolbox.get_num_processed_runfolders(
+        num_processed_runfolders = get_num_processed_runfolders(
             self.script_logger, self.processed_runfolders
         )
         setattr(self, "num_processed_runfolders", num_processed_runfolders)
 
 
-class ProcessRunfolder:
+class ProcessRunfolder(SWConfig):
     """
     A new instance of this class is initiated for each runfolder being assessed. Calls methods to process and
     upload a runfolder including creation of DNAnexus project, upload of data using upload_runfolder,
@@ -234,7 +243,7 @@ class ProcessRunfolder:
             Build file upload commands
         split_tso_samplesheet()
             Split tso500 samplesheet into parts with x samples per samplesheet (no.
-            defined in ad_config.TSO_BATCH_SIZE) and write to runfolder
+            defined in TSO_BATCH_SIZE) and write to runfolder
         read_tso_samplesheet()
             Read required lines from the TSO samplesheet
         create_file_upload_dict()
@@ -259,23 +268,23 @@ class ProcessRunfolder:
             written to as the upload is taking place)
     """
 
-    def __init__(self, rf_obj: object):
+    def __init__(self, rf_obj: RunfolderObject):
         """
         Constructor for the RunfolderProcessor class
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
                                     attributes)
         """
         self.rf_obj = rf_obj
-        self.dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])
+        self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["ad_version"],
-            toolbox.git_tag(),
+            git_tag(),
         )
         self.samples_obj = CollectRunfolderSamples(self.rf_obj)
 
         if self.samples_obj.samplename_dict:  # If samples are present
             if not any(
-                panno in panel_config.DEVELOPMENT_PANEL
+                panno in SWConfig.DEVELOPMENT_PANEL
                 for panno in self.samples_obj.unique_pannos
             ):
                 self.rf_obj.rf_loggers.sw.info(
@@ -296,11 +305,12 @@ class ProcessRunfolder:
                 self.build_dx_commands = BuildDxCommands(  # TODO add to docstring
                     self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
                 )
-                self.build_dx_commands.create_dx_cmds()
                 self.create_decision_support_command_file()
                 self.pre_pipeline_upload()
                 self.run_dx_run_commands()
-                PipelineEmails(self.rf_obj, self.samples_obj)
+                self.pipeline_emails = PipelineEmails(self.rf_obj, self.samples_obj)
+                self.pipeline_emails.send_sql_email()
+                self.pipeline_emails.send_samples_email()
                 self.post_pipeline_upload()
             else:
                 self.rf_obj.rf_loggers.sw.info(
@@ -326,11 +336,11 @@ class ProcessRunfolder:
         )
         return {
             "viewers": {
-                "user_list": ad_config.DNANEXUS_USERS["viewers"].append(dry_lab_list),
+                "user_list": SWConfig.DNANEXUS_USERS["viewers"].append(dry_lab_list),
                 "permissions": "VIEW",
             },
             "admins": {
-                "user_list": ad_config.DNANEXUS_USERS["admins"],
+                "user_list": SWConfig.DNANEXUS_USERS["admins"],
                 "permissions": "ADMINISTER",
             },
         }
@@ -344,20 +354,20 @@ class ProcessRunfolder:
             :return None:
         """
         lines_to_write = [
-            f"{ad_config.SDK_SOURCE}",
-             ad_config.DX_CMDS["create_proj"]
-                % (
-                    ad_config.PROD_ORGANISATION,
-                    self.samples_obj.nexus_paths["proj_name"],
-                    self.dnanexus_auth,
-                ),
+            SWConfig.SDK_SOURCE,
+            SWConfig.DX_CMDS["create_proj"]
+            % (
+                SWConfig.PROD_ORGANISATION,
+                self.samples_obj.nexus_paths["proj_name"],
+                self.dnanexus_auth,
+            ),
         ]
         # Give view and admin permissions for project
         for permissions_level in self.users_dict.keys():
             if self.users_dict[permissions_level]["user_list"]:
                 for user in self.users_dict[permissions_level]["user_list"]:
                     lines_to_write.append(
-                        ad_config.DX_CMDS["invite_user"]
+                        SWConfig.DX_CMDS["invite_user"]
                         % (
                             user,
                             self.users_dict[permissions_level]["permissions"],
@@ -370,7 +380,7 @@ class ProcessRunfolder:
                     permissions_level,
                 )
         lines_to_write.append("echo $PROJECT_ID")  # Capture project id
-        toolbox.write_lines(self.rf_obj.proj_creation_script, "w", lines_to_write)
+        write_lines(self.rf_obj.proj_creation_script, "w", lines_to_write)
 
     def run_project_creation_script(self) -> str:
         """
@@ -384,7 +394,7 @@ class ProcessRunfolder:
         )
         project_creation_cmd = f"bash {self.rf_obj.proj_creation_script}"
 
-        project_id, err, returncode = toolbox.execute_subprocess_command(
+        project_id, err, returncode = execute_subprocess_command(
             project_creation_cmd, self.rf_obj.rf_loggers.sw, "exit_on_fail"
         )
         if returncode == 0:
@@ -404,21 +414,21 @@ class ProcessRunfolder:
                                         files to the DNAnexus project
         """
         upload_cmds = {
-            "cd": ad_config.DX_CMDS["file_upload_cmd"]
+            "cd": SWConfig.DX_CMDS["file_upload_cmd"]
             % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 "/QC",
                 " ".join(self.rf_obj.cluster_density_files),
             ),
-            "bcl2fastq_qc": ad_config.DX_CMDS["file_upload_cmd"]
+            "bcl2fastq_qc": SWConfig.DX_CMDS["file_upload_cmd"]
             % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 f"{self.samples_obj.nexus_paths['fastqs_dir']}/Stats",
                 self.rf_obj.bcl2fastqstats_file,
             ),
-            "logfiles": ad_config.DX_CMDS["file_upload_cmd"]
+            "logfiles": SWConfig.DX_CMDS["file_upload_cmd"]
             % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
@@ -432,7 +442,7 @@ class ProcessRunfolder:
                 os.path.join(self.rf_obj.runfolderpath, ss)
                 for ss in self.rf_obj.tso_ss_list
             ]
-            upload_cmds["runfolder_samplesheet"] = ad_config.DX_CMDS[
+            upload_cmds["runfolder_samplesheet"] = SWConfig.DX_CMDS[
                 "file_upload_cmd"
             ] % (
                 self.rf_obj.dnanexus_auth,
@@ -441,13 +451,13 @@ class ProcessRunfolder:
                 " ".join(samplesheet_paths),
             )
         else:
-            upload_cmds["fastqs"] = ad_config.DX_CMDS["file_upload_cmd"] % (
+            upload_cmds["fastqs"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 self.samples_obj.nexus_paths["fastqs_dir"],
                 self.samples_obj.fastqs_str,
             )
-            upload_cmds["runfolder_samplesheet"] = ad_config.DX_CMDS[
+            upload_cmds["runfolder_samplesheet"] = SWConfig.DX_CMDS[
                 "file_upload_cmd"
             ] % (
                 self.rf_obj.dnanexus_auth,
@@ -460,15 +470,15 @@ class ProcessRunfolder:
     def split_tso_samplesheet(self) -> list:
         """
         Split tso500 samplesheet into parts with x samples per samplesheet (no.
-        defined in ad_config.TSO_BATCH_SIZE), and write to runfolder
+        defined in TSO_BATCH_SIZE), and write to runfolder
             :return (list):     Samplesheet names
         """
         samplesheet_list = []
         samples, samplesheet_header = self.read_tso_samplesheet()
         # Split samples into batches (size specified in config)
         batches = [
-            samples[i : i + ad_config.TSO_BATCH_SIZE]
-            for i in range(0, len(samples), ad_config.TSO_BATCH_SIZE)
+            samples[i: i + SWConfig.TSO_BATCH_SIZE]
+            for i in range(0, len(samples), SWConfig.TSO_BATCH_SIZE)
         ]
         # Create new samplesheets named "PartXofY", add samplesheet to list
         # Capture path for samplesheet in runfolder
@@ -484,7 +494,7 @@ class ProcessRunfolder:
                 f"{samplesheet_count}of{len(batches)}.csv"
             )
             samplesheet_list.append(samplesheet_name)
-            toolbox.write_lines(samplesheet_filepath, "w", [samplesheet_header, batch])
+            write_lines(samplesheet_filepath, "w", [samplesheet_header, batch])
         samplesheet_list.append(self.rf_obj.samplesheet_name)
         return samplesheet_list
 
@@ -649,8 +659,8 @@ class ProcessRunfolder:
             :return None:
         """
         if self.samples_obj.pipeline in ("pipe", "wes"):
-            lines_to_write = [ad_config.SDK_SOURCE, ad_config.EMPTY_DEPENDS]
-            toolbox.write_lines(self.rf_obj.decision_support_upload_cmds, "w", lines_to_write)
+            lines_to_write = [SWConfig.SDK_SOURCE, SWConfig.EMPTY_DEPENDS]
+            write_lines(self.rf_obj.decision_support_upload_cmds, "w", lines_to_write)
 
     def run_dx_run_commands(self) -> None:
         """
@@ -662,7 +672,7 @@ class ProcessRunfolder:
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["running_cmds"],
         )
-        out, err, returncode = toolbox.execute_subprocess_command(
+        out, err, returncode = execute_subprocess_command(
             dx_run_cmd, self.rf_obj.rf_loggers.sw, "exit_on_fail"
         )
         if returncode != 0:
@@ -698,7 +708,7 @@ class ProcessRunfolder:
             self.upload_to_dnanexus(filetype, file_upload_dict)
 
 
-class CollectRunfolderSamples:
+class CollectRunfolderSamples(SWConfig):
     """
     Collect attributes for all samples within the runfolder
 
@@ -713,12 +723,13 @@ class CollectRunfolderSamples:
                                         and WES batch numbers if run is a WES run
         nexus_paths (dict):             Dictionary of paths within the DNAnexus project
                                         that are required for building dx commands
-        unique_pannos (list):           List of unique panel numbers within the run
+        unique_pannos (set):            Set of unique panel numbers within the run
         samples_dict (dict):            Dictionary of SampleObject per sample,
                                         containing sample-specific attributes
         fasqs_list (list):              List of all sample fastqs in the run
         fastqs_str (str):               Space separated string of sample fastqs with
                                         each fastq encased in quotation marks
+        sample_obj (object):            SampleObject containing sample-specific attributes
 
     Methods
         get_samplename_dict()
@@ -760,7 +771,7 @@ class CollectRunfolderSamples:
             Return a space separated string of sample fastqs with each fastq encased in quotation marks
     """
 
-    def __init__(self, rf_obj: object):
+    def __init__(self, rf_obj: RunfolderObject):
         """
         Constructor for the CollectRunfolderSamples class
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
@@ -806,13 +817,17 @@ class CollectRunfolderSamples:
                     else:  # If it's a line detailing a sample, get sample name and pan num
                         panel_number = ""
                         sample_name = line.split(",")[0]
-                        for pannum in panel_config.PANELS:
+                        for pannum in SWConfig.PANELS:
                             if pannum in line:
                                 panel_number = pannum
                             samplename_dict[sample_name] = panel_number
             if samplename_dict:  # If samples identified
                 # Create upload agent file (prevents processing by other script runs)
-                toolbox.write_lines(self.rf_obj.rf_loggers.upload_agent.filepath, "w", ad_config.UPLOAD_STARTED_MSG)
+                write_lines(
+                    self.rf_obj.rf_loggers.upload_agent.filepath,
+                    "w",
+                    SWConfig.UPLOAD_STARTED_MSG,
+                )
                 return samplename_dict
             else:
                 return False
@@ -822,7 +837,7 @@ class CollectRunfolderSamples:
             )
             return False
 
-    def get_pipeline(self) -> str:
+    def get_pipeline(self) -> Union[str, None]:
         """
         Use samplename_dict and the config.PANEL_DICT to get a list of pipeline
         names for samples in the run. Generates error mesage if there is more than one
@@ -831,7 +846,7 @@ class CollectRunfolderSamples:
         """
         pipelines_list = []
         for sample, panno in self.samplename_dict.items():
-            pipelines_list.append(panel_config.PANEL_DICT[panno]["pipeline"])
+            pipelines_list.append(SWConfig.PANEL_DICT[panno]["pipeline"])
         if len(set(pipelines_list)) > 1:
             self.rf_obj.rf_loggers.sw.error(
                 self.rf_obj.rf_loggers.sw.log_msgs["multiple_pipeline_names"],
@@ -853,7 +868,7 @@ class CollectRunfolderSamples:
         """
         runtype_list = []
         for sample, panno in self.samplename_dict.items():
-            runtype_list.append(panel_config.PANEL_DICT[panno]["runtype"])  
+            runtype_list.append(SWConfig.PANEL_DICT[panno]["runtype"])
         runtype_str = "_".join(set(runtype_list))
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["runtype_str"],
@@ -949,10 +964,10 @@ class CollectRunfolderSamples:
         ] = f"{self.rf_obj.runfolder_name}_{self.nexus_runfolder_suffix}"
         nexus_paths[
             "fastqs_dir"
-        ] = f"/{nexus_paths['runfolder_name']}/{ad_config.FASTQ_DIRS[fastq_type]}/"
+        ] = f"/{nexus_paths['runfolder_name']}/{SWConfig.FASTQ_DIRS[fastq_type]}/"
         nexus_paths[
             "proj_name"
-        ] = f"{ad_config.DNANEXUS_PROJECT_PREFIX}{nexus_paths['runfolder_name']}"
+        ] = f"{SWConfig.DNANEXUS_PROJECT_PREFIX}{nexus_paths['runfolder_name']}"
         nexus_paths["proj_root"] = f"{nexus_paths['proj_name']}:/"
         nexus_paths[
             "runfolder_subdir"
@@ -975,13 +990,13 @@ class CollectRunfolderSamples:
         """
         samples_dict = {}
         for sample_name in self.samplename_dict.keys():
-            sample_obj = SampleObject(
+            self.sample_obj = SampleObject(
                 sample_name,
                 self.pipeline,
                 self.rf_obj,
                 self.nexus_paths,
             )
-            samples_dict[sample_name] = sample_obj.return_sample_dict()
+            samples_dict[sample_name] = self.sample_obj.return_sample_dict()
         return samples_dict
 
     def check_fastqs(self) -> None:
@@ -1037,15 +1052,15 @@ class CollectRunfolderSamples:
                 )
         for sample_name in missing_samples:  # Add the sample to the sample_obj
             self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["add_missing_sample"],
-                sample_name
+                self.rf_obj.rf_loggers.sw.log_msgs["add_missing_sample"], sample_name
             )
-            self.samples_dict[sample_name] = SampleObject(
+            self.sample_obj = SampleObject(
                 sample_name,
                 self.pipeline,
                 self.rf_obj,
                 self.nexus_paths,
-            ).return_sample_dict()
+            )
+            self.samples_dict[sample_name] = self.sample_obj.return_sample_dict()
 
     def identify_missing_fastqs(self) -> None:
         """
@@ -1071,7 +1086,9 @@ class CollectRunfolderSamples:
         Identify whether the undetermined file is present as expected
             :return None:
         """
-        if any("Undetermined" in fastq for fastq in os.listdir(self.rf_obj.fastq_dir_path)):
+        if any(
+            "Undetermined" in fastq for fastq in os.listdir(self.rf_obj.fastq_dir_path)
+        ):
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["undetermined_exists"],
             )
@@ -1123,7 +1140,7 @@ class CollectRunfolderSamples:
 
 
 # TODO eventually adapt this class to use the seglh-naming library
-class SampleObject:
+class SampleObject(SWConfig):
     """
     Collect sample-specific attributes for a sample
 
@@ -1207,7 +1224,11 @@ class SampleObject:
     """
 
     def __init__(
-        self, sample_name: str, pipeline: str, rf_obj: object, nexus_paths: dict
+        self,
+        sample_name: str,
+        pipeline: str,
+        rf_obj: RunfolderObject,
+        nexus_paths: dict,
     ):
         """
         Constructor for the SampleObject class
@@ -1225,7 +1246,7 @@ class SampleObject:
         self.reference_sample = self.check_reference_sample()
         self.workflow_name = self.get_workflow_name()
         self.pannum = self.find_pannum()
-        self.panel_settings = panel_config.PANEL_DICT[self.pannum]
+        self.panel_settings = SWConfig.PANEL_DICT[self.pannum]
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["sample_identified"],
             self.panel_settings["panel_name"],
@@ -1258,7 +1279,7 @@ class SampleObject:
         """
         if any(
             f"_{ref_sample_id}_" in self.sample_name
-            for ref_sample_id in ad_config.REF_SAMPLE_IDS
+            for ref_sample_id in SWConfig.REF_SAMPLE_IDS
         ):
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["reference_sample"],
@@ -1275,16 +1296,16 @@ class SampleObject:
             :return workflow_name (str): Workflow name
         """
         if self.pipeline == "tso500":
-            (workflow_name, err, returncode) = toolbox.execute_subprocess_command(
-                f"dx describe {ad_config.NEXUS_IDS['APPS'][self.pipeline]} "
+            (workflow_name, _, _) = execute_subprocess_command(
+                f"dx describe {SWConfig.NEXUS_IDS['APPS'][self.pipeline]} "
                 "--json | jq -r '(.name)'",
                 self.rf_obj.rf_loggers.sw,
                 "exit_on_fail",
             )
         else:
-            (workflow_name, err, returncode) = toolbox.execute_subprocess_command(
+            (workflow_name, _, _) = execute_subprocess_command(
                 "dx describe "
-                f"{ad_config.NEXUS_IDS['WORKFLOWS'][self.pipeline]} "
+                f"{SWConfig.NEXUS_IDS['WORKFLOWS'][self.pipeline]} "
                 "--json | jq -r '\"\(.folder)/\(.name)\"'",
                 self.rf_obj.rf_loggers.sw,
                 "exit_on_fail",
@@ -1306,7 +1327,7 @@ class SampleObject:
         Check whether pan number is valid
             :return (True | None):  True if pan number is valid, else None
         """
-        if str(pannum) in panel_config.PANELS:
+        if str(pannum) in SWConfig.PANELS:
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["recognised_panno"],
                 self.sample_name,
@@ -1355,7 +1376,7 @@ class SampleObject:
                     "path": None,
                     "nexus_path": (
                         f"{self.nexus_paths['proj_root']}"
-                        f"{ad_config.FASTQ_DIRS['tso_fastqs']}{self.sample_name}/"
+                        f"{SWConfig.FASTQ_DIRS['tso_fastqs']}{self.sample_name}/"
                         f"{self.sample_name}_R1.fastq.gz"
                     ),
                 }
@@ -1402,8 +1423,8 @@ class SampleObject:
         Create a query per sample using the DNA number
             :return query (str):    Sample SQL rare disease query
         """
-        pipeline_version = str(ad_config.SQL_IDS["WORKFLOWS"][self.pipeline])
-        rd_query = ad_config.QUERIES["customrun"] % (
+        pipeline_version = str(SWConfig.SQL_IDS["WORKFLOWS"][self.pipeline])
+        rd_query = SWConfig.QUERIES["customrun"] % (
             f"'{self.primary_identifier}','{pipeline_version}',"
             f"'{self.rf_obj.runfolder_name}'"
         )
@@ -1415,10 +1436,10 @@ class SampleObject:
         These are recorded along with the pipeline version, run name, and panel ID.
             :return query (str):    Sample SQL oncology query
         """
-        pipeline_version = str(ad_config.SQL_IDS["WORKFLOWS"][self.pipeline])
+        pipeline_version = str(SWConfig.SQL_IDS["WORKFLOWS"][self.pipeline])
         panel_id = self.pannum.replace("Pan", "")
 
-        onc_query = ad_config.QUERIES["oncology"] % (
+        onc_query = SWConfig.QUERIES["oncology"] % (
             f"'{self.primary_identifier}','{self.secondary_identifier}',"
             f"'{self.rf_obj.runfolder_name}','{pipeline_version}','{panel_id}'"
         )
@@ -1460,19 +1481,19 @@ class SampleObject:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["wes"]}{self.sample_name}',
-                f'{ad_config.STAGE_INPUTS["wes"]["fastqc1_reads"]}'
+                f'{SWConfig.DX_CMDS["wes"]}{self.sample_name}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc1_reads"]}'
                 f'{self.fastqs_dict["R1"]["nexus_path"]}',
-                f'{ad_config.STAGE_INPUTS["wes"]["fastqc2_reads"]}'
+                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc2_reads"]}'
                 f'{self.fastqs_dict["R2"]["nexus_path"]}',
-                f'{ad_config.STAGE_INPUTS["wes"]["sentieon_samplename"]}'
+                f'{SWConfig.STAGE_INPUTS["wes"]["sentieon_samplename"]}'
                 f"{self.sample_name}",
-                f'{ad_config.STAGE_INPUTS["wes"]["picard_bed"]}'
+                f'{SWConfig.STAGE_INPUTS["wes"]["picard_bed"]}'
                 f'{self.panel_settings["hsmetrics_bedfile"]}',
-                f'{ad_config.STAGE_INPUTS["wes"]["sambamba_bed"]}'
+                f'{SWConfig.STAGE_INPUTS["wes"]["sambamba_bed"]}'
                 f'{self.panel_settings["sambamba_bedfile"]}',
-                f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
-                ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
 
@@ -1532,10 +1553,10 @@ class SampleObject:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["congenica_sftp"]}'
+                f'{SWConfig.DX_CMDS["congenica_sftp"]}'
                 f"congenica_SFTP_upload_{self.sample_name}",
-                f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
-                (ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
                     ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
                 ),
             ]
@@ -1556,14 +1577,14 @@ class SampleObject:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["congenica_upload"]}congenica_{self.sample_name}',
+                f'{SWConfig.DX_CMDS["congenica_upload"]}congenica_{self.sample_name}',
                 f'-icongenica_project={str(self.panel_settings["congenica_project"])}',
                 f'-icredentials={self.panel_settings["congenica_credentials"]}',
                 f'-iIR_template={self.panel_settings["congenica_IR_template"]}',
-                f'{ad_config.APP_INPUTS["congenica_upload"]["samplename"]}'
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["samplename"]}'
                 f"{self.sample_name}",
-                f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
-                (ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
                     ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
                 ),
             ]
@@ -1578,12 +1599,12 @@ class SampleObject:
         """
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["qiagen_upload"]}{self.sample_name}',
-                f'{ad_config.APP_INPUTS["qiagen_upload"]["sample_name"]}'
+                f'{SWConfig.DX_CMDS["qiagen_upload"]}{self.sample_name}',
+                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_name"]}'
                 f"{self.sample_name}",
-                f'{ad_config.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}'
+                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}'
                 f"$PROJECT_ID:/results/{self.pannum}{self.sample_name}.zip",
-                (ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
+                (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
                     ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
                 ),
             ]
@@ -1606,45 +1627,45 @@ class SampleObject:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["pipe"]}{self.sample_name}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["fastqc_reads"]}'
+                f'{SWConfig.DX_CMDS["pipe"]}{self.sample_name}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["fastqc_reads"]}'
                 f'{self.fastqs_dict["R1"]["nexus_path"]}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["fastqc_reads"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["fastqc_reads"]}'
                 f'{self.fastqs_dict["R2"]["nexus_path"]}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["bwa_reads1"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_reads1"]}'
                 f'{self.fastqs_dict["R1"]["nexus_path"]}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["bwa_reads2"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_reads2"]}'
                 f'{self.fastqs_dict["R2"]["nexus_path"]}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["bwa_rg_sample"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_rg_sample"]}'
                 f"{self.sample_name}",
-                f'{ad_config.STAGE_INPUTS["pipe"]["sambamba_bed"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_bed"]}'
                 f'{self.panel_settings["sambamba_bedfile"]}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["sambamba_min_base_qual"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_min_base_qual"]}'
                 f'{str(self.panel_settings["coverage_min_basecall_qual"])}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["sambamba_min_mapping_qual"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_min_mapping_qual"]}'
                 f'{str(self.panel_settings["coverage_min_mapping_qual"])}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["sambamba_cov_level"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_cov_level"]}'
                 f'{str(self.panel_settings["clinical_coverage_depth"])}',
-                ad_config.STAGE_INPUTS["pipe"]["sambamba_filter_cmds"],
-                ad_config.STAGE_INPUTS["pipe"]["sambamba_excl_dups"],
-                ad_config.STAGE_INPUTS["pipe"]["sambamba_excl_failed_qual"],
-                ad_config.STAGE_INPUTS["pipe"]["sambamba_count_overl_mates"],
+                SWConfig.STAGE_INPUTS["pipe"]["sambamba_filter_cmds"],
+                SWConfig.STAGE_INPUTS["pipe"]["sambamba_excl_dups"],
+                SWConfig.STAGE_INPUTS["pipe"]["sambamba_excl_failed_qual"],
+                SWConfig.STAGE_INPUTS["pipe"]["sambamba_count_overl_mates"],
                 self.get_vcfeval_cmd_string(),
                 self.get_fhprs_cmd_string(),
-                f'{ad_config.STAGE_INPUTS["pipe"]["fhprs_bed"]}'
-                f"{panel_config.FH_PRS_BEDFILE}",
+                f'{SWConfig.STAGE_INPUTS["pipe"]["fhprs_bed"]}'
+                f"{SWConfig.FH_PRS_BEDFILE}",
                 self.get_polyedge_cmd_string(),
                 self.get_masked_reference_cmd_string(),
-                f'{ad_config.STAGE_INPUTS["pipe"]["picard_bed"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["picard_bed"]}'
                 f'{self.panel_settings["hsmetrics_bedfile"]}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["picard_capturetype"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["picard_capturetype"]}'
                 f'{self.panel_settings["capture_type"]}',
-                f'{ad_config.STAGE_INPUTS["pipe"]["gatk_padding"]}'
-                f"{str(panel_config.PIPE_HAPLOTYPE_CALLER_PADDING)}",
-                f'{ad_config.STAGE_INPUTS["pipe"]["filter_vcf_bed"]}'
+                f'{SWConfig.STAGE_INPUTS["pipe"]["gatk_padding"]}'
+                f"{str(SWConfig.PIPE_HAPLOTYPE_CALLER_PADDING)}",
+                f'{SWConfig.STAGE_INPUTS["pipe"]["filter_vcf_bed"]}'
                 f'{self.panel_settings["variant_calling_bedfile"]}',
-                f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
-                ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
 
@@ -1655,12 +1676,12 @@ class SampleObject:
             :return (str):  App input string
         """
         prefix_str = (  # Set prefix as samplename
-            f'{ad_config.STAGE_INPUTS["pipe"]["happy_prefix"]}{self.sample_name}'
+            f'{SWConfig.STAGE_INPUTS["pipe"]["happy_prefix"]}{self.sample_name}'
         )
         if self.reference_sample:
-            skip_str = f'{ad_config.STAGE_INPUTS["pipe"]["happy_skip"]}false'
+            skip_str = f'{SWConfig.STAGE_INPUTS["pipe"]["happy_skip"]}false'
         else:
-            skip_str = f'{ad_config.STAGE_INPUTS["pipe"]["happy_skip"]}true'
+            skip_str = f'{SWConfig.STAGE_INPUTS["pipe"]["happy_skip"]}true'
 
         return " ".join([prefix_str, skip_str])
 
@@ -1674,11 +1695,11 @@ class SampleObject:
         if self.panel_settings["FH"]:
             return " ".join(
                 [
-                    ad_config.STAGE_INPUTS["pipe"]["fhprs_skip"],
-                    f"{ad_config.NEXUS_IDS['STAGES']['pipe']['gatk']}="
-                    f'{ad_config.STAGE_INPUTS["pipe"]["fhprs_instance"]}',
-                    ad_config.STAGE_INPUTS["pipe"]["gatk_vcf_format"],
-                    ad_config.PIPE_FH_GATK_TIMEOUT_ARGS,
+                    SWConfig.STAGE_INPUTS["pipe"]["fhprs_skip"],
+                    f"{SWConfig.NEXUS_IDS['STAGES']['pipe']['gatk']}="
+                    f'{SWConfig.STAGE_INPUTS["pipe"]["fhprs_instance"]}',
+                    SWConfig.STAGE_INPUTS["pipe"]["gatk_vcf_format"],
+                    SWConfig.PIPE_FH_GATK_TIMEOUT_ARGS,
                 ]
             )
         else:
@@ -1694,15 +1715,15 @@ class SampleObject:
         if self.panel_settings["polyedge"]:
             return " ".join(
                 [
-                    f'{ad_config.STAGE_INPUTS["pipe"]["polyedge_gene"]}'
+                    f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_gene"]}'
                     f'{self.panel_settings["polyedge"]["gene"]}',
-                    f'{ad_config.STAGE_INPUTS["pipe"]["polyedge_chrom"]}'
+                    f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_chrom"]}'
                     f'{str(self.panel_settings["polyedge"]["chrom"])}',
-                    f'{ad_config.STAGE_INPUTS["pipe"]["polyedge_poly_start"]}'
+                    f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_poly_start"]}'
                     f'{str(self.panel_settings["polyedge"]["poly_start"])}',
-                    f'{ad_config.STAGE_INPUTS["pipe"]["polyedge_poly_end"]}'
+                    f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_poly_end"]}'
                     f'{str(self.panel_settings["polyedge"]["poly_end"])}',
-                    ad_config.STAGE_INPUTS["pipe"]["polyedge_skip"],
+                    SWConfig.STAGE_INPUTS["pipe"]["polyedge_skip"],
                 ]
             )
         else:
@@ -1715,7 +1736,7 @@ class SampleObject:
             :return masked_reference_cmd_string (str):  Masked reference input string
         """
         if self.panel_settings["masked_reference"]:
-            return f"{ad_config.STAGE_INPUTS['pipe']['bwa_ref']}{self.panel_settings['masked_reference']}"
+            return f"{SWConfig.STAGE_INPUTS['pipe']['bwa_ref']}{self.panel_settings['masked_reference']}"
         else:
             return ""
 
@@ -1731,14 +1752,14 @@ class SampleObject:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["snp"]}{self.sample_name}',
-                f'{ad_config.STAGE_INPUTS["snp"]["fastqc1_reads"]}'
+                f'{SWConfig.DX_CMDS["snp"]}{self.sample_name}',
+                f'{SWConfig.STAGE_INPUTS["snp"]["fastqc1_reads"]}'
                 f'{self.fastqs_dict["R1"]["nexus_path"]}',
-                f'{ad_config.STAGE_INPUTS["snp"]["fastqc2_reads"]}'
+                f'{SWConfig.STAGE_INPUTS["snp"]["fastqc2_reads"]}'
                 f'{self.fastqs_dict["R2"]["nexus_path"]}',
-                f'{ad_config.STAGE_INPUTS["snp"]["sentieon_samplename"]}{self.sample_name}',
-                f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
-                ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
+                f'{SWConfig.STAGE_INPUTS["snp"]["sentieon_samplename"]}{self.sample_name}',
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
 
@@ -1754,11 +1775,11 @@ class SampleObject:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["fastqc"]}FASTQC-{self.sample_name}',
+                f'{SWConfig.DX_CMDS["fastqc"]}FASTQC-{self.sample_name}',
                 f'-ireads={self.fastqs_dict["R1"]["nexus_path"]}',
                 f'-ireads={self.fastqs_dict["R2"]["nexus_path"]}',
-                f'{ad_config.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
-                ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
 
@@ -1783,7 +1804,7 @@ class SampleObject:
         }
 
 
-class BuildDxCommands:
+class BuildDxCommands(SWConfig):
     """
     Build run-wide commands for runfolder, and write sample-level commands from the
     samples_obj along with the run-wide commands to the dx run script
@@ -1853,7 +1874,12 @@ class BuildDxCommands:
             Write dx run commands to the dx run script for the runfolder
     """
 
-    def __init__(self, rf_obj: object, samples_obj: object, nexus_project_id: str):
+    def __init__(
+        self,
+        rf_obj: RunfolderObject,
+        samples_obj: CollectRunfolderSamples,
+        nexus_project_id: str,
+    ):
         """
         Constructor for the BuildDxCommands class
             :param rf_obj (obj):            RunfolderObject object (contains runfolder-specific attributes)
@@ -1863,27 +1889,23 @@ class BuildDxCommands:
         self.rf_obj = rf_obj
         self.samples_obj = samples_obj
         self.nexus_project_id = nexus_project_id
-        self.dnanexus_auth = toolbox.get_credential(ad_config.CREDENTIALS["dnanexus_authtoken"])
+        self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmds"]
         )
-
-    def create_dx_cmds(self):  # TODO tidy and add to docstrings
-        """
-        """
         self.dx_cmd_list, self.dx_postprocessing_cmds = self.build_dx_cmds()
         self.write_dx_run_cmds(  # Write commands to file
-            self.dx_cmd_list, self.rf_obj.runfolder_dx_run_script,
-            "dx run bash script"
+            self.dx_cmd_list, self.rf_obj.runfolder_dx_run_script, "dx run bash script"
         )
         if (
             self.samples_obj.pipeline == "tso500"
         ):  # Write commands to TSO post-processing file
             self.write_dx_run_cmds(
-                self.dx_postprocessing_cmds, self.rf_obj.post_run_dx_run_script,
-                "tso500 postprocessing script"
+                self.dx_postprocessing_cmds,
+                self.rf_obj.post_run_dx_run_script,
+                "tso500 postprocessing script",
             )
-        
+
     def build_dx_cmds(self) -> Union[list, list]:
         """
         Build dx run commands (pipeline-dependent) by calling the relevant functions and
@@ -1948,7 +1970,7 @@ class BuildDxCommands:
             dx_postprocessing_cmds.append(
                 self.samples_obj.samples_dict[sample_name]["sample_pipeline_cmd"]
             )
-            dx_postprocessing_cmds.append(ad_config.UPLOAD_ARGS["depends_list"])
+            dx_postprocessing_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
             sambamba_cmds_list.append(
                 self.create_sambamba_cmd(
                     sample_name, self.samples_obj.samples_dict[sample_name]["pannum"]
@@ -1959,7 +1981,7 @@ class BuildDxCommands:
             # to help assess contamination. Only add to depends_list if job ID from
             # previous command is not empty
             if not self.samples_obj.samples_dict[sample_name]["neg_control"]:
-                sambamba_cmds_list.append(ad_config.UPLOAD_ARGS["depends_list"])
+                sambamba_cmds_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
             if "HD200" in sample_name:
                 dx_postprocessing_cmds.append(
@@ -1970,7 +1992,7 @@ class BuildDxCommands:
                 )
                 # Only add to depends_list if job ID from previous command
                 # is not empty
-                dx_postprocessing_cmds.append(ad_config.UPLOAD_ARGS["depends_list"])
+                dx_postprocessing_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
         dx_postprocessing_cmds.extend(self.return_multiqc_cmds())
         # Set off after as they are not depended upon by MultiQC but are
@@ -1993,20 +2015,20 @@ class BuildDxCommands:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["tso500"]}{self.rf_obj.runfolder_name}',
-                f'{ad_config.APP_INPUTS["tso500"]["docker"]}'
-                f'{ad_config.NEXUS_IDS["FILES"]["tso500_docker"]}',
-                f'{ad_config.APP_INPUTS["tso500"]["samplesheet"]}'
+                f'{SWConfig.DX_CMDS["tso500"]}{self.rf_obj.runfolder_name}',
+                f'{SWConfig.APP_INPUTS["tso500"]["docker"]}'
+                f'{SWConfig.NEXUS_IDS["FILES"]["tso500_docker"]}',
+                f'{SWConfig.APP_INPUTS["tso500"]["samplesheet"]}'
                 f'{self.nexus_project_id}:{self.samples_obj.nexus_paths["runfolder_name"]}/{tso_ss}',
-                f'{ad_config.APP_INPUTS["tso500"]["project_name"]}'
+                f'{SWConfig.APP_INPUTS["tso500"]["project_name"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{ad_config.APP_INPUTS["tso500"]["runfolder_name"]}'
+                f'{SWConfig.APP_INPUTS["tso500"]["runfolder_name"]}'
                 f'{self.samples_obj.nexus_paths["runfolder_name"]}',
                 self.get_tso_analysis_options(),
                 self.get_tso_instance_type(),
-                f'{ad_config.UPLOAD_ARGS["dest"]}'
+                f'{SWConfig.UPLOAD_ARGS["dest"]}'
                 f'{self.samples_obj.nexus_paths["proj_root"]}',
-                ad_config.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
 
@@ -2016,12 +2038,12 @@ class BuildDxCommands:
         relevant tso500 app input string
             :return (str):  Analysis options for the tso500 app
         """
-        if ad_config.NOVASEQ_ID in self.rf_obj.runfolder_name:
+        if SWConfig.NOVASEQ_ID in self.rf_obj.runfolder_name:
             tso500_analysis_options = "--isNovaSeq "
         else:
             tso500_analysis_options = ""
         return (
-            f'{ad_config.APP_INPUTS["tso500"]["analysis_options"]}'
+            f'{SWConfig.APP_INPUTS["tso500"]["analysis_options"]}'
             f"{tso500_analysis_options}"
         )
 
@@ -2032,12 +2054,12 @@ class BuildDxCommands:
             :return (str):  Instance type command for tso500 app execution
         """
         if any(
-            panel_config.PANEL_DICT[pannumber]["throughput"] == "high"
+            SWConfig.PANEL_DICT[pannumber]["throughput"] == "high"
             for pannumber in self.samples_obj.unique_pannos
         ):
-            return f"--instance-type {ad_config.APP_INPUTS['tso500']['ht_instance']}"
+            return f"--instance-type {SWConfig.APP_INPUTS['tso500']['ht_instance']}"
         else:
-            return f"--instance-type {ad_config.APP_INPUTS['tso500']['lt_instance']}"
+            return f"--instance-type {SWConfig.APP_INPUTS['tso500']['lt_instance']}"
 
     def create_sompy_cmd(self, sample: str, pannumber: str) -> str:
         """
@@ -2051,17 +2073,17 @@ class BuildDxCommands:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["sompy"]}{sample}',
-                ad_config.APP_INPUTS["sompy"]["truth_vcf"],
+                f'{SWConfig.DX_CMDS["sompy"]}{sample}',
+                SWConfig.APP_INPUTS["sompy"]["truth_vcf"],
                 # Get inputs based on output location within project
-                f'{ad_config.APP_INPUTS["sompy"]["query_vcf"]}'
+                f'{SWConfig.APP_INPUTS["sompy"]["query_vcf"]}'
                 f"{self.nexus_project_id}:analysis_folder/Results/"
                 f"{sample}/{sample}_MergedSmallVariants.genome.vcf",
-                ad_config.APP_INPUTS["sompy"]["tso"],
-                ad_config.APP_INPUTS["sompy"]["skip"],
-                f'{ad_config.UPLOAD_ARGS["dest"]}'
+                SWConfig.APP_INPUTS["sompy"]["tso"],
+                SWConfig.APP_INPUTS["sompy"]["skip"],
+                f'{SWConfig.UPLOAD_ARGS["dest"]}'
                 f'{self.samples_obj.nexus_paths["proj_root"]}coverage/{pannumber}',
-                ad_config.UPLOAD_ARGS["token"] % self.dnanexus_auth,
+                SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
 
@@ -2079,29 +2101,29 @@ class BuildDxCommands:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["sambamba"]}{sample}',
-                f'{ad_config.APP_INPUTS["sambamba"]["bam"]}'
+                f'{SWConfig.DX_CMDS["sambamba"]}{sample}',
+                f'{SWConfig.APP_INPUTS["sambamba"]["bam"]}'
                 f"{self.samples_obj.nexus_paths['proj_root']}analysis_folder/"
                 f"Logs_Intermediates/StitchedRealigned/{sample}/{sample}.bam",
-                f'{ad_config.APP_INPUTS["sambamba"]["bai"]}'
+                f'{SWConfig.APP_INPUTS["sambamba"]["bai"]}'
                 f"{self.samples_obj.nexus_paths['proj_root']}analysis_folder/"
                 f"Logs_Intermediates/StitchedRealigned/{sample}/{sample}.bam.bai",
-                f'{ad_config.APP_INPUTS["sambamba"]["coverage_level"]}'
-                f'{str(panel_config.PANEL_DICT[pannumber]["clinical_coverage_depth"])}',
-                f'{ad_config.APP_INPUTS["sambamba"]["sambamba_bed"]}'
-                f'{panel_config.PANEL_DICT[pannumber]["sambamba_bedfile"]}',
-                ad_config.APP_INPUTS["sambamba"]["cov_cmds"]
+                f'{SWConfig.APP_INPUTS["sambamba"]["coverage_level"]}'
+                f'{str(SWConfig.PANEL_DICT[pannumber]["clinical_coverage_depth"])}',
+                f'{SWConfig.APP_INPUTS["sambamba"]["sambamba_bed"]}'
+                f'{SWConfig.PANEL_DICT[pannumber]["sambamba_bedfile"]}',
+                SWConfig.APP_INPUTS["sambamba"]["cov_cmds"]
                 % (
                     str(
-                        panel_config.PANEL_DICT[pannumber]["coverage_min_basecall_qual"]
+                        SWConfig.PANEL_DICT[pannumber]["coverage_min_basecall_qual"]
                     ),
                     str(
-                        panel_config.PANEL_DICT[pannumber]["coverage_min_mapping_qual"]
+                        SWConfig.PANEL_DICT[pannumber]["coverage_min_mapping_qual"]
                     ),
                 ),
-                f'{ad_config.UPLOAD_ARGS["dest"]}'
+                f'{SWConfig.UPLOAD_ARGS["dest"]}'
                 f'{self.samples_obj.nexus_paths["proj_root"]}coverage/{pannumber}',
-                ad_config.UPLOAD_ARGS["token"] % self.dnanexus_auth,
+                SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
 
@@ -2113,9 +2135,9 @@ class BuildDxCommands:
         """
         cmd_list = []
         cmd_list.append(self.create_multiqc_cmd())
-        cmd_list.append(ad_config.UPLOAD_ARGS["depends_list"])
+        cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
         cmd_list.append(self.create_upload_multiqc_cmd())
-        cmd_list.append(ad_config.UPLOAD_ARGS["depends_list"])
+        cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
         return cmd_list
 
     def create_multiqc_cmd(self) -> str:
@@ -2134,20 +2156,20 @@ class BuildDxCommands:
             set(
                 [
                     v["multiqc_coverage_level"]
-                    for k, v in panel_config.CAPTURE_PANEL_DICT.items()
+                    for k, v in SWConfig.PanelConfig.CAPTURE_PANEL_DICT.items()
                     if v["pipeline"] == self.samples_obj.pipeline
                 ]
             )
         )[0]
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["multiqc"]}MultiQC',
-                f'{ad_config.APP_INPUTS["multiqc"]["project_name"]}'
+                f'{SWConfig.DX_CMDS["multiqc"]}MultiQC',
+                f'{SWConfig.APP_INPUTS["multiqc"]["project_name"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{ad_config.APP_INPUTS["multiqc"]["coverage_level"]}{str(coverage_level)}',
-                f'{ad_config.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
-                ad_config.UPLOAD_ARGS["depends"],
-                ad_config.UPLOAD_ARGS["token"] % self.dnanexus_auth,
+                f'{SWConfig.APP_INPUTS["multiqc"]["coverage_level"]}{str(coverage_level)}',
+                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
+                SWConfig.UPLOAD_ARGS["depends"],
+                SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ],
         )
 
@@ -2166,24 +2188,24 @@ class BuildDxCommands:
         if self.samples_obj.pipeline == "tso500":
             multiqc_data_input = (
                 f"{self.samples_obj.nexus_paths['runfolder_subdir']}/"
-                f"{ad_config.STRINGS['lane_metrics_suffix']}"
+                f"{SWConfig.STRINGS['lane_metrics_suffix']}"
             )
         else:
             multiqc_data_input = (
                 f"{self.samples_obj.nexus_paths['proj_name']}:/QC/*"
                 f"{self.rf_obj.runfolder_name}"
-                f"{ad_config.STRINGS['lane_metrics_suffix']}"
+                f"{SWConfig.STRINGS['lane_metrics_suffix']}"
             )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["upload_multiqc"]}Upload_MultiQC',
-                ad_config.APP_INPUTS["upload_multiqc"]["multiqc_html"],
-                f'{ad_config.APP_INPUTS["upload_multiqc"]["data_input"]}$JOB_ID:multiqc',
-                f'{ad_config.APP_INPUTS["upload_multiqc"]["data_input"]}'
+                f'{SWConfig.DX_CMDS["upload_multiqc"]}Upload_MultiQC',
+                SWConfig.APP_INPUTS["upload_multiqc"]["multiqc_html"],
+                f'{SWConfig.APP_INPUTS["upload_multiqc"]["data_input"]}$JOB_ID:multiqc',
+                f'{SWConfig.APP_INPUTS["upload_multiqc"]["data_input"]}'
                 f"{multiqc_data_input}",
-                f'{ad_config.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
-                ad_config.UPLOAD_ARGS["depends"],
-                ad_config.UPLOAD_ARGS["token"] % self.dnanexus_auth,
+                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
+                SWConfig.UPLOAD_ARGS["depends"],
+                SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
 
@@ -2206,12 +2228,12 @@ class BuildDxCommands:
             # If not a negative control, add string that adds the job to the depends
             # list for downstream jobs to depend upon
             if not self.samples_obj.samples_dict[sample_name]["neg_control"]:
-                cmd_list.append(ad_config.UPLOAD_ARGS["depends_list"])
+                cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
                 if self.samples_obj.pipeline == "pipe":
                     # Add to gatk depends list because RPKM must depend only upon the
                     # sample workflows completing successfully, whilst other downstream
                     # apps depend on all prior jobs completing succesfully
-                    cmd_list.append(ad_config.UPLOAD_ARGS["depends_list_gatk"])
+                    cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_gatk"])
 
             if self.samples_obj.pipeline in ["wes", "pipe"]:
                 cmd_list.append(self.return_analysis_id_cmd())
@@ -2235,7 +2257,7 @@ class BuildDxCommands:
         """
         return (
             "analysisid=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh; "
-            f"&& cd {ad_config.PROJECT_DIR} && conda activate python3.10.6 && python3 -m congenica_inputs "
+            f"&& cd {SWConfig.PROJECT_DIR} && conda activate python3.10.6 && python3 -m congenica_inputs "
             f"-a $JOB_ID -p {self.nexus_project_id} -r {self.rf_obj.runfolder_name})"
         )
 
@@ -2259,12 +2281,12 @@ class BuildDxCommands:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["peddy"]}Peddy',
-                f'{ad_config.APP_INPUTS["peddy"]["project_name"]}'
+                f'{SWConfig.DX_CMDS["peddy"]}Peddy',
+                f'{SWConfig.APP_INPUTS["peddy"]["project_name"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{ad_config.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
-                ad_config.UPLOAD_ARGS["depends"],
-                ad_config.UPLOAD_ARGS["token"] % self.dnanexus_auth,
+                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
+                SWConfig.UPLOAD_ARGS["depends"],
+                SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
 
@@ -2290,7 +2312,7 @@ class BuildDxCommands:
                 ]
                 # Make sure there are enough samples for exome depth and RPKM
                 if len(self.samples_obj.samples_dict.items()) >= 3:
-                    if panel_config.CAPTURE_PANEL_DICT[core_panel][
+                    if SWConfig.CAPTURE_PANEL_DICT[core_panel][
                         "ed_readcount_bedfile"
                     ]:
                         # CNV calling steps are a dependency of MultiQC
@@ -2300,14 +2322,14 @@ class BuildDxCommands:
 
                     cmd_list.append(self.create_rpkm_cmd(core_panel))
 
-        cmd_list.append(ad_config.UPLOAD_ARGS["depends_list_recombined"])
+        cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_recombined"])
         return cmd_list
 
     def create_rpkm_cmd(self, core_panel_name: str) -> str:
         """
         Build dx run command to run RPKM for a core panel. RPKM app requires project id,
         bedfile and string containing the pannumber(s) of all files that should be included
-        in this analysis (input list is pulled from ad_config.VCP_PANELS using the core_panel_name).
+        in this analysis (input list is pulled from PanelConfig.VCP_PANELS using the core_panel_name).
         App takes pan numbers as string, and will separate on commas when passed multiple pan numbers
             :param core_panel_name (str):   Name of synnovis core panel
             :return (str):                  Dx run command for RPKM app
@@ -2319,16 +2341,16 @@ class BuildDxCommands:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["rpkm"]}RPKM_using_conifer',
-                f'{ad_config.APP_INPUTS["rpkm"]["bed"]}'
-                f'{panel_config.CAPTURE_PANEL_DICT[core_panel_name]["rpkm_bedfile"]}',
-                f'{ad_config.APP_INPUTS["rpkm"]["proj"]}'
+                f'{SWConfig.DX_CMDS["rpkm"]}RPKM_using_conifer',
+                f'{SWConfig.APP_INPUTS["rpkm"]["bed"]}'
+                f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["rpkm_bedfile"]}',
+                f'{SWConfig.APP_INPUTS["rpkm"]["proj"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{ad_config.APP_INPUTS["rpkm"]["pannos"]}'
-                f'{",".join(panel_config.VCP_PANELS[core_panel_name])}',
-                f'{ad_config.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
-                ad_config.UPLOAD_ARGS["depends_gatk"],
-                ad_config.UPLOAD_ARGS["token"] % self.dnanexus_auth,
+                f'{SWConfig.APP_INPUTS["rpkm"]["pannos"]}'
+                f'{",".join(SWConfig.VCP_PANELS[core_panel_name])}',
+                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
+                SWConfig.UPLOAD_ARGS["depends_gatk"],
+                SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
 
@@ -2348,26 +2370,26 @@ class BuildDxCommands:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["ed_readcount"]}ED_readcount',
-                f'{ad_config.APP_INPUTS["ed_readcount"]["ref_genome"]}'
-                f'{ad_config.NEXUS_IDS["FILES"]["hs37d5_ref_no_index"]}',
-                f'{ad_config.APP_INPUTS["ed_readcount"]["bed"]}'
-                f'{panel_config.CAPTURE_PANEL_DICT[core_panel_name]["ed_readcount_bedfile"]}',
-                f'{ad_config.APP_INPUTS["ed_readcount"]["normals_rdata"]}'
-                f'{ad_config.NEXUS_IDS["FILES"][f"ed_{core_panel_name}_readcount_normals"]}',
-                f'{ad_config.APP_INPUTS["ed_readcount"]["proj"]}'
+                f'{SWConfig.DX_CMDS["ed_readcount"]}ED_readcount',
+                f'{SWConfig.APP_INPUTS["ed_readcount"]["ref_genome"]}'
+                f'{SWConfig.NEXUS_IDS["FILES"]["hs37d5_ref_no_index"]}',
+                f'{SWConfig.APP_INPUTS["ed_readcount"]["bed"]}'
+                f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["ed_readcount_bedfile"]}',
+                f'{SWConfig.APP_INPUTS["ed_readcount"]["normals_rdata"]}'
+                f'{SWConfig.NEXUS_IDS["FILES"][f"ed_{core_panel_name}_readcount_normals"]}',
+                f'{SWConfig.APP_INPUTS["ed_readcount"]["proj"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{ad_config.APP_INPUTS["ed_readcount"]["pannos"]}'
-                f'{",".join(panel_config.ED_PANNOS[core_panel_name])}',
-                f'{ad_config.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
-                ad_config.UPLOAD_ARGS[
+                f'{SWConfig.APP_INPUTS["ed_readcount"]["pannos"]}'
+                f'{",".join(SWConfig.ED_PANNOS[core_panel_name])}',
+                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
+                SWConfig.UPLOAD_ARGS[
                     "depends_gatk"
                 ],  # Use list of gatk related jobs to delay start
-                ad_config.UPLOAD_ARGS["token"] % self.dnanexus_auth,
+                SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
 
-    def create_ed_cnvcalling_cmd(self, panno: str):
+    def create_ed_cnvcalling_cmd(self, panno: str) -> str:
         """
         Build dx run command for exomedepth cnv calling app
             :param panno (str):     Pannumber to filter CNV calls
@@ -2380,19 +2402,19 @@ class BuildDxCommands:
         )
         return " ".join(
             [
-                f'{ad_config.DX_CMDS["ed_cnvcalling"]}ED_cnvcalling',
-                f'{ad_config.APP_INPUTS["ed_cnvcalling"]["readcount"]}'
-                f'$ed_jobid:{ad_config.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
-                f'{ad_config.APP_INPUTS["ed_cnvcalling"]["bed"]}'
-                f'{panel_config.BEDFILE_FOLDER}{panel_config.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]}_CNV.bed',
-                f'{ad_config.APP_INPUTS["ed_cnvcalling"]["proj"]}'
+                f'{SWConfig.DX_CMDS["ed_cnvcalling"]}ED_cnvcalling',
+                f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount"]}'
+                f'$ed_jobid:{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
+                f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["bed"]}'
+                f'{SWConfig.BEDFILE_FOLDER}{SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]}_CNV.bed',
+                f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["proj"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{ad_config.APP_INPUTS["ed_cnvcalling"]["pannos"]}{panno}',
-                f'{ad_config.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
-                ad_config.UPLOAD_ARGS[
+                f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["pannos"]}{panno}',
+                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
+                SWConfig.UPLOAD_ARGS[
                     "depends_gatk"
                 ],  # Use list of gatk related jobs to delay start
-                ad_config.UPLOAD_ARGS["token"] % self.dnanexus_auth,
+                SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
 
@@ -2412,18 +2434,18 @@ class BuildDxCommands:
         )
         return " ".join(
             [
-                f"{ad_config.DX_CMDS['duty_csv']}duty_csv",
-                f'{ad_config.APP_INPUTS["duty_csv"]["project_name"]}'
+                f"{SWConfig.DX_CMDS['duty_csv']}duty_csv",
+                f'{SWConfig.APP_INPUTS["duty_csv"]["project_name"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{ad_config.APP_INPUTS["duty_csv"]["tso_pannumbers"]}'
-                f'{",".join(panel_config.TSO_VIAPATH_PANNUMBERS)}',
-                f'{ad_config.APP_INPUTS["duty_csv"]["stg_pannumbers"]}'
-                f'{",".join(panel_config.STG_PANNUMBERS)}',
-                f'{ad_config.APP_INPUTS["duty_csv"]["cp_capture_pannos"]}'
-                f'{",".join(panel_config.CP_CAPTURE_PANNOS)}',
-                f'{ad_config.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
-                ad_config.UPLOAD_ARGS["depends"],
-                ad_config.UPLOAD_ARGS["token"] % self.dnanexus_auth,
+                f'{SWConfig.APP_INPUTS["duty_csv"]["tso_pannumbers"]}'
+                f'{",".join(SWConfig.TSO_VIAPATH_PANNUMBERS)}',
+                f'{SWConfig.APP_INPUTS["duty_csv"]["stg_pannumbers"]}'
+                f'{",".join(SWConfig.STG_PANNUMBERS)}',
+                f'{SWConfig.APP_INPUTS["duty_csv"]["cp_capture_pannos"]}'
+                f'{",".join(SWConfig.CP_CAPTURE_PANNOS)}',
+                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
+                SWConfig.UPLOAD_ARGS["depends"],
+                SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
 
@@ -2436,14 +2458,13 @@ class BuildDxCommands:
             :return None:
         """
         self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"],
-            location
+            self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], location
         )
         # Remove any None values from the command_list
-        toolbox.write_lines(script, "w", list(filter(None, cmds)))            
+        write_lines(script, "w", list(filter(None, cmds)))
 
 
-class PipelineEmails:
+class PipelineEmails(SWConfig):
     """
     Class for sending the start of pipeline emails. Calls the AdEmail class for email
     sending. The following emails are sent:
@@ -2452,7 +2473,7 @@ class PipelineEmails:
             samples processed using each workflow are recorded in Moka using an
             insert query per sample
         - Emails with details of the samples being processed. These are sent to binfx
-            for all runs, plus to additional recijpients as defined within the
+            for all runs, plus to additional recipients as defined within the
             config.ad_config file
 
         Attributes
@@ -2476,7 +2497,7 @@ class PipelineEmails:
                 Construct and send the samples being processed email using AdEmail class
     """
 
-    def __init__(self, rf_obj: object, samples_obj: object):
+    def __init__(self, rf_obj: RunfolderObject, samples_obj: SampleObject):
         """
         Constructor for the PipelineEmails class
         """
@@ -2488,13 +2509,10 @@ class PipelineEmails:
         ]
         self.sample_count = len(self.samples_obj.samples_dict)
         self.email_subj = (
-            ad_config.MAIL_SETTINGS["pipeline_started_subj"]
-            % self.rf_obj.runfolder_name
+            SWConfig.MAIL_SETTINGS["pipeline_started_subj"] % self.rf_obj.runfolder_name
         )
-        self.email = ad_email.AdEmail(self.rf_obj.rf_loggers.sw)
+        self.email = AdEmail(self.rf_obj.rf_loggers.sw)
         self.queries = self.collect_queries()
-        self.send_sql_email()
-        self.send_samples_email()
 
     def collect_queries(self) -> str:
         """
@@ -2521,12 +2539,12 @@ class PipelineEmails:
             for k in self.samples_obj.samples_dict.keys()
         ]
         return [
-            ad_config.QUERIES["wes"]
+            SWConfig.QUERIES["wes"]
             % (
-                str(ad_config.SQL_IDS["WORKFLOWS"]["wes"]),
-                str(ad_config.SQL_IDS["WES_TEST_STATUS"]["data_processing"]),
+                str(SWConfig.SQL_IDS["WORKFLOWS"]["wes"]),
+                str(SWConfig.SQL_IDS["WES_TEST_STATUS"]["data_processing"]),
                 ("','").join(wes_dnanumbers),
-                str(ad_config.SQL_IDS["WES_TEST_STATUS"]["nextseq_sequencing"]),
+                str(SWConfig.SQL_IDS["WES_TEST_STATUS"]["nextseq_sequencing"]),
             )
         ]
 
@@ -2544,7 +2562,7 @@ class PipelineEmails:
             self.sample_count,
         )
         self.email.send_email(
-            recipients=[ad_config.MAIL_SETTINGS["binfx_recipient"]],
+            recipients=[SWConfig.MAIL_SETTINGS["binfx_recipient"]],
             email_subject=self.email_subj,
             email_message=email_html,
             email_priority=1,
@@ -2564,11 +2582,11 @@ class PipelineEmails:
             False,
             self.sample_count,
         )
-        recipients = [ad_config.MAIL_SETTINGS["binfx_recipient"]]
+        recipients = [SWConfig.MAIL_SETTINGS["binfx_recipient"]]
         if self.samples_obj.pipeline == "wes":
-            recipients.extend(ad_config.MAIL_SETTINGS["wes_samplename_emaillist"])
+            recipients.extend(SWConfig.MAIL_SETTINGS["wes_samplename_emaillist"])
         elif self.samples_obj.pipeline in ["amp", "tso500", "archerdx"]:
-            recipients.append(ad_config.MAIL_SETTINGS["oncology_ops_email"])
+            recipients.append(SWConfig.MAIL_SETTINGS["oncology_ops_email"])
         self.email.send_email(
             recipients=recipients,
             email_subject=self.email_subj,

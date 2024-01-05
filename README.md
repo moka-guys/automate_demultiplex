@@ -1,11 +1,13 @@
 # Automate Demultiplex Scripts
 
-This repository contains the main scripts for routine analysis of clinical next generation sequencing (NGS) data at Viapath Genetics. These are as follows, and the documentation for each script can be found in [docs/](docs/) or using the links below:
+This repository contains the main scripts for routine analysis of clinical next generation sequencing (NGS) data at Viapath Genetics. Follow the links in the below table for specific documentation.
 
-1. [demultiplex.py](demultiplex.py) - Demultiplex (excluding TSO runs) and calculate cluster density for Illumina NGS data using `bcl2fastq2`
-[(guide)](demultiplex/README.md)
-2. [setoff_workflows.py](setoff_workflows.py) - Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md)
-3. [congenica_inputs.py](congenica_inputs.py) - This script is called from the dx run script for samples requiring congenica upload (the dx run script is created by setoff_workflows.py). The script prints the inputs required by the congenica upload apps in DNAnexus [(guide)](congenica_inputs/README.md)
+| Script | Run mode | Details |
+| ------ | -------- | ------- |
+|[demultiplex.py](demultiplex.py) | Command line | Demultiplex (excluding TSO runs) and calculate cluster density for Illumina NGS data using `bcl2fastq2` [(guide)](demultiplex/README.md) |
+| [setoff_workflows.py](setoff_workflows.py) | Command line | Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md) |
+| [congenica_inputs.py](congenica_inputs.py) | Command line |Prints the inputs required by the congenica upload apps in DNAnexus [(guide)](congenica_inputs/README.md). This script is called from the dx run script for samples requiring congenica upload (the dx run script is created by [setoff_workflows.py](setoff_workflows.py)) |
+| [upload_runfolder](upload_runfolder) | Command line or module import | Uploads an Illumina runfolder to DNAnexus [(guide)](upload_runfolder/README.md)|
 
 # Assumptions / Requirements
 
@@ -14,23 +16,63 @@ Each runfolder must be discrete per workflow, therefore must consist of only one
 * ADX
 * SNP
 * WES
-* Custom Panels + LRPCR
+* Custom Panels / LRPCR
+
+The type of run is detected by the scripts by matching the Pan numbers within the sample names in the corresponding samplesheet to the pan numbers in the [panel_config](config/panel_config.py).
+
+# Setup
+
+The script has been tested using python v3.10.6 therefore it is recommended that this version of python is used.
+
+Dependencies, which include the [samplesheet_validator](https://github.com/moka-guys/samplesheet_validator) package**, are installed using the requirements.txt file:
+
+```bash
+pip3 install -r requirements.txt
+```
+
+Before running the script, the conda environment must be activated as follows:
+```bash
+conda activate python3.10.6
+```
+
+\*\* The [samplesheet_validator](https://github.com/moka-guys/samplesheet_validator) package validates naming and contents of samplesheets prior to demultiplexing, using the [seglh-naming](https://github.com/moka-guys/seglh-naming) package [(guide)](samplesheet_validator/README.md).
+
+# Configuration
+
+The [config](config) directory contains configuration files. See [(guide)](config/README.md). for further details.
 
 # Modules
 
-The following modules are utilised by the above scripts, with the documentation for each within the corresponding subdirectory.
+The below diagram is a UML class diagram showing the relationships between the classes in this repository. Classes are colour-coded by modules. Per-module documentation is available within each module directory.
 
-* [ad_email](ad_email) - Email sending module [(guide)](ad_email/README.md)
-* [ad_logger](ad_logger) - This module contains classes that create logging objects that write messages to the syslog, stream and log files. Used by other modules [(guide)](ad_logger/README.md)
-* [config](config) - Contains configuration files [(guide)](config/README.md):
-    - [ad_config](config/ad_config.py) - Contains general configuration
-    - [log_msgs_config](config/log_msgs_config.py) - Contains messages used by [ad_logger](ad_logger)
-    - [panel_config](config/panel_config.py) - Contains panel specific configuration
-* [toolbox](toolbox) - Contains classes and functions shared [(guide)](toolbox/README.md)
-* [upload_runfolder](upload_runfolder) - Uploads an Illumina runfolder to DNAnexus [(guide)](upload_runfolder/README.md)
+| Module | Colour | Details |
+| ------ | ------ | ------- |
+| [config](config) | lime green | Stores the configuration classes for use by other modules |
+| [ad_email](ad_email) | blue | Email sending module [(guide)](ad_email/README.md) |
+| [ad_logger](ad_logger) | sea green | This module contains classes that create logging objects that write messages to the syslog, stream and log files. Used by other modules [(guide)](ad_logger/README.md) |
+| [congenica_inputs](congenica_inputs) | yellow | This script is called from the dx run script for samples requiring congenica upload (the dx run script is created by setoff_workflows.py). The script prints the inputs required by the congenica upload apps in DNAnexus [(guide)](congenica_inputs/README.md) |
+| [demultiplex](demultiplex) | orange | Demultiplex (excluding TSO runs) and calculate cluster density for Illumina NGS data using `bcl2fastq2` [(guide)](demultiplex/README.md) |
+| [setoff_workflows](setoff_workflows) | pink | Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md) |
+| [toolbox](toolbox) | grey | Contains classes and functions shared [(guide)](toolbox/README.md) |
+| [upload_runfolder](upload_runfolder) | purple | Uploads an Illumina runfolder to DNAnexus [(guide)](upload_runfolder/README.md) |
 
-External imports:
-* [samplesheet_validator](https://github.com/moka-guys/samplesheet_validator) - Validates naming and contents of samplesheets prior to demultiplexing. Uses the [seglh-naming](https://github.com/moka-guys/seglh-naming) package [(guide)](samplesheet_validator/README.md)
+### Class Diagram
+![alt text](img/classes_automate_demultiplex.png)
+
+This class diagram was generated by running the following command from the project root:
+
+```bash
+pyreverse -o png -p automate_demultiplex . --ignore=test --colorized --color-palette=#CBC3E3,#99DDFF,#44BB99,#BBCC33,#EEDD88,#EE8866,#FFAABB,#DDDDDD
+```
+
+### Package Diagram
+![alt text](img/packages_automate_demultiplex.png)
+
+This package diagram was generated by running the following command from the project root:
+
+```bash
+pyreverse -o png -p automate_demultiplex . --ignore=test --source-roots . --colorized --color-palette=#CBC3E3,#99DDFF,#44BB99,#BBCC33,#EEDD88,#EE8866,#FFAABB,#DDDDDD 
+```
 
 # Logfile Heirarchy
 
@@ -51,24 +93,10 @@ External imports:
 | ss_validator | Records runfolder-level logs for the samplesheet_validator script | `RUNFOLDERNAME_samplesheet_validator_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/samplesheet_validator_script_logfiles/` |
 | backup | Records the logs from the upload runfolder script | `RUNFOLDERNAME_upload_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/upload_runfolder_script_logfiles/` |
 
-# Setup
-
-The script has been tested using python v3.10.6 therefore it is recommended that this version of python is used.
-
-Dependencies, which include the [seglh-naming](https://github.com/moka-guys/seglh-naming) package, should be insalled using the requirements.txt file:
-
-```bash
-pip3 install -r requirements.txt
-```
-
-Before running the script, the conda environment must be activated as follows:
-```bash
-conda activate python3.10.6
-```
 
 # Pytest
 
-[test](test) contains test data and test scripts (these use pytest).
+[test](test) contains test data ([/test/data](../test/data)) and test scripts (these use pytest).
 
 Tests can be executed using the following command. It is important to include the ignore flag to prevent pytest from scanning for tests through all test files, which slows down the tests considerably
 
@@ -76,21 +104,22 @@ Tests can be executed using the following command. It is important to include th
 pytest -v --ignore=test/demultiplex_test_files/ --cov=.
 ```
 
-**N.B. Tests and test cases/files MUST be maintained and updated accordingly in conjunction with script development**
-**These tests should be run before pushing any code to ensure all tests in the GitHub Actions workflow pass.**
+Currently test suite coverage is as follows:
 
-Currently the test suite covers the following scripts/modules:
-* [ad_email](ad_email)
-* [ad_logger](ad_logger)
-* [demultiplex.py](demultiplex.py)
+| Module | Coverage |
+| ------ | -------- |
+| [ad_email](ad_email) |  |
+| [ad_logger](ad_logger) |  |
+| [demultiplex.py](demultiplex.py) | 0 |
+| [setoff_workflows.py](setoff_workflows.py) | 0 |
+| [congenica_inputs.py](congenica_inputs.py) | 0 |
+| [upload_runfolder](upload_runfolder) | 0 |
+| [toolbox](toolbox) | 0 |
 
-Suites for the following scripts/modules still require development:
-* [setoff_workflows.py](setoff_workflows.py)
-* [congenica_inputs.py](congenica_inputs.py)
-* [upload_runfolder](upload_runfolder)
-* [toolbox](toolbox)
 
-Test datasets are stored in [/test/data](../test/data)
+**TESTS AND TEST CASES/FILES *MUST* BE MAINTAINED AND UPDATED ACCORDINGLY IN CONJUNCTION WITH SCRIPT DEVELOPMENT**
+
+**Tests should be run before pushing any code to ensure all tests in the GitHub Actions workflow pass.**
 
 ## Alerts
 

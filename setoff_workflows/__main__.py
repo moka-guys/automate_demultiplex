@@ -5,16 +5,16 @@ per sample), BuildDxCommands which generates the dx run commands, and PipelineEm
 and sends the pipeline emails using ad_email.AdEmail
 """
 from ..setoff_workflows.setoff_workflows import SequencingRuns
-from ..toolbox import toolbox
-from ..ad_logger import ad_logger
+from ..toolbox.toolbox import script_start_logmsg, script_end_logmsg
+from ..ad_logger.ad_logger import shutdown_logs
 
 
 sequencing_runs = SequencingRuns()
 
-toolbox.script_start_logmsg(sequencing_runs.script_logger, __file__)
+script_start_logmsg(sequencing_runs.script_logger, __file__)
 
 sequencing_runs.setoff_processing()
 
-toolbox.script_end_logmsg(sequencing_runs.script_logger, __file__)
+script_end_logmsg(sequencing_runs.script_logger, __file__)
 
-ad_logger.shutdown_logs(sequencing_runs.script_logger)
+shutdown_logs(sequencing_runs.script_logger)

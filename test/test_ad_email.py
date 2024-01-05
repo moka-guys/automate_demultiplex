@@ -8,9 +8,11 @@ workstation where the required auth details are stored
 - AdEmail.generate_email_html
 """
 import pytest
-from test.conftest import logger_obj
-from ad_email.ad_email import AdEmail
-from config import ad_config
+from .conftest import logger_obj
+from ..ad_email.ad_email import AdEmail
+from ..config.ad_config import AdEmailConfig
+
+logger_obj = logger_obj
 
 
 class TestAdEmail:
@@ -38,10 +40,10 @@ class TestAdEmail:
         Return test email recipients
         """
         return [
-            [ad_config.MAIL_SETTINGS["binfx_recipient"]],
+            [AdEmailConfig.MAIL_SETTINGS["binfx_recipient"]],
             [
-                ad_config.MAIL_SETTINGS["binfx_recipient"],
-                ad_config.MAIL_SETTINGS["binfx_email"],
+                AdEmailConfig.MAIL_SETTINGS["binfx_recipient"],
+                AdEmailConfig.MAIL_SETTINGS["binfx_email"],
             ],
         ]
 
