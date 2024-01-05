@@ -1666,6 +1666,11 @@ class SampleObject(SWConfig):
                 f'{self.panel_settings["variant_calling_bedfile"]}',
                 f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
                 SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
+                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['bwa']}=mem1_ssd1_v2_x8",
+                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['gatk']}=mem1_ssd1_v2_x8",
+                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
+                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['picard']}=mem1_ssd1_v2_x4",
+                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['sambamba']}=mem1_ssd1_v2_x2",
             ]
         )
 
@@ -1696,7 +1701,7 @@ class SampleObject(SWConfig):
             return " ".join(
                 [
                     SWConfig.STAGE_INPUTS["pipe"]["fhprs_skip"],
-                    f"{SWConfig.NEXUS_IDS['STAGES']['pipe']['gatk']}="
+                    f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['gatk']}="
                     f'{SWConfig.STAGE_INPUTS["pipe"]["fhprs_instance"]}',
                     SWConfig.STAGE_INPUTS["pipe"]["gatk_vcf_format"],
                     SWConfig.PIPE_FH_GATK_TIMEOUT_ARGS,
