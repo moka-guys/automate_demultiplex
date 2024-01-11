@@ -10,8 +10,8 @@ import sys
 import os
 import re
 import math
-from ..config.ad_config import URConfig
-from ..toolbox.toolbox import execute_subprocess_command, git_tag, test_upload_software
+from config.ad_config import URConfig
+from toolbox.toolbox import execute_subprocess_command, git_tag, test_upload_software
 
 
 class UploadRunfolder(URConfig):

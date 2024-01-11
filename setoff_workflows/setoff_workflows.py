@@ -28,11 +28,11 @@ import os
 import re
 from shutil import copyfile
 from typing import Union, Tuple
-from ..ad_logger.ad_logger import AdLogger, shutdown_logs
-from ..config.ad_config import SWConfig
-from ..ad_email.ad_email import AdEmail
-from ..upload_runfolder.upload_runfolder import UploadRunfolder
-from ..toolbox.toolbox import (
+from ad_logger.ad_logger import AdLogger, shutdown_logs
+from config.ad_config import SWConfig
+from ad_email.ad_email import AdEmail
+from upload_runfolder.upload_runfolder import UploadRunfolder
+from toolbox.toolbox import (
     return_scriptlog_config,
     test_upload_software,
     RunfolderObject,
@@ -50,10 +50,11 @@ class SequencingRuns(SWConfig):
     Collects sequencing runs and initiates runfolder processing for those sequencing runs requiring processing
 
     Attributes
-        runs_to_process (dict):         Object containing runs that require processing as key,value pairs
+        ad_logger_obj (object):         AdLogger object, used to create a python logging object with custom attributes
+                                        and a file handler, syslog handler, and stream handler    
+        script_logger (object):         Script-level logger, created by the ad_logger_obj
+        runs_to_process (list):         List of runfolder objects for runs that require processing
         processed_runfolders (list):    List of runfolders processed by the script
-        ad_logger_obj (object):         AdLogger object
-        script_logger (object):         Script-level logger
         num_processed_runfolders (int): Number of runfolders processed during this cycle
 
     Methods:
@@ -80,11 +81,10 @@ class SequencingRuns(SWConfig):
         """
         Constructor for the SequencingRuns class
         """
-        self.runs_to_process = {}
-        self.processed_runfolders = []
         self.ad_logger_obj = AdLogger("sw", "sw", return_scriptlog_config()["sw"])
         self.script_logger = self.ad_logger_obj.get_logger()
         self.runs_to_process = self.set_runfolders()
+        self.processed_runfolders = []
 
     def setoff_processing(self) -> None:
         """
@@ -98,11 +98,11 @@ class SequencingRuns(SWConfig):
 
     def set_runfolders(self) -> None:
         """
-        Update self.runs_to_process dict with NGS runfolders in the runfolders directory
+        Update self.runs_to_process list with NGS runfolders in the runfolders directory
         that match the runfolder pattern, and require processing by the script
-            :return None:
+            :return runs_to_process (list): List of runfolder objects for runs to process
         """
-        runs_to_process = {}
+        runs_to_process = []
         for folder in os.listdir(SWConfig.RUNFOLDERS):
             if os.path.isdir(os.path.join(SWConfig.RUNFOLDERS, folder)) and re.compile(
                 SWConfig.RUNFOLDER_PATTERN
@@ -112,7 +112,7 @@ class SequencingRuns(SWConfig):
                 )
                 self.rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
                 if self.requires_processing():
-                    runs_to_process[folder] = self.rf_obj
+                    runs_to_process.append(self.rf_obj)
         return runs_to_process
 
     def requires_processing(self) -> Union[bool, None]:
@@ -202,7 +202,7 @@ class SequencingRuns(SWConfig):
             self.process_runfolder_obj.rf_obj.runfolder_name,
         )
 
-    def return_num_processed_runfolders(self) -> None:
+    def num_processed_runfolders(self) -> None:
         """
         Set the total number of processed runfolders as a class attribute
             :return None:
@@ -230,6 +230,10 @@ class ProcessRunfolder(SWConfig):
                                             files to the DNAnexus project
         upload_cmds (dict):                 Dictionary of commands for uploading files to the DNAnexus project
         pre_pipeline_upload_dict (dict):    Dict of files to upload prior to pipeline setoff, and commands
+        build_dx_commands(obj):             BuildDxCommands object for building run-wide commands for runfolder,
+                                            and writing sample-level commands from the samples_obj along with the
+                                            run-wide commands to the dx run script
+        pipeline_emails (obj):              PipelineEmails object for sending the start of pipeline emails
 
     Methods:
         get_users_dict()
@@ -302,7 +306,7 @@ class ProcessRunfolder(SWConfig):
                 )
                 self.upload_cmds = self.get_upload_cmds()
                 self.pre_pipeline_upload_dict = self.create_file_upload_dict()
-                self.build_dx_commands = BuildDxCommands(  # TODO add to docstring
+                self.build_dx_commands = BuildDxCommands(
                     self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
                 )
                 self.create_decision_support_command_file()
@@ -419,13 +423,13 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 "/QC",
-                " ".join(self.rf_obj.cluster_density_files),
+                " ".join(f"'{cd_file}'" for cd_file in self.rf_obj.cluster_density_files),                
             ),
             "bcl2fastq_qc": SWConfig.DX_CMDS["file_upload_cmd"]
             % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
-                f"{self.samples_obj.nexus_paths['fastqs_dir']}/Stats",
+                f"{os.path.join(self.samples_obj.nexus_paths['fastqs_dir'], 'Stats')}",
                 self.rf_obj.bcl2fastqstats_file,
             ),
             "logfiles": SWConfig.DX_CMDS["file_upload_cmd"]
@@ -433,7 +437,7 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 self.samples_obj.nexus_paths["logfiles_dir"],
-                " ".join(self.rf_obj.logfiles_to_upload),
+                " ".join(f"'{logfile}'" for logfile in self.rf_obj.logfiles_to_upload),
             ),
         }
         if self.samples_obj.pipeline == "tso500":
@@ -448,7 +452,8 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 f'/{self.samples_obj.nexus_paths["runfolder_name"]}',
-                " ".join(samplesheet_paths),
+                " ".join(f"'{samplesheet}'" for samplesheet in samplesheet_paths),
+
             )
         else:
             upload_cmds["fastqs"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
@@ -659,7 +664,7 @@ class ProcessRunfolder(SWConfig):
             :return None:
         """
         if self.samples_obj.pipeline in ("pipe", "wes"):
-            lines_to_write = [SWConfig.SDK_SOURCE, SWConfig.EMPTY_DEPENDS]
+            lines_to_write = [SWConfig.SDK_SOURCE]
             write_lines(self.rf_obj.decision_support_upload_cmds, "w", lines_to_write)
 
     def run_dx_run_commands(self) -> None:
@@ -784,7 +789,7 @@ class CollectRunfolderSamples(SWConfig):
             self.runtype_str = self.get_runtype()
             self.nexus_runfolder_suffix = self.get_nexus_runfolder_suffix()
             self.nexus_paths = self.get_nexus_paths()
-            self.unique_pannos = set([sample[1] for sample in self.samplename_dict])
+            self.unique_pannos = set(self.samplename_dict.values())
             self.samples_dict = self.get_samples_dict()
             if self.pipeline != "tso500":
                 # tso500 run is not demultiplexed locally so there are no fastqs
@@ -964,20 +969,20 @@ class CollectRunfolderSamples(SWConfig):
         ] = f"{self.rf_obj.runfolder_name}_{self.nexus_runfolder_suffix}"
         nexus_paths[
             "fastqs_dir"
-        ] = f"/{nexus_paths['runfolder_name']}/{SWConfig.FASTQ_DIRS[fastq_type]}/"
+        ] = os.path.join(f"/{nexus_paths['runfolder_name']}", SWConfig.FASTQ_DIRS[fastq_type])
         nexus_paths[
             "proj_name"
         ] = f"{SWConfig.DNANEXUS_PROJECT_PREFIX}{nexus_paths['runfolder_name']}"
-        nexus_paths["proj_root"] = f"{nexus_paths['proj_name']}:/"
+        nexus_paths["proj_root"] = f"{nexus_paths['proj_name']}:"
         nexus_paths[
             "runfolder_subdir"
-        ] = f"{nexus_paths['proj_root']}{nexus_paths['runfolder_name']}/"
+        ] = f"{nexus_paths['proj_root']}{nexus_paths['runfolder_name']}"
         nexus_paths[
             "logfiles_dir"
-        ] = f"/{nexus_paths['runfolder_name']}/automated_scripts_logfiles/"
+        ] = os.path.join(f"/{nexus_paths['runfolder_name']}", "automated_scripts_logfiles")
         nexus_paths[
             "samplesheet"
-        ] = f"/{nexus_paths['proj_root']}/{self.rf_obj.samplesheet_name}"
+        ] = os.path.join(nexus_paths['proj_root'], self.rf_obj.samplesheet_name)
         return nexus_paths
 
     def get_samples_dict(self) -> dict:
@@ -1026,13 +1031,11 @@ class CollectRunfolderSamples(SWConfig):
                 )
                 if self.fastq_not_undetermined(fastq_dir_file):  # Exclude undetermined
                     # Check if fastq matches a sample in the sample_dict, if not add it
-                    print(self.samplename_dict)
                     sample_name = [
                         sample_name
                         for sample_name in self.samplename_dict.keys()
                         if sample_name in fastq_dir_file
                     ]
-                    print(sample_name)
                     if sample_name:
                         self.rf_obj.rf_loggers.sw.info(
                             self.rf_obj.rf_loggers.sw.log_msgs["sample_match"],
@@ -1139,7 +1142,7 @@ class CollectRunfolderSamples(SWConfig):
         return " ".join(quotation_marked_list)
 
 
-# TODO eventually adapt this class to use the seglh-naming library
+# TODO eventually adapt this class to use the SamplesheetValidator package
 class SampleObject(SWConfig):
     """
     Collect sample-specific attributes for a sample
@@ -1374,10 +1377,11 @@ class SampleObject(SWConfig):
                 fastqs_dict[read] = {
                     "name": None,
                     "path": None,
-                    "nexus_path": (
-                        f"{self.nexus_paths['proj_root']}"
-                        f"{SWConfig.FASTQ_DIRS['tso_fastqs']}{self.sample_name}/"
-                        f"{self.sample_name}_R1.fastq.gz"
+                    "nexus_path":
+                        os.path.join(
+                            self.nexus_paths['proj_root'],
+                            SWConfig.FASTQ_DIRS['tso_fastqs'], self.sample_name,
+                            f"{self.sample_name}_R1.fastq.gz",
                     ),
                 }
             else:
@@ -1393,10 +1397,12 @@ class SampleObject(SWConfig):
                     ", ".join(matches),
                 )
                 fastq_name = fastq_name[0]
-                nexus_path = (
-                    f"{self.nexus_paths['proj_root']}"
-                    f"{self.nexus_paths['fastqs_dir']}{fastq_name}"
+                print(self.nexus_paths['proj_root'])
+                nexus_path = os.path.join(
+                    f"{self.nexus_paths['proj_root']}{self.nexus_paths['fastqs_dir']}",
+                    fastq_name
                 )
+                print(nexus_path)
                 fastqs_dict[read] = {
                     "name": fastq_name,
                     "path": os.path.join(self.rf_obj.fastq_dir_path, fastq_name),
@@ -1458,7 +1464,7 @@ class SampleObject(SWConfig):
         elif self.pipeline == "pipe":
             workflow_cmd = self.create_pipe_cmd()
             decision_support_upload_cmd = self.return_decision_support_cmd()
-        elif self.pipeline == "snp":
+        elif self.pipeline == "snp":  # TODO eventually remove this
             workflow_cmd = self.create_snp_cmd()
             decision_support_upload_cmd = False, False
         elif self.pipeline == "archerdx":
@@ -1625,6 +1631,12 @@ class SampleObject(SWConfig):
             "PIPE",
             self.sample_name,
         )
+        # Specify instance type for human exome app
+        if self.panel_settings["FH"]:  # Larger instance required for FH samples
+            GATK_INSTANCE = "mem3_ssd1_v2_x16"
+        else:
+            GATK_INSTANCE = "mem1_ssd1_v2_x8"
+        
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["pipe"]}{self.sample_name}',
@@ -1664,13 +1676,13 @@ class SampleObject(SWConfig):
                 f"{str(SWConfig.PIPE_HAPLOTYPE_CALLER_PADDING)}",
                 f'{SWConfig.STAGE_INPUTS["pipe"]["filter_vcf_bed"]}'
                 f'{self.panel_settings["variant_calling_bedfile"]}',
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
-                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
                 f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['bwa']}=mem1_ssd1_v2_x8",
-                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['gatk']}=mem1_ssd1_v2_x8",
+                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['gatk']}={GATK_INSTANCE}",
                 f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
                 f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['picard']}=mem1_ssd1_v2_x4",
                 f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['sambamba']}=mem1_ssd1_v2_x2",
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth
             ]
         )
 
@@ -1694,15 +1706,13 @@ class SampleObject(SWConfig):
         """
         Get command string for input FH_PRS stage of PIPE workflow. If sample is specified as
         requiring FH analysis in the config, set skip to False (the app default is skip=True),
-        and specify instance type for human exome app and specify outptut as both VCF and GVCF
+        and specify outptut as both VCF and GVCF
             :return fh_prs_cmd_string: App input string
         """
         if self.panel_settings["FH"]:
             return " ".join(
                 [
                     SWConfig.STAGE_INPUTS["pipe"]["fhprs_skip"],
-                    f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['gatk']}="
-                    f'{SWConfig.STAGE_INPUTS["pipe"]["fhprs_instance"]}',
                     SWConfig.STAGE_INPUTS["pipe"]["gatk_vcf_format"],
                     SWConfig.PIPE_FH_GATK_TIMEOUT_ARGS,
                 ]
@@ -1745,7 +1755,7 @@ class SampleObject(SWConfig):
         else:
             return ""
 
-    def create_snp_cmd(self) -> str:
+    def create_snp_cmd(self) -> str:  # TODO eventually remove this
         """
         Construct dx run command for SNP workflow
             :return (str):  Dx run command string
@@ -1951,7 +1961,7 @@ class BuildDxCommands(SWConfig):
             :return dx_cmd_list (list):     List of runwide commands for tso runs
             :dx_postprocessing_cmds (list): Post-processing commands for tso runs
         """
-        dx_cmd_list = []
+        dx_cmd_list = [SWConfig.EMPTY_DEPENDS]
         dx_postprocessing_cmds = []
         sambamba_cmds_list = []
         # Remove base samplesheet as we only want to use split samplesheets
@@ -2161,7 +2171,7 @@ class BuildDxCommands(SWConfig):
             set(
                 [
                     v["multiqc_coverage_level"]
-                    for k, v in SWConfig.PanelConfig.CAPTURE_PANEL_DICT.items()
+                    for k, v in SWConfig.CAPTURE_PANEL_DICT.items()
                     if v["pipeline"] == self.samples_obj.pipeline
                 ]
             )
@@ -2220,7 +2230,7 @@ class BuildDxCommands(SWConfig):
         and congenica input and upload commands if required for the sample type
             :return cmd_list (list):    List of per-sample commands
         """
-        cmd_list = []
+        cmd_list = [SWConfig.EMPTY_DEPENDS, SWConfig.EMPTY_GATK_DEPENDS]
         for sample_name in self.samples_obj.samples_dict.keys():
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["sample_identified"],
@@ -2261,9 +2271,10 @@ class BuildDxCommands(SWConfig):
                             some of the inputs for the upload app dx run command
         """
         return (
-            "analysisid=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh; "
-            f"&& cd {SWConfig.PROJECT_DIR} && conda activate python3.10.6 && python3 -m congenica_inputs "
-            f"-a $JOB_ID -p {self.nexus_project_id} -r {self.rf_obj.runfolder_name})"
+            "analysisid=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh "
+            f"&& cd {SWConfig.PROJECT_DIR} && conda activate python3.10.6 && "
+            "python3 -m congenica_inputs -a ${JOB_ID} "
+            f"-p {self.nexus_project_id} -r {self.rf_obj.runfolder_name})"
         )
 
     def return_wes_runwide_cmds(self) -> list:
@@ -2409,7 +2420,7 @@ class BuildDxCommands(SWConfig):
             [
                 f'{SWConfig.DX_CMDS["ed_cnvcalling"]}ED_cnvcalling',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount"]}'
-                f'$ed_jobid:{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
+                f'$ED_JOBID:{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["bed"]}'
                 f'{SWConfig.BEDFILE_FOLDER}{SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]}_CNV.bed',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["proj"]}'

@@ -13,8 +13,8 @@ import logging
 import argparse
 from distutils.spawn import find_executable
 from typing import Union
-from ..config.ad_config import ToolboxConfig
-from ..ad_logger.ad_logger import RunfolderLoggers
+from config.ad_config import ToolboxConfig
+from ad_logger.ad_logger import RunfolderLoggers
 
 
 def get_credential(file):

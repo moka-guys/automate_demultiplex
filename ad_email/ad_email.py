@@ -15,8 +15,8 @@ import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Union
-from ..config.ad_config import AdEmailConfig
-from ..toolbox.toolbox import get_credential, git_tag
+from config.ad_config import AdEmailConfig
+from toolbox.toolbox import get_credential, git_tag
 
 
 class AdEmail(AdEmailConfig):

@@ -4,9 +4,9 @@ SequencingRuns calls further classes ProcessRunfolder which calls CollectRunfold
 per sample), BuildDxCommands which generates the dx run commands, and PipelineEmails which generates
 and sends the pipeline emails using ad_email.AdEmail
 """
-from ..setoff_workflows.setoff_workflows import SequencingRuns
-from ..toolbox.toolbox import script_start_logmsg, script_end_logmsg
-from ..ad_logger.ad_logger import shutdown_logs
+from setoff_workflows.setoff_workflows import SequencingRuns
+from toolbox.toolbox import script_start_logmsg, script_end_logmsg
+from ad_logger.ad_logger import shutdown_logs
 
 
 sequencing_runs = SequencingRuns()

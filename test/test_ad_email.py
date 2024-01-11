@@ -9,8 +9,8 @@ workstation where the required auth details are stored
 """
 import pytest
 from .conftest import logger_obj
-from ..ad_email.ad_email import AdEmail
-from ..config.ad_config import AdEmailConfig
+from ad_email.ad_email import AdEmail
+from config.ad_config import AdEmailConfig
 
 logger_obj = logger_obj
 

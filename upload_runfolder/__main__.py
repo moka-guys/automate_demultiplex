@@ -6,9 +6,9 @@ See README and docstrings for further details
 """
 import os
 import argparse
-from ..config.ad_config import URConfig
-from ..upload_runfolder.upload_runfolder import UploadRunfolder
-from ..toolbox.toolbox import (
+from config.ad_config import URConfig
+from upload_runfolder.upload_runfolder import UploadRunfolder
+from toolbox.toolbox import (
     get_credential,
     RunfolderObject,
     execute_subprocess_command,

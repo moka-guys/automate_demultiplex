@@ -8,10 +8,10 @@ import subprocess
 import json
 import re
 import argparse
-from ..config.ad_config import CongenicaInputsConfig
-from ..ad_logger.ad_logger import shutdown_logs
-from ..toolbox.toolbox import get_credential, script_start_logmsg, script_end_logmsg
-from ..congenica_inputs.congenica_inputs import CongenicaInputs
+from config.ad_config import CongenicaInputsConfig
+from ad_logger.ad_logger import shutdown_logs
+from toolbox.toolbox import get_credential, script_start_logmsg, script_end_logmsg
+from congenica_inputs.congenica_inputs import CongenicaInputs
 
 
 def get_arguments():

@@ -16,9 +16,9 @@ import os
 import re
 from typing import Union, Tuple
 import samplesheet_validator.samplesheet_validator as samplesheet_validator
-from ..config.ad_config import DemultiplexConfig
-from ..ad_logger.ad_logger import AdLogger, shutdown_logs
-from ..toolbox.toolbox import (
+from config.ad_config import DemultiplexConfig
+from ad_logger.ad_logger import AdLogger, shutdown_logs
+from toolbox.toolbox import (
     return_scriptlog_config,
     get_runfolder_path,
     test_processing_software,
@@ -36,7 +36,8 @@ class GetRunfolders(DemultiplexConfig):
     Loop through and process NGS runfolders in a given directory
 
     Attributes
-        script_logger_obj (object):         AdLogger object
+        ad_logger_obj (object):             AdLogger object, used to create a python logging object with custom attributes
+                                            and a file handler, syslog handler, and stream handler  
         script_logger (object):             Script-level logger
         cmd_line_supplied_runfolder (bool): Denotes whether the runfolder name was supplied on
                                             the command line (i.e. the run is a development
@@ -51,7 +52,9 @@ class GetRunfolders(DemultiplexConfig):
                                             attributes)
 
     Methods
-        get_runfolder_names()
+        check_cmd_line_supplied_runfolder(runfolder_name)
+            Determine whether runfolder name was supplied on the command line
+        get_runfolder_names(runfolder_name)
             Get test-mode-dependent runfolder names
         setoff_processing()
             Call methods to set off runfolder processing
@@ -68,12 +71,12 @@ class GetRunfolders(DemultiplexConfig):
         Constructor for the GetRunfolders class
             :param runfolder_name (str | False):    Optional command line argument
         """
-        self.script_logger_obj = AdLogger(
+        self.ad_logger_obj = AdLogger(
             "demultiplex",
             "demultiplex",
             return_scriptlog_config()["demultiplex"],
         )
-        self.script_logger = self.script_logger_obj.get_logger()
+        self.script_logger = self.ad_logger_obj.get_logger()
         self.cmd_line_supplied_runfolder = self.check_cmd_line_supplied_runfolder(
             runfolder_name
         )
@@ -120,7 +123,6 @@ class GetRunfolders(DemultiplexConfig):
                 if get_runfolder_path(folder_name) and re.compile(
                     DemultiplexConfig.RUNFOLDER_PATTERN
                 ).match(folder_name):
-                    # TODO
                     runfolder_names.append(folder_name)
             self.script_logger.info(
                 self.script_logger.log_msgs["runfolder_names"],

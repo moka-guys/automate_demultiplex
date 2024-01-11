@@ -4,9 +4,9 @@ Main entry point for demultiplex module.
 Demultiplexes NGS Run Folders. See README and docstrings for further details
 """
 import argparse
-from ..demultiplex.demultiplex import GetRunfolders
-from ..toolbox.toolbox import script_start_logmsg, script_end_logmsg
-from ..ad_logger.ad_logger import shutdown_logs
+from demultiplex.demultiplex import GetRunfolders
+from toolbox.toolbox import script_start_logmsg, script_end_logmsg
+from ad_logger.ad_logger import shutdown_logs
 
 
 def get_arguments():

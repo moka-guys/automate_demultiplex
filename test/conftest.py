@@ -8,10 +8,10 @@ import os
 import shutil
 import pytest
 import sys
-sys.path.append("..")
-from ..ad_logger import ad_logger
-from ..toolbox import toolbox
-from ..config import ad_config
+# sys.path.append("..")
+from ad_logger import ad_logger
+from toolbox import toolbox
+from config import ad_config
 
 # Variables used across test classes
 

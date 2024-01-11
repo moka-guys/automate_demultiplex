@@ -15,9 +15,9 @@
     - _get_stream_handler
 """
 import pytest
-from ..toolbox import toolbox
-from ..ad_logger import ad_logger
-from ..config import ad_config
+from toolbox import toolbox
+from ad_logger import ad_logger
+from config import ad_config
 
 # import logging
 

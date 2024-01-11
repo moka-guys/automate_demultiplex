@@ -6,9 +6,9 @@ See Readme and doctrings for further details. Contains the following classes:
     Builds congenica upload DNAnexus app command line inputs
 """
 import sys
-from ..config.ad_config import CongenicaInputsConfig
-from ..toolbox.toolbox import get_credential, RunfolderObject, execute_subprocess_command
-from ..ad_logger.ad_logger import shutdown_streamhandler
+from config.ad_config import CongenicaInputsConfig
+from toolbox.toolbox import get_credential, RunfolderObject, execute_subprocess_command
+from ad_logger.ad_logger import shutdown_streamhandler
 
 
 class CongenicaInputs(CongenicaInputsConfig):
@@ -180,5 +180,5 @@ class CongenicaInputs(CongenicaInputsConfig):
         app inputs in string format)
             :return None:
         """
-        self.logger.info(self.logger.log_msgs["printing_app_input_str"])
+        self.logger.info(self.logger.log_msgs["printing_app_input_str"], self.congenica_app_inputs)
         print(self.congenica_app_inputs)

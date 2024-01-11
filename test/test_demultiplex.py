@@ -18,10 +18,10 @@ demultiplex.py pytest unit tests
 import os
 import itertools
 import pytest
-from ..demultiplex import demultiplex
-from ..config import ad_config
+from demultiplex import demultiplex
+from config import ad_config
 from . import conftest
-from ..ad_logger import ad_logger
+from ad_logger import ad_logger
 from pytest_cases import fixture_union
 
 
@@ -576,7 +576,6 @@ class TestDemultiplexRunfolder(object):
         samplesheets
         """
         for sspath in valid_samplesheets:
-            print(sspath)
             dr_obj = get_dr_obj("")
             monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", sspath)
             valid, _ = dr_obj.valid_samplesheet()

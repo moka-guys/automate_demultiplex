@@ -32,8 +32,7 @@ The test cases are described below.
 
 Lone samplesheet test cases are detailed below. These have been created for the purpose of testing samplesheet related functions in the demultiplex script (valid_samplesheet and no_disallowed_sserrs). The test cases are as follows:
 
-#### Valid SampleSheets
-# TODO add link to directory
+#### [Valid SampleSheets](data/samplesheets/valid)
 
 | SampleSheet name | Run Type |
 | ---- | -------- |
@@ -42,8 +41,7 @@ Lone samplesheet test cases are detailed below. These have been created for the 
 | 221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv | TSO500 |  # DONE
 | 221024_A01229_0146_BHKGG2DRX2_SampleSheet.csv | WES Skin |  # DONE
 
-#### Invalid SampleSheets
-# TODO add link to directory
+#### [Invalid SampleSheets](data/samplesheets/invalid/)
 # TODO check if these cover all cases
 
 | SampleSheet Name | Details | Expected behaviour |

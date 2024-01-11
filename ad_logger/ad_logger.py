@@ -7,7 +7,7 @@ import sys
 import re
 import logging
 import logging.handlers
-from ..config.ad_config import AdLoggerConfig
+from config.ad_config import AdLoggerConfig
 
 
 def shutdown_streamhandler(logger: object) -> None:
@@ -162,7 +162,7 @@ class AdLogger(AdLoggerConfig):
         return stream_handler
 
 
-class RunfolderLoggers(object):  # TODO not linking in diagram
+class RunfolderLoggers(object):
     """
     Creates an RunfolderLoggers object that contains various loggers required by the
     script that calls it. The loggers created are dictated by the logfiles_config dict
@@ -189,7 +189,7 @@ class RunfolderLoggers(object):  # TODO not linking in diagram
         self.logfiles_config = logfiles_config
         self.loggers = self.get_loggers()  # Collect all loggers
 
-    def get_loggers(self) -> list:  # TODO need to sort this not appearing in the png
+    def get_loggers(self) -> list:
         """
         Assign loggers using logfiles_config
             :return all_loggers (list): List of logger types

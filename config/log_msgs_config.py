@@ -186,6 +186,6 @@ LOG_MSGS = {
         "get_job_id_fail": "Exceeded max no. retries to retrieve job ID for file %s",
         "setting_app_input_str": "Setting the congenica upload app input string",
         "app_input_str_err": "Exception encountered when setting the app input string: %s",
-        "printing_app_input_str": "Printing the congenica upload app input string",
+        "printing_app_input_str": "Printing the congenica upload app input string: %s",
     },
 }

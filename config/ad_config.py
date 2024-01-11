@@ -6,8 +6,6 @@ Automate demultiplex configuration. Contains the following settings:
 - Demultiplexing script-specific settings
 - Setoff workflows script-specific settings
 """
-# TODO group into classes?
-
 import os
 import datetime
 from pygit2 import Repository
@@ -24,7 +22,7 @@ PROJECT_DIR = str(Path(__file__).absolute().parent.parent)  # Project working di
 # Root of folder containing apps, automate_demultiplexing_logfiles and
 # development_area scripts (2 levels up from this file)
 DOCUMENT_ROOT = "/".join(PROJECT_DIR.split("/")[:-2])
-BRANCH = Repository(".").head.shorthand
+BRANCH = Repository(PROJECT_DIR).head.shorthand
 MAIL_SETTINGS = {
     "host": "email-smtp.eu-west-1.amazonaws.com",
     "port": 587,
@@ -98,9 +96,7 @@ NEXUS_IDS = {
         "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
         "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-Gbv7Yb80v8Q40f8v140QBPQv",  # Pan5191_normals_v1.1.0.RData
         "ed_vcp2_readcount_normals": f"{TOOLS_PROJECT}:file-Gbkgyq00ZpxpFKx03zVPJ9GX",  # Pan5188_normals_v1.1.0.RData
-        "ed_vcp3_readcount_normals": (
-            f"{TOOLS_PROJECT}:file-GbkYMASKED_REFERENCE5v80jjgjkJqPXbgFpYzF"
-        ),  # Pan5192_normals_v1.0.0.RData
+        "ed_vcp3_readcount_normals": f"{TOOLS_PROJECT}:file-GbkY5v80jjgjkJqPXbgFpYzF",  # Pan5192_normals_v1.0.0.RData
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
     },
     "APPS": {
@@ -228,16 +224,15 @@ UPLOAD_ARGS = {
     "dest": "--dest=",
     "proj": "--project=",
     "token": "--brief --auth %s)",
-    "depends": "$DEPENDS_LIST",
-    "depends_gatk": "$DEPENDS_LIST_GATK",
+    "depends": "${DEPENDS_LIST}",
+    "depends_gatk": "${DEPENDS_LIST_GATK}",
     # Arguments to capture jobids. Job IDS are built into a string that can be passed to
     # downstream apps to ensure the jobs don't start until those job ids have completed successfully
     "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
-    "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOBID} "',
+    "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOB_ID} "',
     "depends_list_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
-    "depends_list_edreadcount": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${ed_jobid} "',
+    "depends_list_edreadcount": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${ED_JOBID} "',
 }
-EMPTY_GATK_DEPENDS = "DEPENDS_LIST_GATK=''"  # TODO not currently used anywhere!!
 
 DX_CMDS = {
     "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth %s)"',
@@ -254,7 +249,7 @@ DX_CMDS = {
     "find_data": f"source {SDK_SOURCE}; dx find data {UPLOAD_ARGS['proj']}%s --auth %s | wc -l",
     "invite_user": "USER_INVITE_OUT=$(dx invite %s $PROJECT_ID %s --no-email --auth %s)",
     "file_upload_cmd": (
-        f"{UPLOAD_AGENT_EXE} --auth %s {UPLOAD_ARGS['proj']}%s --folder %s --do-not-compress --upload-threads 10 %s"
+        f"{UPLOAD_AGENT_EXE} --auth %s {UPLOAD_ARGS['proj']}%s --folder '%s' --do-not-compress --upload-threads 10 %s"
     ),
     "pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
     "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
@@ -280,11 +275,14 @@ DX_CMDS = {
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
     "congenica_sftp": (
-        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y ' $analysisid ' {JOB_NAME_STR}"
+        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_sftp']} "
+        "--priority high -y ' ${analysisid} ' "
+        f"{JOB_NAME_STR}"
     ),
     "congenica_upload": (  # TODO move instance type into app itself
         f"echo 'dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
-        f"--instance-type mem1_ssd1_v2_x2 ' $analysisid ' {JOB_NAME_STR}"
+        "--instance-type mem1_ssd1_v2_x2 ' ${analysisid} ' "
+        f"{JOB_NAME_STR}"
     ),
     "qiagen_upload": f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",
     "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
@@ -319,7 +317,6 @@ class CongenicaInputsConfig(PanelConfig):
     """
     Congenica Inputs configuration
     """
-    pass
     APP_INPUTS = APP_INPUTS
     CREDENTIALS = CREDENTIALS
     DX_CMDS = DX_CMDS
@@ -437,6 +434,7 @@ class SWConfig(PanelConfig):
         }
         TSO_BATCH_SIZE = 2
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
+    EMPTY_GATK_DEPENDS = "DEPENDS_LIST_GATK=''"
     STRINGS = {
         "demultiplexlog_tso500_msg": DEMULTIPLEXLOG_TSO500_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
@@ -510,7 +508,6 @@ class SWConfig(PanelConfig):
             ),
             "fhprs_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.skip=false",
             "fhprs_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.BEDfile=",
-            "fhprs_instance": "mem3_ssd1_v2_x8",  # Required when creating gVCFs
             "polyedge_gene": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.gene=",
             "polyedge_chrom": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.chrom=",
             "polyedge_poly_start": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_start=",
