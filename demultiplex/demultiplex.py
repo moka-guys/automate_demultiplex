@@ -232,8 +232,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
         sequencing_complete()
             Check if sequencing has completed for the current runfolder (presence of
             RTAComplete.txt)
-        check_dev_run()
-            Check whether the development run is ready for further manual processing
+        dev_run(sscheck_obj)
+            Determine whether the run is a development run using the sscheck_obj development_run() method
+        dev_run_requires_automated_processing()
+            Check whether the development run requires manual processing or automated
+            processing by the script
         pass_integrity_check()
             Check whether the integrity checking was successful
         no_disallowed_sserrs(valid, sscheck_obj)
@@ -347,28 +350,51 @@ class DemultiplexRunfolder(DemultiplexConfig):
         )
         valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
         self.tso = sscheck_obj.tso
-        self.development_run = sscheck_obj.development_run()
-        if self.sequencing_complete():
-            # Do not want samplesheet checks to be performed on dev runs
-            if self.development_run and not self.cmd_line_supplied_runfolder:
-                self.check_dev_run()
-                return False
-            if self.development_run and self.cmd_line_supplied_runfolder:
-                if self.pass_integrity_check():
-                    return True
-            else:
-                if self.no_disallowed_sserrs(valid, sscheck_obj):
-                    if self.pass_integrity_check():
-                        return True
 
-    def check_dev_run(self) -> None:
+        if self.sequencing_complete():
+            if self.pass_integrity_check():
+                if self.dev_run(sscheck_obj):
+                    if self.dev_run_requires_automated_processing():
+                        return True
+                # Only want samplesheet checks to be performed on production runs not dev runs
+                elif self.no_disallowed_sserrs(valid, sscheck_obj):
+                    return True
+
+    def dev_run(self, sscheck_obj):
         """
-        Check whether the development run is ready for further manual processing
-        (integrity check was successful and bcl2fastqlog was created successfully
-        to stop further processing by the scripts). Send alert to slack if so
-            :return None:
+        Determine whether the run is a development run using the sscheck_obj development_run() method
+            :sscheck_obj (obj):     Object created by samplesheet_validator.SampleheetCheck
+            :return (True | None):  Return true if development run, else None
+        """ 
+        if sscheck_obj.development_run():
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["dev_run"],
+                self.rf_obj.samplesheet_path,
+            )
+            return True
+        else:
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["not_dev_run"],
+                self.rf_obj.samplesheet_path,
+            )
+
+    def dev_run_requires_automated_processing(self) -> None:
         """
-        if self.pass_integrity_check() and self.create_bcl2fastqlog():
+        Check whether the development run requires manual processing or automated
+        processing by the script. If the runfolder was supplied in command line mode,
+        development run requires automated processing by the script. Otherwise,
+        the bcl2fastqlog is created to prevent further processing, an alert will be
+        sent to slack, and the development run will need to be processed by bioinformatics.
+            :return (True | None): True if requires automated processing, else None
+        """
+        if self.cmd_line_supplied_runfolder:
+            self.demux_rf_logger.warning(
+                self.demux_rf_logger.log_msgs["dev_run_will_be_processed"],
+                self.rf_obj.runfolder_name,
+            )
+            return True
+        # Create bcl2fastq log to prevent scripts processing this run
+        elif self.create_bcl2fastqlog():
             self.demux_rf_logger.warning(
                 self.demux_rf_logger.log_msgs["dev_run_needs_processing"],
                 self.rf_obj.runfolder_name,
@@ -397,7 +423,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.rf_obj.samplesheet_path,
             DemultiplexConfig.SEQUENCER_IDS.keys(),
             DemultiplexConfig.PANELS,
-            DemultiplexConfig.LIBRARY_PREP_NAMES,
             DemultiplexConfig.TSO_PANELS,
             DemultiplexConfig.DEVELOPMENT_PANEL,
             os.path.dirname(self.rf_obj.samplesheet_validator_logfile),

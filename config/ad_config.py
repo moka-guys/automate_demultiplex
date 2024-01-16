@@ -385,7 +385,7 @@ class DemultiplexConfig(PanelConfig):
         "999999_M02353_0496_000000000-DEMUX",
         # tso500 runfolder is used for testing both demultiplexing and sw script
         "999999_A01229_0182_AHM2TSO500",
-        "231012_M02631_0285_000000000-DEVOO",
+        "999999_M02631_0285_000000000-DEVOO",
     ]
     SEQUENCER_IDS = {
         # Requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed

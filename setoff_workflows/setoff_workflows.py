@@ -92,9 +92,9 @@ class SequencingRuns(SWConfig):
             :return None:
         """
         if test_upload_software(self.script_logger):
-            for runfolder, rf_obj in self.runs_to_process.items():
+            for rf_obj in self.runs_to_process:
                 self.process_runfolder(rf_obj)
-            self.return_num_processed_runfolders()
+            self.num_processed_runfolders()
 
     def set_runfolders(self) -> None:
         """
@@ -1054,6 +1054,8 @@ class CollectRunfolderSamples(SWConfig):
                     self.rf_obj.rf_loggers.sw.log_msgs["not_fastq"], fastq_dir_file
                 )
         for sample_name in missing_samples:  # Add the sample to the sample_obj
+            # Strip end off sample name
+            sample_name = re.sub(r"_S[0-9]+_R[1-2]{1}_001.fastq.gz", '', sample_name)
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["add_missing_sample"], sample_name
             )
@@ -1120,12 +1122,13 @@ class CollectRunfolderSamples(SWConfig):
         """
         fastqs_list = []
         for sample_name in self.samples_dict.keys():
-            fastqs_list.extend(
-                [
-                    self.samples_dict[sample_name]["fastqs"][read]["path"]
-                    for read, path in self.samples_dict[sample_name]["fastqs"].items()
-                ]
-            )
+            if self.samples_dict[sample_name]["fastqs"]:
+                fastqs_list.extend(
+                    [
+                        self.samples_dict[sample_name]["fastqs"][read]["path"]
+                        for read, path in self.samples_dict[sample_name]["fastqs"].items()
+                    ]
+                )
         return fastqs_list
 
     def get_fastqs_str(self) -> str:
@@ -1368,8 +1371,9 @@ class SampleObject(SWConfig):
         Collate R1 and R2 fastqs and their local and cloud paths into a dictionary.
         tso500 runs are not demultiplexed locally so have no local fastq path. All other
         runfolders have fastqs in the BaseCalls directory
-            :return fastqs_dict (dict):     Dictionary containing R1 and R2 fastqs and
-                                            their local and cloud paths
+            :return fastqs_dict (dict | False):     Dictionary containing R1 and R2 fastqs and
+                                                    their local and cloud paths. False if either
+                                                    fastq doesn't exist
         """
         fastqs_dict = {"R1": {}, "R2": {}}
         for read in ["R1", "R2"]:
@@ -1385,30 +1389,49 @@ class SampleObject(SWConfig):
                     ),
                 }
             else:
-                matches = [self.sample_name, f"_{read}_"]
-                fastq_name = list(
-                    fastq_path
-                    for fastq_path in os.listdir(self.rf_obj.fastq_dir_path)
-                    if all([substring in fastq_path for substring in matches])
-                )
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["fastq_identified"],
-                    ", ".join(fastq_name),
-                    ", ".join(matches),
-                )
-                fastq_name = fastq_name[0]
-                print(self.nexus_paths['proj_root'])
-                nexus_path = os.path.join(
+                (fastq_name, fastq_path, nexus_fastq_path) = self.get_fastq_paths(read)
+                if not fastq_path:
+                    fastqs_dict = False
+                    break
+                else:
+                    fastqs_dict[read] = {
+                        "name": fastq_name,
+                        "path": fastq_path,
+                        "nexus_path": nexus_fastq_path,
+                    }
+        return fastqs_dict
+    
+    def get_fastq_paths(self, read) -> str:
+        """
+            :param read (str):  
+            :return fastq_name (str):
+            :return fastq_path (str):
+            :return nexus_fastq_path (str):
+        """
+        matches = [self.sample_name, f"_{read}_"]
+        try:
+            fastq_name = list(
+                fastq_path
+                for fastq_path in os.listdir(self.rf_obj.fastq_dir_path)
+                if all([substring in fastq_path for substring in matches])
+            )[0]
+            self.rf_obj.rf_loggers.sw.info(
+                self.rf_obj.rf_loggers.sw.log_msgs["fastq_identified"],
+                fastq_name,
+                ", ".join(matches),
+            )
+            fastq_path = os.path.join(self.rf_obj.fastq_dir_path, fastq_name)
+            nexus_fastq_path = os.path.join(
                     f"{self.nexus_paths['proj_root']}{self.nexus_paths['fastqs_dir']}",
                     fastq_name
                 )
-                print(nexus_path)
-                fastqs_dict[read] = {
-                    "name": fastq_name,
-                    "path": os.path.join(self.rf_obj.fastq_dir_path, fastq_name),
-                    "nexus_path": nexus_path,
-                }
-        return fastqs_dict
+            return fastq_name, fastq_path, nexus_fastq_path
+        except:
+            self.rf_obj.rf_loggers.sw.error(
+                self.rf_obj.rf_loggers.sw.log_msgs["fastq_nonexistent"],
+                ", ".join(matches),
+            )
+            return False, False, False
 
     def get_sample_sql_query(self) -> str:
         """
@@ -1458,23 +1481,27 @@ class SampleObject(SWConfig):
             :return decision_support_upload_cmd (str):  Cmd for running the script to generate
                                                         inputs to the decision support tool upload app
         """
-        if self.pipeline == "wes":
-            workflow_cmd = self.create_wes_cmd()
-            decision_support_upload_cmd = self.return_decision_support_cmd()
-        elif self.pipeline == "pipe":
-            workflow_cmd = self.create_pipe_cmd()
-            decision_support_upload_cmd = self.return_decision_support_cmd()
-        elif self.pipeline == "snp":  # TODO eventually remove this
-            workflow_cmd = self.create_snp_cmd()
-            decision_support_upload_cmd = False, False
-        elif self.pipeline == "archerdx":
-            workflow_cmd = self.create_fastqc_cmd()
-            decision_support_upload_cmd = False, False
-        elif self.pipeline == "tso500":
-            workflow_cmd = (
-                self.create_fastqc_cmd()
-            )  # Pipeline cmd is built at whole-run level
-            decision_support_upload_cmd = self.return_decision_support_cmd()
+        workflow_cmd, decision_support_upload_cmd = [], []
+
+        if self.fastqs_dict:
+            if self.pipeline == "wes":
+                workflow_cmd = self.create_wes_cmd()
+                decision_support_upload_cmd = self.return_decision_support_cmd()
+            elif self.pipeline == "pipe":
+                workflow_cmd = self.create_pipe_cmd()
+                decision_support_upload_cmd = self.return_decision_support_cmd()
+            elif self.pipeline == "snp":  # TODO eventually remove this
+                workflow_cmd = self.create_snp_cmd()
+                decision_support_upload_cmd = False, False
+            elif self.pipeline == "archerdx":
+                workflow_cmd = self.create_fastqc_cmd()
+                decision_support_upload_cmd = False, False
+            elif self.pipeline == "tso500":
+                workflow_cmd = (
+                    self.create_fastqc_cmd()
+                )  # Pipeline cmd is built at whole-run level
+                decision_support_upload_cmd = self.return_decision_support_cmd()
+
         return workflow_cmd, decision_support_upload_cmd
 
     def create_wes_cmd(self) -> str:
@@ -1610,6 +1637,7 @@ class SampleObject(SWConfig):
                 f"{self.sample_name}",
                 f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}'
                 f"$PROJECT_ID:/results/{self.pannum}{self.sample_name}.zip",
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
                 (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
                     ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
                 ),
@@ -2041,8 +2069,7 @@ class BuildDxCommands(SWConfig):
                 f'{self.samples_obj.nexus_paths["runfolder_name"]}',
                 self.get_tso_analysis_options(),
                 self.get_tso_instance_type(),
-                f'{SWConfig.UPLOAD_ARGS["dest"]}'
-                f'{self.samples_obj.nexus_paths["proj_root"]}',
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
@@ -2097,7 +2124,7 @@ class BuildDxCommands(SWConfig):
                 SWConfig.APP_INPUTS["sompy"]["tso"],
                 SWConfig.APP_INPUTS["sompy"]["skip"],
                 f'{SWConfig.UPLOAD_ARGS["dest"]}'
-                f'{self.samples_obj.nexus_paths["proj_root"]}coverage/{pannumber}',
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}:coverage/{pannumber}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2136,8 +2163,7 @@ class BuildDxCommands(SWConfig):
                         SWConfig.PANEL_DICT[pannumber]["coverage_min_mapping_qual"]
                     ),
                 ),
-                f'{SWConfig.UPLOAD_ARGS["dest"]}'
-                f'{self.samples_obj.nexus_paths["proj_root"]}coverage/{pannumber}',
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}:coverage/{pannumber}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2182,8 +2208,8 @@ class BuildDxCommands(SWConfig):
                 f'{SWConfig.APP_INPUTS["multiqc"]["project_name"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
                 f'{SWConfig.APP_INPUTS["multiqc"]["coverage_level"]}{str(coverage_level)}',
-                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["depends"],
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ],
         )
@@ -2218,8 +2244,8 @@ class BuildDxCommands(SWConfig):
                 f'{SWConfig.APP_INPUTS["upload_multiqc"]["data_input"]}$JOB_ID:multiqc',
                 f'{SWConfig.APP_INPUTS["upload_multiqc"]["data_input"]}'
                 f"{multiqc_data_input}",
-                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["depends"],
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2300,8 +2326,8 @@ class BuildDxCommands(SWConfig):
                 f'{SWConfig.DX_CMDS["peddy"]}Peddy',
                 f'{SWConfig.APP_INPUTS["peddy"]["project_name"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["depends"],
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2357,15 +2383,15 @@ class BuildDxCommands(SWConfig):
         )
         return " ".join(
             [
-                f'{SWConfig.DX_CMDS["rpkm"]}RPKM_using_conifer',
+                f'{SWConfig.DX_CMDS["rpkm"]}RPKM_using_conifer_{core_panel_name}',
                 f'{SWConfig.APP_INPUTS["rpkm"]["bed"]}'
                 f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["rpkm_bedfile"]}',
                 f'{SWConfig.APP_INPUTS["rpkm"]["proj"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
                 f'{SWConfig.APP_INPUTS["rpkm"]["pannos"]}'
                 f'{",".join(SWConfig.VCP_PANELS[core_panel_name])}',
-                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["depends_gatk"],
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2386,7 +2412,7 @@ class BuildDxCommands(SWConfig):
         )
         return " ".join(
             [
-                f'{SWConfig.DX_CMDS["ed_readcount"]}ED_readcount',
+                f'{SWConfig.DX_CMDS["ed_readcount"]}ED_readcount_{core_panel_name}',
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["ref_genome"]}'
                 f'{SWConfig.NEXUS_IDS["FILES"]["hs37d5_ref_no_index"]}',
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["bed"]}'
@@ -2397,10 +2423,10 @@ class BuildDxCommands(SWConfig):
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["pannos"]}'
                 f'{",".join(SWConfig.ED_PANNOS[core_panel_name])}',
-                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS[
                     "depends_gatk"
                 ],  # Use list of gatk related jobs to delay start
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2418,7 +2444,7 @@ class BuildDxCommands(SWConfig):
         )
         return " ".join(
             [
-                f'{SWConfig.DX_CMDS["ed_cnvcalling"]}ED_cnvcalling',
+                f'{SWConfig.DX_CMDS["ed_cnvcalling"]}ED_cnvcalling_{panno}',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount"]}'
                 f'$ED_JOBID:{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["bed"]}'
@@ -2426,10 +2452,10 @@ class BuildDxCommands(SWConfig):
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["proj"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["pannos"]}{panno}',
-                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS[
                     "depends_gatk"
                 ],  # Use list of gatk related jobs to delay start
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2459,8 +2485,7 @@ class BuildDxCommands(SWConfig):
                 f'{",".join(SWConfig.STG_PANNUMBERS)}',
                 f'{SWConfig.APP_INPUTS["duty_csv"]["cp_capture_pannos"]}'
                 f'{",".join(SWConfig.CP_CAPTURE_PANNOS)}',
-                f'{SWConfig.UPLOAD_ARGS["proj"]}{self.nexus_project_id}',
-                SWConfig.UPLOAD_ARGS["depends"],
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_project_id}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
