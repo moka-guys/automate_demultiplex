@@ -10,6 +10,7 @@ from config.ad_config import CongenicaInputsConfig
 from toolbox.toolbox import get_credential, RunfolderObject, execute_subprocess_command
 from ad_logger.ad_logger import shutdown_streamhandler
 
+# TODO simplify this so it e.g. takes just a sample name as input and outputs the entire command as string
 
 class CongenicaInputs(CongenicaInputsConfig):
     """

@@ -7,24 +7,42 @@
             - SampleObject() - Collect sample-specific attributes for a sample
         * BuildDxCommands() - Build run-wide commands for runfolder, and write sample-level commands from the samples_obj along with the run-wide commands to the dx run script
         * PipelineEmails() - Class for sending the start of pipeline emails. Calls the AdEmail class for email sending. The following emails are sent:
+            - SQL emails for all pipelines, to binfx team
+            - Emails with details of the samples being processed. Sent to binfx for all runs, plus to additional recipients as defined within the config.ad_config file
 
 ## Protocol
 
-1. Identify runfolders in the runfolders directory which have not been processed
+1. Identify runfolders in the runfolders directory which have not been processed:
+    - Runfolder contains bcl2fastq2 log file with success string
+    - Runfolder does not contain upload started flag file
 2. Collect names and metadata for all samples in the runfolder
 3. Write and run the DNAnexus project creation script
-4. Carry out pre-pipeline file upload (cluster density files, bcl2fastq2 QC files, fastqs if not a tso run, samplesheet and entire runfolder if a tso run)
-5. Build and populate dnanexus commands bash script
-6. Create congenica commands bash script (contains the commands to run the congenica upload app, this is set off later manually after QC inspection)
-7. Run dnanexus commands bash script (sets off workflows / apps in DNAnexus)
-8. Send pipeline emails (Send SQL queries email, and samples being processed email)
-9. Carry out the post-pipeline file upload (rest of the runfolder, and the logfiles)
+4. Split tso500 samplesheet into parts with x samples per samplesheet (no.defined in TSO_BATCH_SIZE) and write to runfolder
+5. Carry out pre-pipeline file upload (cluster density files, bcl2fastq2 QC files, fastqs if not a tso run, samplesheet and entire runfolder if a tso run)
+6. Build and populate dnanexus commands bash script
+7. Create congenica commands bash script (contains the commands to run the congenica upload app, this is set off later manually after QC inspection)
+8. Run dnanexus commands bash script (sets off workflows / apps in DNAnexus)
+9. Send pipeline emails (Send SQL queries email, and samples being processed email)
+10. Carry out the post-pipeline file upload (rest of the runfolder, and the logfiles)
 
 ## Configuration
 
 Settings are imported from [ad_config.py](../config/ad_config.py) and [panel_config.py](../config/panel_config.py).
 
 ## Usage
+
+The module can be used either from the command line or as a module import:
+
+```bash
+python3 -m setoff_workflows
+```
+
+```python
+from setoff_workflows.setoff_workflows import SequencingRuns
+
+sequencing_runs = SequencingRuns()
+sequencing_runs.setoff_processing()
+```
 
 ## Logging
 

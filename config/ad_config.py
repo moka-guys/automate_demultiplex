@@ -186,7 +186,7 @@ APP_INPUTS = {
     },
     "ed_cnvcalling": {
         "readcount_rdata": "RData",
-        "readcount": "-ireadcount_file=",
+        "readcount": "-ireadcount_file=${ED_JOB_ID}:",
         "bed": "-isubpanel_bed=",
         "proj": "-iproject_name=",
         "pannos": "-ibamfile_pannumbers=",
@@ -202,7 +202,7 @@ APP_INPUTS = {
     },
     "upload_multiqc": {
         "data_input": "-imultiqc_data_input=",
-        "multiqc_html": "-imultiqc_html=$JOB_ID:multiqc_report",
+        "multiqc_html": "-imultiqc_html=${JOB_ID}:multiqc_report",
     },
     "congenica_upload": {
         "samplename": "-ianalysis_name=",
@@ -231,7 +231,7 @@ UPLOAD_ARGS = {
     "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
     "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOB_ID} "',
     "depends_list_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
-    "depends_list_edreadcount": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${ED_JOBID} "',
+    "depends_list_edreadcount": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${ED_JOB_ID} "',
 }
 
 DX_CMDS = {

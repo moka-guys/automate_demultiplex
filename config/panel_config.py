@@ -139,7 +139,7 @@ class PanelConfig:
             "panel_name": "vcp2",
             "pipeline": "pipe",
             "sample_prefix": "NGS",
-            "runtype": "CP",
+            "runtype": "VCP",
             "capture_pan_num": "Pan5109",
             "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan5123data.bed",
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5123dataSambamba.bed",
@@ -871,12 +871,13 @@ class PanelConfig:
     DEVELOPMENT_PANEL = ''.join([k for k, v in PANEL_DICT.items() if v["development_run"]])
 
     # ================ DUTY_CSV INPUTS ===================================================
+    
+    # tso_pannumbers should not include the dry lab pan number as we do not want to include
+    # this as input to duty_csv as we do not want to download this to the trust network
     TSO_VIAPATH_PANNUMBERS = [
-        # tso_pannumbers should not include the dry lab pan number as we do not want to include
-        # this as input to duty_csv as we do not want to download this to the trust network
         k
         for k, v in PANEL_DICT.items()
-        if v["pipeline"] == "tso500" and v["dry_lab_only"] is False
+        if v["pipeline"] == "tso500" and v["dry_lab_only"] != None
     ]
     STG_PANNUMBERS = [
         k

@@ -160,6 +160,11 @@ class GetRunfolders(DemultiplexConfig):
                 )
                 # Add runfolder to processed runfolder list
                 self.processed_runfolders.append(folder_name)
+        else:
+            self.script_logger.info(
+                self.script_logger.log_msgs["skipping_runfolder"],
+                folder_name,
+            )
 
     def bcl2fastqlog_absent(self, folder_name: str) -> Union[bool, None]:
         """
@@ -245,7 +250,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         seq_requires_no_ic()
             Determines whether the run requires integrity checking (not possible on all
             sequencers)
-        no_prior_ic()
+        prior_ic()
             Determines whether an integrity check has been previously performed by this
             script
         checksums_match()
@@ -407,7 +412,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         if self.seq_requires_no_ic():
             return True
-        if self.no_prior_ic():
+        if not self.prior_ic():
             if self.checksums_match():
                 return True
 
@@ -504,7 +509,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ic_notrequired"])
             return True
 
-    def no_prior_ic(self) -> Union[bool, None]:
+    def prior_ic(self) -> Union[bool, None]:
         """
         Determines whether an integrity check has been previously performed by this
         script. Does this by checking whether the checksum file is present (this is
@@ -513,12 +518,10 @@ class DemultiplexRunfolder(DemultiplexConfig):
         (this message is added when self.checksums_match() is called to
         prevent the script from performing further integrity checks until the cause of
         the problem is addressed)
-            :return True|None:  Returns true if the checksum file has not previously
+            :return True|None:  Returns true if the checksum file has previously
                                 been checked for the success message by the script
         """
-        if not os.path.isfile(self.rf_obj.checksumfile_path):
-            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["csumfile_absent"])
-        else:
+        if os.path.isfile(self.rf_obj.checksumfile_path):
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["csumfile_present"])
 
             checksums = read_lines(self.rf_obj.checksumfile_path)
@@ -527,11 +530,13 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["checksums_checked"]
                 )
+                return True
             else:
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["checksums_notchecked"]
                 )
-                return True
+        else:
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["csumfile_absent"])            
 
     def checksums_match(self) -> Union[bool, None]:
         """
@@ -550,9 +555,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         with open(self.rf_obj.checksumfile_path, "r") as f:
             checksums = f.readlines()
 
-        write_lines(
-            self.rf_obj.checksumfile_path, "a", DemultiplexConfig.CHECKSUM_COMPLETE_MSG
-        )
+        write_lines(self.rf_obj.checksumfile_path, "a", DemultiplexConfig.CHECKSUM_COMPLETE_MSG)
 
         if DemultiplexConfig.CHECKSUM_MATCH_MSG in checksums[0]:
             self.demux_rf_logger.info(
