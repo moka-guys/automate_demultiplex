@@ -378,14 +378,17 @@ class DemultiplexConfig(PanelConfig):
         "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
-    CHECKSUM_COMPLETE_MSG = "Checksum result reported"  # Checksum complete statement
-    CHECKSUM_MATCH_MSG = "Checksums match"  # Statement to write when checksums match
+    
+    CHECKSUMS_ALREADY_ASSESSED = "Checksums already assessed by AS"  # Written to file by AS
+    CHECKSUM_MATCH_MSG = "Checksums match"  # Success message written to md5checksum file by integrity check scripts
+    CHECKSUM_DO_NOT_MATCH_MSG = "Checksums do not match"  # Failure message written to md5checksum file by integrity check scripts
+    SAMPLESHEET_ERRORS_MSG = "Processing halted. SampleSheet contains disallowed SampleSheet errors: %s"
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
-        # tso500 runfolder is used for testing both demultiplexing and sw script
-        "999999_A01229_0182_AHM2TSO500",
+        "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
         "999999_M02631_0285_000000000-DEVOO",
+        "999999_NB551068_0285_OODEVINTEG",
     ]
     SEQUENCER_IDS = {
         # Requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed
@@ -454,7 +457,7 @@ class SWConfig(PanelConfig):
     )
     QUERIES = {
         # SQL queries for updating the Moka database (audit trail)
-        "customrun": "insert into NGSCustomRuns(DNAnumber,PipelineVersion, RunID) values (%s)",
+        "customrun": "insert into NGSCustomRuns(DNAnumber,PipelineVersion,RunID) values (%s)",
         "wes": "update NGSTest set PipelineVersion = %s, StatusID = %s where dna in ('%s') and StatusID = %s",
         "oncology": "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values (%s)",
     }

@@ -339,6 +339,10 @@ class RunfolderObject(ToolboxConfig):
             self.runfolderpath,
             "md5checksum.txt",  # File holding checksum results
         )
+        self.sscheck_flagfile_path = os.path.join(
+            self.runfolderpath,
+            "sscheck_flagfile.txt"
+        )
         self.bcl2fastqlog_file = os.path.join(
             self.runfolderpath,
             "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs

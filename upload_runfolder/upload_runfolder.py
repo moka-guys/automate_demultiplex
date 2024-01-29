@@ -356,7 +356,7 @@ class UploadRunfolder(URConfig):
         # Check all files exist before trying to upload. If they don't, the script
         # will fail when trying to upload them
         if all([os.path.isfile(file) for file in files_list]):
-            self.logger.info(self.logger.log_msgs["call_ua"], files_list)
+            self.logger.info(self.logger.log_msgs["call_ua"], ", ".join(files_list))
             while upload_attempts < 5:  # Attempt the upload 5 times
                 # Execute upload agent command, writing log to upload agent log file
                 _, _, returncode = execute_subprocess_command(
