@@ -28,6 +28,7 @@ processing. See Readme and docstrings for further details. Contains the followin
 import sys
 import os
 import re
+import datetime
 from shutil import copyfile
 from typing import Union, Tuple
 from ad_logger.ad_logger import AdLogger, shutdown_logs
@@ -45,6 +46,7 @@ from toolbox.toolbox import (
     write_lines,
     execute_subprocess_command,
 )
+from seglh_naming.sample import Sample as seglh_namingSample
 
 
 class SequencingRuns(SWConfig):
@@ -462,7 +464,7 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 self.samples_obj.nexus_paths["fastqs_dir"],
-                self.samples_obj.fastqs_str,
+                " ".join([self.samples_obj.fastqs_str, self.samples_obj.undetermined_fastqs_str]),
             )
             upload_cmds["runfolder_samplesheet"] = SWConfig.DX_CMDS[
                 "file_upload_cmd"
@@ -568,7 +570,7 @@ class ProcessRunfolder(SWConfig):
         else:
             pre_pipeline_upload_dict["fastqs"] = {
                 "cmd": self.upload_cmds["fastqs"],
-                "files_list": self.samples_obj.fastqs_list,
+                "files_list": [*self.samples_obj.fastqs_list, *self.samples_obj.undetermined_fastqs_list],
             }
             pre_pipeline_upload_dict["bcl2fastq_qc"] = {
                 "cmd": self.upload_cmds["bcl2fastq_qc"],
@@ -770,23 +772,17 @@ class CollectRunfolderSamples(SWConfig):
         get_samples_dict()
             Create a SampleObject per sample, containing sample-specific properties, and
             add each SampleObject to a larger samples_dict
-        check_fastqs()
-            Call functions that check the fastqs, self.identify_missing_fastqs() and
-            self.validate_fastqs()
         validate_fastqs()
             Validate the fastqs in the BaseCalls directory by checking that all sample fastqs
             match a sample name from the self.samplename_dict
-        identify_missing_fastqs()
-            Check all sample names in self.samplename_dict are in the BaseCalls directory, and
-            that the undetermined file is in the BaseCalls directory. If not, raise an error
-        undetermined_present()
-            Identify whether the undetermined file is present as expected
         fastq_not_undetermined(fastq_dir_file)
             Determine whether the fastq is an undetermined fastq
         get_fastqs_list()
             Return a list of sample fastqs for the run
-        get_fastqs_str()
-            Return a space separated string of sample fastqs with each fastq encased in quotation marks
+        get_fastqs_str(fastqs_list)
+            Return a space separated string of fastqs with each fastq encased in quotation marks
+        get_undetermined_fastqs_list()
+            Return a list of undetermined fastqs for the run
     """
 
     def __init__(self, rf_obj: RunfolderObject):
@@ -809,9 +805,11 @@ class CollectRunfolderSamples(SWConfig):
                 # All other runfolders have fastqs in the BaseCalls directory
                 # Check fastqs in fastq dir were correctly identified from the
                 # samplesheet and add any missing samples to the samples dict
-                self.check_fastqs()
+                self.validate_fastqs()
                 self.fastqs_list = self.get_fastqs_list()
-                self.fastqs_str = self.get_fastqs_str()
+                self.fastqs_str = self.get_fastqs_str(self.fastqs_list)
+                self.undetermined_fastqs_list = self.get_undetermined_fastqs_list()
+                self.undetermined_fastqs_str = self.get_fastqs_str(self.undetermined_fastqs_list)
 
     def get_samplename_dict(self) -> list:
         """
@@ -844,7 +842,7 @@ class CollectRunfolderSamples(SWConfig):
                 write_lines(
                     self.rf_obj.rf_loggers.upload_agent.filepath,
                     "w",
-                    SWConfig.UPLOAD_STARTED_MSG,
+                    f"{SWConfig.UPLOAD_STARTED_MSG}: {datetime.datetime.now()}",
                 )
                 return samplename_dict
             else:
@@ -865,13 +863,14 @@ class CollectRunfolderSamples(SWConfig):
         pipelines_list = []
         for sample, panno in self.samplename_dict.items():
             pipelines_list.append(SWConfig.PANEL_DICT[panno]["pipeline"])
-        if len(set(pipelines_list)) > 1:
+        pipelines_list = list(set(pipelines_list))
+        if len(pipelines_list) > 1:
             self.rf_obj.rf_loggers.sw.error(
                 self.rf_obj.rf_loggers.sw.log_msgs["multiple_pipeline_names"],
                 pipelines_list,
             )
         else:
-            pipeline_name = max(set(pipelines_list), key=pipelines_list.count)
+            pipeline_name = max(list(set(pipelines_list)), key=pipelines_list.count)
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["pipeline_name"],
                 pipelines_list,
@@ -887,7 +886,7 @@ class CollectRunfolderSamples(SWConfig):
         runtype_list = []
         for sample, panno in self.samplename_dict.items():
             runtype_list.append(SWConfig.PANEL_DICT[panno]["runtype"])
-        runtype_str = "_".join(set(runtype_list))
+        runtype_str = "_".join(list(set(runtype_list)))
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["runtype_str"],
             runtype_str,
@@ -924,7 +923,7 @@ class CollectRunfolderSamples(SWConfig):
         if library_numbers:  # Should always be library numbers found
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["library_nos_identified"],
-                ", ".join(library_numbers),
+                ", ".join(list(set(library_numbers))),
             )
             return list(set(library_numbers))
         else:  # Prompt a slack alert
@@ -1014,18 +1013,14 @@ class CollectRunfolderSamples(SWConfig):
                 self.rf_obj,
                 self.nexus_paths,
             )
-            samples_dict[sample_name] = self.sample_obj.return_sample_dict()
+            if self.sample_obj.fastqs_dict:
+                samples_dict[sample_name] = self.sample_obj.return_sample_dict()
+            else:
+                self.rf_obj.rf_loggers.sw.info(
+                    self.rf_obj.rf_loggers.sw.log_msgs["sample_excluded"],
+                    sample_name,
+                )
         return samples_dict
-
-    def check_fastqs(self) -> None:
-        """
-        Call functions that check the fastqs, self.identify_missing_fastqs() and
-        self.validate_fastqs()
-            :return None:
-        """
-        self.validate_fastqs()
-        self.identify_missing_fastqs()
-        self.undetermined_present()
 
     def validate_fastqs(self) -> None:
         """
@@ -1043,25 +1038,32 @@ class CollectRunfolderSamples(SWConfig):
                     fastq_dir_file,
                 )
                 if self.fastq_not_undetermined(fastq_dir_file):  # Exclude undetermined
-                    # Check if fastq matches a sample in the sample_dict, if not add it
-                    sample_name = [
-                        sample_name
-                        for sample_name in self.samplename_dict.keys()
-                        if sample_name in fastq_dir_file
-                    ]
-                    if sample_name:
-                        self.rf_obj.rf_loggers.sw.info(
-                            self.rf_obj.rf_loggers.sw.log_msgs["sample_match"],
-                            fastq_dir_file,
-                            sample_name,
-                        )
-                    else:
+                    try:
+                        seglh_namingSample.from_string(fastq_dir_file)
+                        sample_name = [
+                            sample_name
+                            for sample_name in self.samplename_dict.keys()
+                            if sample_name in fastq_dir_file
+                        ]
+                        if sample_name:
+                            self.rf_obj.rf_loggers.sw.info(
+                                self.rf_obj.rf_loggers.sw.log_msgs["sample_match"],
+                                fastq_dir_file,
+                                sample_name,
+                            )
+                        else:
+                            self.rf_obj.rf_loggers.sw.error(
+                                self.rf_obj.rf_loggers.sw.log_msgs["sample_mismatch"],
+                                fastq_dir_file,
+                            )
+                            sample_name = re.sub("R[0-9]_001.fastq.gz", "", fastq_dir_file)
+                            missing_samples.append(fastq_dir_file)
+                    except ValueError as exception:
                         self.rf_obj.rf_loggers.sw.error(
-                            self.rf_obj.rf_loggers.sw.log_msgs["sample_mismatch"],
+                            self.rf_obj.rf_loggers.sw.log_msgs["fastq_wrong_naming"],
                             fastq_dir_file,
+                            exception,                            
                         )
-                        sample_name = re.sub("R[0-9]_001.fastq.gz", "", fastq_dir_file)
-                        missing_samples.append(fastq_dir_file)
             else:
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["not_fastq"], fastq_dir_file
@@ -1079,41 +1081,6 @@ class CollectRunfolderSamples(SWConfig):
                 self.nexus_paths,
             )
             self.samples_dict[sample_name] = self.sample_obj.return_sample_dict()
-
-    def identify_missing_fastqs(self) -> None:
-        """
-        Check all sample names in self.samplename_dict are in the BaseCalls directory, and
-        that the undetermined file is in the BaseCalls directory. If not, raise an error
-            :return None:
-        """
-        fastqs = os.listdir(self.rf_obj.fastq_dir_path)
-        for sample_name in self.samplename_dict.keys():
-            if any(sample_name in fastq for fastq in fastqs):
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["existent_fastq"],
-                    sample_name,
-                )
-            else:
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["nonexistent_fastq"],
-                    sample_name,
-                )
-
-    def undetermined_present(self) -> None:
-        """
-        Identify whether the undetermined file is present as expected
-            :return None:
-        """
-        if any(
-            "Undetermined" in fastq for fastq in os.listdir(self.rf_obj.fastq_dir_path)
-        ):
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["undetermined_exists"],
-            )
-        else:
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["undetermined_missing"],
-            )
 
     def fastq_not_undetermined(self, fastq_dir_file: str) -> Union[bool, None]:
         """
@@ -1144,18 +1111,39 @@ class CollectRunfolderSamples(SWConfig):
                 )
         return fastqs_list
 
-    def get_fastqs_str(self) -> str:
+    def get_fastqs_str(self, fastqs_list: list) -> str:
         """
-        Return a space separated string of sample fastqs with each fastq
-        encased in quotation marks
-            :return fastqs_str (str):   Space separated string of sample fastqs with
+        Return a space separated string of fastqs with each fastq encased in quotation marks
+            :return fastqs_str (str):   Space separated string of fastqs with
                                         each fastq encased in quotation marks
         """
         quotation_marked_list = []
-        for fastq in self.fastqs_list:
+        for fastq in fastqs_list:
             quotation_marked = f"'{fastq}'"
             quotation_marked_list.append(quotation_marked)
         return " ".join(quotation_marked_list)
+
+    def get_undetermined_fastqs_list(self) -> list:
+        """
+        Return a list and string of undetermined fastqs for the run
+            :return undetermined_fastqs_list (list): List of all undetermined fastqs in the run
+        """
+        undetermined_fastqs_list = []
+        r1 = os.path.join(self.rf_obj.fastq_dir_path, "Undetermined_S0_R1_001.fastq.gz")
+        r2 = os.path.join(self.rf_obj.fastq_dir_path, "Undetermined_S0_R2_001.fastq.gz")
+        for fastq in [r1, r2]:
+            if os.path.exists(fastq):
+                undetermined_fastqs_list.append(fastq)
+                self.rf_obj.rf_loggers.sw.info(
+                    self.rf_obj.rf_loggers.sw.log_msgs["undetermined_exists"],
+                    fastq,
+                )
+            else:
+                self.rf_obj.rf_loggers.sw.error(
+                    self.rf_obj.rf_loggers.sw.log_msgs["undetermined_missing"],
+                    fastq,
+                )
+        return undetermined_fastqs_list
 
 
 # TODO eventually adapt this class to use the SamplesheetValidator package
@@ -1201,6 +1189,10 @@ class SampleObject(SWConfig):
             null if the sample is a negative control (these only have one identifier)
         get_fastqs_dict()
             Collate R1 and R2 fastqs and their local and cloud paths into a dictionary.
+        get_fastq_paths()
+            Get fastqs in fastq directory that correspond to each sample name in the
+            sample dictionary. Build the fastq name, local path, and DNAnexus path
+            for each fastq file
         get_sample_sql_query()
             Call functions to construct SQL query for the sample (sample-level query)
         return_rd_query()
@@ -1358,6 +1350,7 @@ class SampleObject(SWConfig):
                 self.rf_obj.rf_loggers.sw.log_msgs["unrecognised_panno"],
                 self.sample_name,
             )
+            sys.exit(1)
 
     def get_identifiers(self) -> Tuple[str, str]:
         """
@@ -1416,10 +1409,13 @@ class SampleObject(SWConfig):
     
     def get_fastq_paths(self, read) -> str:
         """
-            :param read (str):  
-            :return fastq_name (str):
-            :return fastq_path (str):
-            :return nexus_fastq_path (str):
+        Get fastqs in fastq directory that correspond to each sample name in the
+        sample dictionary. Build the fastq name, local path, and DNAnexus path
+        for each fastq file
+            :param read (str):                  Either 'R1' or 'R2'
+            :return fastq_name (str):           Fastq name
+            :return fastq_path (str):           Local fastq path
+            :return nexus_fastq_path (str):     DNAnexus fastq path
         """
         matches = [self.sample_name, f"_{read}_"]
         try:
@@ -2489,7 +2485,7 @@ class BuildDxCommands(SWConfig):
         )
         return " ".join(
             [
-                f"{SWConfig.DX_CMDS['duty_csv']}Duty_CSV-",
+                f"{SWConfig.DX_CMDS['duty_csv']}Duty_CSV",
                 f'{SWConfig.APP_INPUTS["duty_csv"]["project_name"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
                 f'{SWConfig.APP_INPUTS["duty_csv"]["tso_pannumbers"]}'
@@ -2498,6 +2494,7 @@ class BuildDxCommands(SWConfig):
                 f'{",".join(SWConfig.STG_PANNUMBERS)}',
                 f'{SWConfig.APP_INPUTS["duty_csv"]["cp_capture_pannos"]}'
                 f'{",".join(SWConfig.CP_CAPTURE_PANNOS)}',
+                SWConfig.UPLOAD_ARGS["depends"],
                 f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
@@ -2611,9 +2608,10 @@ class PipelineEmails(SWConfig):
         """
         email_html = self.email.generate_email_html(
             self.rf_obj.runfolder_name,
-            ",".join(set(self.workflows)),
-            "\n".join(self.queries),
+            ",".join(list(set(self.workflows))),
+            " <br> ".join(self.queries),
             self.sample_count,
+            False,
         )
         self.email.send_email(
             recipients=[SWConfig.MAIL_SETTINGS["binfx_recipient"]],
@@ -2632,9 +2630,10 @@ class PipelineEmails(SWConfig):
         """
         email_html = self.email.generate_email_html(
             self.rf_obj.runfolder_name,
-            ",".join(set(self.workflows)),
+            ",".join(list(set(self.workflows))),
             False,
             self.sample_count,
+            " <br> ".join(self.samples_obj.samples_dict.keys()),
         )
         recipients = [SWConfig.MAIL_SETTINGS["binfx_recipient"]]
         if self.samples_obj.pipeline == "wes":
