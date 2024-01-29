@@ -655,23 +655,23 @@ class TestDemultiplexRunfolder(object):
         assert not dr_obj.seq_requires_no_ic()
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    def test_no_prior_ic_pass(self, no_prior_ic_rfs):
+    def test_prior_ic_fail(self, no_prior_ic_rfs):
         """
         Test function correctly identifies there has been a prior integrity check
         """
         for runfolder in no_prior_ic_rfs:
             dr_obj = get_dr_obj(runfolder)
-            assert dr_obj.no_prior_ic()
+            assert not dr_obj.prior_ic()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    def test_no_prior_ic_fail(self, checksumfile_present_pass_checked):
+    def test_prior_ic_pass(self, checksumfile_present_pass_checked):
         """
         Test function correctly identifies checksums have been assessed by the script
         previously
         """
         for runfolder in checksumfile_present_pass_checked:
             dr_obj = get_dr_obj(runfolder)
-            assert not dr_obj.no_prior_ic()
+            assert dr_obj.prior_ic()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     def test_checksums_match_pass(self, checksumfile_present_pass_notchecked):
@@ -683,7 +683,7 @@ class TestDemultiplexRunfolder(object):
             dr_obj = get_dr_obj(runfolder)
             assert dr_obj.checksums_match()
             with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
-                assert ad_config.DemultiplexConfig.CHECKSUM_COMPLETE_MSG in checksumfile.read()
+                assert ad_config.DemultiplexConfig.CHECKSUM_MATCH_MSG in checksumfile.read()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     def test_checksums_match_fail(self, checksumfile_present_pass_notchecked):
@@ -695,7 +695,7 @@ class TestDemultiplexRunfolder(object):
             dr_obj = get_dr_obj(runfolder)
             assert dr_obj.checksums_match()
             with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
-                assert ad_config.DemultiplexConfig.CHECKSUM_COMPLETE_MSG in checksumfile.read()
+                assert ad_config.DemultiplexConfig.CHECKSUM_DO_NOT_MATCH_MSG in checksumfile.read()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     # @pytest.mark.nodisableloggers

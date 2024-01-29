@@ -237,35 +237,46 @@ class DemultiplexRunfolder(DemultiplexConfig):
         sequencing_complete()
             Check if sequencing has completed for the current runfolder (presence of
             RTAComplete.txt)
-        dev_run(sscheck_obj)
-            Determine whether the run is a development run using the sscheck_obj development_run() method
-        dev_run_requires_automated_processing()
-            Check whether the development run requires manual processing or automated
-            processing by the script
         pass_integrity_check()
             Check whether the integrity checking was successful
-        no_disallowed_sserrs(valid, sscheck_obj)
-            Check for specific errors that would cause bcl2fastq2 to fail and whose
-            presence should stop demultiplexing
         seq_requires_no_ic()
             Determines whether the run requires integrity checking (not possible on all
             sequencers)
+        checksumfile_exists()
+            Check if md5checksum file exists (i.e. integrity check has been performed
+            by integrity check scripts)
         prior_ic()
             Determines whether an integrity check has been previously performed by this
             script
+        write_checksums_assessed()
+            Write DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED message to file to prevent script
+            performing checks on future runs of the script
         checksums_match()
-            Checks for checksum match string to determine whether the workstation
-            runfolder matches that on the sequencer
+            Reads the md5checksum file and checks for the presence of the CHECKSUM_MATCH_MSG /
+            CHECKSUM_DO_NOT_MATCH_MSG denoting that the runfolder has not / has been corrupted
+            during transfer from the sequencer respectively
+        dev_run(sscheck_obj)
+            Determine whether the run is a development run using the sscheck_obj development_run() method
+        no_disallowed_sserrs(valid, sscheck_obj)
+            Check for specific errors that would cause bcl2fastq2 to fail and whose
+            presence should stop demultiplexing
+        dev_run_requires_automated_processing()
+            Check whether the development run requires manual processing or automated
+            processing by the script  
         create_bcl2fastqlog()
             Create file to prevent demultiplexing starting again
         add_bcl2fastqlog_tso_msg()
             If runfolder is from TSO500 run, add specific message to
             bcl2fastq2_output.log file (TSO500 runs do not require demultiplexing)
         calculate_cluster_density()
-            Run dockerised GATK to run Picard CollecIlluminaLaneMetrics cluster density
-            calculation
+            Run dockerised GATK to run Picard CollectIlluminaLaneMetrics - this calculates
+            cluster density and saves files (runfolder.illumina_phasing_metrics and
+            runfolder.illumina_lane_metrics) to the runfolder
         run_demultiplexing()
-            Run demultiplexing command
+            Run demultiplexing command. If unsuccessful, exit script
+        validate_fastqs()
+            Validate the created fastqs in the BaseCalls directory and log success
+            or failure error message accordingly
     """
 
     def __init__(
@@ -287,11 +298,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.bcl2fastq2_rf_logger = self.rf_obj.rf_loggers.bcl2fastq2
         self.ss_validator_logger = self.rf_obj.rf_loggers.ss_validator
         self.disallowed_sserrs = [
-            "sspresent_err",
-            "ssname_err",
-            "ssempty_err",
-            "headers_err",
-            "validchars_err",
+            "Samplesheet absent",
+            "Samplesheet name invalid",
+            "Samplesheet is empty",
+            "Missing headers",
+            "Illegal characters",
         ]
         # N.B. --no-lane-splitting creates a single fastq for a sample,
         # not into one fastq per lane)
@@ -330,6 +341,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     self.run_processed = True
                 elif self.run_demultiplexing():  # All other runs require demultiplexing
                     self.run_processed = True
+                    self.validate_fastqs()
 
             if self.run_processed:
                 self.demux_rf_logger.info(
@@ -352,69 +364,18 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["ad_version"],
             git_tag(),
-        )
+        )        
         valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
         self.tso = sscheck_obj.tso
 
         if self.sequencing_complete():
             if self.pass_integrity_check():
-                if self.dev_run(sscheck_obj):
+                if self.dev_run(sscheck_obj) and self.no_disallowed_sserrs(valid, sscheck_obj):
                     if self.dev_run_requires_automated_processing():
                         return True
                 # Only want samplesheet checks to be performed on production runs not dev runs
                 elif self.no_disallowed_sserrs(valid, sscheck_obj):
                     return True
-
-    def dev_run(self, sscheck_obj):
-        """
-        Determine whether the run is a development run using the sscheck_obj development_run() method
-            :sscheck_obj (obj):     Object created by samplesheet_validator.SampleheetCheck
-            :return (True | None):  Return true if development run, else None
-        """ 
-        if sscheck_obj.development_run():
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["dev_run"],
-                self.rf_obj.samplesheet_path,
-            )
-            return True
-        else:
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["not_dev_run"],
-                self.rf_obj.samplesheet_path,
-            )
-
-    def dev_run_requires_automated_processing(self) -> None:
-        """
-        Check whether the development run requires manual processing or automated
-        processing by the script. If the runfolder was supplied in command line mode,
-        development run requires automated processing by the script. Otherwise,
-        the bcl2fastqlog is created to prevent further processing, an alert will be
-        sent to slack, and the development run will need to be processed by bioinformatics.
-            :return (True | None): True if requires automated processing, else None
-        """
-        if self.cmd_line_supplied_runfolder:
-            self.demux_rf_logger.warning(
-                self.demux_rf_logger.log_msgs["dev_run_will_be_processed"],
-                self.rf_obj.runfolder_name,
-            )
-            return True
-        # Create bcl2fastq log to prevent scripts processing this run
-        elif self.create_bcl2fastqlog():
-            self.demux_rf_logger.warning(
-                self.demux_rf_logger.log_msgs["dev_run_needs_processing"],
-                self.rf_obj.runfolder_name,
-            )
-
-    def pass_integrity_check(self) -> Union[bool, None]:
-        """
-        Check whether the integrity checking was successful
-            :return (True | None):  True if successful, None if unsuccessful
-        """
-        if self.seq_requires_no_ic():
-            return True
-        if not self.prior_ic():
-            if self.checksums_match():
-                return True
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
         """
@@ -431,14 +392,10 @@ class DemultiplexRunfolder(DemultiplexConfig):
             DemultiplexConfig.TSO_PANELS,
             DemultiplexConfig.DEVELOPMENT_PANEL,
             os.path.dirname(self.rf_obj.samplesheet_validator_logfile),
-        )        
+        )
         sscheck_obj.ss_checks()
         shutdown_logs(sscheck_obj.logger)
         if sscheck_obj.errors:
-            self.demux_rf_logger.warning(
-                self.demux_rf_logger.log_msgs["sschecks_not_passed"],
-                self.rf_obj.samplesheet_path,
-            )
             return False, sscheck_obj
         else:
             self.demux_rf_logger.info(
@@ -465,32 +422,18 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.rtacompletefile_path,
             )
 
-    def no_disallowed_sserrs(
-        self, valid: bool, sscheck_obj: object
-    ) -> Union[bool, None]:
+    def pass_integrity_check(self) -> Union[bool, None]:
         """
-        Check for specific errors that would cause bcl2fastq2 to fail and whose presence
-        should stop demultiplexing
-            :param valid (bool):            Denotes whether the samplesheet is valid
-                                            (conforms to requirements)
-            :param sscheck_obj (object):    samplesheet_validator.SamplesheetCheck
-                                            object, generated by the samplesheet
-                                            validator module
-            :return True|None:              Returns true if samplesheet is valid
+        Check whether the integrity checking was successful
+            :return (True | None):  True if successful, None if unsuccessful
         """
-        if not valid:
-            if any(
-                error in list(sscheck_obj.errors_dict.values())
-                for error in self.disallowed_sserrs
-            ):
-                err_str = ", ".join(list(sscheck_obj.errors_dict.values()))
-                self.demux_rf_logger.error(
-                    self.demux_rf_logger.log_msgs["ssfail_haltdemux"],
-                    self.rf_obj.samplesheet_path,
-                    err_str,
-                )
-        else:
+        if self.seq_requires_no_ic():
             return True
+        if self.checksumfile_exists():
+            if not self.prior_ic():
+                self.write_checksums_assessed()       
+                if self.checksums_match():
+                    return True
 
     def seq_requires_no_ic(self) -> Union[bool, None]:
         """
@@ -504,70 +447,179 @@ class DemultiplexRunfolder(DemultiplexConfig):
             item in self.rf_obj.runfolder_name
             for item in DemultiplexConfig.SEQ_REQUIRE_IC
         ):
-            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ic_required"])
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["seq_with_ic"])
         else:
-            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ic_notrequired"])
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["seq_without_ic"])
             return True
+
+    def checksumfile_exists(self) -> Union[bool, None]:
+        """
+        Check if md5checksum file exists (i.e. integrity check has been performed
+        by integrity check scripts and it has written the checksums and success / failure
+        message to this file)
+            :return True|None: Return True if md5checksum file exists
+        """
+        if os.path.isfile(self.rf_obj.checksumfile_path):
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["checksumfile_present"], self.rf_obj.checksumfile_path
+            )
+            return True
+        else:
+            self.demux_rf_logger.error(
+                self.demux_rf_logger.log_msgs["checksumfile_absent"],
+                self.rf_obj.checksumfile_path,
+            )
 
     def prior_ic(self) -> Union[bool, None]:
         """
         Determines whether an integrity check has been previously performed by this
-        script. Does this by checking whether the checksum file is present (this is
-        where the checksums are written to by the integrity check scripts), then checks
-        for the presence of the CHECKSUM_COMPLETE_MSG in the checksum file
-        (this message is added when self.checksums_match() is called to
-        prevent the script from performing further integrity checks until the cause of
-        the problem is addressed)
+        script. Checks for presence of the CHECKSUMS_ALREADY_ASSESSED message in the
+        md5checksum file (this message is added when self.checksums_match() is called
+        to prevent the script from checking this file again until the cause of an issue
+        is addressed. If this string is removed from the file then the script will check
+        for the CHECKSUM_MATCH_MSG / CHECKSUM_DO_NOT_MATCH_MSG messages again using
+        self.checksums_match() )
             :return True|None:  Returns true if the checksum file has previously
                                 been checked for the success message by the script
         """
-        if os.path.isfile(self.rf_obj.checksumfile_path):
-            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["csumfile_present"])
+        checksums = read_lines(self.rf_obj.checksumfile_path)
 
-            checksums = read_lines(self.rf_obj.checksumfile_path)
-
-            if DemultiplexConfig.CHECKSUM_COMPLETE_MSG in checksums[-1]:
-                self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["checksums_checked"]
-                )
-                return True
-            else:
-                self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["checksums_notchecked"]
-                )
+        if DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED in checksums[-1]:
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["checksumfile_checked"]
+            )
+            return True
         else:
-            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["csumfile_absent"])            
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["checksumfile_notchecked"]
+            )
+
+    def write_checksums_assessed(self) -> None:
+        """
+        Write DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED message to file to prevent script
+        performing checks on future runs of the script
+            :return None:
+        """
+        write_lines(self.rf_obj.checksumfile_path, "a", f"\n{DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED}")
 
     def checksums_match(self) -> Union[bool, None]:
         """
-        Opens file containing md5 checksums and writes CHECKSUM_COMPLETE_MSG to file
-        to prevent script performing checks in the future. Reads the file and checks for
-        the presence of the CHECKSUM_MATCH_MSG (this is added by the integrity check
-        scripts if the checksums match, meaning that the runfolder has not been
-        corrupted during transfer from the sequencer). If the match string is not
-        present, this means the runfolder on the workstation does not match the
-        runfolder on the sequencer.
+        Reads the md5checksum file and checks for the presence of the CHECKSUM_MATCH_MSG (this
+        is added by the integrity check scripts if the checksums match, denoting that the runfolder
+        has not been corrupted during transfer from the sequencer). If the CHECKSUM_DO_NOT_MATCH_MSG
+        is present, this denotes that the runfolder has been corrupted during transfer from the
+        sequencer). If neither string is present the contents of the file are not as expected and a
+        warning message is sent
             :return True|None:  Returns True if checksum match string is present in
                                 checksum file
         """
-        self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ic_start"])
-
+        self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["checksumfilecheck_start"])
+        
         with open(self.rf_obj.checksumfile_path, "r") as f:
             checksums = f.readlines()
-
-        write_lines(self.rf_obj.checksumfile_path, "a", DemultiplexConfig.CHECKSUM_COMPLETE_MSG)
 
         if DemultiplexConfig.CHECKSUM_MATCH_MSG in checksums[0]:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["ic_pass"],
                 self.rf_obj.runfolder_name,
+                self.rf_obj.checksumfile_path,
             )
             return True
-        else:
+        elif DemultiplexConfig.CHECKSUM_DO_NOT_MATCH_MSG in checksums[0]:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["ic_fail"],
                 self.rf_obj.runfolder_name,
                 self.rf_obj.checksumfile_path,
+            )
+        else:
+            self.demux_rf_logger.warning(
+                self.demux_rf_logger.log_msgs["unexpected_checksumfile_contents"],
+                self.rf_obj.runfolder_name,
+                self.rf_obj.checksumfile_path,
+            )
+
+    def dev_run(self, sscheck_obj):
+        """
+        Determine whether the run is a development run using the sscheck_obj development_run() method
+            :sscheck_obj (obj):     Object created by samplesheet_validator.SampleheetCheck
+            :return (True | None):  Return true if development run, else None
+        """ 
+        if sscheck_obj.development_run():
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["dev_run"],
+                self.rf_obj.samplesheet_path,
+            )
+            return True
+        else:
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["not_dev_run"],
+                self.rf_obj.samplesheet_path,
+            )
+
+    def no_disallowed_sserrs(
+        self, valid: bool, sscheck_obj: object
+    ) -> Union[bool, None]:
+        """
+        Check for specific errors that would cause bcl2fastq2 to fail and whose presence
+        should stop demultiplexing. Write errors to flag file if they exist, which will
+        stop the checks from continuing to fire in subsequent runs of the script. The first
+        time the errors are detected it will log the message as an error which appears in
+        slack, and on subsequent runs of the script it will log at level INFO so as not to
+        overload slack with error messages
+            :param valid (bool):            Denotes whether the samplesheet is valid
+                                            (conforms to requirements)
+            :param sscheck_obj (object):    samplesheet_validator.SamplesheetCheck
+                                            object, generated by the samplesheet
+                                            validator module
+            :return True|None:              Returns true if samplesheet is valid
+        """
+        if valid and not any(
+            error in list(sscheck_obj.errors_dict.keys())
+            for error in self.disallowed_sserrs
+        ):
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["no_disallowed_ss_errs"],
+                self.rf_obj.samplesheet_path,
+            )
+            return True
+        else: 
+            err_str = ", ".join(list(sscheck_obj.errors_dict.keys()))
+            if not os.path.exists(self.rf_obj.sscheck_flagfile_path):
+                self.demux_rf_logger.error(
+                    self.demux_rf_logger.log_msgs["ssfail_haltdemux"],
+                    self.rf_obj.samplesheet_path,
+                    err_str,
+                )
+            else:
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["ssfail_haltdemux"],
+                    self.rf_obj.samplesheet_path,
+                    err_str,
+                )
+            write_lines(
+                self.rf_obj.sscheck_flagfile_path, "w", DemultiplexConfig.SAMPLESHEET_ERRORS_MSG % err_str
+            )
+
+    def dev_run_requires_automated_processing(self) -> None:
+        """
+        Check whether the development run requires manual processing or automated
+        processing by the script. If the runfolder was supplied in command line mode,
+        development run requires automated processing by the script. Otherwise,
+        the bcl2fastqlog is created to prevent further processing, an alert will be
+        sent to slack, and the development run will need to be processed by bioinformatics.
+            :return (True | None): True if requires automated processing, else None
+        """
+        if self.cmd_line_supplied_runfolder:
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["dev_run_will_be_processed"],
+                self.rf_obj.runfolder_name,
+            )
+            return True
+        # Create bcl2fastq log to prevent scripts processing this run
+        elif self.create_bcl2fastqlog():
+            self.demux_rf_logger.warning(
+                self.demux_rf_logger.log_msgs["dev_run_needs_processing"],
+                self.rf_obj.runfolder_name,
             )
 
     def create_bcl2fastqlog(self) -> Union[bool, None]:
@@ -618,6 +670,46 @@ class DemultiplexRunfolder(DemultiplexConfig):
         )
         return True
 
+    def calculate_cluster_density(self) -> Union[bool, None]:
+        """
+        Run dockerised GATK to run Picard CollectIlluminaLaneMetrics - this calculates
+        cluster density and saves files (runfolder.illumina_phasing_metrics and
+        runfolder.illumina_lane_metrics) to the runfolder. If the success statement is
+        seen in the stderr, record in the log file else raise a slack alert and exit
+        script. If run was sequenced on novaseq, an extra argument is provided
+            :return True|None:  True if success statement seen
+        """
+        if DemultiplexConfig.NOVASEQ_ID in self.rf_obj.runfolder_name:
+            novaseq_flag = " --IS_NOVASEQ"
+        else:
+            novaseq_flag = ""
+
+        self.cluster_density_cmd = f"{self.cluster_density_cmd }{novaseq_flag}"
+
+        self.demux_rf_logger.info(
+            self.demux_rf_logger.log_msgs["running_cd"],
+            self.cluster_density_cmd,
+        )
+        out, err, returncode = execute_subprocess_command(
+            self.cluster_density_cmd, self.demux_rf_logger
+        )
+        if returncode == 0:
+            # Assess stderr, looking for expected success statement
+            if DemultiplexConfig.STRINGS["cd_success"] in out or err:
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["cd_success"],
+                    self.rf_obj.runfolder_name,
+                    DemultiplexConfig.STRINGS["lane_metrics_suffix"],
+                )
+                return True
+        else:
+            self.demux_rf_logger.error(
+                self.demux_rf_logger.log_msgs["cd_fail"],
+                self.rf_obj.runfolder_name,
+                err,
+            )
+            sys.exit(1)
+
     def run_demultiplexing(self) -> Union[bool, None]:
         """
         Run demultiplexing command. If unsuccessful, exit script
@@ -653,43 +745,27 @@ class DemultiplexRunfolder(DemultiplexConfig):
             )
             sys.exit(1)
 
-    def calculate_cluster_density(self) -> Union[bool, None]:
+    def validate_fastqs(self) -> None:
         """
-        Run dockerised GATK to run Picard CollectIlluminaLaneMetrics - this calculates
-        cluster density and saves files (runfolder.illumina_phasing_metrics and
-        runfolder.illumina_lane_metrics) to the runfolder. If the success statement is
-        seen in the stderr, record in the log file else raise a slack alert and exit
-        script. If run was sequenced on novaseq, an extra argument is provided
-            :return True|None:  True if success statement seen
+        Validate the created fastqs in the BaseCalls directory and log success
+        or failure error message accordingly
+            :return None:
         """
-        if DemultiplexConfig.NOVASEQ_ID in self.rf_obj.runfolder_name:
-            novaseq_flag = " --IS_NOVASEQ"
-        else:
-            novaseq_flag = ""
+        fastqs = [x for x in os.listdir(self.rf_obj.fastq_dir_path) if x.endswith("fastq.gz")]
 
-        self.cluster_density_cmd = f"{self.cluster_density_cmd }{novaseq_flag}"
-
-        self.demux_rf_logger.info(
-            self.demux_rf_logger.log_msgs["running_cd"],
-            self.cluster_density_cmd,
-        )
-        out, err, returncode = execute_subprocess_command(
-            self.cluster_density_cmd, self.demux_rf_logger
-        )
-
-        if returncode == 0:
-            # Assess stderr, looking for expected success statement
-            if DemultiplexConfig.STRINGS["cd_success"] in out or err:
-                self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["cd_success"],
-                    self.rf_obj.runfolder_name,
-                    DemultiplexConfig.STRINGS["lane_metrics_suffix"],
-                )
-                return True
-        else:
-            self.demux_rf_logger.error(
-                self.demux_rf_logger.log_msgs["cd_fail"],
-                self.rf_obj.runfolder_name,
-                err,
+        for fastq in fastqs:
+            out, err, returncode = execute_subprocess_command(
+                f"gzip --test {os.path.join(self.rf_obj.fastq_dir_path, fastq)}",
+                self.demux_rf_logger,
             )
-            sys.exit(1)
+            if returncode == 0:
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["fastq_valid"],
+                    fastq,
+                )
+            else:
+                self.demux_rf_logger.error(
+                    self.demux_rf_logger.log_msgs["fastq_invalid"],
+                    fastq,
+                    out, err,
+                )

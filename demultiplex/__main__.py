@@ -19,9 +19,9 @@ def get_arguments():
         description=(
             "Used to demultiplex a runfolder using the demultiplexing script."
             "If given an input runfolder name, will process just that single "
-            "runfolder. Runfolder input should ONLY BE USED FOR PROCESSING "
-            "DEVELOPMENT RUNS AS IT WILL BYPASS SAMPLESHEET ERRORS AND RUN "
-            "DEMULTIPLEXING ANYWAY"
+            "runfolder. Runfolder input should only be used for processing "
+            "development runs as it will bypass samplesheet errors and run "
+            "demultiplexing anyway"
         ),
         usage="Used to demultiplex a runfolder using the demultiplexing script"
     )
@@ -31,9 +31,9 @@ def get_arguments():
         type=str,
         required=False,
         help=(
-            "Runfolder name for script to process. This argument should ONLY BE "
-            "USED FOR PROCESSING DEVELOPMENT RUNS AS IT WILL BYPASS SAMPLESHEET "
-            "ERRORS AND RUN DEMULTIPLEXING ANYWAY"
+            "Runfolder name for script to process. This argument should only "
+            "be used for processing development runs as it will bypass samplesheet "
+            "errors and run demultiplexing anyway"
         ),
     )
     return parser.parse_args()

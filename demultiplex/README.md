@@ -37,9 +37,27 @@ must be present
 
 The module can be used either from the command line or as a module import:
 
+### Command line
+
+#### Non-development runs
+
+The script should be run with no inputs provided when assessing production runs on
+the workstation:
+
 ```bash
 python3 -m demultiplex
 ```
+
+#### Development runs
+
+The script should be run as per below when handling development runs that require the standard
+demultiplexing protocol:
+
+```bash
+python3 -m demultiplex -r $RUNFOLDER_NAME
+```
+
+### Module import 
 
 ```python
 from demultiplex import demultiplex
