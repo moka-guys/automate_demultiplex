@@ -21,7 +21,7 @@ self.email = AdEmail(self.rf_obj.rf_loggers.sw)
 # Render email html message
 email_html = self.email.generate_email_html(
     self.rf_obj.runfolder_name, ",".join(set(self.workflows)),
-    self.queries, self.sample_count
+    self.queries, self.sample_count, self.samples
 )
 # Send email
 self.email.send_email(

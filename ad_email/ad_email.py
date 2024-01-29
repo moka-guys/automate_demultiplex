@@ -32,7 +32,7 @@ class AdEmail(AdEmailConfig):
         template (obj):             Loaded template
 
     Methods
-        generate_email_html(runfolder_name, workflows, queries, sample_count)
+        generate_email_html(runfolder_name, workflows, queries, sample_count, samples)
             Renders the html string for the email message
         send_email(recipients, email_subject, email_message, email_priority)
             Create email message object and specify settings, then
@@ -57,7 +57,7 @@ class AdEmail(AdEmailConfig):
         ).get_template("email.html")
 
     def generate_email_html(
-        self, runfolder_name: str, workflows: str, queries: str, sample_count: int
+        self, runfolder_name: str, workflows: str, queries: str, sample_count: int, samples: list
     ) -> str:
         """
         Generate HTML. If unsuccessful, exit script
@@ -65,6 +65,7 @@ class AdEmail(AdEmailConfig):
             :workflows (str):               Comma separated string of workflow names
             :queries (list):                List of SQL queries
             :sample_count (int):            Total number of samples processed
+            :samples (list):                List of sample names being processed by the pipeline
             :return html (str):             Rendered html as a string
         """
         try:
@@ -74,6 +75,7 @@ class AdEmail(AdEmailConfig):
                 workflows=workflows,
                 queries=queries,
                 sample_count=sample_count,
+                samples=samples,
                 git_tag=git_tag(),
             )
             self.logger.info(self.logger.log_msgs["html_success"])

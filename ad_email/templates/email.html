@@ -16,9 +16,12 @@
             <p>{{ runfolder_name }} being processed using workflow(s) {{ workflows }}</p>
             {% if queries %}
             <p>Please update Moka using the below queries and ensure that {{ sample_count }} records are updated:</p>
-            <p> {{ queries }}</p>
+            <p> {{ queries|safe }}</p>
             {% else %}
-            <p>{{ sample_count }} samples are being processed</p>
+            <p>{{ sample_count }} samples are being processed:</p>
+            {% endif %}
+            {% if samples %}
+            <p> {{ samples|safe }} </p>
             {% endif %}
     </body>
     <div class="footer">

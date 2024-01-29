@@ -63,7 +63,7 @@ class TestAdEmail:
         for recipients_list in email_recipients:
             ad_email_obj = AdEmail(logger_obj)
             email_html = ad_email_obj.generate_email_html(
-                "test_runfolder", "workflow", "SQL_str", 5
+                "test_runfolder", "workflow", "SQL_str", 5, ["one", "two", "three"]
             )
             assert email_html
             assert ad_email_obj.send_email(
@@ -87,7 +87,7 @@ class TestAdEmail:
             ad_email_obj = AdEmail(logger_obj)
             monkeypatch.setattr(ad_email_obj, "email_user", "abc")
             email_html = ad_email_obj.generate_email_html(
-                "test_runfolder", "workflow", "SQL_str", 5
+                "test_runfolder", "workflow", "SQL_str", 5, ["one", "two", "three"]
             )
             with pytest.raises(SystemExit) as pytest_wrapped_e:
                 ad_email_obj.send_email(
