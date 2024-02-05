@@ -17,13 +17,14 @@
     - Runfolder does not contain upload started flag file
 2. Collect names and metadata for all samples in the runfolder
 3. Write and run the DNAnexus project creation script
-4. Split tso500 samplesheet into parts with x samples per samplesheet (no.defined in TSO_BATCH_SIZE) and write to runfolder
-5. Carry out pre-pipeline file upload (cluster density files, bcl2fastq2 QC files, fastqs if not a tso run, samplesheet and entire runfolder if a tso run)
-6. Build and populate dnanexus commands bash script
-7. Create congenica commands bash script (contains the commands to run the congenica upload app, this is set off later manually after QC inspection)
-8. Run dnanexus commands bash script (sets off workflows / apps in DNAnexus)
-9. Send pipeline emails (Send SQL queries email, and samples being processed email)
-10. Carry out the post-pipeline file upload (rest of the runfolder, and the logfiles)
+4. Split tso500 SampleSheet into parts with x samples per SampleSheet (no.defined in TSO_BATCH_SIZE) and write to runfolder
+5. Carry out pre-pipeline file upload (cluster density files, bcl2fastq2 QC files, fastqs if not a tso run, SampleSheet and entire runfolder if a tso run)
+6. Build and populate DNAnexus commands bash script
+7. Build and populate post run commands bash script if a TSO run
+8. Create decision support commands bash script (contains the commands to run the Congenica upload app if custom panels, LRPCR, or WES run, and contains the commands to run the Qiagen upload app if TSO run). This is set off manually after QC inspection
+9. Run DNAnexus commands bash script (sets off workflows / apps in DNAnexus)
+10. Send pipeline emails (Send SQL queries email, and samples being processed email)
+11. Carry out the post-pipeline file upload (rest of the runfolder, and the logfiles)
 
 ## Configuration
 
@@ -55,7 +56,7 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py).
 | sw (rf_loggers.sw) | Records runfolder-level logs for the setoff workflows script | `RUNFOLDERNAME_setoff_workflow.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/sw_script_logfiles/` |
 | upload_agent | Records upload agent logs (stdout and stderr of the upload agent) | `DNANexus_upload_started.txt` |  Within the runfolder |
 | dx_run_script | Records the dx run commands for processing the run. N.B. this is not written to by logging | `RUNFOLDERNAME_dx_run_commands.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
-| decision_support_upload_cmds | Records the dx run commands to set off the congenica upload apps. N.B. this is not written to by logging | `RUNFOLDERNAME_decision_support.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
+| decision_support_upload_cmds | Records the dx run commands to set off the Congenica upload apps. N.B. this is not written to by logging | `RUNFOLDERNAME_decision_support.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
 | proj_creation_script | Records the commands for creating the DNAnexus project. N.B. this is not written to by logging | `RUNFOLDERNAME_create_nexus_project.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
 
 ## Testing

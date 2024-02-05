@@ -40,7 +40,7 @@ def get_gr_obj():
 @pytest.fixture(scope="function")
 def valid_samplesheets():
     """
-    Test cases with valid paths, files are populated, and valid samplesheet names, and
+    Test cases with valid paths, files are populated, and valid SampleSheet names, and
     contain:
         Expected headers, matching Sample_IDs and Sample_Names, valid samples, valid pan
         nos, valid runtypes
@@ -349,7 +349,7 @@ class TestDemultiplexRunfolder(object):
     @pytest.fixture(scope="function")
     def internal_chars_invalid(self):
         """
-        Samplesheet containing invalid characters in sample name
+        SampleSheet containing invalid characters in sample name
         """
         return [
             os.path.join(
@@ -362,7 +362,7 @@ class TestDemultiplexRunfolder(object):
     @pytest.fixture(scope="function")
     def perfect_ss(self):
         """
-        Path to perfect samplesheet
+        Path to perfect SampleSheet
         """
         return os.path.join(
             conftest.sv_samplesheet_temp_dir,
@@ -380,8 +380,8 @@ class TestDemultiplexRunfolder(object):
         internal_chars_invalid,
     ):
         """
-        Samplesheets with disallowed errors in the more stringent set of requirements
-        than the base samplesheet validator check
+        SampleSheets with disallowed errors in the more stringent set of requirements
+        than the base SampleSheet validator check
         """
         return list(
             itertools.chain(
@@ -417,7 +417,7 @@ class TestDemultiplexRunfolder(object):
             "999999_A01229_0000_00000TEST1",
             # Sequencing not yet complete
             "999999_A01229_0000_00000TEST2",
-            # Fatal samplesheet errors (headers missing from data section)
+            # Fatal SampleSheet errors (headers missing from data section)
             "999999_A01229_0000_00000TEST3",
             # Checksum file absent
             "999999_A01229_0000_00000TEST5",
@@ -425,7 +425,7 @@ class TestDemultiplexRunfolder(object):
             "999999_A01229_0000_00000TEST6",
             # TSO run
             "999999_A01229_0000_00000TEST8",
-            # Samplesheet missing
+            # SampleSheet missing
             "999999_A01229_0000_0000TEST10",
         ]
 
@@ -574,7 +574,7 @@ class TestDemultiplexRunfolder(object):
     def test_valid_samplesheet_pass(self, monkeypatch, valid_samplesheets):
         """
         Test function correctly returns valid flag, using a set of representative
-        samplesheets
+        SampleSheets
         """
         for sspath in valid_samplesheets:
             dr_obj = get_dr_obj("")
@@ -586,7 +586,7 @@ class TestDemultiplexRunfolder(object):
     def test_valid_samplesheet_fail(self, monkeypatch, ss_with_disallowed_sserrs):
         """
         Test function fails to return valid flag as expected, using a set of
-        samplesheets covering all failure cases
+        SampleSheets covering all failure cases
         """
         for sspath in ss_with_disallowed_sserrs:
             dr_obj = get_dr_obj("")
@@ -620,7 +620,7 @@ class TestDemultiplexRunfolder(object):
 
     def test_no_disallowed_sserrs_pass(self, monkeypatch, perfect_ss):
         """
-        Test no_disallowed_sserrs() using a perfect samplesheet
+        Test no_disallowed_sserrs() using a perfect SampleSheet
         """
         dr_obj = get_dr_obj("")
         monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", perfect_ss)

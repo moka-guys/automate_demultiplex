@@ -8,7 +8,7 @@ Contains the following classes:
     Loop through and process NGS runfolders in a given directory
 - DemultiplexRunfolder
     Call bcl2fastq2 on runfolders after asserting that runfolder has not been
-    demultiplexed and a valid samplesheet is present
+    demultiplexed and a valid SampleSheet is present
 
 """
 import sys
@@ -202,7 +202,7 @@ class GetRunfolders(DemultiplexConfig):
 class DemultiplexRunfolder(DemultiplexConfig):
     """
     Call bcl2fastq2 on runfolders after asserting that runfolder has not been
-    demultiplexed and a valid samplesheet is present.
+    demultiplexed and a valid SampleSheet is present.
 
     Attributes
         timestamp (str):                    Timestamp in the format %Y%m%d_%H%M%S
@@ -216,7 +216,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                                             loggers
         bcl2fastq2_rf_logger (object):      Bcl2fastq2 runfolder-level logger, extracted from the
                                             RunfolderObject containing runfolder-level loggers
-        disallowed_sserrs (list):           List of disallowed samplesheet error strings
+        disallowed_sserrs (list):           List of disallowed SampleSheet error strings
         bcl2fastq2_cmd (str):               Shell command to run demultiplexing
         cluster_density_cmd (str):          Shell command to run cluster density calculation
         tso (bool):                         Denotes whether the run is a tso500 run
@@ -232,7 +232,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             Carries out per-runfolder pre-demultiplexing tasks to determine whether
             demultiplexing is required.
         valid_samplesheet()
-            Check samplesheet is present and naming and contents are valid, using the
+            Check SampleSheet is present and naming and contents are valid, using the
             samplesheet_validator module
         sequencing_complete()
             Check if sequencing has completed for the current runfolder (presence of
@@ -353,10 +353,10 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def demultiplexing_required(self) -> Union[bool, None]:
         """
         Carries out per-runfolder pre-demultiplexing tasks to determine whether demultiplexing is
-        required. Carries out the early warning samplesheet checks. If sequencing is complete and
-        the run is a development run, creates the bcl2fastq logfile to prevent further processing.
+        required. Carries out the early warning SampleSheet checks. If sequencing is complete and
+        the run is a development run, creates the bcl2fastq2 logfile to prevent further processing.
         Else, if sequencing is complete (RTAComplete.txt present) and the run is not a development
-        run, the samplesheet contains no disallowed errors, and either 1) the sequencer does not
+        run, the SampleSheet contains no disallowed errors, and either 1) the sequencer does not
         require an integrity check or 2) there has not previously been an integrity check and the
         checksums match, returns True as demultiplexing is required
             :return True|None:  Return true if demultiplexing is required
@@ -373,15 +373,15 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 if self.dev_run(sscheck_obj) and self.no_disallowed_sserrs(valid, sscheck_obj):
                     if self.dev_run_requires_automated_processing():
                         return True
-                # Only want samplesheet checks to be performed on production runs not dev runs
+                # Only want SampleSheet checks to be performed on production runs not dev runs
                 elif self.no_disallowed_sserrs(valid, sscheck_obj):
                     return True
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
         """
-        Check samplesheet is present and naming and contents are valid, using the
+        Check SampleSheet is present and naming and contents are valid, using the
         samplesheet_validator module
-            :return (tuple):    Returns tuple of boolean (denotes whether samplesheet
+            :return (tuple):    Returns tuple of boolean (denotes whether SampleSheet
                                 is valid), and SampleSheetCheck object containing any
                                 errors identified
         """
@@ -566,12 +566,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
         time the errors are detected it will log the message as an error which appears in
         slack, and on subsequent runs of the script it will log at level INFO so as not to
         overload slack with error messages
-            :param valid (bool):            Denotes whether the samplesheet is valid
+            :param valid (bool):            Denotes whether the SampleSheet is valid
                                             (conforms to requirements)
             :param sscheck_obj (object):    samplesheet_validator.SamplesheetCheck
-                                            object, generated by the samplesheet
+                                            object, generated by the SampleSheet
                                             validator module
-            :return True|None:              Returns true if samplesheet is valid
+            :return True|None:              Returns true if SampleSheet is valid
         """
         if valid and not any(
             error in list(sscheck_obj.errors_dict.keys())
@@ -615,7 +615,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.runfolder_name,
             )
             return True
-        # Create bcl2fastq log to prevent scripts processing this run
+        # Create bcl2fastq2 log to prevent scripts processing this run
         elif self.create_bcl2fastqlog():
             self.demux_rf_logger.warning(
                 self.demux_rf_logger.log_msgs["dev_run_needs_processing"],

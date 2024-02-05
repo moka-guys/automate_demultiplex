@@ -1,11 +1,12 @@
 """
-Print inputs required by congenica upload applications on DNAnexus.
+Print inputs required by Congenica upload applications on DNAnexus.
 See Readme and doctrings for further details. Contains the following classes:
 
 - CongenicaInputs
-    Builds congenica upload DNAnexus app command line inputs
+    Builds Congenica upload DNAnexus app command line inputs
 """
 import sys
+import time
 from config.ad_config import CongenicaInputsConfig
 from toolbox.toolbox import get_credential, RunfolderObject, execute_subprocess_command
 from ad_logger.ad_logger import shutdown_streamhandler
@@ -14,7 +15,7 @@ from ad_logger.ad_logger import shutdown_streamhandler
 
 class CongenicaInputs(CongenicaInputsConfig):
     """
-    Builds congenica upload DNAnexus app command line inputs
+    Builds Congenica upload DNAnexus app command line inputs
 
     Attributes
         dnanexus_auth (str):        DNAnexus auth token
@@ -25,30 +26,30 @@ class CongenicaInputs(CongenicaInputsConfig):
         rf_obj (object):            RunfolderObject() object (contains runfolder-specific attributes)
         logger (object):            Runfolder-level logger
         file_dict(dict):            Dictionary containing strings required for building
-                                    the congenica upload app input string
+                                    the Congenica upload app input string
         vcfjobid_cmd(str):          Command for retrieving the VCF creation job ID
         bamjobid_cmd(str):          Command for retrieving the BAM creation job ID
         baijobid_cmd(str):          Commmand for retrieving the BAI creation job ID
         bamjobid(str):              BAM job ID
         vcfjobid(str):              VCF job ID
         baijobid(str):              BAI job ID
-        congenica_app_inputs(str):  Input string for the congenica app
+        congenica_app_inputs(str):  Input string for the Congenica app
 
     Methods
         get_inputs()
-            Call methods to generate the congenica upload DNAnexus app input string
+            Call methods to generate the Congenica upload DNAnexus app input string
         get_file_dict()
             Get file dict of DNAnexus app inputs if workflow is valid (requires
-            congenica upload), else exit script
+            Congenica upload), else exit script
         set_jobid_cmds()
             Set commands for retrieving the job ID for the vcf and bam workflow stages
         get_jobids()
             Get job ids for bam and vcf jobs within the workflow and set as class
             attributes
         set_app_input_string()
-            Set the input string for the congenica app as class attribute
+            Set the input string for the Congenica app as class attribute
         printer()
-            Print inputs to congenica upload app (bam and vcf congenica app inputs
+            Print inputs to Congenica upload app (bam and vcf Congenica app inputs
             in string format)
     """
 
@@ -82,7 +83,7 @@ class CongenicaInputs(CongenicaInputsConfig):
 
     def get_inputs(self) -> None:
         """
-        Call methods to generate the congenica upload DNAnexus app input string
+        Call methods to generate the Congenica upload DNAnexus app input string
             :return None:
         """
         self.get_file_dict()
@@ -94,8 +95,8 @@ class CongenicaInputs(CongenicaInputsConfig):
     def get_file_dict(self) -> dict:
         """
         Get file dict of DNAnexus app inputs if workflow is valid (requires
-        congenica upload), else exit script
-            :return (dict): Dictionary of congenica upload app inputs
+        Congenica upload), else exit script
+            :return (dict): Dictionary of Congenica upload app inputs
         """
         if self.workflow in ["wes", "pipe"]:
             self.logger.info(self.logger.log_msgs["workflow_type"], self.workflow)
@@ -134,31 +135,34 @@ class CongenicaInputs(CongenicaInputsConfig):
         """
         for outfile in self.file_dict.keys():
             self.logger.info(self.logger.log_msgs["get_job_id"], outfile)
+            max_tries = 20
             tries, returncode = 0, 1
             jobid_cmd = getattr(self, f"{outfile}jobid_cmd")
             # Can take a while for job to set off
-            while tries < 1000 and returncode != 0:
+            while tries < max_tries:
                 (jobid, err, returncode) = execute_subprocess_command(
                     jobid_cmd,
                     self.logger,
                 )
-                if returncode == 0:
+                if err:
+                    self.logger.info(
+                        self.logger.log_msgs["get_job_id_err"], outfile, err, tries
+                    )
+                    tries += 1
+                    time.sleep(10)
+                else:
                     self.logger.info(
                         self.logger.log_msgs["found_job_id"], outfile, jobid
                     )
                     setattr(self, f"{outfile}jobid", jobid)
-                else:
-                    tries += 1
-                    self.logger.warning(
-                        self.logger.log_msgs["get_job_id_err"], outfile, err
-                    )
-            if tries > 1000:
-                self.logger.error(self.logger.log_msgs["get_job_id_fail"], outfile)
+                    break                    
+            if tries == max_tries and err:
+                self.logger.error(self.logger.log_msgs["get_job_id_fail"], max_tries, outfile)
                 sys.exit(1)
 
     def set_app_input_string(self) -> None:
         """
-        Set the input string for the congenica app as class attribute. If
+        Set the input string for the Congenica app as class attribute. If
         unsuccessful, exit script
             :return None:
         """
@@ -177,7 +181,7 @@ class CongenicaInputs(CongenicaInputsConfig):
 
     def printer(self) -> None:
         """
-        Print inputs to congenica upload app (bam and vcf congenica
+        Print inputs to Congenica upload app (bam and vcf Congenica
         app inputs in string format)
             :return None:
         """

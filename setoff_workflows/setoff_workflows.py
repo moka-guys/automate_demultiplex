@@ -97,6 +97,10 @@ class SequencingRuns(SWConfig):
         """
         if test_upload_software(self.script_logger):
             for rf_obj in self.runs_to_process:
+                self.script_logger.info(
+                    self.script_logger.log_msgs["start_runfolder_proc"],
+                    rf_obj.runfolder_name,
+                )
                 self.process_runfolder(rf_obj)
             self.num_processed_runfolders()
 
@@ -114,29 +118,28 @@ class SequencingRuns(SWConfig):
                 self.script_logger.info(
                     self.script_logger.log_msgs["runfolder_identified"], folder
                 )
-                self.rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
-                if self.requires_processing():
-                    runs_to_process.append(self.rf_obj)
+                rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
+                if self.requires_processing(rf_obj):
+                    runs_to_process.append(rf_obj)
         return runs_to_process
 
-    def requires_processing(self) -> Union[bool, None]:
+    def requires_processing(self, rf_obj: object) -> Union[bool, None]:
         """
         Calls other methods to determine whether the runfolder requires processing (demultiplexing
         has finished successfully and the runfolder has not already been uploaded)
+            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
             :return True | None:    Returns true if runfolder requires processing, else None
         """
-        if self.has_demultiplexed(self.rf_obj) and not self.already_uploaded(
-            self.rf_obj
-        ):
+        if self.has_demultiplexed(rf_obj) and not self.already_uploaded(rf_obj):
             self.script_logger.info(
                 self.script_logger.log_msgs["runfolder_requires_proc"],
-                self.rf_obj.runfolder_name,
+                rf_obj.runfolder_name,
             )
             return True
         else:
             self.script_logger.info(
                 self.script_logger.log_msgs["runfolder_prev_proc"],
-                self.rf_obj.runfolder_name,
+                rf_obj.runfolder_name,
             )
 
     def has_demultiplexed(self, rf_obj: object) -> Union[bool, None]:
@@ -250,10 +253,10 @@ class ProcessRunfolder(SWConfig):
         get_upload_cmds()
             Build file upload commands
         split_tso_samplesheet()
-            Split tso500 samplesheet into parts with x samples per samplesheet (no.
+            Split tso500 SampleSheet into parts with x samples per SampleSheet (no.
             defined in TSO_BATCH_SIZE) and write to runfolder
         read_tso_samplesheet()
-            Read required lines from the TSO samplesheet
+            Read required lines from the TSO SampleSheet
         create_file_upload_dict()
             Create dictionary of files to upload prior to setting off the pipeline, and
             the upload commands required
@@ -329,7 +332,7 @@ class ProcessRunfolder(SWConfig):
     def get_users_dict(self) -> dict:
         """
         Create a dictionary of users and admins that require access to the DNAnexus project. This also
-        includes dry lab dnanexus IDs if applicable for the samples in the runfolder. These are taken
+        includes dry lab DNAnexus IDs if applicable for the samples in the runfolder. These are taken
         from the per-sample panel_stettings in the samples_dict. This is required because some samples
         are analysed at dry labs, with access to projects only given where there is a sample for that
         dry lab on the run
@@ -355,7 +358,7 @@ class ProcessRunfolder(SWConfig):
 
     def write_project_creation_script(self) -> None:
         """
-        Write the script that creates the dnanexus project and shares it with the
+        Write the script that creates the DNAnexus project and shares it with the
         required users with the required access levels. The project is created using
         the project creation command which utilises the DNAnexus sdk. This command and
         the project sharing commands are written to a bash script
@@ -478,9 +481,9 @@ class ProcessRunfolder(SWConfig):
 
     def split_tso_samplesheet(self) -> list:
         """
-        Split tso500 samplesheet into parts with x samples per samplesheet (no.
+        Split tso500 SampleSheet into parts with x samples per SampleSheet (no.
         defined in TSO_BATCH_SIZE), and write to runfolder
-            :return (list):     Samplesheet names
+            :return (list):     SampleSheet names
         """
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["splitting_tso_samplesheet"],
@@ -498,15 +501,15 @@ class ProcessRunfolder(SWConfig):
             self.rf_obj.rf_loggers.sw.log_msgs["tso_batches_count"],
             len(batches),
         )
-        # Create new samplesheets named "PartXofY", add samplesheet to list
-        # Capture path for samplesheet in runfolder
+        # Create new SampleSheets named "PartXofY", add SampleSheet to list
+        # Capture path for SampleSheet in runfolder
         for samplesheet_count, batch in enumerate(batches, start=1):
-            # Capture samplesheet file path to write samplesheet paths to the runfolder
+            # Capture SampleSheet file path to write SampleSheet paths to the runfolder
             samplesheet_filepath = (
                 f'{self.rf_obj.runfolder_samplesheet_path.split(".csv")[0]}'
                 f"Part{samplesheet_count}of{len(batches)}.csv"
             )
-            # Capture samplesheet name to write to list- use runfolder name
+            # Capture SampleSheet name to write to list- use runfolder name
             samplesheet_name = (
                 f"{self.rf_obj.runfolder_name}_SampleSheetPart"
                 f"{samplesheet_count}of{len(batches)}.csv"
@@ -519,9 +522,9 @@ class ProcessRunfolder(SWConfig):
 
     def read_tso_samplesheet(self) -> Union[list, list]:
         """
-        Read required lines from the TSO samplesheet
-            :return samples (list):             Samples read from samplesheet
-            :return samplesheet_header (list):  Samplesheet header lines
+        Read required lines from the TSO SampleSheet
+            :return samples (list):             Samples read from SampleSheet
+            :return samplesheet_header (list):  SampleSheet header lines
         """
         samples, samplesheet_header = [], []
         no_sample_lines = 0
@@ -559,7 +562,7 @@ class ProcessRunfolder(SWConfig):
                 "files_list": self.rf_obj.cluster_density_files,
             },
         }
-        if self.samples_obj.pipeline == "tso500":  # Add samplesheet entry
+        if self.samples_obj.pipeline == "tso500":  # Add SampleSheet entry
             pre_pipeline_upload_dict["runfolder_samplesheet"] = {
                 "cmd": self.upload_cmds["runfolder_samplesheet"],
                 "files_list": [
@@ -624,7 +627,7 @@ class ProcessRunfolder(SWConfig):
 
     def upload_rest_of_runfolder(self) -> None:
         """
-        Backs up the rest of the runfolder. First copies the samplesheet into the
+        Backs up the rest of the runfolder. First copies the SampleSheet into the
         project, then specifies which files to ignore (excludes BCL files for all runs
         except tso500 runs for which they are needed for demultiplexing on DNAnexus).
         Calls upload_runfolder.upload_rest_of_runfolder(ignore), passing a run-dependent
@@ -635,7 +638,7 @@ class ProcessRunfolder(SWConfig):
         """
         if os.path.exists(
             self.rf_obj.samplesheet_path
-        ):  # Try to copy samplesheet into project
+        ):  # Try to copy SampleSheet into project
             copyfile(
                 self.rf_obj.samplesheet_path,
                 self.rf_obj.runfolder_samplesheet_path,
@@ -736,7 +739,7 @@ class CollectRunfolderSamples(SWConfig):
         param rf_obj (obj):             RunfolderObject object (contains
                                         runfolder-specific attributes)
         samplename_dict (dict):         Dict of sample names identified from the
-                                        samplesheet, and their pan numbers
+                                        SampleSheet, and their pan numbers
         pipeline (str):                 Pipeline name
         runtype_str (str):              Runtype name string
         nexus_runfolder_suffix (str):   String of '_' delimited unique library numbers,
@@ -753,7 +756,7 @@ class CollectRunfolderSamples(SWConfig):
 
     Methods
         get_samplename_dict()
-            Read samplesheet to create a dict of samples and their pan numbers for the run
+            Read SampleSheet to create a dict of samples and their pan numbers for the run
         get_pipeline()
             Use self.samplename_dict and the config.PANEL_DICT to get a list of pipeline
             names for samples in the run. Returns the most frequent pipeline name in the set
@@ -804,7 +807,7 @@ class CollectRunfolderSamples(SWConfig):
                 # tso500 run is not demultiplexed locally so there are no fastqs
                 # All other runfolders have fastqs in the BaseCalls directory
                 # Check fastqs in fastq dir were correctly identified from the
-                # samplesheet and add any missing samples to the samples dict
+                # SampleSheet and add any missing samples to the samples dict
                 self.validate_fastqs()
                 self.fastqs_list = self.get_fastqs_list()
                 self.fastqs_str = self.get_fastqs_str(self.fastqs_list)
@@ -813,13 +816,13 @@ class CollectRunfolderSamples(SWConfig):
 
     def get_samplename_dict(self) -> list:
         """
-        Read samplesheet to create a dict of samples and their pan numbers for the
+        Read SampleSheet to create a dict of samples and their pan numbers for the
         run. Reads file into list and loops through in reverse allowing us to access
         sample names and stop at column headers, skipping the file header. Creates
         upload agent file if samples have been identified, to prevent processing by
         other script runs
             :return samplename_dict (dict): Dict of sample names identified from the
-                                            samplesheet, and their pan numbers
+                                            SampleSheet, and their pan numbers
         """
         samplename_dict = {}
         if os.path.exists(self.rf_obj.samplesheet_path):
@@ -873,7 +876,7 @@ class CollectRunfolderSamples(SWConfig):
             pipeline_name = max(list(set(pipelines_list)), key=pipelines_list.count)
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["pipeline_name"],
-                pipelines_list,
+                pipeline_name,
             )
             return pipeline_name  # Get pipeline from pipelines_list
 
@@ -1032,42 +1035,43 @@ class CollectRunfolderSamples(SWConfig):
         """
         missing_samples = []
         for fastq_dir_file in os.listdir(self.rf_obj.fastq_dir_path):
-            if fastq_dir_file.endswith("fastq.gz"):
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["checking_fastq"],
-                    fastq_dir_file,
-                )
-                if self.fastq_not_undetermined(fastq_dir_file):  # Exclude undetermined
-                    try:
-                        seglh_namingSample.from_string(fastq_dir_file)
-                        sample_name = [
-                            sample_name
-                            for sample_name in self.samplename_dict.keys()
-                            if sample_name in fastq_dir_file
-                        ]
-                        if sample_name:
-                            self.rf_obj.rf_loggers.sw.info(
-                                self.rf_obj.rf_loggers.sw.log_msgs["sample_match"],
-                                fastq_dir_file,
-                                sample_name,
-                            )
-                        else:
+            if os.path.isfile(fastq_dir_file):
+                if fastq_dir_file.endswith("fastq.gz"):
+                    self.rf_obj.rf_loggers.sw.info(
+                        self.rf_obj.rf_loggers.sw.log_msgs["checking_fastq"],
+                        fastq_dir_file,
+                    )
+                    if self.fastq_not_undetermined(fastq_dir_file):  # Exclude undetermined
+                        try:
+                            seglh_namingSample.from_string(fastq_dir_file)
+                            sample_name = [
+                                sample_name
+                                for sample_name in self.samplename_dict.keys()
+                                if sample_name in fastq_dir_file
+                            ]
+                            if sample_name:
+                                self.rf_obj.rf_loggers.sw.info(
+                                    self.rf_obj.rf_loggers.sw.log_msgs["sample_match"],
+                                    fastq_dir_file,
+                                    sample_name,
+                                )
+                            else:
+                                self.rf_obj.rf_loggers.sw.error(
+                                    self.rf_obj.rf_loggers.sw.log_msgs["sample_mismatch"],
+                                    fastq_dir_file,
+                                )
+                                sample_name = re.sub("R[0-9]_001.fastq.gz", "", fastq_dir_file)
+                                missing_samples.append(fastq_dir_file)
+                        except ValueError as exception:
                             self.rf_obj.rf_loggers.sw.error(
-                                self.rf_obj.rf_loggers.sw.log_msgs["sample_mismatch"],
+                                self.rf_obj.rf_loggers.sw.log_msgs["fastq_wrong_naming"],
                                 fastq_dir_file,
+                                exception,                            
                             )
-                            sample_name = re.sub("R[0-9]_001.fastq.gz", "", fastq_dir_file)
-                            missing_samples.append(fastq_dir_file)
-                    except ValueError as exception:
-                        self.rf_obj.rf_loggers.sw.error(
-                            self.rf_obj.rf_loggers.sw.log_msgs["fastq_wrong_naming"],
-                            fastq_dir_file,
-                            exception,                            
-                        )
-            else:
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["not_fastq"], fastq_dir_file
-                )
+                else:
+                    self.rf_obj.rf_loggers.sw.info(
+                        self.rf_obj.rf_loggers.sw.log_msgs["not_fastq"], fastq_dir_file
+                    )
         for sample_name in missing_samples:  # Add the sample to the sample_obj
             # Strip end off sample name
             sample_name = re.sub(r"_S[0-9]+_R[1-2]{1}_001.fastq.gz", '', sample_name)
@@ -1158,7 +1162,7 @@ class SampleObject(SWConfig):
         nexus_paths (dict):                 Dictionary of paths within the DNAnexus project that
                                             are required for building dx commands
         neg_control (bool):                 True if sample is a negative control, else False
-        reference_sample (bool):            True if sample is a reference sample, else False
+        pos_control (bool):                 True if sample is a reference sample, else False
         workflow_name (str):                Workflow name
         pannum (str):                       Panel number that matches a config-defined panel
                                             number, or None if pannum not valid
@@ -1173,7 +1177,7 @@ class SampleObject(SWConfig):
     Methods
         check_negative_control()
             Determine whether sample is a negative control
-        check_reference_sample()
+        check_pos_control()
             Check if sample is a reference sample by checking if reference ids are
             present in fastq name
         get_workflow_name()
@@ -1200,17 +1204,17 @@ class SampleObject(SWConfig):
         return_oncology_query()
             Create a query per sample using IDs from the samplename (3rd and 4th) elements
         build_sample_dx_run_cmd()
-            Build sample-level dx run commands for the workflow and congenica upload
+            Build sample-level dx run commands for the workflow and Congenica upload
         create_wes_cmd()
             Construct dx run command for WES workflow
         return_decision_support_cmd()
             Construct decision support tool command for decision support tool upload where required by
             calling build_congenica_sftp_cmd, build_congenica_cmd or build_qiagen_upload_cmd
         build_congenica_sftp_cmd()
-            Build the command to write the congenica upload dx run command for the SFTP
+            Build the command to write the Congenica upload dx run command for the SFTP
             app to the decision support tool upload bash script
         build_congenica_cmd()
-            Build the command to write the congenica upload dx run command to the decision
+            Build the command to write the Congenica upload dx run command to the decision
             support tool upload bash script
         build_qiagen_upload_cmd()
             Build the command to write the qiagen upload command to the decisions support
@@ -1254,7 +1258,7 @@ class SampleObject(SWConfig):
         self.pipeline = pipeline
         self.nexus_paths = nexus_paths
         self.neg_control = self.check_negative_control()
-        self.reference_sample = self.check_reference_sample()
+        self.pos_control = self.check_pos_control()
         self.workflow_name = self.get_workflow_name()
         self.pannum = self.find_pannum()
         self.panel_settings = SWConfig.PANEL_DICT[self.pannum]
@@ -1276,13 +1280,16 @@ class SampleObject(SWConfig):
         Determine whether sample is a negative control
             :return (bool): True if sample is a negative control, else False
         """
-        ntcon_strings = ["00000", "NTCcon", "NTC000", "NC000"]
-        if any(identifier in self.sample_name for identifier in ntcon_strings):
+        if any(identifier in self.sample_name for identifier in SWConfig.NTCON_IDS):
+            self.rf_obj.rf_loggers.sw.info(
+                self.rf_obj.rf_loggers.sw.log_msgs["neg_control"],
+                self.sample_name,
+            )
             return True
         else:
             return False
 
-    def check_reference_sample(self) -> bool:
+    def check_pos_control(self) -> bool:
         """
         Check if sample is a reference sample by checking if reference
         ids are present in fastq name
@@ -1290,10 +1297,10 @@ class SampleObject(SWConfig):
         """
         if any(
             f"_{ref_sample_id}_" in self.sample_name
-            for ref_sample_id in SWConfig.REF_SAMPLE_IDS
+            for ref_sample_id in SWConfig.PSCON_IDS
         ):
             self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["reference_sample"],
+                self.rf_obj.rf_loggers.sw.log_msgs["pos_control"],
                 self.sample_name,
             )
             return True
@@ -1485,7 +1492,7 @@ class SampleObject(SWConfig):
 
     def build_sample_dx_run_cmd(self) -> Union[str, str]:
         """
-        Build sample-level dx run commands for the workflow and congenica upload
+        Build sample-level dx run commands for the workflow and Congenica upload
             :return workflow_cmd (str):                 Dx run command for the sample workflow
             :return decision_support_upload_cmd (str):  Cmd for running the script to generate
                                                         inputs to the decision support tool upload app
@@ -1519,7 +1526,7 @@ class SampleObject(SWConfig):
             :return (str):  Dx run command string
         """
         self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"], "WES", self.sample_name
+            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"], self.pipeline, self.sample_name
         )
         return " ".join(
             [
@@ -1542,16 +1549,16 @@ class SampleObject(SWConfig):
     def return_decision_support_cmd(self) -> Union[str, None]:
         """
         Construct decision support tool command for non-reference samples by calling build_congenica_sftp_cmd
-        or build_congenica_cmd. If a sample requires congenica upload, there are 2 methods. If congenica
+        or build_congenica_cmd. If a sample requires Congenica upload, there are 2 methods. If Congenica
         project ID is specified as 'SFTP' within the config it means the sample requires upload via SFTP,
         else if congenica_project ID is specified it means it can be uploaded using the upload agent. Both
-        congenica apps app take inputs in the format jobid.outputname which ensures the job doesn't run until
+        Congenica apps app take inputs in the format jobid.outputname which ensures the job doesn't run until
         the vcfs have been created. App inputs are created by a python script, which is called immediately
         before the app is set off, and the script output (app inputs) is captured by the variable $analysisid
-            :return (str | None):   Dx run commands (congenica input command, congenica upload command),
+            :return (str | None):   Dx run commands (Congenica input command, Congenica upload command),
                                     or None if sample is a reference sample
         """
-        if self.reference_sample:
+        if self.pos_control:
             decision_support_cmd = None
         else:
             self.rf_obj.rf_loggers.sw.info(
@@ -1581,12 +1588,12 @@ class SampleObject(SWConfig):
 
     def build_congenica_sftp_cmd(self) -> str:
         """
-        Build the command to write the congenica upload dx run command for the SFTP app to the decision
-        support tool upload bash script. This command is used to upload the sample to congenica using
-        the SFTP congenica upload app. Samples requiring upload by SFTP require patient-specific info
+        Build the command to write the Congenica upload dx run command for the SFTP app to the decision
+        support tool upload bash script. This command is used to upload the sample to Congenica using
+        the SFTP Congenica upload app. Samples requiring upload by SFTP require patient-specific info
         to be pre-added into Congenica by the scientists. Takes BAM and VCF inputs, and does not require
         project IDs, IR templates or name
-            :return (str):  Dx run command for the congenica upload (SFTP app)
+            :return (str):  Dx run command for the Congenica upload (SFTP app)
         """
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
@@ -1606,11 +1613,11 @@ class SampleObject(SWConfig):
 
     def build_congenica_cmd(self) -> str:
         """
-        Build the command to write the congenica upload dx run command to the decision support tool
-        upload bash script. This command is used to upload the sample to congenica using the standard
-        congenica upload app. Takes BAM and VCF inputs, along with config-specified inputs congenica
+        Build the command to write the Congenica upload dx run command to the decision support tool
+        upload bash script. This command is used to upload the sample to Congenica using the standard
+        Congenica upload app. Takes BAM and VCF inputs, along with config-specified inputs congenica
         project ID, credentials, IR template and sample name
-            :return (str):  Dx run command for the congenica upload (standard congenica upload app)
+            :return (str):  Dx run command for the Congenica upload (standard Congenica upload app)
         """
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
@@ -1665,7 +1672,7 @@ class SampleObject(SWConfig):
         """
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
-            "PIPE",
+            self.pipeline,
             self.sample_name,
         )
         # Specify instance type for human exome app
@@ -1732,7 +1739,7 @@ class SampleObject(SWConfig):
         prefix_str = (  # Set prefix as samplename
             f'{SWConfig.STAGE_INPUTS["pipe"]["happy_prefix"]}{self.sample_name}'
         )
-        if self.reference_sample:
+        if self.pos_control:
             skip_str = f'{SWConfig.STAGE_INPUTS["pipe"]["happy_skip"]}false'
         else:
             skip_str = f'{SWConfig.STAGE_INPUTS["pipe"]["happy_skip"]}true'
@@ -1799,7 +1806,7 @@ class SampleObject(SWConfig):
         """
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
-            "SNP",
+            self.pipeline,
             self.sample_name,
         )
         return " ".join(
@@ -1902,10 +1909,10 @@ class BuildDxCommands(SWConfig):
             the html_report output of the multiqc app in the format jobid:output_name
         return_sample_workflow_cmds()
             Return sample-level commands. This includes the sample workflow command,
-            and congenica input and upload commands if required for the sample type
+            and Congenica input and upload commands if required for the sample type
         return_analysis_id_cmd()
             Generates the command that runs the congenica_upload python script, and
-            captures the script output (the congenica upload app input string)
+            captures the script output (the Congenica upload app input string)
         return_wes_runwide_cmds()
             Collect runwide commands for WES runs as a list. This includes peddy
         create_peddy_cmd()
@@ -2001,7 +2008,7 @@ class BuildDxCommands(SWConfig):
         dx_cmd_list = [SWConfig.EMPTY_DEPENDS]
         dx_postprocessing_cmds = [SWConfig.EMPTY_DEPENDS]
         sambamba_cmds_list = []
-        # Remove base samplesheet as we only want to use split samplesheets
+        # Remove base SampleSheet as we only want to use split SampleSheets
         for tso_ss in self.rf_obj.tso_ss_list:
             if tso_ss != self.rf_obj.samplesheet_name:
                 dx_cmd_list.append(self.create_tso500_cmd(tso_ss))
@@ -2035,7 +2042,7 @@ class BuildDxCommands(SWConfig):
             if not self.samples_obj.samples_dict[sample_name]["neg_control"]:
                 sambamba_cmds_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
-            if "HD200" in sample_name:
+            if self.samples_obj.samples_dict[sample_name]["pos_control"]:
                 dx_postprocessing_cmds.append(
                     self.create_sompy_cmd(
                         sample_name,
@@ -2057,12 +2064,12 @@ class BuildDxCommands(SWConfig):
     def create_tso500_cmd(self, tso_ss: str) -> str:
         """
         Build dx run command for tso500 docker app
-            :param tso_ss (str):    TSO samplesheet
+            :param tso_ss (str):    TSO SampleSheet
             :return (str):          Dx run command for tso500 app
         """
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
-            "TSO500",
+            self.pipeline,
             tso_ss,
         )
         return " ".join(
@@ -2262,7 +2269,7 @@ class BuildDxCommands(SWConfig):
     def return_sample_workflow_cmds(self) -> list:
         """
         Return sample-level commands. This includes the sample workflow command,
-        and congenica input and upload commands if required for the sample type
+        and Congenica input and upload commands if required for the sample type
             :return cmd_list (list):    List of per-sample commands
         """
         cmd_list = [SWConfig.EMPTY_DEPENDS, SWConfig.EMPTY_GATK_DEPENDS]
@@ -2297,9 +2304,9 @@ class BuildDxCommands(SWConfig):
     def return_analysis_id_cmd(self) -> str:
         """
         Generates the command that runs the congenica_upload python script, and captures the script
-        output (the congenica upload app input string) congenica_upload support tool python script is run
+        output (the Congenica upload app input string) congenica_upload support tool python script is run
         after each dx run command, taking analysis and project name as input, and printing the required
-        inputs to the command line which are required by the congenica upload script ${JOB_ID} is a bash
+        inputs to the command line which are required by the Congenica upload script ${JOB_ID} is a bash
         variable which will be populated by when run on the command line. The python script has three
         inputs - the analysisID (${JOB_ID}), and -p is the DNAnexus project the analysis is running in
             :return (str):  Command that runs the congenica_upload python script and obtains
@@ -2474,7 +2481,7 @@ class BuildDxCommands(SWConfig):
         Build dx run command to run create_duty_csv app for the run. This creates a CSV
         file for use in downloading files to the trust network with the process_duty_csv
         script. It also sends an email denoting the run is ready for processing. The
-        input to the duty_csv app is the dnanexus project name, and the pan numbers for
+        input to the duty_csv app is the DNAnexus project name, and the pan numbers for
         tso samples, stg samples, and the custom panel whole capture for each core panel
             :return (str):  Dx run command for duty_csv app
         """

@@ -1,17 +1,17 @@
 # Decision Support Tool Inputs
 
-[congenica_inputs.py](congenica_inputs.py) prints the required inputs for the congenica upload app for a sample workflow in a string format.
+[congenica_inputs.py](congenica_inputs.py) prints the required inputs for the Congenica upload app for a sample workflow in a string format.
 
 Inputs are specified in the format executionid.output_name. The execution IDs for the relevant workflow stages are retrieved using dx describe with the workflow analysis ID and stage ID. 
 
-The script is currently configured to return the IDs for the BAM and VCF files for WES and Custom Panels samples. It prints the output in the correct format for the input arguments for the congenica upload app.
+The script is currently configured to return the IDs for the BAM and VCF files for WES and Custom Panels samples. It prints the output in the correct format for the input arguments for the Congenica upload app.
 
 ## Protocol
 
-1. Creates a file dictionary of congenica upload inputs if the workflow is a workflow that required congenica upload
+1. Creates a file dictionary of Congenica upload inputs if the workflow is a workflow that required Congenica upload
 2. Sets the commands for retrieving the job ID for the VCF and BAM workflow stages
 3. Gets the job IDs for the VCF and BAM workflow stages using the created commands 
-4. Creates the input string for the congenica app using the obtained job IDs and DNAnexus job output names
+4. Creates the input string for the Congenica app using the obtained job IDs and DNAnexus job output names
 5. Prints the input string
 
 ## Configuration
@@ -27,9 +27,9 @@ The script can be either imported as a module, or run directly from the command 
 ### Command line
 
 ```bash
-usage: Called from within the dx run commands to produce part of the dx run string for the congenica uploads
+usage: Called from within the dx run commands to produce part of the dx run string for the Congenica uploads
 
-Given an analysis-id, will obtain the job ids for bam and vcf files for upload to congenica
+Given an analysis-id, will obtain the job ids for bam and vcf files for upload to Congenica
 
 options:
   -h, --help            show this help message and exit

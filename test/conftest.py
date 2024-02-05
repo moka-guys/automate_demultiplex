@@ -26,7 +26,7 @@ temp_runfolderdir = os.path.join(temp_testfiles_dir, "test_runfolders/")
 # temp_samplesheet_path = os.path.join(temp_samplesheets_dir, "%s_SampleSheet.csv")
 temp_log_dir = os.path.join(tempdir, "automate_demultiplexing_logfiles")
 
-# Temp directory for samplesheet validator samplesheet test cases
+# Temp directory for SampleSheet validator SampleSheet test cases
 sv_samplesheet_temp_dir = os.path.join(tempdir, "samplesheets")
 
 

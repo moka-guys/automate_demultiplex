@@ -57,7 +57,7 @@ When run as a module import, the above inputs are supplied in the following form
 the matching project in DNAnexus using the runfolder name**
 
 ```python
-# Dictionary containing dnanexus project name and id
+# Dictionary containing DNAnexus project name and id
 nexus_identifiers = {
     "proj_name": project_name,
     "proj_id": project_id,

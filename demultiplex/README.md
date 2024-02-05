@@ -17,11 +17,11 @@ It contains 2 classes:
 - Initiate runfolder processing per identified runfolder, on runfolders that have an absent bcl2fastq2 logfile (`bcl2fastq2_output.log` - denotes that demultiplexing has been performed). bcl2fastq2 stdout and stderr streams are written to this file
 3. If criteria 2 is met, `DemultiplexRunfolder().setoff_workflow()` is called which performs a set of further checks on the runfolder to determine whether demultiplexing is required:
 - Sequencing is complete (presence of `RTAComplete.txt` file created by the sequencer when sequencing is complete)
-- Samplesheet does not contain any errors that would cause demultiplexing to fail - checks are carried out by the [samplesheet_validator.py](../samplesheet_validator/samplesheet_validator.py) module which makes use of the [seglh-naming](https://github.com/moka-guys/seglh-naming) library. The absence of error messages for specific tests is checked:
+- SampleSheet does not contain any errors that would cause demultiplexing to fail - checks are carried out by the [samplesheet_validator.py](../samplesheet_validator/samplesheet_validator.py) module which makes use of the [seglh-naming](https://github.com/moka-guys/seglh-naming) library. The absence of error messages for specific tests is checked:
    * Sample sheet is present
-   * Samplesheet name is valid (validates using the [seglh-naming](https://github.com/moka-guys/seglh-naming) library)
-   * Samplesheet is not empty
-   * Samplesheet contains the minimum expected `[Data]` section headers: `Sample_ID, Sample_Name, index`
+   * SampleSheet name is valid (validates using the [seglh-naming](https://github.com/moka-guys/seglh-naming) library)
+   * SampleSheet is not empty
+   * SampleSheet contains the minimum expected `[Data]` section headers: `Sample_ID, Sample_Name, index`
    * Sample name does not contain any illegal characters (in case this was not rectified after the early warning checks as this will cause bcl2fastq2 to fail)
 - If the sequencer does not require an integrity check, it skips straight to `run_demultiplexing()`
 - If the sequencer does require an integrity check the following requirements must be met for `run_demultiplexing()` to be called:

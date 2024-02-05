@@ -1,7 +1,7 @@
 """
 Main entry point for congenica_inputs module.
 
-Prints inputs required by congenica upload apps on DNAnexus.
+Prints inputs required by Congenica upload apps on DNAnexus.
 See README and docstrings for further details
 """
 import subprocess
@@ -27,7 +27,7 @@ def get_arguments():
         ),
         usage=(
             "Called from within the dx run commands to produce part of the "
-            "dx run string for the congenica uploads"
+            "dx run string for the Congenica uploads"
         ),
     )
     parser.add_argument(

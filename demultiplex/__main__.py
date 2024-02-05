@@ -20,7 +20,7 @@ def get_arguments():
             "Used to demultiplex a runfolder using the demultiplexing script."
             "If given an input runfolder name, will process just that single "
             "runfolder. Runfolder input should only be used for processing "
-            "development runs as it will bypass samplesheet errors and run "
+            "development runs as it will bypass SampleSheet errors and run "
             "demultiplexing anyway"
         ),
         usage="Used to demultiplex a runfolder using the demultiplexing script"
@@ -32,7 +32,7 @@ def get_arguments():
         required=False,
         help=(
             "Runfolder name for script to process. This argument should only "
-            "be used for processing development runs as it will bypass samplesheet "
+            "be used for processing development runs as it will bypass SampleSheet "
             "errors and run demultiplexing anyway"
         ),
     )

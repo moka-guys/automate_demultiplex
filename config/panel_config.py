@@ -39,8 +39,8 @@ required for analysis of samples with that pan number
     test_number                     R or M number, or false if no specific number
     congenica_project               False = no upload. Number = normal. SFTP =
                                     sftp upload
-    congenica_credentials           'Viapath' or 'StG'. False = congenica app not used
-    congenica_IR_template           'priority' or 'non-priority'. False = congenica app
+    congenica_credentials           'Viapath' or 'StG'. False = Congenica app not used
+    congenica_IR_template           'priority' or 'non-priority'. False = Congenica app
                                     not used
     polyedge                        False if app not required, subdictionary containing
                                     app inputs if it is required
@@ -56,7 +56,7 @@ required for analysis of samples with that pan number
 
 TOOLS_PROJECT = "project-ByfFPz00jy1fk6PjpZ95F27J"  # 001_ToolsReferenceData
 MASKED_REFERENCE = f"{TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q"  # hs37d5_Pan4967.bwa-index.tar.gz
-POLYEDGE_INPUTS = {  # Inputs for the polyedge dnanexus app command
+POLYEDGE_INPUTS = {  # Inputs for the polyedge DNAnexus app command
     "MSH2": {
         "gene": "MSH2",
         "chrom": 2,
@@ -121,7 +121,7 @@ class PanelConfig:
             "panel_name": "vcp1",
             "pipeline": "pipe",
             "sample_prefix": "NGS",
-            "runtype": "CP",
+            "runtype": "VCP",
             "capture_pan_num": "Pan4399",
             "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4397data.bed",
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4397dataSambamba.bed",
@@ -157,7 +157,7 @@ class PanelConfig:
             "panel_name": "vcp3",
             "pipeline": "pipe",
             "sample_prefix": "NGS",
-            "runtype": "CP",
+            "runtype": "VCP",
             "capture_pan_num": "Pan4362",
             "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4995dataSambamba.bed",

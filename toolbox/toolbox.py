@@ -282,10 +282,10 @@ class RunfolderObject(ToolboxConfig):
                                                 %Y%m%d_%H%M%S}")
         runfolder_name (str):                   Runfolder name string
         runfolderpath (str):                    Runfolder path
-        samplesheet_name (str):                 Name of runfolder samplesheet
+        samplesheet_name (str):                 Name of runfolder SampleSheet
         rtacompletefile_path (str):             Sequencing finished filepath (within runfolder)
-        samplesheet_path (str):                 Path to samplesheet in samplesheets dir
-        runfolder_samplesheet_path (str):       Runfolder samplesheet path (within runfolder)
+        samplesheet_path (str):                 Path to SampleSheet in SampleSheets dir
+        runfolder_samplesheet_path (str):       Runfolder SampleSheets path (within runfolder)
         checksumfile_path (str):                md5 checksum (integrity check) file path (within runfolder)
         bcl2fastqlog_file (str):                bcl2fastq2 logfile path (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
@@ -301,7 +301,7 @@ class RunfolderObject(ToolboxConfig):
         decision_support_upload_cmds (str):     Decision support upload commands for runfolder (within logfiles dir)
         proj_creation_script (str):             DNAnexus project creation bash script (within logfiles dir)
         decision_support_tool_logfile (str):    Decision support tool inputs script logfile (within logfiles dir)
-        samplesheet_validator_logfile (str):    Samplesheet validator script logfile (within logfiles dir)
+        samplesheet_validator_logfile (str):    SampleSheet validator script logfile (within logfiles dir)
         logfiles_config (dict):                 Contains all runfolder log files
         logfiles_to_upload (list):              All logfiles that require upload tozzzDNAnexus
         logfile (path):                         One per runfolder logfile
@@ -327,7 +327,7 @@ class RunfolderObject(ToolboxConfig):
         self.samplesheet_name = f"{self.runfolder_name}_SampleSheet.csv"
         self.rtacompletefile_path = os.path.join(
             self.runfolderpath,
-            "RTAComplete.txt",  # Sequencing complete file
+            ToolboxConfig.FLAG_FILES["seq_complete"]
         )
         self.samplesheet_path = os.path.join(
             ToolboxConfig.RUNFOLDERS, "samplesheets", self.samplesheet_name
@@ -337,22 +337,22 @@ class RunfolderObject(ToolboxConfig):
         )
         self.checksumfile_path = os.path.join(
             self.runfolderpath,
-            "md5checksum.txt",  # File holding checksum results
+            ToolboxConfig.FLAG_FILES["md5checksum"]
         )
         self.sscheck_flagfile_path = os.path.join(
             self.runfolderpath,
-            "sscheck_flagfile.txt"
+            ToolboxConfig.FLAG_FILES["sscheck_flag"]
         )
         self.bcl2fastqlog_file = os.path.join(
             self.runfolderpath,
-            "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
+            ToolboxConfig.FLAG_FILES["bcl2fastqlog"]
         )
         self.fastq_dir_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FASTQ_DIRS["fastqs"]
         )
         self.upload_agent_logfile = os.path.join(
             self.runfolderpath,
-            "DNANexus_upload_started.txt",  # Holds UA output
+            ToolboxConfig.FLAG_FILES["upload_started"]
         )
         self.bcl2fastqstats_file = os.path.join(
             self.runfolderpath,

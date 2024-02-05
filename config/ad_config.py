@@ -80,6 +80,7 @@ SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
+GATK_DOCKER = "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
 DEMULTIPLEXLOG_TSO500_MSG = "TSO500 run. Does not need demultiplexing locally"
 DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
@@ -149,8 +150,7 @@ NEXUS_IDS = {
 }
 NEXUS_IDS["WORKFLOWS"]["archerdx"] = NEXUS_IDS["APPS"]["fastqc"]
 
-APP_INPUTS = {
-    # Inputs for apps run outside of workflows
+APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     "tso500": {
         "docker": "-iTSO500_ruo=",
         "samplesheet": "-isamplesheet=",
@@ -170,7 +170,9 @@ APP_INPUTS = {
             "-iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s"
         ),
     },
-    "peddy": {"project_name": "-iproject_for_peddy="},
+    "peddy": {
+        "project_name": "-iproject_for_peddy="
+    },
     "sompy": {
         "truth_vcf": f"-itruthVCF={NEXUS_IDS['FILES']['sompy_truth_vcf']}",
         "query_vcf": "-iqueryVCF=",
@@ -323,7 +325,7 @@ class CongenicaInputsConfig(PanelConfig):
     NEXUS_IDS = NEXUS_IDS
     TIMESTAMP = TIMESTAMP
     DECISION_SUPPORT_INPUTS = {
-        # Used by the script to build the input commands for the congenica upload app
+        # Used by the script to build the input commands for the Congenica upload app
         "pipe": {
             "vcf": {
                 "stage": NEXUS_IDS["STAGES"]["pipe"]["filter_vcf"],
@@ -375,7 +377,7 @@ class DemultiplexConfig(PanelConfig):
         "--sample-sheet /mnt/run/%s --no-lane-splitting"
     )
     CD_CMD = (
-        "sudo docker run --rm -v %s:/input_run broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics "
+        f"sudo docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
     
@@ -461,10 +463,16 @@ class SWConfig(PanelConfig):
         "wes": "update NGSTest set PipelineVersion = %s, StatusID = %s where dna in ('%s') and StatusID = %s",
         "oncology": "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values (%s)",
     }
-    REF_SAMPLE_IDS = [
-        # NA12878 identifiers to exclude from congenica upload
+    PSCON_IDS = [
         "NA12878",
-        "136819",
+        "136819",  # NA12878
+        "HD200",  # Seracare v4 tumour fusion reference material
+    ]
+    NTCON_IDS = [
+        "00000",
+        "NTCcon",
+        "NTC000",
+        "NC000"
     ]
     SQL_IDS = {
         # Moka IDs for generating SQLs to update the Moka database (audit trail)
@@ -550,6 +558,13 @@ class ToolboxConfig:
         "phasing_metrics_suffix": ".illumina_phasing_metrics",
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
     }
+    FLAG_FILES = {
+        "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
+        "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs    
+        "md5checksum": "md5checksum.txt",  # File holding checksum results
+        "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
+        "seq_complete": "RTAComplete.txt",  # Sequencing complete file
+    }
     TEST_PROGRAMS_DICT = {
         "dx_toolkit": {
             "executable": "dx",
@@ -561,9 +576,7 @@ class ToolboxConfig:
         },
         "gatk_collect_lane_metrics": {
             "executable": "docker",
-            "test_cmd": (
-                "sudo docker run --rm broadinstitute/gatk:4.1.8.1 ./gatk CollectIlluminaLaneMetrics --version"
-            ),
+            "test_cmd": f"sudo docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
         },
         "bcl2fastq2": {
             "executable": "docker",
