@@ -39,7 +39,7 @@ required for analysis of samples with that pan number
     test_number                     R or M number, or false if no specific number
     congenica_project               False = no upload. Number = normal. SFTP =
                                     sftp upload
-    congenica_credentials           'Viapath' or 'StG'. False = Congenica app not used
+    congenica_credentials           'Synnovis' or 'StG'. False = Congenica app not used
     congenica_IR_template           'priority' or 'non-priority'. False = Congenica app
                                     not used
     polyedge                        False if app not required, subdictionary containing
@@ -65,7 +65,7 @@ POLYEDGE_INPUTS = {  # Inputs for the polyedge DNAnexus app command
     }
 }
 CONGENICA_CREDENTIALS = {
-    "viapath": {
+    "synnovis": {
         "congenica_credentials": "Viapath",
         "congenica_IR_template": "priority",
     },
@@ -255,11 +255,11 @@ class PanelConfig:
         "Pan4009": {  # SNP
             **CAPTURE_PANEL_DICT["snp"],
         },
-        "Pan2835": {  # TWIST WES (Viapath)
+        "Pan2835": {  # TWIST WES (Synnovis)
             **CAPTURE_PANEL_DICT["wes"],
             "congenica_project": "SFTP",
         },
-        "Pan4940": {  # TWIST WES for EB lab (Viapath)
+        "Pan4940": {  # TWIST WES for EB lab (Synnovis)
             **CAPTURE_PANEL_DICT["wes_eb"],
             "congenica_project": 4697,
             "congenica_credentials": "Viapath",
@@ -294,9 +294,9 @@ class PanelConfig:
             "throughput": "high",
             "drylab_dnanexus_id": "BSPS_MD",
         },
-        "Pan5007": {  # LRPCR R207 (Viapath) - PMS2
+        "Pan5007": {  # LRPCR R207 (Synnovis) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R207",
             "congenica_project": 9986,
         },
@@ -306,9 +306,9 @@ class PanelConfig:
             "test_number": "R207",
             "congenica_project": 10010,
         },
-        "Pan5009": {  # LRPCR R208 (Viapath) - CHEK2
+        "Pan5009": {  # LRPCR R208 (Synnovis) - CHEK2
             **CAPTURE_PANEL_DICT["lrpcr"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R208",
             "congenica_project": 9984,
         },
@@ -318,9 +318,9 @@ class PanelConfig:
             "test_number": "R208",
             "congenica_project": 10009,
         },
-        "Pan5011": {  # LRPCR R210 (Viapath) - PMS2
+        "Pan5011": {  # LRPCR R210 (Synnovis) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R210",
             "congenica_project": 9981,
         },
@@ -331,9 +331,9 @@ class PanelConfig:
             "congenica_credentials": "STG",
             "congenica_IR_template": "non-priority",
         },
-        "Pan5013": {  # LRPCR R211 (Viapath) - PMS2
+        "Pan5013": {  # LRPCR R211 (Synnovis) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R211",
             "congenica_project": 9982,
         },
@@ -344,125 +344,125 @@ class PanelConfig:
             "congenica_credentials": "STG",
             "congenica_IR_template": "non-priority",
         },
-        "Pan5015": {  # LRPCR R71 (Viapath) - SMN1
+        "Pan5015": {  # LRPCR R71 (Synnovis) - SMN1
             **CAPTURE_PANEL_DICT["lrpcr"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R71",
             "congenica_project": 9547,
         },
-        "Pan5016": {  # LRPCR R239 (Viapath) - IKBKG
+        "Pan5016": {  # LRPCR R239 (Synnovis) - IKBKG
             **CAPTURE_PANEL_DICT["lrpcr"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R239",
             "congenica_project": 9985,
         },
-        "Pan4119": {  # VCP1 R134 (Viapath) - FH small panel
+        "Pan4119": {  # VCP1 R134 (Synnovis) - FH small panel
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R134",
             "congenica_project": 4664,
             "FH": True,
             "ed_cnvcalling_bedfile": "Pan4702",
         },
-        "Pan4121": {  # VCP1 R184 (Viapath) - Cystic Fibrosis
+        "Pan4121": {  # VCP1 R184 (Synnovis) - Cystic Fibrosis
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R184",
             "congenica_project": 4862,
             "ed_cnvcalling_bedfile": "Pan4703",
         },
-        "Pan4122": {  # VCP1 R25 (Viapath) - FGFR. CNV not required
+        "Pan4122": {  # VCP1 R25 (Synnovis) - FGFR. CNV not required
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R25",
             "congenica_project": 5291,
         },
-        "Pan4125": {  # VCP1 R73 (Viapath) - Duchenne or Becker muscular dystrophy
+        "Pan4125": {  # VCP1 R73 (Synnovis) - Duchenne or Becker muscular dystrophy
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R73",
             "congenica_project": 4861,
             "ed_cnvcalling_bedfile": "Pan4622",
         },
-        "Pan4126": {  # VCP1 R337 (Viapath) - CADASIL. CNV not required
+        "Pan4126": {  # VCP1 R337 (Synnovis) - CADASIL. CNV not required
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R337",
             "congenica_project": 4865,
         },
-        "Pan4974": {  # VCP1 R112 (Viapath) - Molecular Haemostasis Factor II deficiency
+        "Pan4974": {  # VCP1 R112 (Synnovis) - Molecular Haemostasis Factor II deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R112",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4985",
         },
-        "Pan4975": {  # VCP1 R115 (Viapath) - Molecular Haemostasis Factor V deficiency
+        "Pan4975": {  # VCP1 R115 (Synnovis) - Molecular Haemostasis Factor V deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R115",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4986",
         },
-        "Pan4976": {  # VCP1 R116 (Viapath) - Molecular Haemostasis Factor VII deficiency
+        "Pan4976": {  # VCP1 R116 (Synnovis) - Molecular Haemostasis Factor VII deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R116",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4987",
         },
-        "Pan4977": {  # VCP1 R117 (Viapath) - Molecular Haemostasis Factor VIII deficiency
+        "Pan4977": {  # VCP1 R117 (Synnovis) - Molecular Haemostasis Factor VIII deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R117",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4988",
         },
-        "Pan4978": {  # VCP1 R118 (Viapath) - Molecular Haemostasis Factor IX deficiency
+        "Pan4978": {  # VCP1 R118 (Synnovis) - Molecular Haemostasis Factor IX deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R118",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4989",
         },
-        "Pan4979": {  # VCP1 R119 (Viapath) - Molecular Haemostasis Factor X deficiency
+        "Pan4979": {  # VCP1 R119 (Synnovis) - Molecular Haemostasis Factor X deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R119",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4990",
         },
-        "Pan4980": {  # VCP1 R120 (Viapath) - Molecular Haemostasis Factor XI deficiency
+        "Pan4980": {  # VCP1 R120 (Synnovis) - Molecular Haemostasis Factor XI deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R120",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4991",
         },
-        "Pan4981": {  # VCP1 R121 (Viapath) - Molecular Haemostasis von Willebrand disease
+        "Pan4981": {  # VCP1 R121 (Synnovis) - Molecular Haemostasis von Willebrand disease
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R121",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4708",
         },
-        "Pan4982": {  # VCP1 R122 (Viapath) - Molecular Haemostasis Factor XIII deficiency
+        "Pan4982": {  # VCP1 R122 (Synnovis) - Molecular Haemostasis Factor XIII deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R122",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4992",
         },
-        "Pan4983": {  # VCP1 R123 (Viapath) - Molecular Haemostasis Combined vitamin K-dependent clotting factor deficiency
+        "Pan4983": {  # VCP1 R123 (Synnovis) - Molecular Haemostasis Combined vitamin K-dependent clotting factor deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R123",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4993",
         },
-        "Pan4984": {  # VCP1 R124 (Viapath) - Molecular Haemostasis Combined factor V and VIII deficiency
+        "Pan4984": {  # VCP1 R124 (Synnovis) - Molecular Haemostasis Combined factor V and VIII deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R124",
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4994",
@@ -502,14 +502,14 @@ class PanelConfig:
             "test_number": "R337",
             "congenica_project": 4203,
         },
-        "Pan4149": {  # VCP2 R208 (Viapath) - BRCA
+        "Pan4149": {  # VCP2 R208 (Synnovis) - BRCA
             **CAPTURE_PANEL_DICT["vcp2"],
-            **CONGENICA_CREDENTIALS["viapath"],
+            **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R208",
             "congenica_project": 4665,
             "ed_cnvcalling_bedfile": "Pan5158",
         },
-        "Pan4150": {  # VCP2 R207 (Viapath) - ovarian cancer
+        "Pan4150": {  # VCP2 R207 (Synnovis) - ovarian cancer
             **CAPTURE_PANEL_DICT["vcp2"],
             "test_number": "R207",
             "congenica_project": 4864,
@@ -518,7 +518,7 @@ class PanelConfig:
             "polyedge": POLYEDGE_INPUTS["MSH2"],
             "ed_cnvcalling_bedfile": "Pan5152",
         },
-        "Pan4129": {  # VCP2 R210 (Viapath) - Inherited MMR deficiency (Lynch syndrome)
+        "Pan4129": {  # VCP2 R210 (Synnovis) - Inherited MMR deficiency (Lynch syndrome)
             **CAPTURE_PANEL_DICT["vcp2"],
             "test_number": "R210",
             "congenica_project": 5094,
@@ -527,7 +527,7 @@ class PanelConfig:
             "polyedge": POLYEDGE_INPUTS["MSH2"],
             "ed_cnvcalling_bedfile": "Pan5206",
         },
-        "Pan4964": {  # VCP2 R259 (Viapath) - Nijmegen breakage syndrome
+        "Pan4964": {  # VCP2 R259 (Synnovis) - Nijmegen breakage syndrome
             **CAPTURE_PANEL_DICT["vcp2"],
             "test_number": "R259",
             "congenica_project": 9118,
@@ -535,7 +535,7 @@ class PanelConfig:
             "congenica_IR_template": "priority",
             "ed_cnvcalling_bedfile": "Pan5161",
         },
-        "Pan4130": {  # VCP2 R211 (Viapath) - Inherited polyposis and early onset colorectal cancer - germline testing
+        "Pan4130": {  # VCP2 R211 (Synnovis) - Inherited polyposis and early onset colorectal cancer - germline testing
             **CAPTURE_PANEL_DICT["vcp2"],
             "test_number": "R211",
             "congenica_project": 5095,
@@ -544,7 +544,7 @@ class PanelConfig:
             "polyedge": POLYEDGE_INPUTS["MSH2"],
             "ed_cnvcalling_bedfile": "Pan5193",
         },
-        "Pan5121": {  # VCP2 R430 (Viapath) - Inherited prostate cancer
+        "Pan5121": {  # VCP2 R430 (Synnovis) - Inherited prostate cancer
             **CAPTURE_PANEL_DICT["vcp2"],
             "test_number": "R430",
             "congenica_project": 12814,
@@ -561,7 +561,7 @@ class PanelConfig:
             "congenica_IR_template": "non-priority",
             "ed_cnvcalling_bedfile": "Pan5162",
         },
-        "Pan5186": {  # VCP2 R414 (Viapath) - APC associated Polyposis 
+        "Pan5186": {  # VCP2 R414 (Synnovis) - APC associated Polyposis 
             **CAPTURE_PANEL_DICT["vcp2"],
             "test_number": "R414",
             "congenica_project": 5095,
@@ -569,7 +569,7 @@ class PanelConfig:
             "congenica_IR_template": "priority",
             "ed_cnvcalling_bedfile": "Pan5162",
         },
-        "Pan5143": {  # VCP2 R444.1 (Viapath) - Breast cancer (PARP treatment)
+        "Pan5143": {  # VCP2 R444.1 (Synnovis) - Breast cancer (PARP treatment)
             **CAPTURE_PANEL_DICT["vcp2"],
             "test_number": "R444.1",
             "congenica_project": 14563,
@@ -577,7 +577,7 @@ class PanelConfig:
             "congenica_IR_template": "priority",
             "ed_cnvcalling_bedfile": "Pan5183",
         },
-        "Pan5147": {  # VCP2 R444.2 (Viapath) - Prostate cancer (PARP treatment)
+        "Pan5147": {  # VCP2 R444.2 (Synnovis) - Prostate cancer (PARP treatment)
             **CAPTURE_PANEL_DICT["vcp2"],
             "test_number": "R444.2",
             "congenica_project": 14564,
@@ -645,7 +645,7 @@ class PanelConfig:
             "polyedge": POLYEDGE_INPUTS["MSH2"],
             "ed_cnvcalling_bedfile": "Pan5193",
         },
-        "Pan4145": {  # VCP3 R79 (Viapath) - Congenital muscular dystrophy
+        "Pan4145": {  # VCP3 R79 (Synnovis) - Congenital muscular dystrophy
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R79",
             "congenica_project": 4666,
@@ -653,7 +653,7 @@ class PanelConfig:
             "congenica_IR_template": "priority",
             "ed_cnvcalling_bedfile": "Pan5168",
         },
-        "Pan4146": {  # VCP3 R81 (Viapath) - Congenital myopathy
+        "Pan4146": {  # VCP3 R81 (Synnovis) - Congenital myopathy
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R81",
             "congenica_project": 4666,
@@ -661,42 +661,42 @@ class PanelConfig:
             "congenica_IR_template": "priority",
             "ed_cnvcalling_bedfile": "Pan5170",
         },
-        "Pan4132": {  # VCP3 R56 (Viapath) - Adult onset dystonia, chorea or related movement disorder. CNV not required
+        "Pan4132": {  # VCP3 R56 (Synnovis) - Adult onset dystonia, chorea or related movement disorder. CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R56",
             "congenica_project": 5092,
             "congenica_credentials": "Viapath",
             "congenica_IR_template": "priority",
         },
-        "Pan4134": {  # VCP3 R57 (Viapath) - Childhood onset dystonia, chorea or related movement disorder. CNV not required
+        "Pan4134": {  # VCP3 R57 (Synnovis) - Childhood onset dystonia, chorea or related movement disorder. CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R57",
             "congenica_project": 5092,
             "congenica_credentials": "Viapath",
             "congenica_IR_template": "priority",
         },
-        "Pan4136": {  # VCP3 R58 (Viapath) - Adult onset neurodegenerative disorder. CNV not required
+        "Pan4136": {  # VCP3 R58 (Synnovis) - Adult onset neurodegenerative disorder. CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R58",
             "congenica_project": 5092,
             "congenica_credentials": "Viapath",
             "congenica_IR_template": "priority",
         },
-        "Pan4137": {  # VCP3 R60 (Viapath) - Adult onset hereditary spastic paraplegia. CNV not required
+        "Pan4137": {  # VCP3 R60 (Synnovis) - Adult onset hereditary spastic paraplegia. CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R60",
             "congenica_project": 5092,
             "congenica_credentials": "Viapath",
             "congenica_IR_template": "priority",
         },
-        "Pan4138": {  # VCP3 R62 (Viapath) - Adult onset leukodystrophy. CNV not required
+        "Pan4138": {  # VCP3 R62 (Synnovis) - Adult onset leukodystrophy. CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R62",
             "congenica_project": 5092,
             "congenica_credentials": "Viapath",
             "congenica_IR_template": "priority",
         },
-        "Pan4143": {  # VCP3 R66 (Viapath) - Paroxysmal central nervous system disorders
+        "Pan4143": {  # VCP3 R66 (Synnovis) - Paroxysmal central nervous system disorders
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R66",
             "congenica_project": 5092,
@@ -704,21 +704,21 @@ class PanelConfig:
             "congenica_IR_template": "priority",
             "ed_cnvcalling_bedfile": "Pan5174",
         },
-        "Pan4144": {  # VCP3 R78 (Viapath) - Hereditary neuropathy or pain disorders. CNV not required
+        "Pan4144": {  # VCP3 R78 (Synnovis) - Hereditary neuropathy or pain disorders. CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R78",
             "congenica_project": 5092,
             "congenica_credentials": "Viapath",
             "congenica_IR_template": "priority",
         },
-        "Pan4151": {  # VCP3 R82 (Viapath) - Limb girdle muscular dystrophies, myofibrillar myopathies and distal myopathies. CNV not required
+        "Pan4151": {  # VCP3 R82 (Synnovis) - Limb girdle muscular dystrophies, myofibrillar myopathies and distal myopathies. CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R82",
             "congenica_project": 5092,
             "congenica_credentials": "Viapath",
             "congenica_IR_template": "priority",
         },
-        "Pan4314": {  # VCP3 R229 (Viapath) - Confirmed Fanconi anaemia or Bloom syndrome
+        "Pan4314": {  # VCP3 R229 (Synnovis) - Confirmed Fanconi anaemia or Bloom syndrome
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R229",
             "congenica_project": 5290,
@@ -726,7 +726,7 @@ class PanelConfig:
             "congenica_IR_template": "priority",
             "ed_cnvcalling_bedfile": "Pan5179",
         },
-        "Pan4351": {  # VCP3 R227 (Viapath) - Xeroderma pigmentosum, Trichothiodystrophy or Cockayne syndrome
+        "Pan4351": {  # VCP3 R227 (Synnovis) - Xeroderma pigmentosum, Trichothiodystrophy or Cockayne syndrome
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R227",
             "congenica_project": 5522,
@@ -734,7 +734,7 @@ class PanelConfig:
             "congenica_IR_template": "priority",
             "ed_cnvcalling_bedfile": "Pan5177",
         },
-        "Pan4387": {  # VCP3 R90 (Viapath) - Bleeding and platelet disorders
+        "Pan4387": {  # VCP3 R90 (Synnovis) - Bleeding and platelet disorders
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R90",
             "congenica_project": 4699,
@@ -742,7 +742,7 @@ class PanelConfig:
             "congenica_IR_template": "priority",
             "ed_cnvcalling_bedfile": "Pan5171",
         },
-        "Pan4390": {  # VCP3 R97 (Viapath) - Thrombophilia with a likely monogenic cause
+        "Pan4390": {  # VCP3 R97 (Synnovis) - Thrombophilia with a likely monogenic cause
             **CAPTURE_PANEL_DICT["vcp3"],
             "test_number": "R97",
             "congenica_project": 4699,
@@ -874,7 +874,7 @@ class PanelConfig:
     
     # tso_pannumbers should not include the dry lab pan number as we do not want to include
     # this as input to duty_csv as we do not want to download this to the trust network
-    TSO_VIAPATH_PANNUMBERS = [
+    TSO_SYNNOVIS_PANNUMBERS = [
         k
         for k, v in PANEL_DICT.items()
         if v["pipeline"] == "tso500" and v["dry_lab_only"] != None

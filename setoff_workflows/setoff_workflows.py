@@ -2496,7 +2496,7 @@ class BuildDxCommands(SWConfig):
                 f'{SWConfig.APP_INPUTS["duty_csv"]["project_name"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
                 f'{SWConfig.APP_INPUTS["duty_csv"]["tso_pannumbers"]}'
-                f'{",".join(SWConfig.TSO_VIAPATH_PANNUMBERS)}',
+                f'{",".join(SWConfig.TSO_SYNNOVIS_PANNUMBERS)}',
                 f'{SWConfig.APP_INPUTS["duty_csv"]["stg_pannumbers"]}'
                 f'{",".join(SWConfig.STG_PANNUMBERS)}',
                 f'{SWConfig.APP_INPUTS["duty_csv"]["cp_capture_pannos"]}'
