@@ -296,7 +296,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.rf_obj.add_runfolder_loggers()  # Add rf loggers to runfolder object
         self.demux_rf_logger = self.rf_obj.rf_loggers.demultiplex
         self.bcl2fastq2_rf_logger = self.rf_obj.rf_loggers.bcl2fastq2
-        self.ss_validator_logger = self.rf_obj.rf_loggers.ss_validator
         self.disallowed_sserrs = [
             "Samplesheet absent",
             "Samplesheet name invalid",

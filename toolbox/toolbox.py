@@ -416,7 +416,7 @@ class RunfolderObject(ToolboxConfig):
         self.samplesheet_validator_logfile = os.path.join(
             ToolboxConfig.AD_LOGDIR,
             "samplesheet_validator_script_logfiles",
-            f"{self.runfolder_name}_samplesheet_validator_script.log",
+            f"{self.runfolder_name}_samplesheet_validator.log",
         )
         self.logfiles_config = {
             "sw": self.sw_runfolder_logfile,
