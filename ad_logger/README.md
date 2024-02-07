@@ -42,7 +42,7 @@ self.script_logger.info(
 logfiles_config = {
     "sw": sw_runfolder_logfile,
     "demultiplex": demultiplex_runfolder_logfile,
-    "upload_agent": upload_agent_logfile,
+    "upload_agent": upload_flagfile,
     "backup": upload_runfolder_logfile,
     "project": proj_creation_script,
     "dx_run": runfolder_dx_run_script,

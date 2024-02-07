@@ -184,7 +184,7 @@ class SequencingRuns(SWConfig):
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
             :return True | None:    Returns True if runfolder already uploaded, else None
         """
-        if os.path.isfile(rf_obj.upload_agent_logfile):
+        if os.path.isfile(rf_obj.upload_flagfile):
             self.script_logger.info(self.script_logger.log_msgs["ua_file_present"])
             return True
         else:
@@ -841,9 +841,9 @@ class CollectRunfolderSamples(SWConfig):
                                 panel_number = pannum
                             samplename_dict[sample_name] = panel_number
             if samplename_dict:  # If samples identified
-                # Create upload agent file (prevents processing by other script runs)
+                # Create upload flag file (prevents processing by other script runs)
                 write_lines(
-                    self.rf_obj.rf_loggers.upload_agent.filepath,
+                    self.rf_obj.upload_flagfile,
                     "w",
                     f"{SWConfig.UPLOAD_STARTED_MSG}: {datetime.datetime.now()}",
                 )
@@ -1190,7 +1190,7 @@ class SampleObject(SWConfig):
         get_identifiers()
             For WES and PIPE samples, extract DNA number from sample name. For oncology
             samples, collect 3rd and 4th identifiers, setting secondary_identifier to
-            null if the sample is a negative control (these only have one identifier)
+            null if the sample is a negative or positive control (these only have one identifier)
         get_fastqs_dict()
             Collate R1 and R2 fastqs and their local and cloud paths into a dictionary.
         get_fastq_paths()
@@ -1293,7 +1293,7 @@ class SampleObject(SWConfig):
         """
         Check if sample is a reference sample by checking if reference
         ids are present in fastq name
-            :return (bool): True if reference sample, else None
+            :return (bool): True if reference sample, else False
         """
         if any(
             f"_{ref_sample_id}_" in self.sample_name
@@ -1363,19 +1363,19 @@ class SampleObject(SWConfig):
         """
         For WES and PIPE samples, extract DNA number from sample name. For oncology
         samples, collect 3rd and 4th identifiers, setting secondary_identifier to null
-        if the sample is a negative control (these only have one identifier)
+        if the sample is a positive or negative control (these only have one identifier)
             :return primary_identifier (str):    Primary sample identifier
             :return secondary_identifier (str):  Secondary sample identifier
         """
         if self.pipeline in ("wes", "pipe", "snp"):
             # Extract the dna number from sample name
             primary_identifier = self.sample_name.split("_")[2]
-            secondary_identifier = False
-        elif self.pipeline in ("tso500", "archerdx", "amp"):
+            secondary_identifier = False  # Secondary identifiers are not input to Moka
+        elif self.pipeline in ("tso500", "archerdx"):
             # Collect 3rd and 4th elements (identifiers)
             primary_identifier, secondary_identifier = self.sample_name.split("_")[2:4]
-            # negative controls only have one ID so set id2 to null
-            if self.neg_control:
+            # Negative and positive controls only have one ID so set id2 to null
+            if any(self.neg_control, self.pos_control):
                 secondary_identifier = "NULL"
         return primary_identifier, secondary_identifier
 
@@ -1456,7 +1456,7 @@ class SampleObject(SWConfig):
         """
         if self.pipeline in ("pipe", "snp"):
             query = self.return_rd_query()
-        elif self.pipeline in ("tso500", "archerdx", "amp"):
+        elif self.pipeline in ("tso500", "archerdx"):
             query = self.return_oncology_query()
         elif self.pipeline in "wes":
             # This query is constructed at the runfolder level, not the sample level
@@ -1849,6 +1849,7 @@ class SampleObject(SWConfig):
         """
         return {
             "sample_name": self.sample_name,
+            "pos_control": self.pos_control,
             "neg_control": self.neg_control,
             "identifiers": {
                 "primary": self.primary_identifier,
@@ -2074,10 +2075,10 @@ class BuildDxCommands(SWConfig):
         """
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
-            self.pipeline,
+            self.samples_obj.pipeline,
             tso_ss,
         )
-        return " ".join(
+        return " ".join( 
             [
                 f'{SWConfig.DX_CMDS["tso500"]}{self.rf_obj.runfolder_name}',
                 f'{SWConfig.APP_INPUTS["tso500"]["docker"]}'
@@ -2320,7 +2321,7 @@ class BuildDxCommands(SWConfig):
         Collect runwide commands for WES runs as a list. This includes peddy.
             :return cmd_list (list):    List of runwide commands for WES runs
         """
-        return [self.create_peddy_cmd()]
+        return [self.create_peddy_cmd(), SWConfig.UPLOAD_ARGS["depends_list"]]
 
     def create_peddy_cmd(self) -> str:
         """
@@ -2646,7 +2647,7 @@ class PipelineEmails(SWConfig):
         recipients = [SWConfig.MAIL_SETTINGS["binfx_recipient"]]
         if self.samples_obj.pipeline == "wes":
             recipients.extend(SWConfig.MAIL_SETTINGS["wes_samplename_emaillist"])
-        elif self.samples_obj.pipeline in ["amp", "tso500", "archerdx"]:
+        elif self.samples_obj.pipeline in ["tso500", "archerdx"]:
             recipients.append(SWConfig.MAIL_SETTINGS["oncology_ops_email"])
         self.email.send_email(
             recipients=recipients,

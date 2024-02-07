@@ -289,7 +289,7 @@ class RunfolderObject(ToolboxConfig):
         checksumfile_path (str):                md5 checksum (integrity check) file path (within runfolder)
         bcl2fastqlog_file (str):                bcl2fastq2 logfile path (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
-        upload_agent_logfile (str):             Upload agent logfile (within runfolder).
+        upload_flagfile (str):                  Flag file denoting upload has begun (within runfolder)
         bcl2fastqstats_file (str):              Bcl2fastq stats file (within runfolder)
         cluster_density_files (list):           List containing runfolder lane metrics
                                                 and phasing metrics file paths
@@ -350,7 +350,7 @@ class RunfolderObject(ToolboxConfig):
         self.fastq_dir_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FASTQ_DIRS["fastqs"]
         )
-        self.upload_agent_logfile = os.path.join(
+        self.upload_flagfile = os.path.join(
             self.runfolderpath,
             ToolboxConfig.FLAG_FILES["upload_started"]
         )
@@ -421,7 +421,7 @@ class RunfolderObject(ToolboxConfig):
         self.logfiles_config = {
             "sw": self.sw_runfolder_logfile,
             "demultiplex": self.demultiplex_runfolder_logfile,
-            "upload_agent": self.upload_agent_logfile,
+            "upload_flag": self.upload_flagfile,
             "backup": self.upload_runfolder_logfile,
             "project": self.proj_creation_script,
             "dx_run": self.runfolder_dx_run_script,
@@ -437,6 +437,7 @@ class RunfolderObject(ToolboxConfig):
             self.proj_creation_script,
             self.runfolder_dx_run_script,
             self.samplesheet_validator_logfile,
+            self.upload_runfolder_logfile,
         ]
 
     def add_runfolder_loggers(self) -> None:
