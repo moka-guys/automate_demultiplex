@@ -2271,7 +2271,10 @@ class BuildDxCommands(SWConfig):
         and Congenica input and upload commands if required for the sample type
             :return cmd_list (list):    List of per-sample commands
         """
-        cmd_list = [SWConfig.EMPTY_DEPENDS, SWConfig.EMPTY_GATK_DEPENDS]
+        cmd_list = [SWConfig.EMPTY_DEPENDS]
+        
+        if self.samples_obj.pipeline == "pipe":
+            cmd_list.append(SWConfig.EMPTY_GATK_DEPENDS)
         for sample_name in self.samples_obj.samples_dict.keys():
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["sample_identified"],
