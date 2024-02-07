@@ -473,7 +473,7 @@ class PanelConfig:
             "test_number": "R13",
             "congenica_project": 4203,
             "FH": True,
-            "ed_cnvcalvling_bedfile": "Pan4702",
+            "ed_cnvcalling_bedfile": "Pan4702",
         },
         "Pan4822": {  # VCP1 R184 (STG) - CF
             **CAPTURE_PANEL_DICT["vcp1"],

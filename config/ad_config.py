@@ -188,7 +188,7 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     },
     "ed_cnvcalling": {
         "readcount_rdata": "RData",
-        "readcount": "-ireadcount_file=${ED_JOB_ID}:",
+        "readcount": "-ireadcount_file=${ED_READCOUNT_JOB_ID}:",
         "bed": "-isubpanel_bed=",
         "proj": "-iproject_name=",
         "pannos": "-ibamfile_pannumbers=",
@@ -232,8 +232,10 @@ UPLOAD_ARGS = {
     # downstream apps to ensure the jobs don't start until those job ids have completed successfully
     "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
     "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOB_ID} "',
-    "depends_list_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
-    "depends_list_edreadcount": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${ED_JOB_ID} "',
+    "depends_list_gatk_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
+    "depends_list_edreadcount": 'DEPENDS_LIST_EDREADCOUNT="${DEPENDS_LIST} -d ${ED_READCOUNT_JOB_ID} "',
+    "depends_list_cnvcalling": 'DEPENDS_LIST_CNVCALLING="${DEPENDS_LIST} -d ${CNVCALLING_JOB_ID} "',
+    "depends_list_cnv_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_EDREADCOUNT} ${DEPENDS_LIST_CNVCALLING}"',
 }
 
 DX_CMDS = {
@@ -268,12 +270,12 @@ DX_CMDS = {
         f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
     "ed_readcount": (
-        f"ED_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
+        f"ED_READCOUNT_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
-    "ed_cnvcalling": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} --priority high -y {JOB_NAME_STR}",
+    "ed_cnvcalling": f"CNVCALLING_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} --priority high -y {JOB_NAME_STR}",
     "rpkm": (  # TODO soon to be removed
-        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['rpkm']} "
+        f"CNVCALLING_JOB_ID=$(dx run {NEXUS_IDS['APPS']['rpkm']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
     "congenica_sftp": (

@@ -1990,6 +1990,11 @@ class BuildDxCommands(SWConfig):
 
             # Get run-wide commands that apply to all sequencing runs
             dx_cmd_list.extend(self.return_multiqc_cmds())
+            
+            if self.samples_obj.pipeline == "pipe":
+                # We want duty_csv to also depend on the cnv calling jobs for PIPE workflows
+                dx_cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnv_recombined"])
+
             dx_cmd_list.append(self.create_duty_csv_cmd())
 
             self.rf_obj.rf_loggers.sw.info(
@@ -2139,7 +2144,7 @@ class BuildDxCommands(SWConfig):
                 f"{sample}/{sample}_MergedSmallVariants.genome.vcf",
                 SWConfig.APP_INPUTS["sompy"]["tso"],
                 SWConfig.APP_INPUTS["sompy"]["skip"],
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}coverage/{pannumber}',
+                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2241,17 +2246,10 @@ class BuildDxCommands(SWConfig):
             "upload multiqc",
             self.rf_obj.runfolder_name,
         )
-        if self.samples_obj.pipeline == "tso500":
-            multiqc_data_input = (
-                f"{self.samples_obj.nexus_paths['runfolder_subdir']}"
-                f"{SWConfig.STRINGS['lane_metrics_suffix']}"
-            )
-        else:
-            multiqc_data_input = (
-                f"{self.samples_obj.nexus_paths['proj_name']}:/QC/*"
-                f"{self.rf_obj.runfolder_name}"
-                f"{SWConfig.STRINGS['lane_metrics_suffix']}"
-            )
+        multiqc_data_input = (
+            f"{self.samples_obj.nexus_paths['proj_name']}:/QC/{self.rf_obj.runfolder_name}"
+            f"{SWConfig.STRINGS['lane_metrics_suffix']}"
+        )
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["upload_multiqc"]}Upload_MultiQC',
@@ -2282,15 +2280,13 @@ class BuildDxCommands(SWConfig):
             cmd_list.append(
                 self.samples_obj.samples_dict[sample_name]["sample_pipeline_cmd"]
             )
-            # If not a negative control, add string that adds the job to the depends
-            # list for downstream jobs to depend upon
-            if not self.samples_obj.samples_dict[sample_name]["neg_control"]:
-                cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
-                if self.samples_obj.pipeline == "pipe":
-                    # Add to gatk depends list because RPKM must depend only upon the
-                    # sample workflows completing successfully, whilst other downstream
-                    # apps depend on all prior jobs completing succesfully
-                    cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_gatk"])
+            cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
+
+            if self.samples_obj.pipeline == "pipe":
+                # Add to gatk depends list because RPKM must depend only upon the
+                # sample workflows completing successfully, whilst other downstream
+                # apps depend on all prior jobs completing succesfully
+                cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_gatk"])
 
             if self.samples_obj.pipeline in ["wes", "pipe"]:
                 cmd_list.append(self.return_analysis_id_cmd())
@@ -2375,12 +2371,15 @@ class BuildDxCommands(SWConfig):
                     ]:
                         # CNV calling steps are a dependency of MultiQC
                         cmd_list.append(self.create_ed_readcount_cmd(core_panel))
+                        cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_edreadcount"])
                         for panno in set(core_panel_pannos):
                             cmd_list.append(self.create_ed_cnvcalling_cmd(panno))
+                            cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
 
                     cmd_list.append(self.create_rpkm_cmd(core_panel))
+                    cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
 
-        cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_recombined"])
+        cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_gatk_recombined"])
         return cmd_list
 
     def create_rpkm_cmd(self, core_panel_name: str) -> str:
@@ -2415,7 +2414,7 @@ class BuildDxCommands(SWConfig):
     def create_ed_readcount_cmd(self, core_panel_name: str) -> str:
         """
         Build dx run command for exomedepth readcount app. Exome depth is run in 2 stages,
-        firstly readcounts are calculated for each capture panel. Job ID is saved to $ED_JOB_ID
+        firstly readcounts are calculated for each capture panel. Job ID is saved to $ED_READCOUNT_JOB_ID
         which allows the output of this stage to be used to filter CNVs with a panel-specific BEDfile
             :param core_panel_name (str):   Name of synnovis core panel
             :return (str):                  Dx run command for ED readcount app
@@ -2627,6 +2626,8 @@ class PipelineEmails(SWConfig):
             email_priority=1,
         )
 
+    # TODO no email is sent for custom panels samples - this is something that could be added in future
+    # to notify the lab that the workflow has been set off
     def send_samples_email(self) -> None:
         """
         Construct and send the samples being processed email using the AdEmail class.
