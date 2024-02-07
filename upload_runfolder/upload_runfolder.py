@@ -360,7 +360,7 @@ class UploadRunfolder(URConfig):
             while upload_attempts < 5:  # Attempt the upload 5 times
                 # Execute upload agent command, writing log to upload agent log file
                 _, _, returncode = execute_subprocess_command(
-                    upload_cmd, self.rf_obj.rf_loggers.backup, "exit_on_fail"
+                    upload_cmd, self.rf_obj.rf_loggers.backup,
                 )
                 if returncode == 0:
                     return "success"

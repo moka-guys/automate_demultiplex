@@ -2630,8 +2630,6 @@ class PipelineEmails(SWConfig):
             email_priority=1,
         )
 
-    # TODO no email is sent for custom panels samples - this is something that could be added in future
-    # to notify the lab that the workflow has been set off
     def send_samples_email(self) -> None:
         """
         Construct and send the samples being processed email using the AdEmail class.
