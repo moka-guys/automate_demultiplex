@@ -1375,7 +1375,7 @@ class SampleObject(SWConfig):
             # Collect 3rd and 4th elements (identifiers)
             primary_identifier, secondary_identifier = self.sample_name.split("_")[2:4]
             # Negative and positive controls only have one ID so set id2 to null
-            if any(self.neg_control, self.pos_control):
+            if any([self.neg_control, self.pos_control]):
                 secondary_identifier = "NULL"
         return primary_identifier, secondary_identifier
 
