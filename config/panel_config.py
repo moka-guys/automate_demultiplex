@@ -47,8 +47,7 @@ required for analysis of samples with that pan number
     ed_readcount_bedfile            False if app not required, panel bed file if required
     dry_lab_only                    Used to determine whether to include the TSO pan
                                     number in the duty_csv pan number list
-    drylab_dnanexus_id              False if not required to share with other users,
-                                    user ID string if needs sharing
+    dry_lab                         True if required to share with dry lab, False if not
     development_run                 False if pan number is not a development pan number,
                                     else True
 """
@@ -102,7 +101,7 @@ DEFAULT_DICT = {
     "ed_cnvcalling_bedfile": None,
     "FH": None,
     "dry_lab_only": None,
-    "drylab_dnanexus_id": None,
+    "dry_lab": None,
     "development_run": None,
 }
 
@@ -176,9 +175,8 @@ class PanelConfig:
             "pipeline": "pipe",
             "sample_prefix": "NGS",
             "runtype": "LRPCR",
-            "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4967_reference.bed",
-            "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5018dataSambamba.bed",
-            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4767data.bed",
+            "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4967_reference.bed", # CORRECT
+            "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5018dataSambamba.bed", # CORRECT
             "capture_type": "Amplicon",
             "multiqc_coverage_level": 30,
             "clinical_coverage_depth": 30,
@@ -287,42 +285,47 @@ class PanelConfig:
             **CAPTURE_PANEL_DICT["tso500"],
             "throughput": "high",
             "dry_lab_only": True,
-            "drylab_dnanexus_id": "BSPS_MD",
+            "dry_lab": True,
         },
         "Pan5114": {  # TSO500 High throughput Control. no UTRs. TERT promoter
             **CAPTURE_PANEL_DICT["tso500"],
             "throughput": "high",
-            "drylab_dnanexus_id": "BSPS_MD",
+            "dry_lab": "BSPS_MD",
         },
         "Pan5007": {  # LRPCR R207 (Synnovis) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R207",
             "congenica_project": 9986,
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4767data.bed",
         },
         "Pan5008": {  # LRPCR R207 (STG) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R207",
             "congenica_project": 10010,
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4767data.bed",
         },
         "Pan5009": {  # LRPCR R208 (Synnovis) - CHEK2
             **CAPTURE_PANEL_DICT["lrpcr"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R208",
             "congenica_project": 9984,
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4766data.bed",
         },
         "Pan5010": {  # LRPCR R208 (STG) - CHEK2
             **CAPTURE_PANEL_DICT["lrpcr"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R208",
             "congenica_project": 10009,
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4766data.bed",
         },
         "Pan5011": {  # LRPCR R210 (Synnovis) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R210",
             "congenica_project": 9981,
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4767data.bed",
         },
         "Pan5012": {  # LRPCR R210 (STG) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
@@ -330,12 +333,14 @@ class PanelConfig:
             "congenica_project": 10042,
             "congenica_credentials": "STG",
             "congenica_IR_template": "non-priority",
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4767data.bed",
         },
         "Pan5013": {  # LRPCR R211 (Synnovis) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R211",
             "congenica_project": 9982,
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4767data.bed",
         },
         "Pan5014": {  # LRPCR R211 (STG) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
@@ -343,18 +348,21 @@ class PanelConfig:
             "congenica_project": 10042,
             "congenica_credentials": "STG",
             "congenica_IR_template": "non-priority",
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4767data.bed",
         },
         "Pan5015": {  # LRPCR R71 (Synnovis) - SMN1
             **CAPTURE_PANEL_DICT["lrpcr"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R71",
             "congenica_project": 9547,
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4971data.bed",
         },
         "Pan5016": {  # LRPCR R239 (Synnovis) - IKBKG
             **CAPTURE_PANEL_DICT["lrpcr"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R239",
             "congenica_project": 9985,
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4768data.bed",
         },
         "Pan4119": {  # VCP1 R134 (Synnovis) - FH small panel
             **CAPTURE_PANEL_DICT["vcp1"],

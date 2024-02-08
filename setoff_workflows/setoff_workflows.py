@@ -29,6 +29,7 @@ import sys
 import os
 import re
 import datetime
+from itertools import *
 from shutil import copyfile
 from typing import Union, Tuple
 from ad_logger.ad_logger import AdLogger, shutdown_logs
@@ -338,16 +339,28 @@ class ProcessRunfolder(SWConfig):
         dry lab on the run
             :return (dict):     Dictionary of users and admins requiring access to the DNAnexus project
         """
-        dry_lab_list = set(
+        dry_lab_list = list(set(
             [
-                k
+                v["panel_settings"]["dry_lab"]
                 for k, v in self.samples_obj.samples_dict.items()
-                if v["panel_settings"]["drylab_dnanexus_id"]
+                if v["panel_settings"]["dry_lab"]
             ]
+        ))
+        if True in dry_lab_list:
+            viewers = list(chain([SWConfig.BSPS_ID], SWConfig.DNANEXUS_USERS["viewers"]))
+        else:
+            viewers = SWConfig.DNANEXUS_USERS["viewers"]
+        self.rf_obj.rf_loggers.sw.info(
+            self.rf_obj.rf_loggers.sw.log_msgs["view_users"],
+            viewers,
+        )
+        self.rf_obj.rf_loggers.sw.info(
+            self.rf_obj.rf_loggers.sw.log_msgs["admin_users"],
+            SWConfig.DNANEXUS_USERS["admins"]
         )
         return {
             "viewers": {
-                "user_list": SWConfig.DNANEXUS_USERS["viewers"].append(dry_lab_list),
+                "user_list": viewers,
                 "permissions": "VIEW",
             },
             "admins": {
@@ -1554,7 +1567,7 @@ class SampleObject(SWConfig):
         else if congenica_project ID is specified it means it can be uploaded using the upload agent. Both
         Congenica apps app take inputs in the format jobid.outputname which ensures the job doesn't run until
         the vcfs have been created. App inputs are created by a python script, which is called immediately
-        before the app is set off, and the script output (app inputs) is captured by the variable $analysisid
+        before the app is set off, and the script output (app inputs) is captured by the variable $DSS_INPUTS
             :return (str | None):   Dx run commands (Congenica input command, Congenica upload command),
                                     or None if sample is a reference sample
         """
@@ -2313,7 +2326,7 @@ class BuildDxCommands(SWConfig):
                             some of the inputs for the upload app dx run command
         """
         return (
-            "analysisid=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh "
+            "DSS_INPUTS=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh "
             f"&& cd {SWConfig.PROJECT_DIR} && conda activate python3.10.6 && "
             "python3 -m congenica_inputs -a ${JOB_ID} "
             f"-p {self.nexus_project_id} -r {self.rf_obj.runfolder_name})"
@@ -2339,7 +2352,7 @@ class BuildDxCommands(SWConfig):
         )
         return " ".join(
             [
-                f'{SWConfig.DX_CMDS["peddy"]}Peddy-',
+                f'{SWConfig.DX_CMDS["peddy"]}Peddy',
                 f'{SWConfig.APP_INPUTS["peddy"]["project_name"]}'
                 f'{self.samples_obj.nexus_paths["proj_name"]}',
                 SWConfig.UPLOAD_ARGS["depends"],

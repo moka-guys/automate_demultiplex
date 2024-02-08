@@ -280,12 +280,12 @@ DX_CMDS = {
     ),
     "congenica_sftp": (
         f"echo 'dx run {NEXUS_IDS['APPS']['congenica_sftp']} "
-        "--priority high -y ' ${analysisid} ' "
+        "--priority high -y ' ${DSS_INPUTS} ' "
         f"{JOB_NAME_STR}"
     ),
     "congenica_upload": (  # TODO move instance type into app itself
         f"echo 'dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
-        "--instance-type mem1_ssd1_v2_x2 ' ${analysisid} ' "
+        "--instance-type mem1_ssd1_v2_x2 ' ${DSS_INPUTS} ' "
         f"{JOB_NAME_STR}"
     ),
     "qiagen_upload": f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",
@@ -428,6 +428,7 @@ class SWConfig(PanelConfig):
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
     if BRANCH == "master":  # Prod branch
         DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
+        BSPS_ID = "BSPS_MD"
         DNANEXUS_USERS = {  # User access level
             "viewers": [PROD_ORGANISATION, "InterpretationRequest", "org-seglh_read"],
             "admins": ["mokaguys"],
@@ -435,6 +436,7 @@ class SWConfig(PanelConfig):
         TSO_BATCH_SIZE = 16
     else:
         DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
+        BSPS_ID = ""
         DNANEXUS_USERS = {  # User access level
             "viewers": [],
             "admins": [PROD_ORGANISATION],
