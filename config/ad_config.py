@@ -233,8 +233,8 @@ UPLOAD_ARGS = {
     "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
     "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOB_ID} "',
     "depends_list_gatk_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
-    "depends_list_edreadcount": 'DEPENDS_LIST_EDREADCOUNT="${DEPENDS_LIST} -d ${ED_READCOUNT_JOB_ID} "',
-    "depends_list_cnvcalling": 'DEPENDS_LIST_CNVCALLING="${DEPENDS_LIST} -d ${CNVCALLING_JOB_ID} "',
+    "depends_list_edreadcount": 'DEPENDS_LIST_EDREADCOUNT="-d ${ED_READCOUNT_JOB_ID} "',
+    "depends_list_cnvcalling": 'DEPENDS_LIST_CNVCALLING="-d ${CNVCALLING_JOB_ID} "',
     "depends_list_cnv_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_EDREADCOUNT} ${DEPENDS_LIST_CNVCALLING}"',
 }
 

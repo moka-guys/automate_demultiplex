@@ -1411,7 +1411,7 @@ class SampleObject(SWConfig):
                         os.path.join(
                             self.nexus_paths['proj_root'],
                             SWConfig.FASTQ_DIRS['tso_fastqs'], self.sample_name,
-                            f"{self.sample_name}_R1.fastq.gz",
+                            f"{self.sample_name}_{read}.fastq.gz",
                     ),
                 }
             else:
