@@ -74,7 +74,7 @@ NOVASEQ_ID = "A01229"  # Nofaseq sequencer ID
 RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
-    "tso_fastqs": "analysis_folder/Logs_Intermediates/CollapsedReads/",
+    "tso_fastqs": "${PROJECT_ID}:/analysis_folder/Logs_Intermediates/CollapsedReads/",
 }
 SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
 # DNAnexus upload agent path
@@ -152,17 +152,17 @@ NEXUS_IDS["WORKFLOWS"]["archerdx"] = NEXUS_IDS["APPS"]["fastqc"]
 
 APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     "tso500": {
-        "docker": "-iTSO500_ruo=",
-        "samplesheet": "-isamplesheet=",
+        "docker": f"-iTSO500_ruo={NEXUS_IDS['FILES']['tso500_docker']}",
+        "samplesheet": "-isamplesheet=${PROJECT_ID}:${RUNFOLDER_NAME}/%s",
         "analysis_options": "-ianalysis_options=",
-        "project_name": "-iproject_name=",
-        "runfolder_name": "-irunfolder_name=",
+        "project_name": "-iproject_name=${PROJECT_NAME}",
+        "runfolder_name": "-irunfolder_name=${RUNFOLDER_NAME}",
         "ht_instance": "mem1_ssd1_v2_x72",
         "lt_instance": "mem1_ssd1_v2_x36",
     },
-    "sambamba": {
-        "bam": "-ibamfile=",
-        "bai": "-ibam_index=",
+    "sambamba": {  # Used for TSO samples only as standalone app
+        "bam": "-ibamfile=${DNANEXUS_PROJ_ID}/analysis_folder/Logs_Intermediates/StitchedRealigned/",
+        "bai": "-ibam_index=${DNANEXUS_PROJ_ID}/analysis_folder/Logs_Intermediates/StitchedRealigned",
         "coverage_level": "-icoverage_level=",
         "sambamba_bed": "-isambamba_bed=",
         "cov_cmds": (
@@ -170,12 +170,15 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
             "-iexclude_duplicate_reads=true -imin_base_qual=%s -imin_mapping_qual=%s"
         ),
     },
+    "fastqc": {
+        "reads": "-ireads=",
+        },
     "peddy": {
-        "project_name": "-iproject_for_peddy="
+        "project_name": "-iproject_for_peddy=${PROJECT_NAME}"
     },
     "sompy": {
         "truth_vcf": f"-itruthVCF={NEXUS_IDS['FILES']['sompy_truth_vcf']}",
-        "query_vcf": "-iqueryVCF=",
+        "query_vcf": "-iqueryVCF=${DNANEXUS_PROJ_ID}",
         "tso": "-iTSO=true",
         "skip": "-iskip=false",
     },
@@ -183,48 +186,55 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "ref_genome": "-ireference_genome=",
         "bed": "-ibedfile=",
         "normals_rdata": "-inormals_RData=",
-        "proj": "-iproject_name=",
+        "proj": "-iproject_name=${PROJECT_NAME}:/analysis_folder/Results/",
         "pannos": "-ibamfile_pannumbers=",
     },
     "ed_cnvcalling": {
         "readcount_rdata": "RData",
         "readcount": "-ireadcount_file=${ED_READCOUNT_JOB_ID}:",
         "bed": "-isubpanel_bed=",
-        "proj": "-iproject_name=",
+        "proj": "-iproject_name=${PROJECT_NAME}",
         "pannos": "-ibamfile_pannumbers=",
     },
     "rpkm": {
         "bed": "-ibedfile=",
-        "proj": "-iproject_name=",
+        "proj": "-iproject_name=${PROJECT_NAME}",
         "pannos": "-ibamfile_pannumbers=",
     },
     "multiqc": {
-        "project_name": "-iproject_for_multiqc=",
+        "project_name": "-iproject_for_multiqc=${PROJECT_NAME}",
         "coverage_level": "-icoverage_level=",
     },
     "upload_multiqc": {
-        "data_input": "-imultiqc_data_input=",
+        "lane_metrics": (
+            "-imultiqc_data_input=${PROJECT_ID}:/QC/${RUNFOLDER_NAME}"
+            f"{LANE_METRICS_SUFFIX}"
+        ),
+        "multiqc_output": "-imultiqc_data_input=${JOB_ID}:multiqc",
         "multiqc_html": "-imultiqc_html=${JOB_ID}:multiqc_report",
     },
     "congenica_upload": {
         "samplename": "-ianalysis_name=",
+        "congenica_project": "-icongenica_project=",
+        "credentials": "-icredentials=",
+        "ir_template": "-iIR_template=",
         "vcf": "-ivcf=",
         "bam": "-ibam=",
     },
     "qiagen_upload": {
         "sample_name": "-isample_name=",
-        "sample_zip_folder": "-isample_zip_folder=",
+        "sample_zip_folder": "-isample_zip_folder=$PROJECT_ID:/results/",
     },
     "duty_csv": {
-        "project_name": "-iproject_name=",
+        "project_name": "-iproject_name=${PROJECT_NAME}",
         "tso_pannumbers": "-itso_pannumbers=",
         "stg_pannumbers": "-istg_pannumbers=",
         "cp_capture_pannos": "-icp_capture_pannos=",
     },
 }
 UPLOAD_ARGS = {
-    "dest": "--dest=",
-    "proj": "--project=",
+    "dest": "--dest=${PROJECT_ID}",
+    "proj": "--project=${PROJECT_NAME}",
     "token": "--brief --auth %s)",
     "depends": "${DEPENDS_LIST}",
     "depends_gatk": "${DEPENDS_LIST_GATK}",
@@ -233,8 +243,8 @@ UPLOAD_ARGS = {
     "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
     "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOB_ID} "',
     "depends_list_gatk_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
-    "depends_list_edreadcount": 'DEPENDS_LIST_EDREADCOUNT="-d ${ED_READCOUNT_JOB_ID} "',
-    "depends_list_cnvcalling": 'DEPENDS_LIST_CNVCALLING="-d ${CNVCALLING_JOB_ID} "',
+    "depends_list_edreadcount": 'DEPENDS_LIST_EDREADCOUNT="${DEPENDS_LIST_EDREADCOUNT} -d ${ED_READCOUNT_JOB_ID} "',
+    "depends_list_cnvcalling": 'DEPENDS_LIST_CNVCALLING="${DEPENDS_LIST_CNVCALLING} -d ${CNVCALLING_JOB_ID} "',
     "depends_list_cnv_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_EDREADCOUNT} ${DEPENDS_LIST_CNVCALLING}"',
 }
 
@@ -288,6 +298,7 @@ DX_CMDS = {
         "--instance-type mem1_ssd1_v2_x2 ' ${DSS_INPUTS} ' "
         f"{JOB_NAME_STR}"
     ),
+    "write_projid": "echo PROJECT_ID=$(echo $PROJECT_ID) >",
     "qiagen_upload": f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",
     "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
     "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
@@ -442,8 +453,11 @@ class SWConfig(PanelConfig):
             "admins": [PROD_ORGANISATION],
         }
         TSO_BATCH_SIZE = 2
+    DNANEXUS_PROJ_ID = "${PROJECT_ID}"
+    DNANEXUS_PROJ_NAME = "${PROJ_NAME}"
+    RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
-    EMPTY_GATK_DEPENDS = "DEPENDS_LIST_GATK=''"
+    EMPTY_CP_DEPENDS=["DEPENDS_LIST_GATK=''", "DEPENDS_LIST_CNVCALLING=''", "DEPENDS_LIST_EDREADCOUNT=''"]
     STRINGS = {
         "demultiplexlog_tso500_msg": DEMULTIPLEXLOG_TSO500_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
@@ -495,17 +509,22 @@ class SWConfig(PanelConfig):
     STAGE_INPUTS = {
         "pipe": {
             "fastqc_reads": f"-i{NEXUS_IDS['STAGES']['pipe']['fastqc']}.reads=",
+            "bwa_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['bwa']}=mem1_ssd1_v2_x8",
             "bwa_reads1": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads_fastqgz=",
             "bwa_reads2": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads2_fastqgz=",
             "bwa_rg_sample": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.read_group_sample=",
             "bwa_ref": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.genomeindex_targz=",
+            "picard_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['picard']}=mem1_ssd1_v2_x4",
             "picard_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.vendor_exome_bedfile=",
             "picard_capturetype": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.Capture_panel=",
-            "gatk_padding": (f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.padding="),
+            "gatk_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['gatk']}=",
+            "gatk_padding": f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.padding=0",
             "gatk_vcf_format": f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.output_format=both",
             "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['filter_vcf']}.bedfile=",
+            "filter_vcf_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
             "happy_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.skip=",
             "happy_prefix": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.prefix=",
+            "sambamba_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['sambamba']}=mem1_ssd1_v2_x2",
             "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.sambamba_bed=",
             "sambamba_min_base_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_base_qual=",
             "sambamba_min_mapping_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_mapping_qual=",

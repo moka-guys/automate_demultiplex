@@ -385,6 +385,7 @@ class ProcessRunfolder(SWConfig):
                 self.samples_obj.nexus_paths["proj_name"],
                 self.dnanexus_auth,
             ),
+            f'{SWConfig.DX_CMDS["write_projid"]} {self.rf_obj.runfolder_dx_run_script}',
         ]
         # Give view and admin permissions for project
         for permissions_level in self.users_dict.keys():
@@ -398,12 +399,12 @@ class ProcessRunfolder(SWConfig):
                             self.dnanexus_auth,
                         )
                     )
+                    lines_to_write.append("echo $PROJECT_ID")
             else:
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["no_users"],
                     permissions_level,
                 )
-        lines_to_write.append("echo $PROJECT_ID")  # Capture project id
         write_lines(self.rf_obj.proj_creation_script, "w", lines_to_write)
 
     def run_project_creation_script(self) -> str:
@@ -996,15 +997,15 @@ class CollectRunfolderSamples(SWConfig):
             "runfolder_name"
         ] = f"{self.rf_obj.runfolder_name}_{self.nexus_runfolder_suffix}"
         nexus_paths[
-            "fastqs_dir"
-        ] = os.path.join(f"/{nexus_paths['runfolder_name']}", SWConfig.FASTQ_DIRS[fastq_type])
-        nexus_paths[
             "proj_name"
         ] = f"{SWConfig.DNANEXUS_PROJECT_PREFIX}{nexus_paths['runfolder_name']}"
         nexus_paths["proj_root"] = f"{nexus_paths['proj_name']}:/"
         nexus_paths[
             "runfolder_subdir"
-        ] = f"{nexus_paths['proj_root']}{nexus_paths['runfolder_name']}"
+        ] = f"{nexus_paths['proj_root']}{self.rf_obj.runfolder_name}"
+        nexus_paths[
+            "fastqs_dir"
+        ] = os.path.join(f"/{self.rf_obj.runfolder_name}", SWConfig.FASTQ_DIRS[fastq_type])
         nexus_paths[
             "logfiles_dir"
         ] = os.path.join(f"/{nexus_paths['runfolder_name']}", "automated_scripts_logfiles")
@@ -1409,7 +1410,6 @@ class SampleObject(SWConfig):
                     "path": None,
                     "nexus_path":
                         os.path.join(
-                            self.nexus_paths['proj_root'],
                             SWConfig.FASTQ_DIRS['tso_fastqs'], self.sample_name,
                             f"{self.sample_name}_{read}.fastq.gz",
                     ),
@@ -1451,7 +1451,7 @@ class SampleObject(SWConfig):
             )
             fastq_path = os.path.join(self.rf_obj.fastq_dir_path, fastq_name)
             nexus_fastq_path = os.path.join(
-                    f"{self.nexus_paths['proj_root']}{self.nexus_paths['fastqs_dir']}",
+                    f"{SWConfig.DNANEXUS_PROJ_ID}:{self.nexus_paths['fastqs_dir']}",
                     fastq_name
                 )
             return fastq_name, fastq_path, nexus_fastq_path
@@ -1544,17 +1544,12 @@ class SampleObject(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["wes"]}{self.sample_name}',
-                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc1_reads"]}'
-                f'{self.fastqs_dict["R1"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc2_reads"]}'
-                f'{self.fastqs_dict["R2"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["wes"]["sentieon_samplename"]}'
-                f"{self.sample_name}",
-                f'{SWConfig.STAGE_INPUTS["wes"]["picard_bed"]}'
-                f'{self.panel_settings["hsmetrics_bedfile"]}',
-                f'{SWConfig.STAGE_INPUTS["wes"]["sambamba_bed"]}'
-                f'{self.panel_settings["sambamba_bedfile"]}',
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc1_reads"]}{self.fastqs_dict["R1"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc2_reads"]}{self.fastqs_dict["R2"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["sentieon_samplename"]}{self.sample_name}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["picard_bed"]}{self.panel_settings["hsmetrics_bedfile"]}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["sambamba_bed"]}{self.panel_settings["sambamba_bedfile"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
@@ -1615,9 +1610,8 @@ class SampleObject(SWConfig):
         )
         return " ".join(
             [
-                f'{SWConfig.DX_CMDS["congenica_sftp"]}'
-                f"Congenica_SFTP_Upload-{self.sample_name}",
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                f'{SWConfig.DX_CMDS["congenica_sftp"]}Congenica_SFTP_Upload-{self.sample_name}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
                     ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
                 ),
@@ -1640,12 +1634,14 @@ class SampleObject(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["congenica_upload"]}Congenica_Upload-{self.sample_name}',
-                f'-icongenica_project={str(self.panel_settings["congenica_project"])}',
-                f'-icredentials={self.panel_settings["congenica_credentials"]}',
-                f'-iIR_template={self.panel_settings["congenica_IR_template"]}',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["samplename"]}'
-                f"{self.sample_name}",
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["congenica_project"]}'
+                f'{str(self.panel_settings["congenica_project"])}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["congenica_project"]}'
+                f'{self.panel_settings["congenica_credentials"]}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["ir_template"]}'
+                f'{self.panel_settings["congenica_IR_template"]}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["samplename"]}{self.sample_name}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
                     ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
                 ),
@@ -1662,11 +1658,9 @@ class SampleObject(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["qiagen_upload"]}Qiagen_Upload-{self.sample_name}',
-                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_name"]}'
-                f"{self.sample_name}",
-                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}'
-                f"$PROJECT_ID:/results/{self.pannum}{self.sample_name}.zip",
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_name"]}{self.sample_name}',
+                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}{self.pannum}{self.sample_name}.zip',
+                SWConfig.UPLOAD_ARGS["dest"],
                 (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
                     ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
                 ),
@@ -1697,18 +1691,12 @@ class SampleObject(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["pipe"]}{self.sample_name}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["fastqc_reads"]}'
-                f'{self.fastqs_dict["R1"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["fastqc_reads"]}'
-                f'{self.fastqs_dict["R2"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_reads1"]}'
-                f'{self.fastqs_dict["R1"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_reads2"]}'
-                f'{self.fastqs_dict["R2"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_rg_sample"]}'
-                f"{self.sample_name}",
-                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_bed"]}'
-                f'{self.panel_settings["sambamba_bedfile"]}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["fastqc_reads"]}{self.fastqs_dict["R1"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["fastqc_reads"]}{self.fastqs_dict["R2"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_reads1"]}{self.fastqs_dict["R1"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_reads2"]}{self.fastqs_dict["R2"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_rg_sample"]}{self.sample_name}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_bed"]}{self.panel_settings["sambamba_bedfile"]}',
                 f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_min_base_qual"]}'
                 f'{str(self.panel_settings["coverage_min_basecall_qual"])}',
                 f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_min_mapping_qual"]}'
@@ -1721,24 +1709,19 @@ class SampleObject(SWConfig):
                 SWConfig.STAGE_INPUTS["pipe"]["sambamba_count_overl_mates"],
                 self.get_vcfeval_cmd_string(),
                 self.get_fhprs_cmd_string(),
-                f'{SWConfig.STAGE_INPUTS["pipe"]["fhprs_bed"]}'
-                f"{SWConfig.FH_PRS_BEDFILE}",
+                f'{SWConfig.STAGE_INPUTS["pipe"]["fhprs_bed"]}{SWConfig.FH_PRS_BEDFILE}',
                 self.get_polyedge_cmd_string(),
                 self.get_masked_reference_cmd_string(),
-                f'{SWConfig.STAGE_INPUTS["pipe"]["picard_bed"]}'
-                f'{self.panel_settings["hsmetrics_bedfile"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["picard_capturetype"]}'
-                f'{self.panel_settings["capture_type"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["gatk_padding"]}'
-                f"{str(SWConfig.PIPE_HAPLOTYPE_CALLER_PADDING)}",
-                f'{SWConfig.STAGE_INPUTS["pipe"]["filter_vcf_bed"]}'
-                f'{self.panel_settings["variant_calling_bedfile"]}',
-                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['bwa']}=mem1_ssd1_v2_x8",
-                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['gatk']}={GATK_INSTANCE}",
-                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
-                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['picard']}=mem1_ssd1_v2_x4",
-                f"--instance-type {SWConfig.NEXUS_IDS['STAGES']['pipe']['sambamba']}=mem1_ssd1_v2_x2",
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["picard_bed"]}{self.panel_settings["hsmetrics_bedfile"]}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["picard_capturetype"]}{self.panel_settings["capture_type"]}',
+                SWConfig.STAGE_INPUTS["pipe"]["gatk_padding"],
+                f'{SWConfig.STAGE_INPUTS["pipe"]["filter_vcf_bed"]}{self.panel_settings["variant_calling_bedfile"]}',
+                SWConfig.STAGE_INPUTS["pipe"]["bwa_instance"],
+                f'{SWConfig.STAGE_INPUTS["pipe"]["gatk_instance"]}={GATK_INSTANCE}',
+                SWConfig.STAGE_INPUTS["pipe"]["filter_vcf_instance"],
+                SWConfig.STAGE_INPUTS["pipe"]["picard_instance"],
+                SWConfig.STAGE_INPUTS["pipe"]["sambamba_instance"],
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth
             ]
         )
@@ -1787,10 +1770,8 @@ class SampleObject(SWConfig):
         if self.panel_settings["polyedge"]:
             return " ".join(
                 [
-                    f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_gene"]}'
-                    f'{self.panel_settings["polyedge"]["gene"]}',
-                    f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_chrom"]}'
-                    f'{str(self.panel_settings["polyedge"]["chrom"])}',
+                    f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_gene"]}{self.panel_settings["polyedge"]["gene"]}',
+                    f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_chrom"]}{str(self.panel_settings["polyedge"]["chrom"])}',
                     f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_poly_start"]}'
                     f'{str(self.panel_settings["polyedge"]["poly_start"])}',
                     f'{SWConfig.STAGE_INPUTS["pipe"]["polyedge_poly_end"]}'
@@ -1825,12 +1806,10 @@ class SampleObject(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["snp"]}{self.sample_name}',
-                f'{SWConfig.STAGE_INPUTS["snp"]["fastqc1_reads"]}'
-                f'{self.fastqs_dict["R1"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["snp"]["fastqc2_reads"]}'
-                f'{self.fastqs_dict["R2"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["snp"]["fastqc1_reads"]}{self.fastqs_dict["R1"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["snp"]["fastqc2_reads"]}{self.fastqs_dict["R2"]["nexus_path"]}',
                 f'{SWConfig.STAGE_INPUTS["snp"]["sentieon_samplename"]}{self.sample_name}',
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
@@ -1848,9 +1827,9 @@ class SampleObject(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["fastqc"]}FastQC-{self.sample_name}',
-                f'-ireads={self.fastqs_dict["R1"]["nexus_path"]}',
-                f'-ireads={self.fastqs_dict["R2"]["nexus_path"]}',
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.nexus_paths["proj_root"]}',
+                f'{SWConfig.APP_INPUTS["fastqc"]["reads"]}{self.fastqs_dict["R1"]["nexus_path"]}',
+                f'{SWConfig.APP_INPUTS["fastqc"]["reads"]}{self.fastqs_dict["R2"]["nexus_path"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
@@ -1907,7 +1886,7 @@ class BuildDxCommands(SWConfig):
         get_tso_instance_type()
             If run contains high throughput tso pannumbers, return the high throughput
             instance type (larger instance), else return low throughput instance type
-        create_sompy_cmd(sample, pannumber)
+        create_sompy_cmd(sample)
             Build dx run command to run sompy on a single VCF file
         create_sambamba_cmd(sample, pannumber)
             Build dx run command to run sambamba on a single BAM file
@@ -2024,8 +2003,11 @@ class BuildDxCommands(SWConfig):
             :return dx_cmd_list (list):     List of runwide commands for tso runs
             :dx_postprocessing_cmds (list): Post-processing commands for tso runs
         """
-        dx_cmd_list = [SWConfig.EMPTY_DEPENDS]
-        dx_postprocessing_cmds = [SWConfig.EMPTY_DEPENDS]
+        dx_cmd_list, dx_postprocessing_cmds = [
+            f"PROJECT_NAME={self.samples_obj.nexus_paths['proj_name']}",
+            f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
+            SWConfig.EMPTY_DEPENDS
+        ]
         sambamba_cmds_list = []
         # Remove base SampleSheet as we only want to use split SampleSheets
         for tso_ss in self.rf_obj.tso_ss_list:
@@ -2063,10 +2045,7 @@ class BuildDxCommands(SWConfig):
 
             if self.samples_obj.samples_dict[sample_name]["pos_control"]:
                 dx_postprocessing_cmds.append(
-                    self.create_sompy_cmd(
-                        sample_name,
-                        self.samples_obj.samples_dict[sample_name]["pannum"],
-                    )
+                    self.create_sompy_cmd(sample_name)
                 )
                 # Only add to depends_list if job ID from previous command
                 # is not empty
@@ -2093,18 +2072,14 @@ class BuildDxCommands(SWConfig):
         )
         return " ".join( 
             [
-                f'{SWConfig.DX_CMDS["tso500"]}{self.rf_obj.runfolder_name}',
-                f'{SWConfig.APP_INPUTS["tso500"]["docker"]}'
-                f'{SWConfig.NEXUS_IDS["FILES"]["tso500_docker"]}',
-                f'{SWConfig.APP_INPUTS["tso500"]["samplesheet"]}'
-                f'{self.nexus_project_id}:{self.samples_obj.nexus_paths["runfolder_name"]}/{tso_ss}',
-                f'{SWConfig.APP_INPUTS["tso500"]["project_name"]}'
-                f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{SWConfig.APP_INPUTS["tso500"]["runfolder_name"]}'
-                f'{self.samples_obj.nexus_paths["runfolder_name"]}',
+                f'{SWConfig.DX_CMDS["tso500"]}{SWConfig.RUNFOLDER_NAME}',
+                SWConfig.APP_INPUTS["tso500"]["docker"],
+                f'{SWConfig.APP_INPUTS["tso500"]["samplesheet"]}{tso_ss}',
+                SWConfig.APP_INPUTS["tso500"]["project_name"],
+                SWConfig.APP_INPUTS["tso500"]["runfolder_name"],
                 self.get_tso_analysis_options(),
                 self.get_tso_instance_type(),
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
@@ -2119,10 +2094,7 @@ class BuildDxCommands(SWConfig):
             tso500_analysis_options = "--isNovaSeq "
         else:
             tso500_analysis_options = ""
-        return (
-            f'{SWConfig.APP_INPUTS["tso500"]["analysis_options"]}'
-            f"{tso500_analysis_options}"
-        )
+        return f'{SWConfig.APP_INPUTS["tso500"]["analysis_options"]}{tso500_analysis_options}'
 
     def get_tso_instance_type(self) -> str:
         """
@@ -2138,11 +2110,10 @@ class BuildDxCommands(SWConfig):
         else:
             return f"--instance-type {SWConfig.APP_INPUTS['tso500']['lt_instance']}"
 
-    def create_sompy_cmd(self, sample: str, pannumber: str) -> str:
+    def create_sompy_cmd(self, sample: str) -> str:
         """
         Build dx run command to run sompy on a single VCF file
             :param sample (str):    Sample name
-            :param pannumber (str): Config-defined pan number for sample
             :return (str):          Dx run command for sompy app
         """
         self.rf_obj.rf_loggers.sw.info(
@@ -2152,13 +2123,10 @@ class BuildDxCommands(SWConfig):
             [
                 f'{SWConfig.DX_CMDS["sompy"]}Sompy-{sample}',
                 SWConfig.APP_INPUTS["sompy"]["truth_vcf"],
-                # Get inputs based on output location within project
-                f'{SWConfig.APP_INPUTS["sompy"]["query_vcf"]}'
-                f"{self.nexus_project_id}:analysis_folder/Results/"
-                f"{sample}/{sample}_MergedSmallVariants.genome.vcf",
+                f'{SWConfig.APP_INPUTS["sompy"]["query_vcf"]}{sample}/{sample}_MergedSmallVariants.genome.vcf',
                 SWConfig.APP_INPUTS["sompy"]["tso"],
                 SWConfig.APP_INPUTS["sompy"]["skip"],
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2178,12 +2146,8 @@ class BuildDxCommands(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["sambamba"]}Sambamba_Chanjo-{sample}',
-                f'{SWConfig.APP_INPUTS["sambamba"]["bam"]}'
-                f"{self.samples_obj.nexus_paths['proj_root']}analysis_folder/"
-                f"Logs_Intermediates/StitchedRealigned/{sample}/{sample}.bam",
-                f'{SWConfig.APP_INPUTS["sambamba"]["bai"]}'
-                f"{self.samples_obj.nexus_paths['proj_root']}analysis_folder/"
-                f"Logs_Intermediates/StitchedRealigned/{sample}/{sample}.bam.bai",
+                f'{SWConfig.APP_INPUTS["sambamba"]["bam"]}{sample}/{sample}.bam',
+                f'{SWConfig.APP_INPUTS["sambamba"]["bai"]}{sample}/{sample}.bam.bai',
                 f'{SWConfig.APP_INPUTS["sambamba"]["coverage_level"]}'
                 f'{str(SWConfig.PANEL_DICT[pannumber]["clinical_coverage_depth"])}',
                 f'{SWConfig.APP_INPUTS["sambamba"]["sambamba_bed"]}'
@@ -2197,7 +2161,7 @@ class BuildDxCommands(SWConfig):
                         SWConfig.PANEL_DICT[pannumber]["coverage_min_mapping_qual"]
                     ),
                 ),
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}coverage/{pannumber}',
+                f'{SWConfig.UPLOAD_ARGS["dest"]}:/coverage/{pannumber}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2239,11 +2203,10 @@ class BuildDxCommands(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["multiqc"]}MultiQC',
-                f'{SWConfig.APP_INPUTS["multiqc"]["project_name"]}'
-                f'{self.samples_obj.nexus_paths["proj_name"]}',
+                SWConfig.APP_INPUTS["multiqc"]["project_name"],
                 f'{SWConfig.APP_INPUTS["multiqc"]["coverage_level"]}{str(coverage_level)}',
                 SWConfig.UPLOAD_ARGS["depends"],
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ],
         )
@@ -2260,20 +2223,14 @@ class BuildDxCommands(SWConfig):
             "upload multiqc",
             self.rf_obj.runfolder_name,
         )
-        multiqc_data_input = (
-            f"{self.samples_obj.nexus_paths['proj_name']}:/QC/{self.rf_obj.runfolder_name}"
-            f"{SWConfig.STRINGS['lane_metrics_suffix']}"
-        )
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["upload_multiqc"]}Upload_MultiQC',
                 SWConfig.APP_INPUTS["upload_multiqc"]["multiqc_html"],
-                f'{SWConfig.APP_INPUTS["upload_multiqc"]["data_input"]}'
-                '${JOB_ID}:multiqc',
-                f'{SWConfig.APP_INPUTS["upload_multiqc"]["data_input"]}'
-                f"{multiqc_data_input}",
+                SWConfig.APP_INPUTS["upload_multiqc"]["lane_metrics"],
+                SWConfig.APP_INPUTS["upload_multiqc"]["multiqc_output"],
                 SWConfig.UPLOAD_ARGS["depends"],
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2284,10 +2241,14 @@ class BuildDxCommands(SWConfig):
         and Congenica input and upload commands if required for the sample type
             :return cmd_list (list):    List of per-sample commands
         """
-        cmd_list = [SWConfig.EMPTY_DEPENDS]
+        cmd_list = [
+            f"PROJECT_NAME={self.samples_obj.nexus_paths['proj_name']}",
+            f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
+            SWConfig.EMPTY_DEPENDS,
+        ]
         
         if self.samples_obj.pipeline == "pipe":
-            cmd_list.append(SWConfig.EMPTY_GATK_DEPENDS)
+            cmd_list.extend(SWConfig.EMPTY_CP_DEPENDS)
         for sample_name in self.samples_obj.samples_dict.keys():
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["sample_identified"],
@@ -2329,7 +2290,7 @@ class BuildDxCommands(SWConfig):
             "DSS_INPUTS=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh "
             f"&& cd {SWConfig.PROJECT_DIR} && conda activate python3.10.6 && "
             "python3 -m congenica_inputs -a ${JOB_ID} "
-            f"-p {self.nexus_project_id} -r {self.rf_obj.runfolder_name})"
+            f"-p {SWConfig.DNANEXUS_PROJ_ID} -r {SWConfig.RUNFOLDER_NAME})"
         )
 
     def return_wes_runwide_cmds(self) -> list:
@@ -2353,10 +2314,9 @@ class BuildDxCommands(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["peddy"]}Peddy',
-                f'{SWConfig.APP_INPUTS["peddy"]["project_name"]}'
-                f'{self.samples_obj.nexus_paths["proj_name"]}',
+                SWConfig.APP_INPUTS["peddy"]["project_name"],
                 SWConfig.UPLOAD_ARGS["depends"],
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2382,7 +2342,7 @@ class BuildDxCommands(SWConfig):
                     == core_panel
                 ]
                 # Make sure there are enough samples for exome depth and RPKM
-                if len(self.samples_obj.samples_dict.items()) >= 3:
+                if len(core_panel_pannos) >= 3:
                     if SWConfig.CAPTURE_PANEL_DICT[core_panel][
                         "ed_readcount_bedfile"
                     ]:
@@ -2416,14 +2376,11 @@ class BuildDxCommands(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["rpkm"]}RPKM_using_conifer-{core_panel_name}',
-                f'{SWConfig.APP_INPUTS["rpkm"]["bed"]}'
-                f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["rpkm_bedfile"]}',
-                f'{SWConfig.APP_INPUTS["rpkm"]["proj"]}'
-                f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{SWConfig.APP_INPUTS["rpkm"]["pannos"]}'
-                f'{",".join(SWConfig.VCP_PANELS[core_panel_name])}',
+                f'{SWConfig.APP_INPUTS["rpkm"]["bed"]}{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["rpkm_bedfile"]}',
+                SWConfig.APP_INPUTS["rpkm"]["proj"],
+                f'{SWConfig.APP_INPUTS["rpkm"]["pannos"]}{",".join(SWConfig.VCP_PANELS[core_panel_name])}',
                 SWConfig.UPLOAD_ARGS["depends_gatk"],
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2451,14 +2408,12 @@ class BuildDxCommands(SWConfig):
                 f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["ed_readcount_bedfile"]}',
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["normals_rdata"]}'
                 f'{SWConfig.NEXUS_IDS["FILES"][f"ed_{core_panel_name}_readcount_normals"]}',
-                f'{SWConfig.APP_INPUTS["ed_readcount"]["proj"]}'
-                f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{SWConfig.APP_INPUTS["ed_readcount"]["pannos"]}'
-                f'{",".join(SWConfig.ED_PANNOS[core_panel_name])}',
+                SWConfig.APP_INPUTS["ed_readcount"]["proj"],
+                f'{SWConfig.APP_INPUTS["ed_readcount"]["pannos"]}{",".join(SWConfig.ED_PANNOS[core_panel_name])}',
                 SWConfig.UPLOAD_ARGS[
                     "depends_gatk"
                 ],  # Use list of gatk related jobs to delay start
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2481,13 +2436,12 @@ class BuildDxCommands(SWConfig):
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["bed"]}'
                 f'{SWConfig.BEDFILE_FOLDER}{SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]}_CNV.bed',
-                f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["proj"]}'
-                f'{self.samples_obj.nexus_paths["proj_name"]}',
+                SWConfig.APP_INPUTS["ed_cnvcalling"]["proj"],
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["pannos"]}{panno}',
                 SWConfig.UPLOAD_ARGS[
                     "depends_gatk"
                 ],  # Use list of gatk related jobs to delay start
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2509,16 +2463,12 @@ class BuildDxCommands(SWConfig):
         return " ".join(
             [
                 f"{SWConfig.DX_CMDS['duty_csv']}Duty_CSV",
-                f'{SWConfig.APP_INPUTS["duty_csv"]["project_name"]}'
-                f'{self.samples_obj.nexus_paths["proj_name"]}',
-                f'{SWConfig.APP_INPUTS["duty_csv"]["tso_pannumbers"]}'
-                f'{",".join(SWConfig.TSO_SYNNOVIS_PANNUMBERS)}',
-                f'{SWConfig.APP_INPUTS["duty_csv"]["stg_pannumbers"]}'
-                f'{",".join(SWConfig.STG_PANNUMBERS)}',
-                f'{SWConfig.APP_INPUTS["duty_csv"]["cp_capture_pannos"]}'
-                f'{",".join(SWConfig.CP_CAPTURE_PANNOS)}',
+                SWConfig.APP_INPUTS["duty_csv"]["project_name"],
+                f'{SWConfig.APP_INPUTS["duty_csv"]["tso_pannumbers"]}{",".join(SWConfig.TSO_SYNNOVIS_PANNUMBERS)}',
+                f'{SWConfig.APP_INPUTS["duty_csv"]["stg_pannumbers"]}{",".join(SWConfig.STG_PANNUMBERS)}',
+                f'{SWConfig.APP_INPUTS["duty_csv"]["cp_capture_pannos"]}{",".join(SWConfig.CP_CAPTURE_PANNOS)}',
                 SWConfig.UPLOAD_ARGS["depends"],
-                f'{SWConfig.UPLOAD_ARGS["dest"]}{self.samples_obj.nexus_paths["proj_root"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
             ]
         )
@@ -2535,7 +2485,7 @@ class BuildDxCommands(SWConfig):
             self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], location
         )
         # Remove any None values from the command_list
-        write_lines(script, "w", list(filter(None, cmds)))
+        write_lines(script, "a", list(filter(None, cmds)))
 
 
 class PipelineEmails(SWConfig):

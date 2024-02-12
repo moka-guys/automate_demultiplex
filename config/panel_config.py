@@ -110,7 +110,6 @@ class PanelConfig:
     """
     Variables required for import into other scripts
     """
-    PIPE_HAPLOTYPE_CALLER_PADDING = 0
     BEDFILE_FOLDER = f"{TOOLS_PROJECT}:/Data/BED/"
     FH_PRS_BEDFILE = f"{BEDFILE_FOLDER}Pan4909.bed"
     CAPTURE_PANEL_DICT = {
