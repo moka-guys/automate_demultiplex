@@ -170,6 +170,7 @@ LOG_MSGS = {
         "project_name": "Project name is: %s",
         "finding_project_id": "Searching for DNAnexus project ID using the runfolder name %s",
         "project_id": "Project ID is: %s",
+        "proj_id_err": "Exception encountered whilst finding the project ID: %s",
         "building_command": "Building upload command",
         "added_command": "Added command to upload commands dictionary",
         "building_file_dict": "Adding the files contained within each folder to the file dictionary",

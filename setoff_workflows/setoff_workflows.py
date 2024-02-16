@@ -385,7 +385,6 @@ class ProcessRunfolder(SWConfig):
                 self.samples_obj.nexus_paths["proj_name"],
                 self.dnanexus_auth,
             ),
-            f'{SWConfig.DX_CMDS["write_projid"]} {self.rf_obj.runfolder_dx_run_script}',
         ]
         # Give view and admin permissions for project
         for permissions_level in self.users_dict.keys():
@@ -399,12 +398,12 @@ class ProcessRunfolder(SWConfig):
                             self.dnanexus_auth,
                         )
                     )
-                    lines_to_write.append("echo $PROJECT_ID")
             else:
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["no_users"],
                     permissions_level,
                 )
+        lines_to_write.append("echo $PROJECT_ID")
         write_lines(self.rf_obj.proj_creation_script, "w", lines_to_write)
 
     def run_project_creation_script(self) -> str:
@@ -472,7 +471,7 @@ class ProcessRunfolder(SWConfig):
             ] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
-                f'/{self.samples_obj.nexus_paths["runfolder_name"]}',
+                f'/{self.rf_obj.runfolder_name}',
                 " ".join(f"'{samplesheet}'" for samplesheet in samplesheet_paths),
 
             )
@@ -994,24 +993,14 @@ class CollectRunfolderSamples(SWConfig):
             fastq_type = "fastqs"
 
         nexus_paths[
-            "runfolder_name"
-        ] = f"{self.rf_obj.runfolder_name}_{self.nexus_runfolder_suffix}"
-        nexus_paths[
             "proj_name"
-        ] = f"{SWConfig.DNANEXUS_PROJECT_PREFIX}{nexus_paths['runfolder_name']}"
-        nexus_paths["proj_root"] = f"{nexus_paths['proj_name']}:/"
-        nexus_paths[
-            "runfolder_subdir"
-        ] = f"{nexus_paths['proj_root']}{self.rf_obj.runfolder_name}"
+        ] = f"{SWConfig.DNANEXUS_PROJECT_PREFIX}{self.rf_obj.runfolder_name}_{self.nexus_runfolder_suffix}"
         nexus_paths[
             "fastqs_dir"
         ] = os.path.join(f"/{self.rf_obj.runfolder_name}", SWConfig.FASTQ_DIRS[fastq_type])
         nexus_paths[
             "logfiles_dir"
-        ] = os.path.join(f"/{nexus_paths['runfolder_name']}", "automated_scripts_logfiles")
-        nexus_paths[
-            "samplesheet"
-        ] = os.path.join(nexus_paths['proj_root'], self.rf_obj.samplesheet_name)
+        ] = os.path.join(f"/{self.rf_obj.runfolder_name}", "automated_scripts_logfiles")
         return nexus_paths
 
     def get_samples_dict(self) -> dict:
@@ -1451,9 +1440,9 @@ class SampleObject(SWConfig):
             )
             fastq_path = os.path.join(self.rf_obj.fastq_dir_path, fastq_name)
             nexus_fastq_path = os.path.join(
-                    f"{SWConfig.DNANEXUS_PROJ_ID}:{self.nexus_paths['fastqs_dir']}",
-                    fastq_name
-                )
+                f"{SWConfig.DNANEXUS_PROJ_ID}:{self.nexus_paths['fastqs_dir']}",
+                fastq_name
+            )
             return fastq_name, fastq_path, nexus_fastq_path
         except:
             self.rf_obj.rf_loggers.sw.error(
@@ -1636,7 +1625,7 @@ class SampleObject(SWConfig):
                 f'{SWConfig.DX_CMDS["congenica_upload"]}Congenica_Upload-{self.sample_name}',
                 f'{SWConfig.APP_INPUTS["congenica_upload"]["congenica_project"]}'
                 f'{str(self.panel_settings["congenica_project"])}',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["congenica_project"]}'
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["credentials"]}'
                 f'{self.panel_settings["congenica_credentials"]}',
                 f'{SWConfig.APP_INPUTS["congenica_upload"]["ir_template"]}'
                 f'{self.panel_settings["congenica_IR_template"]}',
@@ -1659,7 +1648,7 @@ class SampleObject(SWConfig):
             [
                 f'{SWConfig.DX_CMDS["qiagen_upload"]}Qiagen_Upload-{self.sample_name}',
                 f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_name"]}{self.sample_name}',
-                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}{self.pannum}{self.sample_name}.zip',
+                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}{self.pannum}/{self.sample_name}.zip',
                 SWConfig.UPLOAD_ARGS["dest"],
                 (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
                     ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
@@ -1717,7 +1706,7 @@ class SampleObject(SWConfig):
                 SWConfig.STAGE_INPUTS["pipe"]["gatk_padding"],
                 f'{SWConfig.STAGE_INPUTS["pipe"]["filter_vcf_bed"]}{self.panel_settings["variant_calling_bedfile"]}',
                 SWConfig.STAGE_INPUTS["pipe"]["bwa_instance"],
-                f'{SWConfig.STAGE_INPUTS["pipe"]["gatk_instance"]}={GATK_INSTANCE}',
+                f'{SWConfig.STAGE_INPUTS["pipe"]["gatk_instance"]}{GATK_INSTANCE}',
                 SWConfig.STAGE_INPUTS["pipe"]["filter_vcf_instance"],
                 SWConfig.STAGE_INPUTS["pipe"]["picard_instance"],
                 SWConfig.STAGE_INPUTS["pipe"]["sambamba_instance"],
@@ -2003,11 +1992,13 @@ class BuildDxCommands(SWConfig):
             :return dx_cmd_list (list):     List of runwide commands for tso runs
             :dx_postprocessing_cmds (list): Post-processing commands for tso runs
         """
-        dx_cmd_list, dx_postprocessing_cmds = [
+        dx_cmd_list = [
+            f"PROJECT_ID={self.nexus_project_id}",
             f"PROJECT_NAME={self.samples_obj.nexus_paths['proj_name']}",
             f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
             SWConfig.EMPTY_DEPENDS
         ]
+        dx_postprocessing_cmds = dx_cmd_list[:]
         sambamba_cmds_list = []
         # Remove base SampleSheet as we only want to use split SampleSheets
         for tso_ss in self.rf_obj.tso_ss_list:
@@ -2242,6 +2233,7 @@ class BuildDxCommands(SWConfig):
             :return cmd_list (list):    List of per-sample commands
         """
         cmd_list = [
+            f"PROJECT_ID={self.nexus_project_id}",
             f"PROJECT_NAME={self.samples_obj.nexus_paths['proj_name']}",
             f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
             SWConfig.EMPTY_DEPENDS,
@@ -2432,8 +2424,7 @@ class BuildDxCommands(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["ed_cnvcalling"]}ED_CNVcalling-{panno}',
-                f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount"]}'
-                f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount_rdata"]}',
+                f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount"]}',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["bed"]}'
                 f'{SWConfig.BEDFILE_FOLDER}{SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]}_CNV.bed',
                 SWConfig.APP_INPUTS["ed_cnvcalling"]["proj"],
@@ -2485,7 +2476,7 @@ class BuildDxCommands(SWConfig):
             self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], location
         )
         # Remove any None values from the command_list
-        write_lines(script, "a", list(filter(None, cmds)))
+        write_lines(script, "w", list(filter(None, cmds)))
 
 
 class PipelineEmails(SWConfig):

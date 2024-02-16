@@ -153,7 +153,7 @@ NEXUS_IDS["WORKFLOWS"]["archerdx"] = NEXUS_IDS["APPS"]["fastqc"]
 APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     "tso500": {
         "docker": f"-iTSO500_ruo={NEXUS_IDS['FILES']['tso500_docker']}",
-        "samplesheet": "-isamplesheet=${PROJECT_ID}:${RUNFOLDER_NAME}/%s",
+        "samplesheet": "-isamplesheet=${PROJECT_ID}:/${RUNFOLDER_NAME}/",
         "analysis_options": "-ianalysis_options=",
         "project_name": "-iproject_name=${PROJECT_NAME}",
         "runfolder_name": "-irunfolder_name=${RUNFOLDER_NAME}",
@@ -161,8 +161,8 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "lt_instance": "mem1_ssd1_v2_x36",
     },
     "sambamba": {  # Used for TSO samples only as standalone app
-        "bam": "-ibamfile=${DNANEXUS_PROJ_ID}/analysis_folder/Logs_Intermediates/StitchedRealigned/",
-        "bai": "-ibam_index=${DNANEXUS_PROJ_ID}/analysis_folder/Logs_Intermediates/StitchedRealigned",
+        "bam": "-ibamfile=${PROJECT_ID}:/analysis_folder/Logs_Intermediates/StitchedRealigned/",
+        "bai": "-ibam_index=${PROJECT_ID}:/analysis_folder/Logs_Intermediates/StitchedRealigned/",
         "coverage_level": "-icoverage_level=",
         "sambamba_bed": "-isambamba_bed=",
         "cov_cmds": (
@@ -178,7 +178,7 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     },
     "sompy": {
         "truth_vcf": f"-itruthVCF={NEXUS_IDS['FILES']['sompy_truth_vcf']}",
-        "query_vcf": "-iqueryVCF=${DNANEXUS_PROJ_ID}",
+        "query_vcf": "-iqueryVCF=${PROJECT_ID}:/analysis_folder/Results/",
         "tso": "-iTSO=true",
         "skip": "-iskip=false",
     },
@@ -186,12 +186,11 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "ref_genome": "-ireference_genome=",
         "bed": "-ibedfile=",
         "normals_rdata": "-inormals_RData=",
-        "proj": "-iproject_name=${PROJECT_NAME}:/analysis_folder/Results/",
+        "proj": "-iproject_name=${PROJECT_NAME}",
         "pannos": "-ibamfile_pannumbers=",
     },
     "ed_cnvcalling": {
-        "readcount_rdata": "RData",
-        "readcount": "-ireadcount_file=${ED_READCOUNT_JOB_ID}:",
+        "readcount": "-ireadcount_file=${ED_READCOUNT_JOB_ID}:RData",
         "bed": "-isubpanel_bed=",
         "proj": "-iproject_name=${PROJECT_NAME}",
         "pannos": "-ibamfile_pannumbers=",
@@ -223,7 +222,7 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     },
     "qiagen_upload": {
         "sample_name": "-isample_name=",
-        "sample_zip_folder": "-isample_zip_folder=$PROJECT_ID:/results/",
+        "sample_zip_folder": "-isample_zip_folder=${PROJECT_ID}:/results/",
     },
     "duty_csv": {
         "project_name": "-iproject_name=${PROJECT_NAME}",
@@ -261,9 +260,9 @@ DX_CMDS = {
         'select( .id == "%s") | .execution.id\''
     ),
     "find_data": f"source {SDK_SOURCE}; dx find data {UPLOAD_ARGS['proj']}%s --auth %s | wc -l",
-    "invite_user": "USER_INVITE_OUT=$(dx invite %s $PROJECT_ID %s --no-email --auth %s)",
+    "invite_user": "USER_INVITE_OUT=$(dx invite %s ${PROJECT_ID} %s --no-email --auth %s)",
     "file_upload_cmd": (
-        f"{UPLOAD_AGENT_EXE} --auth %s {UPLOAD_ARGS['proj']}%s --folder '%s' --do-not-compress --upload-threads 10 %s"
+        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder '%s' --do-not-compress --upload-threads 10 %s"
     ),
     "pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
     "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
@@ -298,7 +297,6 @@ DX_CMDS = {
         "--instance-type mem1_ssd1_v2_x2 ' ${DSS_INPUTS} ' "
         f"{JOB_NAME_STR}"
     ),
-    "write_projid": "echo PROJECT_ID=$(echo $PROJECT_ID) >",
     "qiagen_upload": f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",
     "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
     "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
