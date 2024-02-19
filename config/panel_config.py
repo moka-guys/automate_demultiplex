@@ -792,6 +792,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R229",
             "congenica_project": 4201,
+            "ed_cnvcalling_bedfile": "Pan5179",
         },
     }
     # ================ PAN NUMBER LISTS ===================================================

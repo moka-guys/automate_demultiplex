@@ -193,8 +193,8 @@ LOG_MSGS = {
             "and check if any that should have been ignored are in DNAnexus"
         ),
         "files_uploaded": (
-            "%s files should have been uploaded (excluding any with ignore terms in "
-            "filename or path). %s files present in DNAnexus project"
+            "%s files should have been uploaded (excluding any with ignore terms in filename or path). %s files "
+            "present in DNAnexus project that were uploaded by the automated scripts (contain the tag 'as_upload')"
         ),
         "check_ignore": (
             "%s files present in DNAnexus project containing one of the ignore terms. NB this may not be accurate if "

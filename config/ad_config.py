@@ -259,10 +259,13 @@ DX_CMDS = {
         f"source {SDK_SOURCE}; dx describe %s --json --auth %s | jq -r '.stages[] | "
         'select( .id == "%s") | .execution.id\''
     ),
-    "find_data": f"source {SDK_SOURCE}; dx find data {UPLOAD_ARGS['proj']}%s --auth %s | wc -l",
+    "find_data": (
+        f"source {SDK_SOURCE}; dx find data --project=%s --tag as_upload --auth %s | "
+        "grep -v 'automated_scripts_logfiles' | wc -l"
+    ),
     "invite_user": "USER_INVITE_OUT=$(dx invite %s ${PROJECT_ID} %s --no-email --auth %s)",
     "file_upload_cmd": (
-        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder '%s' --do-not-compress --upload-threads 10 %s"
+        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder '%s' --do-not-compress --upload-threads 10 %s --tag as_upload"
     ),
     "pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
     "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
