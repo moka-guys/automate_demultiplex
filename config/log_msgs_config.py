@@ -117,9 +117,10 @@ LOG_MSGS = {
         "sample_identified": "Identified %s sample: %s",
         "splitting_tso_samplesheet": "Splitting SampleSheet for TSO run into batches containing %s samples each: %s",
         "tso_batches_count": "Creating %s SampleSheets",
-        "decision_support_upload_required": "Samples in project %s require upload to decision support tool",
-        "congenica_upload_required": "Samples in project %s require upload to Congenica",
-        "qiagen_upload_required": "Samples in project %s required upload to QCII",
+        "decision_support_upload_required": "Sample %s requires upload to decision support tool",
+        "decision_support_upload_notrequired": "Sample %s is a control so does not require decision support upload",
+        "congenica_upload_required": "Sample %s requires upload to Congenica",
+        "qiagen_upload_required": "Sample %s requires upload to QCII",
         "unrecognised_panno": "Sample in SampleSheet does not contain a recognised pan number: %s",
         "recognised_panno": "Sample in SampleSheet contains a recognised pan number: %s, %s",
         "fastq_identified": (
@@ -200,18 +201,5 @@ LOG_MSGS = {
             "%s files present in DNAnexus project containing one of the ignore terms. NB this may not be accurate if "
             "the ignore term is found in the result of dx find data (eg present in project name)"
         ),
-    },
-    "decision_support": {
-        "workflow_type": "Workflow is a %s workflow",
-        "incorrect_workflow": "Workflow type %s does not require Congenica upload",
-        "setting_job_id_cmds": "Setting job ID retrieval commands",
-        "setting_job_id_cmds_err": "Exception encountered when setting the job ID retrieval commands: %s",
-        "get_job_id": "Getting job ID for file %s",
-        "found_job_id": "Found job ID for file %s: %s",
-        "get_job_id_err": "Error getting job ID for file %s: %s. Attempt %s",
-        "get_job_id_fail": "Reached max no. retries of %s to retrieve job ID for file %s",
-        "setting_app_input_str": "Setting the Congenica upload app input string",
-        "app_input_str_err": "Exception encountered when setting the app input string: %s",
-        "printing_app_input_str": "Printing the Congenica upload app input string: %s",
-    },
+    }
 }

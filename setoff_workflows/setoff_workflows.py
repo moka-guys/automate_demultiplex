@@ -253,6 +253,8 @@ class ProcessRunfolder(SWConfig):
             Set off the project creation script using subprocess, return project ID
         get_upload_cmds()
             Build file upload commands
+        copy_samplesheet()
+            Copy samplesheet from samplesheet dir into the runfolder
         split_tso_samplesheet()
             Split tso500 SampleSheet into parts with x samples per SampleSheet (no.
             defined in TSO_BATCH_SIZE) and write to runfolder
@@ -269,9 +271,6 @@ class ProcessRunfolder(SWConfig):
             which writes log messages to the upload agent log within the runfolder
         upload_rest_of_runfolder()
             Backs up the rest of the runfolder, ignoring files dependent upon the type of run
-        create_decision_support_command_file()
-            If there is a decision support tool upload required, create the upload bash
-            script, which  is run manually after QC has passed
         run_dx_run_commands()
             Execute the dx run bash script
         post_pipeline_upload()
@@ -313,11 +312,11 @@ class ProcessRunfolder(SWConfig):
                     self.rf_obj, self.nexus_identifiers
                 )
                 self.upload_cmds = self.get_upload_cmds()
+                self.copy_samplesheet()
                 self.pre_pipeline_upload_dict = self.create_file_upload_dict()
                 self.build_dx_commands = BuildDxCommands(
                     self.rf_obj, self.samples_obj, self.nexus_identifiers["proj_id"]
                 )
-                self.create_decision_support_command_file()
                 self.pre_pipeline_upload()
                 self.run_dx_run_commands()
                 self.pipeline_emails = PipelineEmails(self.rf_obj, self.samples_obj)
@@ -562,6 +561,27 @@ class ProcessRunfolder(SWConfig):
                     pass
         return samples, samplesheet_header
 
+    def copy_samplesheet(self) -> None:
+        """
+        Copy samplesheet from samplesheet dir into the runfolder        
+            :return None:
+        """
+        if os.path.exists(
+            self.rf_obj.samplesheet_path
+        ):  # Try to copy SampleSheet into project
+            copyfile(
+                self.rf_obj.samplesheet_path,
+                self.rf_obj.runfolder_samplesheet_path,
+            )
+            self.rf_obj.rf_loggers.sw.info(
+                self.rf_obj.rf_loggers.sw.log_msgs["ss_copy_success"],
+                self.rf_obj.runfolder_samplesheet_path,
+            )
+        else:
+            self.rf_obj.rf_loggers.sw.info(
+                self.rf_obj.rf_loggers.sw.log_msgs["ss_copy_fail"],
+            )
+        
     def create_file_upload_dict(self) -> dict:
         """
         Create dictionary of files to upload prior to setting off the pipeline,
@@ -584,6 +604,10 @@ class ProcessRunfolder(SWConfig):
                 ],
             }
         else:
+            pre_pipeline_upload_dict["runfolder_samplesheet"] = {
+                "cmd": self.upload_cmds["runfolder_samplesheet"],
+                "files_list": [self.rf_obj.runfolder_samplesheet_path],
+            }
             pre_pipeline_upload_dict["fastqs"] = {
                 "cmd": self.upload_cmds["fastqs"],
                 "files_list": [*self.samples_obj.fastqs_list, *self.samples_obj.undetermined_fastqs_list],
@@ -640,30 +664,13 @@ class ProcessRunfolder(SWConfig):
 
     def upload_rest_of_runfolder(self) -> None:
         """
-        Backs up the rest of the runfolder. First copies the SampleSheet into the
-        project, then specifies which files to ignore (excludes BCL files for all runs
-        except tso500 runs for which they are needed for demultiplexing on DNAnexus).
-        Calls upload_runfolder.upload_rest_of_runfolder(ignore), passing a run-dependent
-        ignore string, and the this handles the runfolder upload. upload_runfolder
-        writes log messages to the upload agent log within the runfolder. If unsuccessful,
-        exit script
+        Backs up the rest of the runfolder. Specifies which files to ignore (excludes BCL files for all
+        runs except tso500 runs for which they are needed for demultiplexing on DNAnexus). Calls
+        upload_runfolder.upload_rest_of_runfolder(ignore), passing a run-dependent ignore string, and
+        the this handles the runfolder upload. upload_runfolder writes log messages to the upload
+        runfolder log file. If unsuccessful, exit script
             :return None:
         """
-        if os.path.exists(
-            self.rf_obj.samplesheet_path
-        ):  # Try to copy SampleSheet into project
-            copyfile(
-                self.rf_obj.samplesheet_path,
-                self.rf_obj.runfolder_samplesheet_path,
-            )
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["ss_copy_success"],
-                self.rf_obj.runfolder_samplesheet_path,
-            )
-        else:
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["ss_copy_fail"],
-            )
         # Build upload_runfolder.py commands, ignoring some files
         if self.samples_obj.pipeline == "tso500":
             ignore = ""
@@ -685,18 +692,6 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.upload_runfolder_logfile,
             )
             sys.exit(1)
-
-    def create_decision_support_command_file(self) -> None:
-        """
-        If there is a decision support tool upload required, create the upload bash file,
-        which is run manually after QC has passed. Writes the source command, activating
-        the environment (the sdk). Specific upload commands are echoed into this file
-        at a later point when the pipeline run script is executed
-            :return None:
-        """
-        if self.samples_obj.pipeline in ("pipe", "wes"):
-            lines_to_write = [SWConfig.SDK_SOURCE]
-            write_lines(self.rf_obj.decision_support_upload_cmds, "w", lines_to_write)
 
     def run_dx_run_commands(self) -> None:
         """
@@ -879,7 +874,7 @@ class CollectRunfolderSamples(SWConfig):
         pipelines_list = []
         for sample, panno in self.samplename_dict.items():
             pipelines_list.append(SWConfig.PANEL_DICT[panno]["pipeline"])
-        pipelines_list = list(set(pipelines_list))
+        pipelines_list = sorted(list(set(pipelines_list)))
         if len(pipelines_list) > 1:
             self.rf_obj.rf_loggers.sw.error(
                 self.rf_obj.rf_loggers.sw.log_msgs["multiple_pipeline_names"],
@@ -902,7 +897,7 @@ class CollectRunfolderSamples(SWConfig):
         runtype_list = []
         for sample, panno in self.samplename_dict.items():
             runtype_list.append(SWConfig.PANEL_DICT[panno]["runtype"])
-        runtype_str = "_".join(list(set(runtype_list)))
+        runtype_str = "_".join(sorted(list(set(runtype_list))))
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["runtype_str"],
             runtype_str,
@@ -939,9 +934,9 @@ class CollectRunfolderSamples(SWConfig):
         if library_numbers:  # Should always be library numbers found
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["library_nos_identified"],
-                ", ".join(list(set(library_numbers))),
+                ", ".join(sorted(list(set(library_numbers)))),
             )
-            return list(set(library_numbers))
+            return sorted(list(set(library_numbers)))
         else:  # Prompt a slack alert
             self.rf_obj.rf_loggers.sw.error(
                 self.rf_obj.rf_loggers.sw.log_msgs["library_no_err"],
@@ -968,7 +963,7 @@ class CollectRunfolderSamples(SWConfig):
                 self.rf_obj.rf_loggers.sw.log_msgs["wes_batch_nos_identified"],
                 ", ".join(wes_batch_numbers_list),
             )
-            return list(set(wes_batch_numbers_list))
+            return sorted(list(set(wes_batch_numbers_list)))
         else:  # Prompt a slack alert
             self.rf_obj.rf_loggers.sw.error(
                 self.rf_obj.rf_loggers.sw.log_msgs["wes_batch_nos_missing"],
@@ -1166,7 +1161,6 @@ class SampleObject(SWConfig):
                                             are required for building dx commands
         neg_control (bool):                 True if sample is a negative control, else False
         pos_control (bool):                 True if sample is a reference sample, else False
-        workflow_name (str):                Workflow name
         pannum (str):                       Panel number that matches a config-defined panel
                                             number, or None if pannum not valid
         panel_settings (dict):              Config defined panel settings specific to the sample panel number
@@ -1183,9 +1177,6 @@ class SampleObject(SWConfig):
         check_pos_control()
             Check if sample is a reference sample by checking if reference ids are
             present in fastq name
-        get_workflow_name()
-            Get workflow name from the app ID by parsing the workflow metadata using dx
-            describe and jq
         find_pannum()
             Extract panel number from sample name using regular expression
         validate_pannum(pannum)
@@ -1262,7 +1253,6 @@ class SampleObject(SWConfig):
         self.nexus_paths = nexus_paths
         self.neg_control = self.check_negative_control()
         self.pos_control = self.check_pos_control()
-        self.workflow_name = self.get_workflow_name()
         self.pannum = self.find_pannum()
         self.panel_settings = SWConfig.PANEL_DICT[self.pannum]
         self.rf_obj.rf_loggers.sw.info(
@@ -1309,29 +1299,6 @@ class SampleObject(SWConfig):
             return True
         else:
             return False
-
-    def get_workflow_name(self) -> str:
-        """
-        Get workflow name from the app ID by parsing the workflow metadata
-        using dx describe and jq
-            :return workflow_name (str): Workflow name
-        """
-        if self.pipeline == "tso500":
-            (workflow_name, _, _) = execute_subprocess_command(
-                f"dx describe {SWConfig.NEXUS_IDS['APPS'][self.pipeline]} "
-                "--json | jq -r '(.name)'",
-                self.rf_obj.rf_loggers.sw,
-                "exit_on_fail",
-            )
-        else:
-            (workflow_name, _, _) = execute_subprocess_command(
-                "dx describe "
-                f"{SWConfig.NEXUS_IDS['WORKFLOWS'][self.pipeline]} "
-                "--json | jq -r '\"\(.folder)/\(.name)\"'",
-                self.rf_obj.rf_loggers.sw,
-                "exit_on_fail",
-            )
-        return workflow_name
 
     def find_pannum(self) -> Union[str, None]:
         """
@@ -1555,30 +1522,34 @@ class SampleObject(SWConfig):
             :return (str | None):   Dx run commands (Congenica input command, Congenica upload command),
                                     or None if sample is a reference sample
         """
-        if self.pos_control:
+        if any([self.neg_control, self.pos_control]):
             decision_support_cmd = None
+            self.rf_obj.rf_loggers.sw.info(
+                self.rf_obj.rf_loggers.sw.log_msgs["decision_support_upload_notrequired"],
+                self.sample_name,
+            )
         else:
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["decision_support_upload_required"],
-                self.nexus_paths["proj_name"],
+                self.sample_name,
             )
             # If project is specified then upload via upload agent
             if self.panel_settings["congenica_project"] == "SFTP":  # SFTP upload cmd
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["congenica_upload_required"],
-                    self.nexus_paths["proj_name"],
+                    self.sample_name,
                 )
                 decision_support_cmd = self.build_congenica_sftp_cmd()
             elif isinstance(self.panel_settings["congenica_project"], int):
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["congenica_upload_required"],
-                    self.nexus_paths["proj_name"],
+                    self.sample_name,
                 )
                 decision_support_cmd = self.build_congenica_cmd()
             elif self.panel_settings["panel_name"] == "tso500":
                 self.rf_obj.rf_loggers.sw.info(
                     self.rf_obj.rf_loggers.sw.log_msgs["qiagen_upload_required"],
-                    self.nexus_paths["proj_name"],
+                    self.sample_name,
                 )
                 decision_support_cmd = self.build_qiagen_upload_cmd()
             return decision_support_cmd
@@ -1598,12 +1569,12 @@ class SampleObject(SWConfig):
             self.sample_name,
         )
         return " ".join(
-            [
+            [   
                 f'{SWConfig.DX_CMDS["congenica_sftp"]}Congenica_SFTP_Upload-{self.sample_name}',
                 SWConfig.UPLOAD_ARGS["dest"],
-                (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
-                    ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
-                ),
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{self.sample_name}*.bedfiltered.vcf.gz',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{self.sample_name}*.refined.bam',
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth
             ]
         )
 
@@ -1620,6 +1591,14 @@ class SampleObject(SWConfig):
             "congenica",
             self.sample_name,
         )
+        if self.pipeline == "pipe":
+            vcf_input = f'{self.sample_name}*.bedfiltered.vcf.gz'
+            bam_input = f'{self.sample_name}*.refined.bam'            
+        
+        if self.pipeline == "wes":
+            vcf_input = f'{self.sample_name}*_markdup_Haplotyper.vcf.gz'
+            bam_input = f'{self.sample_name}*_markdup.bam'
+            
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["congenica_upload"]}Congenica_Upload-{self.sample_name}',
@@ -1630,10 +1609,10 @@ class SampleObject(SWConfig):
                 f'{SWConfig.APP_INPUTS["congenica_upload"]["ir_template"]}'
                 f'{self.panel_settings["congenica_IR_template"]}',
                 f'{SWConfig.APP_INPUTS["congenica_upload"]["samplename"]}{self.sample_name}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{vcf_input}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{bam_input}',
                 SWConfig.UPLOAD_ARGS["dest"],
-                (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
-                    ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
-                ),
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth
             ]
         )
 
@@ -1650,9 +1629,7 @@ class SampleObject(SWConfig):
                 f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_name"]}{self.sample_name}',
                 f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}{self.pannum}/{self.sample_name}.zip',
                 SWConfig.UPLOAD_ARGS["dest"],
-                (SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth).replace(
-                    ")", f"' >> {self.rf_obj.decision_support_upload_cmds}"
-                ),
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth
             ]
         )
 
@@ -1851,12 +1828,13 @@ class BuildDxCommands(SWConfig):
     samples_obj along with the run-wide commands to the dx run script
 
     Attributes:
-        rf_obj (obj):                   RunfolderObject object (contains runfolder-specific attributes)
-        samples_obj (obj):              CollectRunfolderSamples object (contains sample-specific attributes
-        nexus_project_id (str):         Project ID, generated when the DNAnexus project is created
-        dnanexus_auth (str):            DNAnexus auth token
-        dx_cmd_list (list):             List of dx run commands for the project
-        dx_postprocessing_cmds (list):  List of dx run commands to run after the TSO app. TSO runs only
+        rf_obj (obj):                           RunfolderObject object (contains runfolder-specific attributes)
+        samples_obj (obj):                      CollectRunfolderSamples object (contains sample-specific attributes
+        nexus_project_id (str):                 Project ID, generated when the DNAnexus project is created
+        dnanexus_auth (str):                    DNAnexus auth token
+        dx_cmd_list (list):                     Dx run commands for the project
+        dx_postprocessing_cmds (list):          Dx run commands to run after the TSO app. TSO runs only
+        decision_support_upload_cmds (list):    Dx run commands for decision support uploads
 
     Methods:
         build_dx_cmds()
@@ -1892,9 +1870,6 @@ class BuildDxCommands(SWConfig):
         return_sample_workflow_cmds()
             Return sample-level commands. This includes the sample workflow command,
             and Congenica input and upload commands if required for the sample type
-        return_analysis_id_cmd()
-            Generates the command that runs the congenica_upload python script, and
-            captures the script output (the Congenica upload app input string)
         return_wes_runwide_cmds()
             Collect runwide commands for WES runs as a list. This includes peddy
         create_peddy_cmd()
@@ -1911,9 +1886,10 @@ class BuildDxCommands(SWConfig):
             Build dx run command for exomedepth cnv calling app
         create_duty_csv_cmd()
             Build dx run command to run create_duty_csv app for the run
-        write_dx_run_cmds(cmds, script, location)
-            Write dx run commands to the dx run script for the runfolder
-    """
+        write_dx_run_cmds()
+            Write dx run commands to the dx run script, post dx run script, and decision support upload
+            script for the runfolder
+        """
 
     def __init__(
         self,
@@ -1934,34 +1910,25 @@ class BuildDxCommands(SWConfig):
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmds"]
         )
-        self.dx_cmd_list, self.dx_postprocessing_cmds = self.build_dx_cmds()
-        self.write_dx_run_cmds(  # Write commands to file
-            self.dx_cmd_list, self.rf_obj.runfolder_dx_run_script, "dx run bash script"
-        )
-        if (
-            self.samples_obj.pipeline == "tso500"
-        ):  # Write commands to TSO post-processing file
-            self.write_dx_run_cmds(
-                self.dx_postprocessing_cmds,
-                self.rf_obj.post_run_dx_run_script,
-                "tso500 postprocessing script",
-            )
+        self.dx_cmd_list, self.dx_postprocessing_cmds, self.decision_support_upload_cmds = self.build_dx_cmds()
+        self.write_dx_run_cmds()
 
     def build_dx_cmds(self) -> Union[list, list]:
         """
         Build dx run commands (pipeline-dependent) by calling the relevant functions and
         appending to the dx_cmd_list. This includes both sample workflow-level commands
         (self.return_sample_workflow_cmds()), and runwide commands
-            :return dx_cmd_list (list):             Dx run command list for the run
-            :return dx_postprocessing_cmds (list):  Commands for postprocessing.
-                                                    Currently only releveant to tso500
+            :return dx_cmd_list (list):                     Dx run command list for the run
+            :return dx_postprocessing_cmds (list):          Commands for postprocessing.
+                                                            Currently only releveant to tso500
+            :return decision_support_upload_cmds (list):    Commands for decision support uploads
         """
         # Get sample workflow-level commands
         if self.samples_obj.pipeline == "tso500":
-            dx_cmd_list, dx_postprocessing_cmds = self.return_tso_runwide_cmds()
+            dx_cmd_list, dx_postprocessing_cmds, decision_support_upload_cmds = self.return_tso_runwide_cmds()
         else:
             dx_postprocessing_cmds = []
-            dx_cmd_list = self.return_sample_workflow_cmds()
+            dx_cmd_list, decision_support_upload_cmds = self.return_sample_workflow_cmds()
 
             # Get pipeline-specific run-wide commands. SNP, ADX and ONC do not have
             # pipeline-specific run-wide commands
@@ -1982,15 +1949,16 @@ class BuildDxCommands(SWConfig):
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["cmds_built"]
             )
-        return dx_cmd_list, dx_postprocessing_cmds
+        return dx_cmd_list, dx_postprocessing_cmds, decision_support_upload_cmds
 
-    def return_tso_runwide_cmds(self) -> Union[list, list]:
+    def return_tso_runwide_cmds(self) -> Union[list, list, list]:
         """
         Collect runwide commands for tso500 runs as a list. This includes tso500 app,
         fastqc, sompy, sambamba, multiqc and duty_csv. TSO commands are all generated
         within this function as the dependency order is different for this pipeline
-            :return dx_cmd_list (list):     List of runwide commands for tso runs
-            :dx_postprocessing_cmds (list): Post-processing commands for tso runs
+            :return dx_cmd_list (list):                     List of runwide commands for tso runs
+            :return dx_postprocessing_cmds (list):          Post-processing commands for tso runs
+            :return decision_support_upload_cmds (list):    Commands for decision support uploads
         """
         dx_cmd_list = [
             f"PROJECT_ID={self.nexus_project_id}",
@@ -1999,20 +1967,15 @@ class BuildDxCommands(SWConfig):
             SWConfig.EMPTY_DEPENDS
         ]
         dx_postprocessing_cmds = dx_cmd_list[:]
+        decision_support_upload_cmds = dx_cmd_list[:]
         sambamba_cmds_list = []
         # Remove base SampleSheet as we only want to use split SampleSheets
         for tso_ss in self.rf_obj.tso_ss_list:
             if tso_ss != self.rf_obj.samplesheet_name:
                 dx_cmd_list.append(self.create_tso500_cmd(tso_ss))
 
-        dx_cmd_list.append(
-            (
-                f"echo 'PROJECT_ID={self.nexus_project_id}"
-                f"' >> {self.rf_obj.decision_support_upload_cmds}"
-            )
-        )
         for sample_name in self.samples_obj.samples_dict.keys():
-            dx_cmd_list.append(
+            decision_support_upload_cmds.append(
                 self.samples_obj.samples_dict[sample_name][
                     "decision_support_upload_cmd"
                 ]
@@ -2048,7 +2011,7 @@ class BuildDxCommands(SWConfig):
         dx_postprocessing_cmds.extend(sambamba_cmds_list)
         dx_postprocessing_cmds.append(self.create_duty_csv_cmd())
 
-        return dx_cmd_list, dx_postprocessing_cmds
+        return dx_cmd_list, dx_postprocessing_cmds, decision_support_upload_cmds
 
     def create_tso500_cmd(self, tso_ss: str) -> str:
         """
@@ -2230,60 +2193,43 @@ class BuildDxCommands(SWConfig):
         """
         Return sample-level commands. This includes the sample workflow command,
         and Congenica input and upload commands if required for the sample type
-            :return cmd_list (list):    List of per-sample commands
+            :return dx_cmds (list):                         Per-sample workflow commands
+            :return decision_support_upload_cmds (list):    Per-sample decision support upload commands
         """
-        cmd_list = [
+        dx_cmds = [
             f"PROJECT_ID={self.nexus_project_id}",
             f"PROJECT_NAME={self.samples_obj.nexus_paths['proj_name']}",
             f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
             SWConfig.EMPTY_DEPENDS,
         ]
+        decision_support_upload_cmds = dx_cmds[:]
         
         if self.samples_obj.pipeline == "pipe":
-            cmd_list.extend(SWConfig.EMPTY_CP_DEPENDS)
+            dx_cmds.extend(SWConfig.EMPTY_CP_DEPENDS)
         for sample_name in self.samples_obj.samples_dict.keys():
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["sample_identified"],
                 self.samples_obj.pipeline,
                 sample_name,
             )
-            cmd_list.append(
+            dx_cmds.append(
                 self.samples_obj.samples_dict[sample_name]["sample_pipeline_cmd"]
             )
-            cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
+            dx_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
             if self.samples_obj.pipeline == "pipe":
                 # Add to gatk depends list because RPKM must depend only upon the
                 # sample workflows completing successfully, whilst other downstream
                 # apps depend on all prior jobs completing succesfully
-                cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_gatk"])
+                dx_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_gatk"])
 
             if self.samples_obj.pipeline in ["wes", "pipe"]:
-                cmd_list.append(self.return_analysis_id_cmd())
-                cmd_list.append(
+                decision_support_upload_cmds.append(
                     self.samples_obj.samples_dict[sample_name][
                         "decision_support_upload_cmd"
                     ]
                 )
-        return cmd_list
-
-    def return_analysis_id_cmd(self) -> str:
-        """
-        Generates the command that runs the congenica_upload python script, and captures the script
-        output (the Congenica upload app input string) congenica_upload support tool python script is run
-        after each dx run command, taking analysis and project name as input, and printing the required
-        inputs to the command line which are required by the Congenica upload script ${JOB_ID} is a bash
-        variable which will be populated by when run on the command line. The python script has three
-        inputs - the analysisID (${JOB_ID}), and -p is the DNAnexus project the analysis is running in
-            :return (str):  Command that runs the congenica_upload python script and obtains
-                            some of the inputs for the upload app dx run command
-        """
-        return (
-            "DSS_INPUTS=$(source /usr/local/bin/miniconda3/etc/profile.d/conda.sh "
-            f"&& cd {SWConfig.PROJECT_DIR} && conda activate python3.10.6 && "
-            "python3 -m congenica_inputs -a ${JOB_ID} "
-            f"-p {SWConfig.DNANEXUS_PROJ_ID} -r {SWConfig.RUNFOLDER_NAME})"
-        )
+        return dx_cmds, decision_support_upload_cmds
 
     def return_wes_runwide_cmds(self) -> list:
         """
@@ -2464,20 +2410,31 @@ class BuildDxCommands(SWConfig):
             ]
         )
 
-    def write_dx_run_cmds(self, cmds: list, script: str, location: str) -> None:
+    def write_dx_run_cmds(self) -> None:
         """
-        Write dx run commands to the dx run script for the runfolder. Remove any None values
-            :param cmds (list): List of commands to write
-            :script (str):      Path of script to write commands to
-            :location (str):    Name of script the commands are being written to
+        Write dx run commands to the dx run script, post dx run script, and decision support upload
+        script for the runfolder. Remove any None values
+        from the command list
             :return None:
         """
         self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], location
+            self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], self.rf_obj.runfolder_dx_run_script
         )
-        # Remove any None values from the command_list
-        write_lines(script, "w", list(filter(None, cmds)))
+        write_lines(  # Write commands to dx run script
+            self.rf_obj.runfolder_dx_run_script, "w", list(filter(None, self.dx_cmd_list)))
 
+        if (
+            self.samples_obj.pipeline == "tso500"
+        ):  # Write commands to TSO post-processing file
+            self.rf_obj.rf_loggers.sw.info(
+                self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], self.rf_obj.post_run_dx_run_script
+            )
+            write_lines(self.rf_obj.post_run_dx_run_script, "w", list(filter(None, self.dx_postprocessing_cmds)))
+        if (self.samples_obj.pipeline == "tso500", "wes", "pipe"):  # Write commands to decision support upload script
+            self.rf_obj.rf_loggers.sw.info(
+                self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], self.rf_obj.decision_support_upload_script
+            )
+            write_lines(self.rf_obj.decision_support_upload_script, "w", list(filter(None, self.decision_support_upload_cmds)))
 
 class PipelineEmails(SWConfig):
     """
@@ -2572,7 +2529,7 @@ class PipelineEmails(SWConfig):
         """
         email_html = self.email.generate_email_html(
             self.rf_obj.runfolder_name,
-            ",".join(list(set(self.workflows))),
+            ",".join(sorted(list(set(self.workflows)))),
             " <br> ".join(self.queries),
             self.sample_count,
             False,
@@ -2594,7 +2551,7 @@ class PipelineEmails(SWConfig):
         """
         email_html = self.email.generate_email_html(
             self.rf_obj.runfolder_name,
-            ",".join(list(set(self.workflows))),
+            ",".join(sorted(list(set(self.workflows)))),
             False,
             self.sample_count,
             " <br> ".join(self.samples_obj.samples_dict.keys()),

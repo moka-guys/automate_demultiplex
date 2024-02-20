@@ -47,7 +47,6 @@ logfiles_config = {
     "project": proj_creation_script,
     "dx_run": runfolder_dx_run_script,
     "post_run_cmds": post_run_dx_run_script,
-    "decision_support": decision_support_tool_logfile,
     "ss_validator": samplesheet_validator_logfile,
 }
 

@@ -143,7 +143,7 @@ def git_tag() -> str:
 
 def execute_subprocess_command(
     command: str, logger: logging.Logger, exit_on_fail=False
-) -> (str, str, int):
+) -> Union[str, str, int]:
     """
     Execute a subprocess
         :param command(str):            Input command
@@ -298,9 +298,8 @@ class RunfolderObject(ToolboxConfig):
         upload_runfolder_logfile (str):         Records the logs from the upload_runfolder script
         runfolder_dx_run_script (str):          Workflow dx run commands for runfolder (within logfiles dir)
         post_run_dx_run_script (str):           Separate DX run script for downstream processing apps (TSO only)
-        decision_support_upload_cmds (str):     Decision support upload commands for runfolder (within logfiles dir)
+        decision_support_upload_script (str):   Decision support upload commands for runfolder (within logfiles dir)
         proj_creation_script (str):             DNAnexus project creation bash script (within logfiles dir)
-        decision_support_tool_logfile (str):    Decision support tool inputs script logfile (within logfiles dir)
         samplesheet_validator_logfile (str):    SampleSheet validator script logfile (within logfiles dir)
         logfiles_config (dict):                 Contains all runfolder log files
         logfiles_to_upload (list):              All logfiles that require upload tozzzDNAnexus
@@ -398,7 +397,7 @@ class RunfolderObject(ToolboxConfig):
             "dx_run_commands",
             f"{self.runfolder_name}_post_run_commands.sh",
         )
-        self.decision_support_upload_cmds = os.path.join(
+        self.decision_support_upload_script = os.path.join(
             ToolboxConfig.AD_LOGDIR,
             "dx_run_commands",
             f"{self.runfolder_name}_decision_support.sh",
@@ -407,11 +406,6 @@ class RunfolderObject(ToolboxConfig):
             ToolboxConfig.AD_LOGDIR,
             "dx_run_commands",
             f"{self.runfolder_name}_create_nexus_project.sh",
-        )
-        self.decision_support_tool_logfile = os.path.join(
-            ToolboxConfig.AD_LOGDIR,
-            "decision_support_script_logfiles",
-            f"{self.runfolder_name}_decision_support_script.log",
         )
         self.samplesheet_validator_logfile = os.path.join(
             ToolboxConfig.AD_LOGDIR,
@@ -426,7 +420,6 @@ class RunfolderObject(ToolboxConfig):
             "project": self.proj_creation_script,
             "dx_run": self.runfolder_dx_run_script,
             "post_run_cmds": self.post_run_dx_run_script,
-            "decision_support": self.decision_support_tool_logfile,
             "ss_validator": self.samplesheet_validator_logfile,
             "bcl2fastq2": self.bcl2fastqlog_file,
         }

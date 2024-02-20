@@ -76,7 +76,7 @@ FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
     "tso_fastqs": "${PROJECT_ID}:/analysis_folder/Logs_Intermediates/CollapsedReads/",
 }
-SDK_SOURCE = "/usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
+SDK_SOURCE = "source /usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
@@ -217,8 +217,8 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "congenica_project": "-icongenica_project=",
         "credentials": "-icredentials=",
         "ir_template": "-iIR_template=",
-        "vcf": "-ivcf=",
-        "bam": "-ibam=",
+        "vcf": "-ivcf=${PROJECT_ID}:/output/",
+        "bam": "-ibam=${PROJECT_ID}:/output/",
     },
     "qiagen_upload": {
         "sample_name": "-isample_name=",
@@ -244,28 +244,31 @@ UPLOAD_ARGS = {
     "depends_list_gatk_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
     "depends_list_edreadcount": 'DEPENDS_LIST_EDREADCOUNT="${DEPENDS_LIST_EDREADCOUNT} -d ${ED_READCOUNT_JOB_ID} "',
     "depends_list_cnvcalling": 'DEPENDS_LIST_CNVCALLING="${DEPENDS_LIST_CNVCALLING} -d ${CNVCALLING_JOB_ID} "',
-    "depends_list_cnv_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_EDREADCOUNT} ${DEPENDS_LIST_CNVCALLING}"',
+    "depends_list_cnv_recombined": (
+        'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_EDREADCOUNT} ${DEPENDS_LIST_CNVCALLING}"'
+    ),
 }
 
 DX_CMDS = {
     "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth %s)"',
     "find_proj_name": (
-        f"source {SDK_SOURCE}; dx find projects --name *%s* "
+        f"{SDK_SOURCE}; dx find projects --name *%s* "
         "--auth %s | awk '{print $3}'"
     ),
-    "proj_name_from_id": f"source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name",
-    "find_proj_id": f"source {SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id",
+    "proj_name_from_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name",
+    "find_proj_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id",
     "find_execution_id": (
-        f"source {SDK_SOURCE}; dx describe %s --json --auth %s | jq -r '.stages[] | "
+        f"{SDK_SOURCE}; dx describe %s --json --auth %s | jq -r '.stages[] | "
         'select( .id == "%s") | .execution.id\''
     ),
     "find_data": (
-        f"source {SDK_SOURCE}; dx find data --project=%s --tag as_upload --auth %s | "
+        f"{SDK_SOURCE}; dx find data --project=%s --tag as_upload --auth %s | "
         "grep -v 'automated_scripts_logfiles' | wc -l"
     ),
     "invite_user": "USER_INVITE_OUT=$(dx invite %s ${PROJECT_ID} %s --no-email --auth %s)",
     "file_upload_cmd": (
-        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder '%s' --do-not-compress --upload-threads 10 %s --tag as_upload"
+        f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder '%s' --do-not-compress "
+        "--upload-threads 10 %s --tag as_upload"
     ),
     "pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
     "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
@@ -285,22 +288,20 @@ DX_CMDS = {
         f"ED_READCOUNT_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
-    "ed_cnvcalling": f"CNVCALLING_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} --priority high -y {JOB_NAME_STR}",
+    "ed_cnvcalling": (
+        f"CNVCALLING_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} --priority high -y {JOB_NAME_STR}"
+    ),
     "rpkm": (  # TODO soon to be removed
         f"CNVCALLING_JOB_ID=$(dx run {NEXUS_IDS['APPS']['rpkm']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
-    "congenica_sftp": (
-        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_sftp']} "
-        "--priority high -y ' ${DSS_INPUTS} ' "
-        f"{JOB_NAME_STR}"
-    ),
+    "congenica_sftp": f"dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y {JOB_NAME_STR}",
     "congenica_upload": (  # TODO move instance type into app itself
-        f"echo 'dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
-        "--instance-type mem1_ssd1_v2_x2 ' ${DSS_INPUTS} ' "
-        f"{JOB_NAME_STR}"
+        f"dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
+        f"--instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
-    "qiagen_upload": f"echo 'dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",
+    # Sleep command ensures the number of concurrent jobs does not surpass the QCII limit of 10
+    "qiagen_upload": f"sleep 1.5m; dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",
     "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
     "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
     "duty_csv": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y {JOB_NAME_STR}",
@@ -338,39 +339,6 @@ class CongenicaInputsConfig(PanelConfig):
     DX_CMDS = DX_CMDS
     NEXUS_IDS = NEXUS_IDS
     TIMESTAMP = TIMESTAMP
-    DECISION_SUPPORT_INPUTS = {
-        # Used by the script to build the input commands for the Congenica upload app
-        "pipe": {
-            "vcf": {
-                "stage": NEXUS_IDS["STAGES"]["pipe"]["filter_vcf"],
-                "name": "filtered_vcf",
-            },
-            "bam": {
-                "stage": NEXUS_IDS["STAGES"]["pipe"]["gatk"],
-                "name": "bam",
-            },
-            "bai": {
-                "stage": NEXUS_IDS["STAGES"]["pipe"]["gatk"],
-                "name": "bai",
-            },
-        },
-        # Same stage is used to produce both the BAM and VCF
-        "wes": {
-            "vcf": {
-                "stage": NEXUS_IDS["STAGES"]["wes"]["sentieon"],
-                "name": "variants_vcf",
-            },
-            "bam": {
-                "stage": NEXUS_IDS["STAGES"]["wes"]["sentieon"],
-                "name": "mappings_bam",
-            },
-            "bai": {
-                "stage": NEXUS_IDS["STAGES"]["wes"]["sentieon"],
-                "name": "mappings_bam_bai",
-            },
-        },
-    }
-
 
 class DemultiplexConfig(PanelConfig):
     """
@@ -592,7 +560,7 @@ class ToolboxConfig:
     TEST_PROGRAMS_DICT = {
         "dx_toolkit": {
             "executable": "dx",
-            "test_cmd": f"source {SDK_SOURCE}; dx --version",
+            "test_cmd": f"{SDK_SOURCE}; dx --version",
         },
         "upload_agent": {
             "executable": UPLOAD_AGENT_EXE,

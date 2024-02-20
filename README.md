@@ -6,7 +6,6 @@ This repository contains the main scripts for routine analysis of clinical next 
 | ------ | -------- | ------- |
 |[demultiplex.py](demultiplex.py) | Command line | Demultiplex (excluding TSO runs) and calculate cluster density for Illumina NGS data using `bcl2fastq2` [(guide)](demultiplex/README.md) |
 | [setoff_workflows.py](setoff_workflows.py) | Command line | Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md) |
-| [congenica_inputs.py](congenica_inputs.py) | Command line |Prints the inputs required by the congenica upload apps in DNAnexus [(guide)](congenica_inputs/README.md). This script is called from the dx run script for samples requiring congenica upload (the dx run script is created by [setoff_workflows.py](setoff_workflows.py)) |
 | [upload_runfolder](upload_runfolder) | Command line or module import | Uploads an Illumina runfolder to DNAnexus [(guide)](upload_runfolder/README.md)|
 
 # Assumptions / Requirements
@@ -50,7 +49,6 @@ The below diagram is a UML class diagram showing the relationships between the c
 | [config](config) | lime green | Stores the configuration classes for use by other modules |
 | [ad_email](ad_email) | blue | Email sending module [(guide)](ad_email/README.md) |
 | [ad_logger](ad_logger) | sea green | This module contains classes that create logging objects that write messages to the syslog, stream and log files. Used by other modules [(guide)](ad_logger/README.md) |
-| [congenica_inputs](congenica_inputs) | yellow | This script is called from the dx run script for samples requiring congenica upload (the dx run script is created by setoff_workflows.py). The script prints the inputs required by the congenica upload apps in DNAnexus [(guide)](congenica_inputs/README.md) |
 | [demultiplex](demultiplex) | orange | Demultiplex (excluding TSO runs) and calculate cluster density for Illumina NGS data using `bcl2fastq2` [(guide)](demultiplex/README.md) |
 | [setoff_workflows](setoff_workflows) | pink | Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md) |
 | [toolbox](toolbox) | grey | Contains classes and functions shared [(guide)](toolbox/README.md) |
@@ -94,7 +92,6 @@ The above image describes the possible associations in the Class Diagram. In the
 | dx_run_script | Records the dx run commands for processing the run. N.B. this is not written to by logging | `RUNFOLDERNAME_dx_run_commands.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
 | decision_support_upload_cmds | Records the dx run commands to set off the congenica upload apps. N.B. this is not written to by logging | `RUNFOLDERNAME_decision_support.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
 | proj_creation_script | Records the commands for creating the DNAnexus project. N.B. this is not written to by logging | `RUNFOLDERNAME_create_nexus_project.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
-| decision_support | Records the logs from the script to a logfile specific to that DNAnexus project | `RUNFOLDERNAME_decision_support_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/decision_support_script_logfiles/` |
 | Demultiplex output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout` |
 | demultiplex (script_logger) | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
 | demultiplex (demux_rf_logger) | Records runfolder-level logs for the demultiplex script | `RUNFOLDERNAME_demultiplex_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
@@ -121,7 +118,6 @@ Currently test suite coverage is as follows:
 | [ad_logger](ad_logger) |  |
 | [demultiplex.py](demultiplex.py) | 0 |
 | [setoff_workflows.py](setoff_workflows.py) | 0 |
-| [congenica_inputs.py](congenica_inputs.py) | 0 |
 | [upload_runfolder](upload_runfolder) | 0 |
 | [toolbox](toolbox) | 0 |
 
