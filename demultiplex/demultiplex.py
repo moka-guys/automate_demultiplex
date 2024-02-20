@@ -36,8 +36,8 @@ class GetRunfolders(DemultiplexConfig):
     Loop through and process NGS runfolders in a given directory
 
     Attributes
-        ad_logger_obj (object):             AdLogger object, used to create a python logging object with custom attributes
-                                            and a file handler, syslog handler, and stream handler  
+        ad_logger_obj (object):             AdLogger object, used to create a python logging object with custom
+                                            attributes and a file handler, syslog handler, and stream handler
         script_logger (object):             Script-level logger
         cmd_line_supplied_runfolder (bool): Denotes whether the runfolder name was supplied on
                                             the command line (i.e. the run is a development
@@ -262,7 +262,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             presence should stop demultiplexing
         dev_run_requires_automated_processing()
             Check whether the development run requires manual processing or automated
-            processing by the script  
+            processing by the script
         create_bcl2fastqlog()
             Create file to prevent demultiplexing starting again
         add_bcl2fastqlog_tso_msg()
@@ -363,13 +363,15 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["ad_version"],
             git_tag(),
-        )        
+        )
         valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
         self.tso = sscheck_obj.tso
 
         if self.sequencing_complete():
             if self.pass_integrity_check():
-                if self.dev_run(sscheck_obj) and self.no_disallowed_sserrs(valid, sscheck_obj):
+                if self.dev_run(sscheck_obj) and self.no_disallowed_sserrs(
+                    valid, sscheck_obj
+                ):
                     if self.dev_run_requires_automated_processing():
                         return True
                 # Only want SampleSheet checks to be performed on production runs not dev runs
@@ -430,7 +432,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             return True
         if self.checksumfile_exists():
             if not self.prior_ic():
-                self.write_checksums_assessed()       
+                self.write_checksums_assessed()
                 if self.checksums_match():
                     return True
 
@@ -460,7 +462,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         if os.path.isfile(self.rf_obj.checksumfile_path):
             self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["checksumfile_present"], self.rf_obj.checksumfile_path
+                self.demux_rf_logger.log_msgs["checksumfile_present"],
+                self.rf_obj.checksumfile_path,
             )
             return True
         else:
@@ -499,7 +502,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
         performing checks on future runs of the script
             :return None:
         """
-        write_lines(self.rf_obj.checksumfile_path, "a", f"\n{DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED}")
+        write_lines(
+            self.rf_obj.checksumfile_path,
+            "a",
+            f"\n{DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED}",
+        )
 
     def checksums_match(self) -> Union[bool, None]:
         """
@@ -512,8 +519,10 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :return True|None:  Returns True if checksum match string is present in
                                 checksum file
         """
-        self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["checksumfilecheck_start"])
-        
+        self.demux_rf_logger.info(
+            self.demux_rf_logger.log_msgs["checksumfilecheck_start"]
+        )
+
         with open(self.rf_obj.checksumfile_path, "r") as f:
             checksums = f.readlines()
 
@@ -542,7 +551,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         Determine whether the run is a development run using the sscheck_obj development_run() method
             :sscheck_obj (obj):     Object created by samplesheet_validator.SampleheetCheck
             :return (True | None):  Return true if development run, else None
-        """ 
+        """
         if sscheck_obj.development_run():
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["dev_run"],
@@ -581,7 +590,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.samplesheet_path,
             )
             return True
-        else: 
+        else:
             err_str = ", ".join(list(sscheck_obj.errors_dict.keys()))
             if not os.path.exists(self.rf_obj.sscheck_flagfile_path):
                 self.demux_rf_logger.error(
@@ -596,7 +605,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     err_str,
                 )
             write_lines(
-                self.rf_obj.sscheck_flagfile_path, "w", DemultiplexConfig.SAMPLESHEET_ERRORS_MSG % err_str
+                self.rf_obj.sscheck_flagfile_path,
+                "w",
+                DemultiplexConfig.SAMPLESHEET_ERRORS_MSG % err_str,
             )
 
     def dev_run_requires_automated_processing(self) -> None:
@@ -750,7 +761,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
         or failure error message accordingly
             :return None:
         """
-        fastqs = [x for x in os.listdir(self.rf_obj.fastq_dir_path) if x.endswith("fastq.gz")]
+        fastqs = [
+            x for x in os.listdir(self.rf_obj.fastq_dir_path) if x.endswith("fastq.gz")
+        ]
 
         for fastq in fastqs:
             out, err, returncode = execute_subprocess_command(
@@ -766,5 +779,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.demux_rf_logger.error(
                     self.demux_rf_logger.log_msgs["fastq_invalid"],
                     fastq,
-                    out, err,
+                    out,
+                    err,
                 )

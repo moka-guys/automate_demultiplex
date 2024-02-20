@@ -29,7 +29,7 @@ import sys
 import os
 import re
 import datetime
-from itertools import *
+from itertools import chain
 from shutil import copyfile
 from typing import Union, Tuple
 from ad_logger.ad_logger import AdLogger, shutdown_logs
@@ -56,7 +56,7 @@ class SequencingRuns(SWConfig):
 
     Attributes
         ad_logger_obj (object):         AdLogger object, used to create a python logging object with custom attributes
-                                        and a file handler, syslog handler, and stream handler    
+                                        and a file handler, syslog handler, and stream handler
         script_logger (object):         Script-level logger, created by the ad_logger_obj
         runs_to_process (list):         List of runfolder objects for runs that require processing
         processed_runfolders (list):    List of runfolders processed by the script
@@ -338,15 +338,19 @@ class ProcessRunfolder(SWConfig):
         dry lab on the run
             :return (dict):     Dictionary of users and admins requiring access to the DNAnexus project
         """
-        dry_lab_list = list(set(
-            [
-                v["panel_settings"]["dry_lab"]
-                for k, v in self.samples_obj.samples_dict.items()
-                if v["panel_settings"]["dry_lab"]
-            ]
-        ))
+        dry_lab_list = list(
+            set(
+                [
+                    v["panel_settings"]["dry_lab"]
+                    for k, v in self.samples_obj.samples_dict.items()
+                    if v["panel_settings"]["dry_lab"]
+                ]
+            )
+        )
         if True in dry_lab_list:
-            viewers = list(chain([SWConfig.BSPS_ID], SWConfig.DNANEXUS_USERS["viewers"]))
+            viewers = list(
+                chain([SWConfig.BSPS_ID], SWConfig.DNANEXUS_USERS["viewers"])
+            )
         else:
             viewers = SWConfig.DNANEXUS_USERS["viewers"]
         self.rf_obj.rf_loggers.sw.info(
@@ -355,7 +359,7 @@ class ProcessRunfolder(SWConfig):
         )
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["admin_users"],
-            SWConfig.DNANEXUS_USERS["admins"]
+            SWConfig.DNANEXUS_USERS["admins"],
         )
         return {
             "viewers": {
@@ -442,7 +446,9 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 "/QC",
-                " ".join(f"'{cd_file}'" for cd_file in self.rf_obj.cluster_density_files),                
+                " ".join(
+                    f"'{cd_file}'" for cd_file in self.rf_obj.cluster_density_files
+                ),
             ),
             "bcl2fastq_qc": SWConfig.DX_CMDS["file_upload_cmd"]
             % (
@@ -470,16 +476,20 @@ class ProcessRunfolder(SWConfig):
             ] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
-                f'/{self.rf_obj.runfolder_name}',
+                f"/{self.rf_obj.runfolder_name}",
                 " ".join(f"'{samplesheet}'" for samplesheet in samplesheet_paths),
-
             )
         else:
             upload_cmds["fastqs"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 self.samples_obj.nexus_paths["fastqs_dir"],
-                " ".join([self.samples_obj.fastqs_str, self.samples_obj.undetermined_fastqs_str]),
+                " ".join(
+                    [
+                        self.samples_obj.fastqs_str,
+                        self.samples_obj.undetermined_fastqs_str,
+                    ]
+                ),
             )
             upload_cmds["runfolder_samplesheet"] = SWConfig.DX_CMDS[
                 "file_upload_cmd"
@@ -545,7 +555,7 @@ class ProcessRunfolder(SWConfig):
         # Read all lines from the sample sheet
         with open(self.rf_obj.runfolder_samplesheet_path, "r") as samplesheet:
             for line in samplesheet.readlines():
-                line = line.strip('\n')
+                line = line.strip("\n")
                 if any(header in line for header in expected_data_headers):
                     samplesheet_header.append(line)  # Extract header and add to list
                     header_identified = True
@@ -563,7 +573,7 @@ class ProcessRunfolder(SWConfig):
 
     def copy_samplesheet(self) -> None:
         """
-        Copy samplesheet from samplesheet dir into the runfolder        
+        Copy samplesheet from samplesheet dir into the runfolder
             :return None:
         """
         if os.path.exists(
@@ -581,7 +591,7 @@ class ProcessRunfolder(SWConfig):
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["ss_copy_fail"],
             )
-        
+
     def create_file_upload_dict(self) -> dict:
         """
         Create dictionary of files to upload prior to setting off the pipeline,
@@ -610,7 +620,10 @@ class ProcessRunfolder(SWConfig):
             }
             pre_pipeline_upload_dict["fastqs"] = {
                 "cmd": self.upload_cmds["fastqs"],
-                "files_list": [*self.samples_obj.fastqs_list, *self.samples_obj.undetermined_fastqs_list],
+                "files_list": [
+                    *self.samples_obj.fastqs_list,
+                    *self.samples_obj.undetermined_fastqs_list,
+                ],
             }
             pre_pipeline_upload_dict["bcl2fastq_qc"] = {
                 "cmd": self.upload_cmds["bcl2fastq_qc"],
@@ -820,7 +833,9 @@ class CollectRunfolderSamples(SWConfig):
                 self.fastqs_list = self.get_fastqs_list()
                 self.fastqs_str = self.get_fastqs_str(self.fastqs_list)
                 self.undetermined_fastqs_list = self.get_undetermined_fastqs_list()
-                self.undetermined_fastqs_str = self.get_fastqs_str(self.undetermined_fastqs_list)
+                self.undetermined_fastqs_str = self.get_fastqs_str(
+                    self.undetermined_fastqs_list
+                )
 
     def get_samplename_dict(self) -> list:
         """
@@ -987,15 +1002,15 @@ class CollectRunfolderSamples(SWConfig):
         else:
             fastq_type = "fastqs"
 
-        nexus_paths[
-            "proj_name"
-        ] = f"{SWConfig.DNANEXUS_PROJECT_PREFIX}{self.rf_obj.runfolder_name}_{self.nexus_runfolder_suffix}"
-        nexus_paths[
-            "fastqs_dir"
-        ] = os.path.join(f"/{self.rf_obj.runfolder_name}", SWConfig.FASTQ_DIRS[fastq_type])
-        nexus_paths[
-            "logfiles_dir"
-        ] = os.path.join(f"/{self.rf_obj.runfolder_name}", "automated_scripts_logfiles")
+        nexus_paths["proj_name"] = (
+            f"{SWConfig.DNANEXUS_PROJECT_PREFIX}{self.rf_obj.runfolder_name}_{self.nexus_runfolder_suffix}"
+        )
+        nexus_paths["fastqs_dir"] = os.path.join(
+            f"/{self.rf_obj.runfolder_name}", SWConfig.FASTQ_DIRS[fastq_type]
+        )
+        nexus_paths["logfiles_dir"] = os.path.join(
+            f"/{self.rf_obj.runfolder_name}", "automated_scripts_logfiles"
+        )
         return nexus_paths
 
     def get_samples_dict(self) -> dict:
@@ -1039,7 +1054,9 @@ class CollectRunfolderSamples(SWConfig):
                         self.rf_obj.rf_loggers.sw.log_msgs["checking_fastq"],
                         fastq_dir_file,
                     )
-                    if self.fastq_not_undetermined(fastq_dir_file):  # Exclude undetermined
+                    if self.fastq_not_undetermined(
+                        fastq_dir_file
+                    ):  # Exclude undetermined
                         try:
                             seglh_namingSample.from_string(fastq_dir_file)
                             sample_name = [
@@ -1055,16 +1072,22 @@ class CollectRunfolderSamples(SWConfig):
                                 )
                             else:
                                 self.rf_obj.rf_loggers.sw.error(
-                                    self.rf_obj.rf_loggers.sw.log_msgs["sample_mismatch"],
+                                    self.rf_obj.rf_loggers.sw.log_msgs[
+                                        "sample_mismatch"
+                                    ],
                                     fastq_dir_file,
                                 )
-                                sample_name = re.sub("R[0-9]_001.fastq.gz", "", fastq_dir_file)
+                                sample_name = re.sub(
+                                    "R[0-9]_001.fastq.gz", "", fastq_dir_file
+                                )
                                 missing_samples.append(fastq_dir_file)
                         except ValueError as exception:
                             self.rf_obj.rf_loggers.sw.error(
-                                self.rf_obj.rf_loggers.sw.log_msgs["fastq_wrong_naming"],
+                                self.rf_obj.rf_loggers.sw.log_msgs[
+                                    "fastq_wrong_naming"
+                                ],
                                 fastq_dir_file,
-                                exception,                            
+                                exception,
                             )
                 else:
                     self.rf_obj.rf_loggers.sw.info(
@@ -1072,7 +1095,7 @@ class CollectRunfolderSamples(SWConfig):
                     )
         for sample_name in missing_samples:  # Add the sample to the sample_obj
             # Strip end off sample name
-            sample_name = re.sub(r"_S[0-9]+_R[1-2]{1}_001.fastq.gz", '', sample_name)
+            sample_name = re.sub(r"_S[0-9]+_R[1-2]{1}_001.fastq.gz", "", sample_name)
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["add_missing_sample"], sample_name
             )
@@ -1108,7 +1131,9 @@ class CollectRunfolderSamples(SWConfig):
                 fastqs_list.extend(
                     [
                         self.samples_dict[sample_name]["fastqs"][read]["path"]
-                        for read, path in self.samples_dict[sample_name]["fastqs"].items()
+                        for read, path in self.samples_dict[sample_name][
+                            "fastqs"
+                        ].items()
                     ]
                 )
         return fastqs_list
@@ -1364,10 +1389,10 @@ class SampleObject(SWConfig):
                 fastqs_dict[read] = {
                     "name": None,
                     "path": None,
-                    "nexus_path":
-                        os.path.join(
-                            SWConfig.FASTQ_DIRS['tso_fastqs'], self.sample_name,
-                            f"{self.sample_name}_{read}.fastq.gz",
+                    "nexus_path": os.path.join(
+                        SWConfig.FASTQ_DIRS["tso_fastqs"],
+                        self.sample_name,
+                        f"{self.sample_name}_{read}.fastq.gz",
                     ),
                 }
             else:
@@ -1382,7 +1407,7 @@ class SampleObject(SWConfig):
                         "nexus_path": nexus_fastq_path,
                     }
         return fastqs_dict
-    
+
     def get_fastq_paths(self, read) -> str:
         """
         Get fastqs in fastq directory that correspond to each sample name in the
@@ -1408,13 +1433,14 @@ class SampleObject(SWConfig):
             fastq_path = os.path.join(self.rf_obj.fastq_dir_path, fastq_name)
             nexus_fastq_path = os.path.join(
                 f"{SWConfig.DNANEXUS_PROJ_ID}:{self.nexus_paths['fastqs_dir']}",
-                fastq_name
+                fastq_name,
             )
             return fastq_name, fastq_path, nexus_fastq_path
-        except:
+        except Exception as exception:
             self.rf_obj.rf_loggers.sw.error(
                 self.rf_obj.rf_loggers.sw.log_msgs["fastq_nonexistent"],
                 ", ".join(matches),
+                exception,
             )
             return False, False, False
 
@@ -1495,7 +1521,9 @@ class SampleObject(SWConfig):
             :return (str):  Dx run command string
         """
         self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"], self.pipeline, self.sample_name
+            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+            self.pipeline,
+            self.sample_name,
         )
         return " ".join(
             [
@@ -1525,7 +1553,9 @@ class SampleObject(SWConfig):
         if any([self.neg_control, self.pos_control]):
             decision_support_cmd = None
             self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["decision_support_upload_notrequired"],
+                self.rf_obj.rf_loggers.sw.log_msgs[
+                    "decision_support_upload_notrequired"
+                ],
                 self.sample_name,
             )
         else:
@@ -1569,12 +1599,12 @@ class SampleObject(SWConfig):
             self.sample_name,
         )
         return " ".join(
-            [   
+            [
                 f'{SWConfig.DX_CMDS["congenica_sftp"]}Congenica_SFTP_Upload-{self.sample_name}',
                 SWConfig.UPLOAD_ARGS["dest"],
                 f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{self.sample_name}*.bedfiltered.vcf.gz',
                 f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{self.sample_name}*.refined.bam',
-                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
 
@@ -1592,13 +1622,13 @@ class SampleObject(SWConfig):
             self.sample_name,
         )
         if self.pipeline == "pipe":
-            vcf_input = f'{self.sample_name}*.bedfiltered.vcf.gz'
-            bam_input = f'{self.sample_name}*.refined.bam'            
-        
+            vcf_input = f"{self.sample_name}*.bedfiltered.vcf.gz"
+            bam_input = f"{self.sample_name}*.refined.bam"
+
         if self.pipeline == "wes":
-            vcf_input = f'{self.sample_name}*_markdup_Haplotyper.vcf.gz'
-            bam_input = f'{self.sample_name}*_markdup.bam'
-            
+            vcf_input = f"{self.sample_name}*_markdup_Haplotyper.vcf.gz"
+            bam_input = f"{self.sample_name}*_markdup.bam"
+
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["congenica_upload"]}Congenica_Upload-{self.sample_name}',
@@ -1612,7 +1642,7 @@ class SampleObject(SWConfig):
                 f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{vcf_input}',
                 f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{bam_input}',
                 SWConfig.UPLOAD_ARGS["dest"],
-                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
 
@@ -1629,7 +1659,7 @@ class SampleObject(SWConfig):
                 f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_name"]}{self.sample_name}',
                 f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}{self.pannum}/{self.sample_name}.zip',
                 SWConfig.UPLOAD_ARGS["dest"],
-                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
 
@@ -1653,7 +1683,7 @@ class SampleObject(SWConfig):
             GATK_INSTANCE = "mem3_ssd1_v2_x16"
         else:
             GATK_INSTANCE = "mem1_ssd1_v2_x8"
-        
+
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["pipe"]}{self.sample_name}',
@@ -1688,7 +1718,7 @@ class SampleObject(SWConfig):
                 SWConfig.STAGE_INPUTS["pipe"]["picard_instance"],
                 SWConfig.STAGE_INPUTS["pipe"]["sambamba_instance"],
                 SWConfig.UPLOAD_ARGS["dest"],
-                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth
+                SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )
 
@@ -1889,7 +1919,7 @@ class BuildDxCommands(SWConfig):
         write_dx_run_cmds()
             Write dx run commands to the dx run script, post dx run script, and decision support upload
             script for the runfolder
-        """
+    """
 
     def __init__(
         self,
@@ -1910,7 +1940,11 @@ class BuildDxCommands(SWConfig):
         self.rf_obj.rf_loggers.sw.info(
             self.rf_obj.rf_loggers.sw.log_msgs["building_cmds"]
         )
-        self.dx_cmd_list, self.dx_postprocessing_cmds, self.decision_support_upload_cmds = self.build_dx_cmds()
+        (
+            self.dx_cmd_list,
+            self.dx_postprocessing_cmds,
+            self.decision_support_upload_cmds,
+        ) = self.build_dx_cmds()
         self.write_dx_run_cmds()
 
     def build_dx_cmds(self) -> Union[list, list]:
@@ -1925,10 +1959,14 @@ class BuildDxCommands(SWConfig):
         """
         # Get sample workflow-level commands
         if self.samples_obj.pipeline == "tso500":
-            dx_cmd_list, dx_postprocessing_cmds, decision_support_upload_cmds = self.return_tso_runwide_cmds()
+            dx_cmd_list, dx_postprocessing_cmds, decision_support_upload_cmds = (
+                self.return_tso_runwide_cmds()
+            )
         else:
             dx_postprocessing_cmds = []
-            dx_cmd_list, decision_support_upload_cmds = self.return_sample_workflow_cmds()
+            dx_cmd_list, decision_support_upload_cmds = (
+                self.return_sample_workflow_cmds()
+            )
 
             # Get pipeline-specific run-wide commands. SNP, ADX and ONC do not have
             # pipeline-specific run-wide commands
@@ -1939,7 +1977,7 @@ class BuildDxCommands(SWConfig):
 
             # Get run-wide commands that apply to all sequencing runs
             dx_cmd_list.extend(self.return_multiqc_cmds())
-            
+
             if self.samples_obj.pipeline == "pipe":
                 # We want duty_csv to also depend on the cnv calling jobs for PIPE workflows
                 dx_cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnv_recombined"])
@@ -1964,7 +2002,7 @@ class BuildDxCommands(SWConfig):
             f"PROJECT_ID={self.nexus_project_id}",
             f"PROJECT_NAME={self.samples_obj.nexus_paths['proj_name']}",
             f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
-            SWConfig.EMPTY_DEPENDS
+            SWConfig.EMPTY_DEPENDS,
         ]
         dx_postprocessing_cmds = dx_cmd_list[:]
         decision_support_upload_cmds = dx_cmd_list[:]
@@ -1998,9 +2036,7 @@ class BuildDxCommands(SWConfig):
                 sambamba_cmds_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
             if self.samples_obj.samples_dict[sample_name]["pos_control"]:
-                dx_postprocessing_cmds.append(
-                    self.create_sompy_cmd(sample_name)
-                )
+                dx_postprocessing_cmds.append(self.create_sompy_cmd(sample_name))
                 # Only add to depends_list if job ID from previous command
                 # is not empty
                 dx_postprocessing_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
@@ -2024,7 +2060,7 @@ class BuildDxCommands(SWConfig):
             self.samples_obj.pipeline,
             tso_ss,
         )
-        return " ".join( 
+        return " ".join(
             [
                 f'{SWConfig.DX_CMDS["tso500"]}{SWConfig.RUNFOLDER_NAME}',
                 SWConfig.APP_INPUTS["tso500"]["docker"],
@@ -2108,12 +2144,8 @@ class BuildDxCommands(SWConfig):
                 f'{SWConfig.PANEL_DICT[pannumber]["sambamba_bedfile"]}',
                 SWConfig.APP_INPUTS["sambamba"]["cov_cmds"]
                 % (
-                    str(
-                        SWConfig.PANEL_DICT[pannumber]["coverage_min_basecall_qual"]
-                    ),
-                    str(
-                        SWConfig.PANEL_DICT[pannumber]["coverage_min_mapping_qual"]
-                    ),
+                    str(SWConfig.PANEL_DICT[pannumber]["coverage_min_basecall_qual"]),
+                    str(SWConfig.PANEL_DICT[pannumber]["coverage_min_mapping_qual"]),
                 ),
                 f'{SWConfig.UPLOAD_ARGS["dest"]}:/coverage/{pannumber}',
                 SWConfig.UPLOAD_ARGS["token"] % self.dnanexus_auth,
@@ -2203,7 +2235,7 @@ class BuildDxCommands(SWConfig):
             SWConfig.EMPTY_DEPENDS,
         ]
         decision_support_upload_cmds = dx_cmds[:]
-        
+
         if self.samples_obj.pipeline == "pipe":
             dx_cmds.extend(SWConfig.EMPTY_CP_DEPENDS)
         for sample_name in self.samples_obj.samples_dict.keys():
@@ -2281,15 +2313,17 @@ class BuildDxCommands(SWConfig):
                 ]
                 # Make sure there are enough samples for exome depth and RPKM
                 if len(core_panel_pannos) >= 3:
-                    if SWConfig.CAPTURE_PANEL_DICT[core_panel][
-                        "ed_readcount_bedfile"
-                    ]:
+                    if SWConfig.CAPTURE_PANEL_DICT[core_panel]["ed_readcount_bedfile"]:
                         # CNV calling steps are a dependency of MultiQC
                         cmd_list.append(self.create_ed_readcount_cmd(core_panel))
-                        cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_edreadcount"])
+                        cmd_list.append(
+                            SWConfig.UPLOAD_ARGS["depends_list_edreadcount"]
+                        )
                         for panno in set(core_panel_pannos):
                             cmd_list.append(self.create_ed_cnvcalling_cmd(panno))
-                            cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
+                            cmd_list.append(
+                                SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"]
+                            )
 
                     cmd_list.append(self.create_rpkm_cmd(core_panel))
                     cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
@@ -2418,23 +2452,42 @@ class BuildDxCommands(SWConfig):
             :return None:
         """
         self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], self.rf_obj.runfolder_dx_run_script
+            self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"],
+            self.rf_obj.runfolder_dx_run_script,
         )
         write_lines(  # Write commands to dx run script
-            self.rf_obj.runfolder_dx_run_script, "w", list(filter(None, self.dx_cmd_list)))
+            self.rf_obj.runfolder_dx_run_script,
+            "w",
+            list(filter(None, self.dx_cmd_list)),
+        )
 
         if (
             self.samples_obj.pipeline == "tso500"
         ):  # Write commands to TSO post-processing file
             self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], self.rf_obj.post_run_dx_run_script
+                self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"],
+                self.rf_obj.post_run_dx_run_script,
             )
-            write_lines(self.rf_obj.post_run_dx_run_script, "w", list(filter(None, self.dx_postprocessing_cmds)))
-        if self.samples_obj.pipeline in ["tso500", "wes", "pipe"]:  # Write commands to decision support upload script
+            write_lines(
+                self.rf_obj.post_run_dx_run_script,
+                "w",
+                list(filter(None, self.dx_postprocessing_cmds)),
+            )
+        if self.samples_obj.pipeline in [
+            "tso500",
+            "wes",
+            "pipe",
+        ]:  # Write commands to decision support upload script
             self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], self.rf_obj.decision_support_upload_script
+                self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"],
+                self.rf_obj.decision_support_upload_script,
             )
-            write_lines(self.rf_obj.decision_support_upload_script, "w", list(filter(None, self.decision_support_upload_cmds)))
+            write_lines(
+                self.rf_obj.decision_support_upload_script,
+                "w",
+                list(filter(None, self.decision_support_upload_cmds)),
+            )
+
 
 class PipelineEmails(SWConfig):
     """
@@ -2535,7 +2588,7 @@ class PipelineEmails(SWConfig):
             False,
         )
         self.email.send_email(
-            recipients=[SWConfig.MAIL_SETTINGS["binfx_recipient"]],
+            recipients=[SWConfig.MAIL_SETTINGS["binfx_email"]],
             email_subject=self.email_subj,
             email_message=email_html,
             email_priority=1,

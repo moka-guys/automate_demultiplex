@@ -112,8 +112,12 @@ class AdLogger(AdLoggerConfig):
         logger.addHandler(self._get_file_handler())
         logger.addHandler(self._get_stream_handler())
         logger.addHandler(self._get_syslog_handler())
-        logger.timestamp = AdLoggerConfig.TIMESTAMP  # Timestamp in the format %Y%m%d_%H%M%S
-        logger.log_msgs = AdLoggerConfig.LOG_MSGS["general"] | AdLoggerConfig.LOG_MSGS["ad_email"]
+        logger.timestamp = (
+            AdLoggerConfig.TIMESTAMP
+        )  # Timestamp in the format %Y%m%d_%H%M%S
+        logger.log_msgs = (
+            AdLoggerConfig.LOG_MSGS["general"] | AdLoggerConfig.LOG_MSGS["ad_email"]
+        )
         if self.logger_type in AdLoggerConfig.LOG_MSGS.keys():
             logger.log_msgs.update(AdLoggerConfig.LOG_MSGS[self.logger_type])
         return logger
@@ -137,7 +141,7 @@ class AdLogger(AdLoggerConfig):
         return (
             f"%(asctime)s - AUTOMATED SCRIPTS {AdLoggerConfig.SCRIPT_MODE} "
             "- %(name)s - %(levelname)s - %(message)s"
-            )
+        )
 
     def _get_syslog_handler(self) -> logging.handlers.SysLogHandler:
         """

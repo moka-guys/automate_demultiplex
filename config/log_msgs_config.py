@@ -126,7 +126,7 @@ LOG_MSGS = {
         "fastq_identified": (
             "The following fastq has been identified in the runfolder %s as matching the following strings: %s"
         ),
-        "fastq_nonexistent": "No fastq could be intentified that matches the following strings: %s",
+        "fastq_nonexistent": "No fastq could be intentified that matches the following strings: %s. Error: %s",
         "sample_excluded": "Sample excluded from samples dictionary due to missing fastqs: %s",
         "cmds_built": "Finished building dx run commands",
         "building_cmd": "Building %s cmd for %s",
@@ -139,7 +139,8 @@ LOG_MSGS = {
         "ss_copy_success": "SampleSheet copied to runfolder: %s",
         "ss_copy_fail": "SampleSheet not copied to runfolder",
         "uploading_rf": (
-            "Uploading rest of run folder to DNAnexus using upload_runfolder, ignoring: %s. Stdout stored in logfile: %s"
+            "Uploading rest of run folder to DNAnexus using upload_runfolder, "
+            "ignoring: %s. Stdout stored in logfile: %s"
         ),
         "upload_rf_error": (
             "An error occurred when uploading the rest of the runfolder: %s. See %s and %s for further details"
@@ -201,5 +202,5 @@ LOG_MSGS = {
             "%s files present in DNAnexus project containing one of the ignore terms. NB this may not be accurate if "
             "the ignore term is found in the result of dx find data (eg present in project name)"
         ),
-    }
+    },
 }

@@ -287,7 +287,9 @@ class UploadRunfolder(URConfig):
                         nexus_project_subdirectory,
                         f"--tries 100 {files_string}",
                     )
-                    self.file_dict[folderpath]["upload_cmds"][nexus_upload_cmd] = files_list
+                    self.file_dict[folderpath]["upload_cmds"][
+                        nexus_upload_cmd
+                    ] = files_list
                     self.logger.info(self.logger.log_msgs["added_command"])
                     # Increase iteration_count and start and stop by 100 for the next iteration
                     # so second iteration will do next batch of up to 100 files
@@ -314,7 +316,9 @@ class UploadRunfolder(URConfig):
         # Prepend nexus folder path to cleaned path. the nexus folder path is
         # the project name without the first four characters (002_)
         nexus_project_subdirectory = os.path.join(
-            "/", "_".join(self.nexus_identifiers["proj_name"].split("_")[1:5]), clean_runfolder_path
+            "/",
+            "_".join(self.nexus_identifiers["proj_name"].split("_")[1:5]),
+            clean_runfolder_path,
         )
         self.logger.info(
             self.logger.log_msgs["nexus_project_subdirectory"],
@@ -368,7 +372,8 @@ class UploadRunfolder(URConfig):
                     self.logger.log_msgs["upload_attempt"], upload_attempts
                 )
                 _, _, returncode = execute_subprocess_command(
-                    upload_cmd, self.rf_obj.rf_loggers.backup,
+                    upload_cmd,
+                    self.rf_obj.rf_loggers.backup,
                 )
                 if returncode == 0:
                     return "success"
@@ -433,7 +438,7 @@ class UploadRunfolder(URConfig):
                 files_expected,
                 files_present,
             )
-        
+
         if ignore:  # Test for presense of ignore strings in project
             uploaded_file_count_ignore = URConfig.DX_CMDS["find_data"] % (
                 f"{self.nexus_identifiers['proj_id']} {grep_ignore.replace('-v','')}",

@@ -3,6 +3,7 @@ Main entry point for demultiplex module.
 
 Demultiplexes NGS Run Folders. See README and docstrings for further details
 """
+
 import argparse
 from demultiplex.demultiplex import GetRunfolders
 from toolbox.toolbox import script_start_logmsg, script_end_logmsg
@@ -23,7 +24,7 @@ def get_arguments():
             "development runs as it will bypass SampleSheet errors and run "
             "demultiplexing anyway"
         ),
-        usage="Used to demultiplex a runfolder using the demultiplexing script"
+        usage="Used to demultiplex a runfolder using the demultiplexing script",
     )
     parser.add_argument(
         "-r",

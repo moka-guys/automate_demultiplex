@@ -65,7 +65,7 @@ def valid_samplesheets():
             conftest.sv_samplesheet_temp_dir,
             "valid",
             "221024_A01229_0146_BHKGG2DRX2_SampleSheet.csv",
-        )
+        ),
     ]
 
 
@@ -86,7 +86,7 @@ def invalid_paths():
         os.path.join(
             conftest.sv_samplesheet_temp_dir,
             "221021_A01229_0143_BHGGTHDMXY_SampleSheet.csv",
-        )
+        ),
     ]
 
 
@@ -120,7 +120,7 @@ def invalid_names():
             conftest.sv_samplesheet_temp_dir,
             "invalid",
             "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
-        )
+        ),
     ]
 
 
@@ -159,7 +159,7 @@ def invalid_contents():
             conftest.sv_samplesheet_temp_dir,
             "invalid",
             "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
-        )
+        ),
     ]
 
 
@@ -252,17 +252,17 @@ class TestGetRunfolders(object):
         """
         # TODO fix the below patch
         monkeypatch.setattr(
-            demultiplex.DemultiplexConfig, "DEMULTIPLEX_TEST_RUNFOLDERS",
-            runfolders_toproc
+            demultiplex.DemultiplexConfig,
+            "DEMULTIPLEX_TEST_RUNFOLDERS",
+            runfolders_toproc,
         )
         gr_obj = get_gr_obj()
         demultiplex.DemultiplexRunfolder.bcl2fastq2_cmd = (
             f"echo '{ad_config.DEMULTIPLEX_SUCCESS}"
-            )
+        )
         gr_obj.setoff_processing()
         assert all(
-            runfolder in gr_obj.processed_runfolders
-            for runfolder in runfolders_toproc
+            runfolder in gr_obj.processed_runfolders for runfolder in runfolders_toproc
         )
 
     # def test_setoff_processing_nottoproc(self, runfolders_nottoproc, monkeypatch):
@@ -401,7 +401,7 @@ class TestDemultiplexRunfolder(object):
         demultiplexing has not yet started
         """
         return [
-            "999999_M02631_0000_00000TEST4",  
+            "999999_M02631_0000_00000TEST4",
             "999999_A01229_0000_00000TEST7",
             "999999_A01229_0000_00000TEST9",
         ]
@@ -684,7 +684,10 @@ class TestDemultiplexRunfolder(object):
             dr_obj = get_dr_obj(runfolder)
             assert dr_obj.checksums_match()
             with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
-                assert ad_config.DemultiplexConfig.CHECKSUM_MATCH_MSG in checksumfile.read()
+                assert (
+                    ad_config.DemultiplexConfig.CHECKSUM_MATCH_MSG
+                    in checksumfile.read()
+                )
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     # TODO add new test case that tests this - md5checksum checksums do not match message and checksums checked string

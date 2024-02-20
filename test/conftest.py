@@ -7,7 +7,7 @@ that is run before and after every test
 import os
 import shutil
 import pytest
-import sys
+
 # sys.path.append("..")
 from ad_logger import ad_logger
 from toolbox import toolbox

@@ -54,7 +54,9 @@ required for analysis of samples with that pan number
 # TODO in future do we want to swap physical paths for file IDs
 
 TOOLS_PROJECT = "project-ByfFPz00jy1fk6PjpZ95F27J"  # 001_ToolsReferenceData
-MASKED_REFERENCE = f"{TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q"  # hs37d5_Pan4967.bwa-index.tar.gz
+MASKED_REFERENCE = (
+    f"{TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q"  # hs37d5_Pan4967.bwa-index.tar.gz
+)
 POLYEDGE_INPUTS = {  # Inputs for the polyedge DNAnexus app command
     "MSH2": {
         "gene": "MSH2",
@@ -110,6 +112,7 @@ class PanelConfig:
     """
     Variables required for import into other scripts
     """
+
     BEDFILE_FOLDER = f"{TOOLS_PROJECT}:/Data/BED/"
     FH_PRS_BEDFILE = f"{BEDFILE_FOLDER}Pan4909.bed"
     CAPTURE_PANEL_DICT = {
@@ -174,8 +177,8 @@ class PanelConfig:
             "pipeline": "pipe",
             "sample_prefix": "NGS",
             "runtype": "LRPCR",
-            "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4967_reference.bed", # CORRECT
-            "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5018dataSambamba.bed", # CORRECT
+            "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4967_reference.bed",  # CORRECT
+            "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5018dataSambamba.bed",  # CORRECT
             "capture_type": "Amplicon",
             "multiqc_coverage_level": 30,
             "clinical_coverage_depth": 30,
@@ -458,7 +461,8 @@ class PanelConfig:
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4992",
         },
-        "Pan4983": {  # VCP1 R123 (Synnovis) - Molecular Haemostasis Combined vitamin K-dependent clotting factor deficiency
+        "Pan4983": {  # VCP1 R123 (Synnovis) - Molecular Haemostasis Combined vitamin
+            # K-dependent clotting factor deficiency
             **CAPTURE_PANEL_DICT["vcp1"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R123",
@@ -552,14 +556,14 @@ class PanelConfig:
             "polyedge": POLYEDGE_INPUTS["MSH2"],
             "ed_cnvcalling_bedfile": "Pan5165",
         },
-        "Pan5185": {  # VCP2 R414 (STG) - APC associated Polyposis 
+        "Pan5185": {  # VCP2 R414 (STG) - APC associated Polyposis
             **CAPTURE_PANEL_DICT["vcp2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R414",
             "congenica_project": 4202,
             "ed_cnvcalling_bedfile": "Pan5162",
         },
-        "Pan5186": {  # VCP2 R414 (Synnovis) - APC associated Polyposis 
+        "Pan5186": {  # VCP2 R414 (Synnovis) - APC associated Polyposis
             **CAPTURE_PANEL_DICT["vcp2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R414",
@@ -647,13 +651,15 @@ class PanelConfig:
             "congenica_project": 4666,
             "ed_cnvcalling_bedfile": "Pan5170",
         },
-        "Pan4132": {  # VCP3 R56 (Synnovis) - Adult onset dystonia, chorea or related movement disorder. CNV not required
+        "Pan4132": {  # VCP3 R56 (Synnovis) - Adult onset dystonia, chorea or related movement disorder.
+            # CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R56",
             "congenica_project": 5092,
         },
-        "Pan4134": {  # VCP3 R57 (Synnovis) - Childhood onset dystonia, chorea or related movement disorder. CNV not required
+        "Pan4134": {  # VCP3 R57 (Synnovis) - Childhood onset dystonia, chorea or related movement disorder.
+            # CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R57",
@@ -690,7 +696,8 @@ class PanelConfig:
             "test_number": "R78",
             "congenica_project": 5092,
         },
-        "Pan4151": {  # VCP3 R82 (Synnovis) - Limb girdle muscular dystrophies, myofibrillar myopathies and distal myopathies. CNV not required
+        "Pan4151": {  # VCP3 R82 (Synnovis) - Limb girdle muscular dystrophies, myofibrillar
+            # myopathies and distal myopathies. CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R82",
@@ -781,7 +788,8 @@ class PanelConfig:
             "congenica_project": 4201,
             "ed_cnvcalling_bedfile": "Pan5170",
         },
-        "Pan4835": {  # VCP3 R82 (STG) - Limb girdle muscular dystrophies, myofibrillar myopathies and distal myopathies. CNV not required
+        "Pan4835": {  # VCP3 R82 (STG) - Limb girdle muscular dystrophies, myofibrillar myopathies
+            # and distal myopathies. CNV not required
             **CAPTURE_PANEL_DICT["vcp3"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R82",
@@ -820,28 +828,26 @@ class PanelConfig:
         ],
     }
     LIBRARY_PREP_NAMES = list(
-        set(
-            [
-                v["sample_prefix"]
-                for k, v in CAPTURE_PANEL_DICT.items()
-            ]
-        )
+        set([v["sample_prefix"] for k, v in CAPTURE_PANEL_DICT.items()])
     )
     TSO_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "tso500"]
     WES_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "wes"]
     SNP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "snp"]
     ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
     LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
-    DEVELOPMENT_PANEL = ''.join([k for k, v in PANEL_DICT.items() if v["development_run"]])
+    DEVELOPMENT_PANEL = "".join(
+        [k for k, v in PANEL_DICT.items() if v["development_run"]]
+    )
 
     # ================ DUTY_CSV INPUTS ===================================================
-    
+
     # tso_pannumbers should not include the dry lab pan number as we do not want to include
     # this as input to duty_csv as we do not want to download this to the trust network
     TSO_SYNNOVIS_PANNUMBERS = [
         k
         for k, v in PANEL_DICT.items()
-        if v["pipeline"] == "tso500" if v["dry_lab_only"] != True
+        if v["pipeline"] == "tso500"
+        if v["dry_lab_only"] is not True
     ]
     STG_PANNUMBERS = [
         k

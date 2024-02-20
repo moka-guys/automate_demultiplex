@@ -40,9 +40,9 @@ class TestAdEmail:
         Return test email recipients
         """
         return [
-            [AdEmailConfig.MAIL_SETTINGS["binfx_recipient"]],
+            [AdEmailConfig.MAIL_SETTINGS["binfx_email"]],
             [
-                AdEmailConfig.MAIL_SETTINGS["binfx_recipient"],
+                AdEmailConfig.MAIL_SETTINGS["binfx_email"],
                 AdEmailConfig.MAIL_SETTINGS["binfx_email"],
             ],
         ]

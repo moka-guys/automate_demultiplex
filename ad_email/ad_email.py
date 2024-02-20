@@ -57,7 +57,12 @@ class AdEmail(AdEmailConfig):
         ).get_template("email.html")
 
     def generate_email_html(
-        self, runfolder_name: str, workflows: str, queries: str, sample_count: int, samples: list
+        self,
+        runfolder_name: str,
+        workflows: str,
+        queries: str,
+        sample_count: int,
+        samples: list,
     ) -> str:
         """
         Generate HTML. If unsuccessful, exit script

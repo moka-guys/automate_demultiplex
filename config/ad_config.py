@@ -76,11 +76,15 @@ FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
     "tso_fastqs": "${PROJECT_ID}:/analysis_folder/Logs_Intermediates/CollapsedReads/",
 }
-SDK_SOURCE = "source /usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
+SDK_SOURCE = (
+    "source /usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
+)
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
-GATK_DOCKER = "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
+GATK_DOCKER = (
+    "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
+)
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
 DEMULTIPLEXLOG_TSO500_MSG = "TSO500 run. Does not need demultiplexing locally"
 DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
@@ -172,10 +176,8 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     },
     "fastqc": {
         "reads": "-ireads=",
-        },
-    "peddy": {
-        "project_name": "-iproject_for_peddy=${PROJECT_NAME}"
     },
+    "peddy": {"project_name": "-iproject_for_peddy=${PROJECT_NAME}"},
     "sompy": {
         "truth_vcf": f"-itruthVCF={NEXUS_IDS['FILES']['sompy_truth_vcf']}",
         "query_vcf": "-iqueryVCF=${PROJECT_ID}:/analysis_folder/Results/",
@@ -252,8 +254,7 @@ UPLOAD_ARGS = {
 DX_CMDS = {
     "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth %s)"',
     "find_proj_name": (
-        f"{SDK_SOURCE}; dx find projects --name *%s* "
-        "--auth %s | awk '{print $3}'"
+        f"{SDK_SOURCE}; dx find projects --name *%s* " "--auth %s | awk '{print $3}'"
     ),
     "proj_name_from_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name",
     "find_proj_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id",
@@ -314,6 +315,7 @@ class AdEmailConfig:
     """
     Ad Email configuration
     """
+
     CREDENTIALS = CREDENTIALS
     MAIL_SETTINGS = MAIL_SETTINGS
     PROJECT_DIR = PROJECT_DIR
@@ -334,11 +336,13 @@ class CongenicaInputsConfig(PanelConfig):
     """
     Congenica Inputs configuration
     """
+
     APP_INPUTS = APP_INPUTS
     CREDENTIALS = CREDENTIALS
     DX_CMDS = DX_CMDS
     NEXUS_IDS = NEXUS_IDS
     TIMESTAMP = TIMESTAMP
+
 
 class DemultiplexConfig(PanelConfig):
     """
@@ -362,11 +366,16 @@ class DemultiplexConfig(PanelConfig):
         f"sudo docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
-    
-    CHECKSUMS_ALREADY_ASSESSED = "Checksums already assessed by AS"  # Written to file by AS
+
+    CHECKSUMS_ALREADY_ASSESSED = (
+        "Checksums already assessed by AS"  # Written to file by AS
+    )
     CHECKSUM_MATCH_MSG = "Checksums match"  # Success message written to md5checksum file by integrity check scripts
-    CHECKSUM_DO_NOT_MATCH_MSG = "Checksums do not match"  # Failure message written to md5checksum file by integrity check scripts
-    SAMPLESHEET_ERRORS_MSG = "Processing halted. SampleSheet contains disallowed SampleSheet errors: %s"
+    # Failure message written to md5checksum file by integrity check scripts
+    CHECKSUM_DO_NOT_MATCH_MSG = "Checksums do not match"
+    SAMPLESHEET_ERRORS_MSG = (
+        "Processing halted. SampleSheet contains disallowed SampleSheet errors: %s"
+    )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
@@ -382,9 +391,7 @@ class DemultiplexConfig(PanelConfig):
         "M02631": {"requires_ic": False},
         NOVASEQ_ID: {"requires_ic": True},
     }
-    SEQ_REQUIRE_IC = [
-        k for k, v in SEQUENCER_IDS.items() if v["requires_ic"]
-    ]
+    SEQ_REQUIRE_IC = [k for k, v in SEQUENCER_IDS.items() if v["requires_ic"]]
 
 
 class SWConfig(PanelConfig):
@@ -426,7 +433,11 @@ class SWConfig(PanelConfig):
     DNANEXUS_PROJ_NAME = "${PROJ_NAME}"
     RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
-    EMPTY_CP_DEPENDS=["DEPENDS_LIST_GATK=''", "DEPENDS_LIST_CNVCALLING=''", "DEPENDS_LIST_EDREADCOUNT=''"]
+    EMPTY_CP_DEPENDS = [
+        "DEPENDS_LIST_GATK=''",
+        "DEPENDS_LIST_CNVCALLING=''",
+        "DEPENDS_LIST_EDREADCOUNT=''",
+    ]
     STRINGS = {
         "demultiplexlog_tso500_msg": DEMULTIPLEXLOG_TSO500_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
@@ -455,12 +466,7 @@ class SWConfig(PanelConfig):
         "136819",  # NA12878
         "HD200",  # Seracare v4 tumour fusion reference material
     ]
-    NTCON_IDS = [
-        "00000",
-        "NTCcon",
-        "NTC000",
-        "NC000"
-    ]
+    NTCON_IDS = ["00000", "NTCcon", "NTC000", "NC000"]
     SQL_IDS = {
         # Moka IDs for generating SQLs to update the Moka database (audit trail)
         "WORKFLOWS": {
@@ -552,7 +558,7 @@ class ToolboxConfig:
     }
     FLAG_FILES = {
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
-        "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs    
+        "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
         "seq_complete": "RTAComplete.txt",  # Sequencing complete file

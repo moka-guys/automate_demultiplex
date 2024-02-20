@@ -173,7 +173,7 @@ def exit_on_returncode(returncode: int) -> None:
         sys.exit(1)
 
 
-def check_returncode(proc: subprocess.Popen, logger: object) -> (str, str, int):
+def check_returncode(proc: subprocess.Popen, logger: object) -> Union[str, str, int]:
     """
     Check for success returncode and write to log accordingly
         :param proc (class):        subprocess.Popen class
@@ -319,14 +319,15 @@ class RunfolderObject(ToolboxConfig):
             :param runfolder_name (str):    Name of runfolder
             :param timestamp (str):         Timestamp in the format str(f"{datetime.datetime.now():%Y%m%d_%H%M%S}")
         """
-        self.dnanexus_auth = get_credential(ToolboxConfig.CREDENTIALS["dnanexus_authtoken"])
+        self.dnanexus_auth = get_credential(
+            ToolboxConfig.CREDENTIALS["dnanexus_authtoken"]
+        )
         self.timestamp = timestamp
         self.runfolder_name = runfolder_name
         self.runfolderpath = get_runfolder_path(self.runfolder_name)
         self.samplesheet_name = f"{self.runfolder_name}_SampleSheet.csv"
         self.rtacompletefile_path = os.path.join(
-            self.runfolderpath,
-            ToolboxConfig.FLAG_FILES["seq_complete"]
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["seq_complete"]
         )
         self.samplesheet_path = os.path.join(
             ToolboxConfig.RUNFOLDERS, "samplesheets", self.samplesheet_name
@@ -335,23 +336,19 @@ class RunfolderObject(ToolboxConfig):
             self.runfolderpath, self.samplesheet_name
         )
         self.checksumfile_path = os.path.join(
-            self.runfolderpath,
-            ToolboxConfig.FLAG_FILES["md5checksum"]
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["md5checksum"]
         )
         self.sscheck_flagfile_path = os.path.join(
-            self.runfolderpath,
-            ToolboxConfig.FLAG_FILES["sscheck_flag"]
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["sscheck_flag"]
         )
         self.bcl2fastqlog_file = os.path.join(
-            self.runfolderpath,
-            ToolboxConfig.FLAG_FILES["bcl2fastqlog"]
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["bcl2fastqlog"]
         )
         self.fastq_dir_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FASTQ_DIRS["fastqs"]
         )
         self.upload_flagfile = os.path.join(
-            self.runfolderpath,
-            ToolboxConfig.FLAG_FILES["upload_started"]
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["upload_started"]
         )
         self.bcl2fastqstats_file = os.path.join(
             self.runfolderpath,
