@@ -516,7 +516,7 @@ class ProcessRunfolder(SWConfig):
         samples, samplesheet_header = self.read_tso_samplesheet()
         # Split samples into batches (size specified in config)
         batches = [
-            samples[i: i + SWConfig.TSO_BATCH_SIZE]
+            samples[i : i + SWConfig.TSO_BATCH_SIZE]
             for i in range(0, len(samples), SWConfig.TSO_BATCH_SIZE)
         ]
         self.rf_obj.rf_loggers.sw.info(
@@ -1602,8 +1602,8 @@ class SampleObject(SWConfig):
             [
                 f'{SWConfig.DX_CMDS["congenica_sftp"]}Congenica_SFTP_Upload-{self.sample_name}',
                 SWConfig.UPLOAD_ARGS["dest"],
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{self.sample_name}*.bedfiltered.vcf.gz',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{self.sample_name}*.refined.bam',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{self.sample_name}*_markdup_Haplotyper.vcf.gz',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{self.sample_name}*_markdup.bam',
                 SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
         )

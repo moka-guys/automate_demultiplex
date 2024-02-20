@@ -296,13 +296,15 @@ DX_CMDS = {
         f"CNVCALLING_JOB_ID=$(dx run {NEXUS_IDS['APPS']['rpkm']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
-    "congenica_sftp": f"dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y {JOB_NAME_STR}",
+    "congenica_sftp": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y {JOB_NAME_STR}",
     "congenica_upload": (  # TODO move instance type into app itself
-        f"dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
         f"--instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
     # Sleep command ensures the number of concurrent jobs does not surpass the QCII limit of 10
-    "qiagen_upload": f"sleep 1.5m; dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}",
+    "qiagen_upload": (
+        f"sleep 1.5m; JOB_ID=$(dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}"
+    ),
     "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
     "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
     "duty_csv": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y {JOB_NAME_STR}",
