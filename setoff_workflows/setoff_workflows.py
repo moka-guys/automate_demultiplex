@@ -2430,7 +2430,7 @@ class BuildDxCommands(SWConfig):
                 self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], self.rf_obj.post_run_dx_run_script
             )
             write_lines(self.rf_obj.post_run_dx_run_script, "w", list(filter(None, self.dx_postprocessing_cmds)))
-        if (self.samples_obj.pipeline == "tso500", "wes", "pipe"):  # Write commands to decision support upload script
+        if self.samples_obj.pipeline in ["tso500", "wes", "pipe"]:  # Write commands to decision support upload script
             self.rf_obj.rf_loggers.sw.info(
                 self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"], self.rf_obj.decision_support_upload_script
             )
