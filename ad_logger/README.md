@@ -50,10 +50,11 @@ logfiles_config = {
     "ss_validator": samplesheet_validator_logfile,
 }
 
-loggers = ad_logger.RunfolderLoggers(logfiles_config)
+loggers_obj = ad_logger.RunfolderLoggers(logfiles_config)
+loggers = loggers_obj.get_loggers()
 
-loggers.sw.info(
-    loggers.sw.log_msgs["recognised_panno"],
+loggers["sw"].info(
+    loggers["sw"].log_msgs["recognised_panno"],
     sample_name,
     pannum,
 )

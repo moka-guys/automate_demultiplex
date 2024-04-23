@@ -12,7 +12,7 @@ import subprocess
 import logging
 import argparse
 from distutils.spawn import find_executable
-from typing import Union
+from typing import Union, Optional
 from config.ad_config import ToolboxConfig
 from ad_logger.ad_logger import RunfolderLoggers
 
@@ -69,12 +69,12 @@ def return_scriptlog_config() -> dict:
     }
 
 
-def script_start_logmsg(logger: object, file: str) -> None:
+def script_start_logmsg(logger: logging.Logger, file: str) -> None:
     """
     Adds the log message that denotes the start of the script
     running to the logfile
-        :param logger (object): Logger
-        :param file (str):      Path to logfile
+        :param logger (logging.Logger): Logger
+        :param file (str):              Path to logfile
         :return None:
     """
     logger.info(
@@ -84,12 +84,12 @@ def script_start_logmsg(logger: object, file: str) -> None:
     )
 
 
-def script_end_logmsg(logger: object, file: str) -> None:
+def script_end_logmsg(logger: logging.Logger, file: str) -> None:
     """
     Adds the log message that denotes the end of the script
     runnign to the logfile
-        :param logger (object): Logger
-        :param file (str):      Path to logfile
+        :param logger (logging.Logger): Logger
+        :param file (str):              Path to logfile
         :return None:
     """
     logger.info(
@@ -173,14 +173,16 @@ def exit_on_returncode(returncode: int) -> None:
         sys.exit(1)
 
 
-def check_returncode(proc: subprocess.Popen, logger: object) -> Union[str, str, int]:
+def check_returncode(
+    proc: subprocess.Popen, logger: logging.Logger
+) -> Union[str, str, int]:
     """
     Check for success returncode and write to log accordingly
-        :param proc (class):        subprocess.Popen class
-        :param logger (object):     Logger
+        :param proc (class):                subprocess.Popen class
+        :param logger (logging.Logger):     Logger
         :return (stdout(str),
         stderr(str),
-        returncode(int))(tuple):    Stdout, stderr, returncode
+        returncode(int))(tuple):            Stdout, stderr, returncode
     """
     out, err = proc.communicate()
     out = out.decode("utf-8").strip()
@@ -216,7 +218,7 @@ def test_upload_software(logger) -> True:
         sys.exit(1)
 
 
-def test_processing_software(logger) -> Union[bool, None]:
+def test_processing_software(logger) -> Optional[bool]:
     """
     Test the software is installed and performing, by calling the test_upload_agent
     and test_dx_toolkit functions
@@ -228,12 +230,12 @@ def test_processing_software(logger) -> Union[bool, None]:
         return True
 
 
-def test_programs(software_name: str, logger: object) -> True:
+def test_programs(software_name: str, logger: logging.Logger) -> True:
     """
     Check software exists in path, and that the test command executes successfully
     (return code 0). If it does not, exit script
         :param software_name (str):     Name of the sofware being tested
-        :param logger (object):         Logger
+        :param logger (logging.Logger): Logger
         :return True:                   Return True if test passes, else exit script
     """
     software_dict = ToolboxConfig.TEST_PROGRAMS_DICT[software_name]
@@ -256,10 +258,12 @@ def test_programs(software_name: str, logger: object) -> True:
         sys.exit(1)
 
 
-def get_num_processed_runfolders(logger: object, processed_runfolders: list) -> int:
+def get_num_processed_runfolders(
+    logger: logging.Logger, processed_runfolders: list
+) -> int:
     """
     Set self.num_processed_runfolders
-        :param logger (object):                 Logger
+        :param logger (logging.Logger):         Logger
         :param processed_runfolders (list):     List of names of processed runfolders
         :return num_processed_runfolders (int): Number of processed runfolders
     """
@@ -435,7 +439,8 @@ class RunfolderObject(ToolboxConfig):
         Add runfolder loggers to runfolder object
             :return None:
         """
-        self.rf_loggers = RunfolderLoggers(self.logfiles_config)
+        loggers_obj = RunfolderLoggers(self.logfiles_config)
+        self.rf_loggers = loggers_obj.get_loggers()
 
     def add_runfolder_logger(self, logger_name: str) -> None:
         """
@@ -444,4 +449,5 @@ class RunfolderObject(ToolboxConfig):
             :return None:
         """
         logfile_config = {logger_name: self.logfiles_config[logger_name]}
-        self.rf_loggers = RunfolderLoggers(logfile_config)
+        loggers_obj = RunfolderLoggers(logfile_config)
+        self.rf_loggers = loggers_obj.get_loggers()

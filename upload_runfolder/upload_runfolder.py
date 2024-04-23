@@ -72,7 +72,7 @@ class UploadRunfolder(URConfig):
             (dict | False):
         """
         self.rf_obj = rf_obj
-        self.logger = self.rf_obj.rf_loggers.backup
+        self.logger = self.rf_obj.rf_loggers["backup"]
         if nexus_identifiers:
             self.nexus_identifiers = nexus_identifiers
         else:
@@ -373,7 +373,7 @@ class UploadRunfolder(URConfig):
                 )
                 _, _, returncode = execute_subprocess_command(
                     upload_cmd,
-                    self.rf_obj.rf_loggers.backup,
+                    self.rf_obj.rf_loggers["backup"],
                 )
                 if returncode == 0:
                     return "success"
@@ -417,14 +417,14 @@ class UploadRunfolder(URConfig):
             f"find {self.rf_obj.runfolderpath} -type f {grep_ignore} | wc -l"
         )
         files_expected, _, _ = execute_subprocess_command(
-            local_file_count, self.rf_obj.rf_loggers.backup, "exit_on_fail"
+            local_file_count, self.rf_obj.rf_loggers["backup"], "exit_on_fail"
         )
         uploaded_file_count = URConfig.DX_CMDS["find_data"] % (
             self.nexus_identifiers["proj_id"],
             self.rf_obj.dnanexus_auth,
         )
         files_present, _, _ = execute_subprocess_command(
-            uploaded_file_count, self.rf_obj.rf_loggers.backup, "exit_on_fail"
+            uploaded_file_count, self.rf_obj.rf_loggers["backup"], "exit_on_fail"
         )
         if files_expected != files_present:
             self.logger.error(
@@ -446,7 +446,7 @@ class UploadRunfolder(URConfig):
             )
             out, _, _ = execute_subprocess_command(
                 uploaded_file_count_ignore,
-                self.rf_obj.rf_loggers.backup,
+                self.rf_obj.rf_loggers["backup"],
                 "exit_on_fail",
             )
             self.logger.info(self.logger.log_msgs["check_ignore"], out)

@@ -10,11 +10,11 @@ import logging.handlers
 from config.ad_config import AdLoggerConfig
 
 
-def shutdown_streamhandler(logger: object) -> None:
+def shutdown_streamhandler(logger: logging.Logger) -> None:
     """
     Shut down the stream handler only for a logging object. For when
     we do not want to capture log messages in stdout
-        :param logger (object): Logger
+        :param logger (logging.Logger): Logger
         :return (None):
     """
     for handler in logger.handlers[:]:
@@ -23,10 +23,11 @@ def shutdown_streamhandler(logger: object) -> None:
             handler.close()
 
 
-def shutdown_logs(logger: object) -> None:
+def shutdown_logs(logger: logging.Logger) -> None:
     """
     To prevent duplicate filehandlers and system handlers close
     and remove all handlers for a logging object
+        :param logger (logging.Logger): Logger
         :return (None):
     """
     for handler in logger.handlers[:]:
@@ -174,14 +175,11 @@ class RunfolderLoggers(object):
 
     Attributes
         logfiles_config (dict): Dictionary of paths for each logfile
-        loggers (list):         List of loggers
-        ** (logging.Logger):    Logger object created by AdLogger class, with custom
-                                attributes. These are added as class attributes by
-                                self.get_loggers(). Various exist each with their own
-                                name as per logfiles_config
+        loggers (dict):         Dict of loggers
+
     Methods
         get_loggers()
-            Assign loggers using AdLogger class and logfiles_config
+            Create loggers dict using AdLogger class and logfiles_config
     """
 
     def __init__(self, logfiles_config: dict):
@@ -193,21 +191,16 @@ class RunfolderLoggers(object):
         self.logfiles_config = logfiles_config
         self.loggers = self.get_loggers()  # Collect all loggers
 
-    def get_loggers(self) -> list:
+    def get_loggers(self) -> dict:
         """
         Assign loggers using logfiles_config
-            :return all_loggers (list): List of logger types
+            :return all_loggers (dict): Dict of logger types
         """
-        all_loggers = []
+        loggers = {}
         for logger_type in self.logfiles_config.keys():
             logger_name = f"{logger_type} rf"
-            self.ad_logger_obj = AdLogger(
+            ad_logger_obj = AdLogger(
                 logger_name, logger_type, self.logfiles_config[logger_type]
             )
-            setattr(
-                RunfolderLoggers,
-                logger_type,
-                self.ad_logger_obj.get_logger(),
-            )
-            all_loggers.append(getattr(RunfolderLoggers, logger_type))
-        return all_loggers
+            loggers[logger_type] = ad_logger_obj.get_logger()
+        return loggers

@@ -93,11 +93,14 @@ class TestRunfolderLoggers:
         Test all runfolder-level loggers
         """
         # logging.disable(logging.NOTSET)  # Re-enable logging
-        runfolder_loggers = ad_logger.RunfolderLoggers(logfiles_config)
-        for logger in runfolder_loggers.loggers:
+        loggers_obj = ad_logger.RunfolderLoggers(logfiles_config)
+        loggers = loggers_obj.get_loggers()
+        for logger_name in loggers.keys():
             # Test logging works as expected
-            logger.info(f"Test log message. Logger {logger.name}")
-            assert logger.name in caplog.text
+            loggers[logger_name].info(
+                f"Test log message. Logger {loggers[logger_name].name}"
+            )
+            assert loggers[logger_name].name in caplog.text
 
     # TODO write tests for AdLogger class
     # class TestAdLogger:

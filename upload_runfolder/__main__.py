@@ -4,6 +4,7 @@ Main entry point for upload_runfolder module.
 Uploads runfolder to DNAnexus by passing given arguments to the UploadRunfolder script.
 See README and docstrings for further details
 """
+
 import os
 import argparse
 from config.ad_config import URConfig
@@ -81,7 +82,7 @@ if parsed_args.project_id:
         parsed_args.auth_token,
     )
     project_name, err, returncode = execute_subprocess_command(
-        project_name_cmd, rf_obj.rf_loggers.backup, "exit_on_fail"
+        project_name_cmd, rf_obj.rf_loggers["backup"], "exit_on_fail"
     )
     nexus_identifiers = {
         "proj_name": project_name,
@@ -90,7 +91,7 @@ if parsed_args.project_id:
 else:
     nexus_identifiers = False
 
-script_start_logmsg(rf_obj.rf_loggers.backup, __file__)
+script_start_logmsg(rf_obj.rf_loggers["backup"], __file__)
 
 # Create an object to set up the upload agent command
 ur_obj = UploadRunfolder(
@@ -99,4 +100,4 @@ ur_obj = UploadRunfolder(
 )
 ur_obj.upload_rest_of_runfolder(parsed_args.ignore)
 
-script_end_logmsg(rf_obj.rf_loggers.backup, __file__)
+script_end_logmsg(rf_obj.rf_loggers["backup"], __file__)
