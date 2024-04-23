@@ -31,7 +31,7 @@ import re
 import datetime
 from itertools import chain
 from shutil import copyfile
-from typing import Union, Tuple
+from typing import Optional, Union, Tuple
 from ad_logger.ad_logger import AdLogger, shutdown_logs
 from config.ad_config import SWConfig
 from ad_email.ad_email import AdEmail
@@ -93,7 +93,7 @@ class SequencingRuns(SWConfig):
 
     def setoff_processing(self) -> None:
         """
-        Call methods to collect runfolders for processing
+        Call methods to collect runfolders for processing. Called by __main__.py
             :return None:
         """
         if test_upload_software(self.script_logger):
@@ -124,26 +124,27 @@ class SequencingRuns(SWConfig):
                     runs_to_process.append(rf_obj)
         return runs_to_process
 
-    def requires_processing(self, rf_obj: object) -> Union[bool, None]:
+    def requires_processing(self, rf_obj: object) -> Optional[bool]:
         """
         Calls other methods to determine whether the runfolder requires processing (demultiplexing
         has finished successfully and the runfolder has not already been uploaded)
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
             :return True | None:    Returns true if runfolder requires processing, else None
         """
-        if self.has_demultiplexed(rf_obj) and not self.already_uploaded(rf_obj):
-            self.script_logger.info(
-                self.script_logger.log_msgs["runfolder_requires_proc"],
-                rf_obj.runfolder_name,
-            )
-            return True
-        else:
-            self.script_logger.info(
-                self.script_logger.log_msgs["runfolder_prev_proc"],
-                rf_obj.runfolder_name,
-            )
+        if self.has_demultiplexed(rf_obj):
+            if self.already_uploaded(rf_obj):
+                self.script_logger.info(
+                    self.script_logger.log_msgs["runfolder_prev_proc"],
+                    rf_obj.runfolder_name,
+                )
+            else:
+                self.script_logger.info(
+                    self.script_logger.log_msgs["runfolder_requires_proc"],
+                    rf_obj.runfolder_name,
+                )
+                return True
 
-    def has_demultiplexed(self, rf_obj: object) -> Union[bool, None]:
+    def has_demultiplexed(self, rf_obj: object) -> Optional[bool]:
         """
         Check if demultiplexing has already been performed and completed sucessfully. Checks the
         demultiplex log file exists, and if present checks the expected success string is in the
@@ -167,7 +168,9 @@ class SequencingRuns(SWConfig):
                     )
                     return True
                 else:
-                    self.script_logger.info(self.script_logger.log_msgs["demux_failed"])
+                    self.script_logger.info(
+                        self.script_logger.log_msgs["success_string_absent"]
+                    )
             else:
                 # Write to logfile that not yet demultiplexed
                 self.script_logger.info(
@@ -179,7 +182,7 @@ class SequencingRuns(SWConfig):
                 self.script_logger.log_msgs["not_yet_demultiplexed"]
             )
 
-    def already_uploaded(self, rf_obj: object) -> Union[bool, None]:
+    def already_uploaded(self, rf_obj: object) -> Optional[bool]:
         """
         Checks for presence of DNAnexus upload flag file (denotes that the runfolder has already been processed)
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
@@ -202,8 +205,8 @@ class SequencingRuns(SWConfig):
         rf_obj.add_runfolder_loggers()  # Add runfolder loggers attribute
         self.process_runfolder_obj = ProcessRunfolder(rf_obj)
 
-        for logger in rf_obj.rf_loggers.loggers:
-            shutdown_logs(logger)  # Shut down logging
+        for logger_name in rf_obj.rf_loggers.keys():
+            shutdown_logs(rf_obj.rf_loggers[logger_name])  # Shut down logging
         self.processed_runfolders.append(rf_obj.runfolder_name)
         self.script_logger.info(
             self.script_logger.log_msgs["runfolder_processed"],
@@ -281,14 +284,14 @@ class ProcessRunfolder(SWConfig):
 
     def __init__(self, rf_obj: RunfolderObject):
         """
-        Constructor for the RunfolderProcessor class
+        Constructor for the RunfolderProcessor class. Calls the class methods
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
                                     attributes)
         """
         self.rf_obj = rf_obj
         self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["ad_version"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["ad_version"],
             git_tag(),
         )
         self.samples_obj = CollectRunfolderSamples(self.rf_obj)
@@ -298,8 +301,8 @@ class ProcessRunfolder(SWConfig):
                 panno in SWConfig.DEVELOPMENT_PANEL
                 for panno in self.samples_obj.unique_pannos
             ):
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["not_dev_run"],
+                self.rf_obj.rf_loggers["sw"].info(
+                    self.rf_obj.rf_loggers["sw"].log_msgs["not_dev_run"],
                     self.rf_obj.samplesheet_path,
                 )
                 self.users_dict = self.get_users_dict()
@@ -324,8 +327,8 @@ class ProcessRunfolder(SWConfig):
                 self.pipeline_emails.send_samples_email()
                 self.post_pipeline_upload()
             else:
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["dev_run"],
+                self.rf_obj.rf_loggers["sw"].info(
+                    self.rf_obj.rf_loggers["sw"].log_msgs["dev_run"],
                     self.rf_obj.samplesheet_path,
                 )
 
@@ -353,12 +356,12 @@ class ProcessRunfolder(SWConfig):
             )
         else:
             viewers = SWConfig.DNANEXUS_USERS["viewers"]
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["view_users"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["view_users"],
             viewers,
         )
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["admin_users"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["admin_users"],
             SWConfig.DNANEXUS_USERS["admins"],
         )
         return {
@@ -402,8 +405,8 @@ class ProcessRunfolder(SWConfig):
                         )
                     )
             else:
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["no_users"],
+                self.rf_obj.rf_loggers["sw"].info(
+                    self.rf_obj.rf_loggers["sw"].log_msgs["no_users"],
                     permissions_level,
                 )
         lines_to_write.append("echo $PROJECT_ID")
@@ -415,20 +418,20 @@ class ProcessRunfolder(SWConfig):
         ensure it meets the expected success pattern. If unsuccessful, exit script
             :return projectid (str):    Project ID of the created project
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["creating_proj"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["creating_proj"],
             self.rf_obj.proj_creation_script,
         )
         project_creation_cmd = f"bash {self.rf_obj.proj_creation_script}"
 
         project_id, err, returncode = execute_subprocess_command(
-            project_creation_cmd, self.rf_obj.rf_loggers.sw, "exit_on_fail"
+            project_creation_cmd, self.rf_obj.rf_loggers["sw"], "exit_on_fail"
         )
         if returncode == 0:
             return project_id
         else:
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["proj_creation_fail"],
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["proj_creation_fail"],
                 self.samples_obj.nexus_paths["proj_name"],
                 err,
             )
@@ -507,8 +510,8 @@ class ProcessRunfolder(SWConfig):
         defined in TSO_BATCH_SIZE), and write to runfolder
             :return (list):     SampleSheet names
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["splitting_tso_samplesheet"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["splitting_tso_samplesheet"],
             SWConfig.TSO_BATCH_SIZE,
             self.rf_obj.samplesheet_path,
         )
@@ -519,8 +522,8 @@ class ProcessRunfolder(SWConfig):
             samples[i : i + SWConfig.TSO_BATCH_SIZE]
             for i in range(0, len(samples), SWConfig.TSO_BATCH_SIZE)
         ]
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["tso_batches_count"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["tso_batches_count"],
             len(batches),
         )
         # Create new SampleSheets named "PartXofY", add SampleSheet to list
@@ -583,13 +586,13 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.samplesheet_path,
                 self.rf_obj.runfolder_samplesheet_path,
             )
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["ss_copy_success"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["ss_copy_success"],
                 self.rf_obj.runfolder_samplesheet_path,
             )
         else:
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["ss_copy_fail"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["ss_copy_fail"],
             )
 
     def create_file_upload_dict(self) -> dict:
@@ -640,8 +643,8 @@ class ProcessRunfolder(SWConfig):
         for filetype in self.pre_pipeline_upload_dict.keys():
             self.upload_to_dnanexus(filetype, self.pre_pipeline_upload_dict)
         if self.samples_obj.pipeline == "tso500":
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["tso_backup"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["tso_backup"],
             )
             self.upload_rest_of_runfolder()
 
@@ -653,26 +656,26 @@ class ProcessRunfolder(SWConfig):
             :param file_upload_dict (dict): Dictionary of files for upload
             :return None:
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["uploading_files"], filetype
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["uploading_files"], filetype
         )
         result = self.upload_runfolder.upload_files(
             file_upload_dict[filetype]["cmd"],
             file_upload_dict[filetype]["files_list"],
         )
         if result == "success":
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["upload_success"], filetype
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["upload_success"], filetype
             )
         if result == "fail":
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["upload_fail"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["upload_fail"],
                 filetype,
                 self.rf_obj.upload_runfolder_logfile,
             )
         elif result is list:
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["nonexistent_files"], result
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["nonexistent_files"], result
             )
 
     def upload_rest_of_runfolder(self) -> None:
@@ -691,15 +694,15 @@ class ProcessRunfolder(SWConfig):
             ignore = "/L00"
 
         try:
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["uploading_rf"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["uploading_rf"],
                 ignore,
                 self.rf_obj.upload_runfolder_logfile,
             )
             self.upload_runfolder.upload_rest_of_runfolder(ignore)
         except Exception as exception:
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["upload_rf_error"],
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["upload_rf_error"],
                 exception,
                 self.rf_obj.sw_runfolder_logfile,
                 self.rf_obj.upload_runfolder_logfile,
@@ -713,23 +716,23 @@ class ProcessRunfolder(SWConfig):
         """
         dx_run_cmd = f"bash {self.rf_obj.runfolder_dx_run_script}"
 
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["running_cmds"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["running_cmds"],
         )
         out, err, returncode = execute_subprocess_command(
-            dx_run_cmd, self.rf_obj.rf_loggers.sw, "exit_on_fail"
+            dx_run_cmd, self.rf_obj.rf_loggers["sw"], "exit_on_fail"
         )
         if returncode != 0:
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["dx_run_err"],
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["dx_run_err"],
                 self.rf_obj.runfolder_name,
                 dx_run_cmd,
                 out,
                 err,
             )
         else:
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["dx_run_success"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["dx_run_success"],
                 self.rf_obj.runfolder_name,
             )
 
@@ -811,7 +814,7 @@ class CollectRunfolderSamples(SWConfig):
 
     def __init__(self, rf_obj: RunfolderObject):
         """
-        Constructor for the CollectRunfolderSamples class
+        Constructor for the CollectRunfolderSamples class. Calls the class methods
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
                                     attributes)
         """
@@ -874,8 +877,8 @@ class CollectRunfolderSamples(SWConfig):
             else:
                 return False
         else:
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["ss_missing"],
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["ss_missing"],
             )
             return False
 
@@ -891,14 +894,15 @@ class CollectRunfolderSamples(SWConfig):
             pipelines_list.append(SWConfig.PANEL_DICT[panno]["pipeline"])
         pipelines_list = sorted(list(set(pipelines_list)))
         if len(pipelines_list) > 1:
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["multiple_pipeline_names"],
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["multiple_pipeline_names"],
                 pipelines_list,
+                SWConfig.PIPELINES,
             )
         else:
             pipeline_name = max(list(set(pipelines_list)), key=pipelines_list.count)
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["pipeline_name"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["pipeline_name"],
                 pipeline_name,
             )
             return pipeline_name  # Get pipeline from pipelines_list
@@ -913,8 +917,8 @@ class CollectRunfolderSamples(SWConfig):
         for sample, panno in self.samplename_dict.items():
             runtype_list.append(SWConfig.PANEL_DICT[panno]["runtype"])
         runtype_str = "_".join(sorted(list(set(runtype_list))))
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["runtype_str"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["runtype_str"],
             runtype_str,
         )
         return runtype_str  # Get runtype from pipelines_list
@@ -947,14 +951,14 @@ class CollectRunfolderSamples(SWConfig):
                 # Split on underscores to capture library number e.g. ONC100 or NGS100
                 library_numbers.append(samplename.split("_")[0])
         if library_numbers:  # Should always be library numbers found
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["library_nos_identified"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["library_nos_identified"],
                 ", ".join(sorted(list(set(library_numbers)))),
             )
             return sorted(list(set(library_numbers)))
         else:  # Prompt a slack alert
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["library_no_err"],
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["library_no_err"],
                 self.rf_obj.runfolder_name,
             )
             sys.exit(1)
@@ -974,14 +978,14 @@ class CollectRunfolderSamples(SWConfig):
                 wesbatch = re.search(r"WES_?\d+", samplename).group()
                 wes_batch_numbers_list.append(wesbatch.replace("_", ""))
         if wes_batch_numbers_list:
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["wes_batch_nos_identified"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["wes_batch_nos_identified"],
                 ", ".join(wes_batch_numbers_list),
             )
             return sorted(list(set(wes_batch_numbers_list)))
         else:  # Prompt a slack alert
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["wes_batch_nos_missing"],
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["wes_batch_nos_missing"],
                 self.rf_obj.runfolder_name,
             )
             sys.exit(1)
@@ -1032,8 +1036,8 @@ class CollectRunfolderSamples(SWConfig):
             if self.sample_obj.fastqs_dict:
                 samples_dict[sample_name] = self.sample_obj.return_sample_dict()
             else:
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["sample_excluded"],
+                self.rf_obj.rf_loggers["sw"].info(
+                    self.rf_obj.rf_loggers["sw"].log_msgs["sample_excluded"],
                     sample_name,
                 )
         return samples_dict
@@ -1050,8 +1054,8 @@ class CollectRunfolderSamples(SWConfig):
         for fastq_dir_file in os.listdir(self.rf_obj.fastq_dir_path):
             if os.path.isfile(fastq_dir_file):
                 if fastq_dir_file.endswith("fastq.gz"):
-                    self.rf_obj.rf_loggers.sw.info(
-                        self.rf_obj.rf_loggers.sw.log_msgs["checking_fastq"],
+                    self.rf_obj.rf_loggers["sw"].info(
+                        self.rf_obj.rf_loggers["sw"].log_msgs["checking_fastq"],
                         fastq_dir_file,
                     )
                     if self.fastq_not_undetermined(
@@ -1065,14 +1069,16 @@ class CollectRunfolderSamples(SWConfig):
                                 if sample_name in fastq_dir_file
                             ]
                             if sample_name:
-                                self.rf_obj.rf_loggers.sw.info(
-                                    self.rf_obj.rf_loggers.sw.log_msgs["sample_match"],
+                                self.rf_obj.rf_loggers["sw"].info(
+                                    self.rf_obj.rf_loggers["sw"].log_msgs[
+                                        "sample_match"
+                                    ],
                                     fastq_dir_file,
                                     sample_name,
                                 )
                             else:
-                                self.rf_obj.rf_loggers.sw.error(
-                                    self.rf_obj.rf_loggers.sw.log_msgs[
+                                self.rf_obj.rf_loggers["sw"].error(
+                                    self.rf_obj.rf_loggers["sw"].log_msgs[
                                         "sample_mismatch"
                                     ],
                                     fastq_dir_file,
@@ -1082,22 +1088,23 @@ class CollectRunfolderSamples(SWConfig):
                                 )
                                 missing_samples.append(fastq_dir_file)
                         except ValueError as exception:
-                            self.rf_obj.rf_loggers.sw.error(
-                                self.rf_obj.rf_loggers.sw.log_msgs[
+                            self.rf_obj.rf_loggers["sw"].error(
+                                self.rf_obj.rf_loggers["sw"].log_msgs[
                                     "fastq_wrong_naming"
                                 ],
                                 fastq_dir_file,
                                 exception,
                             )
                 else:
-                    self.rf_obj.rf_loggers.sw.info(
-                        self.rf_obj.rf_loggers.sw.log_msgs["not_fastq"], fastq_dir_file
+                    self.rf_obj.rf_loggers["sw"].info(
+                        self.rf_obj.rf_loggers["sw"].log_msgs["not_fastq"],
+                        fastq_dir_file,
                     )
         for sample_name in missing_samples:  # Add the sample to the sample_obj
             # Strip end off sample name
             sample_name = re.sub(r"_S[0-9]+_R[1-2]{1}_001.fastq.gz", "", sample_name)
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["add_missing_sample"], sample_name
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["add_missing_sample"], sample_name
             )
             self.sample_obj = SampleObject(
                 sample_name,
@@ -1107,7 +1114,7 @@ class CollectRunfolderSamples(SWConfig):
             )
             self.samples_dict[sample_name] = self.sample_obj.return_sample_dict()
 
-    def fastq_not_undetermined(self, fastq_dir_file: str) -> Union[bool, None]:
+    def fastq_not_undetermined(self, fastq_dir_file: str) -> Optional[bool]:
         """
         Determine whether the fastq is an undetermined fastq
             :return True | None:    Return True if undetermined, else return None
@@ -1115,8 +1122,8 @@ class CollectRunfolderSamples(SWConfig):
         if not fastq_dir_file.startswith("Undetermined"):
             return True
         else:
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["undetermined_identified"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["undetermined_identified"],
                 fastq_dir_file,
             )
 
@@ -1161,13 +1168,13 @@ class CollectRunfolderSamples(SWConfig):
         for fastq in [r1, r2]:
             if os.path.exists(fastq):
                 undetermined_fastqs_list.append(fastq)
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["undetermined_exists"],
+                self.rf_obj.rf_loggers["sw"].info(
+                    self.rf_obj.rf_loggers["sw"].log_msgs["undetermined_exists"],
                     fastq,
                 )
             else:
-                self.rf_obj.rf_loggers.sw.error(
-                    self.rf_obj.rf_loggers.sw.log_msgs["undetermined_missing"],
+                self.rf_obj.rf_loggers["sw"].error(
+                    self.rf_obj.rf_loggers["sw"].log_msgs["undetermined_missing"],
                     fastq,
                 )
         return undetermined_fastqs_list
@@ -1280,8 +1287,8 @@ class SampleObject(SWConfig):
         self.pos_control = self.check_pos_control()
         self.pannum = self.find_pannum()
         self.panel_settings = SWConfig.PANEL_DICT[self.pannum]
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["sample_identified"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["sample_identified"],
             self.panel_settings["panel_name"],
             self.sample_name,
         )
@@ -1299,8 +1306,8 @@ class SampleObject(SWConfig):
             :return (bool): True if sample is a negative control, else False
         """
         if any(identifier in self.sample_name for identifier in SWConfig.NTCON_IDS):
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["neg_control"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["neg_control"],
                 self.sample_name,
             )
             return True
@@ -1317,8 +1324,8 @@ class SampleObject(SWConfig):
             f"_{ref_sample_id}_" in self.sample_name
             for ref_sample_id in SWConfig.PSCON_IDS
         ):
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["pos_control"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["pos_control"],
                 self.sample_name,
             )
             return True
@@ -1335,21 +1342,21 @@ class SampleObject(SWConfig):
         if self.validate_pannum(pannum):
             return pannum
 
-    def validate_pannum(self, pannum: int) -> Union[bool, None]:
+    def validate_pannum(self, pannum: int) -> Optional[bool]:
         """
         Check whether pan number is valid
             :return (True | None):  True if pan number is valid, else None
         """
         if str(pannum) in SWConfig.PANELS:
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["recognised_panno"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["recognised_panno"],
                 self.sample_name,
                 pannum,
             )
             return True
         else:
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["unrecognised_panno"],
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["unrecognised_panno"],
                 self.sample_name,
             )
             sys.exit(1)
@@ -1425,8 +1432,8 @@ class SampleObject(SWConfig):
                 for fastq_path in os.listdir(self.rf_obj.fastq_dir_path)
                 if all([substring in fastq_path for substring in matches])
             )[0]
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["fastq_identified"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["fastq_identified"],
                 fastq_name,
                 ", ".join(matches),
             )
@@ -1437,8 +1444,8 @@ class SampleObject(SWConfig):
             )
             return fastq_name, fastq_path, nexus_fastq_path
         except Exception as exception:
-            self.rf_obj.rf_loggers.sw.error(
-                self.rf_obj.rf_loggers.sw.log_msgs["fastq_nonexistent"],
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["fastq_nonexistent"],
                 ", ".join(matches),
                 exception,
             )
@@ -1520,8 +1527,8 @@ class SampleObject(SWConfig):
         Construct dx run command for WES workflow
             :return (str):  Dx run command string
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             self.pipeline,
             self.sample_name,
         )
@@ -1552,33 +1559,35 @@ class SampleObject(SWConfig):
         """
         if any([self.neg_control, self.pos_control]):
             decision_support_cmd = None
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs[
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs[
                     "decision_support_upload_notrequired"
                 ],
                 self.sample_name,
             )
         else:
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["decision_support_upload_required"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs[
+                    "decision_support_upload_required"
+                ],
                 self.sample_name,
             )
             # If project is specified then upload via upload agent
             if self.panel_settings["congenica_project"] == "SFTP":  # SFTP upload cmd
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["congenica_upload_required"],
+                self.rf_obj.rf_loggers["sw"].info(
+                    self.rf_obj.rf_loggers["sw"].log_msgs["congenica_upload_required"],
                     self.sample_name,
                 )
                 decision_support_cmd = self.build_congenica_sftp_cmd()
             elif isinstance(self.panel_settings["congenica_project"], int):
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["congenica_upload_required"],
+                self.rf_obj.rf_loggers["sw"].info(
+                    self.rf_obj.rf_loggers["sw"].log_msgs["congenica_upload_required"],
                     self.sample_name,
                 )
                 decision_support_cmd = self.build_congenica_cmd()
             elif self.panel_settings["panel_name"] == "tso500":
-                self.rf_obj.rf_loggers.sw.info(
-                    self.rf_obj.rf_loggers.sw.log_msgs["qiagen_upload_required"],
+                self.rf_obj.rf_loggers["sw"].info(
+                    self.rf_obj.rf_loggers["sw"].log_msgs["qiagen_upload_required"],
                     self.sample_name,
                 )
                 decision_support_cmd = self.build_qiagen_upload_cmd()
@@ -1593,8 +1602,8 @@ class SampleObject(SWConfig):
         project IDs, IR templates or name
             :return (str):  Dx run command for the Congenica upload (SFTP app)
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "congenica sftp",
             self.sample_name,
         )
@@ -1616,8 +1625,8 @@ class SampleObject(SWConfig):
         project ID, credentials, IR template and sample name
             :return (str):  Dx run command for the Congenica upload (standard Congenica upload app)
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "congenica",
             self.sample_name,
         )
@@ -1673,8 +1682,8 @@ class SampleObject(SWConfig):
         of +/- 11bp (bed files are padded +/-10bp) so 1bp padding is applied.
             :return (str):  Dx run command string
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             self.pipeline,
             self.sample_name,
         )
@@ -1794,8 +1803,8 @@ class SampleObject(SWConfig):
         Construct dx run command for SNP workflow
             :return (str):  Dx run command string
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             self.pipeline,
             self.sample_name,
         )
@@ -1815,8 +1824,8 @@ class SampleObject(SWConfig):
         Build dx run command to run fastqc
             :return (str): Dx run command for fastqc app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "fastqc",
             self.sample_name,
         )
@@ -1937,8 +1946,8 @@ class BuildDxCommands(SWConfig):
         self.samples_obj = samples_obj
         self.nexus_project_id = nexus_project_id
         self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmds"]
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmds"]
         )
         (
             self.dx_cmd_list,
@@ -1984,8 +1993,8 @@ class BuildDxCommands(SWConfig):
 
             dx_cmd_list.append(self.create_duty_csv_cmd())
 
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["cmds_built"]
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["cmds_built"]
             )
         return dx_cmd_list, dx_postprocessing_cmds, decision_support_upload_cmds
 
@@ -2055,8 +2064,8 @@ class BuildDxCommands(SWConfig):
             :param tso_ss (str):    TSO SampleSheet
             :return (str):          Dx run command for tso500 app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             self.samples_obj.pipeline,
             tso_ss,
         )
@@ -2106,8 +2115,8 @@ class BuildDxCommands(SWConfig):
             :param sample (str):    Sample name
             :return (str):          Dx run command for sompy app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"], "sompy", sample
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"], "sompy", sample
         )
         return " ".join(
             [
@@ -2128,8 +2137,8 @@ class BuildDxCommands(SWConfig):
             :param pannumber (str): Config-defined pan number for sample
             :return (str):          Dx run command for sambamba app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "sambamba",
             sample,
         )
@@ -2172,8 +2181,8 @@ class BuildDxCommands(SWConfig):
         between panels. The lowest value for the panels on the run is used
             :return (str): Dx run command for MultiQC app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "multiqc",
             self.rf_obj.runfolder_name,
         )
@@ -2204,8 +2213,8 @@ class BuildDxCommands(SWConfig):
         html_report output of the multiqc app in the format jobid:output_name
             :return (str): Dx run command for upload_multiqc app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "upload multiqc",
             self.rf_obj.runfolder_name,
         )
@@ -2239,8 +2248,8 @@ class BuildDxCommands(SWConfig):
         if self.samples_obj.pipeline == "pipe":
             dx_cmds.extend(SWConfig.EMPTY_CP_DEPENDS)
         for sample_name in self.samples_obj.samples_dict.keys():
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["sample_identified"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["sample_identified"],
                 self.samples_obj.pipeline,
                 sample_name,
             )
@@ -2276,8 +2285,8 @@ class BuildDxCommands(SWConfig):
         end of a WES run and downloads required files from the project
             :return (str):  Dx run command for peddy app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "peddy",
             self.rf_obj.runfolder_name,
         )
@@ -2340,8 +2349,8 @@ class BuildDxCommands(SWConfig):
             :param core_panel_name (str):   Name of synnovis core panel
             :return (str):                  Dx run command for RPKM app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "RPKM",
             core_panel_name,
         )
@@ -2366,8 +2375,8 @@ class BuildDxCommands(SWConfig):
             :return (str):                  Dx run command for ED readcount app
 
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "ED_readcount",
             core_panel_name,
         )
@@ -2396,8 +2405,8 @@ class BuildDxCommands(SWConfig):
             :param panno (str):     Pannumber to filter CNV calls
             :return (str):          Dx run command for ED cnv calling app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "ED_cnvcalling",
             panno,
         )
@@ -2426,8 +2435,8 @@ class BuildDxCommands(SWConfig):
         tso samples, stg samples, and the custom panel whole capture for each core panel
             :return (str):  Dx run command for duty_csv app
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["building_cmd"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["building_cmd"],
             "create_duty_csv",
             self.rf_obj.runfolder_name,
         )
@@ -2451,8 +2460,8 @@ class BuildDxCommands(SWConfig):
         from the command list
             :return None:
         """
-        self.rf_obj.rf_loggers.sw.info(
-            self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"],
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["writing_cmds"],
             self.rf_obj.runfolder_dx_run_script,
         )
         write_lines(  # Write commands to dx run script
@@ -2464,8 +2473,8 @@ class BuildDxCommands(SWConfig):
         if (
             self.samples_obj.pipeline == "tso500"
         ):  # Write commands to TSO post-processing file
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["writing_cmds"],
                 self.rf_obj.post_run_dx_run_script,
             )
             write_lines(
@@ -2478,8 +2487,8 @@ class BuildDxCommands(SWConfig):
             "wes",
             "pipe",
         ]:  # Write commands to decision support upload script
-            self.rf_obj.rf_loggers.sw.info(
-                self.rf_obj.rf_loggers.sw.log_msgs["writing_cmds"],
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["writing_cmds"],
                 self.rf_obj.decision_support_upload_script,
             )
             write_lines(
@@ -2536,7 +2545,7 @@ class PipelineEmails(SWConfig):
         self.email_subj = (
             SWConfig.MAIL_SETTINGS["pipeline_started_subj"] % self.rf_obj.runfolder_name
         )
-        self.email = AdEmail(self.rf_obj.rf_loggers.sw)
+        self.email = AdEmail(self.rf_obj.rf_loggers["sw"])
         self.queries = self.collect_queries()
 
     def collect_queries(self) -> str:

@@ -245,6 +245,7 @@ class PanelConfig:
             "coverage_min_mapping_qual": 30,
         },
     }
+    PIPELINES = list(set([v["pipeline"] for k, v in CAPTURE_PANEL_DICT.items()]))
     PANEL_DICT = {
         # Dictionary containing pan number-specific settings, arranged by workflow name
         # These incorporate the capture dictionary settings and build upon them

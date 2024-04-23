@@ -14,7 +14,7 @@ Contains the following classes:
 import sys
 import os
 import re
-from typing import Union, Tuple
+from typing import Optional, Tuple
 import samplesheet_validator.samplesheet_validator as samplesheet_validator
 from config.ad_config import DemultiplexConfig
 from ad_logger.ad_logger import AdLogger, shutdown_logs
@@ -166,7 +166,7 @@ class GetRunfolders(DemultiplexConfig):
                 folder_name,
             )
 
-    def bcl2fastqlog_absent(self, folder_name: str) -> Union[bool, None]:
+    def bcl2fastqlog_absent(self, folder_name: str) -> Optional[bool]:
         """
         Check presence of demultiplex logfile (bcl2fastq2_output.log)
             :param folder_name(str):    Name of runfolder
@@ -276,7 +276,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
             Run demultiplexing command. If unsuccessful, exit script
         validate_fastqs()
             Validate the created fastqs in the BaseCalls directory and log success
-            or failure error message accordingly
+            or failure error message accordingly. If any failure, remove bcl2fastq log
+            file to trigger re-demultiplex on next script run
     """
 
     def __init__(
@@ -294,8 +295,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.cmd_line_supplied_runfolder = cmd_line_supplied_runfolder
         self.rf_obj = RunfolderObject(folder_name, self.timestamp)
         self.rf_obj.add_runfolder_loggers()  # Add rf loggers to runfolder object
-        self.demux_rf_logger = self.rf_obj.rf_loggers.demultiplex
-        self.bcl2fastq2_rf_logger = self.rf_obj.rf_loggers.bcl2fastq2
+        self.demux_rf_logger = self.rf_obj.rf_loggers["demultiplex"]
+        self.bcl2fastq2_rf_logger = self.rf_obj.rf_loggers["bcl2fastq2"]
         self.disallowed_sserrs = [
             "Samplesheet absent",
             "Samplesheet name invalid",
@@ -319,7 +320,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.tso = False
         self.run_processed = False
 
-    def setoff_workflow(self) -> Union[bool, None]:
+    def setoff_workflow(self) -> Optional[bool]:
         """
         Setoff demultiplex workflow only for runs where demultiplexing is required (TSO
         runs don't require demultiplexing). First calls self.create_bcl2fastqlog() to
@@ -349,7 +350,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 )
                 return True
 
-    def demultiplexing_required(self) -> Union[bool, None]:
+    def demultiplexing_required(self) -> Optional[bool]:
         """
         Carries out per-runfolder pre-demultiplexing tasks to determine whether demultiplexing is
         required. Carries out the early warning SampleSheet checks. If sequencing is complete and
@@ -405,7 +406,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             )
             return True, sscheck_obj
 
-    def sequencing_complete(self) -> Union[bool, None]:
+    def sequencing_complete(self) -> Optional[bool]:
         """
         Check if sequencing has completed for the current runfolder - presence of
         RTAComplete.txt.
@@ -423,7 +424,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.rtacompletefile_path,
             )
 
-    def pass_integrity_check(self) -> Union[bool, None]:
+    def pass_integrity_check(self) -> Optional[bool]:
         """
         Check whether the integrity checking was successful
             :return (True | None):  True if successful, None if unsuccessful
@@ -436,7 +437,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 if self.checksums_match():
                     return True
 
-    def seq_requires_no_ic(self) -> Union[bool, None]:
+    def seq_requires_no_ic(self) -> Optional[bool]:
         """
         Check whether integrity check needed. Only runs from sequencers that can have
         checksums generated require this - not all sequencers can have checksums
@@ -453,7 +454,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["seq_without_ic"])
             return True
 
-    def checksumfile_exists(self) -> Union[bool, None]:
+    def checksumfile_exists(self) -> Optional[bool]:
         """
         Check if md5checksum file exists (i.e. integrity check has been performed
         by integrity check scripts and it has written the checksums and success / failure
@@ -472,7 +473,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.checksumfile_path,
             )
 
-    def prior_ic(self) -> Union[bool, None]:
+    def prior_ic(self) -> Optional[bool]:
         """
         Determines whether an integrity check has been previously performed by this
         script. Checks for presence of the CHECKSUMS_ALREADY_ASSESSED message in the
@@ -508,7 +509,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             f"\n{DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED}",
         )
 
-    def checksums_match(self) -> Union[bool, None]:
+    def checksums_match(self) -> Optional[bool]:
         """
         Reads the md5checksum file and checks for the presence of the CHECKSUM_MATCH_MSG (this
         is added by the integrity check scripts if the checksums match, denoting that the runfolder
@@ -564,9 +565,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.samplesheet_path,
             )
 
-    def no_disallowed_sserrs(
-        self, valid: bool, sscheck_obj: object
-    ) -> Union[bool, None]:
+    def no_disallowed_sserrs(self, valid: bool, sscheck_obj: object) -> Optional[bool]:
         """
         Check for specific errors that would cause bcl2fastq2 to fail and whose presence
         should stop demultiplexing. Write errors to flag file if they exist, which will
@@ -632,7 +631,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.runfolder_name,
             )
 
-    def create_bcl2fastqlog(self) -> Union[bool, None]:
+    def create_bcl2fastqlog(self) -> Optional[bool]:
         """
         Create file to prevent demultiplexing starting again. bl2fastq2 v2.20 doesn't
         produce stdout for a while after starting so the file is created and the
@@ -657,7 +656,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             )
             sys.exit(1)
 
-    def add_bcl2fastqlog_tso_msg(self) -> Union[bool, None]:
+    def add_bcl2fastqlog_tso_msg(self) -> Optional[bool]:
         """
         If runfolder is from TSO500 run, add specific message to bcl2fastq2_output.log
         file (TSO500 runs do not require demultiplexing)
@@ -680,7 +679,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         )
         return True
 
-    def calculate_cluster_density(self) -> Union[bool, None]:
+    def calculate_cluster_density(self) -> Optional[bool]:
         """
         Run dockerised GATK to run Picard CollectIlluminaLaneMetrics - this calculates
         cluster density and saves files (runfolder.illumina_phasing_metrics and
@@ -720,7 +719,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             )
             sys.exit(1)
 
-    def run_demultiplexing(self) -> Union[bool, None]:
+    def run_demultiplexing(self) -> Optional[bool]:
         """
         Run demultiplexing command. If unsuccessful, exit script
             :return True|None:  True if command executed succesfully and output is
@@ -758,7 +757,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def validate_fastqs(self) -> None:
         """
         Validate the created fastqs in the BaseCalls directory and log success
-        or failure error message accordingly
+        or failure error message accordingly. If any failure, remove bcl2fastq log
+        file to trigger re-demultiplex on next script run
             :return None:
         """
         fastqs = [
@@ -782,3 +782,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     out,
                     err,
                 )
+                if os.path.exists(self.rf_obj.bcl2fastqlog_file):
+                    os.remove(
+                        self.rf_obj.bcl2fastqlog_file
+                    )  # Bcl2fastq log file removed to trigger re-demultiplex

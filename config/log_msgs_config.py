@@ -102,7 +102,7 @@ LOG_MSGS = {
         "ua_file_present": "Upload started file present. Terminating",
         "ua_file_absent": "Upload started file not found. Continuing",
         "demux_complete": "Run has been previously successfully demultiplexed",
-        "demux_failed": "Run has previously been demultiplexed but demultiplexing failed",
+        "success_string_absent": "Run has previously been demultiplexed but no success string is present",
         "not_yet_demultiplexed": "Demultiplexing has not been performed",
         "bcl2fastqlog_empty": "Bcl2fastq log file exists but is empty",
         "nonexistent_files": "Not all files exist: %s",
@@ -146,7 +146,10 @@ LOG_MSGS = {
             "An error occurred when uploading the rest of the runfolder: %s. See %s and %s for further details"
         ),
         "ss_missing": "SampleSheet is missing and is required for sample name parsing",
-        "multiple_pipeline_names": "Multiple pipeline names detected from panel config for sample list: %s",
+        "multiple_pipeline_names": (
+            "Multiple pipeline names detected from panel config for sample list: %s. Scripts do not support different "
+            "pipelines for the same run. Supported pipelines: %s"
+        ),
         "pipeline_name": "Pipeline name identified as %s",
         "runtype_str": "Runtype name string created: %s",
         "wes_batch_nos_identified": "WES batch numbers %s identified",
