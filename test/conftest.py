@@ -7,6 +7,7 @@ that is run before and after every test
 import os
 import shutil
 import pytest
+import tarfile
 
 # sys.path.append("..")
 from ad_logger import ad_logger
@@ -17,22 +18,57 @@ from config import ad_config
 
 # TODO prevent logging writing to syslog when in testing mode
 
-data_dir = os.path.abspath("test/data/")
-# Temporary directories to copy test files into and to contain outputs
-tempdir = os.path.join(os.path.abspath("test"), "temp/")
-temp_testfiles_dir = os.path.join(tempdir, "demultiplex_test_files")
-temp_runfolderdir = os.path.join(temp_testfiles_dir, "test_runfolders/")
-# temp_samplesheets_dir = os.path.join(temp_runfolderdir, "samplesheets")
-# temp_samplesheet_path = os.path.join(temp_samplesheets_dir, "%s_SampleSheet.csv")
-temp_log_dir = os.path.join(tempdir, "automate_demultiplexing_logfiles")
+
+test_data_dir = os.path.abspath("data")  # Data directory
+test_data_dir_unzipped = os.path.join(
+    test_data_dir, "data_unzipped"
+)  # Unzips data tar to here
+test_data_temp = os.path.abspath("temp")  # Copies data to here for each test
+# Place interop in test 7, test 9, test 11
+data_tars = [
+    {
+        "src": os.path.join(test_data_dir, "demultiplex_test_files.tar.gz"),
+        "dest": test_data_dir_unzipped,
+    },
+    {
+        "src": os.path.join(test_data_dir, "samplesheets.tar.gz"),
+        "dest": test_data_dir_unzipped,
+    },
+    {
+        "src": os.path.join(test_data_dir, "InterOp/batch_1.tar.gz"),
+        "dest": os.path.join(test_data_dir_unzipped, "InterOp"),
+    },
+    {
+        "src": os.path.join(test_data_dir, "InterOp/batch_2.tar.gz"),
+        "dest": os.path.join(test_data_dir_unzipped, "InterOp"),
+    },
+    {
+        "src": os.path.join(test_data_dir, "InterOp/batch_3.tar.gz"),
+        "dest": os.path.join(test_data_dir_unzipped, "InterOp"),
+    },
+]
+source_runfolder_dirs = os.path.join(
+    test_data_dir_unzipped, "demultiplex_test_files/test_runfolders/"
+)
+
+to_copy_interop_to = [
+    os.path.join(source_runfolder_dirs, "999999_A01229_0000_00000TEST7/InterOp/"),
+    os.path.join(source_runfolder_dirs, "999999_A01229_0000_00000TEST9/InterOp/"),
+    os.path.join(source_runfolder_dirs, "999999_A01229_0000_0000TEST11/InterOp/"),
+]
+
+temp_runfolderdir = os.path.join(
+    test_data_temp, "demultiplex_test_files/test_runfolders/"
+)
+temp_log_dir = os.path.join(test_data_temp, "automate_demultiplexing_logfiles")
 
 # Temp directory for SampleSheet validator SampleSheet test cases
-sv_samplesheet_temp_dir = os.path.join(tempdir, "samplesheets")
+sv_samplesheet_temp_dir = os.path.join(test_data_temp, "samplesheets")
 
 
 @pytest.fixture(scope="function")
 def logger_obj():
-    temp_log = os.path.join(tempdir, "temp.log")
+    temp_log = os.path.join(test_data_temp, "temp.log")
     return ad_logger.AdLogger("demultiplex", "demultiplex", temp_log).get_logger()
 
 
@@ -58,6 +94,28 @@ def patch_toolbox(monkeypatch):
     monkeypatch.setattr(toolbox.ToolboxConfig, "AD_LOGDIR", temp_log_dir)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def run_before_and_after_session():
+    """
+    Remove data directory if exists. Cleans up directory structure in the event that the
+    tests are force stopped part way through
+    """
+    # Create temporary dirs for testing
+    os.makedirs(
+        test_data_dir_unzipped
+    )  # Holds the unzipped data to copy from for each test
+
+    for tar in data_tars:
+        with tarfile.open(tar["src"], "r:gz") as open_tar:
+            open_tar.extractall(path=tar["dest"])
+    for destination in to_copy_interop_to:
+        shutil.copytree(os.path.join(test_data_dir_unzipped, "InterOp"), destination)
+    yield
+    for to_remove in [test_data_dir_unzipped, test_data_temp]:
+        if os.path.isdir(to_remove):
+            shutil.rmtree(to_remove)
+
+
 # TODO fix patching of script loggers as this is not set up correctly !!
 @pytest.fixture(scope="function", autouse=True)
 def run_before_and_after_tests(monkeypatch):
@@ -73,16 +131,16 @@ def run_before_and_after_tests(monkeypatch):
     patch_toolbox(monkeypatch)
 
     # SETUP - cleanup after each test
-    if os.path.isdir(tempdir):
+    if os.path.isdir(test_data_temp):
         # Remove dir and all flag files created
-        shutil.rmtree(tempdir)
+        shutil.rmtree(test_data_temp)
     # Create temporary dirs for testing
-    shutil.copytree(data_dir, tempdir)
+    shutil.copytree(test_data_dir, test_data_temp)
     create_logdirs()
 
     yield  # Where the testing happens
     # TEARDOWN - cleanup after each test
-    if os.path.isdir(tempdir):
+    if os.path.isdir(test_data_temp):
         # Remove dir and all flag files created
-        shutil.rmtree(tempdir)
+        shutil.rmtree(test_data_temp)
     # logging.disable(logging.NOTSET)  # Re-enable logging

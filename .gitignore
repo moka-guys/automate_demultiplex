@@ -4,5 +4,5 @@
 seglh-naming/
 seglh_naming.egg-info/
 venv/
-test/temp
+temp/
 .coverage

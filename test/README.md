@@ -11,7 +11,7 @@ This module contains pytest scripts for testing the various modules within this 
 Tests can be executed using the following command. It is important to include the ignore flag to prevent pytest from scanning for tests through all test files, which slows down the tests considerably
 
 ```bash
-python3 -m pytest -v --cov=. --ignore=test/demultiplex_test_files/
+python3 -m pytest
 ```
 
 ## Demultiplex.py tests
