@@ -16,7 +16,7 @@ This script is configured to be used as a module import as per the following exa
 
 ```python
 # Create AdEmail object
-self.email = AdEmail(self.rf_obj.rf_loggers.sw)
+self.email = AdEmail(self.rf_obj.rf_loggers["sw"])
 
 # Render email html message
 email_html = self.email.generate_email_html(

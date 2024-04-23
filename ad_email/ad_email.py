@@ -14,7 +14,7 @@ import smtplib
 import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Union
+from typing import Optional
 from config.ad_config import AdEmailConfig
 from toolbox.toolbox import get_credential, git_tag
 
@@ -87,7 +87,7 @@ class AdEmail(AdEmailConfig):
             return html
         except Exception as exception:
             self.logger.error(self.logger.log_msgs["html_error"], exception)
-            sys.exit(1)
+            sys.exit(1)  # TODO move this to the next level up and only for some emails
 
     def send_email(
         self,
@@ -95,11 +95,11 @@ class AdEmail(AdEmailConfig):
         email_subject: str,
         email_message: str,
         email_priority: int,
-    ) -> Union[bool, None]:
+    ) -> Optional[bool]:
         """
         Create email message object and specify settings, then send email using mail
         settings from init. If unsuccessful, exit script
-            :param recipients (list|str):   List or string of recipient email addresses
+            :param recipients (list):       List of recipient email addresses
             :param email_subject (str):     Email subject string
             :param email_message (str):     Email message string
             :param email_priority (int):    Email priority integer
@@ -116,19 +116,18 @@ class AdEmail(AdEmailConfig):
             self.msg.attach(MIMEText(email_message, "html"))  # Add msg to e-mail body
             self.logger.info(self.logger.log_msgs["sending_email"], self.msg)
             # Configure SMTP server connection for sending email
-            server = smtplib.SMTP(
+            with smtplib.SMTP(
                 host=AdEmailConfig.MAIL_SETTINGS["host"],
                 port=AdEmailConfig.MAIL_SETTINGS["port"],
                 timeout=10,
-            )
-            server.set_debuglevel(False)  # Output connection debug messages
-            server.starttls()  # Encrypt SMTP commands using Transport Layer Security
-            server.ehlo()  # Identify client to ESMTP server using EHLO commands
-            server.login(self.email_user, self.email_pw)
-            server.sendmail(self.sender, recipients, self.msg.as_string())
-            self.logger.info(self.logger.log_msgs["email_success"])
-            return True
-
+            ) as server:
+                server.set_debuglevel(False)  # Output connection debug messages
+                server.starttls()  # Encrypt SMTP commands using Transport Layer Security
+                server.ehlo()  # Identify client to ESMTP server using EHLO commands
+                server.login(self.email_user, self.email_pw)
+                server.sendmail(self.sender, recipients, self.msg.as_string())
+                self.logger.info(self.logger.log_msgs["email_success"])
+                return True
         except Exception as exception:
             self.logger.error(self.logger.log_msgs["email_fail"], exception)
-            sys.exit(1)
+            sys.exit(1)  # TODO move this to the next level up and only for some emails
