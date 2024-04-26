@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """ toolbox.py pytest unit tests
 
 # TODO to write

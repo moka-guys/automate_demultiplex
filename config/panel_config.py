@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """ PANEL NUMBERS AND PANEL PROPERTIES
 
 The panel config file contains the panel numbers and panel properties, which are used by the setoff_workflows script.
@@ -17,39 +16,35 @@ required criteria to be included in that list.
     pan numbers do not necessarily refer to bed files but rather project configuration (e.g. DNAnexus instances,
     project layout etc.)
 
-Dictionary keys and values are as follows. Values are False where they are not
+Dictionary keys and values are as follows. Values are None where they are not
 required for analysis of samples with that pan number
     panel_name                      Name of capture panel
     pipeline                        Name of pipeline
     sample_prefix                   Expected string at front of sample name
-    capture_pan_num                 Pan number of capture panel bedfile (used for RPKM).
-                                    False if RPKM not run
-    hsmetrics_bedfile               bedfile filename, or False
-    sambamba_bedfile                bedfile filename, or False. Coverage BED
-    variant_calling_bedfile         bedfile filename, or False
-    FH                              True if requires PRS analysis, False if not
-    rpkm_bedfile                    bedfile filename, or False
+    capture_pan_num                 Pan number of capture panel bedfile (used for RPKM). None if RPKM not run
+    hsmetrics_bedfile               bedfile filename, or None
+    sambamba_bedfile                bedfile filename, or None. Coverage BED
+    variant_calling_bedfile         bedfile filename, or None
+    FH                              True if requires PRS analysis, None if not
+    rpkm_bedfile                    Bedfile filename, or None
     capture_type                    Amplicon or Hybridisation
     multiqc_coverage_level          Value
-    clinical_coverage_depth         Value, or False. Used as input for sambamba
-    coverage_min_basecall_qual      Value or False. Sambamba minimum base quality
-    coverage_min_mapping_qual       Value or False. Sambamba minimum mapping quality
-    masked_reference                projectid:fileid, or False
-    throughput                      'high' or 'low', or False if unspecified
-    test_number                     R or M number, or false if no specific number
-    congenica_project               False = no upload. Number = normal. SFTP =
-                                    sftp upload
-    congenica_credentials           'Synnovis' or 'StG'. False = Congenica app not used
-    congenica_IR_template           'priority' or 'non-priority'. False = Congenica app
-                                    not used
-    polyedge                        False if app not required, subdictionary containing
-                                    app inputs if it is required
-    ed_readcount_bedfile            False if app not required, panel bed file if required
+    clinical_coverage_depth         Value, or None. Used as input for sambamba
+    coverage_min_basecall_qual      Value or None. Sambamba minimum base quality
+    coverage_min_mapping_qual       Value or None. Sambamba minimum mapping quality
+    masked_reference                projectid:fileid, or None
+    throughput                      'high' or 'low', or None if unspecified
+    test_number                     R or M number, or None if no specific number
+    congenica_project               None = no upload. Number = normal. SFTP = sftp upload
+    congenica_credentials           'Synnovis' or 'StG'. None = Congenica app not used
+    congenica_IR_template           'priority' or 'non-priority'. None = Congenica app not used
+    polyedge                        None if app not required, subdictionary containing app inputs if it is required
+    ed_readcount_bedfile            None if app not required, panel readcount bedfile if required
+    ed_cnvcalling_bedfile           None if app not required, R-number specific bedfile if required
     dry_lab_only                    Used to determine whether to include the TSO pan
                                     number in the duty_csv pan number list
-    dry_lab                         True if required to share with dry lab, False if not
-    development_run                 False if pan number is not a development pan number,
-                                    else True
+    dry_lab                         True if required to share with dry lab, None if not
+    development_run                 None if pan number is not a development pan number, else True
 """
 # TODO in future do we want to swap physical paths for file IDs
 

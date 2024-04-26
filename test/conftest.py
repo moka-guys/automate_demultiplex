@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """
 Variables used across test modules, including the setup and teardown fixture
 that is run before and after every test

@@ -1,4 +1,3 @@
-# coding=utf-8
 """ ad_email.py pytest unit tests
 
 N.B. test_email_sending_success() will only pass when running on the

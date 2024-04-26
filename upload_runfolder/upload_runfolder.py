@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """
 upload_runfolder.py Uploads an Illumina runfolder to DNAnexus. Contains the following classes:
 
@@ -28,8 +27,7 @@ class UploadRunfolder(URConfig):
             Search DNAnexus for the project given as an input argument. If the input is
             'None', searches for a project matching self.rf_obj.runfolder_name
         upload_rest_of_runfolder(ignore)
-            Call methods to upload the rest of the runfolder (the runfolder
-            minus the fastqs and several QC files)
+            Calls methods to upload the rest of the runfolder (the runfolder minus the files matching the ignore string)
         check_runfolder_exists()
             Check runfolder exists
         get_file_dict(ignore)
@@ -126,7 +124,7 @@ class UploadRunfolder(URConfig):
     def upload_rest_of_runfolder(self, ignore: str) -> None:
         """
         Call methods to upload the rest of the runfolder (the
-        runfolder minus the fastqs and several QC files)
+        runfolder minus the files matching the ignore string)
             :return None:
         """
         self.logger.info(
@@ -231,7 +229,7 @@ class UploadRunfolder(URConfig):
         if ignore:
             for pattern in ignore.split(","):
                 if pattern.upper() in filepath.upper():
-                    self.logger.info(self.logger.log_msgs["ignoring_files"], filepath)
+                    self.logger.info(self.logger.log_msgs["ignoring_files"], pattern, filepath)
                     return True
         else:
             return False

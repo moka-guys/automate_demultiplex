@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """
 Automate demultiplex logging. Classes required for logging
 """

@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """
 Config file for logging module. Contains settings specific to logging. The LOG_MSGS dictionary contains
 both general messages which are used across multiple modules, and also logfile-specific messages:
@@ -21,11 +20,11 @@ LOG_MSGS = {
         "cmd_success": "Command executed successfully with returncode %s",
         "cmd_fail": "Command returned non-zero exit code %s. Stdout: %s. Stderr: %s",
         "testing_software": "Testing %s software",
-        "test_fail": "%s test failed: Stdout: %s. Stderr: %s",
+        "test_fail": "%s test failed: Stdout: %s. Stderr: %s. Script exited",
         "test_pass": "%s test passed",
-        "software_fail": "Software tests did not all pass",
+        "software_fail": "Software tests did not all pass. Script exited",
         "found_program": "Found program: %s",
-        "program_missing": "Could not find program: %s",
+        "program_missing": "Could not find program: %s. Script exited",
         "not_dev_run": "SampleSheet is not from a development run: %s",
         "dev_run": "SampleSheet is from a development run: %s",
         "sschecks_passed": "SampleSheet passed all checks %s",
@@ -47,7 +46,9 @@ LOG_MSGS = {
         "tso_run": "TSO500 run detected",
         "bcl2fastq_start": "Demultiplexing started for run %s using bcl2fastq2 command: %s",
         "bcl2fastq_complete": "Demultiplexing compelted successfully - bcl2fastq2 subprocess complete for run %s",
-        "bcl2fastq_failed": "Demultiplexing failed - bcl2fastq2 subprocess failed for run %s. Stdout: %s. Stderr: %s",
+        "bcl2fastq_failed": (
+            "Demultiplexing failed - bcl2fastq2 subprocess failed for run %s. Stdout: %s. Stderr: %s. Script exited"
+        ),
         "demux_already_complete": "Demultiplexing already completed: %s. bcl2fastq2 log found @ %s",
         "skipping_runfolder": "Skipping runfolder: %s",
         "demux_not_complete": "Demultiplexing not yet completed: %s. No demultiplex log found @ %s",
@@ -78,7 +79,7 @@ LOG_MSGS = {
             "Contents of the md5checksum file are unexpected for this runfolder %s. See: %s"
         ),
         "create_bcl2fastqlog_pass": "Created bcl2fastq2 logfile for run %s: %s",
-        "create_bcl2fastqlog_fail": "Failed to create bcl2fastq2 logfile for run %s. Exception: %s",
+        "create_bcl2fastqlog_fail": "Failed to create bcl2fastq2 logfile for run %s. Exception: %s. Script exited",
         "tso500_run": "%s is a %s",
         "write_tso_msg_to_bcl2fastqlog": (
             "TSO500 message successfully written to bcl2fastq2_output.log file for TSO run: %s"
@@ -87,7 +88,7 @@ LOG_MSGS = {
         "bcl2fastqlog_absent": "BCL2FASTQ2 logfile does not exist for run %s. Please see logfile",
         "running_cd": "Running the following command for cluster density calculation: %s",
         "cd_success": "Cluster density calculation saved to %s%s",
-        "cd_fail": "Cluster density calculation failed for: %s. Error: %s",
+        "cd_fail": "Cluster density calculation failed for: %s. Error: %s. Script exited",
         "fastq_valid": "Gzip --test determined that the fastq is valid: %s",
         "fastq_invalid": "Gzip --test determined that the fastq is not valid: %s. Stdout: %s. Stderr: %s",
     },
@@ -109,7 +110,7 @@ LOG_MSGS = {
         "view_users": "Users identifed that require VIEW project permissions: %s",
         "admin_users": "Users identifed that require ADMINISTER project permissions: %s",
         "creating_proj": "Executing project creation script: %s",
-        "proj_creation_fail": "Failed to create project in DNAnexus for %s. Stderr: %s",
+        "proj_creation_fail": "Failed to create project in DNAnexus for %s. Stderr: %s. Script exited",
         "uploading_files": "Uploading %s files",
         "upload_success": "%s files uploaded successfully",
         "upload_fail": "%s upload failed. See %s for detailed error log",
@@ -121,7 +122,7 @@ LOG_MSGS = {
         "decision_support_upload_notrequired": "Sample %s is a control so does not require decision support upload",
         "congenica_upload_required": "Sample %s requires upload to Congenica",
         "qiagen_upload_required": "Sample %s requires upload to QCII",
-        "unrecognised_panno": "Sample in SampleSheet does not contain a recognised pan number: %s",
+        "unrecognised_panno": "Sample in SampleSheet does not contain a recognised pan number: %s. Script exited",
         "recognised_panno": "Sample in SampleSheet contains a recognised pan number: %s, %s",
         "fastq_identified": (
             "The following fastq has been identified in the runfolder %s as matching the following strings: %s"
@@ -130,6 +131,9 @@ LOG_MSGS = {
         "sample_excluded": "Sample excluded from samples dictionary due to missing fastqs: %s",
         "cmds_built": "Finished building dx run commands",
         "building_cmd": "Building %s cmd for %s",
+        "insufficient_samples_for_cnv": (
+            "Less than 3 samples detected for run %s for %s - CNV calling cannot be conducted"
+        ),
         "pos_control": "Positive control sample detected: %s",
         "neg_control": "Negative control sample detected: %s",
         "writing_cmds": "Writing dx run commands to %s",
@@ -143,7 +147,8 @@ LOG_MSGS = {
             "ignoring: %s. Stdout stored in logfile: %s"
         ),
         "upload_rf_error": (
-            "An error occurred when uploading the rest of the runfolder: %s. See %s and %s for further details"
+            "An error occurred when uploading the rest of the runfolder: %s. See %s and %s "
+            "for further details. Script exited"
         ),
         "ss_missing": "SampleSheet is missing and is required for sample name parsing",
         "multiple_pipeline_names": (
@@ -153,9 +158,13 @@ LOG_MSGS = {
         "pipeline_name": "Pipeline name identified as %s",
         "runtype_str": "Runtype name string created: %s",
         "wes_batch_nos_identified": "WES batch numbers %s identified",
-        "wes_batch_nos_missing": "WES batch numbers missing for run %s. Check for errors in the sample names",
+        "wes_batch_nos_missing": (
+            "WES batch numbers missing for run %s. Check for errors in the sample names. Script exited"
+        ),
         "library_nos_identified": "Library numbers %s identified",
-        "library_no_err": "%s - Unable to identify library numbers. Check for underscores in the sample names",
+        "library_no_err": (
+            "%s - Unable to identify library numbers. Check for underscores in the sample names. Script exited"
+        ),
         "checking_fastq": "Checking fastq has been collected: %s",
         "sample_match": "Fastq in the BaseCalls directory matches the sample name in the SampleSheet: %s, %s",
         "sample_mismatch": "Fastq in the BaseCalls directory does not match any sample name in the SampleSheet: %s",
@@ -170,7 +179,7 @@ LOG_MSGS = {
     },
     "backup": {
         "checking_runfolder": "Checking the runfolder exists: %s",
-        "nonexistent_runfolder": "The runfolder does not exist: %s",
+        "nonexistent_runfolder": "The runfolder does not exist: %s. Script exited",
         "finding_project": "Searching for DNAnexus project: %s",
         "project_name": "Project name is: %s",
         "finding_project_id": "Searching for DNAnexus project ID using the runfolder name %s",
@@ -185,7 +194,7 @@ LOG_MSGS = {
         "getting_file_paths": "Walking through the folder paths and getting a list of files",
         "files_for_upload": "Files for upload: %s",
         "uploading_files": "Uploading files in folder: %s",
-        "ignoring_files": "Disincluding file from upload as it contains an ignore string: %s",
+        "ignoring_files": "Excluding file from upload as it contains an ignore string (%s): %s",
         "files_exist": "All files in files_list exist as expected",
         "nonexistent_files": "The following files are expected to be present but do not exist: %s",
         "call_ua": "Calling upload agent on: %s",

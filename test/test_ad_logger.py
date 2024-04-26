@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """ ad_logger.py pytest unit tests
 
 # TODO write the following unit tests which are currently missing or incomplete:

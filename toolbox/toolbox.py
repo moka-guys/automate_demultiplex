@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """
 This script contains functions shared across scripts / modules. Contains the following classes:
 
@@ -136,9 +135,9 @@ def git_tag() -> str:
     proc = subprocess.Popen(
         [cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True
     )
-    out, _ = proc.communicate()
+    out, _ = proc.communicate(text=True)
     #  Return standard out, removing any new line characters
-    return out.rstrip().decode("utf-8")
+    return out
 
 
 def execute_subprocess_command(
@@ -184,9 +183,7 @@ def check_returncode(
         stderr(str),
         returncode(int))(tuple):            Stdout, stderr, returncode
     """
-    out, err = proc.communicate()
-    out = out.decode("utf-8").strip()
-    err = err.decode("utf-8").strip()
+    out, err = proc.communicate(text=True)
     returncode = proc.returncode
 
     if returncode == 0:

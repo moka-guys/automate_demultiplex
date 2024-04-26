@@ -9,7 +9,6 @@ This module contains python configuration files, which are imported by other mod
 Automate demultiplex general configuration. Contains settings specific to each module contained in individual classes:
 - AdEmailConfig
 - AdLoggerConfig
-- CongenicaInputsConfig - inherits attributes from panel_config.PanelConfig
 - DemultiplexConfig - inherits attributes from panel_config.PanelConfig
 - SWConfig - inherits attributes from panel_config.Panel_config
 - ToolboxConfig
@@ -92,4 +91,4 @@ No log is written to as this module contains only configuration files.
 
 ## Testing
 
-This nodule has no tests.
+This module has no tests.

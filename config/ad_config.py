@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """
 Automate demultiplex configuration. Contains the following settings:
 - General settings used across modules
@@ -70,7 +69,7 @@ CREDENTIALS = {
     "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
     "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
 }
-NOVASEQ_ID = "A01229"  # Nofaseq sequencer ID
+NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
 RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
@@ -334,18 +333,6 @@ class AdLoggerConfig:
     TIMESTAMP = TIMESTAMP
 
 
-class CongenicaInputsConfig(PanelConfig):
-    """
-    Congenica Inputs configuration
-    """
-
-    APP_INPUTS = APP_INPUTS
-    CREDENTIALS = CREDENTIALS
-    DX_CMDS = DX_CMDS
-    NEXUS_IDS = NEXUS_IDS
-    TIMESTAMP = TIMESTAMP
-
-
 class DemultiplexConfig(PanelConfig):
     """
     Demultiplex configuration
@@ -432,7 +419,6 @@ class SWConfig(PanelConfig):
         }
         TSO_BATCH_SIZE = 2
     DNANEXUS_PROJ_ID = "${PROJECT_ID}"
-    DNANEXUS_PROJ_NAME = "${PROJ_NAME}"
     RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
     EMPTY_CP_DEPENDS = [

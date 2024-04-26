@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """
 Demultiplexes NGS Run Folders. See Readme and docstrings for further details.
 Contains the following classes:
@@ -57,7 +56,7 @@ class GetRunfolders(DemultiplexConfig):
         get_runfolder_names(runfolder_name)
             Get test-mode-dependent runfolder names
         setoff_processing()
-            Call methods to set off runfolder processing
+            Call methods to set off runfolder processing. Called by main module
         demultiplex_runfolder(folder_name)
             Pass NGS runfolder to instance of DemultiplexRunfolder() for processing
         bcl2fastqlog_absent(folder_name)
@@ -132,7 +131,7 @@ class GetRunfolders(DemultiplexConfig):
 
     def setoff_processing(self) -> None:
         """
-        Call methods to set off runfolder processing
+        Call methods to set off runfolder processing. Called by main module
             :return None:
         """
         if test_processing_software(self.script_logger):
@@ -547,7 +546,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.checksumfile_path,
             )
 
-    def dev_run(self, sscheck_obj):
+    def dev_run(self, sscheck_obj: object) -> Optional[bool]:
         """
         Determine whether the run is a development run using the sscheck_obj development_run() method
             :sscheck_obj (obj):     Object created by samplesheet_validator.SampleheetCheck
@@ -609,7 +608,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 DemultiplexConfig.SAMPLESHEET_ERRORS_MSG % err_str,
             )
 
-    def dev_run_requires_automated_processing(self) -> None:
+    def dev_run_requires_automated_processing(self) -> Optional[bool]:
         """
         Check whether the development run requires manual processing or automated
         processing by the script. If the runfolder was supplied in command line mode,
@@ -633,7 +632,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
 
     def create_bcl2fastqlog(self) -> Optional[bool]:
         """
-        Create file to prevent demultiplexing starting again. bl2fastq2 v2.20 doesn't
+        Create file to prevent demultiplexing starting again. bcl2fastq2 v2.20 doesn't
         produce stdout for a while after starting so the file is created and the
         bcl2fastq2 stdout is written to the file later. If unsuccessful, exit script
             :return True|None:  True if logfile is successfully created

@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """
 Email sending module. See Readme and docstrings for further details.
 Contains the following classes:

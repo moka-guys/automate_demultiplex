@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# coding=utf-8
 """setoff_workflows.py
 
 Collect sequencing runs and initiate runfolder processing for those requiring
@@ -336,7 +335,7 @@ class ProcessRunfolder(SWConfig):
         """
         Create a dictionary of users and admins that require access to the DNAnexus project. This also
         includes dry lab DNAnexus IDs if applicable for the samples in the runfolder. These are taken
-        from the per-sample panel_stettings in the samples_dict. This is required because some samples
+        from the per-sample panel_settings in the samples_dict. This is required because some samples
         are analysed at dry labs, with access to projects only given where there is a sample for that
         dry lab on the run
             :return (dict):     Dictionary of users and admins requiring access to the DNAnexus project
@@ -773,7 +772,7 @@ class CollectRunfolderSamples(SWConfig):
         unique_pannos (set):            Set of unique panel numbers within the run
         samples_dict (dict):            Dictionary of SampleObject per sample,
                                         containing sample-specific attributes
-        fasqs_list (list):              List of all sample fastqs in the run
+        fastqs_list (list):              List of all sample fastqs in the run
         fastqs_str (str):               Space separated string of sample fastqs with
                                         each fastq encased in quotation marks
         sample_obj (object):            SampleObject containing sample-specific attributes
@@ -926,7 +925,8 @@ class CollectRunfolderSamples(SWConfig):
     def get_nexus_runfolder_suffix(self) -> str:
         """
         Get the runfolder suffix for the DNAnexus project name. This consists of the
-        library number, followed by the WES batch if the run is a WES run, followed by the runtype
+        library number (see capture_library_numbers docstring for explanation), followed by
+        the WES batch if the run is a WES run, followed by the runtype (e.g. VCP1 / VCP2)
             :return suffix (str):   String of '_' delimited unique library numbers, and WES
                                     batch numbers if run is a WES run, followed by the runtype
         """
@@ -1147,7 +1147,8 @@ class CollectRunfolderSamples(SWConfig):
 
     def get_fastqs_str(self, fastqs_list: list) -> str:
         """
-        Return a space separated string of fastqs with each fastq encased in quotation marks
+        Return a space separated string of fastqs with each fastq encased in quotation marks. This is used for
+        runs / samples that are demultiplexed locally
             :return fastqs_str (str):   Space separated string of fastqs with
                                         each fastq encased in quotation marks
         """
@@ -1183,7 +1184,8 @@ class CollectRunfolderSamples(SWConfig):
 # TODO eventually adapt this class to use the SamplesheetValidator package
 class SampleObject(SWConfig):
     """
-    Collect sample-specific attributes for a sample
+    Collect sample-specific attributes for a sample. Including sample specific command strings for calling
+    the pipeline and decisions support tools where relevant
 
     Attributes
         rf_obj (obj):                       RunfolderObject object (contains runfolder-specific attributes)
@@ -1230,7 +1232,7 @@ class SampleObject(SWConfig):
         return_oncology_query()
             Create a query per sample using IDs from the samplename (3rd and 4th) elements
         build_sample_dx_run_cmd()
-            Build sample-level dx run commands for the workflow and Congenica upload
+            Build sample-level dx run commands for the workflow and decision support tool upload
         create_wes_cmd()
             Construct dx run command for WES workflow
         return_decision_support_cmd()
@@ -1272,7 +1274,7 @@ class SampleObject(SWConfig):
         nexus_paths: dict,
     ):
         """
-        Constructor for the SampleObject class
+        Constructor for the SampleObject class. Calls the class methods
             :param sample_name (str):       Sample name
             :param pipeline (str):          Pipeline name
             :param rf_obj (obj):            RunfolderObject object (contains runfolder-specific attributes)
@@ -1494,7 +1496,7 @@ class SampleObject(SWConfig):
 
     def build_sample_dx_run_cmd(self) -> Union[str, str]:
         """
-        Build sample-level dx run commands for the workflow and Congenica upload
+        Build sample-level dx run commands for the workflow and decision support tool upload commands
             :return workflow_cmd (str):                 Dx run command for the sample workflow
             :return decision_support_upload_cmd (str):  Cmd for running the script to generate
                                                         inputs to the decision support tool upload app
@@ -1547,15 +1549,15 @@ class SampleObject(SWConfig):
 
     def return_decision_support_cmd(self) -> Union[str, None]:
         """
-        Construct decision support tool command for non-reference samples by calling build_congenica_sftp_cmd
-        or build_congenica_cmd. If a sample requires Congenica upload, there are 2 methods. If Congenica
-        project ID is specified as 'SFTP' within the config it means the sample requires upload via SFTP,
-        else if congenica_project ID is specified it means it can be uploaded using the upload agent. Both
-        Congenica apps app take inputs in the format jobid.outputname which ensures the job doesn't run until
-        the vcfs have been created. App inputs are created by a python script, which is called immediately
+        Construct decision support tool command for non-reference samples by calling build_congenica_sftp_cmd,
+        build_congenica_cmd, or build_qiagen_upload_cmd(). If a sample requires Congenica upload, there are 2
+        methods. If Congenica project ID is specified as 'SFTP' within the config it means the sample requires
+        upload via SFTP, else if congenica_project ID is specified it means it can be uploaded using the upload
+        agent. Both Congenica apps app take inputs in the format jobid.outputname which ensures the job doesn't
+        run until the vcfs have been created. App inputs are created by a python script, which is called immediately
         before the app is set off, and the script output (app inputs) is captured by the variable $DSS_INPUTS
-            :return (str | None):   Dx run commands (Congenica input command, Congenica upload command),
-                                    or None if sample is a reference sample
+            :return (str | None):   Dx run commands (Congenica input command, Congenica upload command, Qiagen upload
+                                    command), or None if sample is a reference sample
         """
         if any([self.neg_control, self.pos_control]):
             decision_support_cmd = None
@@ -1937,7 +1939,7 @@ class BuildDxCommands(SWConfig):
         nexus_project_id: str,
     ):
         """
-        Constructor for the BuildDxCommands class
+        Constructor for the BuildDxCommands class. Calls the class methods
             :param rf_obj (obj):            RunfolderObject object (contains runfolder-specific attributes)
             :param samples_obj (obj):       CollectRunfolderSamples object (contains sample-specific attributes)
             :param nexus_project_id (str):  Project ID, generated when the DNAnexus project is created
@@ -2232,8 +2234,8 @@ class BuildDxCommands(SWConfig):
 
     def return_sample_workflow_cmds(self) -> list:
         """
-        Return sample-level commands. This includes the sample workflow command,
-        and Congenica input and upload commands if required for the sample type
+        Return sample-level commands. This includes the sample workflow command, and decision
+        support tool input and upload commands if required for the sample type
             :return dx_cmds (list):                         Per-sample workflow commands
             :return decision_support_upload_cmds (list):    Per-sample decision support upload commands
         """
@@ -2259,12 +2261,12 @@ class BuildDxCommands(SWConfig):
             dx_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
             if self.samples_obj.pipeline == "pipe":
-                # Add to gatk depends list because RPKM must depend only upon the
+                # Add to gatk depends list because RPKM / ExomeDepth must depend only upon the
                 # sample workflows completing successfully, whilst other downstream
                 # apps depend on all prior jobs completing succesfully
                 dx_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_gatk"])
 
-            if self.samples_obj.pipeline in ["wes", "pipe"]:
+            if self.samples_obj.pipeline in ["wes", "pipe"]:  # N.B. TSO upload cmds are created elsewhere
                 decision_support_upload_cmds.append(
                     self.samples_obj.samples_dict[sample_name][
                         "decision_support_upload_cmd"
@@ -2336,7 +2338,11 @@ class BuildDxCommands(SWConfig):
 
                     cmd_list.append(self.create_rpkm_cmd(core_panel))
                     cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
-
+                else:
+                    self.rf_obj.rf_loggers["sw"].info(
+                        self.rf_obj.rf_loggers["sw"].log_msgs["insufficient_samples_for_cnv"] % (
+                            self.rf_obj.runfolder_name, core_panel),
+                    )
         cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_gatk_recombined"])
         return cmd_list
 
@@ -2533,7 +2539,7 @@ class PipelineEmails(SWConfig):
 
     def __init__(self, rf_obj: RunfolderObject, samples_obj: SampleObject):
         """
-        Constructor for the PipelineEmails class
+        Constructor for the PipelineEmails class. Calls the class methods
         """
         self.rf_obj = rf_obj
         self.samples_obj = samples_obj
