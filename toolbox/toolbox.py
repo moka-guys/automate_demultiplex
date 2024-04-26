@@ -133,11 +133,11 @@ def git_tag() -> str:
     cmd = f"git -C {filepath} describe --tags"
 
     proc = subprocess.Popen(
-        [cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True
+        [cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True,
     )
-    out, _ = proc.communicate(text=True)
+    out, _ = proc.communicate()
     #  Return standard out, removing any new line characters
-    return out
+    return out.rstrip().decode("utf-8")
 
 
 def execute_subprocess_command(
@@ -183,7 +183,9 @@ def check_returncode(
         stderr(str),
         returncode(int))(tuple):            Stdout, stderr, returncode
     """
-    out, err = proc.communicate(text=True)
+    out, err = proc.communicate()
+    out = out.decode("utf-8").strip()
+    err = err.decode("utf-8").strip()
     returncode = proc.returncode
 
     if returncode == 0:

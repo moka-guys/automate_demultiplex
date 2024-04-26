@@ -20,7 +20,7 @@ from config import ad_config
 
 test_data_dir = os.path.abspath("data")  # Data directory
 test_data_dir_unzipped = os.path.join(
-    test_data_dir, "data_unzipped"
+    test_data_dir, "data_unzipped/"
 )  # Unzips data tar to here
 test_data_temp = os.path.abspath("temp")  # Copies data to here for each test
 # Place interop in test 7, test 9, test 11
@@ -57,12 +57,12 @@ to_copy_interop_to = [
 ]
 
 temp_runfolderdir = os.path.join(
-    test_data_temp, "demultiplex_test_files/test_runfolders/"
+    test_data_temp, "data_unzipped/demultiplex_test_files/test_runfolders/"
 )
 temp_log_dir = os.path.join(test_data_temp, "automate_demultiplexing_logfiles")
 
 # Temp directory for SampleSheet validator SampleSheet test cases
-sv_samplesheet_temp_dir = os.path.join(test_data_temp, "samplesheets")
+sv_samplesheet_temp_dir = os.path.join(test_data_temp, "data_unzipped/samplesheets")
 
 
 @pytest.fixture(scope="function")
