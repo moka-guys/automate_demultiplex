@@ -1206,11 +1206,8 @@ class SampleObject(SWConfig):
         decision_support_upload_cmd (str):  Dx run command for the decision support tool upload
 
     Methods
-        check_negative_control()
-            Determine whether sample is a negative control
-        check_pos_control()
-            Check if sample is a reference sample by checking if reference ids are
-            present in fastq name
+        check_control()
+            Determine whether sample contains the control identifier strings
         find_pannum()
             Extract panel number from sample name using regular expression
         validate_pannum(pannum)
@@ -1285,8 +1282,8 @@ class SampleObject(SWConfig):
         self.sample_name = sample_name
         self.pipeline = pipeline
         self.nexus_paths = nexus_paths
-        self.neg_control = self.check_negative_control()
-        self.pos_control = self.check_pos_control()
+        self.neg_control = self.check_control(SWConfig.NTCON_IDS, "Negative")
+        self.pos_control = self.check_control(SWConfig.PSCON_IDS, "Positive")
         self.pannum = self.find_pannum()
         self.panel_settings = SWConfig.PANEL_DICT[self.pannum]
         self.rf_obj.rf_loggers["sw"].info(
@@ -1302,32 +1299,17 @@ class SampleObject(SWConfig):
             self.decision_support_upload_cmd,
         ) = self.build_sample_dx_run_cmd()
 
-    def check_negative_control(self) -> bool:
+    def check_control(self, identifiers, control_type) -> bool:
         """
-        Determine whether sample is a negative control
-            :return (bool): True if sample is a negative control, else False
+        Determine whether sample contains the control identifier strings
+            :param identifiers (list):  List of identifiers for control type (used in sample naming)
+            :param control_type (str):  String describing the type of control. e.g. Negative, Positive
+            :return (bool):             True if sample contains any specified identifier, else False
         """
-        if any(identifier in self.sample_name for identifier in SWConfig.NTCON_IDS):
+        if any(identifier in self.sample_name for identifier in identifiers):
             self.rf_obj.rf_loggers["sw"].info(
-                self.rf_obj.rf_loggers["sw"].log_msgs["neg_control"],
-                self.sample_name,
-            )
-            return True
-        else:
-            return False
-
-    def check_pos_control(self) -> bool:
-        """
-        Check if sample is a reference sample by checking if reference
-        ids are present in fastq name
-            :return (bool): True if reference sample, else False
-        """
-        if any(
-            f"_{ref_sample_id}_" in self.sample_name
-            for ref_sample_id in SWConfig.PSCON_IDS
-        ):
-            self.rf_obj.rf_loggers["sw"].info(
-                self.rf_obj.rf_loggers["sw"].log_msgs["pos_control"],
+                control_type,
+                self.rf_obj.rf_loggers["sw"].log_msgs["control_sample"],
                 self.sample_name,
             )
             return True

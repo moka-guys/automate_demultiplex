@@ -134,8 +134,7 @@ LOG_MSGS = {
         "insufficient_samples_for_cnv": (
             "Less than 3 samples detected for run %s for %s - CNV calling cannot be conducted"
         ),
-        "pos_control": "Positive control sample detected: %s",
-        "neg_control": "Negative control sample detected: %s",
+        "control_sample": "%s control sample detected: %s",
         "writing_cmds": "Writing dx run commands to %s",
         "running_cmds": "Running dx run commands using dx run bash script",
         "dx_run_err": "Error when setting off dx run command for run %s. Command: %s. Stdout: %s. Stderr: %s",
