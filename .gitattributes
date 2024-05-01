@@ -1,0 +1,2 @@
+*.bcl binary -diff
+*.bin binary -diff
