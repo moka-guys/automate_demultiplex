@@ -122,7 +122,7 @@ class PanelConfig:
             "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4397data.bed",
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4397dataSambamba.bed",
             "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4398data.bed",
-            "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5191_exomedepth.bed",
+            "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5208_exomedepth.bed",
             "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4399_RPKM.bed",
             "capture_type": "Hybridisation",
             "multiqc_coverage_level": 30,
@@ -158,7 +158,7 @@ class PanelConfig:
             "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4995dataSambamba.bed",
             "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
-            "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5192_exomedepth.bed",
+            "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5217_exomedepth.bed",
             "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4362_RPKM.bed",
             "capture_type": "Hybridisation",
             "multiqc_coverage_level": 30,
@@ -366,7 +366,7 @@ class PanelConfig:
             "test_number": "R134",
             "congenica_project": 4664,
             "FH": True,
-            "ed_cnvcalling_bedfile": "Pan4702",
+            "ed_cnvcalling_bedfile": "Pan5215",
         },
         "Pan4121": {  # VCP1 R184 (Synnovis) - Cystic Fibrosis
             **CAPTURE_PANEL_DICT["vcp1"],
@@ -475,10 +475,10 @@ class PanelConfig:
         "Pan4821": {  # VCP1 R134 (STG) - FH
             **CAPTURE_PANEL_DICT["vcp1"],
             **CONGENICA_CREDENTIALS["stg"],
-            "test_number": "R13",
+            "test_number": "R134",
             "congenica_project": 4203,
             "FH": True,
-            "ed_cnvcalling_bedfile": "Pan4702",
+            "ed_cnvcalling_bedfile": "Pan5215",
         },
         "Pan4822": {  # VCP1 R184 (STG) - CF
             **CAPTURE_PANEL_DICT["vcp1"],
@@ -638,7 +638,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R79",
             "congenica_project": 4666,
-            "ed_cnvcalling_bedfile": "Pan5168",
+            "ed_cnvcalling_bedfile": "Pan5220",
         },
         "Pan4146": {  # VCP3 R81 (Synnovis) - Congenital myopathy
             **CAPTURE_PANEL_DICT["vcp3"],
@@ -718,7 +718,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R90",
             "congenica_project": 4699,
-            "ed_cnvcalling_bedfile": "Pan5171",
+            "ed_cnvcalling_bedfile": "Pan5223",
         },
         "Pan4390": {  # VCP3 R97 (Synnovis) - Thrombophilia with a likely monogenic cause
             **CAPTURE_PANEL_DICT["vcp3"],
@@ -775,7 +775,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R79",
             "congenica_project": 4201,
-            "ed_cnvcalling_bedfile": "Pan5168",
+            "ed_cnvcalling_bedfile": "Pan5220",
         },
         "Pan4834": {  # VCP3 R81 (STG) - Congenital myopathy
             **CAPTURE_PANEL_DICT["vcp3"],
