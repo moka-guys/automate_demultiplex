@@ -133,7 +133,10 @@ def git_tag() -> str:
     cmd = f"git -C {filepath} describe --tags"
 
     proc = subprocess.Popen(
-        [cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True,
+        [cmd],
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        shell=True,
     )
     out, _ = proc.communicate()
     #  Return standard out, removing any new line characters
@@ -439,7 +442,9 @@ class RunfolderObject(ToolboxConfig):
             :param script (str):    Script name the function has been called from
             :return None:
         """
-        loggers_obj = RunfolderLoggers(script, self.runfolder_name, self.logfiles_config)
+        loggers_obj = RunfolderLoggers(
+            script, self.runfolder_name, self.logfiles_config
+        )
         self.rf_loggers = loggers_obj.loggers
 
     def add_runfolder_logger(self, script: str, logger_name: str) -> None:

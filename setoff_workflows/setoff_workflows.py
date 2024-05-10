@@ -27,7 +27,6 @@ processing. See Readme and docstrings for further details. Contains the followin
 import sys
 import os
 import re
-import logging
 import datetime
 from itertools import chain
 from shutil import copyfile
@@ -51,8 +50,8 @@ from seglh_naming.sample import Sample as seglh_namingSample
 from toolbox.toolbox import script_start_logmsg, script_end_logmsg
 
 # Set up script logging
-ad_logger_obj= AdLogger(__name__, "sw", return_scriptlog_config()["sw"])
-script_logger= ad_logger_obj.get_logger()
+ad_logger_obj = AdLogger(__name__, "sw", return_scriptlog_config()["sw"])
+script_logger = ad_logger_obj.get_logger()
 
 
 class SequencingRuns(SWConfig):
@@ -107,7 +106,6 @@ class SequencingRuns(SWConfig):
                 self.process_runfolder(rf_obj)
             self.num_processed_runfolders()
             script_end_logmsg(script_logger, __file__)
-
 
     def set_runfolders(self) -> None:
         """
@@ -165,24 +163,16 @@ class SequencingRuns(SWConfig):
                     re.search(success_str, logfile_list[-1])
                     for success_str in completed_strs
                 ):
-                    script_logger.info(
-                        script_logger.log_msgs["demux_complete"]
-                    )
+                    script_logger.info(script_logger.log_msgs["demux_complete"])
                     return True
                 else:
-                    script_logger.info(
-                        script_logger.log_msgs["success_string_absent"]
-                    )
+                    script_logger.info(script_logger.log_msgs["success_string_absent"])
             else:
                 # Write to logfile that not yet demultiplexed
-                script_logger.info(
-                    script_logger.log_msgs["bcl2fastqlog_empty"]
-                )
+                script_logger.info(script_logger.log_msgs["bcl2fastqlog_empty"])
         else:
             # Write to logfile that not yet demultiplexed
-            script_logger.info(
-                script_logger.log_msgs["not_yet_demultiplexed"]
-            )
+            script_logger.info(script_logger.log_msgs["not_yet_demultiplexed"])
 
     def already_uploaded(self, rf_obj: object) -> Optional[bool]:
         """
@@ -733,7 +723,9 @@ class ProcessRunfolder(SWConfig):
                 err,
             )
         else:
-            self.rf_obj.rf_loggers["sw"].info(self.rf_obj.rf_loggers["sw"].log_msgs["dx_run_success"])
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["dx_run_success"]
+            )
 
     def post_pipeline_upload(self) -> None:
         """
@@ -936,7 +928,9 @@ class CollectRunfolderSamples(SWConfig):
         suffix = f"{'_'.join(library_numbers)}"
 
         if self.pipeline in ["pipe", "wes"]:
-            suffix.join(f"_{self.runtype_str}") # Provides more detail on contents of runs in runfolder name
+            suffix.join(
+                f"_{self.runtype_str}"
+            )  # Provides more detail on contents of runs in runfolder name
         return suffix
 
     def capture_library_numbers(self) -> list:
@@ -960,7 +954,9 @@ class CollectRunfolderSamples(SWConfig):
             )
             return sorted(list(set(library_numbers)))
         else:  # Prompt a slack alert
-            self.rf_obj.rf_loggers["sw"].error(self.rf_obj.rf_loggers["sw"].log_msgs["library_no_err"])
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["library_no_err"]
+            )
             sys.exit(1)
 
     def capture_wes_batch_numbers(self) -> list:
@@ -984,7 +980,9 @@ class CollectRunfolderSamples(SWConfig):
             )
             return sorted(list(set(wes_batch_numbers_list)))
         else:  # Prompt a slack alert
-            self.rf_obj.rf_loggers["sw"].error(self.rf_obj.rf_loggers["sw"].log_msgs["wes_batch_nos_missing"])
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["wes_batch_nos_missing"]
+            )
             sys.exit(1)
 
     def get_nexus_paths(self) -> dict:
@@ -2242,7 +2240,10 @@ class BuildDxCommands(SWConfig):
                 # apps depend on all prior jobs completing succesfully
                 dx_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_gatk"])
 
-            if self.samples_obj.pipeline in ["wes", "pipe"]:  # N.B. TSO upload cmds are created elsewhere
+            if self.samples_obj.pipeline in [
+                "wes",
+                "pipe",
+            ]:  # N.B. TSO upload cmds are created elsewhere
                 decision_support_upload_cmds.append(
                     self.samples_obj.samples_dict[sample_name][
                         "decision_support_upload_cmd"
@@ -2316,7 +2317,10 @@ class BuildDxCommands(SWConfig):
                     cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
                 else:
                     self.rf_obj.rf_loggers["sw"].info(
-                        self.rf_obj.rf_loggers["sw"].log_msgs["insufficient_samples_for_cnv"], core_panel
+                        self.rf_obj.rf_loggers["sw"].log_msgs[
+                            "insufficient_samples_for_cnv"
+                        ],
+                        core_panel,
                     )
         cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_gatk_recombined"])
         return cmd_list

@@ -6,8 +6,7 @@ Demultiplexes NGS Run Folders. See README and docstrings for further details
 
 import argparse
 from demultiplex.demultiplex import GetRunfolders
-from ad_logger.ad_logger import set_root_logger, shutdown_logs
-from logging_tree import printout
+from ad_logger.ad_logger import set_root_logger
 
 set_root_logger()
 
@@ -51,5 +50,3 @@ else:
     gr_obj = GetRunfolders()
 
 gr_obj.setoff_processing()
-
-printout()

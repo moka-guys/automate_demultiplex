@@ -90,9 +90,7 @@ class GetRunfolders(DemultiplexConfig):
             )
             runfolder_names = [self.runfolder_names]
         else:
-            script_logger.info(
-                script_logger.log_msgs["programmatic_runfolders"]
-            )
+            script_logger.info(script_logger.log_msgs["programmatic_runfolders"])
             runfolder_names = []
             if DemultiplexConfig.TESTING:
                 folders = DemultiplexConfig.DEMULTIPLEX_TEST_RUNFOLDERS
@@ -123,7 +121,6 @@ class GetRunfolders(DemultiplexConfig):
                 self.demultiplex_runfolder(runfolder)
         self.return_num_processed_runfolders()
         script_end_logmsg(script_logger, __file__)
-
 
     def demultiplex_runfolder(self, folder_name: str) -> None:
         """
@@ -275,7 +272,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.timestamp = timestamp
         self.cmd_line_supplied_runfolder = cmd_line_supplied_runfolder
         self.rf_obj = RunfolderObject(folder_name, self.timestamp)
-        self.rf_obj.add_runfolder_loggers(__package__)  # Add rf loggers to runfolder object
+        self.rf_obj.add_runfolder_loggers(
+            __package__
+        )  # Add rf loggers to runfolder object
         self.demux_rf_logger = self.rf_obj.rf_loggers["demux"]
         self.bcl2fastq2_rf_logger = self.rf_obj.rf_loggers["bcl2fastq2"]
         self.disallowed_sserrs = [
@@ -671,7 +670,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             if DemultiplexConfig.STRINGS["cd_success"] in out or err:
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["cd_success"],
-                    f"{self.rf_obj.runfolder_name}{DemultiplexConfig.STRINGS['lane_metrics_suffix']}"
+                    f"{self.rf_obj.runfolder_name}{DemultiplexConfig.STRINGS['lane_metrics_suffix']}",
                 )
                 return True
         else:

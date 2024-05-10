@@ -7,7 +7,6 @@ import re
 import logging
 import logging.handlers
 from config.ad_config import AdLoggerConfig
-from typing import Optional
 
 
 def get_logging_formatter() -> str:
