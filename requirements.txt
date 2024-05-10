@@ -1,5 +1,5 @@
 git+https://github.com/moka-guys/seglh-naming@v1.0.4
-git+https://github.com/moka-guys/samplesheet_validator@v1.1.0
+git+https://github.com/moka-guys/samplesheet_validator@v1.2.0
 pytest-lazy-fixture==0.6.3
 wheel==0.38.4
 pytest==7.2.1

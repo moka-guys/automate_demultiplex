@@ -27,6 +27,7 @@ processing. See Readme and docstrings for further details. Contains the followin
 import sys
 import os
 import re
+import logging
 import datetime
 from itertools import chain
 from shutil import copyfile
@@ -47,6 +48,11 @@ from toolbox.toolbox import (
     execute_subprocess_command,
 )
 from seglh_naming.sample import Sample as seglh_namingSample
+from toolbox.toolbox import script_start_logmsg, script_end_logmsg
+
+# Set up script logging
+ad_logger_obj= AdLogger(__name__, "sw", return_scriptlog_config()["sw"])
+script_logger= ad_logger_obj.get_logger()
 
 
 class SequencingRuns(SWConfig):
@@ -54,9 +60,6 @@ class SequencingRuns(SWConfig):
     Collects sequencing runs and initiates runfolder processing for those sequencing runs requiring processing
 
     Attributes
-        ad_logger_obj (object):         AdLogger object, used to create a python logging object with custom attributes
-                                        and a file handler, syslog handler, and stream handler
-        script_logger (object):         Script-level logger, created by the ad_logger_obj
         runs_to_process (list):         List of runfolder objects for runs that require processing
         processed_runfolders (list):    List of runfolders processed by the script
         num_processed_runfolders (int): Number of runfolders processed during this cycle
@@ -85,9 +88,7 @@ class SequencingRuns(SWConfig):
         """
         Constructor for the SequencingRuns class
         """
-        self.ad_logger_obj = AdLogger("sw", "sw", return_scriptlog_config()["sw"])
-        self.script_logger = self.ad_logger_obj.get_logger()
-        self.runs_to_process = self.set_runfolders()
+        self.runs_to_process = []
         self.processed_runfolders = []
 
     def setoff_processing(self) -> None:
@@ -95,33 +96,35 @@ class SequencingRuns(SWConfig):
         Call methods to collect runfolders for processing. Called by __main__.py
             :return None:
         """
-        if test_upload_software(self.script_logger):
+        script_start_logmsg(script_logger, __file__)
+        self.set_runfolders()
+        if test_upload_software(script_logger):
             for rf_obj in self.runs_to_process:
-                self.script_logger.info(
-                    self.script_logger.log_msgs["start_runfolder_proc"],
+                script_logger.info(
+                    script_logger.log_msgs["start_runfolder_proc"],
                     rf_obj.runfolder_name,
                 )
                 self.process_runfolder(rf_obj)
             self.num_processed_runfolders()
+            script_end_logmsg(script_logger, __file__)
+
 
     def set_runfolders(self) -> None:
         """
         Update self.runs_to_process list with NGS runfolders in the runfolders directory
         that match the runfolder pattern, and require processing by the script
-            :return runs_to_process (list): List of runfolder objects for runs to process
+            :return None:
         """
-        runs_to_process = []
         for folder in os.listdir(SWConfig.RUNFOLDERS):
             if os.path.isdir(os.path.join(SWConfig.RUNFOLDERS, folder)) and re.compile(
                 SWConfig.RUNFOLDER_PATTERN
             ).match(folder):
-                self.script_logger.info(
-                    self.script_logger.log_msgs["runfolder_identified"], folder
+                script_logger.info(
+                    script_logger.log_msgs["runfolder_identified"], folder
                 )
                 rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
                 if self.requires_processing(rf_obj):
-                    runs_to_process.append(rf_obj)
-        return runs_to_process
+                    self.runs_to_process.append(rf_obj)
 
     def requires_processing(self, rf_obj: object) -> Optional[bool]:
         """
@@ -132,13 +135,13 @@ class SequencingRuns(SWConfig):
         """
         if self.has_demultiplexed(rf_obj):
             if self.already_uploaded(rf_obj):
-                self.script_logger.info(
-                    self.script_logger.log_msgs["runfolder_prev_proc"],
+                script_logger.info(
+                    script_logger.log_msgs["runfolder_prev_proc"],
                     rf_obj.runfolder_name,
                 )
             else:
-                self.script_logger.info(
-                    self.script_logger.log_msgs["runfolder_requires_proc"],
+                script_logger.info(
+                    script_logger.log_msgs["runfolder_requires_proc"],
                     rf_obj.runfolder_name,
                 )
                 return True
@@ -162,23 +165,23 @@ class SequencingRuns(SWConfig):
                     re.search(success_str, logfile_list[-1])
                     for success_str in completed_strs
                 ):
-                    self.script_logger.info(
-                        self.script_logger.log_msgs["demux_complete"]
+                    script_logger.info(
+                        script_logger.log_msgs["demux_complete"]
                     )
                     return True
                 else:
-                    self.script_logger.info(
-                        self.script_logger.log_msgs["success_string_absent"]
+                    script_logger.info(
+                        script_logger.log_msgs["success_string_absent"]
                     )
             else:
                 # Write to logfile that not yet demultiplexed
-                self.script_logger.info(
-                    self.script_logger.log_msgs["bcl2fastqlog_empty"]
+                script_logger.info(
+                    script_logger.log_msgs["bcl2fastqlog_empty"]
                 )
         else:
             # Write to logfile that not yet demultiplexed
-            self.script_logger.info(
-                self.script_logger.log_msgs["not_yet_demultiplexed"]
+            script_logger.info(
+                script_logger.log_msgs["not_yet_demultiplexed"]
             )
 
     def already_uploaded(self, rf_obj: object) -> Optional[bool]:
@@ -188,11 +191,11 @@ class SequencingRuns(SWConfig):
             :return (Optional[bool]):   Returns True if runfolder already uploaded, else None
         """
         if os.path.isfile(rf_obj.upload_flagfile):
-            self.script_logger.info(self.script_logger.log_msgs["ua_file_present"])
+            script_logger.info(script_logger.log_msgs["ua_file_present"])
             return True
         else:
             # If file doesn't exist return false to continue, write to log file
-            self.script_logger.info(self.script_logger.log_msgs["ua_file_absent"])
+            script_logger.info(script_logger.log_msgs["ua_file_absent"])
 
     def process_runfolder(self, rf_obj: object) -> None:
         """
@@ -201,14 +204,15 @@ class SequencingRuns(SWConfig):
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
             :return None:
         """
-        rf_obj.add_runfolder_loggers()  # Add runfolder loggers attribute
+        rf_obj.add_runfolder_loggers(__package__)  # Add runfolder loggers attribute
+
         self.process_runfolder_obj = ProcessRunfolder(rf_obj)
 
         for logger_name in rf_obj.rf_loggers.keys():
             shutdown_logs(rf_obj.rf_loggers[logger_name])  # Shut down logging
         self.processed_runfolders.append(rf_obj.runfolder_name)
-        self.script_logger.info(
-            self.script_logger.log_msgs["runfolder_processed"],
+        script_logger.info(
+            script_logger.log_msgs["runfolder_processed"],
             self.process_runfolder_obj.rf_obj.runfolder_name,
         )
 
@@ -218,7 +222,7 @@ class SequencingRuns(SWConfig):
             :return None:
         """
         num_processed_runfolders = get_num_processed_runfolders(
-            self.script_logger, self.processed_runfolders
+            script_logger, self.processed_runfolders
         )
         setattr(self, "num_processed_runfolders", num_processed_runfolders)
 
@@ -724,16 +728,12 @@ class ProcessRunfolder(SWConfig):
         if returncode != 0:
             self.rf_obj.rf_loggers["sw"].error(
                 self.rf_obj.rf_loggers["sw"].log_msgs["dx_run_err"],
-                self.rf_obj.runfolder_name,
                 dx_run_cmd,
                 out,
                 err,
             )
         else:
-            self.rf_obj.rf_loggers["sw"].info(
-                self.rf_obj.rf_loggers["sw"].log_msgs["dx_run_success"],
-                self.rf_obj.runfolder_name,
-            )
+            self.rf_obj.rf_loggers["sw"].info(self.rf_obj.rf_loggers["sw"].log_msgs["dx_run_success"])
 
     def post_pipeline_upload(self) -> None:
         """
@@ -960,10 +960,7 @@ class CollectRunfolderSamples(SWConfig):
             )
             return sorted(list(set(library_numbers)))
         else:  # Prompt a slack alert
-            self.rf_obj.rf_loggers["sw"].error(
-                self.rf_obj.rf_loggers["sw"].log_msgs["library_no_err"],
-                self.rf_obj.runfolder_name,
-            )
+            self.rf_obj.rf_loggers["sw"].error(self.rf_obj.rf_loggers["sw"].log_msgs["library_no_err"])
             sys.exit(1)
 
     def capture_wes_batch_numbers(self) -> list:
@@ -987,10 +984,7 @@ class CollectRunfolderSamples(SWConfig):
             )
             return sorted(list(set(wes_batch_numbers_list)))
         else:  # Prompt a slack alert
-            self.rf_obj.rf_loggers["sw"].error(
-                self.rf_obj.rf_loggers["sw"].log_msgs["wes_batch_nos_missing"],
-                self.rf_obj.runfolder_name,
-            )
+            self.rf_obj.rf_loggers["sw"].error(self.rf_obj.rf_loggers["sw"].log_msgs["wes_batch_nos_missing"])
             sys.exit(1)
 
     def get_nexus_paths(self) -> dict:
@@ -1311,8 +1305,8 @@ class SampleObject(SWConfig):
         """
         if any(identifier in self.sample_name for identifier in identifiers):
             self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["control_sample"],
                 control_type,
-                self.rf_obj.rf_loggers["sw"].log_msgs["control_sample"], control_type,
                 self.sample_name,
             )
             return True
@@ -1993,6 +1987,7 @@ class BuildDxCommands(SWConfig):
             :return decision_support_upload_cmds (list):    Commands for decision support uploads
         """
         dx_cmd_list = [
+            SWConfig.SDK_SOURCE,
             f"PROJECT_ID={self.nexus_project_id}",
             f"PROJECT_NAME={self.samples_obj.nexus_paths['proj_name']}",
             f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
@@ -2220,6 +2215,7 @@ class BuildDxCommands(SWConfig):
             :return decision_support_upload_cmds (list):    Per-sample decision support upload commands
         """
         dx_cmds = [
+            SWConfig.SDK_SOURCE,
             f"PROJECT_ID={self.nexus_project_id}",
             f"PROJECT_NAME={self.samples_obj.nexus_paths['proj_name']}",
             f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
@@ -2320,8 +2316,7 @@ class BuildDxCommands(SWConfig):
                     cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
                 else:
                     self.rf_obj.rf_loggers["sw"].info(
-                        self.rf_obj.rf_loggers["sw"].log_msgs["insufficient_samples_for_cnv"] % (
-                            self.rf_obj.runfolder_name, core_panel),
+                        self.rf_obj.rf_loggers["sw"].log_msgs["insufficient_samples_for_cnv"], core_panel
                     )
         cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_gatk_recombined"])
         return cmd_list
@@ -2451,7 +2446,6 @@ class BuildDxCommands(SWConfig):
             self.rf_obj.runfolder_dx_run_script,
         )
         write_lines(  # Write commands to dx run script
-            SWConfig.SDK_SOURCE,
             self.rf_obj.runfolder_dx_run_script,
             "w",
             list(filter(None, self.dx_cmd_list)),

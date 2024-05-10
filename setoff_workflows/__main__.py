@@ -6,16 +6,11 @@ and sends the pipeline emails using ad_email.AdEmail
 """
 
 from setoff_workflows.setoff_workflows import SequencingRuns
-from toolbox.toolbox import script_start_logmsg, script_end_logmsg
-from ad_logger.ad_logger import shutdown_logs
+from ad_logger.ad_logger import set_root_logger
 
+
+set_root_logger()
 
 sequencing_runs = SequencingRuns()
 
-script_start_logmsg(sequencing_runs.script_logger, __file__)
-
 sequencing_runs.setoff_processing()
-
-script_end_logmsg(sequencing_runs.script_logger, __file__)
-
-shutdown_logs(sequencing_runs.script_logger)

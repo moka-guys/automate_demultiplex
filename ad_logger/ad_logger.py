@@ -7,25 +7,44 @@ import re
 import logging
 import logging.handlers
 from config.ad_config import AdLoggerConfig
+from typing import Optional
 
 
-def shutdown_streamhandler(logger: logging.Logger) -> None:
+def get_logging_formatter() -> str:
     """
-    Shut down the stream handler only for a logging object. For when
-    we do not want to capture log messages in stdout
-        :param logger (logging.Logger): Logger
-        :return (None):
+    Get formatter for logging. This is script mode-dependent
+        :return (str):  Logging formatter string
     """
-    for handler in logger.handlers[:]:
-        if handler.name == "stream_handler":
-            logger.removeHandler(handler)
-            handler.close()
+    return (
+        f"%(asctime)s - {AdLoggerConfig.SCRIPT_MODE} "
+        "- %(name)s - %(levelname)s - %(message)s"
+    )
+
+
+def set_root_logger():
+    """
+    Set up root logger and add stream handler and syslog handler - we only want to add these once
+    else it will duplicate log messages to the terminal. All loggers named with the same stem
+    as the root logger will use these same syslog handler and stream handler
+    """
+    sensitive_formatter = SensitiveFormatter(get_logging_formatter())
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setFormatter(sensitive_formatter)
+    stream_handler.name = "stream_handler"
+    logger.addHandler(stream_handler)
+    syslog_handler = logging.handlers.SysLogHandler(address="/dev/log")
+    syslog_handler.setLevel(logging.DEBUG)
+    syslog_handler.setFormatter(sensitive_formatter)
+    syslog_handler.name = "syslog_handler"
+    logger.addHandler(syslog_handler)
 
 
 def shutdown_logs(logger: logging.Logger) -> None:
     """
-    To prevent duplicate filehandlers and system handlers close
-    and remove all handlers for a logging object
+    Close and remove all handlers for a logging object
         :param logger (logging.Logger): Logger
         :return (None):
     """
@@ -67,8 +86,7 @@ class SensitiveFormatter(logging.Formatter):
 
 class AdLogger(AdLoggerConfig):
     """
-    Creates a python logging object with custom attributes and a
-    file handler, syslog handler and stream handler
+    Creates a python logging object with custom attributes and a file handler
 
     Attributes
         logger_name (str):      Name of logger
@@ -81,12 +99,6 @@ class AdLogger(AdLoggerConfig):
             Returns a Python logging object
         _get_file_handler()
             Get file handler for the logger
-        _get_logging_formatter()
-            Get formatter for logging. This is script mode-dependent
-        _get_syslog_handler()
-            Get syslog handler for the logger
-        _get_stream_handler()
-            Get stream handler for the logger (sends to stdout)
     """
 
     def __init__(self, logger_name: str, logger_type: str, filepath: str):
@@ -99,7 +111,7 @@ class AdLogger(AdLoggerConfig):
         self.logger_name = logger_name
         self.logger_type = logger_type
         self.filepath = filepath
-        self.formatter = SensitiveFormatter(self._get_logging_formatter())
+        self.formatter = SensitiveFormatter(get_logging_formatter())
 
     def get_logger(self) -> logging.Logger:
         """
@@ -110,8 +122,6 @@ class AdLogger(AdLoggerConfig):
         logger.filepath = self.filepath
         logger.setLevel(logging.DEBUG)
         logger.addHandler(self._get_file_handler())
-        logger.addHandler(self._get_stream_handler())
-        logger.addHandler(self._get_syslog_handler())
         logger.timestamp = (
             AdLoggerConfig.TIMESTAMP
         )  # Timestamp in the format %Y%m%d_%H%M%S
@@ -133,38 +143,6 @@ class AdLogger(AdLoggerConfig):
         file_handler.name = "file_handler"
         return file_handler
 
-    def _get_logging_formatter(self) -> str:
-        """
-        Get formatter for logging. This is script mode-dependent
-            :return (str):  Logging formatter string
-        """
-        return (
-            f"%(asctime)s - AUTOMATED SCRIPTS {AdLoggerConfig.SCRIPT_MODE} "
-            "- %(name)s - %(levelname)s - %(message)s"
-        )
-
-    def _get_syslog_handler(self) -> logging.handlers.SysLogHandler:
-        """
-        Get syslog handler for the logger, and give it a name
-            :return syslog_handler (logging.SysLogHandler): SysLogHandler
-        """
-        syslog_handler = logging.handlers.SysLogHandler(address="/dev/log")
-        syslog_handler.setLevel(logging.DEBUG)
-        syslog_handler.setFormatter(self.formatter)
-        syslog_handler.name = "syslog_handler"
-        return syslog_handler
-
-    def _get_stream_handler(self) -> logging.StreamHandler:
-        """
-        Get stream handler for the logger (sends to stdout)
-            :return stream_handler (logging.StreamHandler): StreamHandler
-        """
-        stream_handler = logging.StreamHandler(sys.stdout)
-        stream_handler.setLevel(logging.DEBUG)
-        stream_handler.setFormatter(self.formatter)
-        stream_handler.name = "stream_handler"
-        return stream_handler
-
 
 class RunfolderLoggers(object):
     """
@@ -173,6 +151,9 @@ class RunfolderLoggers(object):
     provided as a parameter
 
     Attributes
+        script (str):           Script from which the base logger was setup
+                                (named in same way to ensure it uses the root syslog / stream handler)
+        runfolder_name (str):   Runfolder name
         logfiles_config (dict): Dictionary of paths for each logfile
         loggers (dict):         Dict of loggers
 
@@ -181,12 +162,17 @@ class RunfolderLoggers(object):
             Create loggers dict using AdLogger class and logfiles_config
     """
 
-    def __init__(self, logfiles_config: dict):
+    def __init__(self, script: str, runfolder_name: str, logfiles_config: dict):
         """
         Constructor for the RunfolderLoggers class
+            :param script (str):            Script from which the base logger was setup
+                                            (named in same way to ensure it uses the root syslog / stream handler)
+            :param runfolder_name (str):    Runfolder name
             :param logfiles_config (dict):  Dictionary containing the configuration
                                             for the required loggers
         """
+        self.script = script
+        self.runfolder_name = runfolder_name
         self.logfiles_config = logfiles_config
         self.loggers = self.get_loggers()  # Collect all loggers
 
@@ -197,7 +183,7 @@ class RunfolderLoggers(object):
         """
         loggers = {}
         for logger_type in self.logfiles_config.keys():
-            logger_name = f"{logger_type} rf"
+            logger_name = f"{self.script}.{logger_type}-{self.runfolder_name}"
             ad_logger_obj = AdLogger(
                 logger_name, logger_type, self.logfiles_config[logger_type]
             )

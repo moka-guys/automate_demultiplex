@@ -6,8 +6,9 @@ This module creates objects that are used to write messages to the syslog, strea
 
 The script has some standalone functions:
 
-* shutdown_streamhandler(logger) shuts down the stream handler only for a logging object. This can be used when we need a logger but do not want to capture log messages in stdout.
-* shutdown_logs(logger) is used to close and remove all handlers for a logging object, to prevent duplicate filehandlers and system handlers.
+* get_logging_formatter() returns the formatter used for logging across all scripts
+* set_root_logger() sets up the root logger and adds a stream handler and syslog handler (we only want to add these handlers once, to the root logger, otherwise the log messages written to the terminal / syslog will be duplicated for each logger added)
+* shutdown_logs(logger) is used to close and remove all handlers for a logging object
 
 ### AdLogger Class
 
@@ -28,7 +29,7 @@ This script is configured to be used as a module import as per the following exa
 ### Example 1 - script-level loggers
 ```python
 self.script_logger = ad_logger.AdLogger(  # Create script level loggers
-    "sw", "sw", toolbox.return_scriptlog_config()['sw']
+    __package__, "sw", toolbox.return_scriptlog_config()['sw']
 ).get_logger()
 
 self.script_logger.info(
@@ -50,7 +51,7 @@ logfiles_config = {
     "ss_validator": samplesheet_validator_logfile,
 }
 
-loggers_obj = ad_logger.RunfolderLoggers(logfiles_config)
+loggers_obj = ad_logger.RunfolderLoggers(__package__, runfolder_name, logfiles_config)
 loggers = loggers_obj.get_loggers()
 
 loggers["sw"].info(

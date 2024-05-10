@@ -16,7 +16,7 @@ import re
 from typing import Optional, Tuple
 import samplesheet_validator.samplesheet_validator as samplesheet_validator
 from config.ad_config import DemultiplexConfig
-from ad_logger.ad_logger import AdLogger, shutdown_logs
+from ad_logger.ad_logger import AdLogger
 from toolbox.toolbox import (
     return_scriptlog_config,
     get_runfolder_path,
@@ -28,6 +28,15 @@ from toolbox.toolbox import (
     write_lines,
     execute_subprocess_command,
 )
+from toolbox.toolbox import script_start_logmsg, script_end_logmsg
+
+
+ad_logger_obj = AdLogger(
+    __name__,
+    "demux",
+    return_scriptlog_config()["demux"],
+)
+script_logger = ad_logger_obj.get_logger()
 
 
 class GetRunfolders(DemultiplexConfig):
@@ -35,13 +44,10 @@ class GetRunfolders(DemultiplexConfig):
     Loop through and process NGS runfolders in a given directory
 
     Attributes
-        ad_logger_obj (object):             AdLogger object, used to create a python logging object with custom
-                                            attributes and a file handler, syslog handler, and stream handler
-        script_logger (object):             Script-level logger
+        runfolder_names (list):             List of runfolders, specified within ad_config
         cmd_line_supplied_runfolder (bool): Denotes whether the runfolder name was supplied on
                                             the command line (i.e. the run is a development
                                             run requiring manual processing)
-        runfolder_names (list):             List of runfolders, specified within ad_config
         timestamp (str):                    Timestamp in the format %Y%m%d_%H%M%S
         processed_runfolders (list):        List to hold names of processed runfolders,
                                             updated dynamically
@@ -51,8 +57,6 @@ class GetRunfolders(DemultiplexConfig):
                                             attributes)
 
     Methods
-        check_cmd_line_supplied_runfolder(runfolder_name)
-            Determine whether runfolder name was supplied on the command line
         get_runfolder_names(runfolder_name)
             Get test-mode-dependent runfolder names
         setoff_processing()
@@ -65,53 +69,30 @@ class GetRunfolders(DemultiplexConfig):
             Add number of total processed runfolders as attribute
     """
 
-    def __init__(self, runfolder_name=False: [str | False]):
+    def __init__(self, runfolder_names=False):
         """
         Constructor for the GetRunfolders class
             :param runfolder_name (str | False):    Optional command line argument
         """
-        self.ad_logger_obj = AdLogger(
-            "demultiplex",
-            "demultiplex",
-            return_scriptlog_config()["demultiplex"],
-        )
-        self.script_logger = self.ad_logger_obj.get_logger()
-        self.cmd_line_supplied_runfolder = self.check_cmd_line_supplied_runfolder(
-            runfolder_name
-        )
-        self.runfolder_names = self.get_runfolder_names(runfolder_name)
-        self.timestamp = self.script_logger.timestamp
+        self.runfolder_names = runfolder_names
+        self.cmd_line_supplied_runfolder = bool
+        self.timestamp = script_logger.timestamp
         self.processed_runfolders = []
 
-    def check_cmd_line_supplied_runfolder(self, runfolder_name: [str | False]) -> bool:
-        """
-        Determine whether runfolder name was supplied on the command line. This only happens
-        in the case of development runs as it should only be used in this way to process
-        development runs
-            :param runfolder_name (str | False):    Runfolder name or False
-            :return bool:                           True if ss checks should be bypassed, False
-                                                    if not
-        """
-        if runfolder_name:
-            self.script_logger.info(
-                self.script_logger.log_msgs["cmd_line_runfolder"], runfolder_name
-            )
-            return True
-        else:
-            self.script_logger.info(
-                self.script_logger.log_msgs["programmatic_runfolders"]
-            )
-            return False
-
-    def get_runfolder_names(self, runfolder_name: str) -> list:
+    def get_runfolder_names(self) -> list:
         """
         Get test-mode-dependent runfolder names
-            :param runfolder_name (str | False):    Runfolder name or False
             :return runfolder_names (list):         List of runfolder names
         """
-        if runfolder_name:
-            runfolder_names = [runfolder_name]
+        if self.runfolder_names:
+            script_logger.info(
+                script_logger.log_msgs["cmd_line_runfolder"], self.runfolder_name
+            )
+            runfolder_names = [self.runfolder_names]
         else:
+            script_logger.info(
+                script_logger.log_msgs["programmatic_runfolders"]
+            )
             runfolder_names = []
             if DemultiplexConfig.TESTING:
                 folders = DemultiplexConfig.DEMULTIPLEX_TEST_RUNFOLDERS
@@ -123,8 +104,8 @@ class GetRunfolders(DemultiplexConfig):
                     DemultiplexConfig.RUNFOLDER_PATTERN
                 ).match(folder_name):
                     runfolder_names.append(folder_name)
-            self.script_logger.info(
-                self.script_logger.log_msgs["runfolder_names"],
+            script_logger.info(
+                script_logger.log_msgs["runfolder_names"],
                 ", ".join(runfolder_names),
             )
         return runfolder_names
@@ -134,10 +115,15 @@ class GetRunfolders(DemultiplexConfig):
         Call methods to set off runfolder processing. Called by main module
             :return None:
         """
-        if test_processing_software(self.script_logger):
+        script_start_logmsg(script_logger, __file__)
+        self.runfolder_names = self.get_runfolder_names()
+
+        if test_processing_software(script_logger):
             for runfolder in self.runfolder_names:
                 self.demultiplex_runfolder(runfolder)
         self.return_num_processed_runfolders()
+        script_end_logmsg(script_logger, __file__)
+
 
     def demultiplex_runfolder(self, folder_name: str) -> None:
         """
@@ -149,19 +135,17 @@ class GetRunfolders(DemultiplexConfig):
                 folder_name, self.timestamp, self.cmd_line_supplied_runfolder
             )
             self.demultiplex_obj.setoff_workflow()
-            shutdown_logs(self.demultiplex_obj.demux_rf_logger)
-
             # If runfolder has been processed during this script run
             if self.demultiplex_obj.run_processed:
-                self.script_logger.info(
-                    self.script_logger.log_msgs["runfolder_processed"],
+                script_logger.info(
+                    script_logger.log_msgs["runfolder_processed"],
                     folder_name,
                 )
                 # Add runfolder to processed runfolder list
                 self.processed_runfolders.append(folder_name)
         else:
-            self.script_logger.info(
-                self.script_logger.log_msgs["skipping_runfolder"],
+            script_logger.info(
+                script_logger.log_msgs["skipping_runfolder"],
                 folder_name,
             )
 
@@ -174,15 +158,13 @@ class GetRunfolders(DemultiplexConfig):
         self.rf_obj = RunfolderObject(folder_name, self.timestamp)
 
         if os.path.isfile(self.rf_obj.bcl2fastqlog_file):
-            self.script_logger.info(
-                self.script_logger.log_msgs["demux_already_complete"],
-                self.rf_obj.runfolder_name,
+            script_logger.info(
+                script_logger.log_msgs["demux_already_complete"],
                 self.rf_obj.bcl2fastqlog_file,
             )
         else:
-            self.script_logger.info(
-                self.script_logger.log_msgs["demux_not_complete"],
-                self.rf_obj.runfolder_name,
+            script_logger.info(
+                script_logger.log_msgs["demux_not_complete"],
                 self.rf_obj.bcl2fastqlog_file,
             )
             return True
@@ -193,7 +175,7 @@ class GetRunfolders(DemultiplexConfig):
             :return None:
         """
         num_processed_runfolders = get_num_processed_runfolders(
-            self.script_logger, self.processed_runfolders
+            script_logger, self.processed_runfolders
         )
         setattr(self, "num_processed_runfolders", num_processed_runfolders)
 
@@ -293,8 +275,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.timestamp = timestamp
         self.cmd_line_supplied_runfolder = cmd_line_supplied_runfolder
         self.rf_obj = RunfolderObject(folder_name, self.timestamp)
-        self.rf_obj.add_runfolder_loggers()  # Add rf loggers to runfolder object
-        self.demux_rf_logger = self.rf_obj.rf_loggers["demultiplex"]
+        self.rf_obj.add_runfolder_loggers(__package__)  # Add rf loggers to runfolder object
+        self.demux_rf_logger = self.rf_obj.rf_loggers["demux"]
         self.bcl2fastq2_rf_logger = self.rf_obj.rf_loggers["bcl2fastq2"]
         self.disallowed_sserrs = [
             "Samplesheet absent",
@@ -341,12 +323,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 elif self.run_demultiplexing():  # All other runs require demultiplexing
                     self.run_processed = True
                     self.validate_fastqs()
-
-            if self.run_processed:
-                self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["runfolder_processed"],
-                    self.rf_obj.runfolder_name,
-                )
                 return True
 
     def demultiplexing_required(self) -> Optional[bool]:
@@ -395,7 +371,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
             os.path.dirname(self.rf_obj.samplesheet_validator_logfile),
         )
         sscheck_obj.ss_checks()
-        shutdown_logs(sscheck_obj.logger)
         if sscheck_obj.errors:
             return False, sscheck_obj
         else:
@@ -529,20 +504,17 @@ class DemultiplexRunfolder(DemultiplexConfig):
         if DemultiplexConfig.CHECKSUM_MATCH_MSG in checksums[0]:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["ic_pass"],
-                self.rf_obj.runfolder_name,
                 self.rf_obj.checksumfile_path,
             )
             return True
         elif DemultiplexConfig.CHECKSUM_DO_NOT_MATCH_MSG in checksums[0]:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["ic_fail"],
-                self.rf_obj.runfolder_name,
                 self.rf_obj.checksumfile_path,
             )
         else:
             self.demux_rf_logger.warning(
                 self.demux_rf_logger.log_msgs["unexpected_checksumfile_contents"],
-                self.rf_obj.runfolder_name,
                 self.rf_obj.checksumfile_path,
             )
 
@@ -620,14 +592,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
         if self.cmd_line_supplied_runfolder:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["dev_run_will_be_processed"],
-                self.rf_obj.runfolder_name,
             )
             return True
         # Create bcl2fastq2 log to prevent scripts processing this run
         elif self.create_bcl2fastqlog():
             self.demux_rf_logger.warning(
                 self.demux_rf_logger.log_msgs["dev_run_needs_processing"],
-                self.rf_obj.runfolder_name,
             )
 
     def create_bcl2fastqlog(self) -> Optional[bool]:
@@ -641,7 +611,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
             open(self.rf_obj.bcl2fastqlog_file, "w", encoding="utf-8").close()
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["create_bcl2fastqlog_pass"],
-                self.rf_obj.runfolder_name,
                 self.rf_obj.bcl2fastqlog_file,
             )
             if self.tso:
@@ -650,7 +619,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         except Exception as exception:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["create_bcl2fastqlog_fail"],
-                self.rf_obj.runfolder_name,
                 exception,
             )
             sys.exit(1)
@@ -663,7 +631,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["tso500_run"],
-            self.rf_obj.runfolder_name,
             DemultiplexConfig.STRINGS["demultiplexlog_tso500_msg"],
         )
         write_lines(
@@ -671,10 +638,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
             "w+",
             DemultiplexConfig.STRINGS["demultiplexlog_tso500_msg"],
         )
-
         self.demux_rf_logger.info(
-            self.demux_rf_logger.log_msgs["write_tso_msg_to_bcl2fastqlog"],
-            self.rf_obj.runfolder_name,
+            self.demux_rf_logger.log_msgs["write_tso_msg_to_bcl2fastqlog"]
         )
         return True
 
@@ -692,7 +657,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         else:
             novaseq_flag = ""
 
-        self.cluster_density_cmd = f"{self.cluster_density_cmd }{novaseq_flag}"
+        self.cluster_density_cmd = f"{self.cluster_density_cmd}{novaseq_flag}"
 
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["running_cd"],
@@ -706,14 +671,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
             if DemultiplexConfig.STRINGS["cd_success"] in out or err:
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["cd_success"],
-                    self.rf_obj.runfolder_name,
-                    DemultiplexConfig.STRINGS["lane_metrics_suffix"],
+                    f"{self.rf_obj.runfolder_name}{DemultiplexConfig.STRINGS['lane_metrics_suffix']}"
                 )
                 return True
         else:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["cd_fail"],
-                self.rf_obj.runfolder_name,
                 err,
             )
             sys.exit(1)
@@ -726,7 +689,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["bcl2fastq_start"],
-            self.rf_obj.runfolder_name,
             self.bcl2fastq2_cmd,
         )
         # Runs bcl2fastq2 and checks if completed successfully
@@ -738,7 +700,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         if returncode == 0:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
-                self.rf_obj.runfolder_name,
             )
             self.bcl2fastq2_rf_logger.info(
                 err  # Write stderr to bcl2fastq2 runfolder logfile
@@ -747,7 +708,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         else:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["bcl2fastq_failed"],
-                self.rf_obj.runfolder_name,
                 out,
                 err,
             )
