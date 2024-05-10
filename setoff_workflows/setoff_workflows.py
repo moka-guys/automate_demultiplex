@@ -127,8 +127,8 @@ class SequencingRuns(SWConfig):
         """
         Calls other methods to determine whether the runfolder requires processing (demultiplexing
         has finished successfully and the runfolder has not already been uploaded)
-            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
-            :return True | None:    Returns true if runfolder requires processing, else None
+            :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific attributes)
+            :return (Optional[bool]):   Returns true if runfolder requires processing, else None
         """
         if self.has_demultiplexed(rf_obj):
             if self.already_uploaded(rf_obj):
@@ -148,8 +148,8 @@ class SequencingRuns(SWConfig):
         Check if demultiplexing has already been performed and completed sucessfully. Checks the
         demultiplex log file exists, and if present checks the expected success string is in the
         last line of the log file.
-            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
-            :return True | None:    Return True if runfolder already demultiplexed, else None
+            :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific attributes)
+            :return (Optional[bool]):   Return True if runfolder already demultiplexed, else None
         """
         if os.path.isfile(rf_obj.bcl2fastqlog_file):
             logfile_list = read_lines(rf_obj.bcl2fastqlog_file)
@@ -184,8 +184,8 @@ class SequencingRuns(SWConfig):
     def already_uploaded(self, rf_obj: object) -> Optional[bool]:
         """
         Checks for presence of DNAnexus upload flag file (denotes that the runfolder has already been processed)
-            :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
-            :return True | None:    Returns True if runfolder already uploaded, else None
+            :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific attributes)
+            :return (Optional[bool]):   Returns True if runfolder already uploaded, else None
         """
         if os.path.isfile(rf_obj.upload_flagfile):
             self.script_logger.info(self.script_logger.log_msgs["ua_file_present"])
@@ -913,15 +913,13 @@ class CollectRunfolderSamples(SWConfig):
             :return runtype_str (str):  Runtype name string
         """
         runtype_list = []
-        runtype_str = ""
-        if self.pipeline in ["pipe", "wes"]:  # Provides more detail on contents of runs in runfolder name
-            for sample, panno in self.samplename_dict.items():
-                runtype_list.append(SWConfig.PANEL_DICT[panno]["runtype"])
-            runtype_str = "_".join(sorted(list(set(runtype_list))))
-            self.rf_obj.rf_loggers["sw"].info(
-                self.rf_obj.rf_loggers["sw"].log_msgs["runtype_str"],
-                runtype_str,
-            )
+        for sample, panno in self.samplename_dict.items():
+            runtype_list.append(SWConfig.PANEL_DICT[panno]["runtype"])
+        runtype_str = "_".join(sorted(list(set(runtype_list))))
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["runtype_str"],
+            runtype_str,
+        )
         return runtype_str  # Get runtype from pipelines_list
 
     def get_nexus_runfolder_suffix(self) -> str:
@@ -935,7 +933,10 @@ class CollectRunfolderSamples(SWConfig):
         library_numbers = self.capture_library_numbers()
         if self.pipeline == "wes":
             library_numbers.extend(self.capture_wes_batch_numbers())
-        suffix = f"{'_'.join(library_numbers)}_{self.runtype_str}"
+        suffix = f"{'_'.join(library_numbers)}"
+
+        if self.pipeline in ["pipe", "wes"]:
+            suffix.join(f"_{self.runtype_str}") # Provides more detail on contents of runs in runfolder name
         return suffix
 
     def capture_library_numbers(self) -> list:
@@ -945,7 +946,7 @@ class CollectRunfolderSamples(SWConfig):
         These numbers are used as the suffix for the DNAnexus project name (along with
         the WES batch number in the case of WES runs). If no library prep numbers are
         found, exit the script
-            :return (list) | None:   List of unique library numbers
+            :return (list | None):   List of unique library numbers
         """
         library_numbers = []
         for samplename in self.samplename_dict.keys():
@@ -1119,7 +1120,7 @@ class CollectRunfolderSamples(SWConfig):
     def fastq_not_undetermined(self, fastq_dir_file: str) -> Optional[bool]:
         """
         Determine whether the fastq is an undetermined fastq
-            :return True | None:    Return True if undetermined, else return None
+            :return (Optional[bool]):    Return True if undetermined, else return None
         """
         if not fastq_dir_file.startswith("Undetermined"):
             return True
@@ -1301,22 +1302,20 @@ class SampleObject(SWConfig):
             self.decision_support_upload_cmd,
         ) = self.build_sample_dx_run_cmd()
 
-    def check_control(self, identifiers, control_type) -> bool:
+    def check_control(self, identifiers: list, control_type: str) -> Optional[bool]:
         """
         Determine whether sample contains the control identifier strings
             :param identifiers (list):  List of identifiers for control type (used in sample naming)
             :param control_type (str):  String describing the type of control. e.g. Negative, Positive
-            :return (bool):             True if sample contains any specified identifier, else False
+            :return (Optional[bool]):   True if sample contains any specified identifier, else False
         """
         if any(identifier in self.sample_name for identifier in identifiers):
             self.rf_obj.rf_loggers["sw"].info(
                 control_type,
-                self.rf_obj.rf_loggers["sw"].log_msgs["control_sample"],
+                self.rf_obj.rf_loggers["sw"].log_msgs["control_sample"], control_type,
                 self.sample_name,
             )
             return True
-        else:
-            return False
 
     def find_pannum(self) -> Union[str, None]:
         """
@@ -1331,7 +1330,7 @@ class SampleObject(SWConfig):
     def validate_pannum(self, pannum: int) -> Optional[bool]:
         """
         Check whether pan number is valid
-            :return (True | None):  True if pan number is valid, else None
+            :return (Optional[bool]):  True if pan number is valid, else None
         """
         if str(pannum) in SWConfig.PANELS:
             self.rf_obj.rf_loggers["sw"].info(
@@ -2023,12 +2022,12 @@ class BuildDxCommands(SWConfig):
                     sample_name, self.samples_obj.samples_dict[sample_name]["pannum"]
                 )
             )
-            # Exclude negative controls from the depends list as the NTC coverage
-            # calculation can often fail. We want the coverage report for the NTC sample
-            # to help assess contamination. Only add to depends_list if job ID from
-            # previous command is not empty
+            # Coverage is in depends list because per-gene coverage is included in MultiQC report
+            # Exclude coverage jobs for negative controls from the depends list as the NTC coverage
+            # calculation can often fail. We want the coverage report for the NTC sample to help
+            # assess contamination. Only add to depends_list if job ID from previous command is not empty.
             if not self.samples_obj.samples_dict[sample_name]["neg_control"]:
-                sambamba_cmds_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
+                dx_postprocessing_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
             if self.samples_obj.samples_dict[sample_name]["pos_control"]:
                 dx_postprocessing_cmds.append(self.create_sompy_cmd(sample_name))
@@ -2037,9 +2036,6 @@ class BuildDxCommands(SWConfig):
                 dx_postprocessing_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
         dx_postprocessing_cmds.extend(self.return_multiqc_cmds())
-        # Set off after as they are not depended upon by MultiQC but are
-        # required for duty_csv
-        dx_postprocessing_cmds.extend(sambamba_cmds_list)
         dx_postprocessing_cmds.append(self.create_duty_csv_cmd())
 
         return dx_cmd_list, dx_postprocessing_cmds, decision_support_upload_cmds
@@ -2455,6 +2451,7 @@ class BuildDxCommands(SWConfig):
             self.rf_obj.runfolder_dx_run_script,
         )
         write_lines(  # Write commands to dx run script
+            SWConfig.SDK_SOURCE,
             self.rf_obj.runfolder_dx_run_script,
             "w",
             list(filter(None, self.dx_cmd_list)),
