@@ -7,6 +7,7 @@ import os
 import shutil
 import pytest
 import tarfile
+import logging
 
 # sys.path.append("..")
 from ad_logger import ad_logger
@@ -128,7 +129,6 @@ def run_before_and_after_tests(monkeypatch):
     # not require any patching)
     monkeypatch.setattr(ad_logger.AdLoggerConfig, "SCRIPT_MODE", "PYTEST_TESTS")
     patch_toolbox(monkeypatch)
-
     # SETUP - cleanup after each test
     if os.path.isdir(test_data_temp):
         # Remove dir and all flag files created
@@ -142,4 +142,4 @@ def run_before_and_after_tests(monkeypatch):
     if os.path.isdir(test_data_temp):
         # Remove dir and all flag files created
         shutil.rmtree(test_data_temp)
-    # logging.disable(logging.NOTSET)  # Re-enable logging
+    ad_logger.remove_all_loggers()

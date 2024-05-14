@@ -9,6 +9,18 @@ import logging.handlers
 from config.ad_config import AdLoggerConfig
 
 
+# Function to remove all loggers
+def remove_all_loggers():
+    """
+    Remove all loggers
+    """
+    for name in list(logging.Logger.manager.loggerDict.keys()):
+        if isinstance(logging.Logger.manager.loggerDict[name], logging.Logger):
+            logging.getLogger(name).handlers = []
+            logging.getLogger(name).propagate = True
+            logging.Logger.manager.loggerDict.pop(name)
+
+
 def get_logging_formatter() -> str:
     """
     Get formatter for logging. This is script mode-dependent
@@ -27,7 +39,7 @@ def set_root_logger():
     as the root logger will use these same syslog handler and stream handler
     """
     sensitive_formatter = SensitiveFormatter(get_logging_formatter())
-    logger = logging.getLogger()
+    logger = logging.getLogger(AdLoggerConfig.REPO_NAME)
     logger.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setLevel(logging.DEBUG)
@@ -117,7 +129,7 @@ class AdLogger(AdLoggerConfig):
         Returns a Python logging object, and give it a name
             :return logger (object):    Python logging object with custom attributes
         """
-        logger = logging.getLogger(self.logger_name)
+        logger = logging.getLogger(f"{AdLoggerConfig.REPO_NAME}.{self.logger_name}")
         logger.filepath = self.filepath
         logger.setLevel(logging.DEBUG)
         logger.addHandler(self._get_file_handler())
