@@ -89,6 +89,8 @@ LOG_MSGS = {
         "cd_fail": "Cluster density calculation failed. Error: %s. Script exited",
         "fastq_valid": "Gzip --test determined that the fastq is valid: %s",
         "fastq_invalid": "Gzip --test determined that the fastq is not valid: %s. Stdout: %s. Stderr: %s",
+        "demux_success": "Demultiplexing was successful for the run with all fastqs valid",
+        "re_demultiplex": "Invalid fastqs were identified. Bcl2fastq log has been removed to trigger re-demultiplex",
     },
     "sw": {
         "runfolder_identified": "Identified runfolder: %s",

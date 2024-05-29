@@ -722,6 +722,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         fastqs = [
             x for x in os.listdir(self.rf_obj.fastq_dir_path) if x.endswith("fastq.gz")
         ]
+        returncodes = []
 
         for fastq in fastqs:
             out, err, returncode = execute_subprocess_command(
@@ -740,7 +741,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     out,
                     err,
                 )
-                if os.path.exists(self.rf_obj.bcl2fastqlog_file):
-                    os.remove(
-                        self.rf_obj.bcl2fastqlog_file
-                    )  # Bcl2fastq log file removed to trigger re-demultiplex
+
+        if all(code == 0 for code in returncodes):
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["demux_success"])
+        else:
+            if os.path.exists(self.rf_obj.bcl2fastqlog_file):
+                os.remove(
+                    self.rf_obj.bcl2fastqlog_file
+                )  # Bcl2fastq log file removed to trigger re-demultiplex
+            self.demux_rf_logger.error(self.demux_rf_logger.log_msgs["re_demultiplex"])
