@@ -38,6 +38,8 @@ LOG_MSGS = {
         "html_error": "There was a problem generating the email html file, with the following exception: %s",
     },
     "demux": {
+        "previous_ss_check": "Samplesheet check previously carried out. Remove the flag file to re-process: %s",
+        "ss_check_required": "Samplesheet check not yet conducted",
         "cmd_line_runfolder": "Runfolder %s has been supplied on the command line",
         "programmatic_runfolders": "Runfolders were gathered programmatically",
         "runfolder_names": "Runfolders identified for processing: %s",

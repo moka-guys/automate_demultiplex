@@ -208,7 +208,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
             (TSO runs don't require demultiplexing)
         demultiplexing_required()
             Carries out per-runfolder pre-demultiplexing tasks to determine whether
-            demultiplexing is required.
+            demultiplexing is required
+        previous_samplesheet_check()
+            Checks if a prior samplesheet check has been carried out
         valid_samplesheet()
             Check SampleSheet is present and naming and contents are valid, using the
             samplesheet_validator module
@@ -327,31 +329,47 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def demultiplexing_required(self) -> Optional[bool]:
         """
         Carries out per-runfolder pre-demultiplexing tasks to determine whether demultiplexing is
-        required. Carries out the early warning SampleSheet checks. If sequencing is complete and
-        the run is a development run, creates the bcl2fastq2 logfile to prevent further processing.
-        Else, if sequencing is complete (RTAComplete.txt present) and the run is not a development
-        run, the SampleSheet contains no disallowed errors, and either 1) the sequencer does not
-        require an integrity check or 2) there has not previously been an integrity check and the
-        checksums match, returns True as demultiplexing is required
+        required. If required (i.e. these have not previously been carried out), carries out the early
+        warning SampleSheet checks. If sequencing is complete and the run is a development run, creates
+        the bcl2fastq2 logfile to prevent further processing. Else, if sequencing is complete
+        (RTAComplete.txt present) and the run is not a development run, the SampleSheet contains no
+        disallowed errors, and either 1) the sequencer does not require an integrity check or 2) there
+        has not previously been an integrity check and the checksums match, returns True as
+        demultiplexing is required
             :return (Optional[bool]):  Return true if demultiplexing is required
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["ad_version"],
             git_tag(),
         )
-        valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
-        self.tso = sscheck_obj.tso
+        if not self.previous_samplesheet_check():
+            valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
+            self.tso = sscheck_obj.tso
 
-        if self.sequencing_complete():
-            if self.pass_integrity_check():
-                if self.dev_run(sscheck_obj) and self.no_disallowed_sserrs(
-                    valid, sscheck_obj
-                ):
-                    if self.dev_run_requires_automated_processing():
+            if self.sequencing_complete():
+                if self.pass_integrity_check():
+                    if self.dev_run(sscheck_obj) and self.no_disallowed_sserrs(
+                        valid, sscheck_obj
+                    ):
+                        if self.dev_run_requires_automated_processing():
+                            return True
+                    # Only want SampleSheet checks to be performed on production runs not dev runs
+                    elif self.no_disallowed_sserrs(valid, sscheck_obj):
                         return True
-                # Only want SampleSheet checks to be performed on production runs not dev runs
-                elif self.no_disallowed_sserrs(valid, sscheck_obj):
-                    return True
+
+    def previous_samplesheet_check(self) -> Optional[bool]:
+        """
+        Checks if a prior samplesheet check has been carried out. This is checked to determine
+        whether to proceed with processing the run. This flag file must be removed for subsequent
+        attempts to process the run in the case of the samplesheet check failing
+            :return (Optional[bool]):   Returns true if the samplesheet check flag file is present
+        """
+        if os.path.exists(self.rf_obj.sscheck_flagfile_path):
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["previous_ss_check"], 
+            self.rf_obj.sscheck_flagfile_path)
+            return True
+        else:
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ss_check_required"])
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
         """
