@@ -16,6 +16,10 @@ from toolbox.toolbox import (
     script_start_logmsg,
     script_end_logmsg,
 )
+from ad_logger.ad_logger import set_root_logger, shutdown_logs
+
+
+set_root_logger()
 
 
 def get_arguments():
@@ -70,7 +74,7 @@ def get_arguments():
 parsed_args = get_arguments()  # Get command line arguments
 
 rf_obj = RunfolderObject(parsed_args.runfolder_name, URConfig.TIMESTAMP)
-rf_obj.add_runfolder_loggers()
+rf_obj.add_runfolder_loggers(__package__)
 
 # If a different auth token is supplied on command line, replace the attribute in the runfolder object
 if parsed_args.auth_token:

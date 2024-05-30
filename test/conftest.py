@@ -7,6 +7,7 @@ import os
 import shutil
 import pytest
 import tarfile
+import logging
 
 # sys.path.append("..")
 from ad_logger import ad_logger
@@ -60,7 +61,7 @@ temp_runfolderdir = os.path.join(
     test_data_temp, "data_unzipped/demultiplex_test_files/test_runfolders/"
 )
 temp_log_dir = os.path.join(test_data_temp, "automate_demultiplexing_logfiles")
-
+temp_samplesheet_logdir = os.path.join(temp_log_dir, "samplesheet_validator_script_logfiles")
 # Temp directory for SampleSheet validator SampleSheet test cases
 sv_samplesheet_temp_dir = os.path.join(test_data_temp, "data_unzipped/samplesheets")
 
@@ -68,7 +69,7 @@ sv_samplesheet_temp_dir = os.path.join(test_data_temp, "data_unzipped/sampleshee
 @pytest.fixture(scope="function")
 def logger_obj():
     temp_log = os.path.join(test_data_temp, "temp.log")
-    return ad_logger.AdLogger("demultiplex", "demultiplex", temp_log).get_logger()
+    return ad_logger.AdLogger(__name__, "demux", temp_log).get_logger()
 
 
 def create_logdirs():
@@ -128,7 +129,6 @@ def run_before_and_after_tests(monkeypatch):
     # not require any patching)
     monkeypatch.setattr(ad_logger.AdLoggerConfig, "SCRIPT_MODE", "PYTEST_TESTS")
     patch_toolbox(monkeypatch)
-
     # SETUP - cleanup after each test
     if os.path.isdir(test_data_temp):
         # Remove dir and all flag files created
@@ -142,4 +142,4 @@ def run_before_and_after_tests(monkeypatch):
     if os.path.isdir(test_data_temp):
         # Remove dir and all flag files created
         shutil.rmtree(test_data_temp)
-    # logging.disable(logging.NOTSET)  # Re-enable logging
+    ad_logger.remove_all_loggers()

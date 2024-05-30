@@ -55,7 +55,7 @@ def return_scriptlog_config() -> dict:
         :return (dict): Dictionary containing logger names and logfile paths
     """
     return {
-        "demultiplex": os.path.join(  # Record demultiplex script logs
+        "demux": os.path.join(  # Record demultiplex script logs
             ToolboxConfig.AD_LOGDIR,
             "demultiplexing_script_logfiles",
             f"{ToolboxConfig.TIMESTAMP}_demultiplex_script.log",
@@ -133,7 +133,10 @@ def git_tag() -> str:
     cmd = f"git -C {filepath} describe --tags"
 
     proc = subprocess.Popen(
-        [cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True,
+        [cmd],
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        shell=True,
     )
     out, _ = proc.communicate()
     #  Return standard out, removing any new line characters
@@ -310,9 +313,9 @@ class RunfolderObject(ToolboxConfig):
         rf_loggers (object):                    RunfolderLoggers object containing
                                                 runfolder-specific loggers
     Methods
-        add_runfolder_loggers()
+        add_runfolder_loggers(script)
             Add runfolder loggers to runfolder object
-        add_runfolder_logger(logger_name)
+        add_runfolder_logger(script, logger_name)
             Add a single runfolder logger to runfolder object
     """
 
@@ -414,7 +417,7 @@ class RunfolderObject(ToolboxConfig):
         )
         self.logfiles_config = {
             "sw": self.sw_runfolder_logfile,
-            "demultiplex": self.demultiplex_runfolder_logfile,
+            "demux": self.demultiplex_runfolder_logfile,
             "upload_flag": self.upload_flagfile,
             "backup": self.upload_runfolder_logfile,
             "project": self.proj_creation_script,
@@ -433,20 +436,24 @@ class RunfolderObject(ToolboxConfig):
             self.upload_runfolder_logfile,
         ]
 
-    def add_runfolder_loggers(self) -> None:
+    def add_runfolder_loggers(self, script: str) -> None:
         """
         Add runfolder loggers to runfolder object
+            :param script (str):    Script name the function has been called from
             :return None:
         """
-        loggers_obj = RunfolderLoggers(self.logfiles_config)
-        self.rf_loggers = loggers_obj.get_loggers()
+        loggers_obj = RunfolderLoggers(
+            script, self.runfolder_name, self.logfiles_config
+        )
+        self.rf_loggers = loggers_obj.loggers
 
-    def add_runfolder_logger(self, logger_name: str) -> None:
+    def add_runfolder_logger(self, script: str, logger_name: str) -> None:
         """
         Add a single runfolder logger to runfolder object
+            :param script (str):        Script name the function has been called from
             :param logger_name (str):   Name of the logger
             :return None:
         """
         logfile_config = {logger_name: self.logfiles_config[logger_name]}
-        loggers_obj = RunfolderLoggers(logfile_config)
+        loggers_obj = RunfolderLoggers(__name__, self.runfolder_name, logfile_config)
         self.rf_loggers = loggers_obj.get_loggers()

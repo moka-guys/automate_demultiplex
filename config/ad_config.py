@@ -15,6 +15,7 @@ from .panel_config import TOOLS_PROJECT, MASKED_REFERENCE, PanelConfig
 
 # =========== GENERAL SETTINGS USED ACROSS MODULES ====================================
 
+REPO_NAME = "automated_scripts"
 # Timestamp used for naming log files with datetime
 TIMESTAMP = str(f"{datetime.datetime.now():%Y%m%d_%H%M%S}")
 PROJECT_DIR = str(Path(__file__).absolute().parent.parent)  # Project working directory
@@ -328,6 +329,7 @@ class AdLoggerConfig:
     Ad Logger configuration
     """
 
+    REPO_NAME = REPO_NAME
     LOG_MSGS = LOG_MSGS
     SCRIPT_MODE = SCRIPT_MODE
     TIMESTAMP = TIMESTAMP

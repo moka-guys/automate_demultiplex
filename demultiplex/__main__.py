@@ -6,9 +6,9 @@ Demultiplexes NGS Run Folders. See README and docstrings for further details
 
 import argparse
 from demultiplex.demultiplex import GetRunfolders
-from toolbox.toolbox import script_start_logmsg, script_end_logmsg
-from ad_logger.ad_logger import shutdown_logs
+from ad_logger.ad_logger import set_root_logger
 
+set_root_logger()
 
 def get_arguments():
     """
@@ -48,10 +48,4 @@ if parsed_args.runfolder_name:  # If run with runfolder name provided as input
 else:
     gr_obj = GetRunfolders()
 
-
-script_start_logmsg(gr_obj.script_logger, __file__)
-
 gr_obj.setoff_processing()
-
-script_end_logmsg(gr_obj.script_logger, __file__)
-shutdown_logs(gr_obj.script_logger)

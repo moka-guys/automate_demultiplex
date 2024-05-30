@@ -112,14 +112,16 @@ python -m pytest
 
 Currently test suite coverage is as follows:
 
+**Total coverage: 45%** (N.B. this includes all scripts incl __init__ and __main__ scripts)
+
 | Module | Coverage |
 | ------ | -------- |
-| [ad_email](ad_email) |  |
-| [ad_logger](ad_logger) |  |
-| [demultiplex.py](demultiplex.py) | 0 |
-| [setoff_workflows.py](setoff_workflows.py) | 0 |
-| [upload_runfolder](upload_runfolder) | 0 |
-| [toolbox](toolbox) | 0 |
+| [ad_email.py](ad_email/ad_email.py) | 94 |
+| [ad_logger.py](ad_logger/ad_logger.py) | 81 |
+| [demultiplex.py](demultiplex/demultiplex.py) | 76 |
+| [setoff_workflows.py](setoff_workflows/setoff_workflows.py) | 0 |
+| [upload_runfolder.py](upload_runfolder/upload_runfolder.py) | 0 |
+| [toolbox.py](toolbox/toolbox.py) | 0 |
 
 
 **TESTS AND TEST CASES/FILES *MUST* BE MAINTAINED AND UPDATED ACCORDINGLY IN CONJUNCTION WITH SCRIPT DEVELOPMENT**

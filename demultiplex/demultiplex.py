@@ -16,7 +16,7 @@ import re
 from typing import Optional, Tuple
 import samplesheet_validator.samplesheet_validator as samplesheet_validator
 from config.ad_config import DemultiplexConfig
-from ad_logger.ad_logger import AdLogger, shutdown_logs
+from ad_logger.ad_logger import AdLogger
 from toolbox.toolbox import (
     return_scriptlog_config,
     get_runfolder_path,
@@ -28,6 +28,15 @@ from toolbox.toolbox import (
     write_lines,
     execute_subprocess_command,
 )
+from toolbox.toolbox import script_start_logmsg, script_end_logmsg
+
+
+ad_logger_obj = AdLogger(
+    __name__,
+    "demux",
+    return_scriptlog_config()["demux"],
+)
+script_logger = ad_logger_obj.get_logger()
 
 
 class GetRunfolders(DemultiplexConfig):
@@ -35,13 +44,10 @@ class GetRunfolders(DemultiplexConfig):
     Loop through and process NGS runfolders in a given directory
 
     Attributes
-        ad_logger_obj (object):             AdLogger object, used to create a python logging object with custom
-                                            attributes and a file handler, syslog handler, and stream handler
-        script_logger (object):             Script-level logger
+        runfolder_names (list):             List of runfolders, specified within ad_config
         cmd_line_supplied_runfolder (bool): Denotes whether the runfolder name was supplied on
                                             the command line (i.e. the run is a development
                                             run requiring manual processing)
-        runfolder_names (list):             List of runfolders, specified within ad_config
         timestamp (str):                    Timestamp in the format %Y%m%d_%H%M%S
         processed_runfolders (list):        List to hold names of processed runfolders,
                                             updated dynamically
@@ -51,8 +57,6 @@ class GetRunfolders(DemultiplexConfig):
                                             attributes)
 
     Methods
-        check_cmd_line_supplied_runfolder(runfolder_name)
-            Determine whether runfolder name was supplied on the command line
         get_runfolder_names(runfolder_name)
             Get test-mode-dependent runfolder names
         setoff_processing()
@@ -65,53 +69,28 @@ class GetRunfolders(DemultiplexConfig):
             Add number of total processed runfolders as attribute
     """
 
-    def __init__(self, runfolder_name=False):
+    def __init__(self, runfolder_names=False):
         """
         Constructor for the GetRunfolders class
             :param runfolder_name (str | False):    Optional command line argument
         """
-        self.ad_logger_obj = AdLogger(
-            "demultiplex",
-            "demultiplex",
-            return_scriptlog_config()["demultiplex"],
-        )
-        self.script_logger = self.ad_logger_obj.get_logger()
-        self.cmd_line_supplied_runfolder = self.check_cmd_line_supplied_runfolder(
-            runfolder_name
-        )
-        self.runfolder_names = self.get_runfolder_names(runfolder_name)
-        self.timestamp = self.script_logger.timestamp
+        self.runfolder_names = runfolder_names
+        self.cmd_line_supplied_runfolder = bool
+        self.timestamp = script_logger.timestamp
         self.processed_runfolders = []
 
-    def check_cmd_line_supplied_runfolder(self, runfolder_name) -> bool:
-        """
-        Determine whether runfolder name was supplied on the command line. This only happens
-        in the case of development runs as it should only be used in this way to process
-        development runs
-            :param runfolder_name (str | False):    Runfolder name or False
-            :return bool:                           True if ss checks should be bypassed, False
-                                                    if not
-        """
-        if runfolder_name:
-            self.script_logger.info(
-                self.script_logger.log_msgs["cmd_line_runfolder"], runfolder_name
-            )
-            return True
-        else:
-            self.script_logger.info(
-                self.script_logger.log_msgs["programmatic_runfolders"]
-            )
-            return False
-
-    def get_runfolder_names(self, runfolder_name) -> list:
+    def get_runfolder_names(self) -> list:
         """
         Get test-mode-dependent runfolder names
-            :param runfolder_name (str | False):    Runfolder name or False
             :return runfolder_names (list):         List of runfolder names
         """
-        if runfolder_name:
-            runfolder_names = [runfolder_name]
+        if self.runfolder_names:
+            script_logger.info(
+                script_logger.log_msgs["cmd_line_runfolder"], self.runfolder_name
+            )
+            runfolder_names = [self.runfolder_names]
         else:
+            script_logger.info(script_logger.log_msgs["programmatic_runfolders"])
             runfolder_names = []
             if DemultiplexConfig.TESTING:
                 folders = DemultiplexConfig.DEMULTIPLEX_TEST_RUNFOLDERS
@@ -123,8 +102,8 @@ class GetRunfolders(DemultiplexConfig):
                     DemultiplexConfig.RUNFOLDER_PATTERN
                 ).match(folder_name):
                     runfolder_names.append(folder_name)
-            self.script_logger.info(
-                self.script_logger.log_msgs["runfolder_names"],
+            script_logger.info(
+                script_logger.log_msgs["runfolder_names"],
                 ", ".join(runfolder_names),
             )
         return runfolder_names
@@ -134,10 +113,14 @@ class GetRunfolders(DemultiplexConfig):
         Call methods to set off runfolder processing. Called by main module
             :return None:
         """
-        if test_processing_software(self.script_logger):
+        script_start_logmsg(script_logger, __file__)
+        self.runfolder_names = self.get_runfolder_names()
+
+        if test_processing_software(script_logger):
             for runfolder in self.runfolder_names:
                 self.demultiplex_runfolder(runfolder)
         self.return_num_processed_runfolders()
+        script_end_logmsg(script_logger, __file__)
 
     def demultiplex_runfolder(self, folder_name: str) -> None:
         """
@@ -149,19 +132,17 @@ class GetRunfolders(DemultiplexConfig):
                 folder_name, self.timestamp, self.cmd_line_supplied_runfolder
             )
             self.demultiplex_obj.setoff_workflow()
-            shutdown_logs(self.demultiplex_obj.demux_rf_logger)
-
             # If runfolder has been processed during this script run
             if self.demultiplex_obj.run_processed:
-                self.script_logger.info(
-                    self.script_logger.log_msgs["runfolder_processed"],
+                script_logger.info(
+                    script_logger.log_msgs["runfolder_processed"],
                     folder_name,
                 )
                 # Add runfolder to processed runfolder list
                 self.processed_runfolders.append(folder_name)
         else:
-            self.script_logger.info(
-                self.script_logger.log_msgs["skipping_runfolder"],
+            script_logger.info(
+                script_logger.log_msgs["skipping_runfolder"],
                 folder_name,
             )
 
@@ -169,20 +150,18 @@ class GetRunfolders(DemultiplexConfig):
         """
         Check presence of demultiplex logfile (bcl2fastq2_output.log)
             :param folder_name(str):    Name of runfolder
-            :return True|None:          Return true if demultiplex logfile exists
+            :return (Optional[bool]):   Return true if demultiplex logfile exists
         """
         self.rf_obj = RunfolderObject(folder_name, self.timestamp)
 
         if os.path.isfile(self.rf_obj.bcl2fastqlog_file):
-            self.script_logger.info(
-                self.script_logger.log_msgs["demux_already_complete"],
-                self.rf_obj.runfolder_name,
+            script_logger.info(
+                script_logger.log_msgs["demux_already_complete"],
                 self.rf_obj.bcl2fastqlog_file,
             )
         else:
-            self.script_logger.info(
-                self.script_logger.log_msgs["demux_not_complete"],
-                self.rf_obj.runfolder_name,
+            script_logger.info(
+                script_logger.log_msgs["demux_not_complete"],
                 self.rf_obj.bcl2fastqlog_file,
             )
             return True
@@ -193,7 +172,7 @@ class GetRunfolders(DemultiplexConfig):
             :return None:
         """
         num_processed_runfolders = get_num_processed_runfolders(
-            self.script_logger, self.processed_runfolders
+            script_logger, self.processed_runfolders
         )
         setattr(self, "num_processed_runfolders", num_processed_runfolders)
 
@@ -229,7 +208,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
             (TSO runs don't require demultiplexing)
         demultiplexing_required()
             Carries out per-runfolder pre-demultiplexing tasks to determine whether
-            demultiplexing is required.
+            demultiplexing is required
+        previous_samplesheet_check()
+            Checks if a prior samplesheet check has been carried out
         valid_samplesheet()
             Check SampleSheet is present and naming and contents are valid, using the
             samplesheet_validator module
@@ -293,8 +274,10 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.timestamp = timestamp
         self.cmd_line_supplied_runfolder = cmd_line_supplied_runfolder
         self.rf_obj = RunfolderObject(folder_name, self.timestamp)
-        self.rf_obj.add_runfolder_loggers()  # Add rf loggers to runfolder object
-        self.demux_rf_logger = self.rf_obj.rf_loggers["demultiplex"]
+        self.rf_obj.add_runfolder_loggers(
+            __package__
+        )  # Add rf loggers to runfolder object
+        self.demux_rf_logger = self.rf_obj.rf_loggers["demux"]
         self.bcl2fastq2_rf_logger = self.rf_obj.rf_loggers["bcl2fastq2"]
         self.disallowed_sserrs = [
             "Samplesheet absent",
@@ -327,7 +310,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         next run of the script (bcl2fastq2 is slow to create the logfile). Then calls
         calculate_cluster_density(). If a tso run, stops here. Else calls
         run_demultiplexing() to demultiplex the run.
-            :return True|None:  Return true if run successfully processed
+            :return (Optional[bool]):  Return true if run successfully processed
         """
         if self.demultiplexing_required():
             self.demux_rf_logger.info(
@@ -341,42 +324,52 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 elif self.run_demultiplexing():  # All other runs require demultiplexing
                     self.run_processed = True
                     self.validate_fastqs()
-
-            if self.run_processed:
-                self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["runfolder_processed"],
-                    self.rf_obj.runfolder_name,
-                )
                 return True
 
     def demultiplexing_required(self) -> Optional[bool]:
         """
         Carries out per-runfolder pre-demultiplexing tasks to determine whether demultiplexing is
-        required. Carries out the early warning SampleSheet checks. If sequencing is complete and
-        the run is a development run, creates the bcl2fastq2 logfile to prevent further processing.
-        Else, if sequencing is complete (RTAComplete.txt present) and the run is not a development
-        run, the SampleSheet contains no disallowed errors, and either 1) the sequencer does not
-        require an integrity check or 2) there has not previously been an integrity check and the
-        checksums match, returns True as demultiplexing is required
-            :return True|None:  Return true if demultiplexing is required
+        required. If required (i.e. these have not previously been carried out), carries out the early
+        warning SampleSheet checks. If sequencing is complete and the run is a development run, creates
+        the bcl2fastq2 logfile to prevent further processing. Else, if sequencing is complete
+        (RTAComplete.txt present) and the run is not a development run, the SampleSheet contains no
+        disallowed errors, and either 1) the sequencer does not require an integrity check or 2) there
+        has not previously been an integrity check and the checksums match, returns True as
+        demultiplexing is required
+            :return (Optional[bool]):  Return true if demultiplexing is required
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["ad_version"],
             git_tag(),
         )
-        valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
-        self.tso = sscheck_obj.tso
+        if not self.previous_samplesheet_check():
+            valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
+            self.tso = sscheck_obj.tso
 
-        if self.sequencing_complete():
-            if self.pass_integrity_check():
-                if self.dev_run(sscheck_obj) and self.no_disallowed_sserrs(
-                    valid, sscheck_obj
-                ):
-                    if self.dev_run_requires_automated_processing():
+            if self.sequencing_complete():
+                if self.pass_integrity_check():
+                    if self.dev_run(sscheck_obj) and self.no_disallowed_sserrs(
+                        valid, sscheck_obj
+                    ):
+                        if self.dev_run_requires_automated_processing():
+                            return True
+                    # Only want SampleSheet checks to be performed on production runs not dev runs
+                    elif self.no_disallowed_sserrs(valid, sscheck_obj):
                         return True
-                # Only want SampleSheet checks to be performed on production runs not dev runs
-                elif self.no_disallowed_sserrs(valid, sscheck_obj):
-                    return True
+
+    def previous_samplesheet_check(self) -> Optional[bool]:
+        """
+        Checks if a prior samplesheet check has been carried out. This is checked to determine
+        whether to proceed with processing the run. This flag file must be removed for subsequent
+        attempts to process the run in the case of the samplesheet check failing
+            :return (Optional[bool]):   Returns true if the samplesheet check flag file is present
+        """
+        if os.path.exists(self.rf_obj.sscheck_flagfile_path):
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["previous_ss_check"], 
+            self.rf_obj.sscheck_flagfile_path)
+            return True
+        else:
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ss_check_required"])
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
         """
@@ -395,7 +388,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
             os.path.dirname(self.rf_obj.samplesheet_validator_logfile),
         )
         sscheck_obj.ss_checks()
-        shutdown_logs(sscheck_obj.logger)
         if sscheck_obj.errors:
             return False, sscheck_obj
         else:
@@ -409,7 +401,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         Check if sequencing has completed for the current runfolder - presence of
         RTAComplete.txt.
-            :return True|None:  Returns true if sequencing is complete
+            :return (Optional[bool]):  Returns true if sequencing is complete
         """
         if os.path.isfile(self.rf_obj.rtacompletefile_path):
             self.demux_rf_logger.info(
@@ -426,7 +418,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def pass_integrity_check(self) -> Optional[bool]:
         """
         Check whether the integrity checking was successful
-            :return (True | None):  True if successful, None if unsuccessful
+            :return (Optional[bool]):  True if successful, None if unsuccessful
         """
         if self.seq_requires_no_ic():
             return True
@@ -441,8 +433,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         Check whether integrity check needed. Only runs from sequencers that can have
         checksums generated require this - not all sequencers can have checksums
         generated by the integrity check script (MiSeq can't have checksums generated).
-            :return True|None:  Return True if sequencer does not require an integrity
-                                check
+            :return (Optional[bool]):   Return True if sequencer does not require an integrity
+                                        check
         """
         if any(
             item in self.rf_obj.runfolder_name
@@ -458,7 +450,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         Check if md5checksum file exists (i.e. integrity check has been performed
         by integrity check scripts and it has written the checksums and success / failure
         message to this file)
-            :return True|None: Return True if md5checksum file exists
+            :return (Optional[bool]): Return True if md5checksum file exists
         """
         if os.path.isfile(self.rf_obj.checksumfile_path):
             self.demux_rf_logger.info(
@@ -481,8 +473,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         is addressed. If this string is removed from the file then the script will check
         for the CHECKSUM_MATCH_MSG / CHECKSUM_DO_NOT_MATCH_MSG messages again using
         self.checksums_match() )
-            :return True|None:  Returns true if the checksum file has previously
-                                been checked for the success message by the script
+            :return (Optional[bool]):   Returns true if the checksum file has previously
+                                        been checked for the success message by the script
         """
         checksums = read_lines(self.rf_obj.checksumfile_path)
 
@@ -516,8 +508,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         is present, this denotes that the runfolder has been corrupted during transfer from the
         sequencer). If neither string is present the contents of the file are not as expected and a
         warning message is sent
-            :return True|None:  Returns True if checksum match string is present in
-                                checksum file
+            :return (Optional[bool]):   Returns True if checksum match string is present in
+                                        checksum file
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["checksumfilecheck_start"]
@@ -529,28 +521,25 @@ class DemultiplexRunfolder(DemultiplexConfig):
         if DemultiplexConfig.CHECKSUM_MATCH_MSG in checksums[0]:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["ic_pass"],
-                self.rf_obj.runfolder_name,
                 self.rf_obj.checksumfile_path,
             )
             return True
         elif DemultiplexConfig.CHECKSUM_DO_NOT_MATCH_MSG in checksums[0]:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["ic_fail"],
-                self.rf_obj.runfolder_name,
                 self.rf_obj.checksumfile_path,
             )
         else:
             self.demux_rf_logger.warning(
                 self.demux_rf_logger.log_msgs["unexpected_checksumfile_contents"],
-                self.rf_obj.runfolder_name,
                 self.rf_obj.checksumfile_path,
             )
 
     def dev_run(self, sscheck_obj: object) -> Optional[bool]:
         """
         Determine whether the run is a development run using the sscheck_obj development_run() method
-            :sscheck_obj (obj):     Object created by samplesheet_validator.SampleheetCheck
-            :return (True | None):  Return true if development run, else None
+            :sscheck_obj (obj):         Object created by samplesheet_validator.SampleheetCheck
+            :return (Optional[bool]):   Return true if development run, else None
         """
         if sscheck_obj.development_run():
             self.demux_rf_logger.info(
@@ -577,7 +566,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :param sscheck_obj (object):    samplesheet_validator.SamplesheetCheck
                                             object, generated by the SampleSheet
                                             validator module
-            :return True|None:              Returns true if SampleSheet is valid
+            :return (Optional[bool]):       Returns true if SampleSheet is valid
         """
         if valid and not any(
             error in list(sscheck_obj.errors_dict.keys())
@@ -615,19 +604,17 @@ class DemultiplexRunfolder(DemultiplexConfig):
         development run requires automated processing by the script. Otherwise,
         the bcl2fastqlog is created to prevent further processing, an alert will be
         sent to slack, and the development run will need to be processed by bioinformatics.
-            :return (True | None): True if requires automated processing, else None
+            :return (Optional[bool]):   True if requires automated processing, else None
         """
         if self.cmd_line_supplied_runfolder:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["dev_run_will_be_processed"],
-                self.rf_obj.runfolder_name,
             )
             return True
         # Create bcl2fastq2 log to prevent scripts processing this run
         elif self.create_bcl2fastqlog():
             self.demux_rf_logger.warning(
                 self.demux_rf_logger.log_msgs["dev_run_needs_processing"],
-                self.rf_obj.runfolder_name,
             )
 
     def create_bcl2fastqlog(self) -> Optional[bool]:
@@ -635,13 +622,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
         Create file to prevent demultiplexing starting again. bcl2fastq2 v2.20 doesn't
         produce stdout for a while after starting so the file is created and the
         bcl2fastq2 stdout is written to the file later. If unsuccessful, exit script
-            :return True|None:  True if logfile is successfully created
+            :return (Optional[bool]):  True if logfile is successfully created
         """
         try:
             open(self.rf_obj.bcl2fastqlog_file, "w", encoding="utf-8").close()
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["create_bcl2fastqlog_pass"],
-                self.rf_obj.runfolder_name,
                 self.rf_obj.bcl2fastqlog_file,
             )
             if self.tso:
@@ -650,7 +636,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         except Exception as exception:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["create_bcl2fastqlog_fail"],
-                self.rf_obj.runfolder_name,
                 exception,
             )
             sys.exit(1)
@@ -659,11 +644,10 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         If runfolder is from TSO500 run, add specific message to bcl2fastq2_output.log
         file (TSO500 runs do not require demultiplexing)
-            :return True|None:  True if log file successfully created and written to
+            :return (Optional[bool]):  True if log file successfully created and written to
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["tso500_run"],
-            self.rf_obj.runfolder_name,
             DemultiplexConfig.STRINGS["demultiplexlog_tso500_msg"],
         )
         write_lines(
@@ -671,10 +655,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
             "w+",
             DemultiplexConfig.STRINGS["demultiplexlog_tso500_msg"],
         )
-
         self.demux_rf_logger.info(
-            self.demux_rf_logger.log_msgs["write_tso_msg_to_bcl2fastqlog"],
-            self.rf_obj.runfolder_name,
+            self.demux_rf_logger.log_msgs["write_tso_msg_to_bcl2fastqlog"]
         )
         return True
 
@@ -685,14 +667,14 @@ class DemultiplexRunfolder(DemultiplexConfig):
         runfolder.illumina_lane_metrics) to the runfolder. If the success statement is
         seen in the stderr, record in the log file else raise a slack alert and exit
         script. If run was sequenced on novaseq, an extra argument is provided
-            :return True|None:  True if success statement seen
+            :return (Optional[bool]):  True if success statement seen
         """
         if DemultiplexConfig.NOVASEQ_ID in self.rf_obj.runfolder_name:
             novaseq_flag = " --IS_NOVASEQ"
         else:
             novaseq_flag = ""
 
-        self.cluster_density_cmd = f"{self.cluster_density_cmd }{novaseq_flag}"
+        self.cluster_density_cmd = f"{self.cluster_density_cmd}{novaseq_flag}"
 
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["running_cd"],
@@ -706,14 +688,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
             if DemultiplexConfig.STRINGS["cd_success"] in out or err:
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["cd_success"],
-                    self.rf_obj.runfolder_name,
-                    DemultiplexConfig.STRINGS["lane_metrics_suffix"],
+                    f"{self.rf_obj.runfolder_name}{DemultiplexConfig.STRINGS['lane_metrics_suffix']}",
                 )
                 return True
         else:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["cd_fail"],
-                self.rf_obj.runfolder_name,
                 err,
             )
             sys.exit(1)
@@ -721,12 +701,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def run_demultiplexing(self) -> Optional[bool]:
         """
         Run demultiplexing command. If unsuccessful, exit script
-            :return True|None:  True if command executed succesfully and output is
-                                successfully written to the logfile
+            :return (Optional[bool]):   True if command executed succesfully and output is
+                                        successfully written to the logfile
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["bcl2fastq_start"],
-            self.rf_obj.runfolder_name,
             self.bcl2fastq2_cmd,
         )
         # Runs bcl2fastq2 and checks if completed successfully
@@ -738,7 +717,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         if returncode == 0:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
-                self.rf_obj.runfolder_name,
             )
             self.bcl2fastq2_rf_logger.info(
                 err  # Write stderr to bcl2fastq2 runfolder logfile
@@ -747,7 +725,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         else:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["bcl2fastq_failed"],
-                self.rf_obj.runfolder_name,
                 out,
                 err,
             )
@@ -763,6 +740,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         fastqs = [
             x for x in os.listdir(self.rf_obj.fastq_dir_path) if x.endswith("fastq.gz")
         ]
+        returncodes = []
 
         for fastq in fastqs:
             out, err, returncode = execute_subprocess_command(
@@ -781,7 +759,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     out,
                     err,
                 )
-                if os.path.exists(self.rf_obj.bcl2fastqlog_file):
-                    os.remove(
-                        self.rf_obj.bcl2fastqlog_file
-                    )  # Bcl2fastq log file removed to trigger re-demultiplex
+
+        if all(code == 0 for code in returncodes):
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["demux_success"])
+        else:
+            if os.path.exists(self.rf_obj.bcl2fastqlog_file):
+                os.remove(
+                    self.rf_obj.bcl2fastqlog_file
+                )  # Bcl2fastq log file removed to trigger re-demultiplex
+            self.demux_rf_logger.error(self.demux_rf_logger.log_msgs["re_demultiplex"])

@@ -7,8 +7,8 @@ any changes are made to these functions and classes, all scripts should be compr
 
 The script contains many functions whose protocol can be identified by reading the individual docstrings. The main class in this module is the RunfolderObject() class which functions as follows:
 1. Adds all runfolder-specific paths and qualities that need to be accessed by other modules as class attributes
-2. add_runfolder_loggers() can be used to add runfolder-specific loggers to the RunfolderObject object as an attribute
-3. add_runfolder_logger() can be used to add a single runfolder logger to the RunfolderObject object as an attribute
+2. add_runfolder_loggers(script) can be used to add runfolder-specific loggers to the RunfolderObject object as an attribute
+3. add_runfolder_logger(script, logger_name) can be used to add a single runfolder logger to the RunfolderObject object as an attribute
 
 ## Configuration
 

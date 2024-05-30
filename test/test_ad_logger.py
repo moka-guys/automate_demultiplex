@@ -2,7 +2,6 @@
 """ ad_logger.py pytest unit tests
 
 # TODO write the following unit tests which are currently missing or incomplete:
-- shutdown_streamhandler
 - shutdown_logs
 - SensitiveFormatter
     - format
@@ -24,12 +23,10 @@ from config import ad_config
 # No patching required
 
 # TODO add tests for SensitiveFormatter class
-# TODO add test for shutdown_logs and shutdown_streamhandler
+# TODO add test for shutdown_logs
 # TODO add test that checks that streamhandler, filehandler and syslog handler are all
 # added as expected
 
-# TODO write test for shutdown_streamhandler()
-# def test_shutdown_streamhandler():
 
 # TODO write test for shutdown_logs()
 # def test_shutdown_logs():
@@ -92,7 +89,7 @@ class TestRunfolderLoggers:
         Test all runfolder-level loggers
         """
         # logging.disable(logging.NOTSET)  # Re-enable logging
-        loggers_obj = ad_logger.RunfolderLoggers(logfiles_config)
+        loggers_obj = ad_logger.RunfolderLoggers(__package__, "DUMMY_NAME", logfiles_config)
         loggers = loggers_obj.get_loggers()
         for logger_name in loggers.keys():
             # Test logging works as expected
