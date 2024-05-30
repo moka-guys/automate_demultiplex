@@ -99,11 +99,14 @@ class SequencingRuns(SWConfig):
         self.set_runfolders()
         if test_upload_software(script_logger):
             for rf_obj in self.runs_to_process:
-                script_logger.info(
-                    script_logger.log_msgs["start_runfolder_proc"],
-                    rf_obj.runfolder_name,
-                )
-                self.process_runfolder(rf_obj)
+                if not os.path.exists(rf_obj.upload_flagfile):
+                    script_logger.info(
+                        script_logger.log_msgs["start_runfolder_proc"],
+                        rf_obj.runfolder_name,
+                    )
+                    self.process_runfolder(rf_obj)
+                else:
+                    self.runs_to_process.remove(rf_obj)
             self.num_processed_runfolders()
             script_end_logmsg(script_logger, __file__)
 
@@ -492,7 +495,7 @@ class ProcessRunfolder(SWConfig):
             ] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
-                self.samples_obj.nexus_paths["fastqs_dir"],
+                "/",
                 self.rf_obj.runfolder_samplesheet_path,
             )
         return upload_cmds
@@ -2282,7 +2285,7 @@ class BuildDxCommands(SWConfig):
     def return_pipe_runwide_cmds(self) -> list:
         """
         Collect runwide commands for PIPE runs as a list. This includes RPKM
-        (single command per vcp panel)
+        (single command per vcp panel). # CNV calling steps are a dependency of MultiQC
             :return cmd_list (list):    List of runwide commands for PIPE runs
         """
         cmd_list = []
@@ -2299,22 +2302,16 @@ class BuildDxCommands(SWConfig):
                     if self.samples_obj.samples_dict[k]["panel_settings"]["panel_name"]
                     == core_panel
                 ]
-                # Make sure there are enough samples for exome depth and RPKM
+                # Make sure there are enough samples for RPKM and ExomeDepth
                 if len(core_panel_pannos) >= 3:
-                    if SWConfig.CAPTURE_PANEL_DICT[core_panel]["ed_readcount_bedfile"]:
-                        # CNV calling steps are a dependency of MultiQC
-                        cmd_list.append(self.create_ed_readcount_cmd(core_panel))
-                        cmd_list.append(
-                            SWConfig.UPLOAD_ARGS["depends_list_edreadcount"]
-                        )
-                        for panno in set(core_panel_pannos):
-                            cmd_list.append(self.create_ed_cnvcalling_cmd(panno))
-                            cmd_list.append(
-                                SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"]
-                            )
-
                     cmd_list.append(self.create_rpkm_cmd(core_panel))
                     cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
+                    cmd_list.append(self.create_ed_readcount_cmd(core_panel))
+                    cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_edreadcount"])
+                    for panno in set(core_panel_pannos):
+                        if SWConfig.CAPTURE_PANEL_DICT[core_panel]["ed_readcount_bedfile"] and SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]:
+                            cmd_list.append(self.create_ed_cnvcalling_cmd(panno))
+                            cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
                 else:
                     self.rf_obj.rf_loggers["sw"].info(
                         self.rf_obj.rf_loggers["sw"].log_msgs[
