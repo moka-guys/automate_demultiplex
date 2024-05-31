@@ -2013,7 +2013,7 @@ class BuildDxCommands(SWConfig):
                 self.samples_obj.samples_dict[sample_name]["sample_pipeline_cmd"]
             )
             dx_postprocessing_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
-            sambamba_cmds_list.append(
+            dx_postprocessing_cmds.append(
                 self.create_sambamba_cmd(
                     sample_name, self.samples_obj.samples_dict[sample_name]["pannum"]
                 )
