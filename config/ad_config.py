@@ -364,6 +364,7 @@ class DemultiplexConfig(PanelConfig):
     CHECKSUM_MATCH_MSG = "Checksums match"  # Success message written to md5checksum file by integrity check scripts
     # Failure message written to md5checksum file by integrity check scripts
     CHECKSUM_DO_NOT_MATCH_MSG = "Checksums do not match"
+    SAMPLESHEET_SUCCESS_MSG = "Samplesheet check successful with no errors identified"
     SAMPLESHEET_ERRORS_MSG = (
         "Processing halted. SampleSheet contains disallowed SampleSheet errors: %s"
     )
