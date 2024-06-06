@@ -240,6 +240,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         no_disallowed_sserrs(valid, sscheck_obj)
             Check for specific errors that would cause bcl2fastq2 to fail and whose
             presence should stop demultiplexing
+        write_to_sscheck_file(message)
+            Write message to the samplesheet check file
         dev_run_requires_automated_processing()
             Check whether the development run requires manual processing or automated
             processing by the script
@@ -365,8 +367,10 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :return (Optional[bool]):   Returns true if the samplesheet check flag file is present
         """
         if os.path.exists(self.rf_obj.sscheck_flagfile_path):
-            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["previous_ss_check"], 
-            self.rf_obj.sscheck_flagfile_path)
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["previous_ss_check"], 
+                self.rf_obj.sscheck_flagfile_path
+            )
             return True
         else:
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ss_check_required"])
@@ -568,34 +572,42 @@ class DemultiplexRunfolder(DemultiplexConfig):
                                             validator module
             :return (Optional[bool]):       Returns true if SampleSheet is valid
         """
-        if valid and not any(
-            error in list(sscheck_obj.errors_dict.keys())
-            for error in self.disallowed_sserrs
-        ):
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["no_disallowed_ss_errs"],
-                self.rf_obj.samplesheet_path,
-            )
-            return True
-        else:
-            err_str = ", ".join(list(sscheck_obj.errors_dict.keys()))
-            if not os.path.exists(self.rf_obj.sscheck_flagfile_path):
+        err_list = list(sscheck_obj.errors_dict.keys())
+        if not os.path.exists(self.rf_obj.sscheck_flagfile_path):
+            if valid and not any(
+                error in err_list for error in self.disallowed_sserrs
+            ):
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["no_disallowed_ss_errs"],
+                    self.rf_obj.samplesheet_path,
+                )
+                self.write_to_sscheck_file(DemultiplexConfig.SAMPLESHEET_SUCCESS_MSG)
+                return True
+            else:
                 self.demux_rf_logger.error(
                     self.demux_rf_logger.log_msgs["ssfail_haltdemux"],
                     self.rf_obj.samplesheet_path,
-                    err_str,
+                    ", ".join(err_list),
                 )
-            else:
-                self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["ssfail_haltdemux"],
-                    self.rf_obj.samplesheet_path,
-                    err_str,
+                self.write_to_sscheck_file(
+                    DemultiplexConfig.SAMPLESHEET_ERRORS_MSG % err_str,
                 )
-            write_lines(
-                self.rf_obj.sscheck_flagfile_path,
-                "w",
-                DemultiplexConfig.SAMPLESHEET_ERRORS_MSG % err_str,
+        else:
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["sscheck_file_exists"],
             )
+
+    def write_to_sscheck_file(self, message: str) -> None:
+        """
+        Write message to the samplesheet check file
+            :param message: Message string to write to file
+            :return None:
+        """
+        write_lines(
+            self.rf_obj.sscheck_flagfile_path,
+            "w",
+            message,
+        )
 
     def dev_run_requires_automated_processing(self) -> Optional[bool]:
         """
@@ -747,6 +759,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 f"gzip --test {os.path.join(self.rf_obj.fastq_dir_path, fastq)}",
                 self.demux_rf_logger,
             )
+            returncodes.append(returncode)
             if returncode == 0:
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["fastq_valid"],

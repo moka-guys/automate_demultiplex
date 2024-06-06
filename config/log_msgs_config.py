@@ -61,6 +61,7 @@ LOG_MSGS = {
             "file, (and the checksums assessed string from the md5checksum file if the sequencer has integrity "
             "checking) to continue processing"
         ),
+        "sscheck_file_exists": "SampleSheet check file already exists. Not conducting further checks",
         "no_disallowed_ss_errs": "SampleSheet does not contain any disallowed SampleSheet errors: %s",
         "dev_run_needs_processing": "Development run requires processing",
         "dev_run_will_be_processed": "Development run will be processed by the scripts",
