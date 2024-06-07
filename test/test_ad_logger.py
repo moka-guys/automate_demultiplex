@@ -89,7 +89,9 @@ class TestRunfolderLoggers:
         Test all runfolder-level loggers
         """
         # logging.disable(logging.NOTSET)  # Re-enable logging
-        loggers_obj = ad_logger.RunfolderLoggers(__package__, "DUMMY_NAME", logfiles_config)
+        loggers_obj = ad_logger.RunfolderLoggers(
+            __package__, "DUMMY_NAME", logfiles_config
+        )
         loggers = loggers_obj.get_loggers()
         for logger_name in loggers.keys():
             # Test logging works as expected

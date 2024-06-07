@@ -2309,9 +2309,16 @@ class BuildDxCommands(SWConfig):
                     cmd_list.append(self.create_ed_readcount_cmd(core_panel))
                     cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_edreadcount"])
                     for panno in set(core_panel_pannos):
-                        if SWConfig.CAPTURE_PANEL_DICT[core_panel]["ed_readcount_bedfile"] and SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]:
+                        if (
+                            SWConfig.CAPTURE_PANEL_DICT[core_panel][
+                                "ed_readcount_bedfile"
+                            ]
+                            and SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]
+                        ):
                             cmd_list.append(self.create_ed_cnvcalling_cmd(panno))
-                            cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"])
+                            cmd_list.append(
+                                SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"]
+                            )
                 else:
                     self.rf_obj.rf_loggers["sw"].info(
                         self.rf_obj.rf_loggers["sw"].log_msgs[

@@ -229,7 +229,9 @@ class UploadRunfolder(URConfig):
         if ignore:
             for pattern in ignore.split(","):
                 if pattern.upper() in filepath.upper():
-                    self.logger.info(self.logger.log_msgs["ignoring_files"], pattern, filepath)
+                    self.logger.info(
+                        self.logger.log_msgs["ignoring_files"], pattern, filepath
+                    )
                     return True
         else:
             return False

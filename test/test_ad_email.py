@@ -6,6 +6,7 @@ workstation where the required auth details are stored
 # TODO write the below tests which are currently missing or incomplete:
 - AdEmail.generate_email_html
 """
+
 import pytest
 from .conftest import logger_obj
 from ad_email.ad_email import AdEmail

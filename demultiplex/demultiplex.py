@@ -368,12 +368,14 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         if os.path.exists(self.rf_obj.sscheck_flagfile_path):
             self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["previous_ss_check"], 
-                self.rf_obj.sscheck_flagfile_path
+                self.demux_rf_logger.log_msgs["previous_ss_check"],
+                self.rf_obj.sscheck_flagfile_path,
             )
             return True
         else:
-            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["ss_check_required"])
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["ss_check_required"]
+            )
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
         """
@@ -574,9 +576,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         err_list = list(sscheck_obj.errors_dict.keys())
         if not os.path.exists(self.rf_obj.sscheck_flagfile_path):
-            if valid and not any(
-                error in err_list for error in self.disallowed_sserrs
-            ):
+            if valid and not any(error in err_list for error in self.disallowed_sserrs):
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["no_disallowed_ss_errs"],
                     self.rf_obj.samplesheet_path,

@@ -10,6 +10,7 @@ from ad_logger.ad_logger import set_root_logger
 
 set_root_logger()
 
+
 def get_arguments():
     """
     Uses argparse module to define and handle command line input arguments

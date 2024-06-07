@@ -61,7 +61,9 @@ temp_runfolderdir = os.path.join(
     test_data_temp, "data_unzipped/demultiplex_test_files/test_runfolders/"
 )
 temp_log_dir = os.path.join(test_data_temp, "automate_demultiplexing_logfiles")
-temp_samplesheet_logdir = os.path.join(temp_log_dir, "samplesheet_validator_script_logfiles")
+temp_samplesheet_logdir = os.path.join(
+    temp_log_dir, "samplesheet_validator_script_logfiles"
+)
 # Temp directory for SampleSheet validator SampleSheet test cases
 sv_samplesheet_temp_dir = os.path.join(test_data_temp, "data_unzipped/samplesheets")
 
