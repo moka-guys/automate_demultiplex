@@ -584,10 +584,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.write_to_sscheck_file(DemultiplexConfig.SAMPLESHEET_SUCCESS_MSG)
                 return True
             else:
+                err_str = ", ".join(err_list)
                 self.demux_rf_logger.error(
                     self.demux_rf_logger.log_msgs["ssfail_haltdemux"],
                     self.rf_obj.samplesheet_path,
-                    ", ".join(err_list),
+                    err_str,
                 )
                 self.write_to_sscheck_file(
                     DemultiplexConfig.SAMPLESHEET_ERRORS_MSG % err_str,
