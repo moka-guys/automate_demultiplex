@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - master
+      - develop
       - 'feature/**'
-      - 'develop/**'
       - 'hotfix/**'
 jobs:
   build:
