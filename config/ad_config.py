@@ -350,11 +350,11 @@ class DemultiplexConfig(PanelConfig):
     }
     TESTING = TESTING
     BCL2FASTQ2_CMD = (
-        f"sudo docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
+        f"docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
         "--sample-sheet /mnt/run/%s --no-lane-splitting"
     )
     CD_CMD = (
-        f"sudo docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
+        f"docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
 
@@ -565,11 +565,11 @@ class ToolboxConfig:
         },
         "gatk_collect_lane_metrics": {
             "executable": "docker",
-            "test_cmd": f"sudo docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
+            "test_cmd": f"docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
         },
         "bcl2fastq2": {
             "executable": "docker",
-            "test_cmd": f"sudo docker run --rm {BCL2FASTQ_DOCKER} --version",
+            "test_cmd": f"docker run --rm {BCL2FASTQ_DOCKER} --version",
         },
     }
 
