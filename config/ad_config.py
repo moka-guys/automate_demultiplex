@@ -6,6 +6,7 @@ Automate demultiplex configuration. Contains the following settings:
 - Setoff workflows script-specific settings
 """
 import os
+import sys
 import datetime
 from pygit2 import Repository
 from pathlib import Path
@@ -30,7 +31,7 @@ MAIL_SETTINGS = {
     "alerts_email": "moka.alerts@gstt.nhs.uk",
 }
 
-if BRANCH == "master":  # Prod branch
+if BRANCH == "master" and "pytest" not in sys.modules:  # Prod branch
     TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
