@@ -1869,9 +1869,6 @@ class BuildDxCommands(SWConfig):
         get_tso_analysis_options()
             Determine whether its a novaseq run from the runfoldername, and return the
             relevant tso500 app input string
-        get_tso_instance_type()
-            If run contains high throughput tso pannumbers, return the high throughput
-            instance type (larger instance), else return low throughput instance type
         create_sompy_cmd(sample)
             Build dx run command to run sompy on a single VCF file
         create_sambamba_cmd(sample, pannumber)
@@ -2055,7 +2052,6 @@ class BuildDxCommands(SWConfig):
                 SWConfig.APP_INPUTS["tso500"]["project_name"],
                 SWConfig.APP_INPUTS["tso500"]["runfolder_name"],
                 self.get_tso_analysis_options(),
-                self.get_tso_instance_type(),
                 SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"] % self.rf_obj.dnanexus_auth,
             ]
@@ -2072,20 +2068,6 @@ class BuildDxCommands(SWConfig):
         else:
             tso500_analysis_options = ""
         return f'{SWConfig.APP_INPUTS["tso500"]["analysis_options"]}{tso500_analysis_options}'
-
-    def get_tso_instance_type(self) -> str:
-        """
-        If run contains high throughput tso pannumbers, return the high throughput
-        instance type (larger instance), else return the low throughput instance type
-            :return (str):  Instance type command for tso500 app execution
-        """
-        if any(
-            SWConfig.PANEL_DICT[pannumber]["throughput"] == "high"
-            for pannumber in self.samples_obj.unique_pannos
-        ):
-            return f"--instance-type {SWConfig.APP_INPUTS['tso500']['ht_instance']}"
-        else:
-            return f"--instance-type {SWConfig.APP_INPUTS['tso500']['lt_instance']}"
 
     def create_sompy_cmd(self, sample: str) -> str:
         """

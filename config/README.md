@@ -67,13 +67,13 @@ for analysis of samples with that pan number
 | coverage_min_basecall_qual | Value or False. Sambamba minimum base quality |
 | coverage_min_mapping_qual | Value or False. Sambamba minimum mapping quality |
 | masked_reference | projectid:fileid, or False |
-| throughput | 'high' or 'low', or False if unspecified |
 | test_number | R or M number, or false if no specific number |
 | congenica_project | False = no upload. Number = normal. SFTP = sftp upload |
 | congenica_credentials | 'Viapath' or 'StG'. False = Congenica app not used |
 | congenica_IR_template | 'priority' or 'non-priority'. False = Congenica app not used |
 | polyedge | False if app not required, subdictionary containing app inputs if it is required |
 | ed_readcount_bedfile | False if app not required, panel bed file if required |
+| dry_lab | True if required to share with dry lab, None if not |
 | dry_lab_only | Used to determine whether to include the TSO pan number in the duty_csv pan number list |
 | drylab_dnanexus_id | False if not required to share with other users, user ID string if needs sharing |
 | development_run | False if pan number is not a development pan number, else True |

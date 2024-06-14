@@ -162,8 +162,6 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "analysis_options": "-ianalysis_options=",
         "project_name": "-iproject_name=${PROJECT_NAME}",
         "runfolder_name": "-irunfolder_name=${RUNFOLDER_NAME}",
-        "ht_instance": "mem1_ssd1_v2_x72",
-        "lt_instance": "mem1_ssd1_v2_x36",
     },
     "sambamba": {  # Used for TSO samples only as standalone app
         "bam": "-ibamfile=${PROJECT_ID}:/analysis_folder/Logs_Intermediates/StitchedRealigned/",
@@ -275,7 +273,10 @@ DX_CMDS = {
     "pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
     "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
     "snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} --priority high -y {JOB_NAME_STR}",
-    "tso500": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --priority high -y {JOB_NAME_STR}",
+    "tso500": (
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --priority high -y {JOB_NAME_STR} "
+        "--instance-type mem1_ssd1_v2_x72"
+    ),
     "fastqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
     "peddy": (  # TODO move instance type into app itself
         f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high "

@@ -33,7 +33,6 @@ required for analysis of samples with that pan number
     coverage_min_basecall_qual      Value or None. Sambamba minimum base quality
     coverage_min_mapping_qual       Value or None. Sambamba minimum mapping quality
     masked_reference                projectid:fileid, or None
-    throughput                      'high' or 'low', or None if unspecified
     test_number                     R or M number, or None if no specific number
     congenica_project               None = no upload. Number = normal. SFTP = sftp upload
     congenica_credentials           'Synnovis' or 'StG'. None = Congenica app not used
@@ -88,7 +87,6 @@ DEFAULT_DICT = {
     "coverage_min_basecall_qual": None,
     "coverage_min_mapping_qual": None,
     "masked_reference": None,
-    "throughput": None,
     "test_number": None,
     "congenica_project": None,
     "congenica_credentials": None,
@@ -270,24 +268,17 @@ class PanelConfig:
                 **CAPTURE_PANEL_DICT["archerdx"],
             },
         ),
-        "Pan4969": {  # TSO500 no UTRs. TERT promoter
-            **CAPTURE_PANEL_DICT["tso500"],
-            "throughput": "low",
-        },
         "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
             **CAPTURE_PANEL_DICT["tso500"],
-            "throughput": "high",
         },
         "Pan5112": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
             **CAPTURE_PANEL_DICT["tso500"],
-            "throughput": "high",
             "dry_lab_only": True,
             "dry_lab": True,
         },
         "Pan5114": {  # TSO500 High throughput Control. no UTRs. TERT promoter
             **CAPTURE_PANEL_DICT["tso500"],
-            "throughput": "high",
-            "dry_lab": "BSPS_MD",
+            "dry_lab": True,
         },
         "Pan5007": {  # LRPCR R207 (Synnovis) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
