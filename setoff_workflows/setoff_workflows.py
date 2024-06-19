@@ -820,6 +820,22 @@ class CollectRunfolderSamples(SWConfig):
                     self.undetermined_fastqs_list
                 )
 
+    def get_runtype(self) -> str:
+        """
+        Use samplename_dict and the config.PANEL_DICT to get the runtype for samples
+        in the run for Custom Panels and WES runs where sample types vary (VCP1/2/3/WES/WES EB)
+            :return runtype_str (str):  Runtype name string
+        """
+        runtype_list = []
+        for sample, panno in self.samplename_dict.items():
+            runtype_list.append(SWConfig.PANEL_DICT[panno]["runtype"])
+        runtype_str = "_".join(sorted(list(set(runtype_list))))
+        self.rf_obj.rf_loggers["sw"].info(
+            self.rf_obj.rf_loggers["sw"].log_msgs["runtype_str"],
+            runtype_str,
+        )
+        return runtype_str  # Get runtype from pipelines_list
+
     def get_nexus_runfolder_suffix(self) -> str:
         """
         Get the runfolder suffix for the DNAnexus project name. This consists of the
