@@ -110,7 +110,7 @@ NEXUS_IDS = {
         "congenica_upload": f"{TOOLS_PROJECT}:applet-G8QGBK80jy1zJK6g9yVP7P8V",  # congenica_upload_v1.3.2"
         "congenica_sftp": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",  # wes_congenica_sftp_upload_v1.0
         "qiagen_upload": f"{TOOLS_PROJECT}:applet-Gb6G4k00v09KXfq8f6BP7f23",  # qiagen_upload_v1.0.0
-        "oncodeep_upload": f"{TOOLS_PROJECT}:",  #TODO finish this
+        "oncodeep_upload": f"{TOOLS_PROJECT}:applet-GkkGQ880jy1vXXFZBFG7232G",  # oncodeep_upload_v1.0.0
         "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",  # upload_multiqc_v1.4.0
         "multiqc": f"{TOOLS_PROJECT}:applet-GXqBzg00jy1pXkQVkY027QqV",  # multiqc_v1.18.0
         "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",  # sompy_v1.2
