@@ -99,8 +99,10 @@ script_start_logmsg(rf_obj.rf_loggers["backup"], __file__)
 
 # Create an object to set up the upload agent command
 ur_obj = UploadRunfolder(
-    rf_obj=rf_obj,
-    nexus_identifiers=nexus_identifiers,
+    rf_obj.rf_loggers["backup"],
+    rf_obj.runfolder_name,
+    rf_obj.runfolderpath,
+    nexus_identifiers,
 )
 ur_obj.upload_rest_of_runfolder(parsed_args.ignore)
 

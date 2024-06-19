@@ -10,6 +10,7 @@ import os
 import subprocess
 import logging
 import argparse
+import datetime
 from distutils.spawn import find_executable
 from typing import Union, Optional
 from config.ad_config import ToolboxConfig
@@ -287,7 +288,7 @@ class RunfolderObject(ToolboxConfig):
         timestamp (str):                        Timestamp in the format str(f"{datetime.datetime.now():
                                                 %Y%m%d_%H%M%S}")
         runfolder_name (str):                   Runfolder name string
-        runfolderpath (str):                    Runfolder path
+        runfolderpath (str):                    Path of runfolder on workstation
         samplesheet_name (str):                 Name of runfolder SampleSheet
         rtacompletefile_path (str):             Sequencing finished filepath (within runfolder)
         samplesheet_path (str):                 Path to SampleSheet in SampleSheets dir
@@ -315,8 +316,6 @@ class RunfolderObject(ToolboxConfig):
     Methods
         add_runfolder_loggers(script)
             Add runfolder loggers to runfolder object
-        add_runfolder_logger(script, logger_name)
-            Add a single runfolder logger to runfolder object
     """
 
     def __init__(self, runfolder_name: str, timestamp: str):
@@ -340,6 +339,13 @@ class RunfolderObject(ToolboxConfig):
         )
         self.runfolder_samplesheet_path = os.path.join(
             self.runfolderpath, self.samplesheet_name
+        )
+        self.masterfile_name = f"{self.runfolder_name}_MasterDataFile.xlsx"
+        self.masterfile_path = os.path.join(
+            ToolboxConfig.RUNFOLDERS, "samplesheets", self.masterfile_name
+        )
+        self.runfolder_masterfile_path = os.path.join(
+            self.runfolderpath, self.masterfile_name
         )
         self.checksumfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["md5checksum"]
@@ -418,13 +424,9 @@ class RunfolderObject(ToolboxConfig):
         self.logfiles_config = {
             "sw": self.sw_runfolder_logfile,
             "demux": self.demultiplex_runfolder_logfile,
-            "upload_flag": self.upload_flagfile,
             "backup": self.upload_runfolder_logfile,
-            "project": self.proj_creation_script,
-            "dx_run": self.runfolder_dx_run_script,
-            "post_run_cmds": self.post_run_dx_run_script,
-            "ss_validator": self.samplesheet_validator_logfile,
             "bcl2fastq2": self.bcl2fastqlog_file,
+            "ss_validator": self.samplesheet_validator_logfile,
         }
         # Log files that sit outside the runfolder that require uploading
         self.logfiles_to_upload = [
@@ -447,13 +449,70 @@ class RunfolderObject(ToolboxConfig):
         )
         self.rf_loggers = loggers_obj.loggers
 
-    def add_runfolder_logger(self, script: str, logger_name: str) -> None:
+    def get_samplename_dict(self, logger: logging.Logger) -> list:
         """
-        Add a single runfolder logger to runfolder object
-            :param script (str):        Script name the function has been called from
-            :param logger_name (str):   Name of the logger
-            :return None:
+        Read SampleSheet to create a dict of samples and their pan numbers for the
+        run. Reads file into list and loops through in reverse allowing us to access
+        sample names and stop at column headers, skipping the file header. Creates
+        upload agent file if samples have been identified, to prevent processing by
+        other script runs
+            :param logger (logging.Logger): Logger
+            :return samplename_dict (dict): Dict of sample names identified from the
+                                            SampleSheet, and their pan numbers
         """
-        logfile_config = {logger_name: self.logfiles_config[logger_name]}
-        loggers_obj = RunfolderLoggers(__name__, self.runfolder_name, logfile_config)
-        self.rf_loggers = loggers_obj.get_loggers()
+        samplename_dict = {}
+        if os.path.exists(self.samplesheet_path):
+            with open(self.samplesheet_path, "r") as samplesheet_stream:
+                for line in reversed(samplesheet_stream.readlines()):
+                    if line.startswith("Sample_ID") or "[Data]" in line:
+                        break
+                    # Skip empty lines (check first element of the line, after splitting on comma)
+                    elif len(line.split(",")[0]) < 2:
+                        pass
+                    else:  # If it's a line detailing a sample, get sample name and pan num
+                        panel_number = ""
+                        sample_name = line.split(",")[0]
+                        for pannum in ToolboxConfig.PANELS:
+                            if pannum in line:
+                                panel_number = pannum
+                            samplename_dict[sample_name] = panel_number
+            if samplename_dict:  # If samples identified
+                write_lines(  # Create upload flag file (prevents processing by other script runs)
+                    self.upload_flagfile,
+                    "w",
+                    f"{ToolboxConfig.UPLOAD_STARTED_MSG}: {datetime.datetime.now()}",
+                )
+                return samplename_dict
+            else:
+                return False
+        else:
+            logger.error(logger.log_msgs["ss_missing"])
+            return False
+
+    def get_pipeline(logger: logging.Logger, samplename_dict: dict) -> Union[str, None]:
+        """
+        Use samplename_dict and the config.PANEL_DICT to get a list of pipeline
+        names for samples in the run. Generates error mesage if there is more than one
+        pipeline name in the list. Returns the most frequent pipeline name in the set
+            :param logger (logging.Logger): Logger
+            :param samplename_dict (dict):  Dict of sample names identified from the
+                                            SampleSheet, and their pan numbers
+            :return pipeline_name (str):    Pipeline name
+        """
+        pipelines_list = []
+        for sample, panno in samplename_dict.items():
+            pipelines_list.append(ToolboxConfig.PANEL_DICT[panno]["pipeline"])
+        pipelines_list = sorted(list(set(pipelines_list)))
+        if len(pipelines_list) > 1:
+            logger.error(
+                logger.log_msgs["multiple_pipeline_names"],
+                pipelines_list,
+                ToolboxConfig.PIPELINES,
+            )
+        else:
+            pipeline_name = max(list(set(pipelines_list)), key=pipelines_list.count)
+            logger.info(
+                logger.log_msgs["pipeline_name"],
+                pipeline_name,
+            )
+            return pipeline_name  # Get pipeline from pipelines_list

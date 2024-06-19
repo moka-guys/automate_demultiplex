@@ -237,6 +237,15 @@ class PanelConfig:
             "coverage_min_basecall_qual": 25,
             "coverage_min_mapping_qual": 30,
         },
+        "oncodeep": {
+            **DEFAULT_DICT,
+            "panel_name": "oncodeep",
+            "pipeline": "oncodeep",
+            "sample_prefix": "OKD",
+            "runtype": "OKD",
+            "capture_type": "Hybridisation",
+            "multiqc_coverage_level": 30,  # We don't align for OncoDEEP
+        },
     }
     PIPELINES = list(set([v["pipeline"] for k, v in CAPTURE_PANEL_DICT.items()]))
     PANEL_DICT = {
@@ -268,6 +277,9 @@ class PanelConfig:
                 **CAPTURE_PANEL_DICT["archerdx"],
             },
         ),
+        "Pan5226": {  # OncoDEEP
+            **CAPTURE_PANEL_DICT["oncodeep"],
+        },
         "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
             **CAPTURE_PANEL_DICT["tso500"],
         },
@@ -821,6 +833,7 @@ class PanelConfig:
     WES_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "wes"]
     SNP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "snp"]
     ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
+    ONCODEEP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "oncodeep"]
     LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
     DEVELOPMENT_PANEL = "".join(
         [k for k, v in PANEL_DICT.items() if v["development_run"]]

@@ -13,6 +13,7 @@ Contains the following classes:
 import sys
 import os
 import re
+from shutil import copyfile
 from typing import Optional, Tuple
 import samplesheet_validator.samplesheet_validator as samplesheet_validator
 from config.ad_config import DemultiplexConfig
@@ -260,6 +261,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
             Validate the created fastqs in the BaseCalls directory and log success
             or failure error message accordingly. If any failure, remove bcl2fastq log
             file to trigger re-demultiplex on next script run
+        copy_file()
+            Copy file from source path to dest path
     """
 
     def __init__(
@@ -326,6 +329,18 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 elif self.run_demultiplexing():  # All other runs require demultiplexing
                     self.run_processed = True
                     self.validate_fastqs()
+                    self.copy_file(
+                        self.rf_obj.samplesheet_path,
+                        self.rf_obj.runfolder_samplesheet_path
+                    )
+                    samplename_dict = self.rf_obj.get_samplename_dict(
+                        self.demux_rf_logger,
+                    )
+                    if self.rf_obj.get_pipeline(self.demux_rf_logger, samplename_dict) == "oncodeep":
+                        self.copy_file(
+                            self.rf_obj.masterfile_path,
+                            self.rf_obj.runfolder_masterfile_path
+                        )
                 return True
 
     def demultiplexing_required(self) -> Optional[bool]:
@@ -465,7 +480,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             )
             return True
         else:
-            self.demux_rf_logger.error(
+            self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["checksumfile_absent"],
                 self.rf_obj.checksumfile_path,
             )
@@ -782,3 +797,24 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     self.rf_obj.bcl2fastqlog_file
                 )  # Bcl2fastq log file removed to trigger re-demultiplex
             self.demux_rf_logger.error(self.demux_rf_logger.log_msgs["re_demultiplex"])
+
+    def copy_file(self, source_path: str, dest_path: str) -> None:
+        """
+        Copy file from source path to dest path
+            :param source_path (str):   Path of file to copy
+            :param dest_path (str):     Path to copy to
+            :return None:
+        """
+        if os.path.exists(source_path):  # Try to copy SampleSheet into project
+            copyfile(source_path, dest_path)
+            self.rf_obj.rf_loggers["sw"].info(
+                self.rf_obj.rf_loggers["sw"].log_msgs["file_copy_success"],
+                source_path,
+                dest_path,
+            )
+        else:
+            self.rf_obj.rf_loggers["sw"].error(
+                self.rf_obj.rf_loggers["sw"].log_msgs["file_copy_fail"],
+                source_path
+            )
+            sys.exit(1)

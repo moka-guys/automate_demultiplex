@@ -110,6 +110,7 @@ NEXUS_IDS = {
         "congenica_upload": f"{TOOLS_PROJECT}:applet-G8QGBK80jy1zJK6g9yVP7P8V",  # congenica_upload_v1.3.2"
         "congenica_sftp": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",  # wes_congenica_sftp_upload_v1.0
         "qiagen_upload": f"{TOOLS_PROJECT}:applet-Gb6G4k00v09KXfq8f6BP7f23",  # qiagen_upload_v1.0.0
+        "oncodeep_upload": f"{TOOLS_PROJECT}:",  #TODO finish this
         "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",  # upload_multiqc_v1.4.0
         "multiqc": f"{TOOLS_PROJECT}:applet-GXqBzg00jy1pXkQVkY027QqV",  # multiqc_v1.18.0
         "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",  # sompy_v1.2
@@ -154,6 +155,8 @@ NEXUS_IDS = {
     },
 }
 NEXUS_IDS["WORKFLOWS"]["archerdx"] = NEXUS_IDS["APPS"]["fastqc"]
+NEXUS_IDS["WORKFLOWS"]["oncodeep"] = NEXUS_IDS["APPS"]["fastqc"]
+
 
 APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     "tso500": {
@@ -225,6 +228,10 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "sample_name": "-isample_name=",
         "sample_zip_folder": "-isample_zip_folder=${PROJECT_ID}:/results/",
     },
+    "oncodeep_upload": {
+        "run_identifier": "-irun_identifier=",
+        "file_to_upload": "-ifile_to_upload=${PROJECT_ID}:",        
+    },
     "duty_csv": {
         "project_name": "-iproject_name=${PROJECT_NAME}",
         "tso_pannumbers": "-itso_pannumbers=",
@@ -235,7 +242,7 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
 UPLOAD_ARGS = {
     "dest": "--dest=${PROJECT_ID}",
     "proj": "--project=${PROJECT_NAME}",
-    "token": "--brief --auth %s)",
+    "token": "--brief --auth ${AUTH})",
     "depends": "${DEPENDS_LIST}",
     "depends_gatk": "${DEPENDS_LIST_GATK}",
     # Arguments to capture jobids. Job IDS are built into a string that can be passed to
@@ -251,7 +258,7 @@ UPLOAD_ARGS = {
 }
 
 DX_CMDS = {
-    "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth %s)"',
+    "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth ${AUTH})"',
     "find_proj_name": (
         f"{SDK_SOURCE}; dx find projects --name *%s* " "--auth %s | awk '{print $3}'"
     ),
@@ -265,7 +272,7 @@ DX_CMDS = {
         f"{SDK_SOURCE}; dx find data --project=%s --tag as_upload --auth %s | "
         "grep -v 'automated_scripts_logfiles' | wc -l"
     ),
-    "invite_user": "USER_INVITE_OUT=$(dx invite %s ${PROJECT_ID} %s --no-email --auth %s)",
+    "invite_user": "USER_INVITE_OUT=$(dx invite %s ${PROJECT_ID} %s --no-email --auth ${AUTH})",
     "file_upload_cmd": (
         f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder '%s' --do-not-compress "
         "--upload-threads 10 %s --tag as_upload"
@@ -305,7 +312,11 @@ DX_CMDS = {
     ),
     # Sleep command ensures the number of concurrent jobs does not surpass the QCII limit of 10
     "qiagen_upload": (
-        f"sleep 1.5m; JOB_ID=$(dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}"
+        f"sleep 1.2m; JOB_ID=$(dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}"
+    ),
+    "oncodeep_upload": (
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['oncodeep_upload']} --priority high -y "
+        f"{JOB_NAME_STR} -iaccount_type=Production"
     ),
     "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
     "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
@@ -463,11 +474,12 @@ class SWConfig(PanelConfig):
     SQL_IDS = {
         # Moka IDs for generating SQLs to update the Moka database (audit trail)
         "WORKFLOWS": {
-            "pipe": 5229,
+            "pipe": 5302,
             "wes": 5078,
-            "archerdx": 5238,
+            "archerdx": 5300,
             "snp": 5091,
-            "tso500": 5288,
+            "tso500": 5301,
+            "oncodeep": 5299,
         },
         "WES_TEST_STATUS": {
             "nextseq_sequencing": 1202218804,  # Test Status = NextSEQ sequencing

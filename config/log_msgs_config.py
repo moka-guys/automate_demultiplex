@@ -142,8 +142,9 @@ LOG_MSGS = {
         "running_cmds": "Running dx run commands using dx run bash script",
         "dx_run_err": "Error when setting off dx run command. Command: %s. Stdout: %s. Stderr: %s",
         "dx_run_success": "dx run commands issued successfully",
-        "ss_copy_success": "SampleSheet copied to runfolder: %s",
-        "ss_copy_fail": "SampleSheet not copied to runfolder",
+        "samplesheet_nonexistent": "Samplesheet does not exist at location: %s",
+        "file_copy_success": "File successfully copied from %s to %s",
+        "file_copy_fail": "Could not copy file - file does not exist: %s",
         "uploading_rf": (
             "Uploading rest of run folder to DNAnexus using upload_runfolder, "
             "ignoring: %s. Stdout stored in logfile: %s"

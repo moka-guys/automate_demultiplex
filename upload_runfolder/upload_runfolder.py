@@ -9,8 +9,14 @@ import sys
 import os
 import re
 import math
+import logging
 from config.ad_config import URConfig
-from toolbox.toolbox import execute_subprocess_command, git_tag, test_upload_software
+from toolbox.toolbox import (
+    execute_subprocess_command,
+    git_tag,
+    test_upload_software,
+    get_credential,
+)
 
 
 class UploadRunfolder(URConfig):
@@ -18,14 +24,16 @@ class UploadRunfolder(URConfig):
     Uploads a runfolder to DNAnexus.
 
     Attributes:
-        rf_obj (obj):               RunfolderObject object (contains runfolder-specific attributes)
-        logger (obj):               Logger object
-        nexus_identifiers (dict):   Dictionary containing project name and ID
+        logger (logging.Logger):    Logger
+        runfolder_name (str):       Name of runfolder
+        runfolderpath (str):        Path of runfolder on workstation
+        dnanexus_auth (str):        DNAnexus auth token
+        nexus_identifiers (dict):   Dictionary of proj_name and proj_id, or False        
 
     Methods:
         find_nexus_project()
             Search DNAnexus for the project given as an input argument. If the input is
-            'None', searches for a project matching self.rf_obj.runfolder_name
+            'None', searches for a project matching self.runfolder_name
         upload_rest_of_runfolder(ignore)
             Calls methods to upload the rest of the runfolder (the runfolder minus the files matching the ignore string)
         check_runfolder_exists()
@@ -62,15 +70,25 @@ class UploadRunfolder(URConfig):
             have been ignored are in DNAnexus
     """
 
-    def __init__(self, rf_obj: object, nexus_identifiers=False):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        runfolder_name: str,
+        runfolderpath: str,
+        nexus_identifiers=False,
+    ):
         """
         Constructor for the UploadRunfolder class
-            :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific attributes)
-            :param nexus_identifiers    Dictionary of proj_name and proj_id, or False
+            :param logger (logging.Logger): Logger
+            :param runfolder_name (str):    Name of runfolder
+            :param runfolderpath (str):     Path of runfolder on workstation
+            :param nexus_identifiers        Dictionary of proj_name and proj_id, or False
             (dict | False):
         """
-        self.rf_obj = rf_obj
-        self.logger = self.rf_obj.rf_loggers["backup"]
+        self.logger = logger
+        self.runfolder_name = runfolder_name
+        self.runfolderpath = runfolderpath
+        self.dnanexus_auth = get_credential(URConfig.CREDENTIALS["dnanexus_authtoken"])
         if nexus_identifiers:
             self.nexus_identifiers = nexus_identifiers
         else:
@@ -79,17 +97,17 @@ class UploadRunfolder(URConfig):
     def find_nexus_project(self) -> dict:
         """
         Search DNAnexus for the project given as an input argument. If the input is
-        'None', searches for a project matching self.rf_obj.runfolder_name.
+        'None', searches for a project matching self.runfolder_name.
             :return (dict):     Dictionary containing proj_name and proj_id
         """
         try:
             self.logger.info(
                 self.logger.log_msgs["finding_project"],
-                self.rf_obj.runfolder_name,
+                self.runfolder_name,
             )
             project_name, _, _ = execute_subprocess_command(
                 URConfig.DX_CMDS["find_proj_name"]
-                % (self.rf_obj.runfolder_name, self.rf_obj.dnanexus_auth),
+                % (self.runfolder_name, self.dnanexus_auth),
                 self.logger,
                 "exit_on_fail",
             )
@@ -99,11 +117,10 @@ class UploadRunfolder(URConfig):
             )
             self.logger.info(
                 self.logger.log_msgs["finding_project_id"],
-                self.rf_obj.runfolder_name,
+                self.runfolder_name,
             )
             project_id, _, _ = execute_subprocess_command(
-                URConfig.DX_CMDS["find_proj_id"]
-                % (project_name, self.rf_obj.dnanexus_auth),
+                URConfig.DX_CMDS["find_proj_id"] % (project_name, self.dnanexus_auth),
                 self.logger,
                 "exit_on_fail",
             )
@@ -154,12 +171,12 @@ class UploadRunfolder(URConfig):
         """
         self.logger.info(
             self.logger.log_msgs["checking_runfolder"],
-            self.rf_obj.runfolderpath,
+            self.runfolderpath,
         )
-        if not os.path.isdir(self.rf_obj.runfolderpath):
+        if not os.path.isdir(self.runfolderpath):
             self.logger.error(
                 self.logger.log_msgs["nonexistent_runfolder"],
-                self.rf_obj.runfolderpath,
+                self.runfolderpath,
             )
             sys.exit(1)
 
@@ -182,8 +199,8 @@ class UploadRunfolder(URConfig):
             :return folderpaths (list): Return a list of folder paths within the runfolder
         """
         self.logger.info(self.logger.log_msgs["getting_folder_paths"])
-        folderpaths = [self.rf_obj.runfolderpath]  # Add root folder path
-        for root, subfolders, _ in os.walk(self.rf_obj.runfolderpath):
+        folderpaths = [self.runfolderpath]  # Add root folder path
+        for root, subfolders, _ in os.walk(self.runfolderpath):
             for folder in subfolders:  # Add subfolder paths
                 folderpaths.append(os.path.join(root, folder))
         return folderpaths
@@ -282,7 +299,7 @@ class UploadRunfolder(URConfig):
 
                     self.logger.info(self.logger.log_msgs["building_command"])
                     nexus_upload_cmd = URConfig.DX_CMDS["file_upload_cmd"] % (
-                        self.rf_obj.dnanexus_auth,
+                        self.dnanexus_auth,
                         self.nexus_identifiers["proj_id"],
                         nexus_project_subdirectory,
                         f"--tries 100 {files_string}",
@@ -307,11 +324,11 @@ class UploadRunfolder(URConfig):
         """
         # Files in the root of a runfolder do not require cleaning, while files not in the root
         # require removal of the runfolder name and parent folders from the input filepath
-        if folderpath == self.rf_obj.runfolderpath:
+        if folderpath == self.runfolderpath:
             clean_runfolder_path = ""
         else:
             clean_runfolder_path = re.search(
-                rf"{self.rf_obj.runfolder_name}[\/](.*)$", folderpath
+                rf"{self.runfolder_name}[\/](.*)$", folderpath
             ).group(1)
         # Prepend nexus folder path to cleaned path. the nexus folder path is
         # the project name without the first four characters (002_)
@@ -373,7 +390,7 @@ class UploadRunfolder(URConfig):
                 )
                 _, _, returncode = execute_subprocess_command(
                     upload_cmd,
-                    self.rf_obj.rf_loggers["backup"],
+                    self.logger,
                 )
                 if returncode == 0:
                     return "success"
@@ -414,17 +431,17 @@ class UploadRunfolder(URConfig):
             grep_ignore = ""
 
         local_file_count = (
-            f"find {self.rf_obj.runfolderpath} -type f {grep_ignore} | wc -l"
+            f"find {self.runfolderpath} -type f {grep_ignore} | wc -l"
         )
         files_expected, _, _ = execute_subprocess_command(
-            local_file_count, self.rf_obj.rf_loggers["backup"], "exit_on_fail"
+            local_file_count, self.logger, "exit_on_fail"
         )
         uploaded_file_count = URConfig.DX_CMDS["find_data"] % (
             self.nexus_identifiers["proj_id"],
-            self.rf_obj.dnanexus_auth,
+            self.dnanexus_auth,
         )
         files_present, _, _ = execute_subprocess_command(
-            uploaded_file_count, self.rf_obj.rf_loggers["backup"], "exit_on_fail"
+            uploaded_file_count, self.logger, "exit_on_fail"
         )
         if files_expected != files_present:
             self.logger.error(
@@ -442,11 +459,11 @@ class UploadRunfolder(URConfig):
         if ignore:  # Test for presense of ignore strings in project
             uploaded_file_count_ignore = URConfig.DX_CMDS["find_data"] % (
                 f"{self.nexus_identifiers['proj_id']} {grep_ignore.replace('-v','')}",
-                self.rf_obj.dnanexus_auth,
+                self.dnanexus_auth,
             )
             out, _, _ = execute_subprocess_command(
                 uploaded_file_count_ignore,
-                self.rf_obj.rf_loggers["backup"],
+                self.logger,
                 "exit_on_fail",
             )
             self.logger.info(self.logger.log_msgs["check_ignore"], out)

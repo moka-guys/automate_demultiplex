@@ -554,7 +554,7 @@ class TestDemultiplexRunfolder(object):
 
     def test_demultiplexing_required_true(self, demultiplexing_required):
         """
-        Test demultiplexing_required() returns True when demultiplexin required
+        Test demultiplexing_required() returns True when demultiplexing required
         """
         for runfolder in demultiplexing_required:
             dr_obj = get_dr_obj(runfolder)

@@ -8,7 +8,6 @@ and sends the pipeline emails using ad_email.AdEmail
 from setoff_workflows.setoff_workflows import SequencingRuns
 from ad_logger.ad_logger import set_root_logger
 
-
 set_root_logger()
 
 sequencing_runs = SequencingRuns()
