@@ -84,7 +84,7 @@ self.upload_runfolder.upload_rest_of_runfolder(ignore)
 | Alias | Description | Filename | Location |
 | ------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | backup | Records the logs from the upload runfolder script | `RUNFOLDERNAME_upload_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/upload_runfolder_script_logfiles/` |
-| upload_agent | Records upload agent logs (stdout and stderr of the upload agent) | `DNANexus_upload_started.txt` | Within the runfolder |
+| upload_agent | Denotes runfolder upload has started | `DNANexus_upload_started.txt` | Within the runfolder |
 
 ## Testing
 

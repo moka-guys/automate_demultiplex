@@ -562,7 +562,7 @@ class ToolboxConfig:
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
     }
     FLAG_FILES = {
-        "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
+        "upload_started": "DNANexus_upload_started.txt",  # Denotes upload has started
         "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked

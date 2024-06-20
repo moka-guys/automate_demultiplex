@@ -331,15 +331,18 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     self.validate_fastqs()
                     self.copy_file(
                         self.rf_obj.samplesheet_path,
-                        self.rf_obj.runfolder_samplesheet_path
+                        self.rf_obj.runfolder_samplesheet_path,
                     )
                     samplename_dict = self.rf_obj.get_samplename_dict(
                         self.demux_rf_logger,
                     )
-                    if self.rf_obj.get_pipeline(self.demux_rf_logger, samplename_dict) == "oncodeep":
+                    if (
+                        self.rf_obj.get_pipeline(self.demux_rf_logger, samplename_dict)
+                        == "oncodeep"
+                    ):
                         self.copy_file(
                             self.rf_obj.masterfile_path,
-                            self.rf_obj.runfolder_masterfile_path
+                            self.rf_obj.runfolder_masterfile_path,
                         )
                 return True
 
@@ -814,7 +817,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
             )
         else:
             self.rf_obj.rf_loggers["sw"].error(
-                self.rf_obj.rf_loggers["sw"].log_msgs["file_copy_fail"],
-                source_path
+                self.rf_obj.rf_loggers["sw"].log_msgs["file_copy_fail"], source_path
             )
             sys.exit(1)
