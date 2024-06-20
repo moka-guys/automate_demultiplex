@@ -41,7 +41,7 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
         "binfx_recipient": MAIL_SETTINGS["binfx_email"],
         # Oncology email address for email alerts
-        "oncology_ops_email": "synnovis.OncologyDutyScientist@nhs.net",
+        "oncology_ops_email": "synnovis.seglh-ods@nhs.net",
         "wes_samplename_emaillist": [
             "gst-tr.ViapathGeneticsAdmin@nhs.net",
             "lu.liu@viapath.co.uk",
