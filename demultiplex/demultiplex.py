@@ -87,7 +87,7 @@ class GetRunfolders(DemultiplexConfig):
         """
         if self.runfolder_names:
             script_logger.info(
-                script_logger.log_msgs["cmd_line_runfolder"], self.runfolder_name
+                script_logger.log_msgs["cmd_line_runfolder"], self.runfolder_names
             )
             runfolder_names = [self.runfolder_names]
         else:
