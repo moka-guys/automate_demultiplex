@@ -43,7 +43,6 @@ required for analysis of samples with that pan number
     dry_lab_only                    Used to determine whether to include the TSO pan
                                     number in the duty_csv pan number list
     dry_lab                         True if required to share with dry lab, None if not
-    development_run                 None if pan number is not a development pan number, else True
 """
 # TODO in future do we want to swap physical paths for file IDs
 
@@ -74,6 +73,7 @@ DEFAULT_DICT = {
     # values are replaced within subsequent dictionaries
     "panel_name": None,
     "pipeline": None,
+    "runtype": None,
     "sample_prefix": None,
     "capture_pan_num": None,
     "hsmetrics_bedfile": None,
@@ -97,7 +97,7 @@ DEFAULT_DICT = {
     "FH": None,
     "dry_lab_only": None,
     "dry_lab": None,
-    "development_run": None,
+    "umis": None,
 }
 
 
@@ -246,14 +246,24 @@ class PanelConfig:
             "capture_type": "Hybridisation",
             "multiqc_coverage_level": 30,  # We don't align for OncoDEEP
         },
+        "dev": {
+            **DEFAULT_DICT,
+            "pipeline": "dev",
+            "panel_name": "dev",
+            "runtype": "dev",
+            "multiqc_coverage_level": 30,
+        },
     }
     PIPELINES = list(set([v["pipeline"] for k, v in CAPTURE_PANEL_DICT.items()]))
     PANEL_DICT = {
         # Dictionary containing pan number-specific settings, arranged by workflow name
         # These incorporate the capture dictionary settings and build upon them
         "Pan5180": {  # Development runs (stops warning messages)
-            **DEFAULT_DICT,
-            "development_run": True,
+            **CAPTURE_PANEL_DICT["dev"],
+        },
+        "Pan5227": {  # Development run with UMIs (stops warning messages)
+            **CAPTURE_PANEL_DICT["dev"],
+            "umis": True,
         },
         "Pan4009": {  # SNP
             **CAPTURE_PANEL_DICT["snp"],
@@ -835,10 +845,8 @@ class PanelConfig:
     ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
     ONCODEEP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "oncodeep"]
     LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
-    DEVELOPMENT_PANEL = "".join(
-        [k for k, v in PANEL_DICT.items() if v["development_run"]]
-    )
-
+    DEVELOPMENT_PANEL = [k for k, v in PANEL_DICT.items() if v["runtype"] == "dev"]
+    UMIS = [k for k, v in PANEL_DICT.items() if v["umis"] == True]
     # ================ DUTY_CSV INPUTS ===================================================
 
     # tso_pannumbers should not include the dry lab pan number as we do not want to include
