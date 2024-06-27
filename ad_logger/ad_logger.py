@@ -38,19 +38,23 @@ def set_root_logger():
     else it will duplicate log messages to the terminal. All loggers named with the same stem
     as the root logger will use these same syslog handler and stream handler
     """
-    sensitive_formatter = SensitiveFormatter(get_logging_formatter())
+    sensitive_formatter=SensitiveFormatter(get_logging_formatter())
     logger = logging.getLogger(AdLoggerConfig.REPO_NAME)
-    logger.setLevel(logging.DEBUG)
     stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setLevel(logging.DEBUG)
     stream_handler.setFormatter(sensitive_formatter)
     stream_handler.name = "stream_handler"
-    logger.addHandler(stream_handler)
     syslog_handler = logging.handlers.SysLogHandler(address="/dev/log")
-    syslog_handler.setLevel(logging.DEBUG)
     syslog_handler.setFormatter(sensitive_formatter)
     syslog_handler.name = "syslog_handler"
-    logger.addHandler(syslog_handler)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        force=True,
+        handlers=[
+            stream_handler,
+            syslog_handler,
+        ]
+    )
 
 
 def shutdown_logs(logger: logging.Logger) -> None:
@@ -148,7 +152,7 @@ class AdLogger(AdLoggerConfig):
         Get file handler for the logger, and give it a name
             :return file_handler (logging.FileHandler): FileHandler
         """
-        file_handler = logging.FileHandler(self.filepath, mode="a", delay=True)
+        file_handler = logging.FileHandler(self.filepath, mode="w", delay=True)
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(self.formatter)
         file_handler.name = "file_handler"
