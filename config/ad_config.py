@@ -77,15 +77,13 @@ FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
     "tso_fastqs": "${PROJECT_ID}:/analysis_folder/Logs_Intermediates/CollapsedReads/",
 }
-SDK_SOURCE = (
-    "source /usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
-)
+SDK_SOURCE = "source /usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
+
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
-GATK_DOCKER = (
-    "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
-)
+GATK_DOCKER = "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
+
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
 DEMUX_NOT_REQUIRED_MSG = "Run does not need demultiplexing locally"
 DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
@@ -107,10 +105,10 @@ NEXUS_IDS = {
     },
     "APPS": {
         "tso500": f"{TOOLS_PROJECT}:applet-GZgv0Jj0jy1Yfbx3QvqyKjzp",  # TSO500_v1.6.0
-        "congenica_upload": f"{TOOLS_PROJECT}:applet-G8QGBK80jy1zJK6g9yVP7P8V",  # congenica_upload_v1.3.2"
+        "congenica_upload": f"{TOOLS_PROJECT}:applet-G8QGBK80jy1zJK6g9yVP7P8V",  # congenica_upload_v1.3.2
         "congenica_sftp": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",  # wes_congenica_sftp_upload_v1.0
         "qiagen_upload": f"{TOOLS_PROJECT}:applet-Gb6G4k00v09KXfq8f6BP7f23",  # qiagen_upload_v1.0.0
-        "oncodeep_upload": f"{TOOLS_PROJECT}:",  #TODO finish this
+        "oncodeep_upload": f"{TOOLS_PROJECT}:applet-GkkGQ880jy1vXXFZBFG7232G",  # oncodeep_upload v1.0.0
         "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",  # upload_multiqc_v1.4.0
         "multiqc": f"{TOOLS_PROJECT}:applet-GXqBzg00jy1pXkQVkY027QqV",  # multiqc_v1.18.0
         "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",  # sompy_v1.2
@@ -259,9 +257,7 @@ UPLOAD_ARGS = {
 
 DX_CMDS = {
     "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth ${AUTH})"',
-    "find_proj_name": (
-        f"{SDK_SOURCE}; dx find projects --name *%s* " "--auth %s | awk '{print $3}'"
-    ),
+    "find_proj_name": f"{SDK_SOURCE}; dx find projects --name *%s* " "--auth %s | awk '{print $3}'",
     "proj_name_from_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name",
     "find_proj_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id",
     "find_execution_id": (
@@ -447,8 +443,7 @@ class SWConfig(PanelConfig):
         "demultiplex_success": DEMULTIPLEX_SUCCESS,
         "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
     }
-    # TODO move this to the DXAPP.JSON file for FH app
-    PIPE_FH_GATK_TIMEOUT_ARGS = (
+    PIPE_FH_GATK_TIMEOUT_ARGS = (  # This is specified for the GATK app in the Custom Panels pipeline for only FH samples
         # Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
         # reason to auto restart list
         '--extra-args \'{"timeoutPolicyByExecutable": {"'
