@@ -87,7 +87,7 @@ GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
-DEMULTIPLEXLOG_TSO500_MSG = "TSO500 run. Does not need demultiplexing locally"
+DEMUX_NOT_REQUIRED_MSG = "Run does not need demultiplexing locally"
 DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
@@ -357,7 +357,7 @@ class DemultiplexConfig(PanelConfig):
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
     STRINGS = {
-        "demultiplexlog_tso500_msg": DEMULTIPLEXLOG_TSO500_MSG,
+        "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
     }
@@ -387,6 +387,7 @@ class DemultiplexConfig(PanelConfig):
         "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
         "999999_M02631_0285_000000000-DEVOO",
         "999999_NB551068_0285_OODEVINTEG",
+        "999999_M02631_0285_000000000-DVUMI",
     ]
     SEQUENCER_IDS = {
         # Requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed
@@ -419,7 +420,7 @@ class SWConfig(PanelConfig):
     RUNFOLDERS = RUNFOLDERS
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
     if BRANCH == "master":  # Prod branch
-        DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
+        
         BSPS_ID = "BSPS_MD"
         DNANEXUS_USERS = {  # User access level
             "viewers": [PROD_ORGANISATION, "InterpretationRequest", "org-seglh_read"],
@@ -427,14 +428,12 @@ class SWConfig(PanelConfig):
         }
         TSO_BATCH_SIZE = 16
     else:
-        DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
         BSPS_ID = ""
         DNANEXUS_USERS = {  # User access level
             "viewers": [],
             "admins": [PROD_ORGANISATION],
         }
         TSO_BATCH_SIZE = 2
-    DNANEXUS_PROJ_ID = "${PROJECT_ID}"
     RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
     EMPTY_CP_DEPENDS = [
@@ -443,13 +442,11 @@ class SWConfig(PanelConfig):
         "DEPENDS_LIST_EDREADCOUNT=''",
     ]
     STRINGS = {
-        "demultiplexlog_tso500_msg": DEMULTIPLEXLOG_TSO500_MSG,
+        "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "demultiplex_success": DEMULTIPLEX_SUCCESS,
+        "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
     }
-    UPLOAD_STARTED_MSG = (
-        "Upload started"  # Statement to write to DNAnexus upload started file
-    )
     # TODO move this to the DXAPP.JSON file for FH app
     PIPE_FH_GATK_TIMEOUT_ARGS = (
         # Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
@@ -465,12 +462,6 @@ class SWConfig(PanelConfig):
         "wes": "update NGSTest set PipelineVersion = %s, StatusID = %s where dna in ('%s') and StatusID = %s",
         "oncology": "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values (%s)",
     }
-    PSCON_IDS = [
-        "NA12878",
-        "136819",  # NA12878
-        "HD200",  # Seracare v4 tumour fusion reference material
-    ]
-    NTCON_IDS = ["00000", "NTCcon", "NTC000", "NC000"]
     SQL_IDS = {
         # Moka IDs for generating SQLs to update the Moka database (audit trail)
         "WORKFLOWS": {
@@ -547,16 +538,26 @@ class SWConfig(PanelConfig):
     }
 
 
-class ToolboxConfig:
+class ToolboxConfig(PanelConfig):
     """
     Toolbox configuration
     """
-
+    if BRANCH == "master":
+        DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
+    else:
+        DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
+    DNANEXUS_PROJ_ID = "${PROJECT_ID}"
     AD_LOGDIR = AD_LOGDIR
     CREDENTIALS = CREDENTIALS
     FASTQ_DIRS = FASTQ_DIRS
     RUNFOLDERS = RUNFOLDERS
     TIMESTAMP = TIMESTAMP
+    PSCON_IDS = [
+        "NA12878",
+        "136819",  # NA12878
+        "HD200",  # Seracare v4 tumour fusion reference material
+    ]
+    NTCON_IDS = ["00000", "NTCcon", "NTC000", "NC000"]
     STRINGS = {
         "phasing_metrics_suffix": ".illumina_phasing_metrics",
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
