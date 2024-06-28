@@ -64,6 +64,7 @@ def get_arguments():
     parser.add_argument(
         "-p",
         "--project_id",
+        required=True,
         default=None,
         help="The ID of an existing DNAnexus project for the given runfolder",
     )
@@ -74,7 +75,7 @@ def get_arguments():
 parsed_args = get_arguments()  # Get command line arguments
 
 rf_obj = RunfolderObject(parsed_args.runfolder_name, URConfig.TIMESTAMP)
-rf_obj.add_runfolder_loggers(__package__)
+loggers = rf_obj.get_runfolder_loggers(__package__)
 
 # If a different auth token is supplied on command line, replace the attribute in the runfolder object
 if parsed_args.auth_token:
@@ -86,7 +87,7 @@ if parsed_args.project_id:
         parsed_args.auth_token,
     )
     project_name, err, returncode = execute_subprocess_command(
-        project_name_cmd, rf_obj.rf_loggers["backup"], "exit_on_fail"
+        project_name_cmd, loggers["backup"], "exit_on_fail"
     )
     nexus_identifiers = {
         "proj_name": project_name,
@@ -95,15 +96,15 @@ if parsed_args.project_id:
 else:
     nexus_identifiers = False
 
-script_start_logmsg(rf_obj.rf_loggers["backup"], __file__)
+script_start_logmsg(loggers["backup"], __file__)
 
 # Create an object to set up the upload agent command
 ur_obj = UploadRunfolder(
-    rf_obj.rf_loggers["backup"],
+    loggers["backup"],
     rf_obj.runfolder_name,
     rf_obj.runfolderpath,
     nexus_identifiers,
 )
 ur_obj.upload_rest_of_runfolder(parsed_args.ignore)
 
-script_end_logmsg(rf_obj.rf_loggers["backup"], __file__)
+script_end_logmsg(loggers["backup"], __file__)
