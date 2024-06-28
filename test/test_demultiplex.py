@@ -26,7 +26,7 @@ from pytest_cases import fixture_union
 
 def get_dr_obj(runfolder):
     """"""
-    dr_obj = demultiplex.DemultiplexRunfolder(runfolder, ad_config.TIMESTAMP, False)
+    dr_obj = demultiplex.DemultiplexRunfolder(runfolder, ad_config.TIMESTAMP)
     return dr_obj
 
 
@@ -215,30 +215,6 @@ class TestGetRunfolders(object):
             "999999_A01229_0000_0000TEST10",
         ]
 
-    @pytest.fixture(scope="function")
-    def rf_no_bcl2fastqlog(self):
-        """
-        Return runfolders with absent bcl2fastqlog
-        """
-        return [
-            "999999_A01229_0000_00000TEST2",
-            "999999_A01229_0000_00000TEST3",
-            "999999_M02631_0000_00000TEST4",
-            "999999_A01229_0000_00000TEST5",
-            "999999_A01229_0000_00000TEST6",
-            "999999_A01229_0000_00000TEST7",
-            "999999_A01229_0000_00000TEST8",
-            "999999_A01229_0000_00000TEST9",
-            "999999_A01229_0000_0000TEST10",
-        ]
-
-    @pytest.fixture(scope="function")
-    def rf_with_bcl2fastqlog(self):
-        """
-        Return runfolders with bcl2fastqlog present
-        """
-        return ["999999_A01229_0000_00000TEST1"]
-
     # TODO write tests
     # def test_get_runfolder_names_test(self):
     # def test_get_runfolder_names_prod(self):
@@ -278,27 +254,6 @@ class TestGetRunfolders(object):
     #         assert pytest_wrapped_e.type == SystemExit
     #         assert pytest_wrapped_e.value.code == 1
 
-    # TODO write test_demultiplex_runfolder_toproc(self):
-    # TODO write test_demultiplex_runfolder_nottoproc(self):
-
-    def test_bcl2fastqlog_absent_false(self, rf_with_bcl2fastqlog):
-        """
-        Test function correctly identifies presence of bcl2fastqlogfile using an empty
-        file
-        """
-        for runfolder in rf_with_bcl2fastqlog:
-            gr_obj = get_gr_obj()
-            assert not gr_obj.bcl2fastqlog_absent(runfolder)
-
-    def test_bcl2fastqlog_absent_true(self, rf_no_bcl2fastqlog):
-        """
-        Test function correctly identifies absence of bcl2fastqlogfile log file, using a
-        path to a nonexistent file
-        """
-        for runfolder in rf_no_bcl2fastqlog:
-            gr_obj = get_gr_obj()
-            assert gr_obj.bcl2fastqlog_absent(runfolder)
-
     # TODO write test_return_num_processed_runfolders(self):
 
 
@@ -306,6 +261,30 @@ class TestDemultiplexRunfolder(object):
     """
     Test DemultiplexRunfolder class
     """
+
+    @pytest.fixture(scope="function")
+    def rf_no_bcl2fastqlog(self):
+        """
+        Return runfolders with absent bcl2fastqlog
+        """
+        return [
+            "999999_A01229_0000_00000TEST2",
+            "999999_A01229_0000_00000TEST3",
+            "999999_M02631_0000_00000TEST4",
+            "999999_A01229_0000_00000TEST5",
+            "999999_A01229_0000_00000TEST6",
+            "999999_A01229_0000_00000TEST7",
+            "999999_A01229_0000_00000TEST8",
+            "999999_A01229_0000_00000TEST9",
+            "999999_A01229_0000_0000TEST10",
+        ]
+
+    @pytest.fixture(scope="function")
+    def rf_with_bcl2fastqlog(self):
+        """
+        Return runfolders with bcl2fastqlog present
+        """
+        return ["999999_A01229_0000_00000TEST1"]
 
     @pytest.fixture(scope="function")
     def bcl2fastqlog_fail(self):
@@ -525,6 +504,27 @@ class TestDemultiplexRunfolder(object):
             # "999999_A01229_0000_00000TEST7",  # Fix as per comments in runfolders_toproc
         ]
 
+    # TODO write test_demultiplex_runfolder_toproc(self):
+    # TODO write test_demultiplex_runfolder_nottoproc(self):
+
+    def test_bcl2fastqlog_absent_false(self, rf_with_bcl2fastqlog):
+        """
+        Test function correctly identifies presence of bcl2fastqlogfile using an empty
+        file
+        """
+        for runfolder in rf_with_bcl2fastqlog:
+            dr_obj = get_dr_obj(runfolder)
+            assert not dr_obj.bcl2fastqlog_absent()
+
+    def test_bcl2fastqlog_absent_true(self, rf_no_bcl2fastqlog):
+        """
+        Test function correctly identifies absence of bcl2fastqlogfile log file, using a
+        path to a nonexistent file
+        """
+        for runfolder in rf_no_bcl2fastqlog:
+            dr_obj = get_dr_obj(runfolder)
+            assert dr_obj.bcl2fastqlog_absent()
+
     # def test_setoff_workflow_success(self, demultiplexing_required, monkeypatch):
     #     """
     #     Test that function sets off run processing correctly for runfolders requiring it
@@ -617,21 +617,21 @@ class TestDemultiplexRunfolder(object):
     # TODO write test_pass_integrity_check_pass
     # TODO write test_pass_integrity_check_fail
 
-    def test_no_disallowed_sserrs_pass(self, monkeypatch, perfect_ss):
+    def disallowed_sserrs_pass(self, monkeypatch, ss_with_disallowed_sserrs):
         """
-        Test no_disallowed_sserrs() using a perfect SampleSheet
+        Tests function identifies all disallowed ss errors
         """
         dr_obj = get_dr_obj("")
-        monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", perfect_ss)
+        monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", ss_with_disallowed_sserrs)
         valid, sscheck_obj = dr_obj.valid_samplesheet()
         assert dr_obj.no_disallowed_sserrs(valid, sscheck_obj)
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    def test_no_disallowed_sserrs_fail(self, monkeypatch, ss_with_disallowed_sserrs):
+    def disallowed_sserrs_fail(self, monkeypatch, perfect_ss):
         """
-        Tests function identifies all disallowed ss errors
+        Test disallowed_sserrs() using a perfect SampleSheet
         """
-        for sspath in ss_with_disallowed_sserrs:
+        for sspath in perfect_ss:
             dr_obj = get_dr_obj("")
             monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", sspath)
             valid, sscheck_obj = dr_obj.valid_samplesheet()
@@ -737,7 +737,7 @@ class TestDemultiplexRunfolder(object):
         assert dr_obj.add_bcl2fastqlog_tso_msg()
         assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_file)
         with open(dr_obj.rf_obj.bcl2fastqlog_file, "r") as file:
-            assert ad_config.DEMULTIPLEXLOG_TSO500_MSG in file.read()
+            assert ad_config.DEMUX_NOT_REQUIRED_MSG in file.read()
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     # TODO write test_add_bcl2fastqlog_tso_msg_fail
