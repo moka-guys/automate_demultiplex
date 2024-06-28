@@ -14,6 +14,7 @@ import sys
 import os
 import re
 import datetime
+import logging
 from shutil import copyfile
 from typing import Optional, Tuple
 import samplesheet_validator.samplesheet_validator as samplesheet_validator
@@ -117,11 +118,11 @@ class GetRunfolders(DemultiplexConfig):
             for runfolder in self.runfolder_names:
                 dr_obj = DemultiplexRunfolder(runfolder, self.timestamp)
                 dr_obj.setoff_workflow()
-                self.check_run_processed(dr_obj)
+                self.check_run_processed(dr_obj, runfolder)
         self.return_num_processed_runfolders()
         script_end_logmsg(script_logger, __file__)
 
-    def check_run_processed(self, dr_obj: object) -> None:
+    def check_run_processed(self, dr_obj: object, runfolder_name: str) -> None:
         """
         If runfolder has been processed during this script run, append
         to processed_runfolders list
@@ -131,9 +132,9 @@ class GetRunfolders(DemultiplexConfig):
         if dr_obj.run_processed:  # If runfolder has been processed during this script run
             script_logger.info(
                 script_logger.log_msgs["runfolder_processed"],
-                folder_name,
+                runfolder_name,
             )
-            self.processed_runfolders.append(folder_name)
+            self.processed_runfolders.append(runfolder_name)
 
     def return_num_processed_runfolders(self) -> None:
         """
@@ -210,8 +211,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         disallowed_sserrs_identified(valid, sscheck_obj)
             Check for specific errors that would cause bcl2fastq2 to fail and whose
             presence should stop demultiplexing
-        write_to_sscheck_file(message)
-            Write message to the samplesheet check file
         dev_run_requires_demultiplexing(sscheck_obj)
             Determine whether the run is a development run requiring automated demultiplexing,
             or not (contains UMIs), using the sscheck_obj           
@@ -245,13 +244,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         )  # Add rf loggers to runfolder object
         self.demux_rf_logger = self.loggers["demux"]
         self.bcl2fastq2_rf_logger = self.loggers["bcl2fastq2"]
-        self.disallowed_sserrs = [
-            "Samplesheet absent",
-            "Samplesheet name invalid",
-            "Samplesheet is empty",
-            "Missing headers",
-            "Illegal characters",
-        ]
         # N.B. --no-lane-splitting creates a single fastq for a sample,
         # not into one fastq per lane)
         self.bcl2fastq2_cmd = DemultiplexConfig.BCL2FASTQ2_CMD % (
@@ -307,25 +299,24 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :return None:
         """
         if self.upload_flagfile_absent() and self.bcl2fastqlog_absent():
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["ad_version"],
-                git_tag(),
-            )
-            if not self.previous_samplesheet_check():
-                valid, sscheck_obj = self.valid_samplesheet()  # Early warning checks
-            if self.checksumfile_exists():
-                if self.sequencing_complete():
-                    if self.pass_integrity_check():
-                        if not self.disallowed_sserrs_identified(valid, sscheck_obj):
-                            self.copy_file(
-                                self.rf_obj.samplesheet_path,
-                                self.rf_obj.runfolder_samplesheet_path
-                            )
-                            self.calculate_cluster_density()
-                            if sscheck_obj.dev_run:
-                                return self.dev_run_requires_demultiplexing(sscheck_obj)                                
-                            else:
-                                return True
+            if not self.previous_samplesheet_check_fail():
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["ad_version"],
+                    git_tag(),
+                )
+                valid_samplesheet = self.valid_samplesheet()  # Early warning checks
+                if valid_samplesheet:
+                    requires_no_ic = self.seq_requires_no_ic()
+                    if requires_no_ic or self.checksumfile_exists():
+                        if self.sequencing_complete():
+                            if requires_no_ic or self.pass_integrity_check():
+                                self.copy_file(
+                                    self.rf_obj.samplesheet_path,
+                                    self.rf_obj.runfolder_samplesheet_path
+                                )
+                                self.calculate_cluster_density()
+                                if self.runtype_requires_demultiplexing():
+                                    return True
 
     def upload_flagfile_absent(self) -> None:
         """
@@ -357,22 +348,30 @@ class DemultiplexRunfolder(DemultiplexConfig):
             )
             return True
 
-    def previous_samplesheet_check(self) -> Optional[bool]:
+    def previous_samplesheet_check_fail(self) -> Optional[bool]:
         """
-        Checks if a prior samplesheet check has been carried out. This is checked to determine
-        whether to proceed with processing the run. This flag file must be removed for subsequent
-        attempts to process the run in the case of the samplesheet check failing
+        Checks if a prior samplesheet check which failed has been carried out. This is checked to
+        determine whether to proceed with processing the run. This flag file must be removed for
+        subsequent attempts to process the run in the case of the samplesheet check failing
+            :logger (logging.Logger):   Logger
             :return (Optional[bool]):   Returns true if the samplesheet check flag file is present
         """
         if os.path.exists(self.rf_obj.sscheck_flagfile_path):
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["previous_ss_check"],
-                self.rf_obj.sscheck_flagfile_path,
-            )
-            return True
+            with open(self.rf_obj.sscheck_flagfile_path, 'r') as sscheck_file:
+                sscheckfile_contents = sscheck_file.readlines()
+            if any(DemultiplexConfig.SAMPLESHEET_ERRORS_MSG in line for line in sscheckfile_contents):
+                script_logger.info(
+                    script_logger.log_msgs["previous_ss_check_fail"],
+                    self.rf_obj.sscheck_flagfile_path,
+                )
+                return True
+            else:
+                script_logger.info(
+                    script_logger.log_msgs["previous_ss_check_pass"],
+                )
         else:
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["ss_check_required"]
+            script_logger.info(
+                script_logger.log_msgs["ss_check_required"]
             )
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
@@ -383,30 +382,68 @@ class DemultiplexRunfolder(DemultiplexConfig):
                                 is valid), and SampleSheetCheck object containing any
                                 errors identified
         """
-        sscheck_obj = samplesheet_validator.SamplesheetCheck(
-            self.rf_obj.samplesheet_path,
-            DemultiplexConfig.SEQUENCER_IDS.keys(),
-            DemultiplexConfig.PANELS,
-            DemultiplexConfig.TSO_PANELS,
-            DemultiplexConfig.DEVELOPMENT_PANEL,
-            os.path.dirname(self.rf_obj.samplesheet_validator_logfile),
-        )
-        sscheck_obj.ss_checks()
-        shutdown_logs(sscheck_obj.logger)
-        self.tso = sscheck_obj.tso
-        self.dev_run = sscheck_obj.dev_run
-        if sscheck_obj.errors:
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["sschecks_failed"],
-                sscheck_obj.errors,  # TODO need to check if this is formatting correctly
+        if not self.sscheck_success_msg_present():
+            sscheck_obj = samplesheet_validator.SamplesheetCheck(
+                self.rf_obj.samplesheet_path,
+                DemultiplexConfig.SEQUENCER_IDS.keys(),
+                DemultiplexConfig.PANELS,
+                DemultiplexConfig.TSO_PANELS,
+                DemultiplexConfig.DEV_PANEL,
+                os.path.dirname(self.rf_obj.samplesheet_validator_logfile),
             )
-            return False, sscheck_obj
+            sscheck_obj.ss_checks()
+            shutdown_logs(sscheck_obj.logger)
+            self.tso = sscheck_obj.tso
+            self.dev_run = sscheck_obj.dev_run
+            err_str = '. '.join(', '.join(v) for v in sscheck_obj.errors_dict.values())
+
+            if sscheck_obj.errors:
+                self.demux_rf_logger.error(
+                    self.demux_rf_logger.log_msgs["sschecks_failed"],
+                    err_str,
+                )
+                write_lines(
+                    self.rf_obj.sscheck_flagfile_path,
+                    "w",
+                    f"{DemultiplexConfig.SAMPLESHEET_ERRORS_MSG} {err_str}",
+                )
+                return False
+            else:
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["sschecks_passed"],
+                    self.rf_obj.samplesheet_path,
+                )
+                write_lines(
+                    self.rf_obj.sscheck_flagfile_path,
+                    "w",
+                    DemultiplexConfig.SAMPLESHEET_SUCCESS_MSG,
+                )
+                return True
+        else:
+            return True
+
+    def sscheck_success_msg_present(self) -> Optional[bool]:
+        """
+        Check samplesheet check success message is present in the sscheck flag file
+            :return (Optional[bool]):       Returns true if success message is identified
+        """
+        if os.path.exists(self.rf_obj.sscheck_flagfile_path):
+            with open(self.rf_obj.sscheck_flagfile_path, 'r') as sscheck_file:
+                sscheckfile_contents = sscheck_file.readlines()
+            if any(DemultiplexConfig.SAMPLESHEET_SUCCESS_MSG in line for line in sscheckfile_contents):
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["sscheck_success_msg_present"],
+                )
+                return True
+            else:
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["sscheck_success_msg_absent"],
+                )
+                return True
         else:
             self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["sschecks_passed"],
-                self.rf_obj.samplesheet_path,
+                self.demux_rf_logger.log_msgs["sscheckfile_absent"],
             )
-            return True, sscheck_obj
 
     def sequencing_complete(self) -> Optional[bool]:
         """
@@ -429,15 +466,25 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def pass_integrity_check(self) -> Optional[bool]:
         """
         Check whether the integrity checking was successful
-            :return (Optional[bool]):  True if successful, None if unsuccessful
+            :return (Optional[bool]):       True if successful, None if unsuccessful
         """
-        if self.seq_requires_no_ic():
-            return True
         if self.checksumfile_exists():
-            if not self.prior_ic():
+            checksums = read_lines(self.rf_obj.checksumfile_path)
+            if not self.prior_ic_fail(checksums):
                 self.write_checksums_assessed()
                 if self.checksums_match():
                     return True
+
+    def prior_ic_fail(self, checksums) -> Optional[bool]:
+        """
+        Determine whether a previous check has identified that the md5sum file contains
+        the checksums do not match message
+        """
+        if DemultiplexConfig.CHECKSUM_DO_NOT_MATCH_MSG in checksums[0]:
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["prior_ic_fail"]
+            )
+            return True  
 
     def seq_requires_no_ic(self) -> Optional[bool]:
         """
@@ -463,8 +510,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         message to this file)
             :return (Optional[bool]): Return True if md5checksum file exists
         """
-        if self.seq_requires_no_ic():
-            return True
         if os.path.isfile(self.rf_obj.checksumfile_path):
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["checksumfile_present"],
@@ -477,29 +522,27 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.checksumfile_path,
             )
 
-    def prior_ic(self) -> Optional[bool]:
-        """
-        Determines whether an integrity check has been previously performed by this
-        script. Checks for presence of the CHECKSUMS_ALREADY_ASSESSED message in the
-        md5checksum file (this message is added when self.checksums_match() is called
-        to prevent the script from checking this file again until the cause of an issue
-        is addressed. If this string is removed from the file then the script will check
-        for the CHECKSUM_MATCH_MSG / CHECKSUM_DO_NOT_MATCH_MSG messages again using
-        self.checksums_match() )
-            :return (Optional[bool]):   Returns true if the checksum file has previously
-                                        been checked for the success message by the script
-        """
-        checksums = read_lines(self.rf_obj.checksumfile_path)
-
-        if DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED in checksums[-1]:
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["checksumfile_checked"]
-            )
-            return True
-        else:
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["checksumfile_notchecked"]
-            )
+    # def prior_ic(self, checksums) -> Optional[bool]:
+    #     """
+    #     Determines whether an integrity check has been previously performed by this
+    #     script. Checks for presence of the CHECKSUMS_ALREADY_ASSESSED message in the
+    #     md5checksum file (this message is added when self.checksums_match() is called
+    #     to prevent the script from checking this file again until the cause of an issue
+    #     is addressed. If this string is removed from the file then the script will check
+    #     for the CHECKSUM_MATCH_MSG / CHECKSUM_DO_NOT_MATCH_MSG messages again using
+    #     self.checksums_match() )
+    #         :return (Optional[bool]):   Returns true if the checksum file has previously
+    #                                     been checked for the success message by the script
+    #     """
+    #     if DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED in checksums[-1]:
+    #         self.demux_rf_logger.info(
+    #             self.demux_rf_logger.log_msgs["checksumfile_checked"]
+    #         )
+    #         return True
+    #     else:
+    #         self.demux_rf_logger.info(
+    #             self.demux_rf_logger.log_msgs["checksumfile_notchecked"]
+    #         )          
 
     def write_checksums_assessed(self) -> None:
         """
@@ -548,66 +591,26 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.checksumfile_path,
             )
 
-    def dev_run_requires_demultiplexing(self, sscheck_obj: object) -> Optional[bool]:
+    def runtype_requires_demultiplexing(self) -> Optional[bool]:
         """
-        Determine whether the run is a development run requiring automated demultiplexing,
-        or not (contains UMIs), using the sscheck_obj. If contains UMIs, the bcl2fastqlog
-        is created to prevent further processing, an alert will be sent to slack, and the
-        development run will need to be processed manually by bioinformatics
-            :sscheck_obj (obj):         Object created by samplesheet_validator.SampleheetCheck
+        Determine whether the run does not require demultiplexing (TSO500, dev runs with UMIs), or does
+        require demultiplexing. If it does not require demultiplexing, creates the bcl2fastq log file.
+        If it does require demultiplexing, returns True. Alert sent for dev runs with UMIs, as these
+        require manual processing by the bioinformatics team
             :return (Optional[bool]):   True if requires automated processing, else None
         """
         with open(self.rf_obj.runfolder_samplesheet_path, "r") as f:
             samplesheet = f.readlines()
-
-        if any(any(pannum in line for line in samplesheet) for pannum in DemultiplexConfig.UMIS):
+        if any(any(pannum in line for line in samplesheet) for pannum in DemultiplexConfig.UMI_DEV_PANEL):
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["dev_run_umis"])
+            self.create_bcl2fastqlog()
+            self.add_bcl2fastqlog_msg()
+        if any(any(pannum in line for line in samplesheet) for pannum in DemultiplexConfig.TSO_PANELS):
             self.create_bcl2fastqlog()  # Create bcl2fastq2 log to prevent scripts processing this run
-
-    def disallowed_sserrs_identified(self, valid: bool, sscheck_obj: object) -> Optional[bool]:
-        """
-        Check for specific errors that would cause bcl2fastq2 to fail and whose presence
-        should stop demultiplexing. Write errors to flag file if they exist, which will
-        stop the checks from continuing to fire in subsequent runs of the script. The first
-        time the errors are detected it will log the message as an error which appears in
-        slack, and on subsequent runs of the script it will log at level INFO so as not to
-        overload slack with error messages
-            :param valid (bool):            Denotes whether the SampleSheet is valid
-                                            (conforms to requirements)
-            :param sscheck_obj (object):    samplesheet_validator.SamplesheetCheck
-                                            object, generated by the SampleSheet
-                                            validator module
-            :return (Optional[bool]):       Returns true if SampleSheet is invalid
-        """
-        err_list = list(sscheck_obj.errors_dict.keys())
-        if valid and not any(error in err_list for error in self.disallowed_sserrs):
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["no_disallowed_ss_errs"],
-                self.rf_obj.samplesheet_path,
-            )
-            self.write_to_sscheck_file(DemultiplexConfig.SAMPLESHEET_SUCCESS_MSG)
+            self.add_bcl2fastqlog_msg()
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["tso_run"])
         else:
-            err_str = ", ".join(err_list)
-            self.demux_rf_logger.error(
-                self.demux_rf_logger.log_msgs["ssfail_haltdemux"],
-                self.rf_obj.samplesheet_path,
-                err_str,
-            )
-            self.write_to_sscheck_file(
-                DemultiplexConfig.SAMPLESHEET_ERRORS_MSG % err_str,
-            )
             return True
-
-    def write_to_sscheck_file(self, message: str) -> None:
-        """
-        Write message to the samplesheet check file
-            :param message: Message string to write to file
-            :return None:
-        """
-        write_lines(
-            self.rf_obj.sscheck_flagfile_path,
-            "w",
-            message,
-        )
 
     def create_bcl2fastqlog(self) -> Optional[bool]:
         """
@@ -622,8 +625,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.demux_rf_logger.log_msgs["create_bcl2fastqlog_pass"],
                 self.rf_obj.bcl2fastqlog_file,
             )
-            if self.tso or self.dev_run:
-                self.add_bcl2fastqlog_msg()
             return True
         except Exception as exception:
             self.demux_rf_logger.error(
@@ -634,13 +635,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
 
     def add_bcl2fastqlog_msg(self) -> Optional[bool]:
         """
-        If runfolder is from TSO500 run, add specific message to bcl2fastq2_output.log
-        file (TSO500 runs do not require demultiplexing)
-            :message (str):            Message to write to log
+        Write message to bcl2fastqlog file that demultiplexing is not required
             :return (Optional[bool]):  True if log file successfully created and written to
         """
         self.demux_rf_logger.info(
-            self.demux_rf_logger.log_msgs["tso500_run"],
+            self.demux_rf_logger.log_msgs["demux_not_required"],
             DemultiplexConfig.STRINGS["demultiplex_not_required_msg"],
         )
         write_lines(
@@ -649,7 +648,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             DemultiplexConfig.STRINGS["demultiplex_not_required_msg"],
         )
         self.demux_rf_logger.info(
-            self.demux_rf_logger.log_msgs["write_tso_msg_to_bcl2fastqlog"]
+            self.demux_rf_logger.log_msgs["write_msg_to_bcl2fastqlog"]
         )
         return True
 

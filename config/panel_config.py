@@ -845,8 +845,8 @@ class PanelConfig:
     ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
     ONCODEEP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "oncodeep"]
     LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
-    DEVELOPMENT_PANEL = [k for k, v in PANEL_DICT.items() if v["runtype"] == "dev"]
-    UMIS = [k for k, v in PANEL_DICT.items() if v["umis"] == True]
+    DEV_PANEL = [k for k, v in PANEL_DICT.items() if v["runtype"] == "dev"]
+    UMI_DEV_PANEL = [k for k, v in PANEL_DICT.items() if v["umis"] == True]
     # ================ DUTY_CSV INPUTS ===================================================
 
     # tso_pannumbers should not include the dry lab pan number as we do not want to include

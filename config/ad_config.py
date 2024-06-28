@@ -367,16 +367,12 @@ class DemultiplexConfig(PanelConfig):
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
 
-    CHECKSUMS_ALREADY_ASSESSED = (
-        "Checksums already assessed by AS"  # Written to file by AS
-    )
+    CHECKSUMS_ALREADY_ASSESSED = "Checksums already assessed by AS"  # Written to file by AS
     CHECKSUM_MATCH_MSG = "Checksums match"  # Success message written to md5checksum file by integrity check scripts
     # Failure message written to md5checksum file by integrity check scripts
     CHECKSUM_DO_NOT_MATCH_MSG = "Checksums do not match"
     SAMPLESHEET_SUCCESS_MSG = "Samplesheet check successful with no errors identified"
-    SAMPLESHEET_ERRORS_MSG = (
-        "Processing halted. SampleSheet contains disallowed SampleSheet errors: %s"
-    )
+    SAMPLESHEET_ERRORS_MSG = "Processing halted. SampleSheet contains SampleSheet errors:"
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
@@ -441,7 +437,6 @@ class SWConfig(PanelConfig):
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "demultiplex_success": DEMULTIPLEX_SUCCESS,
-        "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
     }
     PIPE_FH_GATK_TIMEOUT_ARGS = (  # This is specified for the GATK app in the Custom Panels pipeline for only FH samples
         # Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
@@ -559,7 +554,7 @@ class ToolboxConfig(PanelConfig):
     }
     FLAG_FILES = {
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
-        "bcl2fastqlog": "bcl2fastq2.txt",  # Holds bcl2fastq2 logs
+        "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
         "seq_complete": "RTAComplete.txt",  # Sequencing complete file
@@ -592,3 +587,6 @@ class URConfig:
     CREDENTIALS = CREDENTIALS
     DX_CMDS = DX_CMDS
     TIMESTAMP = TIMESTAMP
+    STRINGS = {
+        "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
+    }
