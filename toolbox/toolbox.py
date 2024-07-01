@@ -501,9 +501,6 @@ class RunfolderSamples(ToolboxConfig):
         get_samples_dict()
             Create a SampleObject per sample, containing sample-specific properties, and
             add each SampleObject to a larger samples_dict
-        validate_fastqs()
-            Validate the fastqs in the BaseCalls directory by checking that all sample fastqs
-            match a sample name from the self.samplename_dict
         check_for_missing_fastqs()
             Validate the fastqs in the BaseCalls directory by checking that all sample fastqs
             match a sample name from the self.samplename_dict
@@ -533,19 +530,18 @@ class RunfolderSamples(ToolboxConfig):
         self.nexus_paths = self.get_nexus_paths()
         self.unique_pannos = set(self.samplename_dict.values())
         self.samples_dict = self.get_samples_dict()
-        if self.pipeline != "tso500":  # TODO need to add dev UMIs as exclusion from this   
-            # tso500 run is not demultiplexed locally so there are no fastqs
-            # All other runfolders have fastqs in the BaseCalls directory
-            # Check fastqs in fastq dir were correctly identified from the
-            # SampleSheet and add any missing samples to thef samples dict
-            self.validate_fastqs()
-            self.check_for_missing_fastqs()
-            self.fastqs_list = self.get_fastqs_list()
-            self.fastqs_str = self.get_fastqs_str(self.fastqs_list)
-            self.undetermined_fastqs_list = self.get_undetermined_fastqs_list(logger)
-            self.undetermined_fastqs_str = self.get_fastqs_str(
-                self.undetermined_fastqs_list
-            )
+        #     # tso500 run is not demultiplexed locally so there are no fastqs
+        #     # All other runfolders have fastqs in the BaseCalls directory
+        #     # Check fastqs in fastq dir were correctly identified from the
+        #     # SampleSheet and add any missing samples to thef samples dict
+        self.validate_fastqs()
+        self.check_for_missing_fastqs()
+        self.fastqs_list = self.get_fastqs_list()
+        self.fastqs_str = self.get_fastqs_str(self.fastqs_list)
+        self.undetermined_fastqs_list = self.get_undetermined_fastqs_list()
+        self.undetermined_fastqs_str = self.get_fastqs_str(
+            self.undetermined_fastqs_list
+        )
 
     def get_pipeline(self) -> Union[str, None]:
         """
@@ -714,46 +710,6 @@ class RunfolderSamples(ToolboxConfig):
                 )
         return samples_dict
 
-    def validate_fastqs(self) -> None:
-        """
-        Validate the created fastqs in the BaseCalls directory and log success
-        or failure error message accordingly. If any failure, remove bcl2fastq log
-        file to trigger re-demultiplex on next script run
-            :return None:
-        """
-        fastqs = [
-            x for x in os.listdir(self.fastq_dir_path) if x.endswith("fastq.gz")
-        ]
-        returncodes = []
-
-        for fastq in fastqs:
-            out, err, returncode = execute_subprocess_command(
-                f"gzip --test {os.path.join(self.fastq_dir_path, fastq)}",
-                self.logger,
-            )
-            returncodes.append(returncode)
-            if returncode == 0:
-                self.logger.info(
-                    self.logger.log_msgs["fastq_valid"],
-                    fastq,
-                )
-            else:
-                self.logger.error(
-                    self.logger.log_msgs["fastq_invalid"],
-                    fastq,
-                    out,
-                    err,
-                )
-
-        if all(code == 0 for code in returncodes):
-            self.logger.info(self.logger.log_msgs["demux_success"])
-        else:
-            if os.path.exists(self.bcl2fastqlog_file):
-                os.remove(
-                    self.bcl2fastqlog_file
-                )  # Bcl2fastq log file removed to trigger re-demultiplex
-            self.logger.error(self.logger.log_msgs["re_demultiplex"])
-
     def check_for_missing_fastqs(self) -> None:
         """
         Validate the fastqs in the BaseCalls directory by checking that all sample fastqs
@@ -885,15 +841,6 @@ class RunfolderSamples(ToolboxConfig):
         for fastq in [r1, r2]:
             if os.path.exists(fastq):
                 undetermined_fastqs_list.append(fastq)
-                self.logger.info(
-                    self.logger.log_msgs["undetermined_exists"],
-                    fastq,
-                )
-            else:
-                self.logger.error(
-                    self.logger.log_msgs["undetermined_missing"],
-                    fastq,
-                )
         return undetermined_fastqs_list
 
 
@@ -1080,7 +1027,7 @@ class SampleObject(ToolboxConfig):
                     }
         return fastqs_dict
 
-    def get_fastq_paths(self, read: stream) -> str:
+    def get_fastq_paths(self, read: str) -> str:
         """
         Get fastqs in fastq directory that correspond to each sample name in the
         sample dictionary. Build the fastq name, local path, and DNAnexus path
@@ -1168,3 +1115,39 @@ def get_samplename_dict(logger: logging.Logger, samplesheet_path: str) -> list:
     else:
         logger.error(logger.log_msgs["ss_missing"])
         return False
+
+
+def validate_fastqs(self, fastq_dir_path: str, logger: logging.Logger) -> None:
+    """
+    Validate the created fastqs in the BaseCalls directory and log success
+    or failure error message accordingly. If any failure, remove bcl2fastq log
+    file to trigger re-demultiplex on next script run
+        :return None:
+    """
+    fastqs = [
+        x for x in os.listdir(fastq_dir_path) if x.endswith("fastq.gz")
+    ]
+    returncodes = []
+
+    for fastq in fastqs:
+        out, err, returncode = execute_subprocess_command(
+            f"gzip --test {os.path.join(fastq_dir_path, fastq)}",
+            logger,
+        )
+        returncodes.append(returncode)
+        if returncode == 0:
+            logger.info(
+                logger.log_msgs["fastq_valid"],
+                fastq,
+            )
+        else:
+            logger.error(
+                logger.log_msgs["fastq_invalid"],
+                fastq,
+                out,
+                err,
+            )
+
+    if all(code == 0 for code in returncodes):
+        logger.info(logger.log_msgs["demux_success"])
+        return True

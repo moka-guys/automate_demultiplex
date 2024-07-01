@@ -711,13 +711,19 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.demux_rf_logger,
             )
             if returncode == 0:
-                self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
-                )
-                self.bcl2fastq2_rf_logger.info(
-                    err  # Write stderr to bcl2fastq2 runfolder logfile
-                )
-                return True
+                if validate_fastqs(self.rf_obj.fastq_dir_path, self.loggers["sw"]):
+                    self.demux_rf_logger.info(
+                        self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
+                    )
+                    self.bcl2fastq2_rf_logger.info(
+                        err  # Write stderr to bcl2fastq2 runfolder logfile
+                    )
+                    return True
+                else:
+                    os.remove(
+                        self.bcl2fastqlog_file
+                    )  # Bcl2fastq log file removed to trigger re-demultiplex
+                    self.demux_rf_logger.error(self.demux_rf_logger.log_msgs["re_demultiplex"])
             else:
                 self.demux_rf_logger.error(
                     self.demux_rf_logger.log_msgs["bcl2fastq_failed"],
