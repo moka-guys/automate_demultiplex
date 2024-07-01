@@ -277,8 +277,7 @@ DX_CMDS = {
     "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
     "snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} --priority high -y {JOB_NAME_STR}",
     "tso500": (
-        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --priority high -y {JOB_NAME_STR} "
-        "--instance-type mem1_ssd1_v2_x72"
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --instance-type mem1_ssd1_v2_x72 --priority high -y {JOB_NAME_STR} "
     ),
     "fastqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
     "peddy": (  # TODO move instance type into app itself
