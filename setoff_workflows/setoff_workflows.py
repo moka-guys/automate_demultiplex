@@ -480,6 +480,8 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.masterfile_name,
             )
         if self.rf_samples.pipeline != "tso500":
+            # tso500 run is not demultiplexed locally so there are no fastqs
+            # All other runfolders have fastqs in the BaseCalls directory
             upload_cmds["fastqs"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
@@ -789,7 +791,8 @@ class ProcessRunfolder(SWConfig):
             )
         else:
             self.loggers["sw"].info(
-                self.loggers["sw"].log_msgs["dx_run_success"]
+                self.loggers["sw"].log_msgs["dx_run_success"],
+                self.rf_obj.runfolder_name
             )
 
     def post_pipeline_upload(self) -> None:

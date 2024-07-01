@@ -530,11 +530,6 @@ class RunfolderSamples(ToolboxConfig):
         self.nexus_paths = self.get_nexus_paths()
         self.unique_pannos = set(self.samplename_dict.values())
         self.samples_dict = self.get_samples_dict()
-        #     # tso500 run is not demultiplexed locally so there are no fastqs
-        #     # All other runfolders have fastqs in the BaseCalls directory
-        #     # Check fastqs in fastq dir were correctly identified from the
-        #     # SampleSheet and add any missing samples to thef samples dict
-        self.validate_fastqs()
         self.check_for_missing_fastqs()
         self.fastqs_list = self.get_fastqs_list()
         self.fastqs_str = self.get_fastqs_str(self.fastqs_list)
@@ -1117,7 +1112,7 @@ def get_samplename_dict(logger: logging.Logger, samplesheet_path: str) -> list:
         return False
 
 
-def validate_fastqs(self, fastq_dir_path: str, logger: logging.Logger) -> None:
+def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> None:
     """
     Validate the created fastqs in the BaseCalls directory and log success
     or failure error message accordingly. If any failure, remove bcl2fastq log

@@ -31,6 +31,7 @@ from toolbox.toolbox import (
     read_lines,
     write_lines,
     execute_subprocess_command,
+    validate_fastqs,
 )
 from toolbox.toolbox import script_start_logmsg, script_end_logmsg
 
@@ -131,7 +132,7 @@ class GetRunfolders(DemultiplexConfig):
         """
         if dr_obj.run_processed:  # If runfolder has been processed during this script run
             script_logger.info(
-                script_logger.log_msgs["runfolder_processed"],
+                script_logger.log_msgs["script_success"],
                 runfolder_name,
             )
             self.processed_runfolders.append(runfolder_name)
@@ -714,6 +715,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 if validate_fastqs(self.rf_obj.fastq_dir_path, self.loggers["sw"]):
                     self.demux_rf_logger.info(
                         self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
+                        self.rf_obj.runfolder_name
                     )
                     self.bcl2fastq2_rf_logger.info(
                         err  # Write stderr to bcl2fastq2 runfolder logfile
