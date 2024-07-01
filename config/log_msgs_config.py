@@ -48,8 +48,6 @@ LOG_MSGS = {
         "fastq_nonexistent": "No fastq could be intentified that matches the following strings: %s. Error: %s",
         "sample_excluded": "Sample excluded from samples dictionary due to missing fastqs: %s",
         "control_sample": "%s control sample detected: %s",
-        "undetermined_exists": "Undetermined fastq exists: %s",
-        "undetermined_missing": "Undetermined fastq is missing: %s",
         "multiple_pipeline_names": (
             "Multiple pipeline names detected from panel config for sample list: %s. Scripts do not support different "
             "pipelines for the same run. Supported pipelines: %s"
