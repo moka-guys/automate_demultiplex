@@ -10,12 +10,14 @@ import os
 import re
 import math
 import logging
+import datetime
 from config.ad_config import URConfig
 from toolbox.toolbox import (
     execute_subprocess_command,
     git_tag,
     test_upload_software,
     get_credential,
+    write_lines,
 )
 
 
@@ -75,6 +77,7 @@ class UploadRunfolder(URConfig):
         logger: logging.Logger,
         runfolder_name: str,
         runfolderpath: str,
+        upload_flagfile: str,
         nexus_identifiers=False,
     ):
         """
@@ -82,6 +85,7 @@ class UploadRunfolder(URConfig):
             :param logger (logging.Logger): Logger
             :param runfolder_name (str):    Name of runfolder
             :param runfolderpath (str):     Path of runfolder on workstation
+            :param upload_flagfile (str):   Path to upload runfolder flag file
             :param nexus_identifiers        Dictionary of proj_name and proj_id, or False
             (dict | False):
         """
@@ -89,10 +93,16 @@ class UploadRunfolder(URConfig):
         self.runfolder_name = runfolder_name
         self.runfolderpath = runfolderpath
         self.dnanexus_auth = get_credential(URConfig.CREDENTIALS["dnanexus_authtoken"])
+        self.upload_flagfile = upload_flagfile
         if nexus_identifiers:
             self.nexus_identifiers = nexus_identifiers
         else:
             self.nexus_identifiers = self.find_nexus_project()
+        write_lines(
+            self.upload_flagfile,
+            "a",
+            f"{URConfig.STRINGS['upload_started']}: {datetime.datetime.now()}",
+        )
 
     def find_nexus_project(self) -> dict:
         """

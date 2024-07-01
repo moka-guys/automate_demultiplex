@@ -67,6 +67,7 @@ self.upload_runfolder = UploadRunfolder(
     rf_obj.rf_loggers["backup"],
     rf_obj.runfolder_name,
     rf_obj.runfolderpath,
+    rf_obj.upload_flagfile,
     nexus_identifiers
 )
 

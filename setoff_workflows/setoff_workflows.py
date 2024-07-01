@@ -36,6 +36,7 @@ from toolbox.toolbox import (
     write_lines,
     execute_subprocess_command,
     get_samplename_dict,
+    validate_fastqs,
 )
 from setoff_workflows.pipeline_emails import PipelineEmails
 from setoff_workflows.build_dx_commands import BuildRunfolderDxCommands, BuildSampleDxCommands
@@ -198,15 +199,21 @@ class SequencingRuns(SWConfig):
         )
         samplename_dict = get_samplename_dict(loggers["sw"], rf_obj.samplesheet_path)
         if samplename_dict:
-            self.process_runfolder_obj = ProcessRunfolder(rf_obj, loggers)
+            if not validate_fastqs(self.rf_obj.fastq_dir_path, self.loggers["sw"]) and os.path.exists(self.bcl2fastqlog_file):
+                os.remove(
+                    self.bcl2fastqlog_file
+                )  # Bcl2fastq log file removed to trigger re-demultiplex
+                self.loggers["sw"].error(self.loggers["sw"].log_msgs["re_demultiplex"])
+            else:
+                self.process_runfolder_obj = ProcessRunfolder(rf_obj, loggers)
 
-            for logger_name in loggers.keys():
-                shutdown_logs(loggers[logger_name])  # Shut down logging
-            self.processed_runfolders.append(rf_obj.runfolder_name)
-            script_logger.info(
-                script_logger.log_msgs["runfolder_processed"],
-                self.process_runfolder_obj.rf_obj.runfolder_name,
-            )
+                for logger_name in loggers.keys():
+                    shutdown_logs(loggers[logger_name])  # Shut down logging
+                self.processed_runfolders.append(rf_obj.runfolder_name)
+                script_logger.info(
+                    script_logger.log_msgs["runfolder_processed"],
+                    self.process_runfolder_obj.rf_obj.runfolder_name,
+                )
 
     def num_processed_runfolders(self) -> None:
         """
@@ -285,11 +292,7 @@ class ProcessRunfolder(SWConfig):
         self.rf_obj = rf_obj
         self.loggers = loggers
         self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
-        write_lines(  # Create upload flag file (prevents processing by other script runs)
-            rf_obj.upload_flagfile,
-            "w",
-            f"{SWConfig.STRINGS['upload_started']}: {datetime.datetime.now()}",  # TODO change this to just creating the file and writing the time stamp later when we actually upload
-        )
+        open(self.rf_obj.upload_flagfile, 'w').close()  # Create upload flag file (prevents processing by other script runs)
         self.rf_samples = RunfolderSamples(self.rf_obj, self.loggers["sw"])
         self.loggers["sw"].info(
             self.loggers["sw"].log_msgs["runtype"],
@@ -306,6 +309,7 @@ class ProcessRunfolder(SWConfig):
             self.loggers["backup"],
             self.rf_obj.runfolder_name,
             self.rf_obj.runfolderpath,
+            self.rf_obj.upload_flagfile,
             self.nexus_identifiers,
         )
         self.upload_cmds = self.get_upload_cmds()
@@ -468,14 +472,14 @@ class ProcessRunfolder(SWConfig):
                 f"/{self.rf_obj.runfolder_name}",
                 " ".join(f"'{samplesheet}'" for samplesheet in samplesheet_paths),
             )
-        elif self.rf_samples.pipeline == "oncodeep":
+        if self.rf_samples.pipeline == "oncodeep":
             upload_cmds["masterfile"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 f"/{self.rf_obj.runfolder_name}",
                 self.rf_obj.masterfile_name,
             )
-        else:
+        if self.rf_samples.pipeline != "tso500":
             upload_cmds["fastqs"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
@@ -487,14 +491,14 @@ class ProcessRunfolder(SWConfig):
                     ]
                 ),
             )
-            upload_cmds["runfolder_samplesheet"] = SWConfig.DX_CMDS[
-                "file_upload_cmd"
-            ] % (
-                self.rf_obj.dnanexus_auth,
-                self.nexus_identifiers["proj_id"],
-                "/",
-                self.rf_obj.runfolder_samplesheet_path,
-            )
+        upload_cmds["runfolder_samplesheet"] = SWConfig.DX_CMDS[
+            "file_upload_cmd"
+        ] % (
+            self.rf_obj.dnanexus_auth,
+            self.nexus_identifiers["proj_id"],
+            "/",
+            self.rf_obj.runfolder_samplesheet_path,
+        )
         return upload_cmds
 
     def split_tso_samplesheet(self) -> list:
@@ -815,8 +819,8 @@ class ProcessRunfolder(SWConfig):
 
 class DevPipeline():
     """
-    There is no decision support upload, post processing command script, or SQL query
-    for this runtype
+    Collate DNAnexus commands for development runs. This runtype has no decision
+    support upload or postprocessing commands, or SQL queries
     """
     
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
@@ -827,9 +831,8 @@ class DevPipeline():
         self.rf_samples = rf_samples
         self.logger = logger
         self.workflow_cmds = []
-        self.dx_postprocessing_cmds = False
-        self.decision_support_upload_cmds = False
         self.sql_queries = False
+        self.decision_support_upload_cmds, self.dx_postprocessing_cmds = False, False
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
         for sample_name in self.rf_samples.samples_dict.keys():
@@ -843,12 +846,11 @@ class DevPipeline():
 
         # Return downstream app commands
         self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
-        self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
-
 
 class ArcherDxPipeline():
     """
-    There is no decision support upload or post processing command script for this runtype
+    Collate DNAnexus commands for ArcherDX runs. This runtype has no decision
+    support upload or postprocessing commands
     """
 
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
@@ -857,9 +859,9 @@ class ArcherDxPipeline():
         self.rf_samples = rf_samples
         self.logger = logger
         self.workflow_cmds = []
+        self.sql_queries = []
         self.dx_postprocessing_cmds = False
         self.decision_support_upload_cmds = []
-        self.sql_queries = []
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
         for sample_name in self.rf_samples.samples_dict.keys():
@@ -881,7 +883,8 @@ class ArcherDxPipeline():
 class SnpPipeline:  # TODO eventually remove this and associated pipeline-specific functions
 
     """
-    This run type has no decision support upload or post processing commands
+    Collate DNAnexus commands for SNP runs. This run type has no decision
+    support upload or post processing commands
 
     Attributes
         workflow_cmd (str): Dx run command for the sample workflow
@@ -894,7 +897,6 @@ class SnpPipeline:  # TODO eventually remove this and associated pipeline-specif
         self.logger = logger
         self.workflow_cmds = []
         self.sql_queries = []
-        self.dx_postprocessing_cmds = False
         self.decision_support_upload_cmds, self.dx_postprocessing_cmds = False, False
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
@@ -914,7 +916,9 @@ class SnpPipeline:  # TODO eventually remove this and associated pipeline-specif
 
 
 class OncoDeepPipeline():
-
+    """
+    Collate DNAnexus commands for OncoDEEP runs. This runtype has no 
+    """
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
         self.rf_obj = rf_obj
         self.rf_samples = rf_samples
@@ -1015,7 +1019,7 @@ class TsoPipeline():
         self.dx_postprocessing_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
 
-class WesPipeline():
+class WesPipeline():  # TODO eventually remove this and associated pipeline-specific functions
 
     """
 
@@ -1027,7 +1031,7 @@ class WesPipeline():
         return_wes_runwide_cmds()
             Collect runwide commands for WES runs as a list. This includes peddy
     """
-    def __init__(self, rf_obj: object, logger: logging.Logger):
+    def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
 
         self.rf_obj = rf_obj
         self.rf_samples = rf_samples
@@ -1093,7 +1097,6 @@ class CustomPanelsPipeline():
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
         """
         """
-        # TODO coverage is missing
         self.rf_obj = rf_obj
         self.rf_samples = rf_samples
         self.logger = logger
@@ -1101,7 +1104,7 @@ class CustomPanelsPipeline():
         self.dx_postprocessing_cmds = False
         self.decision_support_upload_cmds = []
         self.sql_queries = []
-        self.rf_cmds_obj = BuildRunfolderDxCommands()
+        self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
         for sample_name in self.rf_samples.samples_dict.keys():
             sample_cmds_obj = BuildSampleDxCommands(
@@ -1153,8 +1156,9 @@ class CustomPanelsPipeline():
                     )
         self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_gatk_recombined"])
 
+        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
+
         # We want duty_csv to also depend on the cnv calling jobs for PIPE workflows
         self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_cnv_recombined"])
 
-        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())

@@ -103,6 +103,7 @@ ur_obj = UploadRunfolder(
     loggers["backup"],
     rf_obj.runfolder_name,
     rf_obj.runfolderpath,
+    rf_obj.upload_flagfile,
     nexus_identifiers,
 )
 ur_obj.upload_rest_of_runfolder(parsed_args.ignore)

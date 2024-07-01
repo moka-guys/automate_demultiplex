@@ -677,7 +677,7 @@ class BuildSampleDxCommands(SWConfig):
         prefix_str = (  # Set prefix as samplename
             f'{SWConfig.STAGE_INPUTS["pipe"]["happy_prefix"]}{self.sample_dict["sample_name"]}'
         )
-        if self.pos_control:
+        if self.sample_dict["pos_control"]:
             skip_str = f'{SWConfig.STAGE_INPUTS["pipe"]["happy_skip"]}false'
         else:
             skip_str = f'{SWConfig.STAGE_INPUTS["pipe"]["happy_skip"]}true'
