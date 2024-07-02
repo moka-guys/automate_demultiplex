@@ -191,7 +191,7 @@ class SequencingRuns(SWConfig):
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
             :return None:
         """
-        loggers = rf_obj.get_runfolder_loggers(__package__)  # Add runfolder loggers attribute
+        loggers = rf_obj.get_runfolder_loggers(__package__)  # Get dictionary of loggers
 
         loggers["sw"].info(
             loggers["sw"].log_msgs["ad_version"],
@@ -293,16 +293,16 @@ class ProcessRunfolder(SWConfig):
         self.loggers = loggers
         self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
         open(self.rf_obj.upload_flagfile, 'w').close()  # Create upload flag file (prevents processing by other script runs)
-        self.rf_samples = RunfolderSamples(self.rf_obj, self.loggers["sw"])
+        self.rf_samples_obj = RunfolderSamples(self.rf_obj, self.loggers["sw"])
         self.loggers["sw"].info(
             self.loggers["sw"].log_msgs["runtype"],
-            self.rf_samples.pipeline,
+            self.rf_samples_obj.pipeline,
             self.rf_obj.runfolder_name,
         )
         self.users_dict = self.get_users_dict()
         self.write_project_creation_script()
         self.nexus_identifiers = {
-            "proj_name": self.rf_samples.nexus_paths["proj_name"],
+            "proj_name": self.rf_samples_obj.nexus_paths["proj_name"],
             "proj_id": self.run_project_creation_script(),
         }
         self.upload_runfolder = UploadRunfolder(
@@ -336,7 +336,7 @@ class ProcessRunfolder(SWConfig):
             set(
                 [
                     v["panel_settings"]["dry_lab"]
-                    for k, v in self.rf_samples.samples_dict.items()
+                    for k, v in self.rf_samples_obj.samples_dict.items()
                     if v["panel_settings"]["dry_lab"]
                 ]
             )
@@ -380,7 +380,7 @@ class ProcessRunfolder(SWConfig):
             SWConfig.DX_CMDS["create_proj"]
             % (
                 SWConfig.PROD_ORGANISATION,
-                self.rf_samples.nexus_paths["proj_name"],
+                self.rf_samples_obj.nexus_paths["proj_name"],
             ),
         ]
         # Give view and admin permissions for project
@@ -447,18 +447,18 @@ class ProcessRunfolder(SWConfig):
             % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
-                f"{os.path.join(self.rf_samples.nexus_paths['fastqs_dir'], 'Stats')}",
+                f"{os.path.join(self.rf_samples_obj.nexus_paths['fastqs_dir'], 'Stats')}",
                 self.rf_obj.bcl2fastqstats_file,
             ),
             "logfiles": SWConfig.DX_CMDS["file_upload_cmd"]
             % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
-                self.rf_samples.nexus_paths["logfiles_dir"],
+                self.rf_samples_obj.nexus_paths["logfiles_dir"],
                 " ".join(f"'{logfile}'" for logfile in self.rf_obj.logfiles_to_upload),
             ),
         }
-        if self.rf_samples.pipeline == "tso500":
+        if self.rf_samples_obj.pipeline == "tso500":
             self.rf_obj.tso_ss_list = self.split_tso_samplesheet()
             samplesheet_paths = [
                 os.path.join(self.rf_obj.runfolderpath, ss)
@@ -472,24 +472,24 @@ class ProcessRunfolder(SWConfig):
                 f"/{self.rf_obj.runfolder_name}",
                 " ".join(f"'{samplesheet}'" for samplesheet in samplesheet_paths),
             )
-        if self.rf_samples.pipeline == "oncodeep":
+        if self.rf_samples_obj.pipeline == "oncodeep":
             upload_cmds["masterfile"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 f"/{self.rf_obj.runfolder_name}",
                 self.rf_obj.masterfile_name,
             )
-        if self.rf_samples.pipeline != "tso500":
+        if self.rf_samples_obj.pipeline != "tso500":
             # tso500 run is not demultiplexed locally so there are no fastqs
             # All other runfolders have fastqs in the BaseCalls directory
             upload_cmds["fastqs"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
-                self.rf_samples.nexus_paths["fastqs_dir"],
+                self.rf_samples_obj.nexus_paths["fastqs_dir"],
                 " ".join(
                     [
-                        self.rf_samples.fastqs_str,
-                        self.rf_samples.undetermined_fastqs_str,
+                        self.rf_samples_obj.fastqs_str,
+                        self.rf_samples_obj.undetermined_fastqs_str,
                     ]
                 ),
             )
@@ -555,22 +555,22 @@ class ProcessRunfolder(SWConfig):
         expected_data_headers = ["Sample_ID", "Sample_Name", "index"]
         header_identified = False
         # Read all lines from the sample sheet
-        with open(self.rf_obj.runfolder_samplesheet_path, "r") as samplesheet:
-            for line in samplesheet.readlines():
-                line = line.strip("\n")
-                if any(header in line for header in expected_data_headers):
-                    samplesheet_header.append(line)  # Extract header and add to list
-                    header_identified = True
-                elif (
-                    not header_identified
-                ):  # Extract lines above the header and add to list
-                    samplesheet_header.append(line)
-                # Skip empty lines (check first element of the line, after splitting on comma)
-                elif header_identified and len(line.split(",")[0]) > 2:
-                    samples.append(line)
-                    no_sample_lines += 1
-                elif len(line.split(",")[0]) < 2:  # Skip empty lines
-                    pass
+        samplesheet = read_lines(self.rf_obj.runfolder_samplesheet_path)
+        for line in samplesheet:
+            line = line.strip("\n")
+            if any(header in line for header in expected_data_headers):
+                samplesheet_header.append(line)  # Extract header and add to list
+                header_identified = True
+            elif (
+                not header_identified
+            ):  # Extract lines above the header and add to list
+                samplesheet_header.append(line)
+            # Skip empty lines (check first element of the line, after splitting on comma)
+            elif header_identified and len(line.split(",")[0]) > 2:
+                samples.append(line)
+                no_sample_lines += 1
+            elif len(line.split(",")[0]) < 2:  # Skip empty lines
+                pass
         return samples, samplesheet_header
 
     def create_file_upload_dict(self) -> dict:
@@ -586,7 +586,7 @@ class ProcessRunfolder(SWConfig):
                 "files_list": self.rf_obj.cluster_density_files,
             },
         }
-        if self.rf_samples.pipeline == "tso500":  # Add SampleSheet entry
+        if self.rf_samples_obj.pipeline == "tso500":  # Add SampleSheet entry
             pre_pipeline_upload_dict["runfolder_samplesheet"] = {
                 "cmd": self.upload_cmds["runfolder_samplesheet"],
                 "files_list": [
@@ -594,7 +594,7 @@ class ProcessRunfolder(SWConfig):
                     for ss in self.rf_obj.tso_ss_list
                 ],
             }
-        elif self.rf_samples.pipeline == "oncodeep":  # Add MasterFile entry
+        elif self.rf_samples_obj.pipeline == "oncodeep":  # Add MasterFile entry
             pre_pipeline_upload_dict["masterfile"] = {
                 "cmd": self.upload_cmds["masterfile"],
                 "files_list": [self.rf_obj.runfolder_masterfile_path],
@@ -607,8 +607,8 @@ class ProcessRunfolder(SWConfig):
             pre_pipeline_upload_dict["fastqs"] = {
                 "cmd": self.upload_cmds["fastqs"],
                 "files_list": [
-                    *self.rf_samples.fastqs_list,
-                    *self.rf_samples.undetermined_fastqs_list,
+                    *self.rf_samples_obj.fastqs_list,
+                    *self.rf_samples_obj.undetermined_fastqs_list,
                 ],
             }
             pre_pipeline_upload_dict["bcl2fastq_qc"] = {
@@ -627,19 +627,19 @@ class ProcessRunfolder(SWConfig):
             :return decision_support_upload_cmds (list):    Commands for decision support uploads
             :return sql_queries (list):
         """
-        if self.rf_samples.pipeline == "tso500":
+        if self.rf_samples_obj.pipeline == "tso500":
             pipeline_obj = TsoPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
-        if self.rf_samples.pipeline == "archerdx":
+        if self.rf_samples_obj.pipeline == "archerdx":
             pipeline_obj = ArcherDxPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
-        if self.rf_samples.pipeline == "wes":
+        if self.rf_samples_obj.pipeline == "wes":
             pipeline_obj = WesPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
-        if self.rf_samples.pipeline == "oncodeep":
+        if self.rf_samples_obj.pipeline == "oncodeep":
             pipeline_obj = OncoDeepPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
-        if self.rf_samples.pipeline == "snp":
+        if self.rf_samples_obj.pipeline == "snp":
             pipeline_obj = SnpPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
-        if self.rf_samples.pipeline == "pipe":
+        if self.rf_samples_obj.pipeline == "pipe":
             pipeline_obj = CustomPanelsPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
-        if self.rf_samples.pipeline == "dev":
+        if self.rf_samples_obj.pipeline == "dev":
             pipeline_obj = DevPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
 
         self.loggers["sw"].info(
@@ -702,7 +702,7 @@ class ProcessRunfolder(SWConfig):
         """
         for filetype in self.pre_pipeline_upload_dict.keys():
             self.upload_to_dnanexus(filetype, self.pre_pipeline_upload_dict)
-        if self.rf_samples.pipeline == "tso500":
+        if self.rf_samples_obj.pipeline == "tso500":
             self.loggers["sw"].info(
                 self.loggers["sw"].log_msgs["tso_backup"],
             )
@@ -748,7 +748,7 @@ class ProcessRunfolder(SWConfig):
             :return None:
         """
         # Build upload_runfolder.py commands, ignoring some files
-        if self.rf_samples.pipeline in ["tso500", "dev"]:
+        if self.rf_samples_obj.pipeline in ["tso500", "dev"]:
             ignore = ""
         else:
             ignore = "/L00"
@@ -801,7 +801,7 @@ class ProcessRunfolder(SWConfig):
         uploads the runfolder logfiles
             :return None:
         """
-        if self.rf_samples.pipeline != "tso500":
+        if self.rf_samples_obj.pipeline != "tso500":
             self.upload_rest_of_runfolder()
 
         file_upload_dict = {
@@ -831,24 +831,24 @@ class DevPipeline():
         Constructor for the DevPipeline class
         """
         self.rf_obj = rf_obj
-        self.rf_samples = rf_samples
+        self.rf_samples_obj = rf_samples
         self.logger = logger
         self.workflow_cmds = []
         self.sql_queries = False
         self.decision_support_upload_cmds, self.dx_postprocessing_cmds = False, False
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
-        for sample_name in self.rf_samples.samples_dict.keys():
+        for sample_name in self.rf_samples_obj.samples_dict.keys():
             sample_cmds_obj = BuildSampleDxCommands(
                 self.rf_obj.runfolder_name,
-                self.rf_samples.samples_dict[sample_name],
+                self.rf_samples_obj.samples_dict[sample_name],
                 self.logger,
             )
             self.workflow_cmds.append(sample_cmds_obj.create_fastqc_cmd())
             self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
         # Return downstream app commands
-        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
+        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline))
 
 class ArcherDxPipeline():
     """
@@ -859,7 +859,7 @@ class ArcherDxPipeline():
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
 
         self.rf_obj = rf_obj
-        self.rf_samples = rf_samples
+        self.rf_samples_obj = rf_samples
         self.logger = logger
         self.workflow_cmds = []
         self.sql_queries = []
@@ -867,10 +867,10 @@ class ArcherDxPipeline():
         self.decision_support_upload_cmds = []
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
-        for sample_name in self.rf_samples.samples_dict.keys():
+        for sample_name in self.rf_samples_obj.samples_dict.keys():
             sample_cmds_obj = BuildSampleDxCommands(
                 self.rf_obj.runfolder_name,
-                self.rf_samples.samples_dict[sample_name],
+                self.rf_samples_obj.samples_dict[sample_name],
                 self.logger,
             )
             self.workflow_cmds.append(sample_cmds_obj.create_fastqc_cmd())
@@ -879,7 +879,7 @@ class ArcherDxPipeline():
             self.sql_queries.append(sample_cmds_obj.return_oncology_query())  # Get SQL queries
 
         # Return downstream app commands
-        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
+        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline))
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
 
@@ -896,17 +896,17 @@ class SnpPipeline:  # TODO eventually remove this and associated pipeline-specif
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
 
         self.rf_obj = rf_obj
-        self.rf_samples = rf_samples
+        self.rf_samples_obj = rf_samples
         self.logger = logger
         self.workflow_cmds = []
         self.sql_queries = []
         self.decision_support_upload_cmds, self.dx_postprocessing_cmds = False, False
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
-        for sample_name in self.rf_samples.samples_dict.keys():
+        for sample_name in self.rf_samples_obj.samples_dict.keys():
             sample_cmds_obj = BuildSampleDxCommands(
                 self.rf_obj.runfolder_name,
-                self.rf_samples.samples_dict[sample_name],
+                self.rf_samples_obj.samples_dict[sample_name],
                 self.logger,
             )
             self.workflow_cmds.append(sample_cmds_obj.create_snp_cmd())
@@ -914,7 +914,7 @@ class SnpPipeline:  # TODO eventually remove this and associated pipeline-specif
 
             self.sql_queries.append(sample_cmds_obj.return_rd_query())  # Get SQL queries
         # Return downstream app commands
-        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
+        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline))
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
 
@@ -924,7 +924,7 @@ class OncoDeepPipeline():
     """
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
         self.rf_obj = rf_obj
-        self.rf_samples = rf_samples
+        self.rf_samples_obj = rf_samples
         self.logger = logger
         self.workflow_cmds = []
         self.dx_postprocessing_cmds = False
@@ -932,10 +932,10 @@ class OncoDeepPipeline():
         self.sql_queries = []
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
-        for sample_name in self.rf_samples.samples_dict.keys():
+        for sample_name in self.rf_samples_obj.samples_dict.keys():
             sample_cmds_obj = BuildSampleDxCommands(
                 self.rf_obj.runfolder_name,
-                self.rf_samples.samples_dict[sample_name],
+                self.rf_samples_obj.samples_dict[sample_name],
                 self.logger,
             )
             self.workflow_cmds.append(sample_cmds_obj.create_fastqc_cmd())
@@ -947,20 +947,20 @@ class OncoDeepPipeline():
                 self.decision_support_upload_cmds.append(
                     sample_cmds_obj.build_oncodeep_upload_cmd(
                         f"{sample_name}-{read}",
-                        self.rf_samples.nexus_runfolder_suffix,
-                        self.rf_samples.fastqs_dict[read]["nexus_path"],
+                        self.rf_samples_obj.nexus_runfolder_suffix,
+                        self.rf_samples_obj.fastqs_dict[read]["nexus_path"],
                     )
                 )
         # Generate command for MasterFile upload
         sample_cmds_obj.decision_support_upload_cmds.append(
             build_oncodeep_upload_cmd(
                 self.rf_obj.masterfile_name,
-                self.rf_samples.nexus_runfolder_suffix,
+                self.rf_samples_obj.nexus_runfolder_suffix,
                 f"{self.rf_obj.DNANEXUS_PROJ_ID}:{self.rf_obj.masterfile_name}",
             )
         )
         # Return downstream app commands
-        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
+        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline))
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
 
@@ -970,7 +970,7 @@ class TsoPipeline():
     """
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
         self.rf_obj = rf_obj
-        self.rf_samples = rf_samples
+        self.rf_samples_obj = rf_samples
         self.logger = logger
         self.workflow_cmds = []
         self.dx_postprocessing_cmds = []
@@ -985,10 +985,10 @@ class TsoPipeline():
                 self.workflow_cmds.append(self.rf_cmds_obj.create_tso500_cmd(tso_ss))
             
         # Create per-sample commands
-        for sample_name in self.rf_samples.samples_dict.keys():
+        for sample_name in self.rf_samples_obj.samples_dict.keys():
             sample_cmds_obj = BuildSampleDxCommands(
                 self.rf_obj.runfolder_name,
-                self.rf_samples.samples_dict[sample_name],
+                self.rf_samples_obj.samples_dict[sample_name],
                 self.logger,
             )
             # Create fastqc commands and dependency
@@ -997,28 +997,28 @@ class TsoPipeline():
             # Create coverage commands and dependency
             self.dx_postprocessing_cmds.append(
                 sample_cmds_obj.create_sambamba_cmd(
-                    sample_name, self.rf_samples.samples_dict[sample_name]["pannum"]
+                    sample_name, self.rf_samples_obj.samples_dict[sample_name]["pannum"]
                 )
             )
             # Coverage is in depends list because per-gene coverage is included in MultiQC report
             # Exclude coverage jobs for negative controls from the depends list as the NTC coverage
             # calculation can often fail. We want the coverage report for the NTC sample to help
             # assess contamination. Only add to depends_list if job ID from previous command is not empty.
-            if not self.rf_samples.samples_dict[sample_name]["neg_control"]:
+            if not self.rf_samples_obj.samples_dict[sample_name]["neg_control"]:
                 self.dx_postprocessing_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
-            if self.rf_samples.samples_dict[sample_name]["pos_control"]:
+            if self.rf_samples_obj.samples_dict[sample_name]["pos_control"]:
                 self.dx_postprocessing_cmds.append(sample_cmds_obj.create_sompy_cmd(sample_name))
                 # Only add to depends_list if job ID from previous command
                 # is not empty
                 self.dx_postprocessing_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
-            if not self.rf_samples.samples_dict[sample_name]["neg_control"] or self.rf_samples.samples_dict[sample_name]["neg_control"]:
+            if not self.rf_samples_obj.samples_dict[sample_name]["neg_control"] or self.rf_samples_obj.samples_dict[sample_name]["neg_control"]:
                 self.decision_support_upload_cmds.append(sample_cmds_obj.build_qiagen_upload_cmd())   # Build decision support upload commands
             
             self.sql_queries.append(sample_cmds_obj.return_oncology_query())   # Build SQL query
 
-        self.dx_postprocessing_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
+        self.dx_postprocessing_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline))
         self.dx_postprocessing_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
 
@@ -1037,7 +1037,7 @@ class WesPipeline():  # TODO eventually remove this and associated pipeline-spec
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
 
         self.rf_obj = rf_obj
-        self.rf_samples = rf_samples
+        self.rf_samples_obj = rf_samples
         self.logger = logger
         self.workflow_cmds = []
         self.sql_queries = []
@@ -1065,7 +1065,7 @@ class WesPipeline():  # TODO eventually remove this and associated pipeline-spec
         self.workflow_cmds.extend([self.rf_cmds_obj.create_peddy_cmd(), SWConfig.UPLOAD_ARGS["depends_list"]])
 
         # Return downstream app commands
-        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
+        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline))
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
         self.sql_queries = self.rf_cmds_obj.return_wes_query()
@@ -1101,7 +1101,7 @@ class CustomPanelsPipeline():
         """
         """
         self.rf_obj = rf_obj
-        self.rf_samples = rf_samples
+        self.rf_samples_obj = rf_samples
         self.logger = logger
         self.workflow_cmds = []
         self.dx_postprocessing_cmds = False
@@ -1109,10 +1109,10 @@ class CustomPanelsPipeline():
         self.sql_queries = []
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
-        for sample_name in self.rf_samples.samples_dict.keys():
+        for sample_name in self.rf_samples_obj.samples_dict.keys():
             sample_cmds_obj = BuildSampleDxCommands(
                 self.rf_obj.runfolder_name,
-                self.rf_samples.samples_dict[sample_name],
+                self.rf_samples_obj.samples_dict[sample_name],
                 self.logger,
             )
             # Add to gatk depends list because RPKM / ExomeDepth must depend only upon the
@@ -1128,14 +1128,14 @@ class CustomPanelsPipeline():
         for core_panel in ["vcp1", "vcp2", "vcp3"]:
             if core_panel in (
                 [
-                    self.rf_samples.samples_dict[k]["panel_settings"]["panel_name"]
-                    for k, v in self.rf_samples.samples_dict.items()
+                    self.rf_samples_obj.samples_dict[k]["panel_settings"]["panel_name"]
+                    for k, v in self.rf_samples_obj.samples_dict.items()
                 ]
             ):
                 core_panel_pannos = [
-                    self.rf_samples.samples_dict[k]["pannum"]
-                    for k, v in self.rf_samples.samples_dict.items()
-                    if self.rf_samples.samples_dict[k]["panel_settings"]["panel_name"]
+                    self.rf_samples_obj.samples_dict[k]["pannum"]
+                    for k, v in self.rf_samples_obj.samples_dict.items()
+                    if self.rf_samples_obj.samples_dict[k]["panel_settings"]["panel_name"]
                     == core_panel
                 ]
                 # Make sure there are enough samples for RPKM and ExomeDepth
@@ -1159,7 +1159,7 @@ class CustomPanelsPipeline():
                     )
         self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_gatk_recombined"])
 
-        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples.pipeline))
+        self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline))
 
         # We want duty_csv to also depend on the cnv calling jobs for PIPE workflows
         self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_cnv_recombined"])

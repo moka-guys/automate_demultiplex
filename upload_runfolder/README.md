@@ -18,7 +18,7 @@ Uploads an Illumina runfolder to DNAnexus.
 3. If upload_files is called directly, uploads the provided files to the runfolder                
 4. The script uploads logfiles produced by this repository to the DNAnexus project under `PROJECT:/RUNFOLDER/automated_scripts_logfiles`.
 
-* N.B. the runfolder does not upload the SampleSheet from the samplesheets directory. If required, this should be uploaded manually *
+* N.B. the script does not upload the SampleSheet from the SampleSheets directory, unless it has been copied into the runfolder first *
 
 ## Configuration
 

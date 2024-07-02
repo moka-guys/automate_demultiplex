@@ -77,10 +77,10 @@ FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
     "tso_fastqs": "${PROJECT_ID}:/analysis_folder/Logs_Intermediates/CollapsedReads/",
 }
-SDK_SOURCE = "source /usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
+SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit path
 
 # DNAnexus upload agent path
-UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
+UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
 GATK_DOCKER = "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 

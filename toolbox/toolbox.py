@@ -16,7 +16,6 @@ import os
 import re
 import subprocess
 import logging
-import argparse
 import datetime
 from typing import Tuple
 from distutils.spawn import find_executable
@@ -25,21 +24,24 @@ from config.ad_config import ToolboxConfig
 from ad_logger.ad_logger import RunfolderLoggers
 
 
-def get_credential(file: str):
+def get_credential(file: str) -> None:
     """
     File from which to read credential
+        :param file (str):  Filepath
+        :return None:
     """
     with open(file, "r") as to_read:
         credential = to_read.readline().rstrip()
         return credential
 
 
-def write_lines(file: str, mode: str, lines: str):
+def write_lines(file: str, mode: str, lines: str) -> None:
     """
     Write line to newline of file
         :param file (str):          Filepath
         :param mode (str):          Mode to open the file in
         :param lines (str | list):  Line (/s)
+        :return None:
     """
     if isinstance(lines, str):
         lines = [lines]
@@ -48,7 +50,7 @@ def write_lines(file: str, mode: str, lines: str):
             open_file.write(f"{line}\n")
 
 
-def read_lines(file: str):
+def read_lines(file: str) -> None:
     """
     Read lines from file
         :param file (str):      Filepath
@@ -105,33 +107,6 @@ def script_end_logmsg(logger: logging.Logger, file: str) -> None:
         git_tag(),
         os.path.basename(os.path.dirname(file)),
     )
-
-
-def is_valid_dir(parser: argparse.ArgumentParser, file: str) -> str:
-    """
-    Check directory path is valid
-        :param parser (argparse.ArgumentParser):    Holds necessary info to parse cmd
-                                                    line into Python data types
-        :param file (str):                          Input argument
-    """
-    if not os.path.isdir(file):
-        parser.error(f"The directory {file} does not exist!")
-    else:
-        return file
-
-
-def is_valid_file(parser: argparse.ArgumentParser, file: str) -> str:
-    """
-    Check file path is valid
-        :param parser (argparse.ArgumentParser):    Holds necessary info to parse cmd
-                                                    line into Python data types
-        :param file (str):                          Input argument
-    """
-    if not os.path.exists(file):
-        parser.error(f"The file {file} does not exist!")
-    else:
-        return file
-
 
 def git_tag() -> str:
     """
@@ -287,6 +262,76 @@ def get_num_processed_runfolders(
     return num_processed_runfolders
 
 
+def get_samplename_dict(logger: logging.Logger, samplesheet_path: str) -> Optional[dict]:
+    """
+    Read SampleSheet to create a dict of samples and their pan numbers for the
+    run. Reads file into list and loops through in reverse allowing us to access
+    sample names and stop at column headers, skipping the file header
+        :param logger (logging.Logger): Logger
+        :param samplesheet_path (str):  Path to samplesheet
+        :return samplename_dict (dict): Dict of sample names identified from the
+                                        SampleSheet, and their pan numbers
+    """
+    samplename_dict = {}
+    if os.path.exists(samplesheet_path):
+        reversed_samplesheet = reversed(read_lines(samplesheet_path))
+        for line in reversed_samplesheet:
+            if line.startswith("Sample_ID") or "[Data]" in line:
+                break
+            # Skip empty lines (check first element of the line, after splitting on comma)
+            elif len(line.split(",")[0]) < 2:
+                pass
+            else:  # If it's a line detailing a sample, get sample name and pan num
+                panel_number = ""
+                sample_name = line.split(",")[0]
+                for pannum in ToolboxConfig.PANELS:
+                    if pannum in line:
+                        panel_number = pannum
+                    samplename_dict[sample_name] = panel_number
+        if samplename_dict:  # If samples identified
+            return samplename_dict
+    else:
+        logger.error(logger.log_msgs["ss_missing"])
+
+
+def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[bool]:
+    """
+    Validate the created fastqs in the BaseCalls directory and log success
+    or failure error message accordingly. If any failure, remove bcl2fastq log
+    file to trigger re-demultiplex on next script run
+        :param fastq_dir_path (str):    Runfolder fastq directory path (within runfolder)
+        :param logger (logging.Logger): Logger
+        :return Optional[bool]:         Return True if fastqs are all determined to be valid
+    """
+    fastqs = [
+        x for x in os.listdir(fastq_dir_path) if x.endswith("fastq.gz")
+    ]
+    returncodes = []
+
+    for fastq in fastqs:
+        out, err, returncode = execute_subprocess_command(
+            f"gzip --test {os.path.join(fastq_dir_path, fastq)}",
+            logger,
+        )
+        returncodes.append(returncode)
+        if returncode == 0:
+            logger.info(
+                logger.log_msgs["fastq_valid"],
+                fastq,
+            )
+        else:
+            logger.error(
+                logger.log_msgs["fastq_invalid"],
+                fastq,
+                out,
+                err,
+            )
+
+    if all(code == 0 for code in returncodes):
+        logger.info(logger.log_msgs["demux_success"])
+        return True
+
+
 class RunfolderObject(ToolboxConfig):
     """
     An object with runfolder-specific properties
@@ -302,6 +347,7 @@ class RunfolderObject(ToolboxConfig):
         samplesheet_path (str):                 Path to SampleSheet in SampleSheets dir
         runfolder_samplesheet_path (str):       Runfolder SampleSheets path (within runfolder)
         checksumfile_path (str):                md5 checksum (integrity check) file path (within runfolder)
+        sscheck_flagfile_path (str):            Samplesheet check flag file path (within runfolder)
         bcl2fastqlog_file (str):                bcl2fastq2 logfile path (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
         upload_flagfile (str):                  Flag file denoting upload has begun (within runfolder)
@@ -317,11 +363,11 @@ class RunfolderObject(ToolboxConfig):
         proj_creation_script (str):             DNAnexus project creation bash script (within logfiles dir)
         samplesheet_validator_logfile (str):    SampleSheet validator script logfile (within logfiles dir)
         logfiles_config (dict):                 Contains all runfolder log files
-        logfiles_to_upload (list):              All logfiles that require upload tozzzDNAnexus
+        logfiles_to_upload (list):              All logfiles that require upload to DNAnexus
     
     Methods
         get_runfolder_loggers(script)
-            Return runfolder loggers
+            Return dictionary of logger.Logging objects for the runfolder
     """
 
     def __init__(self, runfolder_name: str, timestamp: str):
@@ -444,11 +490,11 @@ class RunfolderObject(ToolboxConfig):
             self.upload_runfolder_logfile,
         ]
 
-    def get_runfolder_loggers(self, script: str) -> None:
-        """
-        Add runfolder loggers to runfolder object
+    def get_runfolder_loggers(self, script: str) -> dict:
+        """ 
+        Return dictionary of logger.Logging objects for the runfolder
             :param script (str):            Script name the function has been called from
-            :return loggers_obj.loggers:
+            :return (dict):                 Dictionary of logger.Logging objects
         """
         loggers_obj = RunfolderLoggers(
             script, self.runfolder_name, self.logfiles_config
@@ -458,7 +504,7 @@ class RunfolderObject(ToolboxConfig):
 
 class RunfolderSamples(ToolboxConfig):
     """
-    An object with properties derived from the samples names in the samplesheet
+    An object with properties derived from the sample names in the samplesheet
 
     Attributes
         samplesheet_path (str):             Path to SampleSheet in SampleSheets dir
@@ -485,10 +531,10 @@ class RunfolderSamples(ToolboxConfig):
     
     Methods
         get_pipeline()
-            Use samplename_dict and the config.PANEL_DICT to get a list of pipeline
-            names for samples in the run.
+            Use samplename_dict and the ToolboxConfig.PANEL_DICT to get the pipeline name for
+            samples in the run
         get_runtype()
-            Use self.samplename_dict and the config.PANEL_DICT to get a list of runtype
+            Use self.samplename_dict and the ToolboxConfig.PANEL_DICT to get a list of runtype
             names for samples in the run. Returns the most frequent runtype name in the set
         get_nexus_runfolder_suffix()
             Get the runfolder suffix for the DNAnexus project name
@@ -538,13 +584,12 @@ class RunfolderSamples(ToolboxConfig):
             self.undetermined_fastqs_list
         )
 
-    def get_pipeline(self) -> Union[str, None]:
+    def get_pipeline(self) -> Optional[str]:
         """
-        Use samplename_dict and the config.PANEL_DICT to get a list of pipeline
+        Use samplename_dict and the ToolboxConfig.PANEL_DICT to get a list of pipeline
         names for samples in the run. Generates error mesage if there is more than one
         pipeline name in the list. Returns the most frequent pipeline name in the set
-            :return pipeline_name (list | None):    Pipeline name, or none if more than
-                                                    one in the list
+            :return pipeline_name (Optional[str]):    Pipeline name if only one pipeline name in list
         """
         pipelines_list = []
         for sample, panno in self.samplename_dict.items():
@@ -557,16 +602,16 @@ class RunfolderSamples(ToolboxConfig):
                 ToolboxConfig.PIPELINES,
             )
         else:
-            pipeline_name = max(list(set(pipelines_list)), key=pipelines_list.count)
+            pipeline_name = pipelines_list[0]  # Get pipeline from pipelines_list
             self.logger.info(
                 self.logger.log_msgs["pipeline_name"],
                 pipeline_name,
             )
-            return pipeline_name  # Get pipeline from pipelines_list
+            return pipeline_name
 
     def get_runtype(self) -> str:
         """
-        Use samplename_dict and the config.PANEL_DICT to get the runtype for samples
+        Use samplename_dict and the ToolboxConfig.PANEL_DICT to get the runtype for samples
         in the run for Custom Panels and WES runs where sample types vary (VCP1/2/3/WES/WES EB)
             :return runtype_str (str):      Runtype name string
         """
@@ -578,7 +623,7 @@ class RunfolderSamples(ToolboxConfig):
             self.logger.log_msgs["runtype_str"],
             runtype_str,
         )
-        return runtype_str  # Get runtype from pipelines_list
+        return runtype_str
 
     def get_nexus_runfolder_suffix(self) -> str:
         """
@@ -606,7 +651,7 @@ class RunfolderSamples(ToolboxConfig):
         These numbers are used as the suffix for the DNAnexus project name (along with
         the WES batch number in the case of WES runs). If no library prep numbers are
         found, exit the script
-            :return (list | None):   List of unique library numbers
+            :return list:List of unique library numbers
         """
         library_numbers = []
         for samplename in self.samplename_dict.keys():
@@ -813,10 +858,10 @@ class RunfolderSamples(ToolboxConfig):
 
     def get_fastqs_str(self, fastqs_list: list) -> str:
         """
-        Return a space separated string of fastqs with each fastq encased in quotation marks. This is used for
-        runs / samples that are demultiplexed locally
+        Return a space-separated string of fastqs with each fastq encased in quotation marks.
+        This is used for runs / samples that are demultiplexed locally
             :param fastqs_list (list):  List of sample fastqs
-            :return fastqs_str (str):   Space separated string of fastqs with
+            :return (str):              Space separated string of fastqs with
                                         each fastq encased in quotation marks
         """
         quotation_marked_list = []
@@ -843,8 +888,8 @@ class RunfolderSamples(ToolboxConfig):
 # TODO eventually adapt this class to use the SamplesheetValidator package
 class SampleObject(ToolboxConfig):
     """
-    Collect sample-specific attributes for a sample. Including sample specific command strings for calling
-    the pipeline and decisions support tools where relevant
+    Collect sample-specific attributes for a sample. Including sample-specific command strings
+    for calling the pipeline and decision support tools where relevant
 
     Attributes
         sample_name (str):                  Sample name
@@ -862,10 +907,11 @@ class SampleObject(ToolboxConfig):
         panel_settings (dict):              Config defined panel settings specific to the sample panel number
         primary_identifier (str):           Primary sample identifier
         secondary_identifier (str):         Secondary sample identifier
-        fastqs_dict (dict):                 Dictionary containing R1 and R2 fastqs and their local and cloud paths
+        fastqs_dict (dict):                 Dictionary containing R1 and R2 fastqs and their
+                                            local and cloud paths
 
     Methods
-        check_control()
+        check_control(identifiers, control_type)
             Determine whether sample contains the control identifier strings
         find_pannum()
             Extract panel number from sample name using regular expression
@@ -877,7 +923,7 @@ class SampleObject(ToolboxConfig):
             null if the sample is a negative or positive control (these only have one identifier)
         get_fastqs_dict()
             Collate R1 and R2 fastqs and their local and cloud paths into a dictionary.
-        get_fastq_paths()
+        get_fastq_paths(read)
             Get fastqs in fastq directory that correspond to each sample name in the
             sample dictionary. Build the fastq name, local path, and DNAnexus path
             for each fastq file
@@ -938,20 +984,20 @@ class SampleObject(ToolboxConfig):
             )
             return True
 
-    def find_pannum(self) -> Union[str, None]:
+    def find_pannum(self) -> Optional[str]:
         """
         Extract panel number from sample name using regular expression
-            :return pannum (str | None):    Panel number that matches a config-defined
+            :return pannum (Optional[str]): Panel number that matches a config-defined
                                             panel number, or None if pannum not valid
         """
         pannum = str(re.search(r"Pan\d+", self.sample_name).group())
         if self.validate_pannum(pannum):
             return pannum
 
-    def validate_pannum(self, pannum: int) -> Optional[bool]:
+    def validate_pannum(self, pannum: int) -> bool:
         """
         Check whether pan number is valid
-            :return (Optional[bool]):  True if pan number is valid, else None
+            :return bool:   True if pan number is valid, else None
         """
         if str(pannum) in ToolboxConfig.PANELS:
             self.logger.info(
@@ -988,14 +1034,14 @@ class SampleObject(ToolboxConfig):
                 secondary_identifier = "NULL"
         return primary_identifier, secondary_identifier
 
-    def get_fastqs_dict(self) -> dict:
+    def get_fastqs_dict(self) -> Optional[dict]:
         """
         Collate R1 and R2 fastqs and their local and cloud paths into a dictionary.
         tso500 runs are not demultiplexed locally so have no local fastq path. All other
         runfolders have fastqs in the BaseCalls directory
-            :return fastqs_dict (dict | False):     Dictionary containing R1 and R2 fastqs and
-                                                    their local and cloud paths. False if either
-                                                    fastq doesn't exist
+            :return fastqs_dict (dict | False): Dictionary containing R1 and R2 fastqs and
+                                                their local and cloud paths. False if either
+                                                fastq doesn't exist
         """
         fastqs_dict = {"R1": {}, "R2": {}}
         for read in ["R1", "R2"]:
@@ -1022,7 +1068,7 @@ class SampleObject(ToolboxConfig):
                     }
         return fastqs_dict
 
-    def get_fastq_paths(self, read: str) -> str:
+    def get_fastq_paths(self, read: str) -> Union[str, str, str]:
         """
         Get fastqs in fastq directory that correspond to each sample name in the
         sample dictionary. Build the fastq name, local path, and DNAnexus path
@@ -1075,74 +1121,3 @@ class SampleObject(ToolboxConfig):
             "panel_settings": self.panel_settings,
             "fastqs": self.fastqs_dict,
         }
-
-
-def get_samplename_dict(logger: logging.Logger, samplesheet_path: str) -> list:
-    """
-    Read SampleSheet to create a dict of samples and their pan numbers for the
-    run. Reads file into list and loops through in reverse allowing us to access
-    sample names and stop at column headers, skipping the file header
-        :param logger (logging.Logger): Logger
-        :param samplesheet_path (str):  Path to samplesheet
-        :return samplename_dict (dict): Dict of sample names identified from the
-                                        SampleSheet, and their pan numbers
-    """
-    samplename_dict = {}
-    if os.path.exists(samplesheet_path):
-        with open(samplesheet_path, "r") as samplesheet_stream:
-            for line in reversed(samplesheet_stream.readlines()):
-                if line.startswith("Sample_ID") or "[Data]" in line:
-                    break
-                # Skip empty lines (check first element of the line, after splitting on comma)
-                elif len(line.split(",")[0]) < 2:
-                    pass
-                else:  # If it's a line detailing a sample, get sample name and pan num
-                    panel_number = ""
-                    sample_name = line.split(",")[0]
-                    for pannum in ToolboxConfig.PANELS:
-                        if pannum in line:
-                            panel_number = pannum
-                        samplename_dict[sample_name] = panel_number
-        if samplename_dict:  # If samples identified
-            return samplename_dict
-        else:
-            return False
-    else:
-        logger.error(logger.log_msgs["ss_missing"])
-        return False
-
-
-def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> None:
-    """
-    Validate the created fastqs in the BaseCalls directory and log success
-    or failure error message accordingly. If any failure, remove bcl2fastq log
-    file to trigger re-demultiplex on next script run
-        :return None:
-    """
-    fastqs = [
-        x for x in os.listdir(fastq_dir_path) if x.endswith("fastq.gz")
-    ]
-    returncodes = []
-
-    for fastq in fastqs:
-        out, err, returncode = execute_subprocess_command(
-            f"gzip --test {os.path.join(fastq_dir_path, fastq)}",
-            logger,
-        )
-        returncodes.append(returncode)
-        if returncode == 0:
-            logger.info(
-                logger.log_msgs["fastq_valid"],
-                fastq,
-            )
-        else:
-            logger.error(
-                logger.log_msgs["fastq_invalid"],
-                fastq,
-                out,
-                err,
-            )
-
-    if all(code == 0 for code in returncodes):
-        logger.info(logger.log_msgs["demux_success"])
-        return True

@@ -39,15 +39,15 @@ class PipelineEmails(SWConfig):
                 Construct and send the samples being processed email using AdEmail class
     """
 
-    def __init__(self, rf_obj: RunfolderObject, rf_samples: RunfolderSamples, sql_queries: str, logger: logging.Logger):
+    def __init__(self, rf_obj: RunfolderObject, rf_samples_obj: RunfolderSamples, sql_queries: str, logger: logging.Logger):
         """
         Constructor for the PipelineEmails class. Calls the class methods
         """
         self.rf_obj = rf_obj
         self.logger = logger
-        self.rf_samples = rf_samples
+        self.rf_samples_obj = rf_samples_obj
         self.sql_queries = sql_queries
-        self.sample_count = len(self.rf_samples.samples_dict)
+        self.sample_count = len(self.rf_samples_obj.samples_dict)
         self.email_subj = (
             SWConfig.MAIL_SETTINGS["pipeline_started_subj"] % self.rf_obj.runfolder_name
         )
@@ -62,7 +62,7 @@ class PipelineEmails(SWConfig):
         """
         email_html = self.email.generate_email_html(
             self.rf_obj.runfolder_name,
-            self.rf_samples.pipeline,
+            self.rf_samples_obj.pipeline,
             " <br> ".join(self.sql_queries),
             self.sample_count,
             False,
@@ -84,15 +84,15 @@ class PipelineEmails(SWConfig):
         """
         email_html = self.email.generate_email_html(
             self.rf_obj.runfolder_name,
-            self.rf_samples.pipeline,
+            self.rf_samples_obj.pipeline,
             False,
             self.sample_count,
-            " <br> ".join(self.rf_samples.samples_dict.keys()),
+            " <br> ".join(self.rf_samples_obj.samples_dict.keys()),
         )
         recipients = [SWConfig.MAIL_SETTINGS["binfx_recipient"]]
-        if self.rf_samples.pipeline == "wes":
+        if self.rf_samples_obj.pipeline == "wes":
             recipients.extend(SWConfig.MAIL_SETTINGS["wes_samplename_emaillist"])
-        elif self.rf_samples.pipeline in ["tso500", "archerdx", "oncodeep"]:
+        elif self.rf_samples_obj.pipeline in ["tso500", "archerdx", "oncodeep"]:
             recipients.append(SWConfig.MAIL_SETTINGS["oncology_ops_email"])
         self.email.send_email(
             recipients=recipients,

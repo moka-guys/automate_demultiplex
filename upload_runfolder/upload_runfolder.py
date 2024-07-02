@@ -30,12 +30,12 @@ class UploadRunfolder(URConfig):
         runfolder_name (str):       Name of runfolder
         runfolderpath (str):        Path of runfolder on workstation
         dnanexus_auth (str):        DNAnexus auth token
+        upload_flagfile (str):      Path to flag file that denotes runfolder upload has started
         nexus_identifiers (dict):   Dictionary of proj_name and proj_id, or False        
 
     Methods:
         find_nexus_project()
-            Search DNAnexus for the project given as an input argument. If the input is
-            'None', searches for a project matching self.runfolder_name
+            Search DNAnexus for the project given as an input argument
         upload_rest_of_runfolder(ignore)
             Calls methods to upload the rest of the runfolder (the runfolder minus the files matching the ignore string)
         check_runfolder_exists()
@@ -85,7 +85,7 @@ class UploadRunfolder(URConfig):
             :param logger (logging.Logger): Logger
             :param runfolder_name (str):    Name of runfolder
             :param runfolderpath (str):     Path of runfolder on workstation
-            :param upload_flagfile (str):   Path to upload runfolder flag file
+            :param upload_flagfile (str):   Path to flag file that denotes runfolder upload has started
             :param nexus_identifiers        Dictionary of proj_name and proj_id, or False
             (dict | False):
         """
@@ -106,8 +106,7 @@ class UploadRunfolder(URConfig):
 
     def find_nexus_project(self) -> dict:
         """
-        Search DNAnexus for the project given as an input argument. If the input is
-        'None', searches for a project matching self.runfolder_name.
+        Search DNAnexus for the project given as an input argument
             :return (dict):     Dictionary containing proj_name and proj_id
         """
         try:
@@ -328,7 +327,7 @@ class UploadRunfolder(URConfig):
         """
         Get the corresponding DNAnexus subdirectory name for the folderpath.
         This is used in the upload agent's '--folder' argument
-            :param folder_path (str):                   Path of a local folder containing
+            :param folderpath (str):                    Path of a local folder containing
                                                         files to be uploaded to DNAnexus
             :returnnexus_project_subdirectory (str):    DNAnexus folder name e.g. runfolder/RTALogs
         """

@@ -287,8 +287,8 @@ class BuildRunfolderDxCommands(SWConfig):
             :return query (str):    Single update query for the WES run
         """
         wes_dnanumbers = [
-            self.rf_samples.samples_dict[k]["identifiers"]["primary"]
-            for k in self.rf_samples.samples_dict.keys()
+            self.rf_samples_obj.samples_dict[k]["identifiers"]["primary"]
+            for k in self.rf_samples_obj.samples_dict.keys()
         ]
         return [
             SWConfig.QUERIES["wes"]
