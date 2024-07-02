@@ -41,7 +41,7 @@ class AdEmail(AdEmailConfig):
     def __init__(self, logger: logging.Logger):
         """
         Constructor for the AdEmail class
-            :param logger:  Logger object
+            :param logger (logging.Logger): Logger
         """
         self.logger = logger
         self.sender = AdEmailConfig.MAIL_SETTINGS["alerts_email"]

@@ -42,12 +42,9 @@ self.script_logger.info(
 
 logfiles_config = {
     "sw": sw_runfolder_logfile,
-    "demultiplex": demultiplex_runfolder_logfile,
-    "upload_agent": upload_flagfile,
+    "demux": demultiplex_runfolder_logfile,
     "backup": upload_runfolder_logfile,
-    "project": proj_creation_script,
-    "dx_run": runfolder_dx_run_script,
-    "post_run_cmds": post_run_dx_run_script,
+    "bcl2fastq2": bcl2fastqlog_file,
     "ss_validator": samplesheet_validator_logfile,
 }
 

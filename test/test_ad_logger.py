@@ -78,7 +78,6 @@ class TestRunfolderLoggers:
         return [
             "sw",
             "demultiplex",
-            "upload_agent",
             "backup",
             "project",
             "dx_run",

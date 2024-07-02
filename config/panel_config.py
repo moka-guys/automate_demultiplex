@@ -33,7 +33,6 @@ required for analysis of samples with that pan number
     coverage_min_basecall_qual      Value or None. Sambamba minimum base quality
     coverage_min_mapping_qual       Value or None. Sambamba minimum mapping quality
     masked_reference                projectid:fileid, or None
-    throughput                      'high' or 'low', or None if unspecified
     test_number                     R or M number, or None if no specific number
     congenica_project               None = no upload. Number = normal. SFTP = sftp upload
     congenica_credentials           'Synnovis' or 'StG'. None = Congenica app not used
@@ -44,7 +43,6 @@ required for analysis of samples with that pan number
     dry_lab_only                    Used to determine whether to include the TSO pan
                                     number in the duty_csv pan number list
     dry_lab                         True if required to share with dry lab, None if not
-    development_run                 None if pan number is not a development pan number, else True
 """
 # TODO in future do we want to swap physical paths for file IDs
 
@@ -75,6 +73,7 @@ DEFAULT_DICT = {
     # values are replaced within subsequent dictionaries
     "panel_name": None,
     "pipeline": None,
+    "runtype": None,
     "sample_prefix": None,
     "capture_pan_num": None,
     "hsmetrics_bedfile": None,
@@ -88,7 +87,6 @@ DEFAULT_DICT = {
     "coverage_min_basecall_qual": None,
     "coverage_min_mapping_qual": None,
     "masked_reference": None,
-    "throughput": None,
     "test_number": None,
     "congenica_project": None,
     "congenica_credentials": None,
@@ -99,7 +97,7 @@ DEFAULT_DICT = {
     "FH": None,
     "dry_lab_only": None,
     "dry_lab": None,
-    "development_run": None,
+    "umis": None,
 }
 
 
@@ -239,14 +237,33 @@ class PanelConfig:
             "coverage_min_basecall_qual": 25,
             "coverage_min_mapping_qual": 30,
         },
+        "oncodeep": {
+            **DEFAULT_DICT,
+            "panel_name": "oncodeep",
+            "pipeline": "oncodeep",
+            "sample_prefix": "OKD",
+            "runtype": "OKD",
+            "capture_type": "Hybridisation",
+            "multiqc_coverage_level": 30,  # We don't align for OncoDEEP
+        },
+        "dev": {
+            **DEFAULT_DICT,
+            "pipeline": "dev",
+            "panel_name": "dev",
+            "runtype": "dev",
+            "multiqc_coverage_level": 30,
+        },
     }
     PIPELINES = list(set([v["pipeline"] for k, v in CAPTURE_PANEL_DICT.items()]))
     PANEL_DICT = {
         # Dictionary containing pan number-specific settings, arranged by workflow name
         # These incorporate the capture dictionary settings and build upon them
         "Pan5180": {  # Development runs (stops warning messages)
-            **DEFAULT_DICT,
-            "development_run": True,
+            **CAPTURE_PANEL_DICT["dev"],
+        },
+        "Pan5227": {  # Development run with UMIs (stops warning messages)
+            **CAPTURE_PANEL_DICT["dev"],
+            "umis": True,
         },
         "Pan4009": {  # SNP
             **CAPTURE_PANEL_DICT["snp"],
@@ -270,24 +287,20 @@ class PanelConfig:
                 **CAPTURE_PANEL_DICT["archerdx"],
             },
         ),
-        "Pan4969": {  # TSO500 no UTRs. TERT promoter
-            **CAPTURE_PANEL_DICT["tso500"],
-            "throughput": "low",
+        "Pan5226": {  # OncoDEEP
+            **CAPTURE_PANEL_DICT["oncodeep"],
         },
         "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
             **CAPTURE_PANEL_DICT["tso500"],
-            "throughput": "high",
         },
         "Pan5112": {  # TSO500 High throughput BSPS. no UTRs. TERT promoter
             **CAPTURE_PANEL_DICT["tso500"],
-            "throughput": "high",
             "dry_lab_only": True,
             "dry_lab": True,
         },
         "Pan5114": {  # TSO500 High throughput Control. no UTRs. TERT promoter
             **CAPTURE_PANEL_DICT["tso500"],
-            "throughput": "high",
-            "dry_lab": "BSPS_MD",
+            "dry_lab": True,
         },
         "Pan5007": {  # LRPCR R207 (Synnovis) - PMS2
             **CAPTURE_PANEL_DICT["lrpcr"],
@@ -830,11 +843,10 @@ class PanelConfig:
     WES_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "wes"]
     SNP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "snp"]
     ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
+    ONCODEEP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "oncodeep"]
     LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
-    DEVELOPMENT_PANEL = "".join(
-        [k for k, v in PANEL_DICT.items() if v["development_run"]]
-    )
-
+    DEV_PANEL = [k for k, v in PANEL_DICT.items() if v["runtype"] == "dev"]
+    UMI_DEV_PANEL = [k for k, v in PANEL_DICT.items() if v["umis"] == True]
     # ================ DUTY_CSV INPUTS ===================================================
 
     # tso_pannumbers should not include the dry lab pan number as we do not want to include
