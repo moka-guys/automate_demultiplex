@@ -199,11 +199,11 @@ class SequencingRuns(SWConfig):
         )
         samplename_dict = get_samplename_dict(loggers["sw"], rf_obj.samplesheet_path)
         if samplename_dict:
-            if not validate_fastqs(self.rf_obj.fastq_dir_path, self.loggers["sw"]) and os.path.exists(self.bcl2fastqlog_file):
+            if not validate_fastqs(rf_obj.fastq_dir_path, loggers["sw"]) and os.path.exists(self.bcl2fastqlog_file):
                 os.remove(
                     self.bcl2fastqlog_file
                 )  # Bcl2fastq log file removed to trigger re-demultiplex
-                self.loggers["sw"].error(self.loggers["sw"].log_msgs["re_demultiplex"])
+                loggers["sw"].error(loggers["sw"].log_msgs["re_demultiplex"])
             else:
                 self.process_runfolder_obj = ProcessRunfolder(rf_obj, loggers)
 
@@ -212,7 +212,7 @@ class SequencingRuns(SWConfig):
                 self.processed_runfolders.append(rf_obj.runfolder_name)
                 script_logger.info(
                     script_logger.log_msgs["runfolder_processed"],
-                    self.process_runfolder_obj.rf_obj.runfolder_name,
+                    rf_obj.runfolder_name,
                 )
 
     def num_processed_runfolders(self) -> None:
@@ -628,19 +628,19 @@ class ProcessRunfolder(SWConfig):
             :return sql_queries (list):
         """
         if self.rf_samples_obj.pipeline == "tso500":
-            pipeline_obj = TsoPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
+            pipeline_obj = TsoPipeline(self.rf_obj, self.rf_samples_obj, self.loggers["sw"])
         if self.rf_samples_obj.pipeline == "archerdx":
-            pipeline_obj = ArcherDxPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
+            pipeline_obj = ArcherDxPipeline(self.rf_obj, self.rf_samples_obj, self.loggers["sw"])
         if self.rf_samples_obj.pipeline == "wes":
-            pipeline_obj = WesPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
+            pipeline_obj = WesPipeline(self.rf_obj, self.rf_samples_obj, self.loggers["sw"])
         if self.rf_samples_obj.pipeline == "oncodeep":
-            pipeline_obj = OncoDeepPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
+            pipeline_obj = OncoDeepPipeline(self.rf_obj, self.rf_samples_obj, self.loggers["sw"])
         if self.rf_samples_obj.pipeline == "snp":
-            pipeline_obj = SnpPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
+            pipeline_obj = SnpPipeline(self.rf_obj, self.rf_samples_obj, self.loggers["sw"])
         if self.rf_samples_obj.pipeline == "pipe":
-            pipeline_obj = CustomPanelsPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
+            pipeline_obj = CustomPanelsPipeline(self.rf_obj, self.rf_samples_obj, self.loggers["sw"])
         if self.rf_samples_obj.pipeline == "dev":
-            pipeline_obj = DevPipeline(self.rf_obj, self.rf_samples, self.loggers["sw"])
+            pipeline_obj = DevPipeline(self.rf_obj, self.rf_samples_obj, self.loggers["sw"])
 
         self.loggers["sw"].info(
             self.loggers["sw"].log_msgs["cmds_built"]
