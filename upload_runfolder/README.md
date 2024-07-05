@@ -41,9 +41,6 @@ options:
   -h, --help            show this help message and exit
   -r RUNFOLDER_NAME, --runfolder_name RUNFOLDER_NAME
                         Workstation runfolder name
-  -a AUTH_TOKEN, --auth_token AUTH_TOKEN
-                        A string or file containing a DNAnexus authorisation key used to access the DNAnexus project. If not specified, the config-specified
-                        authtoken will be used by default
   --ignore IGNORE       Comma-separated list of patterns which prevents the file from being uploaded if any pattern is present in filename or filepath.
   -p PROJECT_ID, --project_id PROJECT_ID
                         The ID of an existing DNAnexus project for the given runfolder
