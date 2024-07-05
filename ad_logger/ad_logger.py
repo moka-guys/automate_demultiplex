@@ -9,10 +9,10 @@ import logging.handlers
 from config.ad_config import AdLoggerConfig
 
 
-# Function to remove all loggers
-def remove_all_loggers():
+def remove_all_loggers() -> None:
     """
     Remove all loggers
+        :return None:
     """
     for name in list(logging.Logger.manager.loggerDict.keys()):
         if isinstance(logging.Logger.manager.loggerDict[name], logging.Logger):
@@ -32,11 +32,12 @@ def get_logging_formatter() -> str:
     )
 
 
-def set_root_logger():
+def set_root_logger() -> None:
     """
     Set up root logger and add stream handler and syslog handler - we only want to add these once
     else it will duplicate log messages to the terminal. All loggers named with the same stem
     as the root logger will use these same syslog handler and stream handler
+        :return None:
     """
     sensitive_formatter=SensitiveFormatter(get_logging_formatter())
     logger = logging.getLogger(AdLoggerConfig.REPO_NAME)
