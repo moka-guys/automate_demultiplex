@@ -92,7 +92,6 @@ LOG_MSGS = {
         "checksumfilecheck_start": "Data integrity checks starting...",
         "ic_pass": "Integrity check passed. 'Checksums match' message present in md5checksum file: %s",
         "ic_fail": "Integrity check failed. 'Checksums do not match' message present in md5checksum file: %s",
-        "prior_ic_fail": "A previous check of the md5checksum file identified the 'Checksums do not match' message",
         "unexpected_checksumfile_contents": "Contents of the md5checksum file are unexpected. See: %s",
         "create_bcl2fastqlog_pass": "Created bcl2fastq2 logfile: %s",
         "create_bcl2fastqlog_fail": "Failed to create bcl2fastq2 logfile. Script exited. Exception: %s",

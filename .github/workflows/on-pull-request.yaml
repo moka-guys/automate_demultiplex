@@ -3,7 +3,7 @@ name: Automated scripts
 on:
   push:
     branches:
-      - master
+      - main
       - develop
       - 'feature/**'
       - 'hotfix/**'

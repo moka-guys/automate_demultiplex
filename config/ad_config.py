@@ -85,7 +85,7 @@ BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
 GATK_DOCKER = "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
-DEMUX_NOT_REQUIRED_MSG = "Run does not need demultiplexing locally"
+DEMUX_NOT_REQUIRED_MSG = "%s run. Does not need demultiplexing locally"
 DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
