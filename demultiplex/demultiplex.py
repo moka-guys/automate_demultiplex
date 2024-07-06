@@ -358,7 +358,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                                         the SampleSheet check error string
         """
         sscheckfile_contents = read_lines(self.rf_obj.sscheck_flagfile_path)
-        if any(DemultiplexConfig.SAMPLESHEET_ERRORS_MSG in line for line in sscheckfile_contents):
+        if any(DemultiplexConfig.STRINGS["demultiplex_not_required_msg"] in line for line in sscheckfile_contents):
             script_logger.info(
                 script_logger.log_msgs["previous_ss_check_fail"],
                 self.rf_obj.sscheck_flagfile_path,
@@ -372,7 +372,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         if os.path.exists(self.rf_obj.sscheck_flagfile_path):
             read_lines(self.rf_obj.sscheck_flagfile_path)
-            if any(DemultiplexConfig.SAMPLESHEET_SUCCESS_MSG in line for line in sscheckfile_contents):
+            if any(DemultiplexConfig.STRINGS["samplesheet_success"] in line for line in sscheckfile_contents):
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["sscheck_success_msg_present"],
                 )
@@ -416,7 +416,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             write_lines(
                 self.rf_obj.sscheck_flagfile_path,
                 "w",
-                f"{DemultiplexConfig.SAMPLESHEET_ERRORS_MSG} {err_str}",
+                f"{DemultiplexConfig.STRINGS['samplesheet_fail']} {err_str}",
             )
             return False
         else:
@@ -427,7 +427,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             write_lines(
                 self.rf_obj.sscheck_flagfile_path,
                 "w",
-                DemultiplexConfig.SAMPLESHEET_SUCCESS_MSG,
+                DemultiplexConfig.STRINGS["samplesheet_success"],
             )
             return True
 
@@ -512,7 +512,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :return (Optional[bool]):   Returns true if the checksum file has previously
                                         been checked for the success message by the script
         """
-        if DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED in checksums[-1]:
+        if DemultiplexConfig.STRINGS["checksums_already_assessed"] in checksums[-1]:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["checksumfile_checked"]
             )
@@ -527,7 +527,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         Determine whether the md5sum file contains the checksums match message
             :param checksums (list):    List of lines from the checksums file
         """
-        if DemultiplexConfig.CHECKSUM_MATCH_MSG in checksums[0]:
+        if DemultiplexConfig.STRINGS["checksums_match"] in checksums[0]:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["ic_pass"],
                 self.rf_obj.checksumfile_path,
@@ -570,7 +570,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         write_lines(
             self.rf_obj.checksumfile_path,
             "a",
-            f"\n{DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED}",
+            f"\n{DemultiplexConfig.STRINGS['checksums_already_assessed']}",
         )
 
     def checksums_do_not_match_message(self, checksums: list) -> Optional[bool]:
@@ -580,7 +580,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :return (Optional[bool]):   Returns True if checksums do not match string
                                         is present in checksum file
         """
-        if DemultiplexConfig.CHECKSUM_DO_NOT_MATCH_MSG in checksums[0]:
+        if DemultiplexConfig["checksums_do_not_match"] in checksums[0]:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["ic_fail"],
                 self.rf_obj.checksumfile_path,

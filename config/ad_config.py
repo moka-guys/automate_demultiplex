@@ -360,6 +360,12 @@ class DemultiplexConfig(PanelConfig):
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
+        "demultiplex_success": DEMULTIPLEX_SUCCESS,
+        "checksums_already_assessed": "Checksums already assessed by AS",  # Written to file by AS
+        "checksums_match": "Checksums match",  # Success message written to md5checksum file by integrity check scripts
+        "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
+        "samplesheet_success": "Samplesheet check successful with no errors identified",
+        "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors:",
     }
     TESTING = TESTING
     BCL2FASTQ2_CMD = (
@@ -370,14 +376,6 @@ class DemultiplexConfig(PanelConfig):
         f"docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
-    STRINGS = {
-        "demultiplex_success": DEMULTIPLEX_SUCCESS,
-        "checksums_already_assessed": "Checksums already assessed by AS",  # Written to file by AS
-        "checksums_match": "Checksums match",  # Success message written to md5checksum file by integrity check scripts
-        "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
-        "samplesheet_success": "Samplesheet check successful with no errors identified",
-        "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors:",
-    }
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
