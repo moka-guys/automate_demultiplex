@@ -504,6 +504,23 @@ class TestDemultiplexRunfolder(object):
             # "999999_A01229_0000_00000TEST7",  # Fix as per comments in runfolders_toproc
         ]
 
+    @pytest.fixture(scope="function")
+    def checksums_checked(self):
+        """
+        """
+        return [
+            "Checksums match after 1 hours",
+            "Checksums already assessed by AS",
+        ]
+
+    @pytest.fixture(scope="function")
+    def checksums_not_checked(self):
+        """
+        """
+        return [
+            "Checksums match after 1 hours",
+        ]
+
     # TODO write test_demultiplex_runfolder_toproc(self):
     # TODO write test_demultiplex_runfolder_nottoproc(self):
 
@@ -567,32 +584,31 @@ class TestDemultiplexRunfolder(object):
         """
         for runfolder in demultiplexing_notrequired:
             dr_obj = get_dr_obj(runfolder)
+            print(dr_obj.demultiplexing_required)
             assert not dr_obj.demultiplexing_required()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    # def test_valid_samplesheet_pass(self, monkeypatch, valid_samplesheets):
-    #     """
-    #     Test function correctly returns valid flag, using a set of representative
-    #     SampleSheets
-    #     """
-    #     for sspath in valid_samplesheets:
-    #         dr_obj = get_dr_obj("")
-    #         monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", sspath)
-    #         valid, _ = dr_obj.valid_samplesheet()
-    #         assert valid
-    #         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
+    def test_valid_samplesheet_pass(self, monkeypatch, valid_samplesheets):
+        """
+        Test function correctly returns valid flag, using a set of representative
+        SampleSheets
+        """
+        for sspath in valid_samplesheets:
+            dr_obj = get_dr_obj("")
+            monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", sspath)
+            assert dr_obj.valid_samplesheet()
+            ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    # def test_valid_samplesheet_fail(self, monkeypatch, ss_with_disallowed_sserrs):
-    #     """
-    #     Test function fails to return valid flag as expected, using a set of
-    #     SampleSheets covering all failure cases
-    #     """
-    #     for sspath in ss_with_disallowed_sserrs:
-    #         dr_obj = get_dr_obj("")
-    #         monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", sspath)
-    #         valid, _ = dr_obj.valid_samplesheet()
-    #         assert not valid
-    #         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
+    def test_valid_samplesheet_fail(self, monkeypatch, ss_with_disallowed_sserrs):
+        """
+        Test function fails to return valid flag as expected, using a set of
+        SampleSheets covering all failure cases
+        """
+        for sspath in ss_with_disallowed_sserrs:
+            dr_obj = get_dr_obj("")
+            monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", sspath)
+            assert not dr_obj.valid_samplesheet()
+            ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     def test_sequencing_complete_pass(self, rtacomplete_present):
         """
@@ -612,10 +628,10 @@ class TestDemultiplexRunfolder(object):
             assert not dr_obj.sequencing_complete()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    # TODO write test_check_dev_run_pass
-    # TODO write test_check_dev_run_fail
-    # TODO write test_pass_integrity_check_pass
-    # TODO write test_pass_integrity_check_fail
+    # # TODO write test_check_dev_run_pass
+    # # TODO write test_check_dev_run_fail
+    # # TODO write test_pass_integrity_check_pass
+    # # TODO write test_pass_integrity_check_fail
 
     def disallowed_sserrs_pass(self, monkeypatch, ss_with_disallowed_sserrs):
         """
@@ -655,52 +671,49 @@ class TestDemultiplexRunfolder(object):
         assert not dr_obj.seq_requires_no_ic()
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    # def test_prior_ic_fail(self, no_prior_ic_rfs):
-    #     """
-    #     Test function correctly identifies there has been a prior integrity check
-    #     """
-    #     for runfolder in no_prior_ic_rfs:
-    #         dr_obj = get_dr_obj(runfolder)
-    #         assert not dr_obj.prior_ic()
-    #         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
+    def test_prior_ic_fail(self, checksums_not_checked):
+        """
+        Test function correctly identifies there has been a prior integrity check
+        """
+        dr_obj = get_dr_obj("")
+        assert not dr_obj.prior_ic(checksums_not_checked)
+        ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    # def test_prior_ic_pass(self, checksumfile_present_pass_checked):
-    #     """
-    #     Test function correctly identifies checksums have been assessed by the script
-    #     previously
-    #     """
-    #     for runfolder in checksumfile_present_pass_checked:
-    #         dr_obj = get_dr_obj(runfolder)
-    #         assert dr_obj.prior_ic()
-    #         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
+    def test_prior_ic_pass(self, checksums_checked):
+        """
+        Test function correctly identifies checksums have been assessed by the script
+        previously
+        """
+        dr_obj = get_dr_obj("")
+        assert dr_obj.prior_ic(checksums_checked)
+        ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    # def test_checksums_match_pass(self, checksumfile_present_pass_notchecked):
-    #     """
-    #     Test function correctly identifies presence of checksum match string in checksum
-    #     file. Also test function adds line to denote integrity check has been assessed
-    #     """
-    #     for runfolder in checksumfile_present_pass_notchecked:
-    #         dr_obj = get_dr_obj(runfolder)
-    #         assert dr_obj.checksums_match()
-    #         with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
-    #             assert (
-    #                 ad_config.DemultiplexConfig.CHECKSUM_MATCH_MSG
-    #                 in checksumfile.read()
-    #             )
-    #         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
+    def test_checksums_match_pass(self, checksumfile_present_pass_notchecked):
+        """
+        Test function correctly identifies presence of checksum match string in checksum
+        file. Also test function adds line to denote integrity check has been assessed
+        """
+        for runfolder in checksumfile_present_pass_notchecked:
+            dr_obj = get_dr_obj(runfolder)
+            dr_obj.checksums_match()
+            with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
+                checksumfile_contents = checksumfile.read()
+                assert "Checksums match" in checksumfile_contents
+            ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     # TODO add new test case that tests this - md5checksum checksums do not match message and checksums checked string
-    # def test_checksums_match_fail(self, ___):
-    #     """
-    #     Test function correctly identifies presence of checksums do not match string in
-    #     checksum file. Also test function adds line to denote integrity check has been assessed
-    #     """
-    #     for runfolder in ___:
-    #         dr_obj = get_dr_obj(runfolder)
-    #         assert dr_obj.checksums_match()
-    #         with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
-    #             assert ad_config.DemultiplexConfig.CHECKSUM_DO_NOT_MATCH_MSG in checksumfile.read()
-    #         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
+    def test_checksums_match_fail(self, checksumfile_present_fail_notchecked):
+        """
+        Test function correctly identifies presence of checksums do not match string in
+        checksum file. Also test function adds line to denote integrity check has been assessed
+        """
+        for runfolder in checksumfile_present_fail_notchecked:
+            dr_obj = get_dr_obj(runfolder)
+            dr_obj.checksums_match()
+            with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
+                checksumfile_contents = checksumfile.read()
+                assert "Checksums do not match" in checksumfile_contents
+            ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     # @pytest.mark.nodisableloggers
     def test_create_bcl2fastqlog_success(self):
@@ -729,18 +742,20 @@ class TestDemultiplexRunfolder(object):
             assert pytest_wrapped_e.type == SystemExit
             assert pytest_wrapped_e.value.code == 1
 
-    # def test_add_bcl2fastqlog_tso_msg_pass(self):
-    #     """
-    #     Test function can correctly add tso message to the bcl2fastq2 logfile
-    #     """
-    #     dr_obj = get_dr_obj("")
-    #     assert dr_obj.add_bcl2fastqlog_tso_msg()
-    #     assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_file)
-    #     with open(dr_obj.rf_obj.bcl2fastqlog_file, "r") as file:
-    #         assert ad_config.DEMUX_NOT_REQUIRED_MSG in file.read()
-    #     ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
-
-    # TODO write test_add_bcl2fastqlog_tso_msg_fail
+    def test_add_bcl2fastqlog_msg_pass(self, demultiplexing_required):
+        """
+        Test function can correctly add tso message to the bcl2fastq2 logfile
+        """
+        for runfolder in demultiplexing_required:
+            dr_obj = get_dr_obj(runfolder)
+            print(vars(dr_obj.rf_obj))
+            dr_obj.add_bcl2fastqlog_msg("TEST")
+            assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_file)
+            with open(dr_obj.rf_obj.bcl2fastqlog_file, "r") as file:
+                contents = file.read()
+                assert "Does not need demultiplexing locally" in contents
+                assert "TEST" in contents
+            ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     def test_run_demultiplexing_success(self, non_tso_runfolder):
         """
@@ -777,15 +792,15 @@ class TestDemultiplexRunfolder(object):
                 assert pytest_wrapped_e.type == SystemExit
                 assert pytest_wrapped_e.value.code == 1
 
-    # def test_calculate_cluster_density_pass(self, demultiplexing_required):
-    #     """
-    #     Test calculate_cluster_density() returns True for runfolders requiring a cluster
-    #     density calculation
-    #     """
-    #     for runfolder in demultiplexing_required:
-    #         dr_obj = get_dr_obj(runfolder)
-    #         assert dr_obj.calculate_cluster_density()
-    #         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
+    def test_calculate_cluster_density_pass(self, demultiplexing_required):
+        """
+        Test calculate_cluster_density() returns True for runfolders requiring a cluster
+        density calculation
+        """
+        for runfolder in demultiplexing_required:
+            dr_obj = get_dr_obj(runfolder)
+            assert dr_obj.calculate_cluster_density()
+            ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     def test_calculate_cluster_density_fail(self, demultiplexing_notrequired):
         """

@@ -522,7 +522,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.demux_rf_logger.log_msgs["checksumfile_notchecked"]
             )
 
-    def checksum_match_message_(self, checksums: list) -> Optional[bool]:
+    def checksum_match_message(self, checksums: list) -> Optional[bool]:
         """
         Determine whether the md5sum file contains the checksums match message
             :param checksums (list):    List of lines from the checksums file
@@ -580,7 +580,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :return (Optional[bool]):   Returns True if checksums do not match string
                                         is present in checksum file
         """
-        if DemultiplexConfig["checksums_do_not_match"] in checksums[0]:
+        if DemultiplexConfig.STRINGS["checksums_do_not_match"] in checksums[0]:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["ic_fail"],
                 self.rf_obj.checksumfile_path,
@@ -687,7 +687,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             )
             sys.exit(1)
 
-    def add_bcl2fastqlog_msg(self, runtype_str) -> Optional[bool]:
+    def add_bcl2fastqlog_msg(self, runtype_str: str) -> Optional[bool]:
         """
         Write message to bcl2fastqlog file that demultiplexing is not required
             :return (Optional[bool]):  True if log file successfully created and written to
