@@ -1,26 +1,36 @@
 #!/usr/bin/python3
 """build_dx_commands.py
 
-Builds dx commands for a runfolder
+Builds dx commands for a runfolder. Contains the following classes:
+- BuildRunfolderDxCommands
+    Build dx run commands that are run at the runfolder level
+- BuildSampleDxCommands
+    Build dx run commands commands that are run at the sample level
 """
 import logging
-from typing import Optional, Union, Tuple
-from toolbox.toolbox import get_credential, RunfolderObject, SampleObject
+from typing import Union
 from config.ad_config import SWConfig
+
 
 class BuildRunfolderDxCommands(SWConfig):
     """
     Build dx run commands that are run at the runfolder level
 
+    Attributes:
+        rf_obj (obj):               RunfolderObject object (contains
+                                    runfolder-specific attributes)
+        logger (logging.Logger):    Logger
+
+    Methods:
         create_tso500_cmd(tso_ss)
             Build dx run command for tso500 docker app
         get_tso_analysis_options()
             Determine whether its a novaseq run from the runfoldername, and return the
             relevant tso500 app input string
-        return_multiqc_cmds()
+        return_multiqc_cmds(pipeline)
             Create list of multiqc commands (for running multiqc and upload multiqc
             apps) by calling the relevant methods
-        create_multiqc_cmd()
+        create_multiqc_cmd(pipeline)
             Build dx run command to run MultiQC for the run. MultiQC is run after all
             QC tools have been run
         create_upload_multiqc_cmd()
@@ -38,8 +48,16 @@ class BuildRunfolderDxCommands(SWConfig):
             Build dx run command for exomedepth cnv calling app
         create_duty_csv_cmd()
             Build dx run command to run create_duty_csv app for the run
+        return_wes_query()
+            Return WES SQL query. This is a single update query per-run
     """
     def __init__(self, rf_obj: object, logger: logging.Logger):
+        """
+        Constructor for the BuildRunfolderDxCommands class
+            :param rf_obj (obj):            RunfolderObject object (contains
+                                            runfolder-specific attributes)
+            :param logger (logging.Logger): Logger
+        """
         self.rf_obj = rf_obj
         self.logger = logger
 
@@ -83,6 +101,7 @@ class BuildRunfolderDxCommands(SWConfig):
         """
         Create list of multiqc commands (for running multiqc and upload multiqc apps) by
         calling the relevant methods
+            :param pipeline (str):  Pipeline name
             :return cmd_list (str): List of multiqc commands
         """
         cmd_list = []
@@ -96,6 +115,7 @@ class BuildRunfolderDxCommands(SWConfig):
         Build dx run command to run MultiQC for the run. MultiQC is run after all QC tools have been
         run. Requires a project to download data from, and a coverage level. Coverage level differs
         between panels. The lowest value for the panels on the run is used
+            :param pipeline (str):  Pipeline name
             :return (str): Dx run command for MultiQC app
         """
         self.logger.info(
@@ -281,7 +301,7 @@ class BuildRunfolderDxCommands(SWConfig):
             ]
         )
 
-    def return_wes_query(self) -> str:
+    def return_wes_query(self) -> str:  # TODO eventually remove this
         """
         Return WES SQL query. This is a single update query per-run
             :return query (str):    Single update query for the WES run
@@ -300,75 +320,19 @@ class BuildRunfolderDxCommands(SWConfig):
             )
         ]
 
-    def write_dx_run_cmds(self, workflow_cmds: list, dx_postprocessing_cmds: list, decision_support_upload_cmds: list) -> None:
-        """
-        Write dx run commands to the dx run script, post dx run script, and decision support upload
-        script for the runfolder. Remove any None values
-        from the command list
-            :return None:
-        """
-
-        if workflow_cmds:  # Write dx run commands
-            cmds_to_write = base_variables.extend(workflow_cmds)
-            self.loggers["sw"].info(
-                self.loggers["sw"].log_msgs["writing_cmds"],
-                self.rf_obj.runfolder_dx_run_script,
-            )
-            write_lines(  # Write commands to dx run script
-                self.rf_obj.runfolder_dx_run_script,
-                "w",
-                list(filter(None, cmds_to_write)),
-            )
-        if self.dx_postprocessing_cmds:  # Write postprocessing commands
-            cmds_to_write = base_variables.extend(self.dx_postprocessing_cmds)
-            self.loggers["sw"].info(
-                self.loggers["sw"].log_msgs["writing_cmds"],
-                self.rf_obj.post_run_dx_run_script,
-            )
-            write_lines(
-                self.rf_obj.post_run_dx_run_script,
-                "w",
-                list(filter(None, cmds_to_write)),
-            )
-        if self.decision_support_upload_cmds:
-            cmds_to_write = base_variables.extend(self.decision_support_upload_cmds)
-            write_lines(
-                self.rf_obj.decision_support_upload_script,
-                "w",
-                list(filter(None, cmds_to_write)),
-            )
-
 
 class BuildSampleDxCommands(SWConfig):
     """
     Build dx run commands commands that are run at the sample level
 
     Attributes:
-        rf_obj (obj):                           RunfolderObject object (contains runfolder-specific attributes)
-        nexus_project_id (str):                 Project ID, generated when the DNAnexus project is created
-        workflow_cmds (list):                   Dx run commands for the project
-        dx_postprocessing_cmds (list):          Dx run commands to run after the TSO app. TSO runs only
-        decision_support_upload_cmds (list):    Dx run commands for decision support uploads
+    
+        sample_dict (dict):         Dictionary of SampleObject per sample, containing
+                                    sample-specific attributes
+        runfolder_name (str):       Runfolder name
+        logger (logging.Logger):    Logger
 
     Methods:
-        return_decision_support_cmd()
-            Construct decision support tool command for decision support tool upload where required by
-            calling build_congenica_sftp_cmd, build_congenica_cmd or build_qiagen_upload_cmd
-        create_sompy_cmd(sample)
-            Build dx run command to run sompy on a single VCF file
-        create_sambamba_cmd(sample, pannumber)
-            Build dx run command to run sambamba on a single BAM file
-        create_wes_cmd()
-            Construct dx run command for WES workflow
-        build_congenica_sftp_cmd()
-            Build the command to write the Congenica upload dx run command for the SFTP
-            app to the decision support tool upload bash script
-        build_congenica_cmd()
-            Build the command to write the Congenica upload dx run command to the decision
-            support tool upload bash script
-        build_qiagen_upload_cmd()
-            Build the command to write the qiagen upload command to the decisions support
-            tool upload bash script
         create_pipe_cmd()
             Construct dx run command for PIPE workflow
         get_vcfeval_cmd_string()
@@ -380,17 +344,35 @@ class BuildSampleDxCommands(SWConfig):
         get_masked_reference_cmd_string()
             Get input string for masked reference input for BWA stage of PIPE workflow,
             if specified for the pan number in the config
+        create_wes_cmd()
+            Construct dx run command for WES workflow
         create_snp_cmd()
             Construct dx run command for SNP workflow
         create_fastqc_cmd()
             Build dx run command to run fastqc
-        build_oncodeep_upload_cmd()
+        create_sambamba_cmd(sample, pannumber)
+            Build dx run command to run sambamba on a single BAM file
+        create_sompy_cmd(sample)
+            Build dx run command to run sompy on a single VCF file
+        return_congenica_cmd()
+            Construct Congenica upload command for non-reference samples
+        build_congenica_sftp_cmd()
+            Build the command to write the Congenica upload dx run command for the SFTP
+            app to the decision support tool upload bash script
+        build_congenica_cmd()
+            Build the command to write the Congenica upload dx run command to the decision
+            support tool upload bash script
+        build_qiagen_upload_cmd()
+            Build the command to write the qiagen upload command to the decisions support
+            tool upload bash script    
+        build_oncodeep_upload_cmd(file_name, run_identifier, file)
             Build the command to write the OncoDEEP upload dx run command to the
             decision support tool upload bash script
         return_rd_query()
             Create a query per sample using the DNA number
         return_oncology_query()
             Create a query per sample using IDs from the samplename (3rd and 4th) elements
+
     """
 
     def __init__(
@@ -401,211 +383,16 @@ class BuildSampleDxCommands(SWConfig):
     ):
         """
         Constructor for the BuildSampleDxCommands class. Calls the class methods
-            :param rf_obj (obj):            RunfolderObject object (contains runfolder-specific attributes)
+            :param runfolder_name (str):    Runfolder name
+            :param sample_dict (dict):      Dictionary of SampleObject per sample, containing
+                                            sample-specific attributes
+            :param logger (logging.Logger): Logger
         """
         self.sample_dict = sample_dict
         self.runfolder_name = runfolder_name
         self.logger = logger
-        self.sql_queries = []
-        self.workflow_cmds = []
-        self.dx_postprocessing_cmds = []
-        self.decision_support_upload_cmds = []
         self.logger.info(
             self.logger.log_msgs["building_cmds"]
-        )
-
-    def return_congenica_cmd(self) -> Union[str, None]:
-        """
-        Construct decision support tool command for non-reference samples by calling build_congenica_sftp_cmd,
-        build_congenica_cmd, or build_qiagen_upload_cmd(). If a sample requires Congenica upload, there are 2
-        methods. If Congenica project ID is specified as 'SFTP' within the config it means the sample requires
-        upload via SFTP, else if congenica_project ID is specified it means it can be uploaded using the upload
-        agent. Both Congenica apps app take inputs in the format jobid.outputname which ensures the job doesn't
-        run until the vcfs have been created. App inputs are created by a python script, which is called immediately
-        before the app is set off, and the script output (app inputs) is captured by the variable $DSS_INPUTS
-            :return (str | None):   Dx run commands (Congenica input command, Congenica upload command, Qiagen upload
-                                    command), or None if sample is a reference sample
-        """
-        if any([self.sample_dict["neg_control"], self.sample_dict["pos_control"]]):
-            decision_support_cmd = None
-            self.logger.info(
-                self.logger.log_msgs[
-                    "decision_support_upload_notrequired"
-                ],
-                self.sample_dict["sample_name"],
-            )
-        else:
-            self.logger.info(
-                self.logger.log_msgs[
-                    "decision_support_upload_required"
-                ],
-                self.sample_dict["sample_name"],
-            )
-            # If project is specified then upload via upload agent
-            if self.sample_dict["panel_settings"]["congenica_project"] == "SFTP":  # SFTP upload cmd
-                decision_support_cmd = self.build_congenica_sftp_cmd()
-            elif isinstance(self.sample_dict["panel_settings"]["congenica_project"], int):
-                decision_support_cmd = self.build_congenica_cmd()
-            return decision_support_cmd
-
-    def create_sompy_cmd(self, sample: str) -> str:
-        """
-        Build dx run command to run sompy on a single VCF file
-            :param sample (str):    Sample name
-            :return (str):          Dx run command for sompy app
-        """
-        self.logger.info(
-            self.logger.log_msgs["building_cmd"], "sompy", sample
-        )
-        return " ".join(
-            [
-                f'{SWConfig.DX_CMDS["sompy"]}Sompy-{sample}',
-                SWConfig.APP_INPUTS["sompy"]["truth_vcf"],
-                f'{SWConfig.APP_INPUTS["sompy"]["query_vcf"]}{sample}/{sample}_MergedSmallVariants.genome.vcf',
-                SWConfig.APP_INPUTS["sompy"]["tso"],
-                SWConfig.APP_INPUTS["sompy"]["skip"],
-                SWConfig.UPLOAD_ARGS["dest"],
-                SWConfig.UPLOAD_ARGS["token"],
-            ]
-        )
-
-    def create_sambamba_cmd(self, sample: str, pannumber: str) -> str:
-        """
-        Build dx run command to run sambamba on a single BAM file
-            :param sample (str):    Sample name
-            :param pannumber (str): Config-defined pan number for sample
-            :return (str):          Dx run command for sambamba app
-        """
-        self.logger.info(
-            self.logger.log_msgs["building_cmd"],
-            "sambamba",
-            sample,
-        )
-        return " ".join(
-            [
-                f'{SWConfig.DX_CMDS["sambamba"]}Sambamba_Chanjo-{sample}',
-                f'{SWConfig.APP_INPUTS["sambamba"]["bam"]}{sample}/{sample}.bam',
-                f'{SWConfig.APP_INPUTS["sambamba"]["bai"]}{sample}/{sample}.bam.bai',
-                f'{SWConfig.APP_INPUTS["sambamba"]["coverage_level"]}'
-                f'{str(SWConfig.PANEL_DICT[pannumber]["clinical_coverage_depth"])}',
-                f'{SWConfig.APP_INPUTS["sambamba"]["sambamba_bed"]}'
-                f'{SWConfig.PANEL_DICT[pannumber]["sambamba_bedfile"]}',
-                SWConfig.APP_INPUTS["sambamba"]["cov_cmds"]
-                % (
-                    str(SWConfig.PANEL_DICT[pannumber]["coverage_min_basecall_qual"]),
-                    str(SWConfig.PANEL_DICT[pannumber]["coverage_min_mapping_qual"]),
-                ),
-                f'{SWConfig.UPLOAD_ARGS["dest"]}:/coverage/{pannumber}',
-                SWConfig.UPLOAD_ARGS["token"],
-            ]
-        )
-
-    def create_wes_cmd(self) -> str:
-        """
-        Construct dx run command for WES workflow
-            :return (str):  Dx run command string
-        """
-        self.logger.info(
-            self.logger.log_msgs["building_cmd"],
-            self.sample_dict["panel_settings"]["pipeline"],
-            self.sample_dict["sample_name"],
-        )
-        return " ".join(
-            [
-                f'{SWConfig.DX_CMDS["wes"]}{self.sample_dict["sample_name"]}',
-                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc1_reads"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc2_reads"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["wes"]["sentieon_samplename"]}{self.sample_dict["sample_name"]}',
-                f'{SWConfig.STAGE_INPUTS["wes"]["picard_bed"]}{self.sample_dict["panel_settings"]["hsmetrics_bedfile"]}',
-                f'{SWConfig.STAGE_INPUTS["wes"]["sambamba_bed"]}{self.sample_dict["panel_settings"]["sambamba_bedfile"]}',
-                SWConfig.UPLOAD_ARGS["dest"],
-                SWConfig.UPLOAD_ARGS["token"],
-            ]
-        )
-
-    def build_congenica_sftp_cmd(self) -> str:
-        """
-        Build the command to write the Congenica upload dx run command for the SFTP app to the decision
-        support tool upload bash script. This command is used to upload the sample to Congenica using
-        the SFTP Congenica upload app. Samples requiring upload by SFTP require patient-specific info
-        to be pre-added into Congenica by the scientists. Takes BAM and VCF inputs, and does not require
-        project IDs, IR templates or name
-            :return (str):  Dx run command for the Congenica upload (SFTP app)
-        """
-        self.logger.info(
-            self.logger.log_msgs["building_cmd"],
-            "congenica sftp",
-            self.sample_dict["sample_name"],
-        )
-        return " ".join(
-            [
-                f'{SWConfig.DX_CMDS["congenica_sftp"]}Congenica_SFTP_Upload-{self.sample_dict["sample_name"]}',
-                SWConfig.UPLOAD_ARGS["dest"],
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{self.sample_dict["sample_name"]}*_markdup_Haplotyper.vcf.gz',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{self.sample_dict["sample_name"]}*_markdup.bam',
-                SWConfig.UPLOAD_ARGS["token"],
-            ]
-        )
-
-    def build_congenica_cmd(self) -> str:
-        """
-        Build the command to write the Congenica upload dx run command to the decision support tool
-        upload bash script. This command is used to upload the sample to Congenica using the standard
-        Congenica upload app. Takes BAM and VCF inputs, along with config-specified inputs congenica
-        project ID, credentials, IR template and sample name
-            :param pipeline (str):  
-            :return (str):          Dx run command for the Congenica upload (standard Congenica upload app)
-        """
-        self.logger.info(
-            self.logger.log_msgs["building_cmd"],
-            "congenica",
-            self.sample_dict["sample_name"],
-        )
-        if self.sample_dict["panel_settings"]["pipeline"] == "pipe":
-            vcf_input = f'{self.sample_dict["sample_name"]}*.bedfiltered.vcf.gz'
-            bam_input = f'{self.sample_dict["sample_name"]}*.refined.bam'
-
-        if self.sample_dict["panel_settings"]["pipeline"] == "wes":
-            vcf_input = f'{self.sample_dict["sample_name"]}*_markdup_Haplotyper.vcf.gz'
-            bam_input = f'{self.sample_dict["sample_name"]}*_markdup.bam'
-
-        return " ".join(
-            [
-                f'{SWConfig.DX_CMDS["congenica_upload"]}Congenica_Upload-{self.sample_dict["sample_name"]}',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["congenica_project"]}'
-                f'{str(self.sample_dict["panel_settings"]["congenica_project"])}',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["credentials"]}'
-                f'{self.sample_dict["panel_settings"]["congenica_credentials"]}',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["ir_template"]}'
-                f'{self.sample_dict["panel_settings"]["congenica_IR_template"]}',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["samplename"]}{self.sample_dict["sample_name"]}',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{vcf_input}',
-                f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{bam_input}',
-                SWConfig.UPLOAD_ARGS["dest"],
-                SWConfig.UPLOAD_ARGS["token"],
-            ]
-        )
-
-    def build_qiagen_upload_cmd(self) -> str:
-        """
-        Build the command to write the qiagen upload dx run command to the decision
-        support tool upload bash script. This command is used to upload the sample
-        to QCII. The command takes sample_name and sample_zip_folder as inputs
-            :return (str):  Dx run command for the qiagen_upload app
-        """
-        self.logger.info(
-            self.logger.log_msgs["building_cmd"],
-            "qiagen",
-            self.sample_dict["sample_name"],
-        )
-        return " ".join(
-            [
-                f'{SWConfig.DX_CMDS["qiagen_upload"]}Qiagen_Upload-{self.sample_dict["sample_name"]}',
-                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_name"]}{self.sample_dict["sample_name"]}',
-                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}{self.sample_dict["pannum"]}/{self.sample_dict["sample_name"]}.zip',
-                SWConfig.UPLOAD_ARGS["dest"],
-                SWConfig.UPLOAD_ARGS["token"],
-            ]
         )
 
     def create_pipe_cmd(self) -> str:
@@ -734,6 +521,29 @@ class BuildSampleDxCommands(SWConfig):
         else:
             return ""
 
+    def create_wes_cmd(self) -> str:  # TODO eventually remove this
+        """
+        Construct dx run command for WES workflow
+            :return (str):  Dx run command string
+        """
+        self.logger.info(
+            self.logger.log_msgs["building_cmd"],
+            self.sample_dict["panel_settings"]["pipeline"],
+            self.sample_dict["sample_name"],
+        )
+        return " ".join(
+            [
+                f'{SWConfig.DX_CMDS["wes"]}{self.sample_dict["sample_name"]}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc1_reads"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["fastqc2_reads"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["sentieon_samplename"]}{self.sample_dict["sample_name"]}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["picard_bed"]}{self.sample_dict["panel_settings"]["hsmetrics_bedfile"]}',
+                f'{SWConfig.STAGE_INPUTS["wes"]["sambamba_bed"]}{self.sample_dict["panel_settings"]["sambamba_bedfile"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
+                SWConfig.UPLOAD_ARGS["token"],
+            ]
+        )
+
     def create_snp_cmd(self) -> str:  # TODO eventually remove this
         """
         Construct dx run command for SNP workflow
@@ -770,6 +580,175 @@ class BuildSampleDxCommands(SWConfig):
                 f'{SWConfig.DX_CMDS["fastqc"]}FastQC-{self.sample_dict["sample_name"]}',
                 f'{SWConfig.APP_INPUTS["fastqc"]["reads"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
                 f'{SWConfig.APP_INPUTS["fastqc"]["reads"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
+                SWConfig.UPLOAD_ARGS["token"],
+            ]
+        )
+
+    def create_sambamba_cmd(self, sample: str, pannumber: str) -> str:
+        """
+        Build dx run command to run sambamba on a single BAM file
+            :param sample (str):    Sample name
+            :param pannumber (str): Config-defined pan number for sample
+            :return (str):          Dx run command for sambamba app
+        """
+        self.logger.info(
+            self.logger.log_msgs["building_cmd"],
+            "sambamba",
+            sample,
+        )
+        return " ".join(
+            [
+                f'{SWConfig.DX_CMDS["sambamba"]}Sambamba_Chanjo-{sample}',
+                f'{SWConfig.APP_INPUTS["sambamba"]["bam"]}{sample}/{sample}.bam',
+                f'{SWConfig.APP_INPUTS["sambamba"]["bai"]}{sample}/{sample}.bam.bai',
+                f'{SWConfig.APP_INPUTS["sambamba"]["coverage_level"]}'
+                f'{str(SWConfig.PANEL_DICT[pannumber]["clinical_coverage_depth"])}',
+                f'{SWConfig.APP_INPUTS["sambamba"]["sambamba_bed"]}'
+                f'{SWConfig.PANEL_DICT[pannumber]["sambamba_bedfile"]}',
+                SWConfig.APP_INPUTS["sambamba"]["cov_cmds"]
+                % (
+                    str(SWConfig.PANEL_DICT[pannumber]["coverage_min_basecall_qual"]),
+                    str(SWConfig.PANEL_DICT[pannumber]["coverage_min_mapping_qual"]),
+                ),
+                f'{SWConfig.UPLOAD_ARGS["dest"]}:/coverage/{pannumber}',
+                SWConfig.UPLOAD_ARGS["token"],
+            ]
+        )
+
+    def create_sompy_cmd(self, sample: str) -> str:
+        """
+        Build dx run command to run sompy on a single VCF file
+            :param sample (str):    Sample name
+            :return (str):          Dx run command for sompy app
+        """
+        self.logger.info(
+            self.logger.log_msgs["building_cmd"], "sompy", sample
+        )
+        return " ".join(
+            [
+                f'{SWConfig.DX_CMDS["sompy"]}Sompy-{sample}',
+                SWConfig.APP_INPUTS["sompy"]["truth_vcf"],
+                f'{SWConfig.APP_INPUTS["sompy"]["query_vcf"]}{sample}/{sample}_MergedSmallVariants.genome.vcf',
+                SWConfig.APP_INPUTS["sompy"]["tso"],
+                SWConfig.APP_INPUTS["sompy"]["skip"],
+                SWConfig.UPLOAD_ARGS["dest"],
+                SWConfig.UPLOAD_ARGS["token"],
+            ]
+        )
+
+    def return_congenica_cmd(self) -> Union[str, None]:
+        """
+        Construct Congenica upload command for non-reference samples. There are 2 methods. If Congenica
+        project ID is specified as 'SFTP' within the config it means the sample requires upload via SFTP, else if
+        congenica_project ID is specified it means it can be uploaded using the upload agent. Both Congenica apps
+        take inputs in the format jobid.outputname which ensures the job doesn't run until the vcfs have been
+        created. App inputs are created by a python script, which is called immediately before the app is set
+        off, and the script output (app inputs) is captured by the variable $DSS_INPUTS
+            :return (str | None):   Dx run commands, or None if sample is a reference sample
+        """
+        if any([self.sample_dict["neg_control"], self.sample_dict["pos_control"]]):
+            decision_support_cmd = None
+            self.logger.info(
+                self.logger.log_msgs[
+                    "decision_support_upload_notrequired"
+                ],
+                self.sample_dict["sample_name"],
+            )
+        else:
+            self.logger.info(
+                self.logger.log_msgs[
+                    "decision_support_upload_required"
+                ],
+                self.sample_dict["sample_name"],
+            )
+            # If project is specified then upload via upload agent
+            if self.sample_dict["panel_settings"]["congenica_project"] == "SFTP":  # SFTP upload cmd. # TODO eventually remove this
+                decision_support_cmd = self.build_congenica_sftp_cmd()
+            elif isinstance(self.sample_dict["panel_settings"]["congenica_project"], int):
+                decision_support_cmd = self.build_congenica_cmd()
+            return decision_support_cmd
+
+    def build_congenica_sftp_cmd(self) -> str:  # TODO eventually remove this
+        """
+        Build the command to write the Congenica upload dx run command for the SFTP app to the decision
+        support tool upload bash script. This command is used to upload the sample to Congenica using
+        the SFTP Congenica upload app. Samples requiring upload by SFTP require patient-specific info
+        to be pre-added into Congenica by the scientists. Takes BAM and VCF inputs, and does not require
+        project IDs, IR templates or name
+            :return (str):  Dx run command for the Congenica upload (SFTP app)
+        """
+        self.logger.info(
+            self.logger.log_msgs["building_cmd"],
+            "congenica sftp",
+            self.sample_dict["sample_name"],
+        )
+        return " ".join(
+            [
+                f'{SWConfig.DX_CMDS["congenica_sftp"]}Congenica_SFTP_Upload-{self.sample_dict["sample_name"]}',
+                SWConfig.UPLOAD_ARGS["dest"],
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{self.sample_dict["sample_name"]}*_markdup_Haplotyper.vcf.gz',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{self.sample_dict["sample_name"]}*_markdup.bam',
+                SWConfig.UPLOAD_ARGS["token"],
+            ]
+        )
+
+    def build_congenica_cmd(self) -> str:
+        """
+        Build the command to write the Congenica upload dx run command to the decision support tool
+        upload bash script. This command is used to upload the sample to Congenica using the standard
+        Congenica upload app. Takes BAM and VCF inputs, along with config-specified inputs congenica
+        project ID, credentials, IR template and sample name
+            :param pipeline (str):  
+            :return (str):          Dx run command for the Congenica upload (standard Congenica upload app)
+        """
+        self.logger.info(
+            self.logger.log_msgs["building_cmd"],
+            "congenica",
+            self.sample_dict["sample_name"],
+        )
+        if self.sample_dict["panel_settings"]["pipeline"] == "pipe":
+            vcf_input = f'{self.sample_dict["sample_name"]}*.bedfiltered.vcf.gz'
+            bam_input = f'{self.sample_dict["sample_name"]}*.refined.bam'
+
+        if self.sample_dict["panel_settings"]["pipeline"] == "wes":  # TODO eventually remove this
+            vcf_input = f'{self.sample_dict["sample_name"]}*_markdup_Haplotyper.vcf.gz'
+            bam_input = f'{self.sample_dict["sample_name"]}*_markdup.bam'
+
+        return " ".join(
+            [
+                f'{SWConfig.DX_CMDS["congenica_upload"]}Congenica_Upload-{self.sample_dict["sample_name"]}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["congenica_project"]}'
+                f'{str(self.sample_dict["panel_settings"]["congenica_project"])}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["credentials"]}'
+                f'{self.sample_dict["panel_settings"]["congenica_credentials"]}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["ir_template"]}'
+                f'{self.sample_dict["panel_settings"]["congenica_IR_template"]}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["samplename"]}{self.sample_dict["sample_name"]}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["vcf"]}{vcf_input}',
+                f'{SWConfig.APP_INPUTS["congenica_upload"]["bam"]}{bam_input}',
+                SWConfig.UPLOAD_ARGS["dest"],
+                SWConfig.UPLOAD_ARGS["token"],
+            ]
+        )
+
+    def build_qiagen_upload_cmd(self) -> str:
+        """
+        Build the command to write the qiagen upload dx run command to the decision
+        support tool upload bash script. This command is used to upload the sample
+        to QCII. The command takes sample_name and sample_zip_folder as inputs
+            :return (str):  Dx run command for the qiagen_upload app
+        """
+        self.logger.info(
+            self.logger.log_msgs["building_cmd"],
+            "qiagen",
+            self.sample_dict["sample_name"],
+        )
+        return " ".join(
+            [
+                f'{SWConfig.DX_CMDS["qiagen_upload"]}Qiagen_Upload-{self.sample_dict["sample_name"]}',
+                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_name"]}{self.sample_dict["sample_name"]}',
+                f'{SWConfig.APP_INPUTS["qiagen_upload"]["sample_zip_folder"]}{self.sample_dict["pannum"]}/{self.sample_dict["sample_name"]}.zip',
                 SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"],
             ]

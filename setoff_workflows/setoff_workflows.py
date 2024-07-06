@@ -11,17 +11,32 @@ processing. See Readme and docstrings for further details. Contains the followin
     upload a runfolder including creation of DNAnexus project, upload of data using upload_runfolder,
     building and execution of dx run commands to set off sample workflows and apps, creation of decision
     support tool upload scripts, and sending of pipeline emails
-
+- DevPipeline
+    Collate DNAnexus commands for development runs. This runtype has no decision
+    support upload or postprocessing commands, or SQL queries
+- ArcherDxPipeline
+    Collate DNAnexus commands for ArcherDX runs. This runtype has no decision
+    support upload or postprocessing commands
+- SnpPipeline
+    Collate DNAnexus commands for SNP runs. This run type has no decision
+    support upload or post processing commands
+- OncoDeepPipeline
+    Collate DNAnexus commands for OncoDEEP runs. This runtype has no post processing commands
+- TsoPipeline
+    Collate commands for TSO workflow. This runtype has postprocessing commands, decision
+    support upload commands, and SQL queries
+- WesPipeline
+    Collate commands for WES workflow. This runtype has no postprocesing commands
+- CustomPanelsPipeline
+    Collate commands for Custom Panels workflow. This runtype has no postprocesing commands
 """
 import sys
 import os
 import re
-import datetime
 from itertools import chain
-from typing import Optional, Union, Tuple
+from typing import Optional, Union
 from ad_logger.ad_logger import AdLogger, shutdown_logs
 from config.ad_config import SWConfig
-from ad_email.ad_email import AdEmail
 import logging
 from upload_runfolder.upload_runfolder import UploadRunfolder
 from toolbox.toolbox import (
@@ -40,7 +55,6 @@ from toolbox.toolbox import (
 )
 from setoff_workflows.pipeline_emails import PipelineEmails
 from setoff_workflows.build_dx_commands import BuildRunfolderDxCommands, BuildSampleDxCommands
-from seglh_naming.sample import Sample as seglh_namingSample
 from toolbox.toolbox import script_start_logmsg, script_end_logmsg
 
 # Set up script logging
@@ -50,12 +64,8 @@ script_logger = ad_logger_obj.get_logger()
 
 class SequencingRuns(SWConfig):
     """
-    Collects sequencing runs and initiates runfolder processing for those sequencing runs requiring processing
-
-    Attributes
-        runs_to_process (list):         List of runfolder objects for runs that require processing
-        processed_runfolders (list):    List of runfolders processed by the script
-        num_processed_runfolders (int): Number of runfolders processed during this cycle
+    Collects sequencing runs and initiates runfolder processing for those
+    sequencing runs requiring processing
 
     Methods:
         setoff_processing()
@@ -73,24 +83,21 @@ class SequencingRuns(SWConfig):
         process_runfolder(rf_obj)
             If software tests pass, set up logging and pass rf_obj to the ProcessRunfolder class for
             processing, shutting down logs upon completion
-        return_num_processed_runfolders()
-            Set the total number of processed runfolders as a class attribute
     """
 
     def __init__(self):
         """
         Constructor for the SequencingRuns class
         """
-        self.runs_to_process = []
-        self.processed_runfolders = []
 
     def setoff_processing(self) -> None:
         """
         Call methods to collect runfolders for processing. Called by __main__.py
             :return None:
         """
+        processed_runfolders = []
         script_start_logmsg(script_logger, __file__)
-        self.set_runfolders()
+        runs_to_process = self.set_runfolders()
         if test_upload_software(script_logger):
             for rf_obj in self.runs_to_process:
                 if not os.path.exists(rf_obj.upload_flagfile):
@@ -98,18 +105,18 @@ class SequencingRuns(SWConfig):
                         script_logger.log_msgs["start_runfolder_proc"],
                         rf_obj.runfolder_name,
                     )
-                    self.process_runfolder(rf_obj)
-                else:
-                    self.runs_to_process.remove(rf_obj)
-            self.num_processed_runfolders()
+                    if self.process_runfolder(rf_obj):
+                        processed_runfolders.append(rf_obj.runfolder_name)
+            get_num_processed_runfolders(script_logger, self.processed_runfolders)
             script_end_logmsg(script_logger, __file__)
 
-    def set_runfolders(self) -> None:
+    def set_runfolders(self) -> list:
         """
         Update self.runs_to_process list with NGS runfolders in the runfolders directory
         that match the runfolder pattern, and require processing by the script
-            :return None:
+            :return (list):     List of runfolder objects that require processing
         """
+        runs_to_process = []
         for folder in os.listdir(SWConfig.RUNFOLDERS):
             if os.path.isdir(os.path.join(SWConfig.RUNFOLDERS, folder)) and re.compile(
                 SWConfig.RUNFOLDER_PATTERN
@@ -119,7 +126,8 @@ class SequencingRuns(SWConfig):
                 )
                 rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
                 if self.requires_processing(rf_obj):
-                    self.runs_to_process.append(rf_obj)
+                    runs_to_process.append(rf_obj)
+        return runs_to_process
 
     def requires_processing(self, rf_obj: object) -> Optional[bool]:
         """
@@ -165,10 +173,8 @@ class SequencingRuns(SWConfig):
                 else:
                     script_logger.info(script_logger.log_msgs["success_string_absent"])
             else:
-                # Write to logfile that not yet demultiplexed
                 script_logger.info(script_logger.log_msgs["bcl2fastqlog_empty"])
         else:
-            # Write to logfile that not yet demultiplexed
             script_logger.info(script_logger.log_msgs["not_yet_demultiplexed"])
 
     def already_uploaded(self, rf_obj: object) -> Optional[bool]:
@@ -181,15 +187,14 @@ class SequencingRuns(SWConfig):
             script_logger.info(script_logger.log_msgs["ua_file_present"])
             return True
         else:
-            # If file doesn't exist return false to continue, write to log file
             script_logger.info(script_logger.log_msgs["ua_file_absent"])
 
-    def process_runfolder(self, rf_obj: object) -> None:
+    def process_runfolder(self, rf_obj: object) -> Optional[bool]:
         """
         If software tests pass, set up logging and pass rf_obj to the ProcessRunfolder class for processing,
         shutting down logs upon completion. Append to self.processed_runfolders
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific attributes)
-            :return None:
+            :return (str):          True name if runfolder has been processed
         """
         loggers = rf_obj.get_runfolder_loggers(__package__)  # Get dictionary of loggers
 
@@ -205,25 +210,15 @@ class SequencingRuns(SWConfig):
                 )  # Bcl2fastq log file removed to trigger re-demultiplex
                 loggers["sw"].error(loggers["sw"].log_msgs["re_demultiplex"])
             else:
-                self.process_runfolder_obj = ProcessRunfolder(rf_obj, loggers)
+                ProcessRunfolder(rf_obj, loggers)
 
                 for logger_name in loggers.keys():
                     shutdown_logs(loggers[logger_name])  # Shut down logging
-                self.processed_runfolders.append(rf_obj.runfolder_name)
                 script_logger.info(
                     script_logger.log_msgs["runfolder_processed"],
                     rf_obj.runfolder_name,
                 )
-
-    def num_processed_runfolders(self) -> None:
-        """
-        Set the total number of processed runfolders as a class attribute
-            :return None:
-        """
-        num_processed_runfolders = get_num_processed_runfolders(
-            script_logger, self.processed_runfolders
-        )
-        setattr(self, "num_processed_runfolders", num_processed_runfolders)
+                return True
 
 
 class ProcessRunfolder(SWConfig):
@@ -235,16 +230,17 @@ class ProcessRunfolder(SWConfig):
 
     Attributes:
         rf_obj (obj):                       RunfolderObject() object (contains runfolder-specific attributes)
+        loggers (dict):                     Dict of loggers
         dnanexus_auth (str):                DNAnexus auth token
+        rf_samples_obj (object):            RunfolderSamples object
         users_dict (dict):                  Dictionary of users and admins requiring access to the DNAnexus project
         nexus_identifiers (dict):           Dictionary containing project name and ID
         upload_runfolder (obj):             UploadRunfolder() object with methods that can be called to upload
                                             files to the DNAnexus project
         upload_cmds (dict):                 Dictionary of commands for uploading files to the DNAnexus project
         pre_pipeline_upload_dict (dict):    Dict of files to upload prior to pipeline setoff, and commands
-        build_dx_commands(obj):             BuildDxCommands object for building run-wide commands for runfolder,
-                                            and writing sample-level commands from the samples_obj along with the
-                                            run-wide commands to the dx run script
+        pipeline_obj (object):              Object with the workflow_cmds, dx_postprocessing_cmds,
+                                            decision_support_upload_cmds and sql_queries as attributes
         pipeline_emails (obj):              PipelineEmails object for sending the start of pipeline emails
 
     Methods:
@@ -267,6 +263,9 @@ class ProcessRunfolder(SWConfig):
             the upload commands required
         build_dx_commands()
             Calls other classes to generate the required commands for the runfolder
+        write_dx_run_cmds(pipeline_obj)
+            Write dx run commands to the dx run script, post dx run script, and decision
+            support upload script for the runfolder
         pre_pipeline_upload()
             Uploads the files in the rf_obj.pre_pipeline_upload_dict for the
             runfolder. Calls the tso runfolder upload function if the runfolder is tso
@@ -283,11 +282,12 @@ class ProcessRunfolder(SWConfig):
             written to as the upload is taking place)
     """
 
-    def __init__(self, rf_obj: RunfolderObject, loggers):
+    def __init__(self, rf_obj: RunfolderObject, loggers: dict):
         """
         Constructor for the RunfolderProcessor class. Calls the class methods
             :param rf_obj (obj):    RunfolderObject object (contains runfolder-specific
                                     attributes)
+            :param loggers (dict):  Dict of loggers
         """
         self.rf_obj = rf_obj
         self.loggers = loggers
@@ -314,11 +314,12 @@ class ProcessRunfolder(SWConfig):
         )
         self.upload_cmds = self.get_upload_cmds()
         self.pre_pipeline_upload_dict = self.create_file_upload_dict()
-        self.sql_queries = self.build_dx_commands()
+        self.pipeline_obj = self.build_dx_commands()
+        self.write_dx_run_cmds(pipeline_obj)
         self.pre_pipeline_upload()
         self.run_dx_run_commands()
-        self.pipeline_emails = PipelineEmails(self.rf_obj, self.rf_samples, self.sql_queries, self.loggers["sw"])
-        if self.sql_queries:
+        self.pipeline_emails = PipelineEmails(self.rf_obj, self.rf_samples, self.pipeline_obj.sql_queries, self.loggers["sw"])
+        if self.pipeline_obj.sql_queries:
             self.pipeline_emails.send_sql_email()
         self.pipeline_emails.send_samples_email()
         self.post_pipeline_upload()
@@ -404,8 +405,8 @@ class ProcessRunfolder(SWConfig):
 
     def run_project_creation_script(self) -> str:
         """
-        Set off the project creation script using subprocess. The output of this command is checked to
-        ensure it meets the expected success pattern. If unsuccessful, exit script
+        Set off the project creation script using subprocess. The output of this command is
+        checked to ensure it meets the expected success pattern. If unsuccessful, exit script
             :return projectid (str):    Project ID of the created project
         """
         self.loggers["sw"].info(
@@ -493,14 +494,14 @@ class ProcessRunfolder(SWConfig):
                     ]
                 ),
             )
-        upload_cmds["runfolder_samplesheet"] = SWConfig.DX_CMDS[
-            "file_upload_cmd"
-        ] % (
-            self.rf_obj.dnanexus_auth,
-            self.nexus_identifiers["proj_id"],
-            "/",
-            self.rf_obj.runfolder_samplesheet_path,
-        )
+            upload_cmds["runfolder_samplesheet"] = SWConfig.DX_CMDS[
+                "file_upload_cmd"
+            ] % (
+                self.rf_obj.dnanexus_auth,
+                self.nexus_identifiers["proj_id"],
+                "/",
+                self.rf_obj.runfolder_samplesheet_path,
+            )
         return upload_cmds
 
     def split_tso_samplesheet(self) -> list:
@@ -617,15 +618,12 @@ class ProcessRunfolder(SWConfig):
             }
         return pre_pipeline_upload_dict
 
-    def build_dx_commands(self):
+    def build_dx_commands(self) -> object:
         """
         Build dx run commands (pipeline-dependent) by calling the relevant classes and
         appending to the cmd lists
-            :return workflow_cmds (list):                   Dx run command list for the run
-            :return dx_postprocessing_cmds (list):          Commands for postprocessing.
-                                                            Currently only releveant to tso500
-            :return decision_support_upload_cmds (list):    Commands for decision support uploads
-            :return sql_queries (list):
+            :return pipeline_obj (object):  Object with the workflow_cmds, dx_postprocessing_cmds,
+                                            decision_support_upload_cmds and sql_queries as attributes
         """
         if self.rf_samples_obj.pipeline == "tso500":
             pipeline_obj = TsoPipeline(self.rf_obj, self.rf_samples_obj, self.loggers["sw"])
@@ -645,15 +643,15 @@ class ProcessRunfolder(SWConfig):
         self.loggers["sw"].info(
             self.loggers["sw"].log_msgs["cmds_built"]
         )
-        self.write_dx_run_cmds(pipeline_obj.workflow_cmds, pipeline_obj.dx_postprocessing_cmds, pipeline_obj.decision_support_upload_cmds)
+        return pipeline_obj
 
-        return pipeline_obj.sql_queries
-
-    def write_dx_run_cmds(self, workflow_cmds, dx_postprocessing_cmds, decision_support_upload_cmds) -> None:
+    def write_dx_run_cmds(self, pipeline_obj: object) -> None:
         """
         Write dx run commands to the dx run script, post dx run script, and decision support upload
         script for the runfolder. Remove any None values
         from the command list
+            :param pipeline_obj (object):   Object with the workflow_cmds, dx_postprocessing_cmds,
+                                            decision_support_upload_cmds and sql_queries as attributes
             :return None:
         """
         base_variables = [
@@ -664,8 +662,8 @@ class ProcessRunfolder(SWConfig):
             f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
             SWConfig.EMPTY_DEPENDS,
         ]
-        if workflow_cmds:  # Write dx run commands
-            workflow_cmds[:0] = base_variables
+        if pipeline_obj.workflow_cmds:  # Write dx run commands
+            pipeline_obj.workflow_cmds[:0] = base_variables
             self.loggers["sw"].info(
                 self.loggers["sw"].log_msgs["writing_cmds"],
                 self.rf_obj.runfolder_dx_run_script,
@@ -673,10 +671,10 @@ class ProcessRunfolder(SWConfig):
             write_lines(  # Write commands to dx run script
                 self.rf_obj.runfolder_dx_run_script,
                 "w",
-                list(filter(None, workflow_cmds)),
+                list(filter(None, pipeline_obj.workflow_cmds)),
             )
-        if dx_postprocessing_cmds:  # Write postprocessing commands
-            dx_postprocessing_cmds[:0] = base_variables
+        if pipeline_obj.dx_postprocessing_cmds:  # Write postprocessing commands
+            pipeline_obj.dx_postprocessing_cmds[:0] = base_variables
             self.loggers["sw"].info(
                 self.loggers["sw"].log_msgs["writing_cmds"],
                 self.rf_obj.runfolder_dx_run_script,
@@ -684,20 +682,20 @@ class ProcessRunfolder(SWConfig):
             write_lines(
                 self.rf_obj.post_run_dx_run_script,
                 "w",
-                list(filter(None, dx_postprocessing_cmds)),
+                list(filter(None, pipeline_obj.dx_postprocessing_cmds)),
             )
-        if decision_support_upload_cmds:
-            decision_support_upload_cmds[:0] = base_variables
+        if pipeline_obj.decision_support_upload_cmds:
+            pipeline_obj.decision_support_upload_cmds[:0] = base_variables
             write_lines(
                 self.rf_obj.decision_support_upload_script,
                 "w",
-                list(filter(None, decision_support_upload_cmds)),
+                list(filter(None, pipeline_obj.decision_support_upload_cmds)),
             )
 
     def pre_pipeline_upload(self) -> None:
         """
-        Uploads the files in the rf_obj.pre_pipeline_upload_dict for the runfolder.
-        Calls the tso runfolder upload function if the runfolder is tso500
+        Uploads the files in the pre_pipeline_upload_dict for the runfolder.
+        Calls the upload_rest_of_runfolder function if the runfolder is tso500
             :return None:
         """
         for filetype in self.pre_pipeline_upload_dict.keys():
@@ -711,7 +709,7 @@ class ProcessRunfolder(SWConfig):
     def upload_to_dnanexus(self, filetype: str, file_upload_dict: dict) -> None:
         """
         Passes the command and file list in file_upload_dict to upload_runfolder.upload_files()
-        which writes log messages to the upload agent log within the runfolder
+        which writes log messages to the backup runfolder log file
             :param filetype (str):          Name of the file upload type
             :param file_upload_dict (dict): Dictionary of files for upload
             :return None:
@@ -749,7 +747,7 @@ class ProcessRunfolder(SWConfig):
         """
         # Build upload_runfolder.py commands, ignoring some files
         if self.rf_samples_obj.pipeline in ["tso500", "dev"]:
-            ignore = ""
+            ignore = ""  # Upload BCL files for tso500 and dev runs
         else:
             ignore = "/L00"
 
@@ -797,30 +795,14 @@ class ProcessRunfolder(SWConfig):
 
     def post_pipeline_upload(self) -> None:
         """
-        Uploads the rest of the runfolder if not a tso run, and
-        uploads the runfolder logfiles
+        Uploads the rest of the runfolder if not a tso run
             :return None:
         """
         if self.rf_samples_obj.pipeline != "tso500":
             self.upload_rest_of_runfolder()
 
-        file_upload_dict = {
-            "logfiles": {
-                "cmd": self.upload_cmds["logfiles"],
-                "files_list": self.rf_obj.logfiles_to_upload,
-            }
-        }
-        for filetype in file_upload_dict.keys():
-            self.upload_to_dnanexus(filetype, file_upload_dict)
 
-
-
-
-# for sample_name in self.rf_obj.samples_dict.keys():
-
-
-
-class DevPipeline():
+class DevPipeline:
     """
     Collate DNAnexus commands for development runs. This runtype has no decision
     support upload or postprocessing commands, or SQL queries
@@ -850,7 +832,7 @@ class DevPipeline():
         # Return downstream app commands
         self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline))
 
-class ArcherDxPipeline():
+class ArcherDxPipeline:
     """
     Collate DNAnexus commands for ArcherDX runs. This runtype has no decision
     support upload or postprocessing commands
@@ -920,7 +902,7 @@ class SnpPipeline:  # TODO eventually remove this and associated pipeline-specif
 
 class OncoDeepPipeline():
     """
-    Collate DNAnexus commands for OncoDEEP runs. This runtype has no 
+    Collate DNAnexus commands for OncoDEEP runs. This runtype has no post processing commands
     """
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
         self.rf_obj = rf_obj
@@ -964,9 +946,10 @@ class OncoDeepPipeline():
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
 
-class TsoPipeline():
+class TsoPipeline:
     """
-    Collate commands for TSO workflow
+    Collate commands for TSO workflow. This runtype has postprocessing commands and
+    decision support upload commands, and SQL queries
     """
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
         self.rf_obj = rf_obj
@@ -1022,17 +1005,10 @@ class TsoPipeline():
         self.dx_postprocessing_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
 
-class WesPipeline():  # TODO eventually remove this and associated pipeline-specific functions
+class WesPipeline:  # TODO eventually remove this and associated pipeline-specific functions
 
     """
-
-    Attributes
-        workflow_cmd (str): Dx run command for the sample workflow
-        query
-
-    Methods
-        return_wes_runwide_cmds()
-            Collect runwide commands for WES runs as a list. This includes peddy
+    Collate commands for WES workflow. This runtype has no postprocesing commands
     """
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
 
@@ -1040,10 +1016,9 @@ class WesPipeline():  # TODO eventually remove this and associated pipeline-spec
         self.rf_samples_obj = rf_samples
         self.logger = logger
         self.workflow_cmds = []
-        self.sql_queries = []
-
-        self.decision_support_upload_cmds = self.return_decision_support_cmd()
         self.dx_postprocessing_cmds = False
+        self.decision_support_upload_cmds = self.return_decision_support_cmd()
+        self.sql_queries = []
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
         for sample_name in self.rf_obj.samples_dict.keys():
@@ -1070,32 +1045,11 @@ class WesPipeline():  # TODO eventually remove this and associated pipeline-spec
 
         self.sql_queries = self.rf_cmds_obj.return_wes_query()
 
-        # build_dx_cmds()
-        #     Build dx run commands (pipeline-dependent) by calling the relevant functions
-        #     and appending to the workflow_cmds. This includes both sample workflow-level
-        #     commands (self.return_sample_workflow_cmds()), and runwide commands
 
-        # return_tso_runwide_cmds()
-        #     Collect runwide commands for tso500 runs. Includes tso500 app, fastqc,
-        #     sompy, sambamba, multiqc and duty_csv. TSO commands are all generated within
-        #     this function as the dependency order is different for this pipeline
-
-        # return_sample_workflow_cmds()
-        #     Return sample-level commands. This includes the sample workflow command,
-        #     and Congenica input and upload commands if required for the sample type
-
-        # return_pipe_runwide_cmds()
-        #     Collect runwide commands for PIPE runs as a list. This includes RPKM (single
-        #     command per vcp panel)
-    
-
-            # write_dx_run_cmds()
-            # Write dx run commands to the dx run script, post dx run script, and decision support upload
-            # script for the runfolder
-
-
-class CustomPanelsPipeline():
+class CustomPanelsPipeline:
     """
+    Collate commands for Custom Panels workflow. This runtype has no postprocesing commands
+
     """
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
         """

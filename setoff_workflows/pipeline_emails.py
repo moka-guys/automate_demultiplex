@@ -9,7 +9,7 @@ Calls the AdEmail class for email sending. The following emails are sent:
 import logging
 from config.ad_config import SWConfig
 from ad_email.ad_email import AdEmail
-from toolbox.toolbox import RunfolderObject, RunfolderSamples, SampleObject
+from toolbox.toolbox import RunfolderObject, RunfolderSamples
 
 
 class PipelineEmails(SWConfig):

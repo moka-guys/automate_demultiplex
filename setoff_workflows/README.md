@@ -1,27 +1,36 @@
 # Set Off Workflows
 
-[setoff_workflows.py](setoff_workflows.py) handles the DNAnexus workflow / app execution for demultiplexed NGS runs. The script consists of multiple classes:
-* SequencingRuns() - Collects sequencing runs and initiates runfolder processing for those sequencing runs requiring processing. Calls:
-    - ProcessRunfolder() - A new instance of this class is initiated for each runfolder being assessed. Calls methods to process and upload a runfolder including creation of DNAnexus project, upload of data using upload_runfolder, building and execution of dx run commands to set off sample workflows and apps, creation of decision support tool upload scripts, and sending of pipeline emails. Calls:
-        * CollectRunfolderSamples() - Collect attributes for all samples within the runfolder. Calls:
-            - SampleObject() - Collect sample-specific attributes for a sample
-        * BuildDxCommands() - Build run-wide commands for runfolder, and write sample-level commands from the samples_obj along with the run-wide commands to the dx run script
-        * PipelineEmails() - Class for sending the start of pipeline emails. Calls the AdEmail class for email sending. The following emails are sent:
-            - SQL emails for all pipelines, to binfx team
-            - Emails with details of the samples being processed. Sent to binfx for all runs, plus to additional recipients as defined within the config.ad_config file
+The setoff_workflows module handles the DNAnexus workflow / app execution for demultiplexed NGS runs. The module contains
+multiple scripts:
+
+| Script | Class | Functionality|
+|--------|--------|---------------|
+|[setoff_workflows.py](setoff_workflows.py)| SequencingRuns | Collects sequencing runs and initiates runfolder processing for those sequencing runs requiring processing |
+| [setoff_workflows.py](setoff_workflows.py) | ProcessRunfolder | A new instance of this class is initiated by the SequencingRuns class for each runfolder being assessed. Calls methods to process and upload a runfolder including creation of DNAnexus project, upload of data using upload_runfolder, building and execution of dx run commands to set off sample workflows and apps, creation of decision support tool upload scripts, and sending of pipeline emails |
+|[setoff_workflows.py](setoff_workflows.py) | Pipeline-specific classes (DevPipeline, ArcherDxPipeline, SnpPipeline, OncoDeepPipeline, TsoPipeline, WesPipeline, CustomPanelsPipeline), which collate lists of commands for each runtype by calling the  imported BuildRunfolderDxCommands, BuildSampleDxCommands and PipelineEmails classes. |
+| [build_dx_commands.py](build_dx_commands.py)| BuildRunfolderDxCommands | Builds dx run commands that are at the runfolder level, for example MultiQC, TSO500 app, peddy, per-sample queries (e.g. WES). |
+| [build_dx_commands.py](build_dx_commands.py)| BuildSampleDxCommands| Builds dx run commands that are at the sample level,
+for example per-sample workflow commands, coverage commands, decision support upload commands, per-sample queries.
+| [pipeline_emails.py](pipeline_emails.py)| PipelineEmails | Sends the start of pipeline emails. It calls the [AdEmail](../ad_email/ad_email.py) class for email sending, and sends the pipeline started email (contains SQL queries used to update the Moka database), and the samples being processed email |
+
+The module uses various functions and classes from the [Toolbox module](../toolbox/toolbox.py).
+
 
 ## Protocol
 
 1. Identify runfolders in the runfolders directory which have not been processed:
     - Runfolder contains bcl2fastq2 log file with success string
-    - Runfolder does not contain upload started flag file
-2. Collect names and metadata for all samples in the runfolder
+    - Runfolder does not contain upload started flag file (has not yet been uploaded to DNAnexus)
+2. Collect names and metadata for all samples in the runfolder, using the RunfolderSamples() class from the [Toolbox module](../toolbox/toolbox.py).
 3. Write and run the DNAnexus project creation script
 4. Split tso500 SampleSheet into parts with x samples per SampleSheet (no.defined in TSO_BATCH_SIZE) and write to runfolder
-5. Carry out pre-pipeline file upload (cluster density files, bcl2fastq2 QC files, fastqs if not a tso run, SampleSheet and entire runfolder if a tso run)
-6. Build and populate DNAnexus commands bash script
-7. Build and populate post run commands bash script if a TSO run
-8. Create decision support commands bash script (contains the commands to run the Congenica upload app if custom panels, LRPCR, or WES run, and contains the commands to run the Qiagen upload app if TSO run). This is set off manually after QC inspection
+5. Generate the pre-pipeline upload commands (cluster density files, bcl2fastq2 QC files, logfiles, fastqs if not a tso run, SampleSheets, MasterFile if an oncodeep run)
+6. Generate the SQL queries
+7. Set off the pre-pipeline file upload, and the rest of the runfolder upload in addition to this if the run is a TSO run
+8. Build dx run commands and write these to the DNAnexus commands bash scripts:
+- Dx run script - contains most dx run commands for all runs
+- Postprocessing script - contains downstream app commands for TSO500 runs and is manually run upon pipeline completion (this is due to issues with the TSO500 pipeline app not having named file outputs which means file dependency does not work)
+- Decision support upload script - contains the commands to run the Congenica upload app (custom panels, LRPCR, WES), Qiagen upload app (TSO), or OncoDEEP upload app (OncoDEEP), if required. These are set off manually after QC inspection, apart from OncoDEEP which is an automated upload
 9. Run DNAnexus commands bash script (sets off workflows / apps in DNAnexus)
 10. Send pipeline emails (Send SQL queries email, and samples being processed email)
 11. Carry out the post-pipeline file upload (rest of the runfolder, and the logfiles)
@@ -41,6 +50,8 @@ python3 -m setoff_workflows
 ```python
 from setoff_workflows.setoff_workflows import SequencingRuns
 
+set_root_logger()
+
 sequencing_runs = SequencingRuns()
 sequencing_runs.setoff_processing()
 ```
@@ -51,7 +62,7 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py).
 
 | Alias | Description | Filename | Location |
 | ------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Setoff workflows output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Upload_agent_stdout` |
+| Setoff workflows output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Setoff_workflows_cron_stdout` |
 | sw (script_loggers) | Records script-level logs for the setoff workflows script | `TIMESTAMP_setoff_workflow.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/sw_script_logfiles/` |
 | sw (rf_loggers["sw"]) | Records runfolder-level logs for the setoff workflows script | `RUNFOLDERNAME_setoff_workflow.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/sw_script_logfiles/` |
 | dx_run_script | Records the dx run commands for processing the run. N.B. this is not written to by logging | `RUNFOLDERNAME_dx_run_commands.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |

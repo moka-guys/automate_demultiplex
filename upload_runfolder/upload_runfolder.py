@@ -83,7 +83,7 @@ class UploadRunfolder(URConfig):
         """
         Constructor for the UploadRunfolder class
             :param logger (logging.Logger): Logger
-            :param runfolder_name (str):    Name of runfolder
+            :param runfolder_name (str):    Runfolder name
             :param runfolderpath (str):     Path of runfolder on workstation
             :param upload_flagfile (str):   Path to flag file that denotes runfolder upload has started
             :param nexus_identifiers        Dictionary of proj_name and proj_id, or False
