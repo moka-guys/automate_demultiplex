@@ -7,7 +7,6 @@ both general messages which are used across multiple modules, and also logfile-s
 - ss_validator
 - sw
 - backup
-- decision_support
 """
 
 # Messages used by individual scripts / modules for logging
@@ -26,15 +25,6 @@ LOG_MSGS = {
         "found_program": "Found program: %s",
         "program_missing": "Could not find program: %s. Script exited",
         "runtype": "Run has been identified as a %s run: %s",
-        "sschecks_passed": "SampleSheet passed all checks %s",
-        "sschecks_failed": (
-            "SampleSheet check failed with the following errors: %s. Please correct these, remove the "
-            "SampleSheet check flag file, (and the checksums assessed string from the md5checksum file "
-            "if present) to continue processing"
-        ),
-        "sscheck_success_msg_present": "SampleSheet check file contains success message",
-        "sscheckfile_absent": "SampleSheet check file is absent",
-        "sscheck_success_msg_absent": "SampleSheet check file does not contain success message",
         "ad_version": "Automate_demultiplex release: %s",
         "pipeline_name": "Pipeline name identified as %s",
         "runtype_str": "Runtype name string created: %s",
@@ -66,9 +56,17 @@ LOG_MSGS = {
         "html_error": "There was a problem generating the email html file, with the following exception: %s",
     },
     "demux": {
-        "previous_ss_check_pass": "Previous samplesheet check identified no errors",
         "previous_ss_check_fail": "Previous SampleSheet check identified errors. Remove the flag file to re-process: %s",
         "ss_check_required": "Samplesheet check not yet conducted",
+        "sschecks_passed": "SampleSheet passed all checks %s",
+        "sschecks_failed": (
+            "SampleSheet check failed with the following errors: %s. Please correct these, remove the "
+            "SampleSheet check flag file, (and the checksums assessed string from the md5checksum file "
+            "if present) to continue processing"
+        ),
+        "sscheck_success_msg_present": "SampleSheet check file contains success message",
+        "sscheckfile_absent": "SampleSheet check file is absent",
+        "sscheck_success_msg_absent": "SampleSheet check file does not contain success message",
         "cmd_line_runfolder": "Runfolder %s has been supplied on the command line",
         "programmatic_runfolders": "Runfolders were gathered programmatically",
         "runfolder_names": "Runfolders identified for processing: %s",

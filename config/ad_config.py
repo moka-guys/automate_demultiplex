@@ -1,9 +1,14 @@
 #!/usr/bin/python3
 """
-Automate demultiplex configuration. Contains the following settings:
-- General settings used across modules
-- Demultiplexing script-specific settings
-- Setoff workflows script-specific settings
+Automate demultiplex configuration. Contains general settings, and the following
+classes collating the settings required per module:
+
+- AdEmailConfig
+- AdLoggerConfig
+- DemultiplexConfig
+- SWConfig
+- ToolboxConfig
+- URConfig
 """
 import os
 import sys
@@ -365,13 +370,14 @@ class DemultiplexConfig(PanelConfig):
         f"docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
-
-    CHECKSUMS_ALREADY_ASSESSED = "Checksums already assessed by AS"  # Written to file by AS
-    CHECKSUM_MATCH_MSG = "Checksums match"  # Success message written to md5checksum file by integrity check scripts
-    # Failure message written to md5checksum file by integrity check scripts
-    CHECKSUM_DO_NOT_MATCH_MSG = "Checksums do not match"
-    SAMPLESHEET_SUCCESS_MSG = "Samplesheet check successful with no errors identified"
-    SAMPLESHEET_ERRORS_MSG = "Processing halted. SampleSheet contains SampleSheet errors:"
+    STRINGS = {
+        "demultiplex_success": DEMULTIPLEX_SUCCESS,
+        "checksums_already_assessed": "Checksums already assessed by AS",  # Written to file by AS
+        "checksums_match": "Checksums match",  # Success message written to md5checksum file by integrity check scripts
+        "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
+        "samplesheet_success": "Samplesheet check successful with no errors identified",
+        "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors:",
+    }
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
@@ -414,6 +420,7 @@ class SWConfig(PanelConfig):
         
         BSPS_ID = "BSPS_MD"
         DNANEXUS_USERS = {  # User access level
+            # TODO remove InterpretationRequest user once per-user accounts set up
             "viewers": [PROD_ORGANISATION, "InterpretationRequest", "org-seglh_read"],
             "admins": ["mokaguys"],
         }

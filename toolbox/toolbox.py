@@ -373,7 +373,7 @@ class RunfolderObject(ToolboxConfig):
     def __init__(self, runfolder_name: str, timestamp: str):
         """
         Constructor for the RunfolderObject class
-            :param runfolder_name (str):    Name of runfolder
+            :param runfolder_name (str):    Runfolder name
             :param timestamp (str):         Timestamp in the format str(f"{datetime.datetime.now():%Y%m%d_%H%M%S}")
         """
         self.dnanexus_auth = get_credential(

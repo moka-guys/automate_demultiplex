@@ -294,11 +294,6 @@ class ProcessRunfolder(SWConfig):
         self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
         open(self.rf_obj.upload_flagfile, 'w').close()  # Create upload flag file (prevents processing by other script runs)
         self.rf_samples_obj = RunfolderSamples(self.rf_obj, self.loggers["sw"])
-        self.loggers["sw"].info(
-            self.loggers["sw"].log_msgs["runtype"],
-            self.rf_samples_obj.pipeline,
-            self.rf_obj.runfolder_name,
-        )
         self.users_dict = self.get_users_dict()
         self.write_project_creation_script()
         self.nexus_identifiers = {

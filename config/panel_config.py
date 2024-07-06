@@ -15,11 +15,14 @@ required criteria to be included in that list.
     are applied at the point of analysis, so R and M numbers (test_number) for these are not listed below. These
     pan numbers do not necessarily refer to bed files but rather project configuration (e.g. DNAnexus instances,
     project layout etc.)
+- Development runs have two options for pan numbers, one for runs that require standard processing with bcl2fastq
+    and one for runs that require manual processing as they have UMIs
 
 Dictionary keys and values are as follows. Values are None where they are not
 required for analysis of samples with that pan number
     panel_name                      Name of capture panel
     pipeline                        Name of pipeline
+    runtype                         Type of run
     sample_prefix                   Expected string at front of sample name
     capture_pan_num                 Pan number of capture panel bedfile (used for RPKM). None if RPKM not run
     hsmetrics_bedfile               bedfile filename, or None
@@ -43,6 +46,7 @@ required for analysis of samples with that pan number
     dry_lab_only                    Used to determine whether to include the TSO pan
                                     number in the duty_csv pan number list
     dry_lab                         True if required to share with dry lab, None if not
+    umis                            True if run has UMIs
 """
 # TODO in future do we want to swap physical paths for file IDs
 
@@ -94,7 +98,6 @@ DEFAULT_DICT = {
     "polyedge": None,
     "ed_readcount_bedfile": None,
     "ed_cnvcalling_bedfile": None,
-    "FH": None,
     "dry_lab_only": None,
     "dry_lab": None,
     "umis": None,
@@ -170,8 +173,8 @@ class PanelConfig:
             "pipeline": "pipe",
             "sample_prefix": "NGS",
             "runtype": "LRPCR",
-            "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4967_reference.bed",  # CORRECT
-            "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5018dataSambamba.bed",  # CORRECT
+            "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4967_reference.bed",
+            "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5018dataSambamba.bed",
             "capture_type": "Amplicon",
             "multiqc_coverage_level": 30,
             "clinical_coverage_depth": 30,
