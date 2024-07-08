@@ -743,7 +743,7 @@ class RunfolderSamples(ToolboxConfig):
             if self.sample_obj.fastqs_dict:
                 samples_dict[sample_name] = self.sample_obj.return_sample_dict()
             else:
-                self.logger.info(
+                self.logger.warning(
                     self.logger.log_msgs["sample_excluded"],
                     sample_name,
                 )
