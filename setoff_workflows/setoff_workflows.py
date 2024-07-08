@@ -98,7 +98,7 @@ class SequencingRuns(SWConfig):
         script_start_logmsg(script_logger, __file__)
         runs_to_process = self.set_runfolders()
         if test_upload_software(script_logger):
-            for rf_obj in self.runs_to_process:
+            for rf_obj in runs_to_process:
                 if not os.path.exists(rf_obj.upload_flagfile):
                     script_logger.info(
                         script_logger.log_msgs["start_runfolder_proc"],
@@ -203,21 +203,14 @@ class SequencingRuns(SWConfig):
         )
         samplename_dict = get_samplename_dict(loggers["sw"], rf_obj.samplesheet_path)
         if samplename_dict:
-            if not validate_fastqs(rf_obj.fastq_dir_path, loggers["sw"]) and os.path.exists(self.bcl2fastqlog_file):
-                os.remove(
-                    self.bcl2fastqlog_file
-                )  # Bcl2fastq log file removed to trigger re-demultiplex
-                loggers["sw"].error(loggers["sw"].log_msgs["re_demultiplex"])
-            else:
-                ProcessRunfolder(rf_obj, loggers)
-
-                for logger_name in loggers.keys():
-                    shutdown_logs(loggers[logger_name])  # Shut down logging
-                script_logger.info(
-                    script_logger.log_msgs["runfolder_processed"],
-                    rf_obj.runfolder_name,
-                )
-                return True
+            ProcessRunfolder(rf_obj, loggers)
+            for logger_name in loggers.keys():
+                shutdown_logs(loggers[logger_name])  # Shut down logging
+            script_logger.info(
+                script_logger.log_msgs["runfolder_processed"],
+                rf_obj.runfolder_name,
+            )
+            return True
 
 
 class ProcessRunfolder(SWConfig):
@@ -309,10 +302,10 @@ class ProcessRunfolder(SWConfig):
         self.upload_cmds = self.get_upload_cmds()
         self.pre_pipeline_upload_dict = self.create_file_upload_dict()
         self.pipeline_obj = self.build_dx_commands()
-        self.write_dx_run_cmds(pipeline_obj)
+        self.write_dx_run_cmds()
         self.pre_pipeline_upload()
         self.run_dx_run_commands()
-        self.pipeline_emails = PipelineEmails(self.rf_obj, self.rf_samples, self.pipeline_obj.sql_queries, self.loggers["sw"])
+        self.pipeline_emails = PipelineEmails(self.rf_obj, self.rf_samples_obj, self.pipeline_obj.sql_queries, self.loggers["sw"])
         if self.pipeline_obj.sql_queries:
             self.pipeline_emails.send_sql_email()
         self.pipeline_emails.send_samples_email()
@@ -417,7 +410,7 @@ class ProcessRunfolder(SWConfig):
         else:
             self.loggers["sw"].error(
                 self.loggers["sw"].log_msgs["proj_creation_fail"],
-                self.rf_samples["proj_name"],
+                self.rf_samples_obj["proj_name"],
                 err,
             )
             sys.exit(1)
@@ -639,7 +632,7 @@ class ProcessRunfolder(SWConfig):
         )
         return pipeline_obj
 
-    def write_dx_run_cmds(self, pipeline_obj: object) -> None:
+    def write_dx_run_cmds(self) -> None:
         """
         Write dx run commands to the dx run script, post dx run script, and decision support upload
         script for the runfolder. Remove any None values
@@ -656,8 +649,8 @@ class ProcessRunfolder(SWConfig):
             f"RUNFOLDER_NAME={self.rf_obj.runfolder_name}",
             SWConfig.EMPTY_DEPENDS,
         ]
-        if pipeline_obj.workflow_cmds:  # Write dx run commands
-            pipeline_obj.workflow_cmds[:0] = base_variables
+        if self.pipeline_obj.workflow_cmds:  # Write dx run commands
+            self.pipeline_obj.workflow_cmds[:0] = base_variables
             self.loggers["sw"].info(
                 self.loggers["sw"].log_msgs["writing_cmds"],
                 self.rf_obj.runfolder_dx_run_script,
@@ -665,10 +658,10 @@ class ProcessRunfolder(SWConfig):
             write_lines(  # Write commands to dx run script
                 self.rf_obj.runfolder_dx_run_script,
                 "w",
-                list(filter(None, pipeline_obj.workflow_cmds)),
+                list(filter(None, self.pipeline_obj.workflow_cmds)),
             )
-        if pipeline_obj.dx_postprocessing_cmds:  # Write postprocessing commands
-            pipeline_obj.dx_postprocessing_cmds[:0] = base_variables
+        if self.pipeline_obj.dx_postprocessing_cmds:  # Write postprocessing commands
+            self.pipeline_obj.dx_postprocessing_cmds[:0] = base_variables
             self.loggers["sw"].info(
                 self.loggers["sw"].log_msgs["writing_cmds"],
                 self.rf_obj.runfolder_dx_run_script,
@@ -676,14 +669,14 @@ class ProcessRunfolder(SWConfig):
             write_lines(
                 self.rf_obj.post_run_dx_run_script,
                 "w",
-                list(filter(None, pipeline_obj.dx_postprocessing_cmds)),
+                list(filter(None, self.pipeline_obj.dx_postprocessing_cmds)),
             )
-        if pipeline_obj.decision_support_upload_cmds:
-            pipeline_obj.decision_support_upload_cmds[:0] = base_variables
+        if self.pipeline_obj.decision_support_upload_cmds:
+            self.pipeline_obj.decision_support_upload_cmds[:0] = base_variables
             write_lines(
                 self.rf_obj.decision_support_upload_script,
                 "w",
-                list(filter(None, pipeline_obj.decision_support_upload_cmds)),
+                list(filter(None, self.pipeline_obj.decision_support_upload_cmds)),
             )
 
     def pre_pipeline_upload(self) -> None:
@@ -897,15 +890,16 @@ class SnpPipeline:  # TODO eventually remove this and associated pipeline-specif
 class OncoDeepPipeline():
     """
     Collate DNAnexus commands for OncoDEEP runs. This runtype has no post processing commands
+    or decision support upload script, as the decision support commands are run automatically
+    therefore reside in the dx run script
     """
     def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
         self.rf_obj = rf_obj
         self.rf_samples_obj = rf_samples
         self.logger = logger
         self.workflow_cmds = []
-        self.dx_postprocessing_cmds = False
-        self.decision_support_upload_cmds = []
         self.sql_queries = []
+        self.decision_support_upload_cmds, self.dx_postprocessing_cmds = False, False
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
         for sample_name in self.rf_samples_obj.samples_dict.keys():
@@ -920,15 +914,15 @@ class OncoDeepPipeline():
             self.sql_queries.append(sample_cmds_obj.return_oncology_query())
 
             for read in ["R1", "R2"]:  # Generate sample oncodeep upload commands
-                self.decision_support_upload_cmds.append(
+                self.workflow_cmds.append(
                     sample_cmds_obj.build_oncodeep_upload_cmd(
                         f"{sample_name}-{read}",
                         self.rf_samples_obj.nexus_runfolder_suffix,
-                        self.rf_samples_obj.fastqs_dict[read]["nexus_path"],
+                        self.rf_samples_obj.samples_dict[sample_name]["fastqs"]["nexus_path"],
                     )
                 )
         # Generate command for MasterFile upload
-        sample_cmds_obj.decision_support_upload_cmds.append(
+        sample_cmds_obj.workflow_cmds.append(
             build_oncodeep_upload_cmd(
                 self.rf_obj.masterfile_name,
                 self.rf_samples_obj.nexus_runfolder_suffix,
@@ -1088,8 +1082,8 @@ class CustomPanelsPipeline:
                 ]
                 # Make sure there are enough samples for RPKM and ExomeDepth
                 if len(core_panel_pannos) >= 3:
-                    self.workflow_cmds.extend([rf_cmds_obj.create_rpkm_cmd(core_panel), SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"]])
-                    self.workflow_cmds.extend([rf_cmds_obj.create_ed_readcount_cmd(core_panel), SWConfig.UPLOAD_ARGS["depends_list_edreadcount"]])
+                    self.workflow_cmds.extend([self.rf_cmds_obj.create_rpkm_cmd(core_panel), SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"]])
+                    self.workflow_cmds.extend([self.rf_cmds_obj.create_ed_readcount_cmd(core_panel), SWConfig.UPLOAD_ARGS["depends_list_edreadcount"]])
                     for panno in set(core_panel_pannos):
                         if (
                             SWConfig.CAPTURE_PANEL_DICT[core_panel][
@@ -1097,7 +1091,7 @@ class CustomPanelsPipeline:
                             ]
                             and SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]
                         ):
-                            self.workflow_cmds.extend([rf_cmds_obj.create_ed_cnvcalling_cmd(panno), SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"]])
+                            self.workflow_cmds.extend([self.rf_cmds_obj.create_ed_cnvcalling_cmd(panno), SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"]])
                 else:
                     self.logger.info(
                         self.logger.log_msgs[
