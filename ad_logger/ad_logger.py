@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 Automate demultiplex logging. Classes required for logging
 """

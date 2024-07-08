@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """build_dx_commands.py
 
 Builds dx commands for a runfolder. Contains the following classes:

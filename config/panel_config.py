@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """ PANEL NUMBERS AND PANEL PROPERTIES
 
 The panel config file contains the panel numbers and panel properties, which are used by the setoff_workflows script.

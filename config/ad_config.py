@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 Automate demultiplex configuration. Contains general settings, and the following
 classes collating the settings required per module:

@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """pipeline_emails.py
 
 Contains the PipelineEmails class for sending the start of pipeline emails.

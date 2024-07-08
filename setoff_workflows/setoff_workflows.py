@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """setoff_workflows.py
 
 Collect sequencing runs and initiate runfolder processing for those requiring

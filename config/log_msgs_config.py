@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 Config file for logging module. Contains settings specific to logging. The LOG_MSGS dictionary contains
 both general messages which are used across multiple modules, and also logfile-specific messages:

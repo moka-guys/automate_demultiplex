@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 upload_runfolder.py Uploads an Illumina runfolder to DNAnexus. Contains the following classes:
 

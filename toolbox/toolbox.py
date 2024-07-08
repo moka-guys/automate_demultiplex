@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 This script contains functions and classes shared across scripts / modules. Contains the following classes:
 

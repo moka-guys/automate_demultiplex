@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 Email sending module. See Readme and docstrings for further details.
 Contains the following classes:
@@ -65,7 +64,7 @@ class AdEmail(AdEmailConfig):
     ) -> str:
         """
         Generate HTML. If unsuccessful, exit script
-            :param runfolder_name (str):    Name of runfolder
+            :param runfolder_name (str):    Runfolder name
             :workflows (str):               Comma separated string of workflow names
             :queries (list):                List of SQL queries
             :sample_count (int):            Total number of samples processed
