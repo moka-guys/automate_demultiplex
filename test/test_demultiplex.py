@@ -564,7 +564,6 @@ class TestDemultiplexRunfolder(object):
         """
         for runfolder in demultiplexing_notrequired:
             dr_obj = get_dr_obj(runfolder)
-            print(dr_obj.demultiplexing_required)
             assert not dr_obj.demultiplexing_required()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
@@ -723,7 +722,6 @@ class TestDemultiplexRunfolder(object):
         """
         for runfolder in demultiplexing_required:
             dr_obj = get_dr_obj(runfolder)
-            print(vars(dr_obj.rf_obj))
             dr_obj.add_bcl2fastqlog_msg("TEST")
             assert os.path.isfile(dr_obj.rf_obj.bcl2fastqlog_file)
             with open(dr_obj.rf_obj.bcl2fastqlog_file, "r") as file:

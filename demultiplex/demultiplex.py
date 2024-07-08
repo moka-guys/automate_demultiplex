@@ -13,6 +13,8 @@ import sys
 import os
 import re
 import logging
+import datetime
+from importlib.metadata import version
 from shutil import copyfile
 from typing import Optional, Tuple
 import samplesheet_validator.samplesheet_validator as samplesheet_validator
@@ -110,7 +112,8 @@ class GetRunfolders(DemultiplexConfig):
             for runfolder in self.runfolder_names:
                 dr_obj = DemultiplexRunfolder(runfolder, self.timestamp)
                 dr_obj.setoff_workflow()
-                self.check_run_processed(dr_obj, runfolder)
+                if self.check_run_processed(dr_obj, runfolder):
+                    processed_runfolders.append(runfolder)
 
         get_num_processed_runfolders(script_logger, processed_runfolders)
         script_end_logmsg(script_logger, __file__)
@@ -128,8 +131,6 @@ class GetRunfolders(DemultiplexConfig):
                 script_logger.log_msgs["script_success"],
                 runfolder_name,
             )
-            self.processed_runfolders.append(runfolder_name)
-
 
 class DemultiplexRunfolder(DemultiplexConfig):
     """
@@ -169,7 +170,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
         previous_samplesheet_check()
             Checks if a prior SampleSheet check has been carried out
         previous_samplesheet_check_fail()
-            Checks if a prior SampleSheet check which failed has been carried out
+            Checks whether there has previously been a SampleSheet check fail for this run, by
+            looking in the sscheck log file. This is checked to determine whether to proceed with
+            processing the run
         sscheck_success_msg_present()
             Check SampleSheet check success message is present in the sscheck flag file
         valid_samplesheet()
@@ -288,7 +291,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :return None:
         """
         if self.upload_flagfile_absent() and self.bcl2fastqlog_absent():
-            if not self.previous_samplesheet_check() or not self.previous_samplesheet_check_fail():
+            if not self.previous_samplesheet_check_fail():                    
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["ad_version"],
                     git_tag(),
@@ -336,6 +339,23 @@ class DemultiplexRunfolder(DemultiplexConfig):
             )
             return True
 
+    def previous_samplesheet_check_fail(self) -> Optional[bool]:
+        """
+        Checks whether there has previously been a SampleSheet check fail for this run, by
+        looking in the sscheck log file. This is checked to determine whether to proceed with
+        processing the run
+            :return (Optional[bool]):   Returns true if either the SampleSheet check file does
+                                        not exist, or contains no SampleSheet check error string
+        """
+        if self.previous_samplesheet_check():
+            sscheckfile_contents = read_lines(self.rf_obj.sscheck_flagfile_path)
+            if any(DemultiplexConfig.STRINGS["demultiplex_not_required_msg"] in line for line in sscheckfile_contents):
+                script_logger.info(
+                    script_logger.log_msgs["previous_ss_check_fail"],
+                    self.rf_obj.sscheck_flagfile_path,
+                )
+                return True
+
     def previous_samplesheet_check(self) -> Optional[bool]:
         """
         Check if a previous SampleSheet check has been carried out
@@ -344,32 +364,17 @@ class DemultiplexRunfolder(DemultiplexConfig):
         if os.path.isfile(self.rf_obj.sscheck_flagfile_path):
             return True
         else:
-            script_logger.info(
-                script_logger.log_msgs["ss_check_required"]
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["sscheckfile_absent"],
             )
-
-    def previous_samplesheet_check_fail(self) -> Optional[bool]:
-        """
-        Checks if a prior SampleSheet check which failed has been carried out. This is checked to
-        determine whether to proceed with processing the run. This flag file must be removed for
-        subsequent attempts to process the run in the case of the SampleSheet check failing
-            :return (Optional[bool]):   Returns true if the SampleSheet check flag file contains
-                                        the SampleSheet check error string
-        """
-        sscheckfile_contents = read_lines(self.rf_obj.sscheck_flagfile_path)
-        if any(DemultiplexConfig.STRINGS["demultiplex_not_required_msg"] in line for line in sscheckfile_contents):
-            script_logger.info(
-                script_logger.log_msgs["previous_ss_check_fail"],
-                self.rf_obj.sscheck_flagfile_path,
-            )
-            return True
 
     def sscheck_success_msg_present(self) -> Optional[bool]:
         """
         Check SampleSheet check success message is present in the sscheck flag file
             :return (Optional[bool]):       Returns true if success message is identified
         """
-        if os.path.exists(self.rf_obj.sscheck_flagfile_path):
+        if self.previous_samplesheet_check():
+            sscheckfile_contents = read_lines(self.rf_obj.sscheck_flagfile_path)
             read_lines(self.rf_obj.sscheck_flagfile_path)
             if any(DemultiplexConfig.STRINGS["samplesheet_success"] in line for line in sscheckfile_contents):
                 self.demux_rf_logger.info(
@@ -381,10 +386,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     self.demux_rf_logger.log_msgs["sscheck_success_msg_absent"],
                 )
                 return True
-        else:
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["sscheckfile_absent"],
-            )
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
         """
@@ -394,6 +395,13 @@ class DemultiplexRunfolder(DemultiplexConfig):
                                 is valid), and SampleSheetCheck object containing any
                                 errors identified
         """
+        script_logger.info(
+            script_logger.log_msgs["ss_check_required"]
+        )
+        script_logger.info(
+            script_logger.log_msgs["ss_validator_version"], version('samplesheet_validator')
+        )
+
         sscheck_obj = samplesheet_validator.SamplesheetCheck(
             self.rf_obj.samplesheet_path,
             DemultiplexConfig.SEQUENCER_IDS.keys(),
@@ -595,14 +603,14 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         if os.path.exists(source_path):  # Try to copy SampleSheet into project
             copyfile(source_path, dest_path)
-            self.loggers["sw"].info(
-                self.loggers["sw"].log_msgs["file_copy_success"],
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["file_copy_success"],
                 source_path,
                 dest_path,
             )
         else:
-            self.loggers["sw"].error(
-                self.loggers["sw"].log_msgs["file_copy_fail"],
+            self.demux_rf_logger.error(
+                self.demux_rf_logger.log_msgs["file_copy_fail"],
                 source_path
             )
             sys.exit(1)
@@ -659,9 +667,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.create_bcl2fastqlog()
             self.add_bcl2fastqlog_msg("DEV")
             write_lines(  # Create upload started log file to prevent automated upload
-                self.upload_flagfile,
+                self.rf_obj.upload_flagfile,
                 "a",
-                f"{URConfig.STRINGS['upload_flag_umis']}: {datetime.datetime.now()}",
+                f"{DemultiplexConfig.STRINGS['upload_flag_umis']}: {datetime.datetime.now()}",
             )
         elif any(any(pannum in line for line in samplesheet) for pannum in DemultiplexConfig.TSO_PANELS):
             self.create_bcl2fastqlog()  # Create bcl2fastq2 log to prevent scripts processing this run
@@ -728,7 +736,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.demux_rf_logger,
         )
         if returncode == 0:
-            if validate_fastqs(self.rf_obj.fastq_dir_path, self.loggers["sw"]):
+            if validate_fastqs(self.rf_obj.fastq_dir_path, self.demux_rf_logger):
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
                     self.rf_obj.runfolder_name
