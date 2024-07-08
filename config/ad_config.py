@@ -35,7 +35,7 @@ MAIL_SETTINGS = {
     "alerts_email": "moka.alerts@gstt.nhs.uk",
 }
 
-if BRANCH == "master" and "pytest" not in sys.modules:  # Prod branch
+if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
     TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
