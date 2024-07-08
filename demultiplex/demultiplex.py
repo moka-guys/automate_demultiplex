@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 Demultiplexes NGS Run Folders. See Readme and docstrings for further details.
 Contains the following classes:
@@ -739,7 +738,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     return True
                 else:
                     os.remove(
-                        self.bcl2fastqlog_file
+                        self.rf_obj.bcl2fastqlog_file
                     )  # Bcl2fastq log file removed to trigger re-demultiplex
                     self.demux_rf_logger.error(self.demux_rf_logger.log_msgs["re_demultiplex"])
             else:
