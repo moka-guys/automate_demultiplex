@@ -303,9 +303,9 @@ def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[boo
         :param logger (logging.Logger): Logger
         :return Optional[bool]:         Return True if fastqs are all determined to be valid
     """
-    fastqs = [
-        x for x in os.listdir(fastq_dir_path) if x.endswith("fastq.gz")
-    ]
+    fastqs = sorted(
+        [x for x in os.listdir(fastq_dir_path) if x.endswith("fastq.gz")]
+    )
     returncodes = []
 
     for fastq in fastqs:
