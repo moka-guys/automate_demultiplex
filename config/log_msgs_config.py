@@ -45,7 +45,6 @@ LOG_MSGS = {
         "fastq_valid": "Gzip --test determined that the fastq is valid: %s",
         "fastq_invalid": "Gzip --test determined that the fastq is not valid: %s. Stdout: %s. Stderr: %s",
         "demux_success": "Demultiplexing was successful for the run with all fastqs valid",
-        "re_demultiplex": "Invalid fastqs were identified. Bcl2fastq log has been removed to trigger re-demultiplex",
     },
     "ad_email": {
         "sending_email": "Sending the email message: %s",
@@ -57,6 +56,7 @@ LOG_MSGS = {
     "demux": {
         "previous_ss_check_fail": "Previous SampleSheet check identified errors. Remove the flag file to re-process: %s",
         "ss_check_required": "Samplesheet check not yet conducted",
+        "ss_validator_version": "Calling samplesheet_validator v%s",
         "sschecks_passed": "SampleSheet passed all checks %s",
         "sschecks_failed": (
             "SampleSheet check failed with the following errors: %s. Please correct these, remove the "
@@ -69,7 +69,7 @@ LOG_MSGS = {
         "cmd_line_runfolder": "Runfolder %s has been supplied on the command line",
         "programmatic_runfolders": "Runfolders were gathered programmatically",
         "runfolder_names": "Runfolders identified for processing: %s",
-        "script_success": "Runfolder has been successfully demultiplexed and cluster density calculated: %s",
+        "script_success": "Runfolder has been successfully processed by the automated scripts: %s",
         "demultiplexing_required": "Demultiplexing is required for this runfolder",
         "bcl2fastq_start": "Demultiplexing started using bcl2fastq2 command: %s",
         "bcl2fastq_complete": "Demultiplexing completed successfully for %s",
@@ -99,6 +99,9 @@ LOG_MSGS = {
         "running_cd": "Running the following command for cluster density calculation: %s",
         "cd_success": "Cluster density calculation saved to %s",
         "cd_fail": "Cluster density calculation failed. Error: %s. Script exited",
+        "file_copy_success": "File successfully copied from %s to %s",
+        "file_copy_fail": "Could not copy file - file does not exist: %s",
+        "re_demultiplex": "Invalid fastqs were identified. Bcl2fastq log has been removed to trigger re-demultiplex",
     },
     "sw": {
         "runfolder_identified": "Identified runfolder: %s",
@@ -136,8 +139,6 @@ LOG_MSGS = {
         "running_cmds": "Running dx run commands using dx run bash script",
         "dx_run_err": "Error when setting off dx run command. Command: %s. Stdout: %s. Stderr: %s",
         "dx_run_success": "Dx run commands issued successfully for run %s",
-        "file_copy_success": "File successfully copied from %s to %s",
-        "file_copy_fail": "Could not copy file - file does not exist: %s",
         "uploading_rf": (
             "Uploading rest of run folder to DNAnexus using upload_runfolder, ignoring: %s. Stdout stored in logfile: %s"
         ),

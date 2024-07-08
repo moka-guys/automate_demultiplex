@@ -365,6 +365,7 @@ class DemultiplexConfig(PanelConfig):
         "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
         "samplesheet_success": "Samplesheet check successful with no errors identified",
         "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors:",
+        "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload"
     }
     TESTING = TESTING
     BCL2FASTQ2_CMD = (
@@ -382,6 +383,7 @@ class DemultiplexConfig(PanelConfig):
         "999999_M02631_0285_000000000-DEVOO",
         "999999_NB551068_0285_OODEVINTEG",
         "999999_M02631_0285_000000000-DVUMI",
+        "999999_NB552085_0320_ONCODEEP00",  # Included as behaviour is slightly different to include copying the MasterFile
     ]
     SEQUENCER_IDS = {
         # Requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed
@@ -592,5 +594,4 @@ class URConfig:
     TIMESTAMP = TIMESTAMP
     STRINGS = {
         "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
-        "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload"
     }
