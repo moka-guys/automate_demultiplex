@@ -71,7 +71,6 @@ LOG_MSGS = {
         "runfolder_names": "Runfolders identified for processing: %s",
         "script_success": "Runfolder has been successfully demultiplexed and cluster density calculated: %s",
         "demultiplexing_required": "Demultiplexing is required for this runfolder",
-        "no_demultiplexing": "%s run detected - does not require demultiplexing",
         "bcl2fastq_start": "Demultiplexing started using bcl2fastq2 command: %s",
         "bcl2fastq_complete": "Demultiplexing completed successfully for %s",
         "bcl2fastq_failed": "Demultiplexing failed - bcl2fastq2 subprocess failed. Script exited. Stdout: %s. Stderr: %s",

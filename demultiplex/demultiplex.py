@@ -712,39 +712,35 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :return (Optional[bool]):   True if command executed succesfully and output is
                                         successfully written to the logfile
         """
-        if self.tso:  # TSO500 runs do not require demultiplexing
-            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["no_demultiplexing"], self.pipeline)
-            return True
-        else:  # All other runs require demultiplexing
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["bcl2fastq_start"],
-                self.bcl2fastq2_cmd,
-            )
-            # Runs bcl2fastq2 and checks if completed successfully
-            # Bcl2fastq2 returncode 0 upon success. Outputs info logs to stderr
-            out, err, returncode = execute_subprocess_command(
-                self.bcl2fastq2_cmd,
-                self.demux_rf_logger,
-            )
-            if returncode == 0:
-                if validate_fastqs(self.rf_obj.fastq_dir_path, self.loggers["sw"]):
-                    self.demux_rf_logger.info(
-                        self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
-                        self.rf_obj.runfolder_name
-                    )
-                    self.bcl2fastq2_rf_logger.info(
-                        err  # Write stderr to bcl2fastq2 runfolder logfile
-                    )
-                    return True
-                else:
-                    os.remove(
-                        self.rf_obj.bcl2fastqlog_file
-                    )  # Bcl2fastq log file removed to trigger re-demultiplex
-                    self.demux_rf_logger.error(self.demux_rf_logger.log_msgs["re_demultiplex"])
-            else:
-                self.demux_rf_logger.error(
-                    self.demux_rf_logger.log_msgs["bcl2fastq_failed"],
-                    out,
-                    err,
+        self.demux_rf_logger.info(
+            self.demux_rf_logger.log_msgs["bcl2fastq_start"],
+            self.bcl2fastq2_cmd,
+        )
+        # Runs bcl2fastq2 and checks if completed successfully
+        # Bcl2fastq2 returncode 0 upon success. Outputs info logs to stderr
+        out, err, returncode = execute_subprocess_command(
+            self.bcl2fastq2_cmd,
+            self.demux_rf_logger,
+        )
+        if returncode == 0:
+            if validate_fastqs(self.rf_obj.fastq_dir_path, self.loggers["sw"]):
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
+                    self.rf_obj.runfolder_name
                 )
-                sys.exit(1)
+                self.bcl2fastq2_rf_logger.info(
+                    err  # Write stderr to bcl2fastq2 runfolder logfile
+                )
+                return True
+            else:
+                os.remove(
+                    self.rf_obj.bcl2fastqlog_file
+                )  # Bcl2fastq log file removed to trigger re-demultiplex
+                self.demux_rf_logger.error(self.demux_rf_logger.log_msgs["re_demultiplex"])
+        else:
+            self.demux_rf_logger.error(
+                self.demux_rf_logger.log_msgs["bcl2fastq_failed"],
+                out,
+                err,
+            )
+            sys.exit(1)
