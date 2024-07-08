@@ -592,4 +592,5 @@ class URConfig:
     TIMESTAMP = TIMESTAMP
     STRINGS = {
         "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
+        "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload"
     }

@@ -658,6 +658,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["dev_run_umis"])
             self.create_bcl2fastqlog()
             self.add_bcl2fastqlog_msg("DEV")
+            write_lines(  # Create upload started log file to prevent automated upload
+                self.upload_flagfile,
+                "a",
+                f"{URConfig.STRINGS['upload_flag_umis']}: {datetime.datetime.now()}",
+            )
         elif any(any(pannum in line for line in samplesheet) for pannum in DemultiplexConfig.TSO_PANELS):
             self.create_bcl2fastqlog()  # Create bcl2fastq2 log to prevent scripts processing this run
             self.add_bcl2fastqlog_msg("TSO500")
