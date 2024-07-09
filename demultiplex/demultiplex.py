@@ -131,6 +131,7 @@ class GetRunfolders(DemultiplexConfig):
                 script_logger.log_msgs["script_success"],
                 runfolder_name,
             )
+            return True
 
 class DemultiplexRunfolder(DemultiplexConfig):
     """
