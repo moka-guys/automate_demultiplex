@@ -232,7 +232,8 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     },
     "oncodeep_upload": {
         "run_identifier": "-irun_identifier=",
-        "file_to_upload": "-ifile_to_upload=${PROJECT_ID}:",        
+        "file_to_upload": "-ifile_to_upload=",
+        "account_type": "-iaccount_type=Production",
     },
     "duty_csv": {
         "project_name": "-iproject_name=${PROJECT_NAME}",
@@ -315,7 +316,7 @@ DX_CMDS = {
     ),
     "oncodeep_upload": (
         f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['oncodeep_upload']} --priority high -y "
-        f"{JOB_NAME_STR} -iaccount_type=Production"
+        f"{JOB_NAME_STR}"
     ),
     "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
     "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",

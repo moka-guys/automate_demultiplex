@@ -300,15 +300,12 @@ class BuildRunfolderDxCommands(SWConfig):
             ]
         )
 
-    def return_wes_query(self) -> str:  # TODO eventually remove this
+    def return_wes_query(self, wes_dnanumbers: list) -> str:  # TODO eventually remove this
         """
         Return WES SQL query. This is a single update query per-run
-            :return query (str):    Single update query for the WES run
+            :param wes_dnanumbers (list):   List of DNA numbers
+            :return query (str):            Single update query for the WES run
         """
-        wes_dnanumbers = [
-            self.rf_samples_obj.samples_dict[k]["identifiers"]["primary"]
-            for k in self.rf_samples_obj.samples_dict.keys()
-        ]
         return [
             SWConfig.QUERIES["wes"]
             % (
@@ -753,7 +750,7 @@ class BuildSampleDxCommands(SWConfig):
             ]
         )
 
-    def build_oncodeep_upload_cmd(file_name: str, run_identifier: str, file: str) -> str:
+    def build_oncodeep_upload_cmd(self, file_name: str, run_identifier: str, file: str) -> str:
         """
         Build the command to write the OncoDEEP upload dx run command to the decision
         support tool upload bash script. This command is used to upload the sample to
@@ -768,6 +765,7 @@ class BuildSampleDxCommands(SWConfig):
                 f'{SWConfig.DX_CMDS["oncodeep_upload"]}OncoDEEP_Upload-{file_name}',
                 f'{SWConfig.APP_INPUTS["oncodeep_upload"]["run_identifier"]}{run_identifier}',
                 f'{SWConfig.APP_INPUTS["oncodeep_upload"]["file_to_upload"]}{file}',
+                f'{SWConfig.APP_INPUTS["oncodeep_upload"]["account_type"]}',
                 SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"],
             ]

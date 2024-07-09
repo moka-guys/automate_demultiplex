@@ -106,7 +106,7 @@ class SequencingRuns(SWConfig):
                     )
                     if self.process_runfolder(rf_obj):
                         processed_runfolders.append(rf_obj.runfolder_name)
-            get_num_processed_runfolders(script_logger, self.processed_runfolders)
+            get_num_processed_runfolders(script_logger, processed_runfolders)
             script_end_logmsg(script_logger, __file__)
 
     def set_runfolders(self) -> list:
@@ -464,8 +464,8 @@ class ProcessRunfolder(SWConfig):
             upload_cmds["masterfile"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
-                f"/{self.rf_obj.runfolder_name}",
-                self.rf_obj.masterfile_name,
+                f"/",
+                self.rf_obj.runfolder_masterfile_path,
             )
         if self.rf_samples_obj.pipeline != "tso500":
             # tso500 run is not demultiplexed locally so there are no fastqs
@@ -582,11 +582,6 @@ class ProcessRunfolder(SWConfig):
                     for ss in self.rf_obj.tso_ss_list
                 ],
             }
-        elif self.rf_samples_obj.pipeline == "oncodeep":  # Add MasterFile entry
-            pre_pipeline_upload_dict["masterfile"] = {
-                "cmd": self.upload_cmds["masterfile"],
-                "files_list": [self.rf_obj.runfolder_masterfile_path],
-            }
         else:
             pre_pipeline_upload_dict["runfolder_samplesheet"] = {
                 "cmd": self.upload_cmds["runfolder_samplesheet"],
@@ -603,6 +598,11 @@ class ProcessRunfolder(SWConfig):
                 "cmd": self.upload_cmds["bcl2fastq_qc"],
                 "files_list": [self.rf_obj.bcl2fastqstats_file],
             }
+            if self.rf_samples_obj.pipeline == "oncodeep":  # Add MasterFile entry
+                pre_pipeline_upload_dict["masterfile"] = {
+                    "cmd": self.upload_cmds["masterfile"],
+                    "files_list": [self.rf_obj.runfolder_masterfile_path],
+                }
         return pre_pipeline_upload_dict
 
     def build_dx_commands(self) -> object:
@@ -912,21 +912,20 @@ class OncoDeepPipeline():
             self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list"])
 
             self.sql_queries.append(sample_cmds_obj.return_oncology_query())
-
             for read in ["R1", "R2"]:  # Generate sample oncodeep upload commands
                 self.workflow_cmds.append(
                     sample_cmds_obj.build_oncodeep_upload_cmd(
                         f"{sample_name}-{read}",
                         self.rf_samples_obj.nexus_runfolder_suffix,
-                        self.rf_samples_obj.samples_dict[sample_name]["fastqs"]["nexus_path"],
+                        self.rf_samples_obj.samples_dict[sample_name]["fastqs"][read]["nexus_path"]
                     )
                 )
         # Generate command for MasterFile upload
-        sample_cmds_obj.workflow_cmds.append(
-            build_oncodeep_upload_cmd(
+        self.workflow_cmds.append(
+            sample_cmds_obj.build_oncodeep_upload_cmd(
                 self.rf_obj.masterfile_name,
                 self.rf_samples_obj.nexus_runfolder_suffix,
-                f"{self.rf_obj.DNANEXUS_PROJ_ID}:{self.rf_obj.masterfile_name}",
+                f"{self.rf_obj.DNANEXUS_PROJ_ID}:{self.rf_obj.masterfile_name}"
             )
         )
         # Return downstream app commands
@@ -1005,23 +1004,19 @@ class WesPipeline:  # TODO eventually remove this and associated pipeline-specif
         self.logger = logger
         self.workflow_cmds = []
         self.dx_postprocessing_cmds = False
-        self.decision_support_upload_cmds = self.return_decision_support_cmd()
+        self.decision_support_upload_cmds = []
         self.sql_queries = []
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
-        for sample_name in self.rf_obj.samples_dict.keys():
+        for sample_name in self.rf_samples_obj.samples_dict.keys():
             sample_cmds_obj = BuildSampleDxCommands(
                 self.rf_obj.runfolder_name,
-                self.rf_obj.sample_dict[sample_name],
+                self.rf_samples_obj.samples_dict[sample_name],
                 self.logger,
             )
             self.workflow_cmds.extend([sample_cmds_obj.create_wes_cmd(), SWConfig.UPLOAD_ARGS["depends_list"]])
 
-            decision_support_upload_cmds.append(
-                self.rf_obj.samples_dict[sample_name][
-                    "decision_support_upload_cmd"
-                ]
-            )
+            self.decision_support_upload_cmds.append(sample_cmds_obj.return_congenica_cmd())
             self.sql_queries.append(sample_cmds_obj.return_rd_query())  # Get SQL queries
 
 
@@ -1031,7 +1026,11 @@ class WesPipeline:  # TODO eventually remove this and associated pipeline-specif
         self.workflow_cmds.extend(self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline))
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
-        self.sql_queries = self.rf_cmds_obj.return_wes_query()
+        wes_dnanumbers = [
+            self.rf_samples_obj.samples_dict[k]["identifiers"]["primary"]
+            for k in self.rf_samples_obj.samples_dict.keys()
+        ]
+        self.sql_queries = self.rf_cmds_obj.return_wes_query(wes_dnanumbers)
 
 
 class CustomPanelsPipeline:
