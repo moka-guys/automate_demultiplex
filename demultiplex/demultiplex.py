@@ -349,7 +349,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         if self.previous_samplesheet_check():
             sscheckfile_contents = read_lines(self.rf_obj.sscheck_flagfile_path)
-            if any(DemultiplexConfig.STRINGS["demultiplex_not_required_msg"] in line for line in sscheckfile_contents):
+            if any(DemultiplexConfig.STRINGS["samplesheet_fail"].partition(' ')[2] in line for line in sscheckfile_contents):
                 script_logger.info(
                     script_logger.log_msgs["previous_ss_check_fail"],
                     self.rf_obj.sscheck_flagfile_path,
@@ -664,7 +664,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         if any(any(pannum in line for line in samplesheet) for pannum in DemultiplexConfig.UMI_DEV_PANEL):
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["dev_run_umis"])
             self.create_bcl2fastqlog()
-            self.add_bcl2fastqlog_msg("DEV")
+            self.add_bcl2fastqlog_msg("DEV UMIs")
             write_lines(  # Create upload started log file to prevent automated upload
                 self.rf_obj.upload_flagfile,
                 "a",
