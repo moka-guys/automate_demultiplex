@@ -63,7 +63,7 @@ LOG_MSGS = {
             "SampleSheet check flag file, (and the checksums assessed string from the md5checksum file "
             "if present) to continue processing"
         ),
-        "dev_umis_upload_flagfile": "Created upload flag file for development runs with UMIs: %s"
+        "dev_umis_upload_flagfile": "Created upload flag file for development runs with UMIs: %s",
         "sscheck_success_msg_present": "SampleSheet check file contains success message",
         "sscheckfile_absent": "SampleSheet check file is absent",
         "sscheck_success_msg_absent": "SampleSheet check file does not contain success message",
