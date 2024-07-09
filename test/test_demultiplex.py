@@ -493,7 +493,7 @@ class TestDemultiplexRunfolder(object):
         """
         return [
             "Checksums match after 1 hours",
-            "Checksums already assessed by AS",
+            "Checksums assessed by AS",
         ]
 
     @pytest.fixture(scope="function")

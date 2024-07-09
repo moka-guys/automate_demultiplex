@@ -519,7 +519,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             :return (Optional[bool]):   Returns true if the checksum file has previously
                                         been checked for the success message by the script
         """
-        if DemultiplexConfig.STRINGS["checksums_already_assessed"] in checksums[-1]:
+        if DemultiplexConfig.STRINGS["checksums_assessed"].split(':')[0] in checksums[-1]:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["checksumfile_checked"]
             )
@@ -577,7 +577,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         write_lines(
             self.rf_obj.checksumfile_path,
             "a",
-            DemultiplexConfig.STRINGS['checksums_already_assessed'] % datetime.datetime.now(),
+            DemultiplexConfig.STRINGS['checksums_assessed'] % datetime.datetime.now(),
         )
 
     def checksums_do_not_match_message(self, checksums: list) -> Optional[bool]:

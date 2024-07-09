@@ -64,7 +64,7 @@ else:  # Testing branch
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
-        "binfx_recipient": MAIL_SETTINGS["binfx_email"],
+        "binfx_recipient": "mokaguys@gmail.com",
         # Oncology email address for email alerts
         "oncology_ops_email": "mokaguys@gmail.com",
         "wes_samplename_emaillist": ["mokaguys@gmail.com"],
@@ -361,7 +361,7 @@ class DemultiplexConfig(PanelConfig):
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
         "demultiplex_success": DEMULTIPLEX_SUCCESS,
-        "checksums_already_assessed": "Checksums already assessed by AS: %s",  # Written to file by AS
+        "checksums_assessed": "Checksums assessed by AS: %s",  # Written to file by AS
         "checksums_match": "Checksums match",  # Success message written to md5checksum file by integrity check scripts
         "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
         "samplesheet_success": "Samplesheet check successful with no errors identified: %s",
