@@ -99,7 +99,7 @@ class UploadRunfolder(URConfig):
             self.nexus_identifiers = self.find_nexus_project()
         write_lines(
             self.upload_flagfile,
-            "a",
+            "w",
             f"{URConfig.STRINGS['upload_started']}: {datetime.datetime.now()}",
         )
 
