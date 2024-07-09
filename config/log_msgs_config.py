@@ -114,7 +114,7 @@ LOG_MSGS = {
         "start_runfolder_proc": "Starting runfolder processing for: %s",
         "ua_file_present": "Upload started file present. Terminating",
         "ua_file_absent": "Upload started file not found. Continuing",
-        "demux_complete": "Run has been previously successfully demultiplexed",
+        "demux_complete": "Run has been previously successfully processed by the demultiplexing script",
         "success_string_absent": "Run has previously been demultiplexed but no success string is present",
         "not_yet_demultiplexed": "Demultiplexing has not been performed",
         "bcl2fastqlog_empty": "Bcl2fastq log file exists but is empty",

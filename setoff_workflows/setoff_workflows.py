@@ -159,7 +159,7 @@ class SequencingRuns(SWConfig):
         if os.path.isfile(rf_obj.bcl2fastqlog_file):
             logfile_list = read_lines(rf_obj.bcl2fastqlog_file)
             completed_strs = [
-                SWConfig.STRINGS["demultiplex_not_required_msg"],
+                SWConfig.STRINGS["demultiplex_not_required_msg"].partition(' ')[-1],
                 SWConfig.STRINGS["demultiplex_success"],
             ]
             if logfile_list:
