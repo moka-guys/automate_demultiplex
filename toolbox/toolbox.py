@@ -633,14 +633,14 @@ class RunfolderSamples(ToolboxConfig):
                                     batch numbers if run is a WES run, followed by the runtype
         """
         library_numbers = self.capture_library_numbers()
+
         if self.pipeline == "wes":
             library_numbers.extend(self.capture_wes_batch_numbers())
-        suffix = f"{'_'.join(library_numbers)}"
 
-        if self.pipeline in ["pipe", "wes"]:
-            suffix.join(
-                f"_{self.runtype_str}"
-            )  # Provides more detail on contents of runs in runfolder name
+        if self.pipeline in ["pipe", "wes", "dev"]:
+            library_numbers.append(self.runtype_str)
+        
+        suffix = f"{'_'.join(library_numbers)}"  # Provides more detail on contents of runs in runfolder name
         return suffix
 
     def capture_library_numbers(self) -> list:

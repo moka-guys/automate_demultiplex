@@ -252,7 +252,7 @@ class PanelConfig:
             **DEFAULT_DICT,
             "pipeline": "dev",
             "panel_name": "dev",
-            "runtype": "dev",
+            "runtype": "DEV",
             "multiqc_coverage_level": 30,
         },
     }
