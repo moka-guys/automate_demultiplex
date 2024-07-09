@@ -788,8 +788,14 @@ class ProcessRunfolder(SWConfig):
         if self.rf_samples_obj.pipeline != "tso500":
             self.upload_rest_of_runfolder()
 
-        for filetype in file_upload_dict.keys():  # Upload logfiles for all runtypes
-            self.upload_to_dnanexus("logfiles", {self.file_upload_dict["logfiles"]})
+        logfiles_upload_dict = {
+            "logfiles": {
+                "cmd": self.upload_cmds["logfiles"],
+                "files_list": self.rf_obj.logfiles_to_upload,
+            },
+        }
+        for filetype in logfiles_upload_dict.keys():  # Upload logfiles for all runtypes
+            self.upload_to_dnanexus(filetype, logfiles_upload_dict)
 
 
 class DevPipeline:
