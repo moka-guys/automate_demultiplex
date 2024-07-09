@@ -39,19 +39,17 @@ The module can be used either from the command line or as a module import:
 
 ### Command line
 
-#### Non-development runs
+#### Multiple runfolders
 
-The script should be run with no inputs provided when assessing production runs on
-the workstation:
+The script should be run with no inputs provided when assessing production runs on the workstation. This allows it to loop over multiple runfolders and demultiplex in succession:
 
 ```bash
 python3 -m demultiplex
 ```
 
-#### Development runs
+#### Single runfolder
 
-The script should be run as per below when handling development runs that require the standard
-demultiplexing protocol:
+The run can be run manually for an individual runfolder as follows:
 
 ```bash
 python3 -m demultiplex -r $RUNFOLDER_NAME
