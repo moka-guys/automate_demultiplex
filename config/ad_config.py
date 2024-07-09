@@ -416,7 +416,7 @@ class SWConfig(PanelConfig):
     UPLOAD_ARGS = UPLOAD_ARGS
     RUNFOLDERS = RUNFOLDERS
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
-    if BRANCH == "master":  # Prod branch
+    if BRANCH == "main":  # Prod branch
         
         BSPS_ID = "BSPS_MD"
         DNANEXUS_USERS = {  # User access level
