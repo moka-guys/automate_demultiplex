@@ -63,13 +63,14 @@ LOG_MSGS = {
             "SampleSheet check flag file, (and the checksums assessed string from the md5checksum file "
             "if present) to continue processing"
         ),
+        "dev_umis_upload_flagfile": "Created upload flag file for development runs with UMIs: %s"
         "sscheck_success_msg_present": "SampleSheet check file contains success message",
         "sscheckfile_absent": "SampleSheet check file is absent",
         "sscheck_success_msg_absent": "SampleSheet check file does not contain success message",
         "cmd_line_runfolder": "Runfolder %s has been supplied on the command line",
         "programmatic_runfolders": "Runfolders were gathered programmatically",
         "runfolder_names": "Runfolders identified for processing: %s",
-        "script_success": "Runfolder has been successfully processed by the automated scripts: %s",
+        "script_success": "Runfolder has been successfully processed by the demultiplex script: %s",
         "demultiplexing_required": "Demultiplexing is required for this runfolder",
         "bcl2fastq_start": "Demultiplexing started using bcl2fastq2 command: %s",
         "bcl2fastq_complete": "Demultiplexing completed successfully for %s",
