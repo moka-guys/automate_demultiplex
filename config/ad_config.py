@@ -361,12 +361,12 @@ class DemultiplexConfig(PanelConfig):
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
         "demultiplex_success": DEMULTIPLEX_SUCCESS,
-        "checksums_already_assessed": "Checksums already assessed by AS",  # Written to file by AS
+        "checksums_already_assessed": "Checksums already assessed by AS: %s",  # Written to file by AS
         "checksums_match": "Checksums match",  # Success message written to md5checksum file by integrity check scripts
         "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
-        "samplesheet_success": "Samplesheet check successful with no errors identified",
-        "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors:",
-        "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload"
+        "samplesheet_success": "Samplesheet check successful with no errors identified: %s",
+        "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors: %s ",
+        "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s"
     }
     TESTING = TESTING
     BCL2FASTQ2_CMD = (
