@@ -18,7 +18,7 @@ Uploads an Illumina runfolder to DNAnexus.
 3. If upload_files is called directly, uploads the provided files to the runfolder                
 4. The script uploads logfiles produced by this repository to the DNAnexus project under `PROJECT:/RUNFOLDER/automated_scripts_logfiles`.
 
-* N.B. the runfolder does not upload the SampleSheet from the samplesheets directory. If required, this should be uploaded manually *
+* N.B. the script does not upload the SampleSheet from the SampleSheets directory, unless it has been copied into the runfolder first *
 
 ## Configuration
 
@@ -41,9 +41,6 @@ options:
   -h, --help            show this help message and exit
   -r RUNFOLDER_NAME, --runfolder_name RUNFOLDER_NAME
                         Workstation runfolder name
-  -a AUTH_TOKEN, --auth_token AUTH_TOKEN
-                        A string or file containing a DNAnexus authorisation key used to access the DNAnexus project. If not specified, the config-specified
-                        authtoken will be used by default
   --ignore IGNORE       Comma-separated list of patterns which prevents the file from being uploaded if any pattern is present in filename or filepath.
   -p PROJECT_ID, --project_id PROJECT_ID
                         The ID of an existing DNAnexus project for the given runfolder
@@ -67,6 +64,7 @@ self.upload_runfolder = UploadRunfolder(
     rf_obj.rf_loggers["backup"],
     rf_obj.runfolder_name,
     rf_obj.runfolderpath,
+    rf_obj.upload_flagfile,
     nexus_identifiers
 )
 

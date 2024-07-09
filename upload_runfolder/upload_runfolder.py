@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 upload_runfolder.py Uploads an Illumina runfolder to DNAnexus. Contains the following classes:
 
@@ -10,12 +9,14 @@ import os
 import re
 import math
 import logging
+import datetime
 from config.ad_config import URConfig
 from toolbox.toolbox import (
     execute_subprocess_command,
     git_tag,
     test_upload_software,
     get_credential,
+    write_lines,
 )
 
 
@@ -28,12 +29,12 @@ class UploadRunfolder(URConfig):
         runfolder_name (str):       Name of runfolder
         runfolderpath (str):        Path of runfolder on workstation
         dnanexus_auth (str):        DNAnexus auth token
+        upload_flagfile (str):      Path to flag file that denotes runfolder upload has started
         nexus_identifiers (dict):   Dictionary of proj_name and proj_id, or False        
 
     Methods:
         find_nexus_project()
-            Search DNAnexus for the project given as an input argument. If the input is
-            'None', searches for a project matching self.runfolder_name
+            Search DNAnexus for the project given as an input argument
         upload_rest_of_runfolder(ignore)
             Calls methods to upload the rest of the runfolder (the runfolder minus the files matching the ignore string)
         check_runfolder_exists()
@@ -75,13 +76,15 @@ class UploadRunfolder(URConfig):
         logger: logging.Logger,
         runfolder_name: str,
         runfolderpath: str,
+        upload_flagfile: str,
         nexus_identifiers=False,
     ):
         """
         Constructor for the UploadRunfolder class
             :param logger (logging.Logger): Logger
-            :param runfolder_name (str):    Name of runfolder
+            :param runfolder_name (str):    Runfolder name
             :param runfolderpath (str):     Path of runfolder on workstation
+            :param upload_flagfile (str):   Path to flag file that denotes runfolder upload has started
             :param nexus_identifiers        Dictionary of proj_name and proj_id, or False
             (dict | False):
         """
@@ -89,15 +92,20 @@ class UploadRunfolder(URConfig):
         self.runfolder_name = runfolder_name
         self.runfolderpath = runfolderpath
         self.dnanexus_auth = get_credential(URConfig.CREDENTIALS["dnanexus_authtoken"])
+        self.upload_flagfile = upload_flagfile
         if nexus_identifiers:
             self.nexus_identifiers = nexus_identifiers
         else:
             self.nexus_identifiers = self.find_nexus_project()
+        write_lines(
+            self.upload_flagfile,
+            "a",
+            f"{URConfig.STRINGS['upload_started']}: {datetime.datetime.now()}",
+        )
 
     def find_nexus_project(self) -> dict:
         """
-        Search DNAnexus for the project given as an input argument. If the input is
-        'None', searches for a project matching self.runfolder_name.
+        Search DNAnexus for the project given as an input argument
             :return (dict):     Dictionary containing proj_name and proj_id
         """
         try:
@@ -318,7 +326,7 @@ class UploadRunfolder(URConfig):
         """
         Get the corresponding DNAnexus subdirectory name for the folderpath.
         This is used in the upload agent's '--folder' argument
-            :param folder_path (str):                   Path of a local folder containing
+            :param folderpath (str):                    Path of a local folder containing
                                                         files to be uploaded to DNAnexus
             :returnnexus_project_subdirectory (str):    DNAnexus folder name e.g. runfolder/RTALogs
         """

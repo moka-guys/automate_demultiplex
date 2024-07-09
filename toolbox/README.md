@@ -1,13 +1,20 @@
 # Toolbox
 
-This module contains functions and classes that are shared across multiple scripts. If
-any changes are made to these functions and classes, all scripts should be comprehensively tested.
+This module contains functions and classes that are shared across multiple scripts. If any changes are made to these functions and classes, all scripts should be comprehensively tested.
 
 ## Protocol
 
-The script contains many functions whose protocol can be identified by reading the individual docstrings. The main class in this module is the RunfolderObject() class which functions as follows:
-1. Adds all runfolder-specific paths and qualities that need to be accessed by other modules as class attributes
-2. add_runfolder_loggers(script) can be used to add runfolder-specific loggers to the RunfolderObject object as an attribute
+The script contains many functions whose protocol can be identified by reading the individual docstrings. The classes in this module are listed below:
+1. RunfolderObject:
+    * An object with runfolder-specific properties
+    * get_runfolder_loggers() function returns a dictionary of logger.Logging objects for the runfolder
+
+2. RunfolderSamples
+    * An object with properties derived from the samples names in the samplesheet
+
+3. SampleObject
+    * An object with sample-specific attributes
+
 
 ## Configuration
 
@@ -20,13 +27,21 @@ This script is configured to be used as a module import as per the following exa
 ```python
 from toolbox import toolbox
 
-# Create runfolder object
 rf_obj = toolbox.RunfolderObject(folder_name, ad_config.timestamp)
+
+loggers = rf_obj.get_runfolder_loggers(__package__)
+
+rf_samples_obj = RunfolderSamples(rf_obj, loggers["demux"])
+
+sample_obj = SampleObject(
+    sample_name,
+    rf_samples_obj.pipeline,
+    rf_samples_obj.logger,
+    rf_samples_obj.fastq_dir_path,
+    rf_samples_obj.nexus_paths,
+    rf_samples_obj.nexus_runfolder_suffix
+)
 ```
-
-## Logging
-
-The RunfolderObject class adds loggers to the runfolder object using ad_logger.RunfolderLoggers.
 
 ## Testing
 

@@ -1,14 +1,14 @@
-#!/usr/bin/python3
 """
 Variables used across test modules, including the setup and teardown fixture
 that is run before and after every test
 """
 import os
+import re
 import shutil
 import pytest
 import tarfile
 import logging
-
+from shutil import copy
 # sys.path.append("..")
 from ad_logger import ad_logger
 from toolbox import toolbox
@@ -78,12 +78,12 @@ def create_logdirs():
     """
     Create temporary log directories for testing purposes
     """
-    os.makedirs(temp_log_dir)
+    os.makedirs(temp_log_dir, exist_ok=True)
     rf_obj = toolbox.RunfolderObject("TEST_FOLDER", ad_config.TIMESTAMP)
     for logfile in rf_obj.logfiles_config.values():
         parent_dir = os.path.dirname(logfile)
         if not os.path.isdir(parent_dir):
-            os.makedirs(parent_dir)
+            os.makedirs(parent_dir, exist_ok=True)
 
 
 def patch_toolbox(monkeypatch):
@@ -104,7 +104,7 @@ def run_before_and_after_session():
     """
     # Create temporary dirs for testing
     os.makedirs(
-        test_data_dir_unzipped
+        test_data_dir_unzipped, exist_ok=True
     )  # Holds the unzipped data to copy from for each test
 
     for tar in data_tars:
@@ -112,13 +112,27 @@ def run_before_and_after_session():
             open_tar.extractall(path=tar["dest"])
     for destination in to_copy_interop_to:
         shutil.copytree(os.path.join(test_data_dir_unzipped, "InterOp"), destination)
-    yield
+
+    test_data_unzipped = os.path.join(test_data_dir_unzipped, "demultiplex_test_files", "test_runfolders")
+
+    directories = [
+        os.path.join(test_data_unzipped, d)
+        for d in os.listdir(test_data_unzipped)
+        if os.path.isdir(os.path.join(test_data_unzipped, d))
+    ]
+    dummy_fastq = os.path.join(test_data_dir, "dummy_fastq.gz")
+
+    for directory in directories:
+        if re.match(".*999999_.*", directory):
+            fastqs_dir = os.path.join(test_data_unzipped, directory, "Data", "Intensities", "BaseCalls/")
+            os.makedirs(fastqs_dir, exist_ok=True)
+            copy(dummy_fastq, fastqs_dir)
+    yield  # Where the testing happens
     for to_remove in [test_data_dir_unzipped, test_data_temp]:
         if os.path.isdir(to_remove):
             shutil.rmtree(to_remove)
 
 
-# TODO fix patching of script loggers as this is not set up correctly !!
 @pytest.fixture(scope="function", autouse=True)
 def run_before_and_after_tests(monkeypatch):
     """

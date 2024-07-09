@@ -3,7 +3,7 @@ name: Automated scripts
 on:
   push:
     branches:
-      - master
+      - main
       - develop
       - 'feature/**'
       - 'hotfix/**'
@@ -47,4 +47,3 @@ jobs:
       # We do not want it to run the email tests because the credentials are not stored in GitHub
         run: |
           python3 -m pytest -k 'not email'
-      # TODO can the bcl2fastq tests be included if the docker image is pulled as part of the tests, or included in the repo as a tar?
