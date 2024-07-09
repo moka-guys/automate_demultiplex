@@ -401,7 +401,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         script_logger.info(
             script_logger.log_msgs["ss_validator_version"], version('samplesheet_validator')
         )
-
         sscheck_obj = samplesheet_validator.SamplesheetCheck(
             self.rf_obj.samplesheet_path,
             DemultiplexConfig.SEQUENCER_IDS.keys(),
@@ -671,6 +670,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 "a",
                 f"{DemultiplexConfig.STRINGS['upload_flag_umis']}: {datetime.datetime.now()}",
             )
+            self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["dev_umis_upload_flagfile"], self.rf_obj.runfolder_name)
         elif any(any(pannum in line for line in samplesheet) for pannum in DemultiplexConfig.TSO_PANELS):
             self.create_bcl2fastqlog()  # Create bcl2fastq2 log to prevent scripts processing this run
             self.add_bcl2fastqlog_msg("TSO500")
