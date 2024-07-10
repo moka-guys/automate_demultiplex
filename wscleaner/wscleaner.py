@@ -14,22 +14,21 @@ Contains the following classes:
 """
 
 import re
-import inspect
 import logging
 import shutil
-from pathlib import Path
 from typing import Optional
 import os
 import dxpy
 from config.ad_config import RunfolderCleanupConfig
 from ad_logger.ad_logger import AdLogger
 from toolbox.toolbox import (
-    git_tag,
     return_scriptlog_config,
     get_credential,
     get_runfolder_path,
     RunfolderObject,
     RunfolderSamples,
+    script_start_logmsg,
+    script_end_logmsg
 )
 from ad_logger.ad_logger import set_root_logger
 
@@ -101,6 +100,8 @@ class RunFolderManager:
         Calls methods for cleaning up runfolders
             :return None:
         """
+        script_start_logmsg(script_logger, __file__)
+
         deleted_runfolders = []  # Deleted runfolders appended here by self.deleted
 
         runfolder_objects = self.get_runfolders_to_process()
@@ -119,7 +120,8 @@ class RunFolderManager:
                 deleted_runfolders.append(rf_obj.runfolder_name)
         # Record runfolders removed by this iteration
         script_logger.info(f"Runfolders deleted in this instance: {deleted_runfolders}")
-        script_logger.info(f"END")
+        script_end_logmsg(script_logger, __file__)
+        
         return deleted_runfolders
 
     def get_runfolders_to_process(self) -> list:

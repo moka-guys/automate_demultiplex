@@ -16,7 +16,6 @@ import os
 import re
 import subprocess
 import logging
-import datetime
 import time
 import seglh_naming
 from pathlib import Path

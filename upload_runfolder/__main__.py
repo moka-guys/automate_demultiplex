@@ -5,7 +5,6 @@ Uploads runfolder to DNAnexus by passing given arguments to the UploadRunfolder 
 See README and docstrings for further details
 """
 
-import os
 import argparse
 from config.ad_config import URConfig
 from upload_runfolder.upload_runfolder import UploadRunfolder
@@ -16,7 +15,7 @@ from toolbox.toolbox import (
     script_start_logmsg,
     script_end_logmsg,
 )
-from ad_logger.ad_logger import set_root_logger, shutdown_logs
+from ad_logger.ad_logger import set_root_logger
 
 
 set_root_logger()
