@@ -783,7 +783,7 @@ class RunfolderSamples(ToolboxConfig):
                         fastq_dir_file
                     ):  # Exclude undetermined
                         try:
-                            seglh_namingSample.from_string(fastq_dir_file)
+                            seglh_naming.Sample.from_string(fastq_dir_file)
                             sample_name = [
                                 sample_name
                                 for sample_name in self.samplename_dict.keys()
@@ -830,7 +830,7 @@ class RunfolderSamples(ToolboxConfig):
             self.sample_obj = SampleObject(
                 sample_name,
                 self.pipeline,
-                logger,
+                self.logger,
                 self.fastq_dir_path,
                 self.nexus_paths,
                 self.nexus_runfolder_suffix,
