@@ -2,6 +2,7 @@
 Variables used across test modules, including the setup and teardown fixture
 that is run before and after every test. This is the top-level testing configuration
 """
+
 import os
 import re
 import shutil
@@ -9,6 +10,7 @@ import pytest
 import tarfile
 import logging
 from shutil import copy
+
 # sys.path.append("..")
 from ad_logger import ad_logger
 from toolbox import toolbox
@@ -65,6 +67,7 @@ data_tars = [
     },
 ]
 
+
 def patch_toolbox(monkeypatch):
     """
     Apply patches required for toolbox script. These point the paths to the
@@ -103,7 +106,9 @@ def run_before_and_after_session():
     for destination in to_copy_interop_to:
         shutil.copytree(os.path.join(test_data_dir_unzipped, "InterOp"), destination)
 
-    test_data_unzipped = os.path.join(test_data_dir_unzipped, "demultiplex_test_files", "test_runfolders")
+    test_data_unzipped = os.path.join(
+        test_data_dir_unzipped, "demultiplex_test_files", "test_runfolders"
+    )
 
     directories = [
         os.path.join(test_data_unzipped, d)
@@ -114,7 +119,9 @@ def run_before_and_after_session():
 
     for directory in directories:
         if re.match(".*999999_.*", directory):
-            fastqs_dir = os.path.join(test_data_unzipped, directory, "Data", "Intensities", "BaseCalls/")
+            fastqs_dir = os.path.join(
+                test_data_unzipped, directory, "Data", "Intensities", "BaseCalls/"
+            )
             os.makedirs(fastqs_dir, exist_ok=True)
             copy(dummy_fastq, fastqs_dir)
     yield  # Where the testing happens

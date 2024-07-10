@@ -12,6 +12,7 @@ Contains the following classes:
 - CheckRunfolder
     Class for determining whether a runfolder should be deleted, and deleting it
 """
+
 import re
 import inspect
 import logging
@@ -53,7 +54,14 @@ script_logger = ad_logger_obj.get_logger()
 
 
 # Set DNAnexus authentication token
-dxpy.set_security_context({"auth_token_type": "Bearer", "auth_token": get_credential(RunfolderCleanupConfig.CREDENTIALS["dnanexus_authtoken"])})
+dxpy.set_security_context(
+    {
+        "auth_token_type": "Bearer",
+        "auth_token": get_credential(
+            RunfolderCleanupConfig.CREDENTIALS["dnanexus_authtoken"]
+        ),
+    }
+)
 
 
 class RunFolderManager:
@@ -99,8 +107,13 @@ class RunFolderManager:
         script_logger.info(
             f"Found local runfolders to consider deleting: {[rf_obj.runfolder_name for rf_obj, rf_samples_obj in runfolder_objects]}"
         )
-        for (rf_obj, rf_samples_obj) in runfolder_objects:
-            cr_obj = CheckRunfolder(rf_obj.runfolder_name, rf_obj.upload_runfolder_logfile, rf_samples_obj.fastqs_list, self.logfile_count)
+        for rf_obj, rf_samples_obj in runfolder_objects:
+            cr_obj = CheckRunfolder(
+                rf_obj.runfolder_name,
+                rf_obj.upload_runfolder_logfile,
+                rf_samples_obj.fastqs_list,
+                self.logfile_count,
+            )
             if cr_obj.to_delete():
                 self.delete(rf_obj.runfolder_name, rf_obj.runfolderpath)
                 deleted_runfolders.append(rf_obj.runfolder_name)
@@ -121,7 +134,9 @@ class RunFolderManager:
             if get_runfolder_path(folder_name) and re.compile(
                 RunfolderCleanupConfig.RUNFOLDER_PATTERN
             ).match(folder_name):
-                script_logger.debug(f"Initiating RunfolderObject instance for {folder_name}")
+                script_logger.debug(
+                    f"Initiating RunfolderObject instance for {folder_name}"
+                )
                 rf_obj = RunfolderObject(folder_name, RunfolderCleanupConfig.TIMESTAMP)
                 rf_samples_obj = RunfolderSamples(rf_obj, script_logger)
                 rf_age = rf_obj.age()
@@ -131,13 +146,17 @@ class RunFolderManager:
                         script_logger.info(
                             f"{rf_obj.runfolder_name} is a DEV runfolder therefore should not be deleted"
                         )
-                    if (rf_age >= self.min_age) and (rf_samples_obj.pipeline == "tso500"):
+                    if (rf_age >= self.min_age) and (
+                        rf_samples_obj.pipeline == "tso500"
+                    ):
                         script_logger.info(
                             f"{rf_obj.runfolder_name} is a TSO500 runfolder and is >= {self.min_age} days old"
                         )
                         runfolder_objects.append(tuple([rf_obj, rf_samples_obj]))
                     # Criteria for runfolder: Older than or equal to min_age and contains fastq.gz files
-                    elif (rf_age >= self.min_age) and len(rf_samples_obj.fastqs_list) > 0:
+                    elif (rf_age >= self.min_age) and len(
+                        rf_samples_obj.fastqs_list
+                    ) > 0:
                         script_logger.debug(
                             f"{rf_obj.runfolder_name} contains 1 or more fastq and is >= {self.min_age} days old"
                         )
@@ -167,15 +186,16 @@ class RunFolderManager:
             script_logger.info(f"{runfolder_name} DELETED.")
             return True
 
+
 class CheckRunfolder:
     """
-    Class for determining whether a runfolder should be deleted, and deleting it 
+    Class for determining whether a runfolder should be deleted, and deleting it
 
     Attributes
         runfolder_name (str):                Runfolder name
         upload_runfolder_logfile (str):      Path to upload runfolder logfile
-        fastqs_list (list):                  List of fastq files in the local runfolder                                                    
-        dx_project (DxProjectRunfolder):     Instance of DxProjectRunfolder  
+        fastqs_list (list):                  List of fastq files in the local runfolder
+        dx_project (DxProjectRunfolder):     Instance of DxProjectRunfolder
 
     Methods
         check_fastqs()
@@ -191,13 +211,19 @@ class CheckRunfolder:
             Determine whether a runfolder is safe for deletion
     """
 
-    def __init__(self, runfolder_name: str, upload_runfolder_logfile: str, fastqs_list: list, logfile_count: int):
+    def __init__(
+        self,
+        runfolder_name: str,
+        upload_runfolder_logfile: str,
+        fastqs_list: list,
+        logfile_count: int,
+    ):
         """
         Constructor for the CheckRunfolder object
             :param runfolder_name (str):                Runfolder name
             :param upload_runfolder_logfile (str):      Path to upload runfolder logfile
-            :param fastqs_list (list):                  List of fastq files in the local runfolder        
-            :param logfile_count (int):                 Number of logfiles expected in the DNAnexus project                                            
+            :param fastqs_list (list):                  List of fastq files in the local runfolder
+            :param logfile_count (int):                 Number of logfiles expected in the DNAnexus project
         """
         self.runfolder_name = runfolder_name
         script_logger.info(f"Processing {self.runfolder_name}")
@@ -245,7 +271,7 @@ class CheckRunfolder:
         """
         Returns true if a runfolder's upload log file exists
             :return Optional[bool]: Return True if runfolder upload log file
-                                    exists, else None               
+                                    exists, else None
         """
         if os.path.exists(self.upload_runfolder_logfile):
             return True
@@ -265,7 +291,9 @@ class CheckRunfolder:
                 log_contents = f.readlines()
             if "- ERROR -" in log_contents:
                 script_logger.debug(f"{self.runfolder_name} upload log contains errors")
-                script_logger.warning(f"{self.runfolder_name} - UPLOAD LOG CONTAINS ERRORS")
+                script_logger.warning(
+                    f"{self.runfolder_name} - UPLOAD LOG CONTAINS ERRORS"
+                )
                 upload_log_bool = False
             else:
                 upload_log_bool = True
@@ -284,14 +312,21 @@ class CheckRunfolder:
             logfiles_uploaded = self.check_logfiles()
             upload_log_exists = self.upload_log_exists()
             clean_upload_log = self.check_upload_log()
-            if all([fastqs_uploaded, logfiles_uploaded, upload_log_exists, clean_upload_log]):
+            if all(
+                [
+                    fastqs_uploaded,
+                    logfiles_uploaded,
+                    upload_log_exists,
+                    clean_upload_log,
+                ]
+            ):
                 return True
 
 
 class DxProjectRunFolder:
     """
     A DNAnexus runfolder object
-        
+
     Attributes
         runfolder (str):    Runfolder name
         id (str):           Project ID of the matching runfolder project in DNANexus
@@ -328,13 +363,20 @@ class DxProjectRunFolder:
             # name_mode='regexp' - look for any occurence of the runfolder name in the project name.
             # Setting more_ok/zero_ok to False ensures only one project is succesfully returned.
             project = dxpy.find_one_project(
-                name=self.runfolder_name, name_mode="regexp", more_ok=False, zero_ok=False
+                name=self.runfolder_name,
+                name_mode="regexp",
+                more_ok=False,
+                zero_ok=False,
             )
-            script_logger.debug(f'{self.runfolder_name} DNAnexus project: {project["id"]}')
+            script_logger.debug(
+                f'{self.runfolder_name} DNAnexus project: {project["id"]}'
+            )
             return project["id"]
         except dxpy.exceptions.DXSearchError as error:
             # Catch exception and raise none
-            script_logger.warning(f"DX PROJECT MISMATCH - 0 or >1 DNAnexus projects found for {self.runfolder_name}: {error}")
+            script_logger.warning(
+                f"DX PROJECT MISMATCH - 0 or >1 DNAnexus projects found for {self.runfolder_name}: {error}"
+            )
             return None
 
     def find_fastqs(self):
@@ -346,7 +388,10 @@ class DxProjectRunFolder:
         # Search dnanexus for files with the fastq.gz extension.
         # name_mode='regexp' tells dxpy to look for any occurence of 'fastq.gz' in the filename
         search_response = dxpy.find_data_objects(
-            project=self.dnanexus_id, classname="file", name="fastq.gz", name_mode="regexp"
+            project=self.dnanexus_id,
+            classname="file",
+            name="fastq.gz",
+            name_mode="regexp",
         )
         file_ids = [result["id"] for result in search_response]
         # Gather a list of uploaded fastq files with the state 'closed', indicating a completed upload.
@@ -365,7 +410,7 @@ class DxProjectRunFolder:
     def count_logfiles(self) -> int:
         """
         Count logfiles in the DNAnexus project, in the /$RUNFOLDER_NAME/automated_scripts_logfiles
-        subdirectory        
+        subdirectory
             :return (int):  Count of automated scripts logfiles identified in the DNAnexus project
         """
         logfile_list = dxpy.find_data_objects(

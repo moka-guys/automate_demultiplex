@@ -1,5 +1,6 @@
 """ ad_logger.py pytest unit tests. The test suite is currently incomplete
 """
+
 import pytest
 from toolbox import toolbox
 from ad_logger import ad_logger
@@ -47,4 +48,3 @@ class TestRunfolderLoggers:
                 f"Test log message. Logger {loggers[logger_name].name}"
             )
             assert loggers[logger_name].name in caplog.text
-

@@ -31,7 +31,8 @@ def get_arguments():
     parser = argparse.ArgumentParser(
         description="Uploads runfolder to DNAnexus",
         usage=(
-            "Upload user-specified runfolder to DNAnexus, providing a project ID to upload ""to, and any file patterns that should be ignored"
+            "Upload user-specified runfolder to DNAnexus, providing a project ID to upload "
+            "to, and any file patterns that should be ignored"
         ),
     )
     parser.add_argument(  # Define arguments

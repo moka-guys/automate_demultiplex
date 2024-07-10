@@ -1,6 +1,7 @@
 """
 demultiplex.py pytest unit tests. The test suite is currently incomplete
 """
+
 import os
 import itertools
 import pytest
@@ -236,7 +237,9 @@ class TestGetRunfolders(object):
         that none have been processed
         """
         monkeypatch.setattr(
-            demultiplex.DemultiplexConfig, "DEMULTIPLEX_TEST_RUNFOLDERS", runfolders_nottoproc
+            demultiplex.DemultiplexConfig,
+            "DEMULTIPLEX_TEST_RUNFOLDERS",
+            runfolders_nottoproc,
         )
         gr_obj = get_gr_obj()
         with pytest.raises(SystemExit) as pytest_wrapped_e:
@@ -494,8 +497,7 @@ class TestDemultiplexRunfolder(object):
 
     @pytest.fixture(scope="function")
     def checksums_checked(self):
-        """
-        """
+        """ """
         return [
             "Checksums match after 1 hours",
             "Checksums assessed by AS",
@@ -503,8 +505,7 @@ class TestDemultiplexRunfolder(object):
 
     @pytest.fixture(scope="function")
     def checksums_not_checked(self):
-        """
-        """
+        """ """
         return [
             "Checksums match after 1 hours",
         ]
@@ -617,7 +618,9 @@ class TestDemultiplexRunfolder(object):
         Tests function identifies all disallowed ss errors
         """
         dr_obj = get_dr_obj("")
-        monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", ss_with_disallowed_sserrs)
+        monkeypatch.setattr(
+            dr_obj.rf_obj, "samplesheet_path", ss_with_disallowed_sserrs
+        )
         valid, sscheck_obj = dr_obj.valid_samplesheet()
         assert dr_obj.no_disallowed_sserrs(valid, sscheck_obj)
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)

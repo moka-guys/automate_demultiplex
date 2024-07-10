@@ -7,7 +7,6 @@ from ..conftest import test_data_temp
 from config.ad_config import RunfolderCleanupConfig
 
 
-
 @pytest.fixture
 def rfm(monkeypatch):
     """
@@ -43,8 +42,15 @@ class TestCheckRunfolder:
         Test that test runfolders pass checks for deletion
         """
         for test_case in data_test_runfolders:
-            runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = test_case
-            crf = wscleaner.CheckRunfolder(runfolder_name=runfolder_name, upload_runfolder_logfile=upload_runfolder_logfile, fastqs_list=fastqs_list, logfile_count=6) 
+            runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = (
+                test_case
+            )
+            crf = wscleaner.CheckRunfolder(
+                runfolder_name=runfolder_name,
+                upload_runfolder_logfile=upload_runfolder_logfile,
+                fastqs_list=fastqs_list,
+                logfile_count=6,
+            )
             assert all(
                 [
                     crf.dx_project,
@@ -60,8 +66,15 @@ class TestCheckRunfolder:
         Test that test runfolders pass checks for deletion
         """
         for test_case in data_test_runfolders_fail:
-            runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = test_case
-            crf = wscleaner.CheckRunfolder(runfolder_name=runfolder_name, upload_runfolder_logfile=upload_runfolder_logfile, fastqs_list=fastqs_list, logfile_count=6) 
+            runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = (
+                test_case
+            )
+            crf = wscleaner.CheckRunfolder(
+                runfolder_name=runfolder_name,
+                upload_runfolder_logfile=upload_runfolder_logfile,
+                fastqs_list=fastqs_list,
+                logfile_count=6,
+            )
             assert not all(
                 [
                     crf.dx_project,
@@ -77,7 +90,14 @@ class TestCheckRunfolder:
         Test the function correctly identifies that the runfolders require deletion
         """
         for test_case in data_test_runfolders:
-            runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = test_case
-            crf = wscleaner.CheckRunfolder(runfolder_name=runfolder_name, upload_runfolder_logfile=upload_runfolder_logfile, fastqs_list=fastqs_list, logfile_count=6) 
+            runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = (
+                test_case
+            )
+            crf = wscleaner.CheckRunfolder(
+                runfolder_name=runfolder_name,
+                upload_runfolder_logfile=upload_runfolder_logfile,
+                fastqs_list=fastqs_list,
+                logfile_count=6,
+            )
             result = crf.to_delete()
             assert result == True

@@ -4,6 +4,7 @@ upload_runfolder.py Uploads an Illumina runfolder to DNAnexus. Contains the foll
 - UploadRunfolder
     Uploads a runfolder to DNAnexus
 """
+
 import sys
 import os
 import re
@@ -30,7 +31,7 @@ class UploadRunfolder(URConfig):
         runfolderpath (str):        Path of runfolder on workstation
         dnanexus_auth (str):        DNAnexus auth token
         upload_flagfile (str):      Path to flag file that denotes runfolder upload has started
-        nexus_identifiers (dict):   Dictionary of proj_name and proj_id, or False        
+        nexus_identifiers (dict):   Dictionary of proj_name and proj_id, or False
 
     Methods:
         find_nexus_project()
@@ -438,9 +439,7 @@ class UploadRunfolder(URConfig):
         else:
             grep_ignore = ""
 
-        local_file_count = (
-            f"find {self.runfolderpath} -type f {grep_ignore} | wc -l"
-        )
+        local_file_count = f"find {self.runfolderpath} -type f {grep_ignore} | wc -l"
         files_expected, _, _ = execute_subprocess_command(
             local_file_count, self.logger, "exit_on_fail"
         )

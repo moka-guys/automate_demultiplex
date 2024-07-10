@@ -18,7 +18,6 @@ from config.ad_config import BRANCH
 from .wscleaner import RunFolderManager
 
 
-
 def get_arguments():
     """
     Uses argparse module to define and handle command line input arguments
@@ -63,11 +62,14 @@ version = git_tag()
 parsed_args = get_arguments()
 
 
-
 # If dry-run CLI flag is given, or script is run from the development area
 # no directories are deleted by the runfolder manager
 if parsed_args.dry_run or BRANCH != "main":
-    dry_run=True
+    dry_run = True
 
-RFM = RunFolderManager(dry_run=dry_run, min_age=parsed_args.min_age, logfile_count=parsed_args.logfile_count)
+RFM = RunFolderManager(
+    dry_run=dry_run,
+    min_age=parsed_args.min_age,
+    logfile_count=parsed_args.logfile_count,
+)
 RFM.cleanup_runfolders()

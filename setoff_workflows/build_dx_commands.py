@@ -6,6 +6,7 @@ Builds dx commands for a runfolder. Contains the following classes:
 - BuildSampleDxCommands
     Build dx run commands commands that are run at the sample level
 """
+
 import logging
 from typing import Union
 from config.ad_config import SWConfig
@@ -50,6 +51,7 @@ class BuildRunfolderDxCommands(SWConfig):
         return_wes_query()
             Return WES SQL query. This is a single update query per-run
     """
+
     def __init__(self, rf_obj: object, logger: logging.Logger):
         """
         Constructor for the BuildRunfolderDxCommands class
@@ -300,7 +302,9 @@ class BuildRunfolderDxCommands(SWConfig):
             ]
         )
 
-    def return_wes_query(self, wes_dnanumbers: list) -> str:  # TODO eventually remove this
+    def return_wes_query(
+        self, wes_dnanumbers: list
+    ) -> str:  # TODO eventually remove this
         """
         Return WES SQL query. This is a single update query per-run
             :param wes_dnanumbers (list):   List of DNA numbers
@@ -322,7 +326,7 @@ class BuildSampleDxCommands(SWConfig):
     Build dx run commands commands that are run at the sample level
 
     Attributes:
-    
+
         sample_dict (dict):         Dictionary of SampleObject per sample, containing
                                     sample-specific attributes
         runfolder_name (str):       Runfolder name
@@ -360,7 +364,7 @@ class BuildSampleDxCommands(SWConfig):
             support tool upload bash script
         build_qiagen_upload_cmd()
             Build the command to write the qiagen upload command to the decisions support
-            tool upload bash script    
+            tool upload bash script
         build_oncodeep_upload_cmd(file_name, run_identifier, file)
             Build the command to write the OncoDEEP upload dx run command to the
             decision support tool upload bash script
@@ -387,9 +391,7 @@ class BuildSampleDxCommands(SWConfig):
         self.sample_dict = sample_dict
         self.runfolder_name = runfolder_name
         self.logger = logger
-        self.logger.info(
-            self.logger.log_msgs["building_cmds"]
-        )
+        self.logger.info(self.logger.log_msgs["building_cmds"])
 
     def create_pipe_cmd(self) -> str:
         """
@@ -407,7 +409,9 @@ class BuildSampleDxCommands(SWConfig):
             self.sample_dict["sample_name"],
         )
         # Specify instance type for human exome app
-        if self.sample_dict["panel_settings"]["FH"]:  # Larger instance required for FH samples
+        if self.sample_dict["panel_settings"][
+            "FH"
+        ]:  # Larger instance required for FH samples
             GATK_INSTANCE = "mem3_ssd1_v2_x16"
         else:
             GATK_INSTANCE = "mem1_ssd1_v2_x8"
@@ -456,9 +460,7 @@ class BuildSampleDxCommands(SWConfig):
         NA12878 we want to skip the vcfeval stage (the app default is skip=False)
             :return (str):  App input string
         """
-        prefix_str = (  # Set prefix as samplename
-            f'{SWConfig.STAGE_INPUTS["pipe"]["happy_prefix"]}{self.sample_dict["sample_name"]}'
-        )
+        prefix_str = f'{SWConfig.STAGE_INPUTS["pipe"]["happy_prefix"]}{self.sample_dict["sample_name"]}'  # Set prefix as samplename
         if self.sample_dict["pos_control"]:
             skip_str = f'{SWConfig.STAGE_INPUTS["pipe"]["happy_skip"]}false'
         else:
@@ -618,9 +620,7 @@ class BuildSampleDxCommands(SWConfig):
             :param sample (str):    Sample name
             :return (str):          Dx run command for sompy app
         """
-        self.logger.info(
-            self.logger.log_msgs["building_cmd"], "sompy", sample
-        )
+        self.logger.info(self.logger.log_msgs["building_cmd"], "sompy", sample)
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["sompy"]}Sompy-{sample}',
@@ -646,22 +646,22 @@ class BuildSampleDxCommands(SWConfig):
         if any([self.sample_dict["neg_control"], self.sample_dict["pos_control"]]):
             decision_support_cmd = None
             self.logger.info(
-                self.logger.log_msgs[
-                    "decision_support_upload_notrequired"
-                ],
+                self.logger.log_msgs["decision_support_upload_notrequired"],
                 self.sample_dict["sample_name"],
             )
         else:
             self.logger.info(
-                self.logger.log_msgs[
-                    "decision_support_upload_required"
-                ],
+                self.logger.log_msgs["decision_support_upload_required"],
                 self.sample_dict["sample_name"],
             )
             # If project is specified then upload via upload agent
-            if self.sample_dict["panel_settings"]["congenica_project"] == "SFTP":  # SFTP upload cmd. # TODO eventually remove this
+            if (
+                self.sample_dict["panel_settings"]["congenica_project"] == "SFTP"
+            ):  # SFTP upload cmd. # TODO eventually remove this
                 decision_support_cmd = self.build_congenica_sftp_cmd()
-            elif isinstance(self.sample_dict["panel_settings"]["congenica_project"], int):
+            elif isinstance(
+                self.sample_dict["panel_settings"]["congenica_project"], int
+            ):
                 decision_support_cmd = self.build_congenica_cmd()
             return decision_support_cmd
 
@@ -695,7 +695,7 @@ class BuildSampleDxCommands(SWConfig):
         upload bash script. This command is used to upload the sample to Congenica using the standard
         Congenica upload app. Takes BAM and VCF inputs, along with config-specified inputs congenica
         project ID, credentials, IR template and sample name
-            :param pipeline (str):  
+            :param pipeline (str):
             :return (str):          Dx run command for the Congenica upload (standard Congenica upload app)
         """
         self.logger.info(
@@ -707,7 +707,9 @@ class BuildSampleDxCommands(SWConfig):
             vcf_input = f'{self.sample_dict["sample_name"]}*.bedfiltered.vcf.gz'
             bam_input = f'{self.sample_dict["sample_name"]}*.refined.bam'
 
-        if self.sample_dict["panel_settings"]["pipeline"] == "wes":  # TODO eventually remove this
+        if (
+            self.sample_dict["panel_settings"]["pipeline"] == "wes"
+        ):  # TODO eventually remove this
             vcf_input = f'{self.sample_dict["sample_name"]}*_markdup_Haplotyper.vcf.gz'
             bam_input = f'{self.sample_dict["sample_name"]}*_markdup.bam'
 
@@ -750,7 +752,9 @@ class BuildSampleDxCommands(SWConfig):
             ]
         )
 
-    def build_oncodeep_upload_cmd(self, file_name: str, run_identifier: str, file: str) -> str:
+    def build_oncodeep_upload_cmd(
+        self, file_name: str, run_identifier: str, file: str
+    ) -> str:
         """
         Build the command to write the OncoDEEP upload dx run command to the decision
         support tool upload bash script. This command is used to upload the sample to
@@ -776,7 +780,11 @@ class BuildSampleDxCommands(SWConfig):
         Create a query per sample using the DNA number
             :return query (str):    Sample SQL rare disease query
         """
-        pipeline_version = str(SWConfig.SQL_IDS["WORKFLOWS"][self.sample_dict["panel_settings"]["pipeline"]])
+        pipeline_version = str(
+            SWConfig.SQL_IDS["WORKFLOWS"][
+                self.sample_dict["panel_settings"]["pipeline"]
+            ]
+        )
         rd_query = SWConfig.QUERIES["customrun"] % (
             f"'{self.sample_dict['identifiers']['primary']}','{pipeline_version}',"
             f"'{self.runfolder_name}'"
@@ -789,7 +797,11 @@ class BuildSampleDxCommands(SWConfig):
         These are recorded along with the pipeline version, run name, and panel ID.
             :return query (str):    Sample SQL oncology query
         """
-        pipeline_version = str(SWConfig.SQL_IDS["WORKFLOWS"][self.sample_dict["panel_settings"]["pipeline"]])
+        pipeline_version = str(
+            SWConfig.SQL_IDS["WORKFLOWS"][
+                self.sample_dict["panel_settings"]["pipeline"]
+            ]
+        )
         panel_id = self.sample_dict["pannum"].replace("Pan", "")
 
         onc_query = SWConfig.QUERIES["oncology"] % (
@@ -797,4 +809,3 @@ class BuildSampleDxCommands(SWConfig):
             f"'{self.runfolder_name}','{pipeline_version}','{panel_id}'"
         )
         return onc_query
-

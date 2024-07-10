@@ -9,6 +9,7 @@ classes collating the settings required per module:
 - ToolboxConfig
 - URConfig
 """
+
 import os
 import sys
 import datetime
@@ -86,7 +87,9 @@ SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
-GATK_DOCKER = "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
+GATK_DOCKER = (
+    "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
+)
 
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
 DEMUX_NOT_REQUIRED_MSG = "%s run. Does not need demultiplexing locally"
@@ -262,7 +265,10 @@ UPLOAD_ARGS = {
 
 DX_CMDS = {
     "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth ${AUTH})"',
-    "find_proj_name": f"{SDK_SOURCE}; dx find projects --name *%s* " "--auth %s | awk '{print $3}'",
+    "find_proj_name": (
+        f"{SDK_SOURCE}; dx find projects --name *%s* "
+        "--auth %s | awk '{print $3}'"
+    ),
     "proj_name_from_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name",
     "find_proj_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id",
     "find_execution_id": (
@@ -366,7 +372,7 @@ class DemultiplexConfig(PanelConfig):
         "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
         "samplesheet_success": "Samplesheet check successful with no errors identified: %s",
         "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors: %s ",
-        "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s"
+        "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s",
     }
     TESTING = TESTING
     BCL2FASTQ2_CMD = (
@@ -417,7 +423,7 @@ class SWConfig(PanelConfig):
     RUNFOLDERS = RUNFOLDERS
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
     if BRANCH == "main":  # Prod branch
-        
+
         BSPS_ID = "BSPS_MD"
         DNANEXUS_USERS = {  # User access level
             # TODO remove InterpretationRequest user once per-user accounts set up
@@ -538,6 +544,7 @@ class ToolboxConfig(PanelConfig):
     """
     Toolbox configuration
     """
+
     if BRANCH == "master":
         DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
     else:
@@ -597,10 +604,12 @@ class URConfig:
         "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
     }
 
-class RunfolderCleanupConfig():
+
+class RunfolderCleanupConfig:
     """
     Runfolder Cleanup configuration
     """
+
     TIMESTAMP = TIMESTAMP
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS

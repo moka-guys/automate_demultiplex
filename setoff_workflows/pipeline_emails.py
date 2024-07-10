@@ -5,6 +5,7 @@ Calls the AdEmail class for email sending. The following emails are sent:
     - Pipeline started email. Contains SQL queries used to update the Moka database
     - Samples being processed email
 """
+
 import logging
 from config.ad_config import SWConfig
 from ad_email.ad_email import AdEmail
@@ -38,7 +39,13 @@ class PipelineEmails(SWConfig):
                 Construct and send the samples being processed email using AdEmail class
     """
 
-    def __init__(self, rf_obj: RunfolderObject, rf_samples_obj: RunfolderSamples, sql_queries: str, logger: logging.Logger):
+    def __init__(
+        self,
+        rf_obj: RunfolderObject,
+        rf_samples_obj: RunfolderSamples,
+        sql_queries: str,
+        logger: logging.Logger,
+    ):
         """
         Constructor for the PipelineEmails class. Calls the class methods
         """

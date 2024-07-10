@@ -32,15 +32,27 @@ def data_test_runfolders():
     return [
         (
             "999999_NB551068_1234_WSCLEANT01",
-            os.path.join(test_data_temp, "999999_NB551068_1234_WSCLEANT01_upload_runfolder.log"),
+            os.path.join(
+                test_data_temp, "999999_NB551068_1234_WSCLEANT01_upload_runfolder.log"
+            ),
             os.path.join(test_data_temp, "test_dir_1_fastqs.txt"),
-            [f"{test_data_temp}/999999_NB551068_1234_WSCLEANT01/Data/Intensities/BaseCalls/" + line.strip() for line in open(os.path.join(test_data_temp, "test_dir_1_fastqs.txt"))]
+            [
+                f"{test_data_temp}/999999_NB551068_1234_WSCLEANT01/Data/Intensities/BaseCalls/"
+                + line.strip()
+                for line in open(os.path.join(test_data_temp, "test_dir_1_fastqs.txt"))
+            ],
         ),
         (
             "999999_NB551068_1234_WSCLEANT02",
-            os.path.join(test_data_temp, "999999_NB551068_1234_WSCLEANT02_upload_runfolder.log"),
+            os.path.join(
+                test_data_temp, "999999_NB551068_1234_WSCLEANT02_upload_runfolder.log"
+            ),
             os.path.join(test_data_temp, "test_dir_2_fastqs.txt"),
-            [f"{test_data_temp}/999999_NB551068_1234_WSCLEANT02/Data/Intensities/BaseCalls/" + line.strip() for line in open(os.path.join(test_data_temp, "test_dir_2_fastqs.txt"))]
+            [
+                f"{test_data_temp}/999999_NB551068_1234_WSCLEANT02/Data/Intensities/BaseCalls/"
+                + line.strip()
+                for line in open(os.path.join(test_data_temp, "test_dir_2_fastqs.txt"))
+            ],
         ),
     ]
 
@@ -51,22 +63,33 @@ def data_test_runfolders_fail():
     return [
         (  # Failure case as fastqs in fastq list are different from those in runfolder
             "999999_NB551068_1234_WSCLEANT01",
-            os.path.join(test_data_temp, "999999_NB551068_1234_WSCLEANT01_upload_runfolder.log"),
+            os.path.join(
+                test_data_temp, "999999_NB551068_1234_WSCLEANT01_upload_runfolder.log"
+            ),
             os.path.join(test_data_temp, "test_dir_1_fastqs.txt"),
-            [f"{test_data_temp}/999999_NB551068_1234_WSCLEANT02/Data/Intensities/BaseCalls/" + line.strip() for line in open(os.path.join(test_data_temp, "test_dir_2_fastqs.txt"))]
+            [
+                f"{test_data_temp}/999999_NB551068_1234_WSCLEANT02/Data/Intensities/BaseCalls/"
+                + line.strip()
+                for line in open(os.path.join(test_data_temp, "test_dir_2_fastqs.txt"))
+            ],
         ),
         (  # Failure case as runfolder name doesn't match an existing DNAnexus project
             "999999_NB551068_2468_WSCLEANT02",
-            os.path.join(test_data_temp, "999999_NB551068_2468_WSCLEANT02_upload_runfolder.log"),
+            os.path.join(
+                test_data_temp, "999999_NB551068_2468_WSCLEANT02_upload_runfolder.log"
+            ),
             os.path.join(test_data_temp, "test_dir_2_fastqs.txt"),
-            [f"{test_data_temp}/999999_NB551068_1234_WSCLEANT02/Data/Intensities/BaseCalls/" + line.strip() for line in open(os.path.join(test_data_temp, "test_dir_2_fastqs.txt"))]
+            [
+                f"{test_data_temp}/999999_NB551068_1234_WSCLEANT02/Data/Intensities/BaseCalls/"
+                + line.strip()
+                for line in open(os.path.join(test_data_temp, "test_dir_2_fastqs.txt"))
+            ],
         ),
     ]
 
-def data_test_runfolder_uploaderror():
-    """
-    """
 
+def data_test_runfolder_uploaderror():
+    """ """
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -76,7 +99,9 @@ def create_test_dirs(data_test_runfolders, request, monkeypatch):
     This is an autouse fixture with session function, meaning it is run once per test
     """
     for test_case in data_test_runfolders:
-        runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = test_case
+        runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = (
+            test_case
+        )
         # Create the runfolder directory as per Illumina spec
         runfolder_path = os.path.join(test_data_temp, runfolder_name)
         fastqs_path = os.path.join(
@@ -107,6 +132,8 @@ def create_test_dirs(data_test_runfolders, request, monkeypatch):
     yield  # Where the testing happens
     # TEARDOWN - cleanup after each test
     for test_case in data_test_runfolders:
-        runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = test_case
+        runfolder_name, upload_runfolder_logfile, fastq_list_file, fastqs_list = (
+            test_case
+        )
         runfolder_path = os.path.join(test_data_temp, runfolder_name)
         shutil.rmtree(runfolder_path)
