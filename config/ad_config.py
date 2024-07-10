@@ -545,7 +545,7 @@ class ToolboxConfig(PanelConfig):
     Toolbox configuration
     """
 
-    if BRANCH == "master":
+    if BRANCH == "main":
         DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
     else:
         DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
