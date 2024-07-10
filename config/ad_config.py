@@ -123,7 +123,7 @@ NEXUS_IDS = {
         "ed_readcount": f"{TOOLS_PROJECT}:applet-GbkVzbQ0jy1zBZf5k6Xk6QP7",  # ED_readcount_analysis_v1.3.0
         "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-GbkVyQ80jy1Xf1p6jpPK6p1x",  # ED_cnv_calling_v1.3.0
         "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",  # RPKM_using_conifer_v1.6
-        "duty_csv": f"{TOOLS_PROJECT}:applet-GkzJfX80jy1fQvPk1z316gBy",  # duty_csv_v1.4.0
+        "duty_csv": f"{TOOLS_PROJECT}:applet-Gp75GB00360KXPV4Jy7PPFfQ",  # duty_csv_v1.5.0
     },
     "WORKFLOWS": {
         "pipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",  # GATK3.5_v2.18
