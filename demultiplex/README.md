@@ -39,19 +39,17 @@ The module can be used either from the command line or as a module import:
 
 ### Command line
 
-#### Non-development runs
+#### Multiple runfolders
 
-The script should be run with no inputs provided when assessing production runs on
-the workstation:
+The script should be run with no inputs provided when assessing production runs on the workstation. This allows it to loop over multiple runfolders and demultiplex in succession:
 
 ```bash
 python3 -m demultiplex
 ```
 
-#### Development runs
+#### Single runfolder
 
-The script should be run as per below when handling development runs that require the standard
-demultiplexing protocol:
+The run can be run manually for an individual runfolder as follows:
 
 ```bash
 python3 -m demultiplex -r $RUNFOLDER_NAME
@@ -76,7 +74,7 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py).
 
 | Alias | Description | Filename | Location |
 | ------------------ | ------------------------------------------------------------------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Demultiplex output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout` |
+| Demultiplex output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplex_cron_stdout` |
 | demultiplex (script_logger) | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
 | demultiplex (demux_rf_logger) | Records runfolder-level logs for the demultiplex script | `RUNFOLDERNAME_demultiplex_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
  Bcl2fastq output | STDERR from bcl2fastq2 | `bcl2fastq2_output.log` | Within the runfolder |

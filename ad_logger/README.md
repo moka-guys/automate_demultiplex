@@ -20,7 +20,7 @@ This removes sensitive information (authentication keys) in log messages (preven
 
 ### RunfolderLoggers Class
 
-Creates an RunfolderLoggers object that contains various loggers required by the script that calls it. The loggers created are dictated by the logfiles_config dict provided as input. The class adds an AdLogger object for each logger specified in the logfiles_config and assigns it as an attribute. In this way the RunfolderLoggers object attributes can be used to write to the log files.
+Creates a RunfolderLoggers object that contains various loggers required by the script that calls it. The loggers created are dictated by the logfiles_config dict provided as input. The class adds an AdLogger object for each logger specified in the logfiles_config and assigns it as an attribute. In this way the RunfolderLoggers object attributes can be used to write to the log files.
 
 ## Usage
 
@@ -42,12 +42,9 @@ self.script_logger.info(
 
 logfiles_config = {
     "sw": sw_runfolder_logfile,
-    "demultiplex": demultiplex_runfolder_logfile,
-    "upload_agent": upload_flagfile,
+    "demux": demultiplex_runfolder_logfile,
     "backup": upload_runfolder_logfile,
-    "project": proj_creation_script,
-    "dx_run": runfolder_dx_run_script,
-    "post_run_cmds": post_run_dx_run_script,
+    "bcl2fastq2": bcl2fastqlog_file,
     "ss_validator": samplesheet_validator_logfile,
 }
 
@@ -67,7 +64,7 @@ No log is written to as this module is creating the logger.
 
 ## Alerts
 
-No alerts are triggered by this module, as it is creating the logger that sends the alerts to Rapid7.
+No alerts are triggered by this module, as it is creating the logger that writes the logs that are used for rapid7 pattern detection.
 
 ## Testing
 

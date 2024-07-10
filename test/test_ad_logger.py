@@ -1,62 +1,11 @@
-#!/usr/bin/python3
-""" ad_logger.py pytest unit tests
-
-# TODO write the following unit tests which are currently missing or incomplete:
-- shutdown_logs
-- SensitiveFormatter
-    - format
-- AdLogger
-    - get_logger
-    - _get_file_handler
-    - _get_logging_formatter
-    - _get_syslog_handler
-    - _get_stream_handler
+""" ad_logger.py pytest unit tests. The test suite is currently incomplete
 """
 import pytest
 from toolbox import toolbox
 from ad_logger import ad_logger
 from config import ad_config
 
-# import logging
-
-# No logging disabled for this test as we are testing logging
-# No patching required
-
-# TODO add tests for SensitiveFormatter class
-# TODO add test for shutdown_logs
-# TODO add test that checks that streamhandler, filehandler and syslog handler are all
-# added as expected
-
-
-# TODO write test for shutdown_logs()
-# def test_shutdown_logs():
-#     """"""
-
-#     ad_logger.shutdown_logs(logger)
-# assert not logger.info(
-#     "Test log message. Logger %s",
-#     logger.name,
-# )
-
-# TODO write tests for SensitiveFormatter class
-# class TestSensitiveFormatter:
-#    """
-#    Tests for the SensitiveFormatter class
-#    """
-
-
-# @pytest.fixture(scope="function", autouse=True)
-# def setup(monkeypatch):
-#     """
-#     """
-#     #  Re-enable logging as it is required for assertions
-#     logging.disable(logging.NOTSET)
-#     # Remove testfiles dir containing test runfolders as we don't need these files
-#     # Apply patches required for test_ad_logger script. These point the paths to the
-#     # temporary locations:
-#     #     - Test logfiles in the temp logfiles dir and within the temp runfolder dirs
-#     monkeypatch.setattr(toolbox.ad_config, "RUNFOLDERS", conftest.temp_runfolderdir)
-#     monkeypatch.setattr(toolbox.ad_config, "AD_LOGDIR", conftest.temp_log_dir)
+# TODO finish this test suite as it is currently incomplete
 
 
 class TestRunfolderLoggers:
@@ -78,7 +27,6 @@ class TestRunfolderLoggers:
         return [
             "sw",
             "demultiplex",
-            "upload_agent",
             "backup",
             "project",
             "dx_run",
@@ -100,8 +48,4 @@ class TestRunfolderLoggers:
             )
             assert loggers[logger_name].name in caplog.text
 
-    # TODO write tests for AdLogger class
-    # class TestAdLogger:
-    """
-    Tests for the AdLogger class
-    """
+

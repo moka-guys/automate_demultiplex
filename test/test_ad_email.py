@@ -1,10 +1,7 @@
-""" ad_email.py pytest unit tests
+""" ad_email.py pytest unit tests. The test suite is currently incomplete
 
 N.B. test_email_sending_success() will only pass when running on the
 workstation where the required auth details are stored
-
-# TODO write the below tests which are currently missing or incomplete:
-- AdEmail.generate_email_html
 """
 
 import pytest
@@ -13,6 +10,8 @@ from ad_email.ad_email import AdEmail
 from config.ad_config import AdEmailConfig
 
 logger_obj = logger_obj
+
+# TODO finish this test suite as it is currently incomplete
 
 
 class TestAdEmail:
@@ -46,9 +45,6 @@ class TestAdEmail:
                 AdEmailConfig.MAIL_SETTINGS["binfx_recipient"],
             ],
         ]
-
-    # TODO write test for generate_email_html
-    # def test_generate_email_html():
 
     def test_send_email_success(
         self,
