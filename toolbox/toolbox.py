@@ -635,6 +635,8 @@ class RunfolderSamples(ToolboxConfig):
         runtype_list = []
         for sample, panno in self.samplename_dict.items():
             runtype_list.append(ToolboxConfig.PANEL_DICT[panno]["runtype"])
+            if all(ToolboxConfig.PANEL_DICT[panno]["sample_prefix"] not in runtype for runtype in runtype_list):
+                runtype_list.append(ToolboxConfig.PANEL_DICT[panno]["sample_prefix"])
         runtype_str = "_".join(sorted(list(set(runtype_list))))
         self.logger.debug(
             self.logger.log_msgs["runtype_str"],
