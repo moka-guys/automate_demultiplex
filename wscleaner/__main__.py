@@ -7,12 +7,7 @@ Methods:
     cli_parser(): Parses command line arguments
     main(): Process input directory or API keys
 """
-import os
-import subprocess
-from pathlib import Path
-import datetime
 import argparse
-import dxpy
 from toolbox.toolbox import git_tag
 from config.ad_config import BRANCH, RunfolderCleanupConfig
 from .wscleaner import RunFolderManager

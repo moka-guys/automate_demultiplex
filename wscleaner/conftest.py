@@ -10,7 +10,6 @@ import dxpy
 from pathlib import Path
 from config.ad_config import CREDENTIALS
 from ..conftest import test_data_temp
-from toolbox.toolbox import get_credential
 
 PROJECT_DIR = str(Path(__file__).absolute().parent.parent)  # Project working directory
 

@@ -1,8 +1,5 @@
 import pytest
-from pathlib import Path
-import shutil
 from . import wscleaner
-from .conftest import data_test_runfolders, data_test_runfolders_fail
 from ..conftest import test_data_temp
 from config.ad_config import RunfolderCleanupConfig
 

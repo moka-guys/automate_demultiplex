@@ -51,7 +51,6 @@ from toolbox.toolbox import (
     write_lines,
     execute_subprocess_command,
     get_samplename_dict,
-    validate_fastqs,
 )
 from setoff_workflows.pipeline_emails import PipelineEmails
 from setoff_workflows.build_dx_commands import (

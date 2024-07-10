@@ -13,7 +13,6 @@ Contains the following classes:
 import sys
 import os
 import re
-import logging
 import datetime
 from importlib.metadata import version
 from shutil import copyfile
