@@ -17,6 +17,7 @@ import subprocess
 import logging
 import datetime
 import time
+import seglh_naming
 from pathlib import Path
 from typing import Tuple
 from distutils.spawn import find_executable
