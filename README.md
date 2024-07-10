@@ -7,8 +7,7 @@ This repository contains the main scripts for routine analysis of clinical next 
 |[demultiplex.py](demultiplex.py) | Command line | Demultiplex (excluding TSO runs) and calculate cluster density for Illumina NGS data using `bcl2fastq2` [(guide)](demultiplex/README.md) |
 | [setoff_workflows.py](setoff_workflows.py) | Command line | Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md) |
 | [upload_runfolder](upload_runfolder) | Command line or module import | Uploads an Illumina runfolder to DNAnexus [(guide)](upload_runfolder/README.md)|
-| [wscleaner](wscleaner) | Command line | Automates the deletion of runfolders that have been uploaded
-to the DNAnexus cloud storage service [(guide)](wscleaner/README.md)|
+| [wscleaner](wscleaner) | Command line | Automates the deletion of runfolders that have been uploaded to the DNAnexus cloud storage service [(guide)](wscleaner/README.md)|
 
 # Assumptions / Requirements
 
@@ -27,7 +26,7 @@ The type of run is detected by the scripts by matching the Pan numbers within th
 
 The script has been tested using python v3.10.6 therefore it is recommended that this version of python is used.
 
-Dependencies, which include the [samplesheet_validator](https://github.com/moka-guys/samplesheet_validator) package**, are installed using the requirements.txt file:
+Dependencies, which include the [samplesheet_validator](https://github.com/moka-guys/samplesheet_validator) package\*\*, are installed using the requirements.txt file:
 
 ```bash
 pip3 install -r requirements.txt
@@ -93,7 +92,8 @@ The above image describes the possible associations in the Class Diagram. In the
 | sw (script_logger) | Records script-level logs for the setoff workflows script | `TIMESTAMP_setoff_workflow.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/sw_script_logfiles/` |
 | sw (rf_loggers["sw"]) | Records runfolder-level logs for the setoff workflows script | `RUNFOLDERNAME_setoff_workflow.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/sw_script_logfiles/` |
 | dx_run_script | Records the dx run commands for processing the run. N.B. this is not written to by logging | `RUNFOLDERNAME_dx_run_commands.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
-| decision_support_upload_cmds | Records the dx run commands to set off the congenica upload apps. N.B. this is not written to by logging | `RUNFOLDERNAME_decision_support.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
+| post_run_dx_run_script | Records the postprocessing commands (TSO runs only), to be run manually after the pipeline apps complete. N.B. this is not written to by logging | `RUNFOLDERNAME_post_run_commands.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
+| decision_support_upload_cmds_script | Records the dx run commands to set off the congenica upload apps. N.B. this is not written to by logging | `RUNFOLDERNAME_decision_support.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
 | proj_creation_script | Records the commands for creating the DNAnexus project. N.B. this is not written to by logging | `RUNFOLDERNAME_create_nexus_project.sh` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/dx_run_commands` |
 | Demultiplex output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout` |
 | demultiplex (script_logger) | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
