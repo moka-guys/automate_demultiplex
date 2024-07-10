@@ -1,6 +1,6 @@
 """
 Variables used across test modules, including the setup and teardown fixture
-that is run before and after every test
+that is run before and after every test. This is the top-level testing configuration
 """
 import os
 import re
@@ -14,17 +14,34 @@ from ad_logger import ad_logger
 from toolbox import toolbox
 from config import ad_config
 
-# Variables used across test classes
-
-# TODO prevent logging writing to syslog when in testing mode
-
-
 test_data_dir = os.path.abspath("data")  # Data directory
 test_data_dir_unzipped = os.path.join(
     test_data_dir, "data_unzipped/"
 )  # Unzips data tar to here
 test_data_temp = os.path.abspath("temp")  # Copies data to here for each test
-# Place interop in test 7, test 9, test 11
+
+temp_log_dir = os.path.join(test_data_temp, "automate_demultiplexing_logfiles")
+temp_samplesheet_logdir = os.path.join(
+    temp_log_dir, "samplesheet_validator_script_logfiles"
+)
+
+# TODO prevent logging writing to syslog when in testing mode
+source_runfolder_dirs = os.path.join(
+    test_data_dir_unzipped, "demultiplex_test_files/test_runfolders/"
+)
+
+
+temp_runfolderdir = os.path.join(
+    test_data_temp, "data_unzipped/demultiplex_test_files/test_runfolders/"
+)
+
+
+to_copy_interop_to = [
+    os.path.join(source_runfolder_dirs, "999999_A01229_0000_00000TEST7/InterOp/"),
+    os.path.join(source_runfolder_dirs, "999999_A01229_0000_00000TEST9/InterOp/"),
+    os.path.join(source_runfolder_dirs, "999999_A01229_0000_0000TEST11/InterOp/"),
+]
+
 data_tars = [
     {
         "src": os.path.join(test_data_dir, "demultiplex_test_files.tar.gz"),
@@ -47,31 +64,15 @@ data_tars = [
         "dest": os.path.join(test_data_dir_unzipped, "InterOp"),
     },
 ]
-source_runfolder_dirs = os.path.join(
-    test_data_dir_unzipped, "demultiplex_test_files/test_runfolders/"
-)
 
-to_copy_interop_to = [
-    os.path.join(source_runfolder_dirs, "999999_A01229_0000_00000TEST7/InterOp/"),
-    os.path.join(source_runfolder_dirs, "999999_A01229_0000_00000TEST9/InterOp/"),
-    os.path.join(source_runfolder_dirs, "999999_A01229_0000_0000TEST11/InterOp/"),
-]
-
-temp_runfolderdir = os.path.join(
-    test_data_temp, "data_unzipped/demultiplex_test_files/test_runfolders/"
-)
-temp_log_dir = os.path.join(test_data_temp, "automate_demultiplexing_logfiles")
-temp_samplesheet_logdir = os.path.join(
-    temp_log_dir, "samplesheet_validator_script_logfiles"
-)
-# Temp directory for SampleSheet validator SampleSheet test cases
-sv_samplesheet_temp_dir = os.path.join(test_data_temp, "data_unzipped/samplesheets")
-
-
-@pytest.fixture(scope="function")
-def logger_obj():
-    temp_log = os.path.join(test_data_temp, "temp.log")
-    return ad_logger.AdLogger(__name__, "demux", temp_log).get_logger()
+def patch_toolbox(monkeypatch):
+    """
+    Apply patches required for toolbox script. These point the paths to the
+    temporary locations:
+        - Test logfiles in the temp logfiles dir and within the temp runfolder dirs
+    """
+    monkeypatch.setattr(toolbox.ToolboxConfig, "RUNFOLDERS", temp_runfolderdir)
+    monkeypatch.setattr(toolbox.ToolboxConfig, "AD_LOGDIR", temp_log_dir)
 
 
 def create_logdirs():
@@ -86,16 +87,6 @@ def create_logdirs():
             os.makedirs(parent_dir, exist_ok=True)
 
 
-def patch_toolbox(monkeypatch):
-    """
-    Apply patches required for toolbox script. These point the paths to the
-    temporary locations:
-        - Test logfiles in the temp logfiles dir and within the temp runfolder dirs
-    """
-    monkeypatch.setattr(toolbox.ToolboxConfig, "RUNFOLDERS", temp_runfolderdir)
-    monkeypatch.setattr(toolbox.ToolboxConfig, "AD_LOGDIR", temp_log_dir)
-
-
 @pytest.fixture(scope="session", autouse=True)
 def run_before_and_after_session():
     """
@@ -106,7 +97,6 @@ def run_before_and_after_session():
     os.makedirs(
         test_data_dir_unzipped, exist_ok=True
     )  # Holds the unzipped data to copy from for each test
-
     for tar in data_tars:
         with tarfile.open(tar["src"], "r:gz") as open_tar:
             open_tar.extractall(path=tar["dest"])

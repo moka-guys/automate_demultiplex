@@ -16,6 +16,8 @@ import re
 import subprocess
 import logging
 import datetime
+import time
+from pathlib import Path
 from typing import Tuple
 from distutils.spawn import find_executable
 from typing import Union, Optional
@@ -75,6 +77,11 @@ def return_scriptlog_config() -> dict:
             "sw_script_logfiles",
             f"{ToolboxConfig.TIMESTAMP}_setoff_workflow.log",
         ),
+        "wscleaner": os.path.join(  # Record wscleaner script logs
+            ToolboxConfig.AD_LOGDIR,
+            "wscleaner_logs",
+            f"{ToolboxConfig.TIMESTAMP}_wscleaner.log",
+        )
     }
 
 
@@ -489,6 +496,13 @@ class RunfolderObject(ToolboxConfig):
             self.upload_runfolder_logfile,
         ]
 
+    def age(self) -> int:
+        """
+        Return runfolder age in days
+            :return age (int):  Runfolder age in days
+        """
+        return (time.time() - Path(self.runfolderpath).stat().st_mtime) // (24 * 3600)
+
     def get_runfolder_loggers(self, script: str) -> dict:
         """ 
         Return dictionary of logger.Logging objects for the runfolder
@@ -602,7 +616,7 @@ class RunfolderSamples(ToolboxConfig):
             )
         else:
             pipeline_name = pipelines_list[0]  # Get pipeline from pipelines_list
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["pipeline_name"],
                 pipeline_name,
             )
@@ -618,7 +632,7 @@ class RunfolderSamples(ToolboxConfig):
         for sample, panno in self.samplename_dict.items():
             runtype_list.append(ToolboxConfig.PANEL_DICT[panno]["runtype"])
         runtype_str = "_".join(sorted(list(set(runtype_list))))
-        self.logger.info(
+        self.logger.debug(
             self.logger.log_msgs["runtype_str"],
             runtype_str,
         )
@@ -658,7 +672,7 @@ class RunfolderSamples(ToolboxConfig):
                 # Split on underscores to capture library number e.g. ONC100 or NGS100
                 library_numbers.append(samplename.split("_")[0])
         if library_numbers:  # Should always be library numbers found
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["library_nos_identified"],
                 ", ".join(sorted(list(set(library_numbers)))),
             )
@@ -684,7 +698,7 @@ class RunfolderSamples(ToolboxConfig):
                 wesbatch = re.search(r"WES_?\d+", samplename).group()
                 wes_batch_numbers_list.append(wesbatch.replace("_", ""))
         if wes_batch_numbers_list:
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["wes_batch_nos_identified"],
                 ", ".join(wes_batch_numbers_list),
             )
@@ -960,7 +974,7 @@ class SampleObject(ToolboxConfig):
         self.pos_control = self.check_control(ToolboxConfig.PSCON_IDS, "Positive")
         self.pannum = self.find_pannum()
         self.panel_settings = ToolboxConfig.PANEL_DICT[self.pannum]
-        self.logger.info(
+        self.logger.debug(
             self.logger.log_msgs["sample_identified"],
             self.panel_settings["panel_name"],
             self.sample_name,
@@ -976,7 +990,7 @@ class SampleObject(ToolboxConfig):
             :return (Optional[bool]):   True if sample contains any specified identifier, else False
         """
         if any(identifier in self.sample_name for identifier in identifiers):
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["control_sample"],
                 control_type,
                 self.sample_name,
@@ -999,7 +1013,7 @@ class SampleObject(ToolboxConfig):
             :return bool:   True if pan number is valid, else None
         """
         if str(pannum) in ToolboxConfig.PANELS:
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["recognised_panno"],
                 self.sample_name,
                 pannum,
@@ -1084,7 +1098,7 @@ class SampleObject(ToolboxConfig):
                 for fastq_path in os.listdir(self.fastq_dir_path)
                 if all([substring in fastq_path for substring in matches])
             )[0]
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["fastq_identified"],
                 fastq_name,
                 ", ".join(matches),

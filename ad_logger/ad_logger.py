@@ -31,12 +31,12 @@ def get_logging_formatter() -> str:
     )
 
 
-def set_root_logger() -> None:
+def set_root_logger() -> object:
     """
     Set up root logger and add stream handler and syslog handler - we only want to add these once
     else it will duplicate log messages to the terminal. All loggers named with the same stem
     as the root logger will use these same syslog handler and stream handler
-        :return None:
+        :return logger: Logging object
     """
     sensitive_formatter=SensitiveFormatter(get_logging_formatter())
     logger = logging.getLogger(AdLoggerConfig.REPO_NAME)
@@ -55,6 +55,7 @@ def set_root_logger() -> None:
             syslog_handler,
         ]
     )
+    return logger
 
 
 def shutdown_logs(logger: logging.Logger) -> None:

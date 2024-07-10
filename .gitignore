@@ -6,3 +6,4 @@ seglh_naming.egg-info/
 venv/
 temp/
 .coverage
+*data_unzipped

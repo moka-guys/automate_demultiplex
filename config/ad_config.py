@@ -596,3 +596,12 @@ class URConfig:
     STRINGS = {
         "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
     }
+
+class RunfolderCleanupConfig():
+    """
+    Runfolder Cleanup configuration
+    """
+    TIMESTAMP = TIMESTAMP
+    RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
+    RUNFOLDERS = RUNFOLDERS
+    CREDENTIALS = CREDENTIALS

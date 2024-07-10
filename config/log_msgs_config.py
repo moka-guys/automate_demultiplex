@@ -45,6 +45,8 @@ LOG_MSGS = {
         "fastq_valid": "Gzip --test determined that the fastq is valid: %s",
         "fastq_invalid": "Gzip --test determined that the fastq is not valid: %s. Stdout: %s. Stderr: %s",
         "demux_success": "Demultiplexing was successful for the run with all fastqs valid",
+        "wes_batch_nos_identified": "WES batch numbers %s identified",
+        "wes_batch_nos_missing": "WES batch numbers missing. Check for errors in the sample names. Script exited",
     },
     "ad_email": {
         "sending_email": "Sending the email message: %s",
@@ -146,8 +148,6 @@ LOG_MSGS = {
         "upload_rf_error": (
             "An error occurred when uploading the rest of the runfolder: %s. See %s and %s for further details. Script exited"
         ),
-        "wes_batch_nos_identified": "WES batch numbers %s identified",
-        "wes_batch_nos_missing": "WES batch numbers missing. Check for errors in the sample names. Script exited",
         "library_no_err": "Unable to identify library numbers. Script exited. Check for underscores in the sample names.",
         "checking_fastq": "Checking fastq has been collected: %s",
         "sample_match": "Fastq in the BaseCalls directory matches the sample name in the SampleSheet: %s, %s",

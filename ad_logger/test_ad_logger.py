@@ -48,4 +48,3 @@ class TestRunfolderLoggers:
             )
             assert loggers[logger_name].name in caplog.text
 
-
