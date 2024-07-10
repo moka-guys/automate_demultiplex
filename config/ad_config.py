@@ -605,7 +605,7 @@ class URConfig:
     }
 
 
-class RunfolderCleanupConfig:
+class RunfolderCleanupConfig(PanelConfig):
     """
     Runfolder Cleanup configuration
     """

@@ -14,7 +14,7 @@ import datetime
 import argparse
 import dxpy
 from toolbox.toolbox import git_tag
-from config.ad_config import BRANCH
+from config.ad_config import BRANCH, RunfolderCleanupConfig
 from .wscleaner import RunFolderManager
 
 
@@ -65,7 +65,7 @@ parsed_args = get_arguments()
 # If dry-run CLI flag is given, or script is run from the development area
 # no directories are deleted by the runfolder manager
 if parsed_args.dry_run or BRANCH != "main":
-    dry_run = True
+    dry_run = True  # Protects against deleting the test folders (!!)
 
 RFM = RunFolderManager(
     dry_run=dry_run,

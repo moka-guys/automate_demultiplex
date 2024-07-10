@@ -108,7 +108,7 @@ class BuildRunfolderDxCommands(SWConfig):
         cmd_list = []
         cmd_list.append(self.create_multiqc_cmd(pipeline))
         cmd_list.append(SWConfig.UPLOAD_ARGS["depends_list"])
-        # cmd_list.append(self.create_upload_multiqc_cmd())  # TODO this can be uncommented once working again
+        cmd_list.append(self.create_upload_multiqc_cmd())  # TODO this can be uncommented once working again
         return cmd_list
 
     def create_multiqc_cmd(self, pipeline: str) -> str:

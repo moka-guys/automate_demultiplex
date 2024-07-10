@@ -99,5 +99,5 @@ class TestCheckRunfolder:
                 fastqs_list=fastqs_list,
                 logfile_count=6,
             )
-            result = crf.to_delete()
+            result = crf.to_delete("NOT_TSO")
             assert result == True

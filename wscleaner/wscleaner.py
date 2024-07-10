@@ -17,10 +17,13 @@ import re
 import inspect
 import logging
 import shutil
+import traceback
+import datetime
 from pathlib import Path
 from typing import Optional
 import os
 import dxpy
+from typing import List
 from config.ad_config import RunfolderCleanupConfig
 from ad_logger.ad_logger import AdLogger
 from toolbox.toolbox import (
@@ -77,24 +80,27 @@ class RunFolderManager:
             Calls methods for cleaning up runfolders
         get_runfolders_to_process()
             Identify runfolders to consider for deletion
+        get_dirs_created_after(path, date_str)
+            Get directories created after a specified date.
         delete()
             Delete the local runfolder from the root directory and append name to self.deleted
     """
 
-    def __init__(self, dry_run=False, min_age=None, logfile_count=6):
+    def __init__(self, dry_run=False, min_age=10, logfile_count=6):
         """
         Constructor for the RunFolderManager class
-            :param runfolders_dir (str):    Runfolders directory, defined within the config
+            :param runfolders_dir (str):    Runfolders directory, with default defined in the config
             :param dry_run (bool):          True if script should not delete runfolders, False if it should
             :param min_age Optional[int]:   Minimum age in days of runfolders that should be assessed by
                                             the script
             :param logfile_count (int):     Expected number of logfiles uploaded to the DNAnexus project.
                                             Default is 6
         """
-        self.runfolders_dir = RunfolderCleanupConfig.RUNFOLDERS
+        self.runfolders_dir = runfolders_dir=RunfolderCleanupConfig.RUNFOLDERS
         self.dry_run = dry_run
         self.min_age = min_age
         self.logfile_count = logfile_count
+        self.samplesheets_dir = os.path.join(self.runfolders_dir, "samplesheets")
 
     def cleanup_runfolders(self) -> None:
         """
@@ -114,7 +120,7 @@ class RunFolderManager:
                 rf_samples_obj.fastqs_list,
                 self.logfile_count,
             )
-            if cr_obj.to_delete():
+            if cr_obj.to_delete(rf_samples_obj.pipeline):
                 self.delete(rf_obj.runfolder_name, rf_obj.runfolderpath)
                 deleted_runfolders.append(rf_obj.runfolder_name)
         # Record runfolders removed by this iteration
@@ -130,7 +136,9 @@ class RunFolderManager:
         """
         runfolder_objects = []
         folders = os.listdir(self.runfolders_dir)
-        for folder_name in folders:
+        # folders = self.get_dirs_created_after(self.runfolders_dir, '2024-06-12')  # V45.0.0 of the automated scripts (logfile number changed to 6)
+        for runfolder_path in folders:
+            folder_name = runfolder_path.split("/")[-1]
             if get_runfolder_path(folder_name) and re.compile(
                 RunfolderCleanupConfig.RUNFOLDER_PATTERN
             ).match(folder_name):
@@ -138,38 +146,84 @@ class RunFolderManager:
                     f"Initiating RunfolderObject instance for {folder_name}"
                 )
                 rf_obj = RunfolderObject(folder_name, RunfolderCleanupConfig.TIMESTAMP)
-                rf_samples_obj = RunfolderSamples(rf_obj, script_logger)
                 rf_age = rf_obj.age()
-                if os.path.exists(rf_obj.rtacompletefile_path):
-                    # Catch TSO500 runfolders here (do not contain fastqs)
-                    if rf_samples_obj.pipeline == "dev":
-                        script_logger.info(
-                            f"{rf_obj.runfolder_name} is a DEV runfolder therefore should not be deleted"
-                        )
-                    if (rf_age >= self.min_age) and (
-                        rf_samples_obj.pipeline == "tso500"
-                    ):
-                        script_logger.info(
-                            f"{rf_obj.runfolder_name} is a TSO500 runfolder and is >= {self.min_age} days old"
-                        )
-                        runfolder_objects.append(tuple([rf_obj, rf_samples_obj]))
-                    # Criteria for runfolder: Older than or equal to min_age and contains fastq.gz files
-                    elif (rf_age >= self.min_age) and len(
-                        rf_samples_obj.fastqs_list
-                    ) > 0:
-                        script_logger.debug(
-                            f"{rf_obj.runfolder_name} contains 1 or more fastq and is >= {self.min_age} days old"
-                        )
-                        runfolder_objects.append(tuple([rf_obj, rf_samples_obj]))
-                    else:  # Shouldn't get this far anymore - leave in just incase
-                        script_logger.debug(
-                            f"{rf_obj.runfolder_name} has 0 fastqs, is not a TSO runfolder or is < {self.min_age} days old"
-                        )
+                if os.path.exists(os.path.join(self.samplesheets_dir, f"{folder_name}_SampleSheet.csv")):
+                    rf_samples_obj = RunfolderSamples(rf_obj, script_logger)
+                    if rf_samples_obj:
+                        if os.path.exists(rf_obj.rtacompletefile_path):
+                            if (rf_age >= self.min_age):
+                                # Catch TSO500 runfolders here (do not contain fastqs)
+                                if rf_samples_obj.pipeline == "dev":
+                                    script_logger.info(
+                                        f"{rf_obj.runfolder_name} is a DEV runfolder therefore should not be deleted"
+                                    )
+                                else:
+                                    if rf_samples_obj.pipeline == "tso500":
+                                        script_logger.info(
+                                            f"{rf_obj.runfolder_name} is a TSO500 runfolder and is >= {self.min_age} days old"
+                                        )
+                                        runfolder_objects.append(tuple([rf_obj, rf_samples_obj]))  # Append to list to process
+                                    else:
+                                        # Criteria for runfolder: Older than or equal to min_age and contains fastq.gz files
+                                        if rf_samples_obj.fastqs_list:
+                                            if len(
+                                                rf_samples_obj.fastqs_list
+                                            ) > 0:
+                                                script_logger.info(
+                                                    f"{rf_obj.runfolder_name} contains 1 or more fastq and is >= {self.min_age} days old"
+                                                )
+                                                runfolder_objects.append(tuple([rf_obj, rf_samples_obj]))  # Append to list to process
+                                            else:
+                                                script_logger.info(
+                                                    f"{rf_obj.runfolder_name} has 0 fastqs and is not a TSO runfolder"
+                                                )
+                                        else:
+                                            script_logger.info(
+                                                f"{rf_obj.runfolder_name}: Expected fastqs could not be parsed from the SampleSheet for the run"
+                                            )
+                            else:
+                                script_logger.info(
+                                    f"{rf_obj.runfolder_name} is < {self.min_age} days old"
+                                )
+                        else:
+                            script_logger.info(
+                                f"{rf_obj.runfolder_name} is not a runfolder, or sequencing has not yet finished"
+                            )
                 else:
-                    script_logger.debug(
-                        f"{rf_obj.runfolder_name} is not a runfolder, or sequencing has not yet finished"
+                    script_logger.info(
+                        f"Corresponding SampleSheet for {rf_obj.runfolder_name} could not be located. This is required for analysing for deletion"
                     )
+        to_assess = [rf_obj.runfolder_name for runfolder_object in runfolder_objects]
+        all_folders = [folder.split("/")[-1].strip() for folder in folders]
+        to_skip = [folder for folder in all_folders if folder not in to_assess]
+        script_logger.info(
+            "Skipping over folders: " + ", ".join(to_skip)
+        )
         return runfolder_objects
+
+    def get_dirs_created_after(self, path: str, date_str: str) -> List[str]:
+        """
+        Get directories created after a specified date.
+            :param path (str):      The directory path to check.
+            :param date_str (str):  The date string to compare against in 'YYYY-MM-DD' format
+            :return List[str]:      List of directory paths that were created after the specified date
+        """
+        specified_date = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        dirs_created_after = []
+
+        for dirname in os.listdir(path):
+            dir_full_path = os.path.join(path, dirname)
+            if os.path.isdir(dir_full_path):
+                if os.name == 'nt':
+                    creation_time = os.path.getctime(dir_full_path)
+                else:
+                    stat_info = os.stat(dir_full_path)
+                    creation_time = getattr(stat_info, 'st_birthtime', stat_info.st_mtime)
+
+                if datetime.datetime.fromtimestamp(creation_time) > specified_date:
+                    dirs_created_after.append(dir_full_path)
+
+        return dirs_created_after
 
     def delete(self, runfolder_name: str, runfolder_path: str) -> Optional[bool]:
         """
@@ -207,7 +261,7 @@ class CheckRunfolder:
             Returns true if a runfolder's upload log exists
         check_upload_log()
             Returns true if a runfolder's upload log contains no upload errors
-        to_delete()
+        to_delete(pipeline)
             Determine whether a runfolder is safe for deletion
     """
 
@@ -244,7 +298,6 @@ class CheckRunfolder:
             fastq_bool = True
             for fastq in self.fastqs_list:  # Local fastqs
                 if fastq.split("/")[-1] not in dx_fastqs:
-                    print(fastq.split("/")[-1])
                     script_logger.debug(f"Fastq missing from DNAnexus project: {fastq}")
                     fastq_bool = False
             script_logger.debug(f"{self.runfolder_name} FASTQ BOOL: {fastq_bool}")
@@ -289,7 +342,8 @@ class CheckRunfolder:
         if os.path.exists(self.upload_runfolder_logfile):
             with open(self.upload_runfolder_logfile, "r") as f:
                 log_contents = f.readlines()
-            if "- ERROR -" in log_contents:
+                print
+            if any("- ERROR -" in string for string in log_contents):
                 script_logger.debug(f"{self.runfolder_name} upload log contains errors")
                 script_logger.warning(
                     f"{self.runfolder_name} - UPLOAD LOG CONTAINS ERRORS"
@@ -300,27 +354,44 @@ class CheckRunfolder:
         script_logger.debug(f"{self.runfolder_name} UPLOAD LOG BOOL: {upload_log_bool}")
         return upload_log_bool
 
-    def to_delete(self) -> Optional[bool]:
+    def to_delete(self, pipeline: str) -> Optional[bool]:
         """
         Determine whether a runfolder is safe for deletion
+            :param pipeline (str):  Name of pipeline
             :return Optional[bool]: Return True if runfolder deleted / marked for deletion, else None
         """
         # Delete runfolder if it meets the backup criteria
         # dx_project is evaluated first as following criteria checks depend on it
+        tso_run = False
+
+        if pipeline == RunfolderCleanupConfig.CAPTURE_PANEL_DICT["tso500"]["pipeline"]:
+            tso_run = True
+
         if self.dx_project:
-            fastqs_uploaded = self.check_fastqs()
-            logfiles_uploaded = self.check_logfiles()
             upload_log_exists = self.upload_log_exists()
             clean_upload_log = self.check_upload_log()
-            if all(
-                [
-                    fastqs_uploaded,
-                    logfiles_uploaded,
-                    upload_log_exists,
-                    clean_upload_log,
-                ]
-            ):
-                return True
+            logfiles_uploaded = self.check_logfiles()
+
+            if tso_run:
+                if all(
+                    [
+                        logfiles_uploaded,
+                        upload_log_exists,
+                        clean_upload_log,
+                    ]
+                ):
+                    return True
+            else:
+                fastqs_uploaded = self.check_fastqs()
+                if all(
+                    [
+                        fastqs_uploaded,
+                        logfiles_uploaded,
+                        upload_log_exists,
+                        clean_upload_log,
+                    ]
+                ):
+                    return True
 
 
 class DxProjectRunFolder:

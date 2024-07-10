@@ -125,8 +125,8 @@ Currently test suite coverage is as follows:
 | [demultiplex.py](demultiplex/demultiplex.py) | 83 |
 | [setoff_workflows.py](setoff_workflows/setoff_workflows.py) | 0 |
 | [upload_runfolder.py](upload_runfolder/upload_runfolder.py) | 0 |
-| [toolbox.py](toolbox/toolbox.py) | 78 |
-| [wscleaner.py](wscleaner/wscleaner.py) | 70 |
+| [toolbox.py](toolbox/toolbox.py) | 76 |
+| [wscleaner.py](wscleaner/wscleaner.py) | 46 |
 
 
 **TESTS AND TEST CASES/FILES *MUST* BE MAINTAINED AND UPDATED ACCORDINGLY IN CONJUNCTION WITH SCRIPT DEVELOPMENT**
