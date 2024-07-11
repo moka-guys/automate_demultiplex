@@ -851,6 +851,7 @@ class DevPipeline:
         self.workflow_cmds.extend(
             self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline)
         )
+        self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
 
 class ArcherDxPipeline:
