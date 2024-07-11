@@ -94,7 +94,7 @@ class RunFolderManager:
             :param logfile_count (int):     Expected number of logfiles uploaded to the DNAnexus project.
                                             Default is 6
         """
-        self.runfolders_dir = runfolders_dir=RunfolderCleanupConfig.RUNFOLDERS
+        self.runfolders_dir = RunfolderCleanupConfig.RUNFOLDERS
         self.dry_run = dry_run
         self.min_age = min_age
         self.logfile_count = logfile_count
@@ -136,8 +136,7 @@ class RunFolderManager:
                                                 RunfolderSamples)
         """
         runfolder_objects = []
-        folders = os.listdir(self.runfolders_dir)
-        # folders = self.get_dirs_created_after(self.runfolders_dir, '2024-06-12')  # V45.0.0 of the automated scripts (logfile number changed to 6)
+        folders = self.get_dirs_created_after(self.runfolders_dir, '2024-06-12')  # V45.0.0 of the automated scripts (logfile number changed to 6)
         for runfolder_path in folders:
             folder_name = runfolder_path.split("/")[-1]
             if get_runfolder_path(folder_name) and re.compile(
