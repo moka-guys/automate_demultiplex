@@ -9,7 +9,7 @@ Uploads an Illumina runfolder to DNAnexus.
 2. If upload_rest_of_runfolder is called, calls methods to upload the rest of the runfolder (the runfolder minus the fastqs and several QC files):
     * Checks the runfolder exists
     * Creates a dictionary of all files and folders requiring upload, ignoring any files specified in the ignore string. Folders are the keys and files in the folders are values in list format
-    * Builds upload commands to upload the rest of the runfolder using the DNAnexus `ua` utility. The number of upload tries is set to 100 with the `--tries` flag. The upload agent command can take multiple files separated by a space, with the full path required for each file, and it has a max number of uploads of 1000 per command. This function generates per-folder upload commands, with maximum 100 files being uploaded per command
+    * Builds upload commands to upload the rest of the runfolder using the DNAnexus `ua` utility. The number of upload tries is set to 100 with the `--tries` flag. The upload agent itself can take multiple files separated by a space, with the full path required for each file, and it has a max number of uploads of 1000 per command. The function in the script generates per-folder upload commands, with a maximum of 100 files uploaded per command
     * Orthogonal tests are performed to verify the upload:
         - A count of files that should be uploaded (using the ignore terms if provided)
         - A count of files in the DNA Nexus project
@@ -18,11 +18,11 @@ Uploads an Illumina runfolder to DNAnexus.
 3. If upload_files is called directly, uploads the provided files to the runfolder                
 4. The script uploads logfiles produced by this repository to the DNAnexus project under `PROJECT:/RUNFOLDER/automated_scripts_logfiles`.
 
-* N.B. the runfolder does not upload the SampleSheet from the samplesheets directory. If required, this should be uploaded manually *
+* N.B. the script does not upload the SampleSheet from the SampleSheets directory, unless it has been copied into the runfolder first *
 
 ## Configuration
 
-Settings are imported from [ad_config.py](../config/ad_config.py).  
+Settings are imported from [ad_config.py](../config/ad_config.py).
 
 ## Usage
 
@@ -41,9 +41,6 @@ options:
   -h, --help            show this help message and exit
   -r RUNFOLDER_NAME, --runfolder_name RUNFOLDER_NAME
                         Workstation runfolder name
-  -a AUTH_TOKEN, --auth_token AUTH_TOKEN
-                        A string or file containing a DNAnexus authorisation key used to access the DNAnexus project. If not specified, the config-specified
-                        authtoken will be used by default
   --ignore IGNORE       Comma-separated list of patterns which prevents the file from being uploaded if any pattern is present in filename or filepath.
   -p PROJECT_ID, --project_id PROJECT_ID
                         The ID of an existing DNAnexus project for the given runfolder
@@ -63,7 +60,13 @@ nexus_identifiers = {
     "proj_id": project_id,
     }
 
-self.upload_runfolder = UploadRunfolder(self.rf_obj, nexus_identifiers)
+self.upload_runfolder = UploadRunfolder(
+    rf_obj.rf_loggers["backup"],
+    rf_obj.runfolder_name,
+    rf_obj.runfolderpath,
+    rf_obj.upload_flagfile,
+    nexus_identifiers
+)
 
 result = self.upload_runfolder.upload_files(
     file_upload_dict[filetype]["cmd"],

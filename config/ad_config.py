@@ -1,10 +1,15 @@
-#!/usr/bin/python3
 """
-Automate demultiplex configuration. Contains the following settings:
-- General settings used across modules
-- Demultiplexing script-specific settings
-- Setoff workflows script-specific settings
+Automate demultiplex configuration. Contains general settings, and the following
+classes collating the settings required per module:
+
+- AdEmailConfig
+- AdLoggerConfig
+- DemultiplexConfig
+- SWConfig
+- ToolboxConfig
+- URConfig
 """
+
 import os
 import sys
 import datetime
@@ -31,7 +36,7 @@ MAIL_SETTINGS = {
     "alerts_email": "moka.alerts@gstt.nhs.uk",
 }
 
-if BRANCH == "master" and "pytest" not in sys.modules:  # Prod branch
+if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
     TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
@@ -41,7 +46,7 @@ if BRANCH == "master" and "pytest" not in sys.modules:  # Prod branch
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
         "binfx_recipient": MAIL_SETTINGS["binfx_email"],
         # Oncology email address for email alerts
-        "oncology_ops_email": "m.neat@nhs.net",
+        "oncology_ops_email": "synnovis.seglh-ods@nhs.net",
         "wes_samplename_emaillist": [
             "gst-tr.ViapathGeneticsAdmin@nhs.net",
             "lu.liu@viapath.co.uk",
@@ -77,17 +82,17 @@ FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
     "tso_fastqs": "${PROJECT_ID}:/analysis_folder/Logs_Intermediates/CollapsedReads/",
 }
-SDK_SOURCE = (
-    "source /usr/local/src/mokaguys/apps/dx-toolkit/environment"  # dxtoolkit path
-)
+SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit path
+
 # DNAnexus upload agent path
-UPLOAD_AGENT_EXE = "/usr/local/src/mokaguys/apps/dnanexus-upload-agent-1.5.17-linux/ua"
+UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
+
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
-DEMULTIPLEXLOG_TSO500_MSG = "TSO500 run. Does not need demultiplexing locally"
+DEMUX_NOT_REQUIRED_MSG = "%s run. Does not need demultiplexing locally"
 DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
@@ -107,9 +112,10 @@ NEXUS_IDS = {
     },
     "APPS": {
         "tso500": f"{TOOLS_PROJECT}:applet-GZgv0Jj0jy1Yfbx3QvqyKjzp",  # TSO500_v1.6.0
-        "congenica_upload": f"{TOOLS_PROJECT}:applet-G8QGBK80jy1zJK6g9yVP7P8V",  # congenica_upload_v1.3.2"
+        "congenica_upload": f"{TOOLS_PROJECT}:applet-G8QGBK80jy1zJK6g9yVP7P8V",  # congenica_upload_v1.3.2
         "congenica_sftp": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",  # wes_congenica_sftp_upload_v1.0
         "qiagen_upload": f"{TOOLS_PROJECT}:applet-Gb6G4k00v09KXfq8f6BP7f23",  # qiagen_upload_v1.0.0
+        "oncodeep_upload": f"{TOOLS_PROJECT}:applet-GkkGQ880jy1vXXFZBFG7232G",  # oncodeep_upload v1.0.0
         "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",  # upload_multiqc_v1.4.0
         "multiqc": f"{TOOLS_PROJECT}:applet-GXqBzg00jy1pXkQVkY027QqV",  # multiqc_v1.18.0
         "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",  # sompy_v1.2
@@ -120,7 +126,7 @@ NEXUS_IDS = {
         "ed_readcount": f"{TOOLS_PROJECT}:applet-GbkVzbQ0jy1zBZf5k6Xk6QP7",  # ED_readcount_analysis_v1.3.0
         "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-GbkVyQ80jy1Xf1p6jpPK6p1x",  # ED_cnv_calling_v1.3.0
         "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",  # RPKM_using_conifer_v1.6
-        "duty_csv": f"{TOOLS_PROJECT}:applet-Gb6QKf00v09JV7KBVJqFVxX6",  # duty_csv_v1.3.0
+        "duty_csv": f"{TOOLS_PROJECT}:applet-Gp75GB00360KXPV4Jy7PPFfQ",  # duty_csv_v1.5.0
     },
     "WORKFLOWS": {
         "pipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",  # GATK3.5_v2.18
@@ -154,6 +160,8 @@ NEXUS_IDS = {
     },
 }
 NEXUS_IDS["WORKFLOWS"]["archerdx"] = NEXUS_IDS["APPS"]["fastqc"]
+NEXUS_IDS["WORKFLOWS"]["oncodeep"] = NEXUS_IDS["APPS"]["fastqc"]
+
 
 APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     "tso500": {
@@ -162,8 +170,6 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "analysis_options": "-ianalysis_options=",
         "project_name": "-iproject_name=${PROJECT_NAME}",
         "runfolder_name": "-irunfolder_name=${RUNFOLDER_NAME}",
-        "ht_instance": "mem1_ssd1_v2_x72",
-        "lt_instance": "mem1_ssd1_v2_x36",
     },
     "sambamba": {  # Used for TSO samples only as standalone app
         "bam": "-ibamfile=${PROJECT_ID}:/analysis_folder/Logs_Intermediates/StitchedRealigned/",
@@ -227,6 +233,11 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "sample_name": "-isample_name=",
         "sample_zip_folder": "-isample_zip_folder=${PROJECT_ID}:/results/",
     },
+    "oncodeep_upload": {
+        "run_identifier": "-irun_identifier=",
+        "file_to_upload": "-ifile_to_upload=",
+        "account_type": "-iaccount_type=Production",
+    },
     "duty_csv": {
         "project_name": "-iproject_name=${PROJECT_NAME}",
         "tso_pannumbers": "-itso_pannumbers=",
@@ -237,7 +248,7 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
 UPLOAD_ARGS = {
     "dest": "--dest=${PROJECT_ID}",
     "proj": "--project=${PROJECT_NAME}",
-    "token": "--brief --auth %s)",
+    "token": "--brief --auth ${AUTH})",
     "depends": "${DEPENDS_LIST}",
     "depends_gatk": "${DEPENDS_LIST_GATK}",
     # Arguments to capture jobids. Job IDS are built into a string that can be passed to
@@ -253,9 +264,10 @@ UPLOAD_ARGS = {
 }
 
 DX_CMDS = {
-    "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth %s)"',
+    "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth ${AUTH})"',
     "find_proj_name": (
-        f"{SDK_SOURCE}; dx find projects --name *%s* " "--auth %s | awk '{print $3}'"
+        f"{SDK_SOURCE}; dx find projects --name *%s* "
+        "--auth %s | awk '{print $3}'"
     ),
     "proj_name_from_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .name",
     "find_proj_id": f"{SDK_SOURCE}; dx describe %s --auth %s --json | jq -r .id",
@@ -267,7 +279,7 @@ DX_CMDS = {
         f"{SDK_SOURCE}; dx find data --project=%s --tag as_upload --auth %s | "
         "grep -v 'automated_scripts_logfiles' | wc -l"
     ),
-    "invite_user": "USER_INVITE_OUT=$(dx invite %s ${PROJECT_ID} %s --no-email --auth %s)",
+    "invite_user": "USER_INVITE_OUT=$(dx invite %s ${PROJECT_ID} %s --no-email --auth ${AUTH})",
     "file_upload_cmd": (
         f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder '%s' --do-not-compress "
         "--upload-threads 10 %s --tag as_upload"
@@ -275,7 +287,9 @@ DX_CMDS = {
     "pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
     "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
     "snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} --priority high -y {JOB_NAME_STR}",
-    "tso500": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --priority high -y {JOB_NAME_STR}",
+    "tso500": (
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --instance-type mem1_ssd1_v2_x72 --priority high -y {JOB_NAME_STR}"
+    ),
     "fastqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
     "peddy": (  # TODO move instance type into app itself
         f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high "
@@ -304,7 +318,11 @@ DX_CMDS = {
     ),
     # Sleep command ensures the number of concurrent jobs does not surpass the QCII limit of 10
     "qiagen_upload": (
-        f"sleep 1.5m; JOB_ID=$(dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}"
+        f"sleep 1.2m; JOB_ID=$(dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}"
+    ),
+    "oncodeep_upload": (
+        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['oncodeep_upload']} --priority high -y "
+        f"{JOB_NAME_STR}"
     ),
     "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
     "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
@@ -345,9 +363,16 @@ class DemultiplexConfig(PanelConfig):
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
     STRINGS = {
-        "demultiplexlog_tso500_msg": DEMULTIPLEXLOG_TSO500_MSG,
+        "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
+        "demultiplex_success": DEMULTIPLEX_SUCCESS,
+        "checksums_assessed": "Checksums assessed by AS: %s",  # Written to file by AS
+        "checksums_match": "Checksums match",  # Success message written to md5checksum file by integrity check scripts
+        "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
+        "samplesheet_success": "Samplesheet check successful with no errors identified: %s",
+        "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors: %s ",
+        "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s",
     }
     TESTING = TESTING
     BCL2FASTQ2_CMD = (
@@ -358,23 +383,14 @@ class DemultiplexConfig(PanelConfig):
         f"docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
-
-    CHECKSUMS_ALREADY_ASSESSED = (
-        "Checksums already assessed by AS"  # Written to file by AS
-    )
-    CHECKSUM_MATCH_MSG = "Checksums match"  # Success message written to md5checksum file by integrity check scripts
-    # Failure message written to md5checksum file by integrity check scripts
-    CHECKSUM_DO_NOT_MATCH_MSG = "Checksums do not match"
-    SAMPLESHEET_SUCCESS_MSG = "Samplesheet check successful with no errors identified"
-    SAMPLESHEET_ERRORS_MSG = (
-        "Processing halted. SampleSheet contains disallowed SampleSheet errors: %s"
-    )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
         "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
         "999999_M02631_0285_000000000-DEVOO",
         "999999_NB551068_0285_OODEVINTEG",
+        "999999_M02631_0285_000000000-DVUMI",
+        "999999_NB552085_0320_ONCODEEP00",  # Included as behaviour is slightly different to include copying the MasterFile
     ]
     SEQUENCER_IDS = {
         # Requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed
@@ -406,23 +422,22 @@ class SWConfig(PanelConfig):
     UPLOAD_ARGS = UPLOAD_ARGS
     RUNFOLDERS = RUNFOLDERS
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
-    if BRANCH == "master":  # Prod branch
-        DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
+    if BRANCH == "main":  # Prod branch
+
         BSPS_ID = "BSPS_MD"
         DNANEXUS_USERS = {  # User access level
+            # TODO remove InterpretationRequest user once per-user accounts set up
             "viewers": [PROD_ORGANISATION, "InterpretationRequest", "org-seglh_read"],
             "admins": ["mokaguys"],
         }
         TSO_BATCH_SIZE = 16
     else:
-        DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
         BSPS_ID = ""
         DNANEXUS_USERS = {  # User access level
             "viewers": [],
             "admins": [PROD_ORGANISATION],
         }
         TSO_BATCH_SIZE = 2
-    DNANEXUS_PROJ_ID = "${PROJECT_ID}"
     RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
     EMPTY_CP_DEPENDS = [
@@ -431,15 +446,11 @@ class SWConfig(PanelConfig):
         "DEPENDS_LIST_EDREADCOUNT=''",
     ]
     STRINGS = {
-        "demultiplexlog_tso500_msg": DEMULTIPLEXLOG_TSO500_MSG,
+        "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "demultiplex_success": DEMULTIPLEX_SUCCESS,
     }
-    UPLOAD_STARTED_MSG = (
-        "Upload started"  # Statement to write to DNAnexus upload started file
-    )
-    # TODO move this to the DXAPP.JSON file for FH app
-    PIPE_FH_GATK_TIMEOUT_ARGS = (
+    PIPE_FH_GATK_TIMEOUT_ARGS = (  # This is specified for the GATK app in the Custom Panels pipeline for only FH samples
         # Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
         # reason to auto restart list
         '--extra-args \'{"timeoutPolicyByExecutable": {"'
@@ -453,20 +464,15 @@ class SWConfig(PanelConfig):
         "wes": "update NGSTest set PipelineVersion = %s, StatusID = %s where dna in ('%s') and StatusID = %s",
         "oncology": "insert into NGSOncologyAudit(SampleID1,SampleID2,RunID,PipelineVersion,ngspanelid) values (%s)",
     }
-    PSCON_IDS = [
-        "NA12878",
-        "136819",  # NA12878
-        "HD200",  # Seracare v4 tumour fusion reference material
-    ]
-    NTCON_IDS = ["00000", "NTCcon", "NTC000", "NC000"]
     SQL_IDS = {
         # Moka IDs for generating SQLs to update the Moka database (audit trail)
         "WORKFLOWS": {
-            "pipe": 5229,
+            "pipe": 5302,
             "wes": 5078,
-            "archerdx": 5238,
+            "archerdx": 5300,
             "snp": 5091,
-            "tso500": 5288,
+            "tso500": 5301,
+            "oncodeep": 5299,
         },
         "WES_TEST_STATUS": {
             "nextseq_sequencing": 1202218804,  # Test Status = NextSEQ sequencing
@@ -534,16 +540,27 @@ class SWConfig(PanelConfig):
     }
 
 
-class ToolboxConfig:
+class ToolboxConfig(PanelConfig):
     """
     Toolbox configuration
     """
 
+    if BRANCH == "main":
+        DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
+    else:
+        DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
+    DNANEXUS_PROJ_ID = "${PROJECT_ID}"
     AD_LOGDIR = AD_LOGDIR
     CREDENTIALS = CREDENTIALS
     FASTQ_DIRS = FASTQ_DIRS
     RUNFOLDERS = RUNFOLDERS
     TIMESTAMP = TIMESTAMP
+    PSCON_IDS = [
+        "NA12878",
+        "136819",  # NA12878
+        "HD200",  # Seracare v4 tumour fusion reference material
+    ]
+    NTCON_IDS = ["00000", "NTCcon", "NTC000", "NC000"]
     STRINGS = {
         "phasing_metrics_suffix": ".illumina_phasing_metrics",
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
@@ -583,3 +600,17 @@ class URConfig:
     CREDENTIALS = CREDENTIALS
     DX_CMDS = DX_CMDS
     TIMESTAMP = TIMESTAMP
+    STRINGS = {
+        "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
+    }
+
+
+class RunfolderCleanupConfig(PanelConfig):
+    """
+    Runfolder Cleanup configuration
+    """
+
+    TIMESTAMP = TIMESTAMP
+    RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
+    RUNFOLDERS = RUNFOLDERS
+    CREDENTIALS = CREDENTIALS

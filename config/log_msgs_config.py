@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 Config file for logging module. Contains settings specific to logging. The LOG_MSGS dictionary contains
 both general messages which are used across multiple modules, and also logfile-specific messages:
@@ -7,7 +6,6 @@ both general messages which are used across multiple modules, and also logfile-s
 - ss_validator
 - sw
 - backup
-- decision_support
 """
 
 # Messages used by individual scripts / modules for logging
@@ -25,10 +23,31 @@ LOG_MSGS = {
         "software_fail": "Software tests did not all pass. Script exited",
         "found_program": "Found program: %s",
         "program_missing": "Could not find program: %s. Script exited",
-        "not_dev_run": "SampleSheet is not from a development run: %s",
-        "dev_run": "SampleSheet is from a development run: %s",
-        "sschecks_passed": "SampleSheet passed all checks %s",
+        "runtype": "Run has been identified as a %s run: %s",
         "ad_version": "Automate_demultiplex release: %s",
+        "pipeline_name": "Pipeline name identified as %s",
+        "runtype_str": "Runtype name string created: %s",
+        "library_nos_identified": "Library numbers %s identified",
+        "unrecognised_panno": "Sample in SampleSheet does not contain a recognised pan number: %s. Script exited",
+        "recognised_panno": "Sample in SampleSheet contains a recognised pan number: %s, %s",
+        "sample_identified": "Identified %s sample: %s",
+        "fastq_identified": (
+            "The following fastq has been identified in the runfolder %s as matching the following strings: %s"
+        ),
+        "fastq_nonexistent": "No fastq could be intentified that matches the following strings: %s. Error: %s",
+        "sample_excluded": "Sample excluded from samples dictionary due to missing fastqs: %s",
+        "control_sample": "%s control sample detected: %s",
+        "missing_panno": "Could not identify pan number from the sample name in the sample sheet: %s",
+        "multiple_pipeline_names": (
+            "Multiple pipeline names detected from panel config for sample list: %s. Scripts do not support different "
+            "pipelines for the same run. Supported pipelines: %s"
+        ),
+        "ss_missing": "SampleSheet is missing and is required for sample name parsing",
+        "fastq_valid": "Gzip --test determined that the fastq is valid: %s",
+        "fastq_invalid": "Gzip --test determined that the fastq is not valid: %s. Stdout: %s. Stderr: %s",
+        "demux_success": "Demultiplexing was successful for the run with all fastqs valid",
+        "wes_batch_nos_identified": "WES batch numbers %s identified",
+        "wes_batch_nos_missing": "WES batch numbers missing. Check for errors in the sample names. Script exited",
     },
     "ad_email": {
         "sending_email": "Sending the email message: %s",
@@ -38,61 +57,54 @@ LOG_MSGS = {
         "html_error": "There was a problem generating the email html file, with the following exception: %s",
     },
     "demux": {
-        "previous_ss_check": "Samplesheet check previously carried out. Remove the flag file to re-process: %s",
+        "previous_ss_check_fail": "Previous SampleSheet check identified errors. Remove the flag file to re-process: %s",
         "ss_check_required": "Samplesheet check not yet conducted",
+        "ss_validator_version": "Calling samplesheet_validator v%s",
+        "sschecks_passed": "SampleSheet passed all checks %s",
+        "sschecks_failed": (
+            "SampleSheet check failed with the following errors: %s. Please correct these, remove the "
+            "SampleSheet check flag file, (and the checksums assessed string from the md5checksum file "
+            "if present) to continue processing"
+        ),
+        "dev_umis_upload_flagfile": "Created upload flag file for development runs with UMIs: %s",
+        "sscheck_success_msg_present": "SampleSheet check file contains success message",
+        "sscheckfile_absent": "SampleSheet check file is absent",
+        "sscheck_success_msg_absent": "SampleSheet check file does not contain success message",
         "cmd_line_runfolder": "Runfolder %s has been supplied on the command line",
         "programmatic_runfolders": "Runfolders were gathered programmatically",
         "runfolder_names": "Runfolders identified for processing: %s",
-        "runfolder_processed": "Runfolder has been successfully processed (demultiplexed and cluster density calculated): %s",
+        "script_success": "Runfolder has been successfully processed by the demultiplex script: %s",
         "demultiplexing_required": "Demultiplexing is required for this runfolder",
-        "tso_run": "TSO500 run detected",
         "bcl2fastq_start": "Demultiplexing started using bcl2fastq2 command: %s",
-        "bcl2fastq_complete": "Demultiplexing subprocess completed successfully",
-        "bcl2fastq_failed": (
-            "Demultiplexing failed - bcl2fastq2 subprocess failed. Script exited. Stdout: %s. Stderr: %s"
-        ),
+        "bcl2fastq_complete": "Demultiplexing completed successfully for %s",
+        "bcl2fastq_failed": "Demultiplexing failed - bcl2fastq2 subprocess failed. Script exited. Stdout: %s. Stderr: %s",
         "demux_already_complete": "Demultiplexing already completed. bcl2fastq2 log found @ %s",
-        "skipping_runfolder": "Skipping runfolder: %s",
+        "skipping_runfolder": "Upload flagfile present denoting runfolder has been uploaded - skipping runfolder: %s",
         "demux_not_complete": "Demultiplexing not yet completed. No demultiplex log found @ %s",
         "run_finished": "Run finished - RTAComplete.txt found @ %s",
         "run_incomplete": "Sequencing not yet complete (RTAComplete.txt file absent) @ %s",
-        "ssfail_haltdemux": (
-            "SampleSheet contains critical errors %s: %s. Please correct these, remove the SampleSheet check flag "
-            "file, (and the checksums assessed string from the md5checksum file if the sequencer has integrity "
-            "checking) to continue processing"
-        ),
-        "sscheck_file_exists": "SampleSheet check file already exists. Not conducting further checks",
-        "no_disallowed_ss_errs": "SampleSheet does not contain any disallowed SampleSheet errors: %s",
-        "dev_run_needs_processing": "Development run requires processing",
-        "dev_run_will_be_processed": "Development run will be processed by the scripts",
         "seq_with_ic": "This run was sequenced on a sequencer that requires integrity checking",
         "seq_without_ic": "This run was sequenced on a sequencer that does not require integrity checking",
         "checksumfile_present": "Checksums file present - checksums have been generated by integrity check scripts: %s",
-        "checksumfile_absent": (
-            "Checksums file absent - checksums not yet generated by integrity check scripts for this run: %s"
-        ),
+        "checksumfile_absent": "Checksums file absent - checksums not yet generated by integrity check scripts for this run: %s",
         "checksumfile_checked": "Checksum file already checked by AS for this run",
         "checksumfile_notchecked": "Checksum file not yet checked by AS for this run",
         "checksumfilecheck_start": "Data integrity checks starting...",
         "ic_pass": "Integrity check passed. 'Checksums match' message present in md5checksum file: %s",
-        "ic_fail": (
-            "Integrity check failed. 'Checksums do not match' message present in md5checksum file: %s"
-        ),
+        "ic_fail": "Integrity check failed. 'Checksums do not match' message present in md5checksum file: %s",
         "unexpected_checksumfile_contents": "Contents of the md5checksum file are unexpected. See: %s",
         "create_bcl2fastqlog_pass": "Created bcl2fastq2 logfile: %s",
         "create_bcl2fastqlog_fail": "Failed to create bcl2fastq2 logfile. Script exited. Exception: %s",
-        "tso500_run": "Runfolder is a %s",
-        "write_tso_msg_to_bcl2fastqlog": (
-            "TSO500 message successfully written to bcl2fastq2_output.log file for TSO run"
-        ),
+        "demux_not_required": "Runfolder is a %s",
+        "dev_run_umis": "Development run requires manual processing as it contains UMIs",
+        "tso_run": "TSO run identified",
+        "write_msg_to_bcl2fastqlog": "Message successfully written to bcl2fastq2_output.log",
         "bcl2fastqlog_empty": "BCL2FASTQ2 logfile is empty for run %s. Please see logfile %s",
-        "bcl2fastqlog_absent": "BCL2FASTQ2 logfile does not exist for run %s. Please see logfile",
         "running_cd": "Running the following command for cluster density calculation: %s",
         "cd_success": "Cluster density calculation saved to %s",
         "cd_fail": "Cluster density calculation failed. Error: %s. Script exited",
-        "fastq_valid": "Gzip --test determined that the fastq is valid: %s",
-        "fastq_invalid": "Gzip --test determined that the fastq is not valid: %s. Stdout: %s. Stderr: %s",
-        "demux_success": "Demultiplexing was successful for the run with all fastqs valid",
+        "file_copy_success": "File successfully copied from %s to %s",
+        "file_copy_fail": "Could not copy file - file does not exist: %s",
         "re_demultiplex": "Invalid fastqs were identified. Bcl2fastq log has been removed to trigger re-demultiplex",
     },
     "sw": {
@@ -105,7 +117,7 @@ LOG_MSGS = {
         "start_runfolder_proc": "Starting runfolder processing for: %s",
         "ua_file_present": "Upload started file present. Terminating",
         "ua_file_absent": "Upload started file not found. Continuing",
-        "demux_complete": "Run has been previously successfully demultiplexed",
+        "demux_complete": "Run has been previously successfully processed by the demultiplexing script",
         "success_string_absent": "Run has previously been demultiplexed but no success string is present",
         "not_yet_demultiplexed": "Demultiplexing has not been performed",
         "bcl2fastqlog_empty": "Bcl2fastq log file exists but is empty",
@@ -118,62 +130,31 @@ LOG_MSGS = {
         "upload_success": "%s files uploaded successfully",
         "upload_fail": "%s upload failed. See %s for detailed error log",
         "building_cmds": "Building dx run commands",
-        "sample_identified": "Identified %s sample: %s",
         "splitting_tso_samplesheet": "Splitting SampleSheet for TSO run into batches containing %s samples each: %s",
         "tso_batches_count": "Creating %s SampleSheets",
         "decision_support_upload_required": "Sample %s requires upload to decision support tool",
         "decision_support_upload_notrequired": "Sample %s is a control so does not require decision support upload",
-        "congenica_upload_required": "Sample %s requires upload to Congenica",
-        "qiagen_upload_required": "Sample %s requires upload to QCII",
-        "unrecognised_panno": "Sample in SampleSheet does not contain a recognised pan number: %s. Script exited",
-        "recognised_panno": "Sample in SampleSheet contains a recognised pan number: %s, %s",
-        "fastq_identified": (
-            "The following fastq has been identified in the runfolder %s as matching the following strings: %s"
-        ),
-        "fastq_nonexistent": "No fastq could be intentified that matches the following strings: %s. Error: %s",
-        "sample_excluded": "Sample excluded from samples dictionary due to missing fastqs: %s",
         "cmds_built": "Finished building dx run commands",
         "building_cmd": "Building %s cmd for %s",
         "insufficient_samples_for_cnv": (
             "Less than 3 samples detected for %s - CNV calling cannot be conducted"
         ),
-        "control_sample": "%s control sample detected: %s",
         "writing_cmds": "Writing dx run commands to %s",
         "running_cmds": "Running dx run commands using dx run bash script",
         "dx_run_err": "Error when setting off dx run command. Command: %s. Stdout: %s. Stderr: %s",
-        "dx_run_success": "dx run commands issued successfully",
-        "ss_copy_success": "SampleSheet copied to runfolder: %s",
-        "ss_copy_fail": "SampleSheet not copied to runfolder",
+        "dx_run_success": "Dx run commands issued successfully for run %s",
         "uploading_rf": (
-            "Uploading rest of run folder to DNAnexus using upload_runfolder, "
-            "ignoring: %s. Stdout stored in logfile: %s"
+            "Uploading rest of run folder to DNAnexus using upload_runfolder, ignoring: %s. Stdout stored in logfile: %s"
         ),
         "upload_rf_error": (
-            "An error occurred when uploading the rest of the runfolder: %s. See %s and %s "
-            "for further details. Script exited"
+            "An error occurred when uploading the rest of the runfolder: %s. See %s and %s for further details. Script exited"
         ),
-        "ss_missing": "SampleSheet is missing and is required for sample name parsing",
-        "multiple_pipeline_names": (
-            "Multiple pipeline names detected from panel config for sample list: %s. Scripts do not support different "
-            "pipelines for the same run. Supported pipelines: %s"
-        ),
-        "pipeline_name": "Pipeline name identified as %s",
-        "runtype_str": "Runtype name string created: %s",
-        "wes_batch_nos_identified": "WES batch numbers %s identified",
-        "wes_batch_nos_missing": "WES batch numbers missing. Check for errors in the sample names. Script exited",
-        "library_nos_identified": "Library numbers %s identified",
-        "library_no_err": (
-            "Unable to identify library numbers. Script exited. Check for underscores in the sample names."
-        ),
+        "library_no_err": "Unable to identify library numbers. Script exited. Check for underscores in the sample names.",
         "checking_fastq": "Checking fastq has been collected: %s",
         "sample_match": "Fastq in the BaseCalls directory matches the sample name in the SampleSheet: %s, %s",
         "sample_mismatch": "Fastq in the BaseCalls directory does not match any sample name in the SampleSheet: %s",
-        "fastq_wrong_naming": (
-            "The fastq has the wrong naming format and is being excluded from processing: %s. Exception: %s"
-        ),
+        "fastq_wrong_naming": "The fastq has the wrong naming format and is being excluded from processing: %s. Exception: %s",
         "add_missing_sample": "Adding missing sample to the samples dictionary: %s",
-        "undetermined_exists": "Undetermined fastq exists: %s",
-        "undetermined_missing": "Undetermined fastq is missing: %s",
         "not_fastq": "File is not a zipped fastq: %s",
         "undetermined_identified": "Undetermined file identified to exclude from processing: %s",
     },
@@ -188,9 +169,7 @@ LOG_MSGS = {
         "building_command": "Building upload command",
         "added_command": "Added command to upload commands dictionary",
         "building_file_dict": "Adding the files contained within each folder to the file dictionary",
-        "getting_folder_paths": (
-            "Walking through the runfolder and creating a list of all folder paths within the runfolder"
-        ),
+        "getting_folder_paths": "Walking through the runfolder and creating a list of all folder paths within the runfolder",
         "getting_file_paths": "Walking through the folder paths and getting a list of files",
         "files_for_upload": "Files for upload: %s",
         "uploading_files": "Uploading files in folder: %s",
