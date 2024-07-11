@@ -147,11 +147,11 @@ class RunFolderManager:
                 )
                 rf_obj = RunfolderObject(folder_name, RunfolderCleanupConfig.TIMESTAMP)
                 rf_age = rf_obj.age()
-                if os.path.exists(os.path.join(self.samplesheets_dir, f"{folder_name}_SampleSheet.csv")):
-                    rf_samples_obj = RunfolderSamples(rf_obj, script_logger)
-                    if rf_samples_obj:
-                        if os.path.exists(rf_obj.rtacompletefile_path):
-                            if (rf_age >= self.min_age):
+                if (rf_age >= self.min_age):
+                    if os.path.exists(os.path.join(self.samplesheets_dir, f"{folder_name}_SampleSheet.csv")):
+                        rf_samples_obj = RunfolderSamples(rf_obj, script_logger)
+                        if rf_samples_obj:
+                            if os.path.exists(rf_obj.rtacompletefile_path):
                                 # Catch TSO500 runfolders here (do not contain fastqs)
                                 if rf_samples_obj.pipeline == "dev":
                                     script_logger.info(
@@ -183,16 +183,16 @@ class RunFolderManager:
                                             )
                             else:
                                 script_logger.info(
-                                    f"{rf_obj.runfolder_name} is < {self.min_age} days old"
+                                    f"{rf_obj.runfolder_name} is not a runfolder, or sequencing has not yet finished"
                                 )
-                        else:
-                            script_logger.info(
-                                f"{rf_obj.runfolder_name} is not a runfolder, or sequencing has not yet finished"
-                            )
+                    else:
+                        script_logger.info(
+                            f"Corresponding SampleSheet for {rf_obj.runfolder_name} could not be located. This is required for analysing for deletion"
+                        )
                 else:
                     script_logger.info(
-                        f"Corresponding SampleSheet for {rf_obj.runfolder_name} could not be located. This is required for analysing for deletion"
-                    )
+                    f"{rf_obj.runfolder_name} is < {self.min_age} days old"
+                )
         to_assess = [rf_obj.runfolder_name for runfolder_object in runfolder_objects]
         all_folders = [folder.split("/")[-1].strip() for folder in folders]
         to_skip = [folder for folder in all_folders if folder not in to_assess]
