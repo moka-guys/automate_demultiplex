@@ -4,14 +4,20 @@ N.B. test_email_sending_success() will only pass when running on the
 workstation where the required auth details are stored
 """
 
+import os
 import pytest
-from .conftest import logger_obj
 from ad_email.ad_email import AdEmail
 from config.ad_config import AdEmailConfig
-
-logger_obj = logger_obj
+from ..conftest import test_data_temp
+from ad_logger import ad_logger
 
 # TODO finish this test suite as it is currently incomplete
+
+
+@pytest.fixture(scope="function")
+def logger_obj():
+    temp_log = os.path.join(test_data_temp, "temp.log")
+    return ad_logger.AdLogger(__name__, "demux", temp_log).get_logger()
 
 
 class TestAdEmail:

@@ -5,6 +5,7 @@ Contains the following classes:
 - AdEmail
     Send email to recipient via SMTP
 """
+
 import sys
 import os
 import jinja2
@@ -111,7 +112,9 @@ class AdEmail(AdEmailConfig):
             self.msg["Subject"] = email_subject
             self.msg["From"] = self.sender
             self.msg["To"] = recipients
-            self.msg.attach(MIMEText(email_message, "html", "utf-8"))  # Add msg to e-mail body
+            self.msg.attach(
+                MIMEText(email_message, "html", "utf-8")
+            )  # Add msg to e-mail body
             self.logger.info(self.logger.log_msgs["sending_email"], self.msg)
             # Configure SMTP server connection for sending email
             with smtplib.SMTP(

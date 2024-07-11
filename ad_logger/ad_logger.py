@@ -1,6 +1,7 @@
 """
 Automate demultiplex logging. Classes required for logging
 """
+
 import sys
 import re
 import logging
@@ -31,14 +32,14 @@ def get_logging_formatter() -> str:
     )
 
 
-def set_root_logger() -> None:
+def set_root_logger() -> object:
     """
     Set up root logger and add stream handler and syslog handler - we only want to add these once
     else it will duplicate log messages to the terminal. All loggers named with the same stem
     as the root logger will use these same syslog handler and stream handler
-        :return None:
+        :return logger: Logging object
     """
-    sensitive_formatter=SensitiveFormatter(get_logging_formatter())
+    sensitive_formatter = SensitiveFormatter(get_logging_formatter())
     logger = logging.getLogger(AdLoggerConfig.REPO_NAME)
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(sensitive_formatter)
@@ -53,8 +54,9 @@ def set_root_logger() -> None:
         handlers=[
             stream_handler,
             syslog_handler,
-        ]
+        ],
     )
+    return logger
 
 
 def shutdown_logs(logger: logging.Logger) -> None:

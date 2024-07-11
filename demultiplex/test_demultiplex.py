@@ -1,17 +1,23 @@
 """
 demultiplex.py pytest unit tests. The test suite is currently incomplete
 """
+
 import os
 import itertools
 import pytest
 from demultiplex import demultiplex
 from config import ad_config
-from . import conftest
+from .. import conftest
 from ad_logger import ad_logger
 from pytest_cases import fixture_union
+from ..conftest import test_data_temp
 
 
 # TODO finish this test suite as it is currently incomplete
+
+
+# Temp directory for SampleSheet validator SampleSheet test cases
+sv_samplesheet_temp_dir = os.path.join(test_data_temp, "data_unzipped/samplesheets")
 
 
 def get_dr_obj(runfolder):
@@ -36,22 +42,22 @@ def valid_samplesheets():
     """
     return [
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "valid",
             "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "valid",
             "210917_NB551068_0409_AH3YNFAFX3_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "valid",
             "221021_A01229_0145_BHGGTHDMXY_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "valid",
             "221024_A01229_0146_BHKGG2DRX2_SampleSheet.csv",
         ),
@@ -65,15 +71,15 @@ def invalid_paths():
     """
     return [
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "210408_M02631_0186_000000000-JFMNN_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "210918_NB551068_551068_0409_AH3YNFAFX3_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "221021_A01229_0143_BHGGTHDMXY_SampleSheet.csv",
         ),
     ]
@@ -86,27 +92,27 @@ def invalid_names():
     """
     return [
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "invalid",
             "21108_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "invalid",
             "21aA08_A01229_0040_AHKGTFDRXY_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "invalid",
             "2110915_M02353_0632_000000000-K242J_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "invalid",
             "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "invalid",
             "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
         ),
@@ -120,7 +126,7 @@ def empty_file():
     """
     return [
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "invalid",
             "220413_A01229_0032_AHGKBIEKFR_SampleSheet.csv",
         )
@@ -135,17 +141,17 @@ def invalid_contents():
     """
     return [
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "invalid",
             "220404_B01229_0348_HFGIFEIOPY_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "invalid",
             "220408_A02631_0186_000000000-JLJFE_SampleSheet.csv",
         ),
         os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "invalid",
             "200817_NB068_0009_AH3YERAFX3_SampleSheet.csv",
         ),
@@ -231,7 +237,9 @@ class TestGetRunfolders(object):
         that none have been processed
         """
         monkeypatch.setattr(
-            demultiplex.DemultiplexConfig, "DEMULTIPLEX_TEST_RUNFOLDERS", runfolders_nottoproc
+            demultiplex.DemultiplexConfig,
+            "DEMULTIPLEX_TEST_RUNFOLDERS",
+            runfolders_nottoproc,
         )
         gr_obj = get_gr_obj()
         with pytest.raises(SystemExit) as pytest_wrapped_e:
@@ -314,7 +322,7 @@ class TestDemultiplexRunfolder(object):
         """
         return [
             os.path.join(
-                conftest.sv_samplesheet_temp_dir,
+                sv_samplesheet_temp_dir,
                 "invalid",
                 "210513_M02631_0236_000000000-JFMNK_SampleSheet.csv",
             ),
@@ -326,7 +334,7 @@ class TestDemultiplexRunfolder(object):
         Path to perfect SampleSheet
         """
         return os.path.join(
-            conftest.sv_samplesheet_temp_dir,
+            sv_samplesheet_temp_dir,
             "valid",
             "210408_M02631_0186_000000000-JFMNK_SampleSheet.csv",
         )
@@ -489,8 +497,7 @@ class TestDemultiplexRunfolder(object):
 
     @pytest.fixture(scope="function")
     def checksums_checked(self):
-        """
-        """
+        """ """
         return [
             "Checksums match after 1 hours",
             "Checksums assessed by AS",
@@ -498,8 +505,7 @@ class TestDemultiplexRunfolder(object):
 
     @pytest.fixture(scope="function")
     def checksums_not_checked(self):
-        """
-        """
+        """ """
         return [
             "Checksums match after 1 hours",
         ]
@@ -612,7 +618,9 @@ class TestDemultiplexRunfolder(object):
         Tests function identifies all disallowed ss errors
         """
         dr_obj = get_dr_obj("")
-        monkeypatch.setattr(dr_obj.rf_obj, "samplesheet_path", ss_with_disallowed_sserrs)
+        monkeypatch.setattr(
+            dr_obj.rf_obj, "samplesheet_path", ss_with_disallowed_sserrs
+        )
         valid, sscheck_obj = dr_obj.valid_samplesheet()
         assert dr_obj.no_disallowed_sserrs(valid, sscheck_obj)
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)

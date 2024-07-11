@@ -10,12 +10,15 @@ This script contains functions and classes shared across scripts / modules. Cont
 - SampleObject
     Collect sample-specific attributes for a sample
 """
+
 import sys
 import os
 import re
 import subprocess
 import logging
-import datetime
+import time
+import seglh_naming
+from pathlib import Path
 from typing import Tuple
 from distutils.spawn import find_executable
 from typing import Union, Optional
@@ -75,6 +78,11 @@ def return_scriptlog_config() -> dict:
             "sw_script_logfiles",
             f"{ToolboxConfig.TIMESTAMP}_setoff_workflow.log",
         ),
+        "wscleaner": os.path.join(  # Record wscleaner script logs
+            ToolboxConfig.AD_LOGDIR,
+            "wscleaner_logs",
+            f"{ToolboxConfig.TIMESTAMP}_wscleaner.log",
+        ),
     }
 
 
@@ -106,6 +114,7 @@ def script_end_logmsg(logger: logging.Logger, file: str) -> None:
         git_tag(),
         os.path.basename(os.path.dirname(file)),
     )
+
 
 def git_tag() -> str:
     """
@@ -261,7 +270,9 @@ def get_num_processed_runfolders(
     return num_processed_runfolders
 
 
-def get_samplename_dict(logger: logging.Logger, samplesheet_path: str) -> Optional[dict]:
+def get_samplename_dict(
+    logger: logging.Logger, samplesheet_path: str
+) -> Optional[dict]:
     """
     Read SampleSheet to create a dict of samples and their pan numbers for the
     run. Reads file into list and loops through in reverse allowing us to access
@@ -302,9 +313,7 @@ def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[boo
         :param logger (logging.Logger): Logger
         :return Optional[bool]:         Return True if fastqs are all determined to be valid
     """
-    fastqs = sorted(
-        [x for x in os.listdir(fastq_dir_path) if x.endswith("fastq.gz")]
-    )
+    fastqs = sorted([x for x in os.listdir(fastq_dir_path) if x.endswith("fastq.gz")])
     returncodes = []
 
     for fastq in fastqs:
@@ -363,7 +372,7 @@ class RunfolderObject(ToolboxConfig):
         samplesheet_validator_logfile (str):    SampleSheet validator script logfile (within logfiles dir)
         logfiles_config (dict):                 Contains all runfolder log files
         logfiles_to_upload (list):              All logfiles that require upload to DNAnexus
-    
+
     Methods
         get_runfolder_loggers(script)
             Return dictionary of logger.Logging objects for the runfolder
@@ -489,8 +498,15 @@ class RunfolderObject(ToolboxConfig):
             self.upload_runfolder_logfile,
         ]
 
+    def age(self) -> int:
+        """
+        Return runfolder age in days
+            :return age (int):  Runfolder age in days
+        """
+        return (time.time() - Path(self.runfolderpath).stat().st_mtime) // (24 * 3600)
+
     def get_runfolder_loggers(self, script: str) -> dict:
-        """ 
+        """
         Return dictionary of logger.Logging objects for the runfolder
             :param script (str):            Script name the function has been called from
             :return (dict):                 Dictionary of logger.Logging objects
@@ -527,7 +543,7 @@ class RunfolderSamples(ToolboxConfig):
         undetermined_fastqs_list (list):    List of all undetermined fastqs in the run
         undetermined_fastqs_str (str)       Space separated string of all undetermined fastqs
                                             in the run, with each fastq encased in quotation marks
-    
+
     Methods
         get_pipeline()
             Use samplename_dict and the ToolboxConfig.PANEL_DICT to get the pipeline name for
@@ -543,6 +559,8 @@ class RunfolderSamples(ToolboxConfig):
             Parse the names in self.samplename_dict to identify the WES batch numbers
         get_nexus_paths()
             Build nexus paths, using NGS run numbers (and batch numbers in the case of WES)
+        get_unique_pannos()
+            Return set of unique pan numbers for samples within the run
         get_samples_dict()
             Create a SampleObject per sample, containing sample-specific properties, and
             add each SampleObject to a larger samples_dict
@@ -558,6 +576,7 @@ class RunfolderSamples(ToolboxConfig):
         get_undetermined_fastqs_list()
             Return a list of undetermined fastqs for the run
     """
+
     def __init__(self, rf_obj: object, logger: logging.Logger):
         """
         Constructor for the RunfolderSamples class
@@ -573,7 +592,7 @@ class RunfolderSamples(ToolboxConfig):
         self.runtype_str = self.get_runtype()
         self.nexus_runfolder_suffix = self.get_nexus_runfolder_suffix()
         self.nexus_paths = self.get_nexus_paths()
-        self.unique_pannos = set(self.samplename_dict.values())
+        self.unique_pannos = self.get_unique_pannos()
         self.samples_dict = self.get_samples_dict()
         self.check_for_missing_fastqs()
         self.fastqs_list = self.get_fastqs_list()
@@ -581,7 +600,7 @@ class RunfolderSamples(ToolboxConfig):
         self.undetermined_fastqs_list = self.get_undetermined_fastqs_list()
         self.undetermined_fastqs_str = self.get_fastqs_str(
             self.undetermined_fastqs_list
-        )
+            )
 
     def get_pipeline(self) -> Optional[str]:
         """
@@ -590,23 +609,27 @@ class RunfolderSamples(ToolboxConfig):
         pipeline name in the list. Returns the most frequent pipeline name in the set
             :return pipeline_name (Optional[str]):    Pipeline name if only one pipeline name in list
         """
-        pipelines_list = []
-        for sample, panno in self.samplename_dict.items():
-            pipelines_list.append(ToolboxConfig.PANEL_DICT[panno]["pipeline"])
-        pipelines_list = sorted(list(set(pipelines_list)))
-        if len(pipelines_list) > 1:
-            self.logger.error(
-                self.logger.log_msgs["multiple_pipeline_names"],
-                pipelines_list,
-                ToolboxConfig.PIPELINES,
-            )
-        else:
-            pipeline_name = pipelines_list[0]  # Get pipeline from pipelines_list
-            self.logger.info(
-                self.logger.log_msgs["pipeline_name"],
-                pipeline_name,
-            )
-            return pipeline_name
+        if self.samplename_dict:
+            try:
+                pipelines_list = []
+                for sample, panno in self.samplename_dict.items():
+                    pipelines_list.append(ToolboxConfig.PANEL_DICT[panno]["pipeline"])
+                pipelines_list = sorted(list(set(pipelines_list)))
+                if len(pipelines_list) > 1:
+                    self.logger.error(
+                        self.logger.log_msgs["multiple_pipeline_names"],
+                        pipelines_list,
+                        ToolboxConfig.PIPELINES,
+                    )
+                else:
+                    pipeline_name = pipelines_list[0]  # Get pipeline from pipelines_list
+                    self.logger.debug(
+                        self.logger.log_msgs["pipeline_name"],
+                        pipeline_name,
+                    )
+                return pipeline_name
+            except Exception:
+                return None
 
     def get_runtype(self) -> str:
         """
@@ -614,15 +637,22 @@ class RunfolderSamples(ToolboxConfig):
         in the run for Custom Panels and WES runs where sample types vary (VCP1/2/3/WES/WES EB)
             :return runtype_str (str):      Runtype name string
         """
-        runtype_list = []
-        for sample, panno in self.samplename_dict.items():
-            runtype_list.append(ToolboxConfig.PANEL_DICT[panno]["runtype"])
-        runtype_str = "_".join(sorted(list(set(runtype_list))))
-        self.logger.info(
-            self.logger.log_msgs["runtype_str"],
-            runtype_str,
-        )
-        return runtype_str
+        if self.samplename_dict:
+            try:
+                runtype_list = []
+                for sample, panno in self.samplename_dict.items():
+                    runtype_list.append(ToolboxConfig.PANEL_DICT[panno]["runtype"])
+                    if ToolboxConfig.PANEL_DICT[panno]["sample_prefix"]:
+                        if all(ToolboxConfig.PANEL_DICT[panno]["sample_prefix"] not in runtype for runtype in runtype_list):
+                            runtype_list.append(ToolboxConfig.PANEL_DICT[panno]["sample_prefix"])
+                runtype_str = "_".join(sorted(list(set(runtype_list))))
+                self.logger.debug(
+                    self.logger.log_msgs["runtype_str"],
+                    runtype_str,
+                )
+                return runtype_str
+            except Exception:
+                return None
 
     def get_nexus_runfolder_suffix(self) -> str:
         """
@@ -632,16 +662,17 @@ class RunfolderSamples(ToolboxConfig):
             :return suffix (str):   String of '_' delimited unique library numbers, and WES
                                     batch numbers if run is a WES run, followed by the runtype
         """
-        library_numbers = self.capture_library_numbers()
+        if self.samplename_dict:
+            library_numbers = self.capture_library_numbers()
 
-        if self.pipeline == "wes":
-            library_numbers.extend(self.capture_wes_batch_numbers())
+            if self.pipeline == "wes":
+                library_numbers.extend(self.capture_wes_batch_numbers())
 
-        if self.pipeline in ["pipe", "wes", "dev"]:
-            library_numbers.append(self.runtype_str)
-        
-        suffix = f"{'_'.join(library_numbers)}"  # Provides more detail on contents of runs in runfolder name
-        return suffix
+            if self.pipeline in ["pipe", "wes", "dev"]:
+                library_numbers.append(self.runtype_str)
+
+            suffix = f"{'_'.join(library_numbers)}"  # Provides more detail on contents of runs in runfolder name
+            return suffix
 
     def capture_library_numbers(self) -> list:
         """
@@ -658,15 +689,13 @@ class RunfolderSamples(ToolboxConfig):
                 # Split on underscores to capture library number e.g. ONC100 or NGS100
                 library_numbers.append(samplename.split("_")[0])
         if library_numbers:  # Should always be library numbers found
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["library_nos_identified"],
                 ", ".join(sorted(list(set(library_numbers)))),
             )
             return sorted(list(set(library_numbers)))
         else:  # Prompt a slack alert
-            self.logger.error(
-                self.logger.log_msgs["library_no_err"]
-            )
+            self.logger.error(self.logger.log_msgs["library_no_err"])
             sys.exit(1)
 
     def capture_wes_batch_numbers(self) -> list:
@@ -684,15 +713,13 @@ class RunfolderSamples(ToolboxConfig):
                 wesbatch = re.search(r"WES_?\d+", samplename).group()
                 wes_batch_numbers_list.append(wesbatch.replace("_", ""))
         if wes_batch_numbers_list:
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["wes_batch_nos_identified"],
                 ", ".join(wes_batch_numbers_list),
             )
             return sorted(list(set(wes_batch_numbers_list)))
         else:  # Prompt a slack alert
-            self.logger.error(
-                self.logger.log_msgs["wes_batch_nos_missing"]
-            )
+            self.logger.error(self.logger.log_msgs["wes_batch_nos_missing"])
             sys.exit(1)
 
     def get_nexus_paths(self) -> dict:
@@ -722,6 +749,14 @@ class RunfolderSamples(ToolboxConfig):
         )
         return nexus_paths
 
+    def get_unique_pannos(self) -> Optional[list]:
+        """
+        Return set of unique pan numbers for samples within the run
+            :return Optional[list]: List of unique pan numbers if samples identified, else None
+        """
+        if self.samplename_dict:
+            return set(self.samplename_dict.values())
+
     def get_samples_dict(self) -> dict:
         """
         Create a SampleObject for each sample which returns a sample dictionary
@@ -730,24 +765,25 @@ class RunfolderSamples(ToolboxConfig):
             :return samples_dict (dict):    Dictionary of SampleObject per sample,
                                             containing sample-specific attributes
         """
-        samples_dict = {}
-        for sample_name in self.samplename_dict.keys():
-            self.sample_obj = SampleObject(
-                sample_name,
-                self.pipeline,
-                self.logger,
-                self.fastq_dir_path,
-                self.nexus_paths,
-                self.nexus_runfolder_suffix,
-            )
-            if self.sample_obj.fastqs_dict:
-                samples_dict[sample_name] = self.sample_obj.return_sample_dict()
-            else:
-                self.logger.warning(
-                    self.logger.log_msgs["sample_excluded"],
+        if self.samplename_dict:
+            samples_dict = {}
+            for sample_name in self.samplename_dict.keys():
+                self.sample_obj = SampleObject(
                     sample_name,
+                    self.pipeline,
+                    self.logger,
+                    self.fastq_dir_path,
+                    self.nexus_paths,
+                    self.nexus_runfolder_suffix,
                 )
-        return samples_dict
+                if self.sample_obj.fastqs_dict:
+                    samples_dict[sample_name] = self.sample_obj.return_sample_dict()
+                else:
+                    self.logger.warning(
+                        self.logger.log_msgs["sample_excluded"],
+                        sample_name,
+                    )
+            return samples_dict
 
     def check_for_missing_fastqs(self) -> None:
         """
@@ -757,71 +793,64 @@ class RunfolderSamples(ToolboxConfig):
         the samples_dict so that they are processed
             :return None:
         """
-        missing_samples = []
-        for fastq_dir_file in os.listdir(self.fastq_dir_path):
-            if os.path.isfile(fastq_dir_file):
-                if fastq_dir_file.endswith("fastq.gz"):
-                    self.logger.info(
-                        self.logger.log_msgs["checking_fastq"],
-                        fastq_dir_file,
-                    )
-                    if self.fastq_not_undetermined(
-                        fastq_dir_file
-                    ):  # Exclude undetermined
-                        try:
-                            seglh_namingSample.from_string(fastq_dir_file)
-                            sample_name = [
-                                sample_name
-                                for sample_name in self.samplename_dict.keys()
-                                if sample_name in fastq_dir_file
-                            ]
-                            if sample_name:
-                                self.logger.info(
-                                    self.logger.log_msgs[
-                                        "sample_match"
-                                    ],
-                                    fastq_dir_file,
-                                    sample_name,
-                                )
-                            else:
+        if self.samplename_dict:
+            missing_samples = []
+            for fastq_dir_file in os.listdir(self.fastq_dir_path):
+                if os.path.isfile(fastq_dir_file):
+                    if fastq_dir_file.endswith("fastq.gz"):
+                        self.logger.info(
+                            self.logger.log_msgs["checking_fastq"],
+                            fastq_dir_file,
+                        )
+                        if self.fastq_not_undetermined(
+                            fastq_dir_file
+                        ):  # Exclude undetermined
+                            try:
+                                seglh_naming.Sample.from_string(fastq_dir_file)
+                                sample_name = [
+                                    sample_name
+                                    for sample_name in self.samplename_dict.keys()
+                                    if sample_name in fastq_dir_file
+                                ]
+                                if sample_name:
+                                    self.logger.info(
+                                        self.logger.log_msgs["sample_match"],
+                                        fastq_dir_file,
+                                        sample_name,
+                                    )
+                                else:
+                                    self.logger.error(
+                                        self.logger.log_msgs["sample_mismatch"],
+                                        fastq_dir_file,
+                                    )
+                                    sample_name = re.sub(
+                                        "R[0-9]_001.fastq.gz", "", fastq_dir_file
+                                    )
+                                    missing_samples.append(fastq_dir_file)
+                            except ValueError as exception:
                                 self.logger.error(
-                                    self.logger.log_msgs[
-                                        "sample_mismatch"
-                                    ],
+                                    self.logger.log_msgs["fastq_wrong_naming"],
                                     fastq_dir_file,
+                                    exception,
                                 )
-                                sample_name = re.sub(
-                                    "R[0-9]_001.fastq.gz", "", fastq_dir_file
-                                )
-                                missing_samples.append(fastq_dir_file)
-                        except ValueError as exception:
-                            self.logger.error(
-                                self.logger.log_msgs[
-                                    "fastq_wrong_naming"
-                                ],
-                                fastq_dir_file,
-                                exception,
-                            )
-                else:
-                    self.logger.info(
-                        self.logger.log_msgs["not_fastq"],
-                        fastq_dir_file,
-                    )
-        for sample_name in missing_samples:  # Add the sample to the sample_obj
-            # Strip end off sample name
-            sample_name = re.sub(r"_S[0-9]+_R[1-2]{1}_001.fastq.gz", "", sample_name)
-            self.logger.info(
-                self.logger.log_msgs["add_missing_sample"], sample_name
-            )
-            self.sample_obj = SampleObject(
-                sample_name,
-                self.pipeline,
-                logger,
-                self.fastq_dir_path,
-                self.nexus_paths,
-                self.nexus_runfolder_suffix,
-            )
-            self.samples_dict[sample_name] = self.sample_obj.return_sample_dict()
+                    else:
+                        self.logger.info(
+                            self.logger.log_msgs["not_fastq"],
+                            fastq_dir_file,
+                        )
+            for sample_name in missing_samples:  # Add the sample to the sample_obj
+                # Strip end off sample name
+                sample_name = re.sub(r"_S[0-9]+_R[1-2]{1}_001.fastq.gz", "", sample_name)
+                self.logger.info(self.logger.log_msgs["add_missing_sample"], sample_name)
+                self.sample_obj = SampleObject(
+                    sample_name,
+                    self.pipeline,
+                    self.logger,
+                    self.fastq_dir_path,
+                    self.nexus_paths,
+                    self.nexus_runfolder_suffix,
+                )
+                self.samples_dict[sample_name] = self.sample_obj.return_sample_dict()
 
     def fastq_not_undetermined(self, fastq_dir_file: str) -> Optional[bool]:
         """
@@ -842,18 +871,19 @@ class RunfolderSamples(ToolboxConfig):
         Return a list of sample fastqs for the run
             :return fastqs_list (list): List of all sample fastqs in the run
         """
-        fastqs_list = []
-        for sample_name in self.samples_dict.keys():
-            if self.samples_dict[sample_name]["fastqs"]:
-                fastqs_list.extend(
-                    [
-                        self.samples_dict[sample_name]["fastqs"][read]["path"]
-                        for read, path in self.samples_dict[sample_name][
-                            "fastqs"
-                        ].items()
-                    ]
-                )
-        return fastqs_list
+        if self.samples_dict:
+            fastqs_list = []
+            for sample_name in self.samples_dict.keys():
+                if self.samples_dict[sample_name]["fastqs"]:
+                    fastqs_list.extend(
+                        [
+                            self.samples_dict[sample_name]["fastqs"][read]["path"]
+                            for read, path in self.samples_dict[sample_name][
+                                "fastqs"
+                            ].items()
+                        ]
+                    )
+            return fastqs_list
 
     def get_fastqs_str(self, fastqs_list: list) -> str:
         """
@@ -863,11 +893,12 @@ class RunfolderSamples(ToolboxConfig):
             :return (str):              Space separated string of fastqs with
                                         each fastq encased in quotation marks
         """
-        quotation_marked_list = []
-        for fastq in fastqs_list:
-            quotation_marked = f"'{fastq}'"
-            quotation_marked_list.append(quotation_marked)
-        return " ".join(quotation_marked_list)
+        if fastqs_list:
+            quotation_marked_list = []
+            for fastq in fastqs_list:
+                quotation_marked = f"'{fastq}'"
+                quotation_marked_list.append(quotation_marked)
+            return " ".join(quotation_marked_list)
 
     def get_undetermined_fastqs_list(self) -> list:
         """
@@ -881,7 +912,6 @@ class RunfolderSamples(ToolboxConfig):
             if os.path.exists(fastq):
                 undetermined_fastqs_list.append(fastq)
         return undetermined_fastqs_list
-
 
 
 # TODO eventually adapt this class to use the SamplesheetValidator package
@@ -914,6 +944,8 @@ class SampleObject(ToolboxConfig):
             Determine whether sample contains the control identifier strings
         find_pannum()
             Extract panel number from sample name using regular expression
+        return_panel_settings()
+            Return panel settings for the specified pan number, if exists
         validate_pannum(pannum)
             Check whether pan number is valid
         get_identifiers()
@@ -959,12 +991,7 @@ class SampleObject(ToolboxConfig):
         self.neg_control = self.check_control(ToolboxConfig.NTCON_IDS, "Negative")
         self.pos_control = self.check_control(ToolboxConfig.PSCON_IDS, "Positive")
         self.pannum = self.find_pannum()
-        self.panel_settings = ToolboxConfig.PANEL_DICT[self.pannum]
-        self.logger.info(
-            self.logger.log_msgs["sample_identified"],
-            self.panel_settings["panel_name"],
-            self.sample_name,
-        )
+        self.panel_settings = self.return_panel_settings()
         self.primary_identifier, self.secondary_identifier = self.get_identifiers()
         self.fastqs_dict = self.get_fastqs_dict()
 
@@ -976,7 +1003,7 @@ class SampleObject(ToolboxConfig):
             :return (Optional[bool]):   True if sample contains any specified identifier, else False
         """
         if any(identifier in self.sample_name for identifier in identifiers):
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["control_sample"],
                 control_type,
                 self.sample_name,
@@ -989,9 +1016,29 @@ class SampleObject(ToolboxConfig):
             :return pannum (Optional[str]): Panel number that matches a config-defined
                                             panel number, or None if pannum not valid
         """
-        pannum = str(re.search(r"Pan\d+", self.sample_name).group())
-        if self.validate_pannum(pannum):
-            return pannum
+        # print(ToolboxConfig.PANEL_DICT[pannum]["panel_name"])
+        try:
+            pannum = str(re.search(r"Pan\d+", self.sample_name).group()).strip()
+            if self.validate_pannum(pannum):
+                self.logger.debug(
+                    self.logger.log_msgs["sample_identified"],
+                    ToolboxConfig.PANEL_DICT[pannum]["panel_name"],
+                    self.sample_name,
+                )
+                return pannum
+        except:
+            self.logger.error(
+                self.logger.log_msgs["missing_panno"],
+                self.sample_name,
+            )
+    
+    def return_panel_settings(self) -> Optional[dict]:
+        """
+        Return panel settings for the specified pan number, if exists
+            :return Optional[dict]: Return dictionary containing panel settings for the Pan number
+        """
+        if self.pannum:
+            return ToolboxConfig.PANEL_DICT[self.pannum]
 
     def validate_pannum(self, pannum: int) -> bool:
         """
@@ -999,7 +1046,7 @@ class SampleObject(ToolboxConfig):
             :return bool:   True if pan number is valid, else None
         """
         if str(pannum) in ToolboxConfig.PANELS:
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["recognised_panno"],
                 self.sample_name,
                 pannum,
@@ -1084,7 +1131,7 @@ class SampleObject(ToolboxConfig):
                 for fastq_path in os.listdir(self.fastq_dir_path)
                 if all([substring in fastq_path for substring in matches])
             )[0]
-            self.logger.info(
+            self.logger.debug(
                 self.logger.log_msgs["fastq_identified"],
                 fastq_name,
                 ", ".join(matches),
