@@ -238,9 +238,14 @@ class DemultiplexRunfolder(DemultiplexConfig):
         )  # Get dictionary of loggers
         self.demux_rf_logger = self.loggers["demux"]
         self.bcl2fastq2_rf_logger = self.loggers["bcl2fastq2"]
+        #get current user to run docker images with this user instead of root
+        #controls the ownership of the files to enable deleting later
+        self.user = os.getuid()
         # N.B. --no-lane-splitting creates a single fastq for a sample,
         # not into one fastq per lane)
         self.bcl2fastq2_cmd = DemultiplexConfig.BCL2FASTQ2_CMD % (
+            self.user,
+            self.user,
             self.rf_obj.runfolderpath,
             self.rf_obj.samplesheet_path,
             self.rf_obj.samplesheet_name,
@@ -248,6 +253,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         )
         # Shell command to run cluster density calculation
         self.cluster_density_cmd = DemultiplexConfig.CD_CMD % (
+            self.user,
+            self.user,
             self.rf_obj.runfolderpath,
             self.rf_obj.runfolder_name,
         )

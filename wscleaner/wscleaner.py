@@ -236,9 +236,11 @@ class RunFolderManager:
         if self.dry_run:
             script_logger.info(f"DRY RUN DELETE {runfolder_name}")
         else:
+            print("test error message- is run deleting?")
             shutil.rmtree(runfolder_path)
             script_logger.info(f"{runfolder_name} DELETED.")
             return True
+        print("test error message- is run deleting?")
 
 
 class CheckRunfolder:
