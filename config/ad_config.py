@@ -376,11 +376,11 @@ class DemultiplexConfig(PanelConfig):
     }
     TESTING = TESTING
     BCL2FASTQ2_CMD = (
-        f"docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
+        f"docker run --rm --user %s:%s -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
         "--sample-sheet /mnt/run/%s --no-lane-splitting"
     )
     CD_CMD = (
-        f"docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
+        f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
