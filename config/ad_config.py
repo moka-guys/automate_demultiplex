@@ -107,7 +107,7 @@ NEXUS_IDS = {
         "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
         "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-GgKKP4Q01jZ62QgF2bbPqz78",  # Pan5208_normals_v1.0.0.RData
         "ed_vcp2_readcount_normals": f"{TOOLS_PROJECT}:file-Gbkgyq00ZpxpFKx03zVPJ9GX",  # Pan5188_normals_v1.1.0.RData
-        "ed_vcp3_readcount_normals": f"{TOOLS_PROJECT}:file-Gj62x5804G8j5Vq90q712FP9",  # Pan5217_normals_v1.0.0.RData
+        "ed_vcp3_readcount_normals": f"{TOOLS_PROJECT}:file-GvyzK780jy1Qb10KxK6kY6Gp",  # Pan5217_normals_v1.1.0.RData
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
     },
     "APPS": {
