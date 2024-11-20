@@ -129,7 +129,7 @@ NEXUS_IDS = {
         "duty_csv": f"{TOOLS_PROJECT}:applet-Gp75GB00360KXPV4Jy7PPFfQ",  # duty_csv_v1.5.0
     },
     "WORKFLOWS": {
-        "pipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",  # GATK3.5_v2.18
+        "pipe": f"{TOOLS_PROJECT}:workflow-Gvy8YZ80jy1bb9zzb5JZBBX3",  # GATK3.5_v2.19
         "wes": f"{TOOLS_PROJECT}:workflow-FjjbQ5Q0jy1ZgyjQ3g1zgx9k",  # MokaWES_v1.8
         "snp": f"{TOOLS_PROJECT}:workflow-GB3kyJj0jy1j06704fxX9J7j",  # MokaSNP_v1.2.0
     },
@@ -467,7 +467,7 @@ class SWConfig(PanelConfig):
     SQL_IDS = {
         # Moka IDs for generating SQLs to update the Moka database (audit trail)
         "WORKFLOWS": {
-            "pipe": 5302,
+            "pipe": 5304,
             "wes": 5078,
             "archerdx": 5300,
             "snp": 5091,
