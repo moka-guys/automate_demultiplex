@@ -56,7 +56,7 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
         ],
     }
 else:  # Testing branch
-    TESTING = True
+    TESTING = False
     SCRIPT_MODE = "TEST_MODE"
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
@@ -67,8 +67,8 @@ else:  # Testing branch
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
         "binfx_recipient": MAIL_SETTINGS["binfx_email"],
         # Oncology email address for email alerts
-        "oncology_ops_email": "mokaguys@gmail.com",
-        "wes_samplename_emaillist": ["mokaguys@gmail.com"],
+        "oncology_ops_email": MAIL_SETTINGS["binfx_email"],
+        "wes_samplename_emaillist": MAIL_SETTINGS["binfx_email"],
     }
 
 CREDENTIALS = {
