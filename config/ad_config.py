@@ -37,7 +37,7 @@ MAIL_SETTINGS = {
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
-    TESTING = False  # Set testing mode
+    TESTING = True  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
     RUNFOLDERS = "/media/data3/share"
@@ -65,7 +65,7 @@ else:  # Testing branch
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
-        "binfx_recipient": "mokaguys@gmail.com",
+        "binfx_recipient": MAIL_SETTINGS["binfx_email"],
         # Oncology email address for email alerts
         "oncology_ops_email": "mokaguys@gmail.com",
         "wes_samplename_emaillist": ["mokaguys@gmail.com"],
