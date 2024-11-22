@@ -37,7 +37,7 @@ MAIL_SETTINGS = {
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
-    TESTING = False  # Set testing mode
+    TESTING = True  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
     RUNFOLDERS = "/media/data3/share"
@@ -56,7 +56,7 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
         ],
     }
 else:  # Testing branch
-    TESTING = True
+    TESTING = False
     SCRIPT_MODE = "TEST_MODE"
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
@@ -65,10 +65,10 @@ else:  # Testing branch
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
-        "binfx_recipient": "mokaguys@gmail.com",
+        "binfx_recipient": MAIL_SETTINGS["binfx_email"],
         # Oncology email address for email alerts
-        "oncology_ops_email": "mokaguys@gmail.com",
-        "wes_samplename_emaillist": ["mokaguys@gmail.com"],
+        "oncology_ops_email": MAIL_SETTINGS["binfx_email"],
+        "wes_samplename_emaillist": MAIL_SETTINGS["binfx_email"],
     }
 
 CREDENTIALS = {
@@ -107,7 +107,7 @@ NEXUS_IDS = {
         "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
         "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-GgKKP4Q01jZ62QgF2bbPqz78",  # Pan5208_normals_v1.0.0.RData
         "ed_vcp2_readcount_normals": f"{TOOLS_PROJECT}:file-Gbkgyq00ZpxpFKx03zVPJ9GX",  # Pan5188_normals_v1.1.0.RData
-        "ed_vcp3_readcount_normals": f"{TOOLS_PROJECT}:file-Gj62x5804G8j5Vq90q712FP9",  # Pan5217_normals_v1.0.0.RData
+        "ed_vcp3_readcount_normals": f"{TOOLS_PROJECT}:file-GvyzK780jy1Qb10KxK6kY6Gp",  # Pan5217_normals_v1.1.0.RData
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
     },
     "APPS": {
@@ -129,7 +129,7 @@ NEXUS_IDS = {
         "duty_csv": f"{TOOLS_PROJECT}:applet-Gp75GB00360KXPV4Jy7PPFfQ",  # duty_csv_v1.5.0
     },
     "WORKFLOWS": {
-        "pipe": f"{TOOLS_PROJECT}:workflow-GPq04280jy1k1yVkQP0fXqBg",  # GATK3.5_v2.18
+        "pipe": f"{TOOLS_PROJECT}:workflow-Gvy8YZ80jy1bb9zzb5JZBBX3",  # GATK3.5_v2.19
         "wes": f"{TOOLS_PROJECT}:workflow-FjjbQ5Q0jy1ZgyjQ3g1zgx9k",  # MokaWES_v1.8
         "snp": f"{TOOLS_PROJECT}:workflow-GB3kyJj0jy1j06704fxX9J7j",  # MokaSNP_v1.2.0
     },
@@ -467,7 +467,7 @@ class SWConfig(PanelConfig):
     SQL_IDS = {
         # Moka IDs for generating SQLs to update the Moka database (audit trail)
         "WORKFLOWS": {
-            "pipe": 5302,
+            "pipe": 5304,
             "wes": 5078,
             "archerdx": 5300,
             "snp": 5091,
