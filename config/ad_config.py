@@ -37,7 +37,7 @@ MAIL_SETTINGS = {
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
-    TESTING = True  # Set testing mode
+    TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
     RUNFOLDERS = "/media/data3/share"
@@ -56,7 +56,7 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
         ],
     }
 else:  # Testing branch
-    TESTING = False
+    TESTING = True
     SCRIPT_MODE = "TEST_MODE"
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
