@@ -159,8 +159,8 @@ class SequencingRuns(SWConfig):
             :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific attributes)
             :return (Optional[bool]):   Return True if runfolder already demultiplexed, else None
         """
-        if os.path.isfile(rf_obj.bcl2fastqlog_file):
-            logfile_list = read_lines(rf_obj.bcl2fastqlog_file)
+        if os.path.isfile(rf_obj.bclconvertlog_file):
+            logfile_list = read_lines(rf_obj.bclconvertlog_file)
             completed_strs = [
                 SWConfig.STRINGS["demultiplex_not_required_msg"].partition(" ")[-1],
                 SWConfig.STRINGS["demultiplex_success"],
@@ -175,7 +175,7 @@ class SequencingRuns(SWConfig):
                 else:
                     script_logger.info(script_logger.log_msgs["success_string_absent"])
             else:
-                script_logger.info(script_logger.log_msgs["bcl2fastqlog_empty"])
+                script_logger.info(script_logger.log_msgs["bclconvertlog_empty"])
         else:
             script_logger.info(script_logger.log_msgs["not_yet_demultiplexed"])
 
@@ -441,12 +441,12 @@ class ProcessRunfolder(SWConfig):
                     f"'{cd_file}'" for cd_file in self.rf_obj.cluster_density_files
                 ),
             ),
-            "bcl2fastq_qc": SWConfig.DX_CMDS["file_upload_cmd"]
+            "bclconvert_qc": SWConfig.DX_CMDS["file_upload_cmd"]
             % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
                 f"{os.path.join(self.rf_samples_obj.nexus_paths['fastqs_dir'], 'Stats')}",
-                self.rf_obj.bcl2fastqstats_file,
+                self.rf_obj.bclconvertstats_file,
             ),
             "logfiles": SWConfig.DX_CMDS["file_upload_cmd"]
             % (
@@ -604,9 +604,9 @@ class ProcessRunfolder(SWConfig):
                     *self.rf_samples_obj.undetermined_fastqs_list,
                 ],
             }
-            pre_pipeline_upload_dict["bcl2fastq_qc"] = {
-                "cmd": self.upload_cmds["bcl2fastq_qc"],
-                "files_list": [self.rf_obj.bcl2fastqstats_file],
+            pre_pipeline_upload_dict["bclconvert_qc"] = {
+                "cmd": self.upload_cmds["bclconvert_qc"],
+                "files_list": [self.rf_obj.bclconvertstats_file],
             }
             if self.rf_samples_obj.pipeline == "oncodeep":  # Add MasterFile entry
                 pre_pipeline_upload_dict["masterfile"] = {

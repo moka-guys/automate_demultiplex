@@ -44,7 +44,7 @@ logfiles_config = {
     "sw": sw_runfolder_logfile,
     "demux": demultiplex_runfolder_logfile,
     "backup": upload_runfolder_logfile,
-    "bcl2fastq2": bcl2fastqlog_file,
+    "bclconvert2": bclconvertlog_file,
     "ss_validator": samplesheet_validator_logfile,
 }
 

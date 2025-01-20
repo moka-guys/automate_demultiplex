@@ -218,9 +218,8 @@ def test_processing_software(logger: logging.Logger) -> Optional[bool]:
     and test_dx_toolkit functions
         :return True|None:  Return true if the tests all pass
     """
-    if test_programs("bcl2fastq2", logger) and test_programs(
-        "gatk_collect_lane_metrics", logger
-    ):
+    
+    if test_programs("gatk_collect_lane_metrics", logger) and test_programs("bclconvert2", logger):
         return True
 
 
@@ -307,7 +306,7 @@ def get_samplename_dict(
 def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[bool]:
     """
     Validate the created fastqs in the BaseCalls directory and log success
-    or failure error message accordingly. If any failure, remove bcl2fastq log
+    or failure error message accordingly. If any failure, remove bclconvert log
     file to trigger re-demultiplex on next script run
         :param fastq_dir_path (str):    Runfolder fastq directory path (within runfolder)
         :param logger (logging.Logger): Logger
@@ -356,10 +355,10 @@ class RunfolderObject(ToolboxConfig):
         runfolder_samplesheet_path (str):       Runfolder SampleSheets path (within runfolder)
         checksumfile_path (str):                md5 checksum (integrity check) file path (within runfolder)
         sscheck_flagfile_path (str):            Samplesheet check flag file path (within runfolder)
-        bcl2fastqlog_file (str):                bcl2fastq2 logfile path (within runfolder)
+        bclconvertlog_file (str):                bclconvert2 logfile path (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
         upload_flagfile (str):                  Flag file denoting upload has begun (within runfolder)
-        bcl2fastqstats_file (str):              Bcl2fastq stats file (within runfolder)
+        bclconvertstats_file (str):              Bclconvert stats file (within runfolder)
         cluster_density_files (list):           List containing runfolder lane metrics
                                                 and phasing metrics file paths
         demultiplex_runfolder_logfile (str):    Runfolder demultiplex logfile (within logfiles dir)
@@ -413,8 +412,8 @@ class RunfolderObject(ToolboxConfig):
         self.sscheck_flagfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["sscheck_flag"]
         )
-        self.bcl2fastqlog_file = os.path.join(
-            self.runfolderpath, ToolboxConfig.FLAG_FILES["bcl2fastqlog"]
+        self.bclconvertlog_file = os.path.join(
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["bclconvertlog"]
         )
         self.fastq_dir_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FASTQ_DIRS["fastqs"]
@@ -422,9 +421,9 @@ class RunfolderObject(ToolboxConfig):
         self.upload_flagfile = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["upload_started"]
         )
-        self.bcl2fastqstats_file = os.path.join(
+        self.bclconvertstats_file = os.path.join(
             self.runfolderpath,
-            "Data/Intensities/BaseCalls/Stats/Stats.json",
+            "Data/Intensities/BaseCalls/Stats/Stats.json", # need to change this path
         )
         self.cluster_density_files = [
             os.path.join(
@@ -485,7 +484,7 @@ class RunfolderObject(ToolboxConfig):
             "sw": self.sw_runfolder_logfile,
             "demux": self.demultiplex_runfolder_logfile,
             "backup": self.upload_runfolder_logfile,
-            "bcl2fastq2": self.bcl2fastqlog_file,
+            "bclconvert2": self.bclconvertlog_file,
             "ss_validator": self.samplesheet_validator_logfile,
         }
         # Log files that sit outside the runfolder that require uploading

@@ -40,7 +40,7 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
     TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
-    RUNFOLDERS = "/media/data3/share"
+    RUNFOLDERS = "/media/data3/share" #change for safety
     AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add prod mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
@@ -61,7 +61,7 @@ else:  # Testing branch
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
-    RUNFOLDERS = "/media/data3/share/testing"
+    RUNFOLDERS = "/media/data1/share/bcl_convert_testing" #/media/runfolder_share/test_runs_bclconvert"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
@@ -86,7 +86,7 @@ SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit 
 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
-BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
+BCLCONVERT_DOCKER = "seglh/bcl-convert:4.3.6"
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
@@ -375,22 +375,31 @@ class DemultiplexConfig(PanelConfig):
         "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s",
     }
     TESTING = TESTING
-    BCL2FASTQ2_CMD = (
-        f"docker run --rm -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
-        "--sample-sheet /mnt/run/%s --no-lane-splitting"
+    BCLCONVERT2_CMD = (
+        f"sudo docker run --rm -v %s:/data/input -v %s:/data/output "
+        f"-v %s:/var/log/bcl-convert "
+        f"-v %s:/samplesheet_input {BCLCONVERT_DOCKER} "
+        f"--force --bcl-input-directory /data/input "
+        f"--output-directory /data/output "
+        f"--sample-sheet /samplesheet_input/%s "
+        f"--no-lane-splitting true"
     )
     CD_CMD = (
-        f"docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
+        f"sudo docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        "999999_NB552085_0496_DEMUXINTEG",
-        "999999_M02353_0496_000000000-DEMUX",
-        "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
-        "999999_M02631_0285_000000000-DEVOO",
-        "999999_NB551068_0285_OODEVINTEG",
-        "999999_M02631_0285_000000000-DVUMI",
-        "999999_NB552085_0320_ONCODEEP00",  # Included as behaviour is slightly different to include copying the MasterFile
+        "999990_A01229_0420_AHLFLHDRX5",
+        #"240823_A01229_0364_BHHVYKDRX5",
+        #"240829_NB552085_0334_AHGMJ5AFX7",
+        #"240902_A01229_0367_AHHNMVDRX5"
+        #"999999_NB552085_0496_DEMUXINTEG",
+        #"999999_M02353_0496_000000000-DEMUX",
+        #"999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
+        #"999999_M02631_0285_000000000-DEVOO",
+        #"999999_NB551068_0285_OODEVINTEG",
+        #"999999_M02631_0285_000000000-DVUMI",
+        #"999999_NB552085_0320_ONCODEEP00",  # Included as behaviour is slightly different to include copying the MasterFile
     ]
     SEQUENCER_IDS = {
         # Requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed
@@ -567,7 +576,7 @@ class ToolboxConfig(PanelConfig):
     }
     FLAG_FILES = {
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
-        "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
+        "bclconvertlog": "bclconvert2_output.log",  # Holds bclconvert2 logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
         "seq_complete": "RTAComplete.txt",  # Sequencing complete file
@@ -583,11 +592,11 @@ class ToolboxConfig(PanelConfig):
         },
         "gatk_collect_lane_metrics": {
             "executable": "docker",
-            "test_cmd": f"docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
+            "test_cmd": f"sudo docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
         },
-        "bcl2fastq2": {
+        "bclconvert2": {
             "executable": "docker",
-            "test_cmd": f"docker run --rm {BCL2FASTQ_DOCKER} --version",
+            "test_cmd": f"sudo docker run --rm {BCLCONVERT_DOCKER} --version",
         },
     }
 
