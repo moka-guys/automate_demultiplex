@@ -40,7 +40,7 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
     TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
-    RUNFOLDERS = "/media/data3/share" #change for safety
+    RUNFOLDERS = "/media/data3/share"
     AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add prod mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
@@ -61,7 +61,7 @@ else:  # Testing branch
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
-    RUNFOLDERS = "/media/data1/share/bcl_convert_testing" #/media/runfolder_share/test_runs_bclconvert"
+    RUNFOLDERS = "/media/data3/share/testing" #/media/runfolder_share/test_runs_bclconvert"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
@@ -376,7 +376,7 @@ class DemultiplexConfig(PanelConfig):
     }
     TESTING = TESTING
     BCLCONVERT2_CMD = (
-        f"sudo docker run --rm -v %s:/data/input -v %s:/data/output "
+        f"docker run --rm --user %s:%s -v %s:/data/input -v %s:/data/output "
         f"-v %s:/var/log/bcl-convert "
         f"-v %s:/samplesheet_input {BCLCONVERT_DOCKER} "
         f"--force --bcl-input-directory /data/input "
@@ -385,7 +385,7 @@ class DemultiplexConfig(PanelConfig):
         f"--no-lane-splitting true"
     )
     CD_CMD = (
-        f"sudo docker run --rm -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
+        f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [

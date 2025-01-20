@@ -243,7 +243,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.user = os.getuid()
         # N.B. --no-lane-splitting creates a single fastq for a sample,
         # not into one fastq per lane)
-        self.bclconvert_cmd = DemultiplexConfig.BCLCONVERT2_CMD % (
+        bclconvert_log_dir = os.path.join(
+                self.rf_obj.runfolderpath,
+                "Bcl_convert_logs",
+            )
+        os.makedirs(bclconvert_log_dir, exist_ok=True)
+        self.bclconvert2_cmd = DemultiplexConfig.BCLCONVERT2_CMD % (
             self.user,
             self.user,
             self.rf_obj.runfolderpath,
@@ -251,10 +256,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.runfolderpath,
                 "Data/Intensities/BaseCalls/",
             ),
-            os.path.join(
-                self.rf_obj.runfolderpath,
-                "Bcl_convert_logs",
-            ),
+            bclconvert_log_dir,
             os.path.join(
                 DemultiplexConfig.RUNFOLDERS,
                 "samplesheets"
