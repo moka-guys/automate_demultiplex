@@ -790,6 +790,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.bclconvert2_rf_logger.info(
                     err  # Write stderr to bclconvert2 runfolder logfile
                 )
+                # wirte demultiplex success message in the bclconvert log file
+                write_lines(
+                    self.rf_obj.bclconvertlog_file,
+                    "a",
+                    DemultiplexConfig.STRINGS["demultiplex_success"],
+                )
                 return True
             else:
                 os.remove(

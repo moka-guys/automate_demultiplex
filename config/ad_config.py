@@ -592,11 +592,11 @@ class ToolboxConfig(PanelConfig):
         },
         "gatk_collect_lane_metrics": {
             "executable": "docker",
-            "test_cmd": f"sudo docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
+            "test_cmd": f"docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
         },
         "bclconvert2": {
             "executable": "docker",
-            "test_cmd": f"sudo docker run --rm {BCLCONVERT_DOCKER} --version",
+            "test_cmd": f"docker run --rm {BCLCONVERT_DOCKER} --version",
         },
     }
 
