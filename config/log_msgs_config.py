@@ -141,8 +141,11 @@ LOG_MSGS = {
         ),
         "writing_cmds": "Writing dx run commands to %s",
         "running_cmds": "Running dx run commands using dx run bash script",
+        "running_decision_cmds": "Running decision support commands using bash script",
         "dx_run_err": "Error when setting off dx run command. Command: %s. Stdout: %s. Stderr: %s",
+        "decision_run_err": "Error when setting off decision support command. Command: %s. Stdout: %s. Stderr: %s",
         "dx_run_success": "Dx run commands issued successfully for run %s",
+        "decision_run_success": "Decision support cmd is run successfully for run %s",    
         "uploading_rf": (
             "Uploading rest of run folder to DNAnexus using upload_runfolder, ignoring: %s. Stdout stored in logfile: %s"
         ),
