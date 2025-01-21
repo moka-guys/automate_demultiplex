@@ -39,6 +39,7 @@ from ad_logger.ad_logger import AdLogger, shutdown_logs
 from config.ad_config import SWConfig
 import logging
 from upload_runfolder.upload_runfolder import UploadRunfolder
+from config.ad_config import DemultiplexConfig
 from toolbox.toolbox import (
     return_scriptlog_config,
     test_upload_software,
@@ -912,14 +913,8 @@ class ArcherDxPipeline:
             )  # Get SQL queries
         # Return the decision support command 
         ADX_runfolder = f"run_folder_name={self.rf_obj.runfolder_name}"
-        ADX_jobID = "job_name=$(cat /media/data3/share/${run_folder_name}/RunParameters.xml | grep -oP '(?<=ExperimentName>).*?(?=</ExperimentName)')"
-        docker = "docker run \
-                    -v /media/data3/share/${run_folder_name}/Data/Intensities/BaseCalls:/data \
-                    -v /usr/local/src/mokaguys:/auth_file \
-                    seglh/archer_api_upload:v1.0.0  /data \
-                    auth_file/.archer_authentication_mokaguys.txt \
-                    ${job_name} 2 | tee -a /usr/local/src/mokaguys/automate_demultiplexing_logfiles/archer_api_upload_logfiles/${run_folder_name}_archer_api_logfile.txt"
-        
+        ADX_jobID = f"job_name=$(cat {self.rf_obj.runfolderpath}/RunParameters.xml | grep -oP '(?<=ExperimentName>).*?(?=</ExperimentName)')"
+        docker = DemultiplexConfig.ADX_CMD
         docker_api_cmd = [ADX_runfolder, ADX_jobID, docker]
         for api_cmd in docker_api_cmd:
             self.decision_support_upload_cmds.append(api_cmd)
