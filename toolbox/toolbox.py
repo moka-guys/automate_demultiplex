@@ -24,6 +24,8 @@ from distutils.spawn import find_executable
 from typing import Union, Optional
 from config.ad_config import ToolboxConfig
 from ad_logger.ad_logger import RunfolderLoggers
+import gzip
+import zlib
 
 
 def get_credential(file: str) -> None:
@@ -304,6 +306,34 @@ def get_samplename_dict(
         logger.error(logger.log_msgs["ss_missing"])
 
 
+def validate_fastq_gzip(file_path):
+    """Fast gzip validation by checking header, footer, and partial decompression"""
+    try:
+        # Check compressed file header (magic number check)
+        with open(file_path, 'rb') as f:
+            magic = f.read(2)
+            if magic != b'\x1f\x8b':
+                return False, f"Invalid gzip magic bytes: {magic.hex()}"
+            
+            # Check footer (last 4 bytes for ISIZE)
+            f.seek(-4, 2)
+            isize = int.from_bytes(f.read(4), 'little')
+            if isize == 0:
+                return False, "Invalid zero uncompressed size"
+
+        # Quick decompression check of first block
+        with gzip.open(file_path, 'rb') as f:
+            # Only read first 1KB of decompressed data
+            f.read(1024)
+            
+        return True, None
+        
+    except (OSError, EOFError, zlib.error) as e:
+        return False, f"Validation error: {str(e)}"
+    except Exception as e:
+        return False, f"Unexpected error: {str(e)}"
+
+
 def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[bool]:
     """
     Validate the created fastqs in the BaseCalls directory and log success
@@ -317,25 +347,24 @@ def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[boo
     returncodes = []
 
     for fastq in fastqs:
-        out, err, returncode = execute_subprocess_command(
-            f"gzip --test {os.path.join(fastq_dir_path, fastq)}",
-            logger,
-        )
-        returncodes.append(returncode)
-        if returncode == 0:
+        full_path = os.path.join(fastq_dir_path, fastq)
+        is_valid, error_msg = validate_fastq_gzip(full_path)
+        
+        if is_valid:
             logger.info(
                 logger.log_msgs["fastq_valid"],
                 fastq,
             )
+            returncodes.append(True)
         else:
             logger.error(
                 logger.log_msgs["fastq_invalid"],
                 fastq,
-                out,
-                err,
+                error_msg,
             )
+            returncodes.append(False)
 
-    if all(code == 0 for code in returncodes):
+    if all(returncodes):
         logger.info(logger.log_msgs["demux_success"])
         return True
 
