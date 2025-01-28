@@ -766,8 +766,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         # Runs bcl2fastq2 and checks if completed successfully
         # Bcl2fastq2 returncode 0 upon success. Outputs info logs to stderr
         out, err, returncode = execute_subprocess_command(
-            #self.bcl2fastq2_cmd,
-            self.cluster_density_cmd,
+            self.bcl2fastq2_cmd,
             self.demux_rf_logger,
         )
         if returncode == 0:

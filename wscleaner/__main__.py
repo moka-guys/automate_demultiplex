@@ -40,7 +40,7 @@ def get_arguments():
         "--min-age",
         help="The age (days) a runfolder must be to be deleted",
         type=int,
-        default=-1,
+        default=14,
     )
     parser.add_argument(
         "-l",
