@@ -43,8 +43,8 @@ LOG_MSGS = {
             "pipelines for the same run. Supported pipelines: %s"
         ),
         "ss_missing": "SampleSheet is missing and is required for sample name parsing",
-        "fastq_valid": "Gzip --test determined that the fastq is valid: %s",
-        "fastq_invalid": "Gzip --test determined that the fastq is not valid: %s. Stdout: %s. Stderr: %s",
+        "fastq_valid": "Gzip testing determined that the fastq is valid: %s",
+        "fastq_invalid": "Gzip testing determined that the fastq is not valid: %s. Error: %s",
         "demux_success": "Demultiplexing was successful for the run with all fastqs valid",
         "wes_batch_nos_identified": "WES batch numbers %s identified",
         "wes_batch_nos_missing": "WES batch numbers missing. Check for errors in the sample names. Script exited",

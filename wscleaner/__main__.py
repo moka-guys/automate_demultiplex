@@ -61,6 +61,9 @@ parsed_args = get_arguments()
 # no directories are deleted by the runfolder manager
 if parsed_args.dry_run or BRANCH != "main":
     dry_run = True  # Protects against deleting the test folders (!!)
+else:
+    dry_run = False
+
 
 RFM = RunFolderManager(
     dry_run=dry_run,
