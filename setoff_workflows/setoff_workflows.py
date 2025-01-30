@@ -39,6 +39,7 @@ from ad_logger.ad_logger import AdLogger, shutdown_logs
 from config.ad_config import SWConfig
 import logging
 from upload_runfolder.upload_runfolder import UploadRunfolder
+from config.ad_config import DemultiplexConfig
 from toolbox.toolbox import (
     return_scriptlog_config,
     test_upload_software,
@@ -310,6 +311,8 @@ class ProcessRunfolder(SWConfig):
         self.write_dx_run_cmds()
         self.pre_pipeline_upload()
         self.run_dx_run_commands()
+        if self.rf_samples_obj.pipeline == "archerdx":
+            self.run_decision_support_commands()
         self.pipeline_emails = PipelineEmails(
             self.rf_obj,
             self.rf_samples_obj,
@@ -776,6 +779,31 @@ class ProcessRunfolder(SWConfig):
             )
             sys.exit(1)
 
+    def run_decision_support_commands(self) -> None:
+        """
+        Execute the decision_support bash script
+            :return None:
+        """
+        decision_support_run_cmd = f"bash {self.rf_obj.decision_support_upload_script}"
+
+        self.loggers["sw"].info(
+            self.loggers["sw"].log_msgs["running_decision_cmds"],
+        )
+        out, err, returncode = execute_subprocess_command(
+            decision_support_run_cmd, self.loggers["sw"], "exit_on_fail"
+        )
+        if returncode != 0:
+            self.loggers["sw"].error(
+                self.loggers["sw"].log_msgs["decision_run_err"],
+                decision_support_run_cmd,
+                out,
+                err,
+            )
+        else:
+            self.loggers["sw"].info(
+                self.loggers["sw"].log_msgs["decision_run_success"],
+                self.rf_obj.runfolder_name,
+            )    
     def run_dx_run_commands(self) -> None:
         """
         Execute the dx run bash script
@@ -883,6 +911,13 @@ class ArcherDxPipeline:
             self.sql_queries.append(
                 sample_cmds_obj.return_oncology_query()
             )  # Get SQL queries
+        # Return the decision support command 
+        ADX_runfolder = f"run_folder_name={self.rf_obj.runfolder_name}"
+        ADX_jobID = f"job_name=$(cat {self.rf_obj.runfolderpath}/RunParameters.xml | grep -oP '(?<=ExperimentName>).*?(?=</ExperimentName)')"
+        docker = DemultiplexConfig.ADX_CMD
+        docker_api_cmd = [ADX_runfolder, ADX_jobID, docker]
+        for api_cmd in docker_api_cmd:
+            self.decision_support_upload_cmds.append(api_cmd)
 
         # Return downstream app commands
         self.workflow_cmds.extend(
