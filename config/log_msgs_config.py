@@ -34,7 +34,7 @@ LOG_MSGS = {
         "fastq_identified": (
             "The following fastq has been identified in the runfolder %s as matching the following strings: %s"
         ),
-        "fastq_nonexistent": "No fastq could be intentified that matches the following strings: %s. Error: %s",
+        "fastq_nonexistent": "No fastq could be identified that matches the following strings: %s. Error: %s",
         "sample_excluded": "Sample excluded from samples dictionary due to missing fastqs: %s",
         "control_sample": "%s control sample detected: %s",
         "missing_panno": "Could not identify pan number from the sample name in the sample sheet: %s",

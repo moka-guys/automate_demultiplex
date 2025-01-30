@@ -17,7 +17,7 @@ import re
 import subprocess
 import logging
 import time
-# import seglh_naming - USED TO FIND MISSING FASTQS WORRY ABOUT THIS LATER
+import seglh_naming
 from pathlib import Path
 from typing import Tuple
 from distutils.spawn import find_executable
@@ -270,7 +270,20 @@ def get_demultiplexlog_file(runfolderpath: str) -> str:
         return os.path.join(
             runfolderpath, ToolboxConfig.FLAG_FILES["bcl2fastqlog"]
         )
-    
+
+def create_aviti_outputpath(runfolderpath: str) -> str:
+    """
+    Checks to see if bases2fastq output directory has been made, if
+    not then creates output directory
+        :param runfolderpath (str):     Runfolder path string
+        :return (str):                  Fastq output folder string
+    """  
+    fastq_outputpath = os.path.join(runfolderpath, "Fastq")
+    if os.path.exists(fastq_outputpath):
+        return fastq_outputpath
+    else:
+        os.mkdir(fastq_outputpath)
+        return fastq_outputpath
 def get_fastq_dir_path(runfolderpath: str) -> str:
     """
     Returns filepath for fastqs for demultiplexing based on sequencer used
@@ -374,7 +387,7 @@ def get_samplename_dict(
     if os.path.exists(samplesheet_path):
         reversed_samplesheet = reversed(read_lines(samplesheet_path))
         for line in reversed_samplesheet:
-            if line.startswith("Sample_ID") or "[Data]" in line:
+            if line.startswith(("Sample_ID", "SampleName", "[Data]")):
                 break
             # Skip empty lines (check first element of the line, after splitting on comma)
             elif len(line.split(",")[0]) < 2:
@@ -500,9 +513,8 @@ class RunfolderObject(ToolboxConfig):
         )
         self.demultiplexlog_file = get_demultiplexlog_file(self.runfolderpath)
         self.fastq_dir_path = get_fastq_dir_path(self.runfolderpath)
-        self.bases2fastq_outputpath = os.path.join(
-            self.runfolderpath, "Fastqs"
-        )
+        self.bases2fastq_outputpath = create_aviti_outputpath(self.runfolderpath)
+        print(self.bases2fastq_outputpath)
         self.upload_flagfile = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["upload_started"]
         )
@@ -675,6 +687,7 @@ class RunfolderSamples(ToolboxConfig):
         self.fastq_dir_path = rf_obj.fastq_dir_path
         self.logger = logger
         self.samplename_dict = get_samplename_dict(self.logger, self.samplesheet_path)
+        print(f"Samplesheet dict - {self.samplename_dict}")
         self.pipeline = self.get_pipeline()
         self.runtype_str = self.get_runtype()
         self.nexus_runfolder_suffix = self.get_nexus_runfolder_suffix()
@@ -1212,7 +1225,7 @@ class SampleObject(ToolboxConfig):
             :return fastq_path (str):           Local fastq path
             :return nexus_fastq_path (str):     DNAnexus fastq path
         """
-        matches = [self.sample_name, f"_{read}_"]
+        matches = [self.sample_name, f"_{read}"]
         try:
             fastq_name = list(
                 fastq_path

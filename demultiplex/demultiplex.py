@@ -338,7 +338,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
 
     def demultiplex_docker_log_absent(self) -> Optional[bool]:
         """
-        Check presence of demultiple log file (bcl2fastq2/bases2fastq_output.log)
+        Check presence of demultiplex log file (bcl2fastq2/bases2fastq_output.log)
             :return (Optional[bool]): Return true is demultiplex logfile exists
         """
         if os.path.isfile(self.rf_obj.demultiplexlog_file):
@@ -811,8 +811,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         if self.rf_obj.sequencer_type == DemultiplexConfig.AVITI_SEQ:
             demultiplex_cmd = DemultiplexConfig.BASES2FASTQ_CMD % (
-            #self.user,
-            #self.user,
+            self.user,
+            self.user,
             self.rf_obj.runfolderpath,
             self.rf_obj.bases2fastq_outputpath,
             DemultiplexConfig.BASES2FASTQ_CPU,

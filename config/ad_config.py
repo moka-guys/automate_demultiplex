@@ -63,8 +63,8 @@ else:  # Testing branch
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
-    RUNFOLDERS = "/media/data3/share/testing"
-    ILLUMINA_RUNFOLDER = "/media/data3/share/testing"
+    RUNFOLDERS = "/media/data3/share/testing/demultiplex_test"
+    ILLUMINA_RUNFOLDER = "/media/data3/share/testing/demultiplex_test"
     AVITI_RUNFOLDER = "/media/data1/share/AV241501/testing"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
@@ -88,7 +88,7 @@ RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 FASTQ_DIRS = {
     "illumina_fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
     "tso_fastqs": "${PROJECT_ID}:/analysis_folder/Logs_Intermediates/CollapsedReads/",
-    "aviti_fastqs": "Fastqs/Samples/DefaultProject"
+    "aviti_fastqs": "Fastq/Samples"
 }
 SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit path
 
@@ -398,8 +398,8 @@ class DemultiplexConfig(PanelConfig):
         "--sample-sheet /mnt/run/%s --no-lane-splitting"
     )
     BASES2FASTQ_CMD = (
-        f"docker run --rm -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
-        "bases2fastq /input /output -p %s --group-fastq"
+        f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
+        "bases2fastq /input /output -p %s --group-fastq --no-projects"
     )
     #(
     #    f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
@@ -410,9 +410,11 @@ class DemultiplexConfig(PanelConfig):
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        "99999999_AV241501_NGS999Simdata"
+        "99999999_AV241501_NGS999Simdata",
     ]
     """
+        "999999_NB552085_0358_AHM2YNAFX7",
+        "99999999_AV241501_NGS999Simdata",
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
         "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
