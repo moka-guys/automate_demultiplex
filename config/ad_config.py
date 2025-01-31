@@ -388,12 +388,12 @@ class DemultiplexConfig(PanelConfig):
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
     ADX_CMD = (
-        f"docker run \
-            -v {RUNFOLDERS}/${{run_folder_name}}/Data/Intensities/BaseCalls:/data \
-            -v {DOCUMENT_ROOT}:/auth_file \
-            {ARCHER_DOCKER}  /data \
-            auth_file/{CREDENTIALS['adx_authtoken']} \
-            ${{job_name}} 2 | tee -a {AD_LOGDIR}/archer_api_upload_logfiles/${{run_folder_name}}_archer_api_logfile.txt"
+        f"docker run "
+        f"-v {RUNFOLDERS}/${{run_folder_name}}/Data/Intensities/BaseCalls:/data "
+        f"-v {DOCUMENT_ROOT}:/auth_file "
+        f"{ARCHER_DOCKER} /data "
+        f"auth_file/{CREDENTIALS['adx_authtoken']} "
+        f"${{job_name}} 2 | tee -a {AD_LOGDIR}/archer_api_upload_logfiles/${{run_folder_name}}_archer_api_logfile.txt"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
