@@ -392,7 +392,7 @@ class DemultiplexConfig(PanelConfig):
             -v {RUNFOLDERS}/${{run_folder_name}}/Data/Intensities/BaseCalls:/data \
             -v {DOCUMENT_ROOT}:/auth_file \
             {ARCHER_DOCKER}  /data \
-            auth_file/{CREDENTIALS["adx_authtoken"]} \
+            auth_file/{CREDENTIALS['adx_authtoken']} \
             ${{job_name}} 2 | tee -a {AD_LOGDIR}/archer_api_upload_logfiles/${{run_folder_name}}_archer_api_logfile.txt"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
