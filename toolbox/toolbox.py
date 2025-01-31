@@ -306,8 +306,13 @@ def get_samplename_dict(
         logger.error(logger.log_msgs["ss_missing"])
 
 
-def validate_fastq_gzip(file_path):
-    """Fast gzip validation by checking header, footer, and partial decompression"""
+def validate_fastq_gzip(file_path: str, logger: logging.Logger) -> Optional[bool]:
+    """
+    Fast gzip validation with basic FASTQ structure checks
+        :param file_path (str): Path to the FASTQ file
+        :param logger (logging.Logger): Logger
+        :return (bool, str): True if valid, False and error message if not
+    """
     try:
         # Check compressed file header (magic number check)
         with open(file_path, 'rb') as f:
@@ -323,9 +328,24 @@ def validate_fastq_gzip(file_path):
 
         # Quick decompression check of first block
         with gzip.open(file_path, 'rb') as f:
-            # Only read first 1KB of decompressed data
-            f.read(1024)
+            # Read first 4 lines (1 FASTQ record)
+            lines = []
+            for _ in range(4):
+                line = f.readline().strip()
+                if not line:  # Handle empty lines early
+                    return False, "Incomplete FASTQ record"
+                lines.append(line)
             
+            # Basic FASTQ structure validation
+            if len(lines) != 4:
+                return False, "Invalid FASTQ: Not enough lines for complete record"
+            if not lines[0].startswith(b'@'):
+                return False, "Invalid FASTQ: Missing @ header"
+            if not lines[2].startswith(b'+'):
+                return False, "Invalid FASTQ: Missing + separator"
+            if len(lines[1]) != len(lines[3]):
+                return False, "Invalid FASTQ: Sequence/quality length mismatch"
+
         return True, None
         
     except (OSError, EOFError, zlib.error) as e:
@@ -348,7 +368,7 @@ def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[boo
 
     for fastq in fastqs:
         full_path = os.path.join(fastq_dir_path, fastq)
-        is_valid, error_msg = validate_fastq_gzip(full_path)
+        is_valid, error_msg = validate_fastq_gzip(full_path, logger)
         
         if is_valid:
             logger.info(
@@ -367,7 +387,6 @@ def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[boo
     if all(returncodes):
         logger.info(logger.log_msgs["demux_success"])
         return True
-
 
 class RunfolderObject(ToolboxConfig):
     """
