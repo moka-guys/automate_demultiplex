@@ -34,7 +34,7 @@ Panel number lists are created from the PANEL_DICT, assimilating pan numbers fro
 
 - SNP does not have R numbers (test_number) as it is an identity check for the GMS SMS
 - Panels for WES (analysed in Congenica) and TSO500 (analysed in QCII), and ArcherDX (analysed in Archer software), are applied at the point of analysis, so R and M numbers (test_number) for these are not listed below. These pan numbers do not necessarily refer to bed files but rather project configuration (e.g. DNAnexus instances, project layout etc.)
-- Development runs have two options for pan numbers, one for runs that require standard processing with bcl2fastq and one for runs that require manual processing as they have UMIs
+- Development runs have two options for pan numbers, one for runs that require standard processing with bclconvert and one for runs that require manual processing as they have UMIs
 
 | Dictionary key | Details |
 |----------------|----------|
