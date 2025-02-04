@@ -445,8 +445,10 @@ class ProcessRunfolder(SWConfig):
             % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
-                f"{os.path.join(self.rf_samples_obj.nexus_paths['fastqs_dir'], 'Stats')}",
-                self.rf_obj.bclconvertstats_file,
+                "/QC/bclconvert/",
+                " ".join(
+                    f"'{cd_file}'" for cd_file in self.rf_obj.bclconvertstats_file
+                ),                
             ),
             "logfiles": SWConfig.DX_CMDS["file_upload_cmd"]
             % (
@@ -606,7 +608,7 @@ class ProcessRunfolder(SWConfig):
             }
             pre_pipeline_upload_dict["bclconvert_qc"] = {
                 "cmd": self.upload_cmds["bclconvert_qc"],
-                "files_list": [self.rf_obj.bclconvertstats_file],
+                "files_list": self.rf_obj.bclconvertstats_file,
             }
             if self.rf_samples_obj.pipeline == "oncodeep":  # Add MasterFile entry
                 pre_pipeline_upload_dict["masterfile"] = {

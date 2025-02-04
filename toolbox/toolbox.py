@@ -421,9 +421,19 @@ class RunfolderObject(ToolboxConfig):
         self.upload_flagfile = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["upload_started"]
         )
-        self.bclconvertstats_file = os.path.join(
-            self.runfolderpath,
-            "Data/Intensities/BaseCalls/Stats/Stats.json", # need to change this path
+        bclconvert_stats = [
+            "Adapter_Cycle_Metrics.csv", "Adapter_Metrics.csv",
+            "Demultiplex_Stats.csv", "fastq_list.csv", "Index_Hopping_Counts.csv", 
+            "IndexMetricsOut.bin", "Quality_Metrics.csv", "Quality_Tile_Metrics.csv", 
+            "RunInfo.xml", "SampleSheet.csv", "Top_Unknown_Barcodes.csv"
+        ]
+        self.bclconvertstats_file = []
+        for stats in bclconvert_stats:
+            self.bclconvertstats_file.append(
+                os.path.join(
+                    self.runfolderpath,
+                    f"Data/Intensities/BaseCalls/Reports/{stats}", 
+            )
         )
         self.cluster_density_files = [
             os.path.join(
