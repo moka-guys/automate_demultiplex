@@ -286,6 +286,13 @@ class DemultiplexRunfolder(DemultiplexConfig):
                             self.rf_obj.runfolder_masterfile_path,
                         )
                         self.run_processed = True
+                    #Copy Bases2Fastq.log output over to the log file we created to continue processing
+                    if self.rf_obj.sequencer_type == DemultiplexConfig.AVITI_SEQ:
+                        bases2fastq_output = os.path.join(self.rf_obj.runfolderpath, "Fastq/info/Bases2Fastq.log")
+                        self.copy_file(
+                            bases2fastq_output,
+                            self.rf_obj.demultiplexlog_file
+                        )
                 return True
 
     def demultiplexing_required(self) -> Optional[bool]:
