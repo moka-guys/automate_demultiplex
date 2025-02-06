@@ -514,7 +514,6 @@ class RunfolderObject(ToolboxConfig):
         self.demultiplexlog_file = get_demultiplexlog_file(self.runfolderpath)
         self.fastq_dir_path = get_fastq_dir_path(self.runfolderpath)
         self.bases2fastq_outputpath = create_aviti_outputpath(self.runfolderpath)
-        print(self.bases2fastq_outputpath)
         self.upload_flagfile = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["upload_started"]
         )
@@ -687,7 +686,6 @@ class RunfolderSamples(ToolboxConfig):
         self.fastq_dir_path = rf_obj.fastq_dir_path
         self.logger = logger
         self.samplename_dict = get_samplename_dict(self.logger, self.samplesheet_path)
-        print(f"Samplesheet dict - {self.samplename_dict}")
         self.pipeline = self.get_pipeline()
         self.runtype_str = self.get_runtype()
         self.nexus_runfolder_suffix = self.get_nexus_runfolder_suffix()
