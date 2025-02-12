@@ -17,6 +17,7 @@ import re
 import subprocess
 import logging
 import time
+import json
 import seglh_naming
 from pathlib import Path
 from typing import Tuple
@@ -193,6 +194,8 @@ def check_returncode(
 def get_sequencer_type(runfolder_name: str) -> str:
     """
     Returns the name of sequencer run was loaded to
+        :param runfolder_name (str):    Runfolder name string
+        :return sequencer_type (str):   Sequencer type
     """
     if ToolboxConfig.AVITI_ID in runfolder_name:
         return ToolboxConfig.AVITI_SEQ
@@ -210,15 +213,36 @@ def get_runfolder_path(sequencer_type: str, runfolder_name: str) -> str:
     else:
         return os.path.join(ToolboxConfig.RUNFOLDERS, runfolder_name)
 
-def get_samplesheet_name(sequencer_type: str, runfolder_name: str) -> str:
+def get_aviti_run_id(sequencer_type: str, aviti_runparameters_json: str) -> str:
+    """
+    Return AVITI ID to match samplesheet with AVITI run
+        :param sequencer_type (str):    Sequencer type string
+        :param runfolder_name (str):    Runfolder name string
+        :return aviti Run ID (str):     AVITI ID String
+    """
+    if sequencer_type == ToolboxConfig.AVITI_SEQ:
+        with open(aviti_runparameters_json) as file:
+            json_contents = file.read()
+            json_file = json.loads(json_contents)
+            date = json_file["Date"].split("T")[0].replace("-","")
+            date_amended = date[2:]
+            side = json_file["Side"].replace("Side","")
+            flowcell = json_file["FlowcellID"]
+            aviti_run_id = f"{date_amended}_{ToolboxConfig.AVITI_ID}_{side}{flowcell}"
+            return aviti_run_id
+    else:
+        return ""
+
+def get_samplesheet_name(sequencer_type: str, runfolder_name: str, aviti_run_id: str) -> str:
     """
     Return the name of the samplesheet based on sequencer type
         :param sequencer_type           Sequencer type string
         :param runfolder_name (str):    Runfolder name string
-        :return (str):                  Samplesheet.csv/RunManifest.csv   
+        :param aviti_run_id (str):      AVITI RunParameters ID string
+        :return (str):                  Samplesheet.csv  
     """
     if sequencer_type == ToolboxConfig.AVITI_SEQ:
-        return "RunManifest.csv"
+        return f"{aviti_run_id}_SampleSheet.csv"
     else:
         return f"{runfolder_name}_SampleSheet.csv"
     
@@ -236,24 +260,6 @@ def get_runcompletefile_path(sequencer_type: str, runfolderpath: str) -> str:
     else:
         return os.path.join(
             runfolderpath, ToolboxConfig.FLAG_FILES["illumina_seq_complete"]
-        )
-    
-def get_samplesheet_path(sequencer_type: str, runfolder_name: str,samplesheet_name: str) -> str:
-    """
-    Return tech team uploaded samplesheet filepath based on sequencer used - 
-    function necessary for Illumina runs but not AVITI 
-        :param sequencer_type           Sequencer type string
-        :param runfolder_name (str):    Runfolder name string
-        :param samplesheet_name (str):  Samplesheet name string
-        :return (str):                  Samplesheet file path
-    """
-    if sequencer_type == ToolboxConfig.AVITI_SEQ:
-        return os.path.join(
-            ToolboxConfig.AVITI_RUNFOLDER, runfolder_name, samplesheet_name
-        )
-    else:
-        return os.path.join(
-            ToolboxConfig.RUNFOLDERS, "samplesheets", samplesheet_name
         )
     
 def get_demultiplexlog_file(runfolderpath: str) -> str:
@@ -492,9 +498,13 @@ class RunfolderObject(ToolboxConfig):
         self.runfolder_name = runfolder_name
         self.sequencer_type = get_sequencer_type(self.runfolder_name)
         self.runfolderpath = get_runfolder_path(self.sequencer_type, self.runfolder_name)
-        self.samplesheet_name = get_samplesheet_name(self.sequencer_type, self.runfolder_name)
+        self.aviti_runparameters_json = os.path.join(self.runfolderpath, "RunParameters.json")
+        self.aviti_run_id = get_aviti_run_id(self.sequencer_type, self.aviti_runparameters_json)
+        self.samplesheet_name = get_samplesheet_name(self.sequencer_type, self.runfolder_name, self.aviti_run_id)
         self.runcompletefile_path = get_runcompletefile_path(self.sequencer_type, self.runfolderpath)
-        self.samplesheet_path = get_samplesheet_path(self.sequencer_type, self.runfolder_name, self.samplesheet_name)
+        self.samplesheet_path = os.path.join(
+            ToolboxConfig.RUNFOLDERS, "samplesheets", self.samplesheet_name
+        )
         self.runfolder_samplesheet_path = os.path.join(
             self.runfolderpath, self.samplesheet_name
         )

@@ -63,8 +63,8 @@ else:  # Testing branch
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
-    RUNFOLDERS = "/media/data3/share/testing/demultiplex_test"
-    ILLUMINA_RUNFOLDER = "/media/data3/share/testing/demultiplex_test"
+    RUNFOLDERS = "/media/data3/share/testing/"
+    ILLUMINA_RUNFOLDER = "/media/data3/share/testing/"
     AVITI_RUNFOLDER = "/media/data1/share/AV241501/testing"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
@@ -399,18 +399,15 @@ class DemultiplexConfig(PanelConfig):
     )
     BASES2FASTQ_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
-        "bases2fastq /input /output -p %s --group-fastq --no-projects"
+        "bases2fastq /input /output -p %s -r /input/%s --group-fastq --no-projects"
     )
-    #(
-    #    f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
-    #    "bases2fastq /input /output -p %s --group-fastq"
-    #)
+
     CD_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        "99999999_AV241501_NGS999Simdata",
+        "20241204_AV241501_NGS651AV",
     ]
     """
         "999999_NB552085_0358_AHM2YNAFX7",

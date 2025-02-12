@@ -321,11 +321,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     if requires_no_ic or self.checksumfile_exists():
                         if self.sequencing_complete():
                             if requires_no_ic or self.pass_integrity_check():
+                                self.copy_file(
+                                    self.rf_obj.samplesheet_path,
+                                    self.rf_obj.runfolder_samplesheet_path,
+                                )
                                 if self.sequenced_on_illumina():
-                                    self.copy_file(
-                                        self.rf_obj.samplesheet_path,
-                                        self.rf_obj.runfolder_samplesheet_path,
-                                    )
                                     self.calculate_cluster_density()
                                 if self.runtype_requires_demultiplexing():
                                     return True
@@ -823,6 +823,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.rf_obj.runfolderpath,
             self.rf_obj.bases2fastq_outputpath,
             DemultiplexConfig.BASES2FASTQ_CPU,
+            self.rf_obj.samplesheet_name,
             )
         else:
             demultiplex_cmd = DemultiplexConfig.BCL2FASTQ2_CMD % (
