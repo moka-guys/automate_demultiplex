@@ -581,6 +581,7 @@ class ToolboxConfig(PanelConfig):
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
         "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
+        "initial_sscheck_flag": "initial_sscheck_flagfile.txt",  # Denotes initial SampleSheet has been checked
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
         "seq_complete": "RTAComplete.txt",  # Sequencing complete file
     }

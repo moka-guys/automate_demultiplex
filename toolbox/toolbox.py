@@ -384,7 +384,9 @@ class RunfolderObject(ToolboxConfig):
         samplesheet_path (str):                 Path to SampleSheet in SampleSheets dir
         runfolder_samplesheet_path (str):       Runfolder SampleSheets path (within runfolder)
         checksumfile_path (str):                md5 checksum (integrity check) file path (within runfolder)
-        sscheck_flagfile_path (str):            Samplesheet check flag file path (within runfolder)
+        initial_sscheck_flagfile_path (str):    initial Samplesheet check flag file path (within runfolder)
+
+        sscheck_flagfile_path (str):            2nd attempt Samplesheet check flag file path (within runfolder)
         bcl2fastqlog_file (str):                bcl2fastq2 logfile path (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
         upload_flagfile (str):                  Flag file denoting upload has begun (within runfolder)
@@ -438,6 +440,9 @@ class RunfolderObject(ToolboxConfig):
         )
         self.checksumfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["md5checksum"]
+        )
+        self.initial_sscheck_flagfile_path = os.path.join(
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["initial_sscheck_flag"]
         )
         self.sscheck_flagfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["sscheck_flag"]
