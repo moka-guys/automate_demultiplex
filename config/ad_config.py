@@ -389,17 +389,13 @@ class DemultiplexConfig(PanelConfig):
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        "999999_NB552085_0358_AHM2YNAFX7",
-        #"240823_A01229_0364_BHHVYKDRX5",
-        #"240829_NB552085_0334_AHGMJ5AFX7",
-        #"240902_A01229_0367_AHHNMVDRX5"
-        #"999999_NB552085_0496_DEMUXINTEG",
-        #"999999_M02353_0496_000000000-DEMUX",
-        #"999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
-        #"999999_M02631_0285_000000000-DEVOO",
-        #"999999_NB551068_0285_OODEVINTEG",
-        #"999999_M02631_0285_000000000-DVUMI",
-        #"999999_NB552085_0320_ONCODEEP00",  # Included as behaviour is slightly different to include copying the MasterFile
+        "999999_NB552085_0496_DEMUXINTEG",
+        "999999_M02353_0496_000000000-DEMUX",
+        "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
+        "999999_M02631_0285_000000000-DEVOO",
+        "999999_NB551068_0285_OODEVINTEG",
+        "999999_M02631_0285_000000000-DVUMI",
+        "999999_NB552085_0320_ONCODEEP00",  # Included as behaviour is slightly different to include copying the MasterFile
     ]
     SEQUENCER_IDS = {
         # Requires_ic denotes sequencers requiring md5 checksums from integrity check to be assessed
