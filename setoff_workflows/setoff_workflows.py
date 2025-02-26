@@ -29,7 +29,7 @@ processing. See Readme and docstrings for further details. Contains the followin
 - CustomPanelsPipeline
     Collate commands for Custom Panels workflow. This runtype has no postprocesing commands
 """
-
+print("Importing Modules")
 import sys
 import os
 import re
@@ -58,13 +58,14 @@ from setoff_workflows.build_dx_commands import (
     BuildSampleDxCommands,
 )
 from toolbox.toolbox import script_start_logmsg, script_end_logmsg
-
+print("Set up logging")
 # Set up script logging
 ad_logger_obj = AdLogger(__name__, "sw", return_scriptlog_config()["sw"])
 script_logger = ad_logger_obj.get_logger()
 
 
 class SequencingRuns(SWConfig):
+    print("Inside Class")
     """
     Collects sequencing runs and initiates runfolder processing for those
     sequencing runs requiring processing
@@ -86,7 +87,6 @@ class SequencingRuns(SWConfig):
             If software tests pass, set up logging and pass rf_obj to the ProcessRunfolder class for
             processing, shutting down logs upon completion
     """
-
     def __init__(self):
         """
         Constructor for the SequencingRuns class
@@ -97,18 +97,25 @@ class SequencingRuns(SWConfig):
         Call methods to collect runfolders for processing. Called by __main__.py
             :return None:
         """
+        print("Setoff Processing")
         processed_runfolders = []
         script_start_logmsg(script_logger, __file__)
+        print("Grabbing runs to process")
         runs_to_process = self.set_runfolders()
+        print("Grabbed runs to process")
         if test_upload_software(script_logger):
+            print("DONE?")
             for rf_obj in runs_to_process:
                 if not os.path.exists(rf_obj.upload_flagfile):
+                    print("Not Uploaded")
                     script_logger.info(
                         script_logger.log_msgs["start_runfolder_proc"],
                         rf_obj.runfolder_name,
                     )
                     if self.process_runfolder(rf_obj):
+                        print("HOORAY")
                         processed_runfolders.append(rf_obj.runfolder_name)
+                        print(processed_runfolders)
             get_num_processed_runfolders(script_logger, processed_runfolders)
             script_end_logmsg(script_logger, __file__)
 
@@ -119,16 +126,22 @@ class SequencingRuns(SWConfig):
             :return (list):     List of runfolder objects that require processing
         """
         runs_to_process = []
-        for folder in os.listdir(SWConfig.RUNFOLDERS):
-            if os.path.isdir(os.path.join(SWConfig.RUNFOLDERS, folder)) and re.compile(
-                SWConfig.RUNFOLDER_PATTERN
-            ).match(folder):
-                script_logger.info(
-                    script_logger.log_msgs["runfolder_identified"], folder
-                )
-                rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
-                if self.requires_processing(rf_obj):
-                    runs_to_process.append(rf_obj)
+        # Created listed directory of both Illumina and Aviti Runs
+        illumina_runfolders = os.listdir(SWConfig.ILLUMINA_RUNFOLDER)
+        aviti_runfolders = os.listdir(SWConfig.AVITI_RUNFOLDER)
+        sequenced_folders = illumina_runfolders + aviti_runfolders
+        for folder in sequenced_folders:
+            if re.compile(SWConfig.RUNFOLDER_PATTERN).match(folder):
+                if os.path.isdir(
+                    os.path.join(SWConfig.ILLUMINA_RUNFOLDER, folder)
+                    ) or os.path.isdir(
+                        os.path.join(SWConfig.AVITI_RUNFOLDER, folder)):
+                    script_logger.info(
+                        script_logger.log_msgs["runfolder_identified"], folder
+                    )
+                    rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
+                    if self.requires_processing(rf_obj):
+                        runs_to_process.append(rf_obj)
         return runs_to_process
 
     def requires_processing(self, rf_obj: object) -> Optional[bool]:
@@ -139,6 +152,7 @@ class SequencingRuns(SWConfig):
             :return (Optional[bool]):   Returns true if runfolder requires processing, else None
         """
         if self.has_demultiplexed(rf_obj):
+            print("Run has demultiplexed")
             if self.already_uploaded(rf_obj):
                 script_logger.info(
                     script_logger.log_msgs["runfolder_prev_proc"],
@@ -159,11 +173,12 @@ class SequencingRuns(SWConfig):
             :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific attributes)
             :return (Optional[bool]):   Return True if runfolder already demultiplexed, else None
         """
-        if os.path.isfile(rf_obj.bcl2fastqlog_file):
-            logfile_list = read_lines(rf_obj.bcl2fastqlog_file)
+        if os.path.isfile(rf_obj.demultiplexlog_file):
+            logfile_list = read_lines(rf_obj.demultiplexlog_file)
             completed_strs = [
                 SWConfig.STRINGS["demultiplex_not_required_msg"].partition(" ")[-1],
-                SWConfig.STRINGS["demultiplex_success"],
+                SWConfig.STRINGS["illumina_demultiplex_success"],
+                SWConfig.STRINGS["aviti_demultiplex_success"],
             ]
             if logfile_list:
                 if any(
@@ -175,7 +190,7 @@ class SequencingRuns(SWConfig):
                 else:
                     script_logger.info(script_logger.log_msgs["success_string_absent"])
             else:
-                script_logger.info(script_logger.log_msgs["bcl2fastqlog_empty"])
+                script_logger.info(script_logger.log_msgs["demultiplexlog_empty"])
         else:
             script_logger.info(script_logger.log_msgs["not_yet_demultiplexed"])
 
@@ -199,11 +214,12 @@ class SequencingRuns(SWConfig):
             :return (str):          True name if runfolder has been processed
         """
         loggers = rf_obj.get_runfolder_loggers(__package__)  # Get dictionary of loggers
-
+        print(f"LOGGER - {loggers}")
         loggers["sw"].info(
             loggers["sw"].log_msgs["ad_version"],
             git_tag(),
         )
+        print(rf_obj.samplesheet_path)
         samplename_dict = get_samplename_dict(loggers["sw"], rf_obj.samplesheet_path)
         if samplename_dict:
             ProcessRunfolder(rf_obj, loggers)
@@ -284,6 +300,7 @@ class ProcessRunfolder(SWConfig):
                                     attributes)
             :param loggers (dict):  Dict of loggers
         """
+        print("CREATING RunfolderProcessor")
         self.rf_obj = rf_obj
         self.loggers = loggers
         self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
@@ -306,6 +323,8 @@ class ProcessRunfolder(SWConfig):
         )
         self.upload_cmds = self.get_upload_cmds()
         self.pre_pipeline_upload_dict = self.create_file_upload_dict()
+        print("DICTIONARY")
+        print(self.pre_pipeline_upload_dict)
         self.pipeline_obj = self.build_dx_commands()
         self.write_dx_run_cmds()
         self.pre_pipeline_upload()
@@ -478,6 +497,10 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.runfolder_masterfile_path,
             )
         if self.rf_samples_obj.pipeline != "tso500":
+            print("FASTQ")
+            print(self.rf_samples_obj.fastqs_str)
+            print("UNDETERMINED")
+            print(self.rf_samples_obj.undetermined_fastqs_str)
             # tso500 run is not demultiplexed locally so there are no fastqs
             # All other runfolders have fastqs in the BaseCalls directory
             upload_cmds["fastqs"] = SWConfig.DX_CMDS["file_upload_cmd"] % (

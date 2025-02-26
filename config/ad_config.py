@@ -63,8 +63,8 @@ else:  # Testing branch
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
-    RUNFOLDERS = "/media/data3/share/testing/demultiplex_test"
-    ILLUMINA_RUNFOLDER = "/media/data3/share/testing/demultiplex_test"
+    RUNFOLDERS = "/media/data3/share/testing/"
+    ILLUMINA_RUNFOLDER = "/media/data3/share/testing/"
     AVITI_RUNFOLDER = "/media/data1/share/AV241501/testing"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
@@ -93,7 +93,7 @@ FASTQ_DIRS = {
 SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit path
 
 # DNAnexus upload agent path
-UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
+UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.33-linux/ua"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
 BASES2FASTQ_DOCKER = "elembio/bases2fastq"
 GATK_DOCKER = (
@@ -102,7 +102,8 @@ GATK_DOCKER = (
 
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
 DEMUX_NOT_REQUIRED_MSG = "%s run. Does not need demultiplexing locally"
-DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
+ILLUMINA_DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
+AVITI_DEMULTIPLEX_SUCCESS = "Output stored in /output"
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
 
@@ -376,15 +377,11 @@ class DemultiplexConfig(PanelConfig):
     RUNFOLDERS = RUNFOLDERS
     ILLUMINA_RUNFOLDER = ILLUMINA_RUNFOLDER
     AVITI_RUNFOLDER = AVITI_RUNFOLDER
-    SEQ_RUNFOLDERS = [
-        ILLUMINA_RUNFOLDER,
-        AVITI_RUNFOLDER,
-    ]
     STRINGS = {
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
-        "demultiplex_success": DEMULTIPLEX_SUCCESS,
+        #"demultiplex_success": #DEMULTIPLEX_SUCCESS,
         "checksums_assessed": "Checksums assessed by AS: %s",  # Written to file by AS
         "checksums_match": "Checksums match",  # Success message written to md5checksum file by integrity check scripts
         "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
@@ -409,8 +406,9 @@ class DemultiplexConfig(PanelConfig):
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
+    #"99999999_AV241501_NGS999Simdata",
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        "99999999_AV241501_NGS999Simdata",
+        "20250123_AV241501_NGS658FFV08Pool2AV",
     ]
     """
         "999999_NB552085_0358_AHM2YNAFX7",
@@ -454,6 +452,8 @@ class SWConfig(PanelConfig):
     SDK_SOURCE = SDK_SOURCE
     UPLOAD_ARGS = UPLOAD_ARGS
     RUNFOLDERS = RUNFOLDERS
+    ILLUMINA_RUNFOLDER = ILLUMINA_RUNFOLDER
+    AVITI_RUNFOLDER = AVITI_RUNFOLDER
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
     if BRANCH == "main":  # Prod branch
 
@@ -481,7 +481,8 @@ class SWConfig(PanelConfig):
     STRINGS = {
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
-        "demultiplex_success": DEMULTIPLEX_SUCCESS,
+        "illumina_demultiplex_success": ILLUMINA_DEMULTIPLEX_SUCCESS,
+        "aviti_demultiplex_success": AVITI_DEMULTIPLEX_SUCCESS
     }
     PIPE_FH_GATK_TIMEOUT_ARGS = (  # This is specified for the GATK app in the Custom Panels pipeline for only FH samples
         # Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
@@ -614,7 +615,7 @@ class ToolboxConfig(PanelConfig):
     TEST_PROGRAMS_DICT = {
         "dx_toolkit": {
             "executable": "dx",
-            "test_cmd": f"{SDK_SOURCE}; dx --version",
+            "test_cmd": "dx --version" #f"{SDK_SOURCE}; dx --version",
         },
         "upload_agent": {
             "executable": UPLOAD_AGENT_EXE,

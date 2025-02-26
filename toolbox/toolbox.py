@@ -17,7 +17,8 @@ import re
 import subprocess
 import logging
 import time
-import seglh_naming
+import json
+#import seglh_naming
 from pathlib import Path
 from typing import Tuple
 from distutils.spawn import find_executable
@@ -210,15 +211,36 @@ def get_runfolder_path(sequencer_type: str, runfolder_name: str) -> str:
     else:
         return os.path.join(ToolboxConfig.RUNFOLDERS, runfolder_name)
 
-def get_samplesheet_name(sequencer_type: str, runfolder_name: str) -> str:
+def get_aviti_run_id(sequencer_type: str, aviti_runparameters_json: str) -> str:
+    """
+    Return AVITI ID to match samplesheet with AVITI run
+        :param sequencer_type (str):    Sequencer type string
+        :param runfolder_name (str):    Runfolder name string
+        :return aviti Run ID (str):     AVITI ID String
+    """
+    if sequencer_type == ToolboxConfig.AVITI_SEQ:
+        with open(aviti_runparameters_json) as file:
+            json_contents = file.read()
+            json_file = json.loads(json_contents)
+            date = json_file["Date"].split("T")[0].replace("-","")
+            date_amended = date[2:]
+            side = json_file["Side"].replace("Side","")
+            flowcell = json_file["FlowcellID"]
+            aviti_run_id = f"{date_amended}_{ToolboxConfig.AVITI_ID}_{side}{flowcell}"
+            return aviti_run_id
+    else:
+        return ""
+
+def get_samplesheet_name(sequencer_type: str, runfolder_name: str, aviti_run_id: str) -> str:
     """
     Return the name of the samplesheet based on sequencer type
         :param sequencer_type           Sequencer type string
         :param runfolder_name (str):    Runfolder name string
-        :return (str):                  Samplesheet.csv/RunManifest.csv   
+        :param aviti_run_id (str):      AVITI RunParameters ID string
+        :return (str):                  Samplesheet.csv  
     """
     if sequencer_type == ToolboxConfig.AVITI_SEQ:
-        return "RunManifest.csv"
+        return f"{aviti_run_id}_SampleSheet.csv"
     else:
         return f"{runfolder_name}_SampleSheet.csv"
     
@@ -387,7 +409,7 @@ def get_samplename_dict(
     if os.path.exists(samplesheet_path):
         reversed_samplesheet = reversed(read_lines(samplesheet_path))
         for line in reversed_samplesheet:
-            if line.startswith(("Sample_ID", "SampleName", "[Data]")):
+            if line.startswith(("Sample_ID", "SampleName", "[Data],", "#",)):
                 break
             # Skip empty lines (check first element of the line, after splitting on comma)
             elif len(line.split(",")[0]) < 2:
@@ -492,9 +514,14 @@ class RunfolderObject(ToolboxConfig):
         self.runfolder_name = runfolder_name
         self.sequencer_type = get_sequencer_type(self.runfolder_name)
         self.runfolderpath = get_runfolder_path(self.sequencer_type, self.runfolder_name)
-        self.samplesheet_name = get_samplesheet_name(self.sequencer_type, self.runfolder_name)
+        self.aviti_runparameters_json = os.path.join(self.runfolderpath, "RunParameters.json")
+        self.aviti_run_id = get_aviti_run_id(self.sequencer_type, self.aviti_runparameters_json)
+        print(self.aviti_run_id)
+        self.samplesheet_name = get_samplesheet_name(self.sequencer_type, self.runfolder_name, self.aviti_run_id)
         self.runcompletefile_path = get_runcompletefile_path(self.sequencer_type, self.runfolderpath)
         self.samplesheet_path = get_samplesheet_path(self.sequencer_type, self.runfolder_name, self.samplesheet_name)
+        print(self.samplesheet_path)
+        print("PATH")
         self.runfolder_samplesheet_path = os.path.join(
             self.runfolderpath, self.samplesheet_name
         )
@@ -514,7 +541,6 @@ class RunfolderObject(ToolboxConfig):
         self.demultiplexlog_file = get_demultiplexlog_file(self.runfolderpath)
         self.fastq_dir_path = get_fastq_dir_path(self.runfolderpath)
         self.bases2fastq_outputpath = create_aviti_outputpath(self.runfolderpath)
-        print(self.bases2fastq_outputpath)
         self.upload_flagfile = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["upload_started"]
         )
@@ -682,15 +708,17 @@ class RunfolderSamples(ToolboxConfig):
             :logger (logging.Logger):   Logger
         """
         self.sequencer_type = rf_obj.sequencer_type
+        self.samplesheet_name = rf_obj.samplesheet_name
         self.samplesheet_path = rf_obj.samplesheet_path
         self.runfolder_name = rf_obj.runfolder_name
         self.fastq_dir_path = rf_obj.fastq_dir_path
         self.logger = logger
         self.samplename_dict = get_samplename_dict(self.logger, self.samplesheet_path)
-        print(f"Samplesheet dict - {self.samplename_dict}")
         self.pipeline = self.get_pipeline()
         self.runtype_str = self.get_runtype()
         self.nexus_runfolder_suffix = self.get_nexus_runfolder_suffix()
+        print("suffix")
+        print(self.nexus_runfolder_suffix)
         self.nexus_paths = self.get_nexus_paths(self.sequencer_type)
         self.unique_pannos = self.get_unique_pannos()
         self.samples_dict = self.get_samples_dict()
@@ -839,9 +867,13 @@ class RunfolderSamples(ToolboxConfig):
             fastq_type = "aviti_fastqs"
         else:
             fastq_type = "illumina_fastqs"
-
+        # Conditional added to reformat project name for AVITI runs (runfolder name leads to duplication)
+        if sequencer_type == ToolboxConfig.AVITI_SEQ:
+            ammended_runfolder_name = self.samplesheet_name.replace("_SampleSheet.csv","")
+        else:
+            ammended_runfolder_name = self.runfolder_name
         nexus_paths["proj_name"] = (
-            f"{ToolboxConfig.DNANEXUS_PROJECT_PREFIX}{self.runfolder_name}_{self.nexus_runfolder_suffix}"
+            f"{ToolboxConfig.DNANEXUS_PROJECT_PREFIX}{ammended_runfolder_name}_{self.nexus_runfolder_suffix}"
         )
         nexus_paths["fastqs_dir"] = os.path.join(
             f"/{self.runfolder_name}", ToolboxConfig.FASTQ_DIRS[fastq_type]
@@ -1008,9 +1040,11 @@ class RunfolderSamples(ToolboxConfig):
             :return undetermined_fastqs_list (list): List of all undetermined fastqs in the run
         """
         undetermined_fastqs_list = []
-        r1 = os.path.join(self.fastq_dir_path, "Undetermined_S0_R1_001.fastq.gz")
-        r2 = os.path.join(self.fastq_dir_path, "Undetermined_S0_R2_001.fastq.gz")
-        for fastq in [r1, r2]:
+        illumina_r1 = os.path.join(self.fastq_dir_path, "Undetermined_S0_R1_001.fastq.gz")
+        illumina_r2 = os.path.join(self.fastq_dir_path, "Undetermined_S0_R2_001.fastq.gz")
+        aviti_r1 = os.path.join(self.fastq_dir_path, "Unassigned_R1.fastq.gz")
+        aviti_r2 = os.path.join(self.fastq_dir_path, "Unassigned_R2.fastq.gz")
+        for fastq in [illumina_r1, illumina_r2, aviti_r1, aviti_r2]:
             if os.path.exists(fastq):
                 undetermined_fastqs_list.append(fastq)
         return undetermined_fastqs_list
