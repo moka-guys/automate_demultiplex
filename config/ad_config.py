@@ -34,7 +34,6 @@ MAIL_SETTINGS = {
     "port": 587,
     "binfx_email": "gst-tr.mokaguys@nhs.net",
     "alerts_email": "moka.alerts@gstt.nhs.uk",
-    "personal_email": "kieron.millard1@nhs.net",
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
@@ -73,7 +72,7 @@ else:  # Testing branch
         "binfx_recipient": MAIL_SETTINGS["personal_email"],
         # Oncology email address for email alerts
         "oncology_ops_email": MAIL_SETTINGS["personal_email"],
-        "wes_samplename_emaillist": MAIL_SETTINGS["personal_email"],
+        "wes_samplename_emaillist": MAIL_SETTINGS["binfx_email"],
     }
 
 CREDENTIALS = {
