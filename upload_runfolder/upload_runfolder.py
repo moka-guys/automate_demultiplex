@@ -18,6 +18,7 @@ from toolbox.toolbox import (
     test_upload_software,
     get_credential,
     write_lines,
+    get_sequencer_type,
 )
 
 
@@ -92,6 +93,7 @@ class UploadRunfolder(URConfig):
         self.logger = logger
         self.runfolder_name = runfolder_name
         self.runfolderpath = runfolderpath
+        self.sequencer_type = get_sequencer_type(runfolder_name)
         self.dnanexus_auth = get_credential(URConfig.CREDENTIALS["dnanexus_authtoken"])
         self.upload_flagfile = upload_flagfile
         if nexus_identifiers:
@@ -341,11 +343,24 @@ class UploadRunfolder(URConfig):
             ).group(1)
         # Prepend nexus folder path to cleaned path. the nexus folder path is
         # the project name without the first four characters (002_)
-        nexus_project_subdirectory = os.path.join(
+        # Conditional added to alter subdirectory path for AVITI as folder name and run name
+        # are different - keeps same folder structure within project as on workstation
+        if self.sequencer_type == URConfig.AVITI_SEQ:
+            split_subfolder = self.nexus_identifiers["proj_name"].split("_")
+            joined_subfolder = "_".join([split_subfolder[1],split_subfolder[2],split_subfolder[4]])
+            # Add '20' to match the year on AVITI runfolders
+            final_subfolder = "20" + joined_subfolder
+            nexus_project_subdirectory = os.path.join(
             "/",
-            "_".join(self.nexus_identifiers["proj_name"].split("_")[1:5]),
+            final_subfolder,
             clean_runfolder_path,
         )
+        else:
+            nexus_project_subdirectory = os.path.join(
+                "/",
+                "_".join(self.nexus_identifiers["proj_name"].split("_")[1:5]),
+                clean_runfolder_path,
+            )
         self.logger.info(
             self.logger.log_msgs["nexus_project_subdirectory"],
             nexus_project_subdirectory,
