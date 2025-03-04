@@ -18,7 +18,7 @@ import subprocess
 import logging
 import time
 import json
-#import seglh_naming
+import seglh_naming
 from pathlib import Path
 from typing import Tuple
 from distutils.spawn import find_executable
@@ -516,12 +516,9 @@ class RunfolderObject(ToolboxConfig):
         self.runfolderpath = get_runfolder_path(self.sequencer_type, self.runfolder_name)
         self.aviti_runparameters_json = os.path.join(self.runfolderpath, "RunParameters.json")
         self.aviti_run_id = get_aviti_run_id(self.sequencer_type, self.aviti_runparameters_json)
-        print(self.aviti_run_id)
         self.samplesheet_name = get_samplesheet_name(self.sequencer_type, self.runfolder_name, self.aviti_run_id)
         self.runcompletefile_path = get_runcompletefile_path(self.sequencer_type, self.runfolderpath)
         self.samplesheet_path = get_samplesheet_path(self.sequencer_type, self.runfolder_name, self.samplesheet_name)
-        print(self.samplesheet_path)
-        print("PATH")
         self.runfolder_samplesheet_path = os.path.join(
             self.runfolderpath, self.samplesheet_name
         )
@@ -717,8 +714,6 @@ class RunfolderSamples(ToolboxConfig):
         self.pipeline = self.get_pipeline()
         self.runtype_str = self.get_runtype()
         self.nexus_runfolder_suffix = self.get_nexus_runfolder_suffix()
-        print("suffix")
-        print(self.nexus_runfolder_suffix)
         self.nexus_paths = self.get_nexus_paths(self.sequencer_type)
         self.unique_pannos = self.get_unique_pannos()
         self.samples_dict = self.get_samples_dict()
