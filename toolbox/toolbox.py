@@ -1125,7 +1125,7 @@ class SampleObject(ToolboxConfig):
             # Extract the dna number from sample name
             primary_identifier = self.sample_name.split("_")[2]
             secondary_identifier = False  # Secondary identifiers are not input to Moka
-        elif self.pipeline in ("tso500", "archerdx", "oncodeep"):
+        elif self.pipeline in ("tso500", "archerdx", "oncodeep", "msk"):
             # Collect 3rd and 4th elements (identifiers)
             primary_identifier, secondary_identifier = self.sample_name.split("_")[2:4]
             # Negative and positive controls only have one ID so set id2 to null

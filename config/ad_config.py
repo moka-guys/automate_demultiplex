@@ -32,8 +32,10 @@ BRANCH = Repository(PROJECT_DIR).head.shorthand
 MAIL_SETTINGS = {
     "host": "email-smtp.eu-west-1.amazonaws.com",
     "port": 587,
-    "binfx_email": "gst-tr.mokaguys@nhs.net",
-    "alerts_email": "moka.alerts@gstt.nhs.uk",
+    #"binfx_email": "gst-tr.mokaguys@nhs.net",
+    "binfx_email": "gdoyle046@gmail.com",
+    #"alerts_email": "moka.alerts@gstt.nhs.uk",
+    "alerts_email": "gdoyle046@gmail.com",
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
@@ -395,6 +397,10 @@ class DemultiplexConfig(PanelConfig):
         f"auth_file/{CREDENTIALS['adx_authtoken']} "
         f"${{job_name}} 2 | tee -a {AD_LOGDIR}/archer_api_upload_logfiles/${{run_folder_name}}_archer_api_logfile.txt"
     )
+    MSK_CMD = (
+        f"python3 /usr/local/src/mokaguys/development_area/sophia_cli/sophia.py "
+        f"{RUNFOLDERS}/${{run_folder_name}} --qc-only"
+    )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
@@ -482,6 +488,7 @@ class SWConfig(PanelConfig):
             "pipe": 5304,
             "wes": 5078,
             "archerdx": 5300,
+            "msk": 5236,
             "snp": 5091,
             "tso500": 5301,
             "oncodeep": 5299,
