@@ -32,10 +32,8 @@ BRANCH = Repository(PROJECT_DIR).head.shorthand
 MAIL_SETTINGS = {
     "host": "email-smtp.eu-west-1.amazonaws.com",
     "port": 587,
-    #"binfx_email": "gst-tr.mokaguys@nhs.net",
-    "binfx_email": "gdoyle046@gmail.com",
-    #"alerts_email": "moka.alerts@gstt.nhs.uk",
-    "alerts_email": "gdoyle046@gmail.com",
+    "binfx_email": "gst-tr.mokaguys@nhs.net",
+    "alerts_email": "moka.alerts@gstt.nhs.uk",
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
@@ -399,7 +397,7 @@ class DemultiplexConfig(PanelConfig):
     )
     MSK_CMD = (
         f"python3 /usr/local/src/mokaguys/development_area/sophia_cli/sophia.py "
-        f"{RUNFOLDERS}/${{run_folder_name}} --qc-only"
+        f"{RUNFOLDERS}/${{run_folder_name}} --force"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
