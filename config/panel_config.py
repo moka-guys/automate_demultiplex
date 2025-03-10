@@ -302,7 +302,7 @@ class PanelConfig:
         "Pan5226": {  # OncoDEEP
             **CAPTURE_PANEL_DICT["oncodeep"],
         },
-        "Pan5236": {  # OncoDEEP
+        "Pan5236": {  # MSK
             **CAPTURE_PANEL_DICT["msk"],
         },
         "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
