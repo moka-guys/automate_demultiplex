@@ -395,6 +395,10 @@ class DemultiplexConfig(PanelConfig):
         f"auth_file/{CREDENTIALS['adx_authtoken']} "
         f"${{job_name}} 2 | tee -a {AD_LOGDIR}/archer_api_upload_logfiles/${{run_folder_name}}_archer_api_logfile.txt"
     )
+    MSK_CMD = (
+        f"python3 /usr/local/src/mokaguys/sophia_cli/sophia.py "
+        f"{RUNFOLDERS}/${{run_folder_name}} --force"
+    )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
@@ -482,6 +486,7 @@ class SWConfig(PanelConfig):
             "pipe": 5304,
             "wes": 5078,
             "archerdx": 5300,
+            "msk": 5341,
             "snp": 5091,
             "tso500": 5301,
             "oncodeep": 5299,

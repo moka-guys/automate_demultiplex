@@ -33,6 +33,7 @@ processing. See Readme and docstrings for further details. Contains the followin
 import sys
 import os
 import re
+import subprocess
 from itertools import chain
 from typing import Optional, Union
 from ad_logger.ad_logger import AdLogger, shutdown_logs
@@ -310,9 +311,15 @@ class ProcessRunfolder(SWConfig):
         self.pipeline_obj = self.build_dx_commands()
         self.write_dx_run_cmds()
         self.pre_pipeline_upload()
-        self.run_dx_run_commands()
+        
+        # Skip run_dx_run_commands for MSK pipeline
+        if self.rf_samples_obj.pipeline != "msk":
+            self.run_dx_run_commands()
+        
         if self.rf_samples_obj.pipeline == "archerdx":
             self.run_decision_support_commands()
+        elif self.rf_samples_obj.pipeline == "msk":
+            self.run_msk_commands()
         self.pipeline_emails = PipelineEmails(
             self.rf_obj,
             self.rf_samples_obj,
@@ -633,6 +640,10 @@ class ProcessRunfolder(SWConfig):
             pipeline_obj = ArcherDxPipeline(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
             )
+        if self.rf_samples_obj.pipeline == "msk":
+            pipeline_obj = MskPipeline(
+                self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
+            )
         if self.rf_samples_obj.pipeline == "wes":
             pipeline_obj = WesPipeline(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
@@ -847,6 +858,60 @@ class ProcessRunfolder(SWConfig):
         for filetype in logfiles_upload_dict.keys():  # Upload logfiles for all runtypes
             self.upload_to_dnanexus(filetype, logfiles_upload_dict)
 
+    def run_msk_commands(self):
+        """Execute MSK pipeline commands directly without any DNAnexus interaction"""
+        self.loggers["sw"].info("Executing MSK pipeline commands")
+        
+        # Set environment variables
+        env = os.environ.copy()
+        env['run_folder_name'] = self.rf_obj.runfolder_name
+        
+        # Try to get job name from RunParameters.xml, but continue without it if not found
+        xml_path = os.path.join(self.rf_obj.runfolderpath, "RunParameters.xml")
+        if os.path.exists(xml_path):
+            try:
+                xml_cmd = f"cat {xml_path} | grep -oP '(?<=ExperimentName>).*?(?=</ExperimentName)'"
+                job_name = subprocess.check_output(xml_cmd, shell=True, text=True).strip()
+                env['job_name'] = job_name
+                self.loggers["sw"].info(f"Found job name: {job_name}")
+            except subprocess.CalledProcessError as e:
+                self.loggers["sw"].warning("Could not extract job name from RunParameters.xml, continuing without it")
+                env['job_name'] = self.rf_obj.runfolder_name
+        else:
+            self.loggers["sw"].warning(f"RunParameters.xml not found at {xml_path}, continuing without job name")
+            env['job_name'] = self.rf_obj.runfolder_name
+        
+        try:
+            # Format the command with the actual runfolder path instead of using env var
+            base_cmd = DemultiplexConfig.MSK_CMD
+            msk_cmd = base_cmd.replace("${run_folder_name}", self.rf_obj.runfolder_name)
+            
+            # Create nohup command and output file path using job_name
+            nohup_out = os.path.join(self.rf_obj.runfolderpath, f"{env['job_name']}_CLI.nohup.out")
+            nohup_cmd = f"cd {self.rf_obj.runfolderpath} && nohup {msk_cmd} > {nohup_out} 2>&1 &"
+            
+            # Execute the nohup command
+            result = subprocess.run(
+                nohup_cmd,
+                shell=True,
+                env=env,
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            
+            self.loggers["sw"].info(
+                "MSK command started in background. Output will be written to: %s",
+                nohup_out
+            )
+            
+        except subprocess.CalledProcessError as e:
+            self.loggers["sw"].error(
+                "Failed to start MSK command: %s\nError: %s",
+                nohup_cmd,
+                e.stderr
+            )
+            raise RuntimeError(f"MSK pipeline failed to start: {e.stderr}") from e
 
 class DevPipeline:
     """
@@ -925,6 +990,40 @@ class ArcherDxPipeline:
         )
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
+class MskPipeline:
+    """
+    Collate DNAnexus commands for MSK runs. Minimal implementation that only runs
+    the MSK command and generates SQL queries for sample tracking.
+    """
+
+    def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
+        self.rf_obj = rf_obj
+        self.rf_samples_obj = rf_samples
+        self.logger = logger
+        self.workflow_cmds = []
+        self.sql_queries = []
+        self.dx_postprocessing_cmds = False
+        self.decision_support_upload_cmds = []
+        self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
+
+        # Generate SQL queries for each sample
+        for sample_name in self.rf_samples_obj.samples_dict.keys():
+            sample_cmds_obj = BuildSampleDxCommands(
+                self.rf_obj.runfolder_name,
+                self.rf_samples_obj.samples_dict[sample_name],
+                self.logger,
+            )
+            self.sql_queries.append(
+                sample_cmds_obj.return_oncology_query()
+            )  # Get SQL queries
+
+        # MSK command setup
+        MSK_runfolder = f"run_folder_name={self.rf_obj.runfolder_name}"
+        MSK_jobID = f"job_name=$(cat {self.rf_obj.runfolderpath}/RunParameters.xml | grep -oP '(?<=ExperimentName>).*?(?=</ExperimentName)')"
+        docker = DemultiplexConfig.MSK_CMD
+        docker_api_cmd = [MSK_runfolder, MSK_jobID, docker]
+        for api_cmd in docker_api_cmd:
+            self.decision_support_upload_cmds.append(api_cmd)
 
 class SnpPipeline:  # TODO eventually remove this and associated pipeline-specific functions
     """
