@@ -599,7 +599,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R444.1",
             "congenica_project": 14563,
-            "ed_cnvcalling_bedfile": "Pan5183",
+            "ed_cnvcalling_bedfile": "Pan5269",
         },
         "Pan5147": {  # VCP2 R444.2 (Synnovis) - Prostate cancer (PARP treatment)
             **CAPTURE_PANEL_DICT["vcp2"],
@@ -636,7 +636,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R444.1",
             "congenica_project": 14629,
-            "ed_cnvcalling_bedfile": "Pan5183",
+            "ed_cnvcalling_bedfile": "Pan5269",
         },
         "Pan5148": {  # VCP2 R444.2 (STG) - Prostate cancer (PARP treatment)
             **CAPTURE_PANEL_DICT["vcp2"],
