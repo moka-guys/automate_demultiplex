@@ -308,7 +308,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     git_tag(),
                 )
                 if (
-                    self.sscheck_success_msg_present() or self.valid_samplesheet()
+                    self.sscheck_success_msg_present(self.rf_obj.initial_sscheck_flagfile_path) or 
+                    self.sscheck_success_msg_present(self.rf_obj.sscheck_flagfile_path) or self.valid_samplesheet()
                 ):  # Early warning ss checks
                     requires_no_ic = self.seq_requires_no_ic()
                     if requires_no_ic or self.checksumfile_exists():
@@ -354,13 +355,13 @@ class DemultiplexRunfolder(DemultiplexConfig):
 
     def previous_samplesheet_check_fail(self) -> Optional[bool]:
         """
-        Checks whether there has previously been a SampleSheet check fail for this run, by
+        Checks whether there has previously been a 2nd attempt SampleSheet check fail for this run, by
         looking in the sscheck log file. This is checked to determine whether to proceed with
         processing the run
             :return (Optional[bool]):   Returns true if either the SampleSheet check file does
                                         not exist, or contains no SampleSheet check error string
         """
-        if self.previous_samplesheet_check():
+        if self.previous_samplesheet_check(self.rf_obj.sscheck_flagfile_path):
             sscheckfile_contents = read_lines(self.rf_obj.sscheck_flagfile_path)
             if any(
                 DemultiplexConfig.STRINGS["samplesheet_fail"].split(":")[0] in line
@@ -372,48 +373,60 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 )
                 return True
 
-    def previous_samplesheet_check(self) -> Optional[bool]:
+    def previous_samplesheet_check(self, ss_flag_file) -> Optional[bool]:
         """
         Check if a previous SampleSheet check has been carried out
-            :return (optional[bool]):   Returns true if the SampleSheet check flag file is present
+            :return (optional[bool]):   Returns true if the provided SampleSheet check flag file is present
         """
-        if os.path.isfile(self.rf_obj.sscheck_flagfile_path):
+        if os.path.isfile(ss_flag_file):
             return True
         else:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["sscheckfile_absent"],
+                ss_flag_file
             )
 
-    def sscheck_success_msg_present(self) -> Optional[bool]:
+    def sscheck_success_msg_present(self, ss_flag_file) -> Optional[bool]:
         """
-        Check SampleSheet check success message is present in the sscheck flag file
+        Check SampleSheet check success message is present in the provided sscheck flag file
             :return (Optional[bool]):       Returns true if success message is identified
         """
-        if self.previous_samplesheet_check():
-            sscheckfile_contents = read_lines(self.rf_obj.sscheck_flagfile_path)
-            read_lines(self.rf_obj.sscheck_flagfile_path)
+        if self.previous_samplesheet_check(ss_flag_file):
+            sscheckfile_contents = read_lines(ss_flag_file)
+            read_lines(ss_flag_file)
             if any(
                 DemultiplexConfig.STRINGS["samplesheet_success"].split(":")[0] in line
                 for line in sscheckfile_contents
             ):
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["sscheck_success_msg_present"],
+                    ss_flag_file
                 )
                 return True
             else:
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["sscheck_success_msg_absent"],
+                    ss_flag_file
                 )
-                return True
+                return False
 
     def valid_samplesheet(self) -> Tuple[bool, object]:
         """
         Check SampleSheet is present and naming and contents are valid, using the
-        samplesheet_validator module
+        samplesheet_validator module. If it is an initial check, the check output is
+        written in initial_sscheck_flagfile_path, and for the 2nd attempt, the
+        output is written in sscheck_flagfile_path.
             :return (tuple):    Returns tuple of boolean (denotes whether SampleSheet
                                 is valid), and SampleSheetCheck object containing any
                                 errors identified
         """
+        if not os.path.isfile(self.rf_obj.initial_sscheck_flagfile_path):
+            attempt = "initial attempt"
+            initial_try = True
+        else:
+            attempt = "2nd attempt"
+            initial_try = False
+
         script_logger.info(script_logger.log_msgs["ss_check_required"])
         script_logger.info(
             script_logger.log_msgs["ss_validator_version"],
@@ -435,25 +448,42 @@ class DemultiplexRunfolder(DemultiplexConfig):
         if sscheck_obj.errors:
             self.demux_rf_logger.error(
                 self.demux_rf_logger.log_msgs["sschecks_failed"],
+                attempt,
                 err_str,
             )
-            write_lines(
-                self.rf_obj.sscheck_flagfile_path,
-                "w",
-                DemultiplexConfig.STRINGS["samplesheet_fail"] % err_str,
-            )
+            if initial_try:
+                write_lines(
+                    self.rf_obj.initial_sscheck_flagfile_path,
+                    "w",
+                    DemultiplexConfig.STRINGS["samplesheet_fail"] % err_str,
+                )
+            else:
+                write_lines(
+                    self.rf_obj.sscheck_flagfile_path,
+                    "w",
+                    DemultiplexConfig.STRINGS["samplesheet_fail"] % err_str,
+                )
             return False
         else:
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["sschecks_passed"],
+                attempt,
                 self.rf_obj.samplesheet_path,
             )
-            write_lines(
-                self.rf_obj.sscheck_flagfile_path,
-                "w",
-                DemultiplexConfig.STRINGS["samplesheet_success"]
-                % datetime.datetime.now(),
-            )
+            if initial_try:
+                write_lines(
+                    self.rf_obj.initial_sscheck_flagfile_path,
+                    "w",
+                    DemultiplexConfig.STRINGS["samplesheet_success"]
+                    % datetime.datetime.now(),
+                )
+            else:
+                write_lines(
+                    self.rf_obj.sscheck_flagfile_path,
+                    "w",
+                    DemultiplexConfig.STRINGS["samplesheet_success"]
+                    % datetime.datetime.now(),
+                )
             return True
 
     def seq_requires_no_ic(self) -> Optional[bool]:

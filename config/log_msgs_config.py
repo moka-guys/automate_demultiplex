@@ -43,8 +43,8 @@ LOG_MSGS = {
             "pipelines for the same run. Supported pipelines: %s"
         ),
         "ss_missing": "SampleSheet is missing and is required for sample name parsing",
-        "fastq_valid": "Gzip --test determined that the fastq is valid: %s",
-        "fastq_invalid": "Gzip --test determined that the fastq is not valid: %s. Stdout: %s. Stderr: %s",
+        "fastq_valid": "Gzip testing determined that the fastq is valid: %s",
+        "fastq_invalid": "Gzip testing determined that the fastq is not valid: %s. Error: %s",
         "demux_success": "Demultiplexing was successful for the run with all fastqs valid",
         "wes_batch_nos_identified": "WES batch numbers %s identified",
         "wes_batch_nos_missing": "WES batch numbers missing. Check for errors in the sample names. Script exited",
@@ -57,19 +57,22 @@ LOG_MSGS = {
         "html_error": "There was a problem generating the email html file, with the following exception: %s",
     },
     "demux": {
-        "previous_ss_check_fail": "Previous SampleSheet check identified errors. Remove the flag file to re-process: %s",
+        "previous_ss_check_fail": (
+            "Previous SampleSheet check (both attempts) identified errors. "
+            "Remove the flag files (at least sscheck_flagfile.txt) to re-process: %s"),
         "ss_check_required": "Samplesheet check not yet conducted",
         "ss_validator_version": "Calling samplesheet_validator v%s",
-        "sschecks_passed": "SampleSheet passed all checks %s",
+        "sschecks_passed": "SampleSheet passed in %s all checks %s",
         "sschecks_failed": (
-            "SampleSheet check failed with the following errors: %s. Please correct these, remove the "
-            "SampleSheet check flag file, (and the checksums assessed string from the md5checksum file "
+            "SampleSheet check for %s failed with the following errors: %s. You may wait for the 2nd attempt check "
+            "if it is initial check or please correct these, remove the "
+            "SampleSheet check flag file(s), (and the checksums assessed string from the md5checksum file "
             "if present) to continue processing"
         ),
         "dev_umis_upload_flagfile": "Created upload flag file for development runs with UMIs: %s",
-        "sscheck_success_msg_present": "SampleSheet check file contains success message",
-        "sscheckfile_absent": "SampleSheet check file is absent",
-        "sscheck_success_msg_absent": "SampleSheet check file does not contain success message",
+        "sscheck_success_msg_present": "The %s file contains success message",
+        "sscheckfile_absent": "The %s is absent",
+        "sscheck_success_msg_absent": "%s does not contain success message",
         "cmd_line_runfolder": "Runfolder %s has been supplied on the command line",
         "programmatic_runfolders": "Runfolders were gathered programmatically",
         "runfolder_names": "Runfolders identified for processing: %s",
@@ -141,8 +144,11 @@ LOG_MSGS = {
         ),
         "writing_cmds": "Writing dx run commands to %s",
         "running_cmds": "Running dx run commands using dx run bash script",
+        "running_decision_cmds": "Running decision support commands using bash script",
         "dx_run_err": "Error when setting off dx run command. Command: %s. Stdout: %s. Stderr: %s",
+        "decision_run_err": "Error when setting off decision support command. Command: %s. Stdout: %s. Stderr: %s",
         "dx_run_success": "Dx run commands issued successfully for run %s",
+        "decision_run_success": "Decision support cmd is run successfully for run %s",    
         "uploading_rf": (
             "Uploading rest of run folder to DNAnexus using upload_runfolder, ignoring: %s. Stdout stored in logfile: %s"
         ),

@@ -75,6 +75,7 @@ CREDENTIALS = {
     "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
     "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
     "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
+    "adx_authtoken": ".archer_authentication_mokaguys.txt"
 }
 NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
 RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
@@ -89,6 +90,9 @@ UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
+)
+ARCHER_DOCKER = (
+    "seglh/archer_api_upload:v1.0.0"
 )
 
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
@@ -383,6 +387,18 @@ class DemultiplexConfig(PanelConfig):
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
+    ADX_CMD = (
+        f"docker run "
+        f"-v {RUNFOLDERS}/${{run_folder_name}}/Data/Intensities/BaseCalls:/data "
+        f"-v {DOCUMENT_ROOT}:/auth_file "
+        f"{ARCHER_DOCKER} /data "
+        f"auth_file/{CREDENTIALS['adx_authtoken']} "
+        f"${{job_name}} 2 | tee -a {AD_LOGDIR}/archer_api_upload_logfiles/${{run_folder_name}}_archer_api_logfile.txt"
+    )
+    MSK_CMD = (
+        f"python3 /usr/local/src/mokaguys/sophia_cli/sophia.py "
+        f"{RUNFOLDERS}/${{run_folder_name}} --force"
+    )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
@@ -470,6 +486,7 @@ class SWConfig(PanelConfig):
             "pipe": 5304,
             "wes": 5078,
             "archerdx": 5300,
+            "msk": 5341,
             "snp": 5091,
             "tso500": 5301,
             "oncodeep": 5299,
@@ -569,6 +586,7 @@ class ToolboxConfig(PanelConfig):
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
         "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
+        "initial_sscheck_flag": "initial_sscheck_flagfile.txt",  # Denotes initial SampleSheet has been checked
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
         "seq_complete": "RTAComplete.txt",  # Sequencing complete file
     }

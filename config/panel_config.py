@@ -227,6 +227,15 @@ class PanelConfig:
             "capture_type": "Hybridisation",
             "multiqc_coverage_level": 30,  # We don't align for Archer
         },
+        "msk": {
+            **DEFAULT_DICT,
+            "panel_name": "msk",
+            "pipeline": "msk",
+            "sample_prefix": "MSK",
+            "runtype": "MSK",
+            "capture_type": "Hybridisation",
+            "multiqc_coverage_level": 30,  # We don't align for MSK
+        },
         "tso500": {
             **DEFAULT_DICT,
             "panel_name": "tso500",
@@ -292,6 +301,9 @@ class PanelConfig:
         ),
         "Pan5226": {  # OncoDEEP
             **CAPTURE_PANEL_DICT["oncodeep"],
+        },
+        "Pan5236": {  # MSK
+            **CAPTURE_PANEL_DICT["msk"],
         },
         "Pan5085": {  # TSO500 High throughput Synnovis. no UTRs. TERT promoter
             **CAPTURE_PANEL_DICT["tso500"],
@@ -587,7 +599,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R444.1",
             "congenica_project": 14563,
-            "ed_cnvcalling_bedfile": "Pan5183",
+            "ed_cnvcalling_bedfile": "Pan5269",
         },
         "Pan5147": {  # VCP2 R444.2 (Synnovis) - Prostate cancer (PARP treatment)
             **CAPTURE_PANEL_DICT["vcp2"],
@@ -624,7 +636,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R444.1",
             "congenica_project": 14629,
-            "ed_cnvcalling_bedfile": "Pan5183",
+            "ed_cnvcalling_bedfile": "Pan5269",
         },
         "Pan5148": {  # VCP2 R444.2 (STG) - Prostate cancer (PARP treatment)
             **CAPTURE_PANEL_DICT["vcp2"],
@@ -847,6 +859,7 @@ class PanelConfig:
     SNP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "snp"]
     ARCHER_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "archerdx"]
     ONCODEEP_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "oncodeep"]
+    MSK_PANELS = [k for k, v in PANEL_DICT.items() if v["pipeline"] == "msk"]
     LRPCR_PANELS = [k for k, v in PANEL_DICT.items() if v["panel_name"] == "lrpcr"]
     DEV_PANEL = [k for k, v in PANEL_DICT.items() if v["runtype"] == "dev"]
     UMI_DEV_PANEL = [k for k, v in PANEL_DICT.items() if v["umis"] == True]

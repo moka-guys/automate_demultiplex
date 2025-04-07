@@ -24,6 +24,8 @@ from distutils.spawn import find_executable
 from typing import Union, Optional
 from config.ad_config import ToolboxConfig
 from ad_logger.ad_logger import RunfolderLoggers
+import gzip
+import zlib
 
 
 def get_credential(file: str) -> None:
@@ -304,6 +306,54 @@ def get_samplename_dict(
         logger.error(logger.log_msgs["ss_missing"])
 
 
+def validate_fastq_gzip(file_path: str, logger: logging.Logger) -> Optional[bool]:
+    """
+    Fast gzip validation with basic FASTQ structure checks
+        :param file_path (str): Path to the FASTQ file
+        :param logger (logging.Logger): Logger
+        :return (bool, str): True if valid, False and error message if not
+    """
+    try:
+        # Check compressed file header (magic number check)
+        with open(file_path, 'rb') as f:
+            magic = f.read(2)
+            if magic != b'\x1f\x8b':
+                return False, f"Invalid gzip magic bytes: {magic.hex()}"
+            
+            # Check footer (last 4 bytes for ISIZE)
+            f.seek(-4, 2)
+            isize = int.from_bytes(f.read(4), 'little')
+            if isize == 0:
+                return False, "Invalid zero uncompressed size"
+
+        # Quick decompression check of first block
+        with gzip.open(file_path, 'rb') as f:
+            # Read first 4 lines (1 FASTQ record)
+            lines = []
+            for _ in range(4):
+                line = f.readline().strip()
+                if not line:  # Handle empty lines early
+                    return False, "Incomplete FASTQ record"
+                lines.append(line)
+            
+            # Basic FASTQ structure validation
+            if len(lines) != 4:
+                return False, "Invalid FASTQ: Not enough lines for complete record"
+            if not lines[0].startswith(b'@'):
+                return False, "Invalid FASTQ: Missing @ header"
+            if not lines[2].startswith(b'+'):
+                return False, "Invalid FASTQ: Missing + separator"
+            if len(lines[1]) != len(lines[3]):
+                return False, "Invalid FASTQ: Sequence/quality length mismatch"
+
+        return True, None
+        
+    except (OSError, EOFError, zlib.error) as e:
+        return False, f"Validation error: {str(e)}"
+    except Exception as e:
+        return False, f"Unexpected error: {str(e)}"
+
+
 def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[bool]:
     """
     Validate the created fastqs in the BaseCalls directory and log success
@@ -317,28 +367,26 @@ def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[boo
     returncodes = []
 
     for fastq in fastqs:
-        out, err, returncode = execute_subprocess_command(
-            f"gzip --test {os.path.join(fastq_dir_path, fastq)}",
-            logger,
-        )
-        returncodes.append(returncode)
-        if returncode == 0:
+        full_path = os.path.join(fastq_dir_path, fastq)
+        is_valid, error_msg = validate_fastq_gzip(full_path, logger)
+        
+        if is_valid:
             logger.info(
                 logger.log_msgs["fastq_valid"],
                 fastq,
             )
+            returncodes.append(True)
         else:
             logger.error(
                 logger.log_msgs["fastq_invalid"],
                 fastq,
-                out,
-                err,
+                error_msg,
             )
+            returncodes.append(False)
 
-    if all(code == 0 for code in returncodes):
+    if all(returncodes):
         logger.info(logger.log_msgs["demux_success"])
         return True
-
 
 class RunfolderObject(ToolboxConfig):
     """
@@ -355,7 +403,9 @@ class RunfolderObject(ToolboxConfig):
         samplesheet_path (str):                 Path to SampleSheet in SampleSheets dir
         runfolder_samplesheet_path (str):       Runfolder SampleSheets path (within runfolder)
         checksumfile_path (str):                md5 checksum (integrity check) file path (within runfolder)
-        sscheck_flagfile_path (str):            Samplesheet check flag file path (within runfolder)
+        initial_sscheck_flagfile_path (str):    initial Samplesheet check flag file path (within runfolder)
+
+        sscheck_flagfile_path (str):            2nd attempt Samplesheet check flag file path (within runfolder)
         bcl2fastqlog_file (str):                bcl2fastq2 logfile path (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
         upload_flagfile (str):                  Flag file denoting upload has begun (within runfolder)
@@ -409,6 +459,9 @@ class RunfolderObject(ToolboxConfig):
         )
         self.checksumfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["md5checksum"]
+        )
+        self.initial_sscheck_flagfile_path = os.path.join(
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["initial_sscheck_flag"]
         )
         self.sscheck_flagfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["sscheck_flag"]
@@ -1072,7 +1125,7 @@ class SampleObject(ToolboxConfig):
             # Extract the dna number from sample name
             primary_identifier = self.sample_name.split("_")[2]
             secondary_identifier = False  # Secondary identifiers are not input to Moka
-        elif self.pipeline in ("tso500", "archerdx", "oncodeep"):
+        elif self.pipeline in ("tso500", "archerdx", "oncodeep", "msk"):
             # Collect 3rd and 4th elements (identifiers)
             primary_identifier, secondary_identifier = self.sample_name.split("_")[2:4]
             # Negative and positive controls only have one ID so set id2 to null
