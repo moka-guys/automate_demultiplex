@@ -78,6 +78,8 @@ CREDENTIALS = {
     "adx_authtoken": ".archer_authentication_mokaguys.txt"
 }
 NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
+AVITI_ID = "AV241501" # Aviti sequencer ID
+# TO DO write if loop for fastq file locations based on sequencer
 RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
@@ -387,6 +389,7 @@ class DemultiplexConfig(PanelConfig):
     """
 
     NOVASEQ_ID = NOVASEQ_ID
+    AVITI_ID = AVITI_ID
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
     STRINGS = {
@@ -438,6 +441,7 @@ class DemultiplexConfig(PanelConfig):
         "M02353": {"requires_ic": False},
         "M02631": {"requires_ic": False},
         NOVASEQ_ID: {"requires_ic": True},
+        AVITI_ID: {"requires_ic": True},
     }
     SEQ_REQUIRE_IC = [k for k, v in SEQUENCER_IDS.items() if v["requires_ic"]]
 

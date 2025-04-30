@@ -116,7 +116,7 @@ class PanelConfig:
         "vcp1": {
             **DEFAULT_DICT,
             "panel_name": "vcp1",
-            "pipeline": "pipe",
+            "pipeline": "gatk_pipe",
             "sample_prefix": "NGS",
             "runtype": "VCP",
             "capture_pan_num": "Pan4399",
@@ -131,36 +131,17 @@ class PanelConfig:
             "coverage_min_basecall_qual": 10,
             "coverage_min_mapping_qual": 20,
         },
-        "vcp2": {
+        "cp2": {
             **DEFAULT_DICT,
-            "panel_name": "vcp2",
-            "pipeline": "pipe",
+            "panel_name": "CP2",
+            "pipeline": "seglh_pipe",
             "sample_prefix": "NGS",
-            "runtype": "VCP",
-            "capture_pan_num": "Pan5109",
-            "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan5123data.bed",
-            "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5123dataSambamba.bed",
-            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan5119data.bed",
-            "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5188_exomedepth.bed",
-            "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan5109_RPKM.bed",
-            "capture_type": "Hybridisation",
-            "multiqc_coverage_level": 30,
-            "clinical_coverage_depth": 30,
-            "coverage_min_basecall_qual": 10,
-            "coverage_min_mapping_qual": 20,
-        },
-        "vcp3": {
-            **DEFAULT_DICT,
-            "panel_name": "vcp3",
-            "pipeline": "pipe",
-            "sample_prefix": "NGS",
-            "runtype": "VCP",
-            "capture_pan_num": "Pan4362",
-            "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
-            "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4995dataSambamba.bed",
-            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4995data.bed",
-            "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5217_exomedepth.bed",
-            "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4362_RPKM.bed",
+            "runtype": "CP2",
+            "capture_pan_num": "Pan5275",
+            "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan5275_data.bed",
+            "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5275_sambamba.bed",
+            "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan5275_data.bed",
+            "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5279_exomeDepth.bed",
             "capture_type": "Hybridisation",
             "multiqc_coverage_level": 30,
             "clinical_coverage_depth": 30,
@@ -504,7 +485,7 @@ class PanelConfig:
             **CAPTURE_PANEL_DICT["vcp1"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R134",
-            "congenica_project": 4203,
+            "congenica_project": 18062,
             "FH": True,
             "ed_cnvcalling_bedfile": "Pan5215",
         },
@@ -534,305 +515,216 @@ class PanelConfig:
             "test_number": "R337",
             "congenica_project": 4203,
         },
-        "Pan4149": {  # VCP2 R208 (Synnovis) - BRCA
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan4149": {  # CP2 R208 (Synnovis) - BRCA
+            **CAPTURE_PANEL_DICT["cp2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R208",
             "congenica_project": 4665,
-            "ed_cnvcalling_bedfile": "Pan5158",
+            "ed_cnvcalling_bedfile": "Pan5249",
         },
-        "Pan4150": {  # VCP2 R207 (Synnovis) - ovarian cancer
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan4150": {  # CP2 R207 (Synnovis) - ovarian cancer
+            **CAPTURE_PANEL_DICT["cp2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R207",
             "congenica_project": 4864,
             "polyedge": POLYEDGE_INPUTS["MSH2"],
-            "ed_cnvcalling_bedfile": "Pan5152",
+            "ed_cnvcalling_bedfile": "Pan5250",
         },
-        "Pan4129": {  # VCP2 R210 (Synnovis) - Inherited MMR deficiency (Lynch syndrome)
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan4129": {  # CP2 R210 (Synnovis) - Inherited MMR deficiency (Lynch syndrome)
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R210",
             "congenica_project": 5094,
             "polyedge": POLYEDGE_INPUTS["MSH2"],
-            "ed_cnvcalling_bedfile": "Pan5206",
+            "ed_cnvcalling_bedfile": "Pan5248",
         },
-        "Pan4964": {  # VCP2 R259 (Synnovis) - Nijmegen breakage syndrome
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan4964": {  # CP2 R259 (Synnovis) - Nijmegen breakage syndrome
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R259",
             "congenica_project": 9118,
-            "ed_cnvcalling_bedfile": "Pan5161",
+            "ed_cnvcalling_bedfile": "Pan5244",
         },
-        "Pan4130": {  # VCP2 R211 (Synnovis) - Inherited polyposis and early onset colorectal cancer - germline testing
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan4130": {  # CP2 R211 (Synnovis) - Inherited polyposis and early onset colorectal cancer - germline testing
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R211",
             "congenica_project": 5095,
             "polyedge": POLYEDGE_INPUTS["MSH2"],
-            "ed_cnvcalling_bedfile": "Pan5193",
+            "ed_cnvcalling_bedfile": "Pan5247",
         },
-        "Pan5121": {  # VCP2 R430 (Synnovis) - Inherited prostate cancer
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan5121": {  # CP2 R430 (Synnovis) - Inherited prostate cancer
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R430",
             "congenica_project": 12814,
             "polyedge": POLYEDGE_INPUTS["MSH2"],
-            "ed_cnvcalling_bedfile": "Pan5165",
+            "ed_cnvcalling_bedfile": "Pan5242",
         },
-        "Pan5185": {  # VCP2 R414 (STG) - APC associated Polyposis
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan5185": {  # CP2 R414 (STG) - APC associated Polyposis
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R414",
             "congenica_project": 4202,
-            "ed_cnvcalling_bedfile": "Pan5162",
+            "ed_cnvcalling_bedfile": "Pan5243",
         },
-        "Pan5186": {  # VCP2 R414 (Synnovis) - APC associated Polyposis
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan5186": {  # CP2 R414 (Synnovis) - APC associated Polyposis
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R414",
             "congenica_project": 5095,
-            "ed_cnvcalling_bedfile": "Pan5162",
+            "ed_cnvcalling_bedfile": "Pan5243",
         },
-        "Pan5143": {  # VCP2 R444.1 (Synnovis) - Breast cancer (PARP treatment)
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan5143": {  # CP2 R444.1 (Synnovis) - Breast cancer (PARP treatment)
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R444.1",
             "congenica_project": 14563,
             "ed_cnvcalling_bedfile": "Pan5269",
         },
-        "Pan5147": {  # VCP2 R444.2 (Synnovis) - Prostate cancer (PARP treatment)
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan5147": {  # CP2 R444.2 (Synnovis) - Prostate cancer (PARP treatment)
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R444.2",
             "congenica_project": 14564,
-            "ed_cnvcalling_bedfile": "Pan5184",
+            "ed_cnvcalling_bedfile": "Pan5256",
         },
-        "Pan4816": {  # VCP2 R208 (STG) - Inherited breast cancer and ovarian cancer
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan4816": {  # CP2 R208 (STG) - Inherited breast cancer and ovarian cancer
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R208",
-            "congenica_project": 12915,
-            "ed_cnvcalling_bedfile": "Pan5158",
+            "congenica_project": 18064,
+            "ed_cnvcalling_bedfile": "Pan5249",
         },
-        "Pan4817": {  # VCP2 R207 (STG) - Inherited ovarian cancer (without breast cancer)
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan4817": {  # CP2 R207 (STG) - Inherited ovarian cancer (without breast cancer)
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R207",
-            "congenica_project": 12914,
+            "congenica_project": 18063,
             "polyedge": POLYEDGE_INPUTS["MSH2"],
-            "ed_cnvcalling_bedfile": "Pan5152",
+            "ed_cnvcalling_bedfile": "Pan5250",
         },
-        "Pan5122": {  # VCP2 R430 (STG) - Inherited prostate cancer
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan5122": {  # CP2 R430 (STG) - Inherited prostate cancer
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R430",
-            "congenica_project": 12913,
+            "congenica_project": 18067,
             "polyedge": POLYEDGE_INPUTS["MSH2"],
-            "ed_cnvcalling_bedfile": "Pan5165",
+            "ed_cnvcalling_bedfile": "Pan5242",
         },
-        "Pan5144": {  # VCP2 R444.1 (STG) - Breast cancer (PARP treatment)
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan5144": {  # CP2 R444.1 (STG) - Breast cancer (PARP treatment)
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R444.1",
-            "congenica_project": 14629,
+            "congenica_project": 18068,
             "ed_cnvcalling_bedfile": "Pan5269",
         },
-        "Pan5148": {  # VCP2 R444.2 (STG) - Prostate cancer (PARP treatment)
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan5148": {  # CP2 R444.2 (STG) - Prostate cancer (PARP treatment)
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R444.2",
-            "congenica_project": 14630,
-            "ed_cnvcalling_bedfile": "Pan5184",
+            "congenica_project": 18069,
+            "ed_cnvcalling_bedfile": "Pan5256",
         },
-        "Pan4819": {  # VCP2 R210 (STG) - Inherited MMR deficiency (Lynch syndrome)
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan4819": {  # CP2 R210 (STG) - Inherited MMR deficiency (Lynch syndrome)
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R210",
-            "congenica_project": 4202,
+            "congenica_project": 18065,
             "polyedge": POLYEDGE_INPUTS["MSH2"],
-            "ed_cnvcalling_bedfile": "Pan5206",
+            "ed_cnvcalling_bedfile": "Pan5248",
         },
-        "Pan4820": {  # VCP2 R211 (STG) - Inherited polyposis and early onset colorectal cancer - germline testing
-            **CAPTURE_PANEL_DICT["vcp2"],
+        "Pan4820": {  # CP2 R211 (STG) - Inherited polyposis and early onset colorectal cancer - germline testing
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R211",
-            "congenica_project": 4202,
+            "congenica_project": 18066,
             "polyedge": POLYEDGE_INPUTS["MSH2"],
-            "ed_cnvcalling_bedfile": "Pan5193",
+            "ed_cnvcalling_bedfile": "Pan5247",
         },
-        "Pan4145": {  # VCP3 R79 (Synnovis) - Congenital muscular dystrophy
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4145": {  # CP2 R79 (Synnovis) - Congenital muscular dystrophy
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R79",
             "congenica_project": 4666,
-            "ed_cnvcalling_bedfile": "Pan5220",
+            "ed_cnvcalling_bedfile": "", #TO DO replace with CP2 BED
         },
-        "Pan4146": {  # VCP3 R81 (Synnovis) - Congenital myopathy
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4146": {  # CP2 R81 (Synnovis) - Congenital myopathy
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R81",
             "congenica_project": 4666,
-            "ed_cnvcalling_bedfile": "Pan5170",
+            "ed_cnvcalling_bedfile": "Pan5273",
         },
-        "Pan4132": {  # VCP3 R56 (Synnovis) - Adult onset dystonia, chorea or related movement disorder.
-            # CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["synnovis"],
-            "test_number": "R56",
-            "congenica_project": 5092,
-        },
-        "Pan4134": {  # VCP3 R57 (Synnovis) - Childhood onset dystonia, chorea or related movement disorder.
-            # CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["synnovis"],
-            "test_number": "R57",
-            "congenica_project": 5092,
-        },
-        "Pan4136": {  # VCP3 R58 (Synnovis) - Adult onset neurodegenerative disorder. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["synnovis"],
-            "test_number": "R58",
-            "congenica_project": 5092,
-        },
-        "Pan4137": {  # VCP3 R60 (Synnovis) - Adult onset hereditary spastic paraplegia. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["synnovis"],
-            "test_number": "R60",
-            "congenica_project": 5092,
-        },
-        "Pan4138": {  # VCP3 R62 (Synnovis) - Adult onset leukodystrophy. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["synnovis"],
-            "test_number": "R62",
-            "congenica_project": 5092,
-        },
-        "Pan4143": {  # VCP3 R66 (Synnovis) - Paroxysmal central nervous system disorders
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4143": {  # CP2 R66 (Synnovis) - Paroxysmal central nervous system disorders
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R66",
             "congenica_project": 5092,
-            "ed_cnvcalling_bedfile": "Pan5174",
+            "ed_cnvcalling_bedfile": "Pan5240",
         },
-        "Pan4144": {  # VCP3 R78 (Synnovis) - Hereditary neuropathy or pain disorders. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["synnovis"],
-            "test_number": "R78",
-            "congenica_project": 5092,
-        },
-        "Pan4151": {  # VCP3 R82 (Synnovis) - Limb girdle muscular dystrophies, myofibrillar
-            # myopathies and distal myopathies. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["synnovis"],
-            "test_number": "R82",
-            "congenica_project": 5092,
-        },
-        "Pan4314": {  # VCP3 R229 (Synnovis) - Confirmed Fanconi anaemia or Bloom syndrome
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4314": {  # CP2 R229 (Synnovis) - Confirmed Fanconi anaemia or Bloom syndrome
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R229",
             "congenica_project": 5290,
-            "ed_cnvcalling_bedfile": "Pan5179",
+            "ed_cnvcalling_bedfile": "Pan5245",
         },
-        "Pan4351": {  # VCP3 R227 (Synnovis) - Xeroderma pigmentosum, Trichothiodystrophy or Cockayne syndrome
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4351": {  # CP2 R227 (Synnovis) - Xeroderma pigmentosum, Trichothiodystrophy or Cockayne syndrome
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R227",
             "congenica_project": 5522,
-            "ed_cnvcalling_bedfile": "Pan5177",
+            "ed_cnvcalling_bedfile": "Pan5246",
         },
-        "Pan4387": {  # VCP3 R90 (Synnovis) - Bleeding and platelet disorders
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4387": {  # CP2 R90 (Synnovis) - Bleeding and platelet disorders
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R90",
             "congenica_project": 4699,
-            "ed_cnvcalling_bedfile": "Pan5223",
+            "ed_cnvcalling_bedfile": "Pan5252",
         },
-        "Pan4390": {  # VCP3 R97 (Synnovis) - Thrombophilia with a likely monogenic cause
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4390": {  # CP2 R97 (Synnovis) - Thrombophilia with a likely monogenic cause
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R97",
             "congenica_project": 4699,
-            "ed_cnvcalling_bedfile": "Pan5173",
+            "ed_cnvcalling_bedfile": "Pan5251",
         },
-        "Pan4826": {  # VCP3 R56 (STG) - Adult onset dystonia, chorea or related movement disorder. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["stg"],
-            "test_number": "R56",
-            "congenica_project": 4201,
-        },
-        "Pan4827": {  # VCP3 R57 (STG) - Childhood onset dystonia, chorea or related movement disorder. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["stg"],
-            "test_number": "R57",
-            "congenica_project": 4201,
-        },
-        "Pan4828": {  # VCP3 R58 (STG) - Adult onset neurodegenerative disorder. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["stg"],
-            "test_number": "R58",
-            "congenica_project": 4201,
-        },
-        "Pan4829": {  # VCP3 R60 (STG) - Adult onset hereditary spastic paraplegia. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["stg"],
-            "test_number": "R60",
-            "congenica_project": 4201,
-        },
-        "Pan4830": {  # VCP3 R62 (STG) - Adult onset leukodystrophy. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["stg"],
-            "test_number": "R62",
-            "congenica_project": 4201,
-        },
-        "Pan4831": {  # VCP3 R66 (STG) - Paroxysmal central nervous system disorders
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4831": {  # CP2 R66 (STG) - Paroxysmal central nervous system disorders
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R66",
-            "congenica_project": 4201,
-            "ed_cnvcalling_bedfile": "Pan5174",
+            "congenica_project": 18061,
+            "ed_cnvcalling_bedfile": "Pan5240",
         },
-        "Pan4832": {  # VCP3 R78 (STG) - Hereditary neuropathy or pain disorder. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["stg"],
-            "test_number": "R78",
-            "congenica_project": 4201,
-        },
-        "Pan4833": {  # VCP3 R79 (STG) - Congenital muscular dystrophy
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4833": {  # CP2 R79 (STG) - Congenital muscular dystrophy
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R79",
             "congenica_project": 4201,
-            "ed_cnvcalling_bedfile": "Pan5220",
+            "ed_cnvcalling_bedfile": "", # TODO add new CP2 calling bedfile
         },
-        "Pan4834": {  # VCP3 R81 (STG) - Congenital myopathy
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4834": {  # CP2 R81 (STG) - Congenital myopathy
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R81",
             "congenica_project": 4201,
-            "ed_cnvcalling_bedfile": "Pan5170",
+            "ed_cnvcalling_bedfile": "Pan5273",
         },
-        "Pan4835": {  # VCP3 R82 (STG) - Limb girdle muscular dystrophies, myofibrillar myopathies
-            # and distal myopathies. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
-            **CONGENICA_CREDENTIALS["stg"],
-            "test_number": "R82",
-            "congenica_project": 4201,
-        },
-        "Pan4836": {  # VCP3 R229 (STG) - Confirmed Fanconi anaemia or Bloom syndrome. CNV not required
-            **CAPTURE_PANEL_DICT["vcp3"],
+        "Pan4836": {  # CP2 R229 (STG) - Confirmed Fanconi anaemia or Bloom syndrome. CNV not required
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R229",
             "congenica_project": 4201,
-            "ed_cnvcalling_bedfile": "Pan5179",
+            "ed_cnvcalling_bedfile": "Pan5245",
         },
     }
     # ================ PAN NUMBER LISTS ===================================================
     PANELS = list(PANEL_DICT.keys())  # All panel pan numbers
     VCP_PANELS = {  # Custom Panels per-capture panel numbers
         "vcp1": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp1"],
-        "vcp2": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp2"],
-        "vcp3": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "vcp3"],
+        "CP2": [k for k, v in PANEL_DICT.items() if v["panel_name"] == "CP2"],
     }
     ED_PANNOS = {
         "vcp1": [
@@ -840,15 +732,10 @@ class PanelConfig:
             for k, v in PANEL_DICT.items()
             if v["panel_name"] == "vcp1" and v["ed_cnvcalling_bedfile"]
         ],
-        "vcp2": [
+        "CP2": [
             k
             for k, v in PANEL_DICT.items()
-            if v["panel_name"] == "vcp2" and v["ed_cnvcalling_bedfile"]
-        ],
-        "vcp3": [
-            k
-            for k, v in PANEL_DICT.items()
-            if v["panel_name"] == "vcp3" and v["ed_cnvcalling_bedfile"]
+            if v["panel_name"] == "CP2" and v["ed_cnvcalling_bedfile"]
         ],
     }
     LIBRARY_PREP_NAMES = list(
@@ -880,6 +767,5 @@ class PanelConfig:
     ]
     CP_CAPTURE_PANNOS = [
         CAPTURE_PANEL_DICT["vcp1"]["capture_pan_num"],
-        CAPTURE_PANEL_DICT["vcp2"]["capture_pan_num"],
-        CAPTURE_PANEL_DICT["vcp3"]["capture_pan_num"],
+        CAPTURE_PANEL_DICT["CP2"]["capture_pan_num"],
     ]
