@@ -236,12 +236,13 @@ class BuildRunfolderDxCommands(SWConfig):
                 f'{SWConfig.NEXUS_IDS["FILES"]["hs37d5_ref_no_index"]}',
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["bed"]}'
                 f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["ed_readcount_bedfile"]}',
+                f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["ed_bam_str"]}',
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["normals_rdata"]}'
                 f'{SWConfig.NEXUS_IDS["FILES"][f"ed_{core_panel_name}_readcount_normals"]}',
                 SWConfig.APP_INPUTS["ed_readcount"]["proj"],
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["pannos"]}{",".join(SWConfig.ED_PANNOS[core_panel_name])}',
                 SWConfig.UPLOAD_ARGS[
-                    "depends_gatk"
+                    "depends_gatk", "depends_sentieon"
                 ],  # Use list of gatk related jobs to delay start
                 SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"],
@@ -263,12 +264,14 @@ class BuildRunfolderDxCommands(SWConfig):
             [
                 f'{SWConfig.DX_CMDS["ed_cnvcalling"]}ED_CNVcalling-{panno}',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["readcount"]}',
+                f'{SWConfig.CAPTURE_PANEL_DICT[panno]["ed_bam_str"]}',
+                f'{SWConfig.CAPTURE_PANEL_DICT[panno]["ed_samplename_str"]}',
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["bed"]}'
                 f'{SWConfig.BEDFILE_FOLDER}{SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]}_CNV.bed',
                 SWConfig.APP_INPUTS["ed_cnvcalling"]["proj"],
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["pannos"]}{panno}',
                 SWConfig.UPLOAD_ARGS[
-                    "depends_gatk"
+                    "depends_gatk", "depends_sentieon"
                 ],  # Use list of gatk related jobs to delay start
                 SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"],
@@ -393,7 +396,7 @@ class BuildSampleDxCommands(SWConfig):
         self.logger = logger
         self.logger.info(self.logger.log_msgs["building_cmds"])
 
-    def create_pipe_cmd(self) -> str:
+    def create_gatk_pipe_cmd(self) -> str:
         """
         Construct dx run command for PIPE workflow. Congenica requires variant calling
         to be restricted in the pipeline, in some cases to prevent incidental findings.
@@ -418,43 +421,99 @@ class BuildSampleDxCommands(SWConfig):
 
         return " ".join(
             [
-                f'{SWConfig.DX_CMDS["pipe"]}{self.sample_dict["sample_name"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["fastqc_reads"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["fastqc_reads"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_reads1"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_reads2"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["bwa_rg_sample"]}{self.sample_dict["sample_name"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_bed"]}{self.sample_dict["panel_settings"]["sambamba_bedfile"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_min_base_qual"]}'
+                f'{SWConfig.DX_CMDS["gatk_pipe"]}{self.sample_dict["sample_name"]}',
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["fastqc_reads"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["fastqc_reads"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["bwa_reads1"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["bwa_reads2"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["bwa_rg_sample"]}{self.sample_dict["sample_name"]}',
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["sambamba_bed"]}{self.sample_dict["panel_settings"]["sambamba_bedfile"]}',
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["sambamba_min_base_qual"]}'
                 f'{str(self.sample_dict["panel_settings"]["coverage_min_basecall_qual"])}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_min_mapping_qual"]}'
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["sambamba_min_mapping_qual"]}'
                 f'{str(self.sample_dict["panel_settings"]["coverage_min_mapping_qual"])}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["sambamba_cov_level"]}'
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["sambamba_cov_level"]}'
                 f'{str(self.sample_dict["panel_settings"]["clinical_coverage_depth"])}',
-                SWConfig.STAGE_INPUTS["pipe"]["sambamba_filter_cmds"],
-                SWConfig.STAGE_INPUTS["pipe"]["sambamba_excl_dups"],
-                SWConfig.STAGE_INPUTS["pipe"]["sambamba_excl_failed_qual"],
-                SWConfig.STAGE_INPUTS["pipe"]["sambamba_count_overl_mates"],
-                self.get_vcfeval_cmd_string(),
-                self.get_fhprs_cmd_string(),
-                f'{SWConfig.STAGE_INPUTS["pipe"]["fhprs_bed"]}{SWConfig.FH_PRS_BEDFILE}',
-                self.get_polyedge_cmd_string(),
-                self.get_masked_reference_cmd_string(),
-                f'{SWConfig.STAGE_INPUTS["pipe"]["picard_bed"]}{self.sample_dict["panel_settings"]["hsmetrics_bedfile"]}',
-                f'{SWConfig.STAGE_INPUTS["pipe"]["picard_capturetype"]}{self.sample_dict["panel_settings"]["capture_type"]}',
-                SWConfig.STAGE_INPUTS["pipe"]["gatk_padding"],
-                f'{SWConfig.STAGE_INPUTS["pipe"]["filter_vcf_bed"]}{self.sample_dict["panel_settings"]["variant_calling_bedfile"]}',
-                SWConfig.STAGE_INPUTS["pipe"]["bwa_instance"],
-                f'{SWConfig.STAGE_INPUTS["pipe"]["gatk_instance"]}{GATK_INSTANCE}',
-                SWConfig.STAGE_INPUTS["pipe"]["filter_vcf_instance"],
-                SWConfig.STAGE_INPUTS["pipe"]["picard_instance"],
-                SWConfig.STAGE_INPUTS["pipe"]["sambamba_instance"],
+                SWConfig.STAGE_INPUTS["gatk_pipe"]["sambamba_filter_cmds"],
+                SWConfig.STAGE_INPUTS["gatk_pipe"]["sambamba_excl_dups"],
+                SWConfig.STAGE_INPUTS["gatk_pipe"]["sambamba_excl_failed_qual"],
+                SWConfig.STAGE_INPUTS["gatk_pipe"]["sambamba_count_overl_mates"],
+                self.get_gatk_vcfeval_cmd_string(),
+                self.get_gatk_fhprs_cmd_string(),
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["fhprs_bed"]}{SWConfig.FH_PRS_BEDFILE}',
+                self.get_gatk_polyedge_cmd_string(),
+                self.get_gatk_masked_reference_cmd_string(),
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["picard_bed"]}{self.sample_dict["panel_settings"]["hsmetrics_bedfile"]}',
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["picard_capturetype"]}{self.sample_dict["panel_settings"]["capture_type"]}',
+                SWConfig.STAGE_INPUTS["gatk_pipe"]["gatk_padding"],
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["filter_vcf_bed"]}{self.sample_dict["panel_settings"]["variant_calling_bedfile"]}',
+                SWConfig.STAGE_INPUTS["gatk_pipe"]["bwa_instance"],
+                f'{SWConfig.STAGE_INPUTS["gatk_pipe"]["gatk_instance"]}{GATK_INSTANCE}',
+                SWConfig.STAGE_INPUTS["gatk_pipe"]["filter_vcf_instance"],
+                SWConfig.STAGE_INPUTS["gatk_pipe"]["picard_instance"],
+                SWConfig.STAGE_INPUTS["gatk_pipe"]["sambamba_instance"],
                 SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"],
             ]
         )
 
-    def get_vcfeval_cmd_string(self) -> str:
+    def create_seglh_pipe_cmd(self) -> str:
+        """
+        Construct dx run command for PIPE workflow. Congenica requires variant calling
+        to be restricted in the pipeline, in some cases to prevent incidental findings.
+        The variant caller pads bed files by 100bp by default so this may need to be
+        overruled. The panel dictionary default is to give a value of 0, which turns off
+        this padding. An example of the use of this is for STG BrCa who require padding
+        of +/- 11bp (bed files are padded +/-10bp) so 1bp padding is applied.
+            :return (str):  Dx run command string
+        """
+        self.logger.info(
+            self.logger.log_msgs["building_cmd"],
+            self.sample_dict["panel_settings"]["pipeline"],
+            self.sample_dict["sample_name"],
+        )
+        # Specify instance type for human exome app
+        if self.sample_dict["panel_settings"][
+            "FH"
+        ]:  # Larger instance required for FH samples
+            SENTIEON_INSTANCE = "mem3_ssd1_v2_x16"
+        else:
+            SENTIEON_INSTANCE = "mem1_ssd1_v2_x8"
+
+        return " ".join(
+            [
+                f'{SWConfig.DX_CMDS["seglh_pipe"]}{self.sample_dict["sample_name"]}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["fastqc_reads"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["fastqc_reads"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_bed"]}{self.sample_dict["panel_settings"]["sambamba_bedfile"]}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_min_base_qual"]}'
+                f'{str(self.sample_dict["panel_settings"]["coverage_min_basecall_qual"])}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_min_mapping_qual"]}'
+                f'{str(self.sample_dict["panel_settings"]["coverage_min_mapping_qual"])}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_cov_level"]}'
+                f'{str(self.sample_dict["panel_settings"]["clinical_coverage_depth"])}',
+                SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_filter_cmds"],
+                SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_excl_dups"],
+                SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_excl_failed_qual"],
+                SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_count_overl_mates"],
+                self.get_seglh_vcfeval_cmd_string(),
+                self.get_seglh_fhprs_cmd_string(),
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["fhprs_bed"]}{SWConfig.FH_PRS_BEDFILE}',
+                self.get_seglh_polyedge_cmd_string(),
+                self.get_seglh_masked_reference_cmd_string(),
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["picard_bed"]}{self.sample_dict["panel_settings"]["hsmetrics_bedfile"]}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["picard_capturetype"]}{self.sample_dict["panel_settings"]["capture_type"]}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["filter_vcf_bed"]}{self.sample_dict["panel_settings"]["variant_calling_bedfile"]}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_instance"]}{SENTIEON_INSTANCE}',
+                SWConfig.STAGE_INPUTS["seglh_pipe"]["filter_vcf_instance"],
+                SWConfig.STAGE_INPUTS["seglh_pipe"]["picard_instance"],
+                SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_instance"],
+                SWConfig.UPLOAD_ARGS["dest"],
+                SWConfig.UPLOAD_ARGS["token"],
+            ]
+        )
+
+    def get_gatk_vcfeval_cmd_string(self) -> str:
         """
         Get command string for input to vcfeval stage of PIPE workflow. If sample is not
         NA12878 we want to skip the vcfeval stage (the app default is skip=False)
@@ -468,9 +527,23 @@ class BuildSampleDxCommands(SWConfig):
 
         return " ".join([prefix_str, skip_str])
 
-    def get_fhprs_cmd_string(self) -> str:
+    def get_seglh_vcfeval_cmd_string(self) -> str:
         """
-        Get command string for input FH_PRS stage of PIPE workflow. If sample is specified as
+        Get command string for input to vcfeval stage of PIPE workflow. If sample is not
+        NA12878 we want to skip the vcfeval stage (the app default is skip=False)
+            :return (str):  App input string
+        """
+        prefix_str = f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["happy_prefix"]}{self.sample_dict["sample_name"]}'  # Set prefix as samplename
+        if self.sample_dict["pos_control"]:
+            skip_str = f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["happy_skip"]}false'
+        else:
+            skip_str = f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["happy_skip"]}true'
+
+        return " ".join([prefix_str, skip_str])
+
+    def get_gatk_fhprs_cmd_string(self) -> str:
+        """
+        Get command string for input FH_PRS staget_vcfeval_cmd_stringge of PIPE workflow. If sample is specified as
         requiring FH analysis in the config, set skip to False (the app default is skip=True),
         and specify outptut as both VCF and GVCF
             :return fh_prs_cmd_string: App input string
@@ -486,7 +559,25 @@ class BuildSampleDxCommands(SWConfig):
         else:
             return ""
 
-    def get_polyedge_cmd_string(self) -> str:
+    def get_seglh_fhprs_cmd_string(self) -> str:
+        """
+        Get command string for input FH_PRS staget_vcfeval_cmd_stringge of PIPE workflow. If sample is specified as
+        requiring FH analysis in the config, set skip to False (the app default is skip=True),
+        and specify outptut as both VCF and GVCF
+            :return fh_prs_cmd_string: App input string
+        """
+        if self.sample_dict["panel_settings"]["FH"]:
+            return " ".join(
+                [
+                    SWConfig.STAGE_INPUTS["seglh_pipe"]["fhprs_skip"],
+                    SWConfig.STAGE_INPUTS["seglh_pipe"]["gatk_vcf_format"],
+                    SWConfig.PIPE_FH_GATK_TIMEOUT_ARGS,
+                ]
+            )
+        else:
+            return ""
+
+    def get_gatk_polyedge_cmd_string(self) -> str:
         """
         Get command string for polyedge stage of PIPE workflow. If sample is specified
         as requiring polyedge analysis in the config, set skip to False (the app default
@@ -508,7 +599,40 @@ class BuildSampleDxCommands(SWConfig):
         else:
             return ""
 
-    def get_masked_reference_cmd_string(self) -> str:
+    def get_seglh_polyedge_cmd_string(self) -> str:
+        """
+        Get command string for polyedge stage of PIPE workflow. If sample is specified
+        as requiring polyedge analysis in the config, set skip to False (the app default
+        is skip=True) and specify gene chrom and start / end inputs
+            :return polyedge_cmd_string (str):  App input string
+        """
+        if self.sample_dict["panel_settings"]["polyedge"]:
+            return " ".join(
+                [
+                    f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["polyedge_gene"]}{self.sample_dict["panel_settings"]["polyedge"]["gene"]}',
+                    f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["polyedge_chrom"]}{str(self.sample_dict["panel_settings"]["polyedge"]["chrom"])}',
+                    f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["polyedge_poly_start"]}'
+                    f'{str(self.sample_dict["panel_settings"]["polyedge"]["poly_start"])}',
+                    f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["polyedge_poly_end"]}'
+                    f'{str(self.sample_dict["panel_settings"]["polyedge"]["poly_end"])}',
+                    SWConfig.STAGE_INPUTS["seglh_pipe"]["polyedge_skip"],
+                ]
+            )
+        else:
+            return ""
+
+    def get_gatk_masked_reference_cmd_string(self) -> str:
+        """
+        Get input string for masked reference input for BWA stage of PIPE workflow, if
+        specified for the pan number in the config
+            :return masked_reference_cmd_string (str):  Masked reference input string
+        """
+        if self.sample_dict["panel_settings"]["masked_reference"]:
+            return f"{SWConfig.STAGE_INPUTS['pipe']['bwa_ref']}{self.sample_dict['panel_settings']['masked_reference']}"
+        else:
+            return ""
+
+    def get_seglh_masked_reference_cmd_string(self) -> str:
         """
         Get input string for masked reference input for BWA stage of PIPE workflow, if
         specified for the pan number in the config
@@ -703,9 +827,13 @@ class BuildSampleDxCommands(SWConfig):
             "congenica",
             self.sample_dict["sample_name"],
         )
-        if self.sample_dict["panel_settings"]["pipeline"] == "pipe":
+        if self.sample_dict["panel_settings"]["pipeline"] == "gatk_pipe":
             vcf_input = f'{self.sample_dict["sample_name"]}*.bedfiltered.vcf.gz'
             bam_input = f'{self.sample_dict["sample_name"]}*.refined.bam'
+
+        if self.sample_dict["panel_settings"]["pipeline"] == "seglh_pipe":
+            vcf_input = f'{self.sample_dict["sample_name"]}*.bedfiltered.vcf.gz'
+            bam_input = f'{self.sample_dict["sample_name"]}*.markdup.bam'
 
         if (
             self.sample_dict["panel_settings"]["pipeline"] == "wes"

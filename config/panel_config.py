@@ -42,6 +42,8 @@ required for analysis of samples with that pan number
     polyedge                        None if app not required, subdictionary containing app inputs if it is required
     ed_readcount_bedfile            None if app not required, panel readcount bedfile if required
     ed_cnvcalling_bedfile           None if app not required, R-number specific bedfile if required
+    ed_bam_str                      String used to search for appropriate BAM
+    ed_samplename_str               String used to find sample name
     dry_lab_only                    Used to determine whether to include the TSO pan
                                     number in the duty_csv pan number list
     dry_lab                         True if required to share with dry lab, None if not
@@ -98,6 +100,8 @@ DEFAULT_DICT = {
     "polyedge": None,
     "ed_readcount_bedfile": None,
     "ed_cnvcalling_bedfile": None,
+    "ed_bam_str": None,
+    "ed_samplename_str": None,
     "dry_lab_only": None,
     "dry_lab": None,
     "umis": None,
@@ -124,6 +128,8 @@ class PanelConfig:
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4397dataSambamba.bed",
             "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4398data.bed",
             "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5208_exomedepth.bed",
+            "ed_bam_str": "*001.ba*",
+            "ed_samplename_str": "R1_001.bam",
             "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4399_RPKM.bed",
             "capture_type": "Hybridisation",
             "multiqc_coverage_level": 30,
@@ -131,7 +137,7 @@ class PanelConfig:
             "coverage_min_basecall_qual": 10,
             "coverage_min_mapping_qual": 20,
         },
-        "cp2": {
+        "CP2": {
             **DEFAULT_DICT,
             "panel_name": "CP2",
             "pipeline": "seglh_pipe",
@@ -142,6 +148,8 @@ class PanelConfig:
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5272_sambamba.bed",
             "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan5272_data.bed",
             "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5279_exomeDepth.bed",
+            "ed_bam_str": "*markdup.ba*",
+            "ed_samplename_str": "_markdup.bam",           
             "capture_type": "Hybridisation",
             "multiqc_coverage_level": 30,
             "clinical_coverage_depth": 30,
@@ -516,14 +524,14 @@ class PanelConfig:
             "congenica_project": 4203,
         },
         "Pan4149": {  # CP2 R208 (Synnovis) - BRCA
-            **CAPTURE_PANEL_DICT["cp2"],
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R208",
             "congenica_project": 4665,
             "ed_cnvcalling_bedfile": "Pan5249",
         },
         "Pan4150": {  # CP2 R207 (Synnovis) - ovarian cancer
-            **CAPTURE_PANEL_DICT["cp2"],
+            **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R207",
             "congenica_project": 4864,

@@ -26,7 +26,7 @@ processing. See Readme and docstrings for further details. Contains the followin
     support upload commands, and SQL queries
 - WesPipeline
     Collate commands for WES workflow. This runtype has no postprocesing commands
-- CustomPanelsPipeline
+- CustomPanelsPipelines
     Collate commands for Custom Panels workflow. This runtype has no postprocesing commands
 """
 
@@ -656,10 +656,14 @@ class ProcessRunfolder(SWConfig):
             pipeline_obj = SnpPipeline(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
             )
-        if self.rf_samples_obj.pipeline == "pipe":
-            pipeline_obj = CustomPanelsPipeline(
+        if self.rf_samples_obj.pipeline == "gatk_pipe":
+            pipeline_obj = CustomPanelsPipelines(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
             )
+        if self.rf_samples_obj.pipeline == "seglh_pipe":
+            pipeline_obj = CustomPanelsPipelines(
+                self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
+            )                       
         if self.rf_samples_obj.pipeline == "dev":
             pipeline_obj = DevPipeline(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
@@ -1236,7 +1240,7 @@ class WesPipeline:  # TODO eventually remove this and associated pipeline-specif
         self.sql_queries = self.rf_cmds_obj.return_wes_query(wes_dnanumbers)
 
 
-class CustomPanelsPipeline:
+class CustomPanelsPipelines:
     """
     Collate commands for Custom Panels workflow. This runtype has no postprocesing commands
 
@@ -1262,11 +1266,20 @@ class CustomPanelsPipeline:
             # Add to gatk depends list because RPKM / ExomeDepth must depend only upon the
             # sample workflows completing successfully, whilst other downstream
             # apps depend on all prior jobs completing succesfully
+
+            pipeline_type = sample_cmds_obj.sample_dict["panel_settings"]["pipeline"]
+            if pipeline_type == "gatk_pipe":
+                cmd = sample_cmds_obj.create_gatk_pipe_cmd()
+            elif pipeline_type == "seglh_pipe":
+                cmd = sample_cmds_obj.create_seglh_pipe_cmd()
+            else:
+                raise ValueError(f"Unsupported pipeline type: {pipeline_type}")
+            
             self.workflow_cmds.extend(
                 [
-                    sample_cmds_obj.create_pipe_cmd(),
+                    cmd,
                     SWConfig.UPLOAD_ARGS["depends_list"],
-                    SWConfig.UPLOAD_ARGS["depends_list_gatk"],
+                    SWConfig.UPLOAD_ARGS["depends_list_pipeline"],
                 ]
             )
 
@@ -1277,7 +1290,7 @@ class CustomPanelsPipeline:
 
         # CNV calling steps are a dependency of MultiQC
         cmd_list = []
-        for core_panel in ["vcp1", "vcp2", "vcp3"]:
+        for core_panel in ["vcp1", "cp2"]:
             if core_panel in (
                 [
                     self.rf_samples_obj.samples_dict[k]["panel_settings"]["panel_name"]
@@ -1324,7 +1337,7 @@ class CustomPanelsPipeline:
                         self.logger.log_msgs["insufficient_samples_for_cnv"],
                         core_panel,
                     )
-        self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_gatk_recombined"])
+        self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_pipeline_recombined"])
 
         self.workflow_cmds.extend(
             self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline)

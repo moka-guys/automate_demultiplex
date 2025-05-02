@@ -112,7 +112,7 @@ NEXUS_IDS = {
         "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01",  # hs37d5.fa.gz
         "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
         "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-GgKKP4Q01jZ62QgF2bbPqz78",  # Pan5208_normals_v1.0.0.RData
-        "ed_cp2_readcount_normals": f"{TOOLS_PROJECT}:file-Gzfj4G80p1ygF65Bq0JY609j",  # Pan5271_normals_v1.1.0.RData
+        "ed_cp2_readcount_normals": f"{TOOLS_PROJECT}:file-J098jB80fxG0fQP64PXXP447",  # Pan5279_normals_v1.1.0.RData
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
     },
     "APPS": {
@@ -275,15 +275,14 @@ UPLOAD_ARGS = {
     "proj": "--project=${PROJECT_NAME}",
     "token": "--brief --auth ${AUTH})",
     "depends": "${DEPENDS_LIST}",
-    "depends_gatk": "${DEPENDS_LIST_GATK}",
-    "depends_sentieon": "${DEPENDS_LIST_SENTIEON}",
+    "depends_pipeline": "${DEPENDS_LIST_PIPELINE}",
+    #"depends_gatk": "${DEPENDS_LIST_GATK}",
+    #"depends_sentieon": "${DEPENDS_LIST_SENTIEON}",
     # Arguments to capture jobids. Job IDS are built into a string that can be passed to
     # downstream apps to ensure the jobs don't start until those job ids have completed successfully
     "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
-    "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOB_ID} "',
-    "depends_list_gatk_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
-    "depends_list_sentieon": 'DEPENDS_LIST_SENTIEON="${DEPENDS_LIST_SENTIEON} -d ${JOB_ID} "',
-    "depends_list_sentieon_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_SENTIEON} "',
+    "depends_list_pipeline": 'DEPENDS_LIST_PIPELINE="${DEPENDS_LIST_PIPELINE} -d ${JOB_ID} "',
+    "depends_list_pipeline_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_PIPELINE} "',
     "depends_list_edreadcount": 'DEPENDS_LIST_EDREADCOUNT="${DEPENDS_LIST_EDREADCOUNT} -d ${ED_READCOUNT_JOB_ID} "',
     "depends_list_cnvcalling": 'DEPENDS_LIST_CNVCALLING="${DEPENDS_LIST_CNVCALLING} -d ${CNVCALLING_JOB_ID} "',
     "depends_list_cnv_recombined": (
@@ -572,8 +571,12 @@ class SWConfig(PanelConfig):
             "picard_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['picard']}=mem1_ssd1_v2_x4",
             "picard_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['picard']}.vendor_exome_bedfile=",
             "picard_capturetype": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['picard']}.Capture_panel=",
+            "sentieon_reads1": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.reads_fastqgzs=",
+            "sentieon_reads2": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.reads2_fastqgzs=",
+            "sentieon_sample": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.sample=",
+            "sentieon_sample": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.sample=",
+            "sentieon_gvcf": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.output_gvcf=false",
             "sentieon_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}=",
-            "sentieon_readgroup": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.read_group_platform=",
             "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['filter_vcf']}.bedfile=",
             "filter_vcf_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
             "happy_skip": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['happy']}.skip=",
