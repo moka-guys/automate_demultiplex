@@ -1263,7 +1263,7 @@ class CustomPanelsPipelines:
                 self.rf_samples_obj.samples_dict[sample_name],
                 self.logger,
             )
-            # Add to gatk depends list because RPKM / ExomeDepth must depend only upon the
+            # Add to gatk and sentieon depends list because RPKM / ExomeDepth must depend only upon the
             # sample workflows completing successfully, whilst other downstream
             # apps depend on all prior jobs completing succesfully
 
@@ -1282,7 +1282,7 @@ class CustomPanelsPipelines:
                     SWConfig.UPLOAD_ARGS["depends_list_pipeline"],
                 ]
             )
-
+            
             self.sql_queries.append(sample_cmds_obj.return_rd_query())
             self.decision_support_upload_cmds.append(
                 sample_cmds_obj.return_congenica_cmd()
@@ -1290,7 +1290,7 @@ class CustomPanelsPipelines:
 
         # CNV calling steps are a dependency of MultiQC
         cmd_list = []
-        for core_panel in ["vcp1", "cp2"]:
+        for core_panel in ["vcp1", "CP2"]:
             if core_panel in (
                 [
                     self.rf_samples_obj.samples_dict[k]["panel_settings"]["panel_name"]
@@ -1307,9 +1307,11 @@ class CustomPanelsPipelines:
                 ]
                 # Make sure there are enough samples for RPKM and ExomeDepth
                 if len(core_panel_pannos) >= 3:
-                    self.workflow_cmds.extend(
+                    rpkm_cmd = self.rf_cmds_obj.create_rpkm_cmd(core_panel)
+                    if rpkm_cmd:
+                        self.workflow_cmds.extend(
                         [
-                            self.rf_cmds_obj.create_rpkm_cmd(core_panel),
+                            rpkm_cmd,
                             SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"],
                         ]
                     )

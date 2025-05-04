@@ -112,7 +112,7 @@ NEXUS_IDS = {
         "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01",  # hs37d5.fa.gz
         "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
         "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-GgKKP4Q01jZ62QgF2bbPqz78",  # Pan5208_normals_v1.0.0.RData
-        "ed_cp2_readcount_normals": f"{TOOLS_PROJECT}:file-J098jB80fxG0fQP64PXXP447",  # Pan5279_normals_v1.1.0.RData
+        "ed_CP2_readcount_normals": f"{TOOLS_PROJECT}:file-J098jB80fxG0fQP64PXXP447",  # Pan5279_normals_v1.1.0.RData
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
     },
     "APPS": {
@@ -225,7 +225,7 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "bed": "-isubpanel_bed=",
         "proj": "-iproject_name=${PROJECT_NAME}",
         "bam_str": "-ibam_str=",
-        "samplename_str": "-isamplename_str",
+        "samplename_str": "-isamplename_str=",
         "ref_genome": "-ireference_genome=",
         "pannos": "-ibamfile_pannumbers=",
     },
@@ -574,13 +574,13 @@ class SWConfig(PanelConfig):
             "sentieon_reads1": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.reads_fastqgzs=",
             "sentieon_reads2": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.reads2_fastqgzs=",
             "sentieon_sample": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.sample=",
-            "sentieon_sample": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.sample=",
             "sentieon_gvcf": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.output_gvcf=false",
             "sentieon_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}=",
             "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['filter_vcf']}.bedfile=",
             "filter_vcf_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
             "happy_skip": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['happy']}.skip=",
             "happy_prefix": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['happy']}.prefix=",
+            "happy_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['happy']}.panel_bed=",
             "sambamba_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}=mem1_ssd1_v2_x2",
             "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.sambamba_bed=",
             "sambamba_min_base_qual": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.min_base_qual=",
@@ -597,7 +597,7 @@ class SWConfig(PanelConfig):
             "sambamba_count_overl_mates": (
                 f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.merge_overlapping_mate_reads=true"
             ),
-            "fhprs_skip": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['fhprs']}.skip=false",
+            "fhprs_skip": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['fhprs']}.skip=true",
             "fhprs_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['fhprs']}.BEDfile=",
             "polyedge_gene": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['polyedge']}.gene=",
             "polyedge_chrom": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['polyedge']}.chrom=",
