@@ -128,7 +128,7 @@ class PanelConfig:
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan4397dataSambamba.bed",
             "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4398data.bed",
             "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5208_exomedepth.bed",
-            "ed_bam_str": "*001.ba*",
+            "ed_bam_str": "001",
             "ed_samplename_str": "R1_001.bam",
             "rpkm_bedfile": f"{BEDFILE_FOLDER}Pan4399_RPKM.bed",
             "capture_type": "Hybridisation",
