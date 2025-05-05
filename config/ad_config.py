@@ -431,7 +431,6 @@ class DemultiplexConfig(PanelConfig):
         "999999_M02631_0285_000000000-DEVOO",
         "999999_NB551068_0285_OODEVINTEG",
         "999999_M02631_0285_000000000-DVUMI",
-        "999999_A01229_0498_BH2277DRX7",
         "999999_NB552085_0320_ONCODEEP00",  # Included as behaviour is slightly different to include copying the MasterFile
     ]
     SEQUENCER_IDS = {
