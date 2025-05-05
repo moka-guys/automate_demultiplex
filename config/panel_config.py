@@ -149,7 +149,7 @@ class PanelConfig:
             "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan5272_data.bed",
             "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5279_exomeDepth.bed",
             "happy_bedfile": f"{BEDFILE_FOLDER}Pan5272_data.bed",
-            "ed_bam_str": "*markdup.ba*",
+            "ed_bam_str": "markdup",
             "ed_samplename_str": "_markdup.bam",           
             "capture_type": "Hybridisation",
             "multiqc_coverage_level": 30,
