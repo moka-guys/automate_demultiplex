@@ -60,6 +60,8 @@ Panel number lists are created from the PANEL_DICT, assimilating pan numbers fro
 | congenica_IR_template | 'priority' or 'non-priority'. False = Congenica app not used |
 | polyedge | False if app not required, subdictionary containing app inputs if it is required |
 | ed_readcount_bedfile | False if app not required, panel bed file if required |
+| ed_bam_str | String to use to search for BAM files
+| ed_samplename_str | String to use to name Exomedepth ouptut
 | ed_cnvcalling_bedfile | None if app not required, R-number specific bedfile if required |
 | dry_lab | True if required to share with dry lab, None if not |
 | dry_lab_only | Used to determine whether to include the TSO pan number in the duty_csv pan number list |
