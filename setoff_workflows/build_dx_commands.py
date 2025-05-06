@@ -198,6 +198,7 @@ class BuildRunfolderDxCommands(SWConfig):
             :param core_panel_name (str):   Name of synnovis core panel
             :return (str):                  Dx run command for RPKM app
         """
+        #Only run RPKM for VCP1 samples
         pipeline = SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["pipeline"]
         if pipeline != "gatk_pipe":
             return None

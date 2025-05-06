@@ -656,7 +656,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R79",
             "congenica_project": 4666,
-            "ed_cnvcalling_bedfile": "", #TO DO replace with CP2 BED
+            "ed_cnvcalling_bedfile": "Pan5281",
         },
         "Pan4146": {  # CP2 R81 (Synnovis) - Congenital myopathy
             **CAPTURE_PANEL_DICT["CP2"],
@@ -712,7 +712,7 @@ class PanelConfig:
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R79",
             "congenica_project": 4201,
-            "ed_cnvcalling_bedfile": "", # TODO add new CP2 calling bedfile
+            "ed_cnvcalling_bedfile": "Pan5281",
         },
         "Pan4834": {  # CP2 R81 (STG) - Congenital myopathy
             **CAPTURE_PANEL_DICT["CP2"],

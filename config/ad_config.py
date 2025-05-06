@@ -276,8 +276,6 @@ UPLOAD_ARGS = {
     "token": "--brief --auth ${AUTH})",
     "depends": "${DEPENDS_LIST}",
     "depends_pipeline": "${DEPENDS_LIST_PIPELINE}",
-    #"depends_gatk": "${DEPENDS_LIST_GATK}",
-    #"depends_sentieon": "${DEPENDS_LIST_SENTIEON}",
     # Arguments to capture jobids. Job IDS are built into a string that can be passed to
     # downstream apps to ensure the jobs don't start until those job ids have completed successfully
     "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
@@ -483,8 +481,7 @@ class SWConfig(PanelConfig):
     RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
     EMPTY_CP_DEPENDS = [
-        "DEPENDS_LIST_GATK=''",
-        "DEPENDS_LIST_SENTIEON=''",
+        "DEPENDS_LIST_PIPELINE=''",
         "DEPENDS_LIST_CNVCALLING=''",
         "DEPENDS_LIST_EDREADCOUNT=''",
     ]
