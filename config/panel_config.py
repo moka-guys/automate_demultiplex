@@ -494,7 +494,7 @@ class PanelConfig:
             **CAPTURE_PANEL_DICT["vcp1"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R134",
-            "congenica_project": 18062,
+            "congenica_project": 4203,
             "FH": True,
             "ed_cnvcalling_bedfile": "Pan5215",
         },
