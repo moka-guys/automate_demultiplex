@@ -854,10 +854,11 @@ class PanelConfig:
         if v["dry_lab_only"] is not True
     ]
     STG_PANNUMBERS = [
-        k
-        for k, v in PANEL_DICT.items()
-        if v["pipeline"] == ("gatk_pipe", "seglh_pipe") and v["congenica_credentials"] == "STG"
-    ]
+    k
+    for k, v in PANEL_DICT.items()
+    if v.get("pipeline", "").strip() in ("gatk_pipe", "seglh_pipe")
+    and v.get("congenica_credentials", "").strip() == "STG"
+]
     CP_CAPTURE_PANNOS = [
         CAPTURE_PANEL_DICT["vcp1"]["capture_pan_num"],
         CAPTURE_PANEL_DICT["CP2"]["capture_pan_num"],

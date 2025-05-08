@@ -516,6 +516,7 @@ class BuildSampleDxCommands(SWConfig):
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_reads1"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_reads2"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_sample"]}{self.sample_dict["sample_name"]}',
+                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_gvcf"]}',
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_bed"]}{self.sample_dict["panel_settings"]["sambamba_bedfile"]}',
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_min_base_qual"]}'
                 f'{str(self.sample_dict["panel_settings"]["coverage_min_basecall_qual"])}',
@@ -601,7 +602,7 @@ class BuildSampleDxCommands(SWConfig):
             return " ".join(
                 [
                     SWConfig.STAGE_INPUTS["seglh_pipe"]["fhprs_skip"],
-                    SWConfig.STAGE_INPUTS["seglh_pipe"]["gatk_vcf_format"],
+                    SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_gvcf"],
                     SWConfig.PIPE_FH_GATK_TIMEOUT_ARGS,
                 ]
             )
