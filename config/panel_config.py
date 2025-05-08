@@ -160,7 +160,7 @@ class PanelConfig:
         "lrpcr": {
             **DEFAULT_DICT,
             "panel_name": "lrpcr",
-            "pipeline": "pipe",
+            "pipeline": "gatk_pipe",
             "sample_prefix": "NGS",
             "runtype": "LRPCR",
             "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan4967_reference.bed",
@@ -856,7 +856,7 @@ class PanelConfig:
     STG_PANNUMBERS = [
         k
         for k, v in PANEL_DICT.items()
-        if v["pipeline"] == "pipe" and v["congenica_credentials"] == "STG"
+        if v["pipeline"] == ("gatk_pipe", "seglh_pipe") and v["congenica_credentials"] == "STG"
     ]
     CP_CAPTURE_PANNOS = [
         CAPTURE_PANEL_DICT["vcp1"]["capture_pan_num"],
