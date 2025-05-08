@@ -711,7 +711,7 @@ class RunfolderSamples(ToolboxConfig):
         """
         Get the runfolder suffix for the DNAnexus project name. This consists of the
         library number (see capture_library_numbers docstring for explanation), followed by
-        the WES batch if the run is a WES run, followed by the runtype (e.g. VCP1 / VCP2)
+        the WES batch if the run is a WES run, followed by the runtype (e.g. VCP1 / CP2)
             :return suffix (str):   String of '_' delimited unique library numbers, and WES
                                     batch numbers if run is a WES run, followed by the runtype
         """
@@ -721,7 +721,7 @@ class RunfolderSamples(ToolboxConfig):
             if self.pipeline == "wes":
                 library_numbers.extend(self.capture_wes_batch_numbers())
 
-            if self.pipeline in ["pipe", "wes", "dev"]:
+            if self.pipeline in ["gatk_pipe", "seglh_pipe", "wes", "dev"]:
                 library_numbers.append(self.runtype_str)
 
             suffix = f"{'_'.join(library_numbers)}"  # Provides more detail on contents of runs in runfolder name
@@ -1114,14 +1114,14 @@ class SampleObject(ToolboxConfig):
 
     def get_identifiers(self) -> Tuple[str, str]:
         """
-        For WES and PIPE samples, extract DNA number from sample name. For oncology
+        For WES and GATK/SENTIEON PIPE samples, extract DNA number from sample name. For oncology
         samples, collect 3rd and 4th identifiers, setting secondary_identifier to null
         if the sample is a positive or negative control (these only have one identifier)
             :return primary_identifier (str):    Primary sample identifier
             :return secondary_identifier (str):  Secondary sample identifier
         """
         primary_identifier, secondary_identifier = False, False
-        if self.pipeline in ("wes", "pipe", "snp"):
+        if self.pipeline in ("wes", "gatk_pipe", "seglh_pipe", "snp"):
             # Extract the dna number from sample name
             primary_identifier = self.sample_name.split("_")[2]
             secondary_identifier = False  # Secondary identifiers are not input to Moka
