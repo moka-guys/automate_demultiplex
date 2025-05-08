@@ -78,6 +78,8 @@ CREDENTIALS = {
     "adx_authtoken": ".archer_authentication_mokaguys.txt"
 }
 NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
+AVITI_ID = "AV241501" # Aviti sequencer ID
+# TO DO write if loop for fastq file locations based on sequencer
 RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 FASTQ_DIRS = {
     "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
@@ -110,8 +112,7 @@ NEXUS_IDS = {
         "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01",  # hs37d5.fa.gz
         "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
         "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-GgKKP4Q01jZ62QgF2bbPqz78",  # Pan5208_normals_v1.0.0.RData
-        "ed_vcp2_readcount_normals": f"{TOOLS_PROJECT}:file-Gbkgyq00ZpxpFKx03zVPJ9GX",  # Pan5188_normals_v1.1.0.RData
-        "ed_vcp3_readcount_normals": f"{TOOLS_PROJECT}:file-GvyzK780jy1Qb10KxK6kY6Gp",  # Pan5217_normals_v1.1.0.RData
+        "ed_CP2_readcount_normals": f"{TOOLS_PROJECT}:file-J098jB80fxG0fQP64PXXP447",  # Pan5279_normals_v1.1.0.RData
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
     },
     "APPS": {
@@ -126,19 +127,22 @@ NEXUS_IDS = {
         "sambamba": f"{TOOLS_PROJECT}:applet-G6vyyf00jy1kPkX9PJ1YkxB1",  # chanjo_sambamba_coverage_v1.13
         "fastqc": f"{TOOLS_PROJECT}:applet-GKXqZV80jy1QxF4yKYB4Y3Kz",  # fastqc_v1.4.0
         "gatk": f"{TOOLS_PROJECT}:applet-FYZ097j0jy1ZZPx30GykP63J",  # gatk3_human_exome_pipeline_v1.5
+        "sentieon": f"{TOOLS_PROJECT}:app-Gy4j5z00PPyQ5qv5FBXy0ZZp",  # Sentieon germline FASTQ to VCF v5.1.0
         "peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",  # peddy_v1.5
-        "ed_readcount": f"{TOOLS_PROJECT}:applet-GbkVzbQ0jy1zBZf5k6Xk6QP7",  # ED_readcount_analysis_v1.3.0
-        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-GbkVyQ80jy1Xf1p6jpPK6p1x",  # ED_cnv_calling_v1.3.0
+        "ed_readcount": f"{TOOLS_PROJECT}:applet-GyQGKjQ0qG6x59F4f1qBFvgz",  # ED_readcount_analysis_v1.5.0
+        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-GybZV0006bZFBzgf54KP7BKj",  # ED_cnv_calling_v1.4.0
         "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",  # RPKM_using_conifer_v1.6
         "duty_csv": f"{TOOLS_PROJECT}:applet-Gp75GB00360KXPV4Jy7PPFfQ",  # duty_csv_v1.5.0
     },
     "WORKFLOWS": {
-        "pipe": f"{TOOLS_PROJECT}:workflow-Gvy8YZ80jy1bb9zzb5JZBBX3",  # GATK3.5_v2.19
+        "gatk_pipe": f"{TOOLS_PROJECT}:workflow-Gvy8YZ80jy1bb9zzb5JZBBX3",  # GATK3.5_v2.19
+        "seglh_pipe": f"{TOOLS_PROJECT}:workflow-Gzj03g80jy1XbKzZY4yz7JXZ",  # SEGLH_RD_v1.3
         "wes": f"{TOOLS_PROJECT}:workflow-FjjbQ5Q0jy1ZgyjQ3g1zgx9k",  # MokaWES_v1.8
         "snp": f"{TOOLS_PROJECT}:workflow-GB3kyJj0jy1j06704fxX9J7j",  # MokaSNP_v1.2.0
+    
     },
     "STAGES": {
-        "pipe": {
+        "gatk_pipe": {
             "filter_vcf": "stage-G5Kpgv80zB02Q64zFf94G05F",
             "gatk": "stage-F28y4qQ0jy1fkqfy5v2b8byx",
             "fastqc": "stage-Bz3YpP80jy1Y1pZKbZ35Bp0x",
@@ -148,6 +152,18 @@ NEXUS_IDS = {
             "sambamba": "stage-F35zBKQ0jy1XpfzYPZY4bgX6",
             "fhprs": "stage-G9BfkZQ0fB6jZY7v1PfJ81F6",
             "polyedge": "stage-GK71VJ80VQgQkjvz0vyQ8YV1",
+        },
+        "seglh_pipe": {
+            "filter_vcf": "stage-G77VfJ803JGy589J21p7Jkqj",
+            "sentieon": "stage-Ff0P73j0GYKX41VkF3j62F9j",
+            "fastqc": "stage-Ff0P5Jj0GYKY717pKX3vX8Z3",
+            "picard": "stage-Ff0P5pQ0GYKVBB0g1FG27BV8",
+            "happy": "stage-GK8G6p803JGx48f74jf16Kjx",
+            "sambamba": "stage-Ff0P82Q0GYKQ4j8b4gXzjqxX",
+            "fhprs": "stage-GK8G6k003JGx48f74jf16Kjv",
+            "bcftools_stats": "stage-GK8G4V003JGYP6VB4q8kj9Kx",
+            "verifybam": "stage-GK8G6qj03JGxB3f84jX9J601",
+            "polyedge": "stage-GK8G6kj03JGyVGvk2Q44KQG1",          
         },
         "wes": {
             "fastqc1": "stage-Ff0P5Jj0GYKY717pKX3vX8Z3",
@@ -200,12 +216,17 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
         "bed": "-ibedfile=",
         "normals_rdata": "-inormals_RData=",
         "proj": "-iproject_name=${PROJECT_NAME}",
+        "bam_str": "-ibam_str=",
+        "excluded_samples": "-iexcluded_samples=",
         "pannos": "-ibamfile_pannumbers=",
     },
     "ed_cnvcalling": {
         "readcount": "-ireadcount_file=${ED_READCOUNT_JOB_ID}:RData",
         "bed": "-isubpanel_bed=",
         "proj": "-iproject_name=${PROJECT_NAME}",
+        "bam_str": "-ibam_str=",
+        "samplename_str": "-isamplename_str=",
+        "ref_genome": "-ireference_genome=",
         "pannos": "-ibamfile_pannumbers=",
     },
     "rpkm": {
@@ -254,12 +275,12 @@ UPLOAD_ARGS = {
     "proj": "--project=${PROJECT_NAME}",
     "token": "--brief --auth ${AUTH})",
     "depends": "${DEPENDS_LIST}",
-    "depends_gatk": "${DEPENDS_LIST_GATK}",
+    "depends_pipeline": "${DEPENDS_LIST_PIPELINE}",
     # Arguments to capture jobids. Job IDS are built into a string that can be passed to
     # downstream apps to ensure the jobs don't start until those job ids have completed successfully
     "depends_list": 'DEPENDS_LIST="${DEPENDS_LIST} -d ${JOB_ID} "',
-    "depends_list_gatk": 'DEPENDS_LIST_GATK="${DEPENDS_LIST_GATK} -d ${JOB_ID} "',
-    "depends_list_gatk_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_GATK} "',
+    "depends_list_pipeline": 'DEPENDS_LIST_PIPELINE="${DEPENDS_LIST_PIPELINE} -d ${JOB_ID} "',
+    "depends_list_pipeline_recombined": 'DEPENDS_LIST="${DEPENDS_LIST} ${DEPENDS_LIST_PIPELINE} "',
     "depends_list_edreadcount": 'DEPENDS_LIST_EDREADCOUNT="${DEPENDS_LIST_EDREADCOUNT} -d ${ED_READCOUNT_JOB_ID} "',
     "depends_list_cnvcalling": 'DEPENDS_LIST_CNVCALLING="${DEPENDS_LIST_CNVCALLING} -d ${CNVCALLING_JOB_ID} "',
     "depends_list_cnv_recombined": (
@@ -288,7 +309,8 @@ DX_CMDS = {
         f"{UPLOAD_AGENT_EXE} --auth %s --project %s --folder '%s' --do-not-compress "
         "--upload-threads 10 %s --tag as_upload"
     ),
-    "pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['pipe']} --priority high -y {JOB_NAME_STR}",
+    "gatk_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['gatk_pipe']} --priority high -y {JOB_NAME_STR}",
+    "seglh_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['seglh_pipe']} --priority high -y {JOB_NAME_STR}",
     "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
     "snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} --priority high -y {JOB_NAME_STR}",
     "tso500": (
@@ -364,6 +386,7 @@ class DemultiplexConfig(PanelConfig):
     """
 
     NOVASEQ_ID = NOVASEQ_ID
+    AVITI_ID = AVITI_ID
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
     STRINGS = {
@@ -415,6 +438,7 @@ class DemultiplexConfig(PanelConfig):
         "M02353": {"requires_ic": False},
         "M02631": {"requires_ic": False},
         NOVASEQ_ID: {"requires_ic": True},
+        AVITI_ID: {"requires_ic": False},
     }
     SEQ_REQUIRE_IC = [k for k, v in SEQUENCER_IDS.items() if v["requires_ic"]]
 
@@ -457,7 +481,7 @@ class SWConfig(PanelConfig):
     RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
     EMPTY_CP_DEPENDS = [
-        "DEPENDS_LIST_GATK=''",
+        "DEPENDS_LIST_PIPELINE=''",
         "DEPENDS_LIST_CNVCALLING=''",
         "DEPENDS_LIST_EDREADCOUNT=''",
     ]
@@ -483,7 +507,8 @@ class SWConfig(PanelConfig):
     SQL_IDS = {
         # Moka IDs for generating SQLs to update the Moka database (audit trail)
         "WORKFLOWS": {
-            "pipe": 5304,
+            "gatk_pipe": 5304,
+            "seglh_pipe": 5365,
             "wes": 5078,
             "archerdx": 5300,
             "msk": 5341,
@@ -497,46 +522,85 @@ class SWConfig(PanelConfig):
         },
     }
     STAGE_INPUTS = {
-        "pipe": {
-            "fastqc_reads": f"-i{NEXUS_IDS['STAGES']['pipe']['fastqc']}.reads=",
-            "bwa_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['bwa']}=mem1_ssd1_v2_x8",
-            "bwa_reads1": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads_fastqgz=",
-            "bwa_reads2": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.reads2_fastqgz=",
-            "bwa_rg_sample": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.read_group_sample=",
-            "bwa_ref": f"-i{NEXUS_IDS['STAGES']['pipe']['bwa']}.genomeindex_targz=",
-            "picard_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['picard']}=mem1_ssd1_v2_x4",
-            "picard_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.vendor_exome_bedfile=",
-            "picard_capturetype": f"-i{NEXUS_IDS['STAGES']['pipe']['picard']}.Capture_panel=",
-            "gatk_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['gatk']}=",
-            "gatk_padding": f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.padding=0",
-            "gatk_vcf_format": f"-i{NEXUS_IDS['STAGES']['pipe']['gatk']}.output_format=both",
-            "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['filter_vcf']}.bedfile=",
-            "filter_vcf_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
-            "happy_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.skip=",
-            "happy_prefix": f"-i{NEXUS_IDS['STAGES']['pipe']['happy']}.prefix=",
-            "sambamba_instance": f"--instance-type {NEXUS_IDS['STAGES']['pipe']['sambamba']}=mem1_ssd1_v2_x2",
-            "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.sambamba_bed=",
-            "sambamba_min_base_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_base_qual=",
-            "sambamba_min_mapping_qual": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.min_mapping_qual=",
-            "sambamba_cov_level": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.coverage_level=",
+        "gatk_pipe": {
+            "fastqc_reads": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['fastqc']}.reads=",
+            "bwa_instance": f"--instance-type {NEXUS_IDS['STAGES']['gatk_pipe']['bwa']}=mem1_ssd1_v2_x8",
+            "bwa_reads1": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['bwa']}.reads_fastqgz=",
+            "bwa_reads2": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['bwa']}.reads2_fastqgz=",
+            "bwa_rg_sample": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['bwa']}.read_group_sample=",
+            "bwa_ref": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['bwa']}.genomeindex_targz=",
+            "picard_instance": f"--instance-type {NEXUS_IDS['STAGES']['gatk_pipe']['picard']}=mem1_ssd1_v2_x4",
+            "picard_bed": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['picard']}.vendor_exome_bedfile=",
+            "picard_capturetype": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['picard']}.Capture_panel=",
+            "gatk_instance": f"--instance-type {NEXUS_IDS['STAGES']['gatk_pipe']['gatk']}=",
+            "gatk_padding": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['gatk']}.padding=0",
+            "gatk_vcf_format": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['gatk']}.output_format=both",
+            "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['filter_vcf']}.bedfile=",
+            "filter_vcf_instance": f"--instance-type {NEXUS_IDS['STAGES']['gatk_pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
+            "happy_skip": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['happy']}.skip=",
+            "happy_prefix": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['happy']}.prefix=",
+            "sambamba_instance": f"--instance-type {NEXUS_IDS['STAGES']['gatk_pipe']['sambamba']}=mem1_ssd1_v2_x2",
+            "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['sambamba']}.sambamba_bed=",
+            "sambamba_min_base_qual": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['sambamba']}.min_base_qual=",
+            "sambamba_min_mapping_qual": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['sambamba']}.min_mapping_qual=",
+            "sambamba_cov_level": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['sambamba']}.coverage_level=",
             "sambamba_filter_cmds": (
-                f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}"
+                f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['sambamba']}"
                 ".additional_filter_commands='not (unmapped or secondary_alignment)'"
             ),
-            "sambamba_excl_dups": f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.exclude_duplicate_reads=true",
+            "sambamba_excl_dups": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['sambamba']}.exclude_duplicate_reads=true",
             "sambamba_excl_failed_qual": (
-                f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.exclude_failed_quality_control=true"
+                f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['sambamba']}.exclude_failed_quality_control=true"
             ),
             "sambamba_count_overl_mates": (
-                f"-i{NEXUS_IDS['STAGES']['pipe']['sambamba']}.merge_overlapping_mate_reads=true"
+                f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['sambamba']}.merge_overlapping_mate_reads=true"
             ),
-            "fhprs_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.skip=false",
-            "fhprs_bed": f"-i{NEXUS_IDS['STAGES']['pipe']['fhprs']}.BEDfile=",
-            "polyedge_gene": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.gene=",
-            "polyedge_chrom": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.chrom=",
-            "polyedge_poly_start": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_start=",
-            "polyedge_poly_end": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.poly_end=",
-            "polyedge_skip": f"-i{NEXUS_IDS['STAGES']['pipe']['polyedge']}.skip=false",
+            "fhprs_skip": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['fhprs']}.skip=false",
+            "fhprs_bed": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['fhprs']}.BEDfile=",
+            "polyedge_gene": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['polyedge']}.gene=",
+            "polyedge_chrom": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['polyedge']}.chrom=",
+            "polyedge_poly_start": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['polyedge']}.poly_start=",
+            "polyedge_poly_end": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['polyedge']}.poly_end=",
+            "polyedge_skip": f"-i{NEXUS_IDS['STAGES']['gatk_pipe']['polyedge']}.skip=false",
+        },
+        "seglh_pipe": {
+            "fastqc_reads": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['fastqc']}.reads=",
+            "picard_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['picard']}=mem1_ssd1_v2_x4",
+            "picard_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['picard']}.vendor_exome_bedfile=",
+            "picard_capturetype": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['picard']}.Capture_panel=",
+            "sentieon_reads1": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.reads_fastqgzs=",
+            "sentieon_reads2": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.reads2_fastqgzs=",
+            "sentieon_sample": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.sample=",
+            "sentieon_gvcf": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.output_gvcf=false",
+            "sentieon_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}=",
+            "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['filter_vcf']}.bedfile=",
+            "filter_vcf_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
+            "happy_skip": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['happy']}.skip=",
+            "happy_prefix": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['happy']}.prefix=",
+            "happy_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['happy']}.panel_bed=",
+            "sambamba_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}=mem1_ssd1_v2_x2",
+            "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.sambamba_bed=",
+            "sambamba_min_base_qual": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.min_base_qual=",
+            "sambamba_min_mapping_qual": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.min_mapping_qual=",
+            "sambamba_cov_level": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.coverage_level=",
+            "sambamba_filter_cmds": (
+                f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}"
+                ".additional_filter_commands='not (unmapped or secondary_alignment)'"
+            ),
+            "sambamba_excl_dups": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.exclude_duplicate_reads=true",
+            "sambamba_excl_failed_qual": (
+                f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.exclude_failed_quality_control=true"
+            ),
+            "sambamba_count_overl_mates": (
+                f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sambamba']}.merge_overlapping_mate_reads=true"
+            ),
+            "fhprs_skip": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['fhprs']}.skip=true",
+            "fhprs_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['fhprs']}.BEDfile=",
+            "polyedge_gene": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['polyedge']}.gene=",
+            "polyedge_chrom": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['polyedge']}.chrom=",
+            "polyedge_poly_start": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['polyedge']}.poly_start=",
+            "polyedge_poly_end": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['polyedge']}.poly_end=",
+            "polyedge_skip": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['polyedge']}.skip=false",
         },
         "wes": {
             "fastqc1_reads": f"-i{NEXUS_IDS['STAGES']['wes']['fastqc1']}.reads=",
