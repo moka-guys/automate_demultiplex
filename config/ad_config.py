@@ -438,7 +438,7 @@ class DemultiplexConfig(PanelConfig):
         "M02353": {"requires_ic": False},
         "M02631": {"requires_ic": False},
         NOVASEQ_ID: {"requires_ic": True},
-        AVITI_ID: {"requires_ic": True},
+        AVITI_ID: {"requires_ic": False},
     }
     SEQ_REQUIRE_IC = [k for k, v in SEQUENCER_IDS.items() if v["requires_ic"]]
 
