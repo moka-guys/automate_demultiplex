@@ -18,6 +18,7 @@ import subprocess
 import logging
 import time
 import seglh_naming
+import json
 from pathlib import Path
 from typing import Tuple
 from distutils.spawn import find_executable
@@ -189,10 +190,12 @@ def check_returncode(
     else:
         logger.error(logger.log_msgs["cmd_fail"], returncode, out, err)
         return out, err, returncode
-
+    
 def get_sequencer_type(runfolder_name: str) -> str:
     """
-    Returns the name of sequencer run was loaded to
+    Returns the name of sequencer run was loaded to based on runfolder name
+        :param runfolder_name (str):    Runfolder name string
+        :return (str):                  Sequencer type string
     """
     if ToolboxConfig.AVITI_ID in runfolder_name:
         return ToolboxConfig.AVITI_SEQ
@@ -203,6 +206,7 @@ def get_runfolder_path(sequencer_type: str, runfolder_name: str) -> str:
     """
     Return the path of the runfolder based on the sequencer type
         :param sequencer_type (str):    Sequencer type string
+        :param runfolder_name (str):    Runfolder name string
         :return (str):                  Runfolder path
     """
     if sequencer_type == ToolboxConfig.AVITI_SEQ:
@@ -210,24 +214,31 @@ def get_runfolder_path(sequencer_type: str, runfolder_name: str) -> str:
     else:
         return os.path.join(ToolboxConfig.RUNFOLDERS, runfolder_name)
 
-def get_samplesheet_name(sequencer_type: str, runfolder_name: str) -> str:
+def get_samplesheet_name(sequencer_type: str, runfolder_name: str,aviti_runparameters_file: str) -> str:
     """
     Return the name of the samplesheet based on sequencer type
         :param sequencer_type           Sequencer type string
         :param runfolder_name (str):    Runfolder name string
-        :return (str):                  Samplesheet.csv/RunManifest.csv   
+        :return (str):                  Samplesheet.csv/RunManifest.csv string  
     """
     if sequencer_type == ToolboxConfig.AVITI_SEQ:
-        return "RunManifest.csv"
+        with open(aviti_runparameters_file, 'r') as file:
+            runparameters_json = json.load(file)
+            date = runparameters_json.get("Date").replace("-","")
+            amended_date = date[2:8]
+            instrument_name = runparameters_json.get("InstrumentName")
+            side = runparameters_json.get("Side")[-1]
+            flowcell = runparameters_json.get("FlowcellID")
+        return f"{amended_date}_{instrument_name}_{side}{flowcell}_SampleSheet.csv"
     else:
         return f"{runfolder_name}_SampleSheet.csv"
     
 def get_runcompletefile_path(sequencer_type: str, runfolderpath: str) -> str:
     """
-    Return run complete file path name based on seqeuncer used
+    Return run complete file path based on seqeuncer used
         :param sequencer_type           Sequencer type string
         :param runfolderpath (str):     Runfolder path string
-        :return (str):                  RTAComplete.txt or RunUploaded.json path
+        :return (str):                  RTAComplete.txt/RunUploaded.json path
     """
     if sequencer_type == ToolboxConfig.AVITI_SEQ:
         return os.path.join(
@@ -238,31 +249,31 @@ def get_runcompletefile_path(sequencer_type: str, runfolderpath: str) -> str:
             runfolderpath, ToolboxConfig.FLAG_FILES["illumina_seq_complete"]
         )
     
-def get_samplesheet_path(sequencer_type: str, runfolder_name: str,samplesheet_name: str) -> str:
+def get_samplesheet_path(sequencer_type: str,samplesheet_name: str) -> str:
     """
     Return tech team uploaded samplesheet filepath based on sequencer used - 
-    function necessary for Illumina runs but not AVITI 
+    filepath necessary for Illumina runs but not AVITI 
         :param sequencer_type           Sequencer type string
-        :param runfolder_name (str):    Runfolder name string
         :param samplesheet_name (str):  Samplesheet name string
         :return (str):                  Samplesheet file path
     """
     if sequencer_type == ToolboxConfig.AVITI_SEQ:
         return os.path.join(
-            ToolboxConfig.AVITI_RUNFOLDER, runfolder_name, samplesheet_name
+            ToolboxConfig.TURING_SAMPLESHEET, samplesheet_name
         )
     else:
         return os.path.join(
             ToolboxConfig.RUNFOLDERS, "samplesheets", samplesheet_name
         )
     
-def get_demultiplexlog_file(runfolderpath: str) -> str:
+def get_demultiplexlog_file(sequencer_type: str, runfolderpath: str) -> str:
     """
     Returns name of demultiplex log file based on demultiplex tool needed
+        :param sequencer_type           Sequencer type string
         :param runfolderpath (str):     Runfolder path string
         :return (str):                  bcl2fastq/bases2fastq log file string
     """
-    if ToolboxConfig.AVITI_ID in runfolderpath:
+    if sequencer_type == ToolboxConfig.AVITI_SEQ:
         return os.path.join(
             runfolderpath, ToolboxConfig.FLAG_FILES["bases2fastqlog"]
         )
@@ -284,13 +295,31 @@ def create_aviti_outputpath(runfolderpath: str) -> str:
     else:
         os.mkdir(fastq_outputpath)
         return fastq_outputpath
-def get_fastq_dir_path(runfolderpath: str) -> str:
+
+def get_aviti_runname(sequencer_type: str, aviti_runparameters_file: str) -> str:
+    """
+    Returns RunName inside RunParameters.json file if AVITI run or empty
+    string if Illumina - used for samplesheet validator
+        :param sequencer_type (str):            Sequencer type string
+        :param aviti_runparameters_file (str):  AVITI RunParameters path string
+        :return (str):                          RunName/Empty String
+    """
+    if sequencer_type == ToolboxConfig.AVITI_SEQ:
+        with open(aviti_runparameters_file, 'r') as file:
+            runparameters_json = json.load(file)
+            aviti_runname = runparameters_json.get("RunName")
+            return aviti_runname
+    else:
+        return ""
+
+def get_fastq_dir_path(sequencer_type: str, runfolderpath: str) -> str:
     """
     Returns filepath for fastqs for demultiplexing based on sequencer used
+        :param sequencer_type           Sequencer type string
         :param runfolderpath (str):     Runfolder path string
         :return (str):                  Fastq directory path string
     """
-    if ToolboxConfig.AVITI_ID in runfolderpath:
+    if sequencer_type == ToolboxConfig.AVITI_SEQ:
         return os.path.join(
             runfolderpath, ToolboxConfig.FASTQ_DIRS["aviti_fastqs"]
         )
@@ -492,9 +521,12 @@ class RunfolderObject(ToolboxConfig):
         self.runfolder_name = runfolder_name
         self.sequencer_type = get_sequencer_type(self.runfolder_name)
         self.runfolderpath = get_runfolder_path(self.sequencer_type, self.runfolder_name)
-        self.samplesheet_name = get_samplesheet_name(self.sequencer_type, self.runfolder_name)
+        self.aviti_runparameters_file = os.path.join(
+            self.runfolderpath, "RunParameters.json"
+        )
+        self.samplesheet_name = get_samplesheet_name(self.sequencer_type, self.runfolder_name, self.aviti_runparameters_file)
         self.runcompletefile_path = get_runcompletefile_path(self.sequencer_type, self.runfolderpath)
-        self.samplesheet_path = get_samplesheet_path(self.sequencer_type, self.runfolder_name, self.samplesheet_name)
+        self.samplesheet_path = get_samplesheet_path(self.sequencer_type, self.samplesheet_name)
         self.runfolder_samplesheet_path = os.path.join(
             self.runfolderpath, self.samplesheet_name
         )
@@ -511,10 +543,13 @@ class RunfolderObject(ToolboxConfig):
         self.sscheck_flagfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["sscheck_flag"]
         )
-        self.demultiplexlog_file = get_demultiplexlog_file(self.runfolderpath)
-        self.fastq_dir_path = get_fastq_dir_path(self.runfolderpath)
+        self.demultiplexlog_file = get_demultiplexlog_file(self.sequencer_type, self.runfolderpath)
+        self.bases2fastq_log_output = os.path.join(
+            self.runfolderpath, "Fastq", "info", "Bases2Fastq.log"
+        )
+        self.fastq_dir_path = get_fastq_dir_path(self.sequencer_type, self.runfolderpath)
         self.bases2fastq_outputpath = create_aviti_outputpath(self.runfolderpath)
-        print(self.bases2fastq_outputpath)
+        self.aviti_runparameters_runname = get_aviti_runname(self.sequencer_type, self.aviti_runparameters_file)
         self.upload_flagfile = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["upload_started"]
         )
@@ -582,7 +617,6 @@ class RunfolderObject(ToolboxConfig):
             "demux": self.demultiplex_runfolder_logfile,
             "backup": self.upload_runfolder_logfile,
             "demultiplex_docker_log": self.demultiplexlog_file,
-            #"bcl2fastq2": self.bcl2fastqlog_file,
             "ss_validator": self.samplesheet_validator_logfile,
         }
         # Log files that sit outside the runfolder that require uploading
@@ -687,7 +721,6 @@ class RunfolderSamples(ToolboxConfig):
         self.fastq_dir_path = rf_obj.fastq_dir_path
         self.logger = logger
         self.samplename_dict = get_samplename_dict(self.logger, self.samplesheet_path)
-        print(f"Samplesheet dict - {self.samplename_dict}")
         self.pipeline = self.get_pipeline()
         self.runtype_str = self.get_runtype()
         self.nexus_runfolder_suffix = self.get_nexus_runfolder_suffix()
