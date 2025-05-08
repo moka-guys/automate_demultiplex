@@ -306,22 +306,22 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     self.demux_rf_logger.log_msgs["ad_version"],
                     git_tag(),
                 )
-                #if (
-                #    self.sscheck_success_msg_present() or self.valid_samplesheet()
-                #):  # Early warning ss checks
-                if self.sscheck_success_msg_present():
-                    requires_no_ic = self.seq_requires_no_ic()
-                    if requires_no_ic or self.checksumfile_exists():
-                        if self.sequencing_complete():
-                            if requires_no_ic or self.pass_integrity_check():
-                                if self.sequenced_on_illumina():
+                if (
+                    self.sscheck_success_msg_present() or self.valid_samplesheet()
+                ):  # Early warning ss checks
+                    if self.sscheck_success_msg_present():
+                        requires_no_ic = self.seq_requires_no_ic()
+                        if requires_no_ic or self.checksumfile_exists():
+                            if self.sequencing_complete():
+                                if requires_no_ic or self.pass_integrity_check():
                                     self.copy_file(
-                                        self.rf_obj.samplesheet_path,
-                                        self.rf_obj.runfolder_samplesheet_path,
+                                    self.rf_obj.samplesheet_path,
+                                    self.rf_obj.runfolder_samplesheet_path,
                                     )
-                                    self.calculate_cluster_density()
-                                if self.runtype_requires_demultiplexing():
-                                    return True
+                                    if self.sequenced_on_illumina():
+                                        self.calculate_cluster_density()
+                                    if self.runtype_requires_demultiplexing():
+                                        return True
 
     def upload_flagfile_absent(self) -> None:
         """
@@ -339,7 +339,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def demultiplex_docker_log_absent(self) -> Optional[bool]:
         """
         Check presence of demultiplex log file (bcl2fastq2/bases2fastq_output.log)
-            :return (Optional[bool]): Return true is demultiplex logfile exists
+            :return (Optional[bool]): Return true if demultiplex logfile exists
         """
         if os.path.isfile(self.rf_obj.demultiplexlog_file):
             script_logger.info(
@@ -426,6 +426,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
             DemultiplexConfig.TSO_PANELS,
             DemultiplexConfig.DEV_PANEL,
             os.path.dirname(self.rf_obj.samplesheet_validator_logfile),
+            self.sequenced_on_illumina(),
+            self.rf_obj.aviti_runparameters_runname,
         )
         sscheck_obj.ss_checks()
         shutdown_logs(sscheck_obj.logger)
@@ -536,6 +538,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         if self.rf_obj.sequencer_type == DemultiplexConfig.ILLUMINA_SEQ:
             return True
+        else:
+            return False
         
     def prior_ic(self, checksums: list) -> Optional[bool]:
         """
@@ -788,6 +792,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.demultiplex_rf_logger.info(
                     err  # Write stderr to demultiplex runfolder logfile 
                 )
+                if self.rf_obj.sequencer_type == DemultiplexConfig.AVITI_SEQ:
+                    self.copy_file(
+                        self.rf_obj.bases2fastq_log_output, 
+                        self.rf_obj.demultiplexlog_file
+                        )
                 return True
             else:
                 os.remove(
@@ -816,6 +825,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.rf_obj.runfolderpath,
             self.rf_obj.bases2fastq_outputpath,
             DemultiplexConfig.BASES2FASTQ_CPU,
+            self.rf_obj.samplesheet_name
             )
         else:
             demultiplex_cmd = DemultiplexConfig.BCL2FASTQ2_CMD % (
@@ -827,4 +837,3 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.rf_obj.samplesheet_name,
         )
         return demultiplex_cmd
-
