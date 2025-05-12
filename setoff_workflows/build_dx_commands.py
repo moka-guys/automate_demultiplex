@@ -256,7 +256,7 @@ class BuildRunfolderDxCommands(SWConfig):
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["bed"]}'
                 f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["ed_readcount_bedfile"]}',
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["bam_str"]}'
-                f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["ed_bam_str"]}',
+                f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["readcount_ed_bam_str"]}',
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["normals_rdata"]}'
                 f'{SWConfig.NEXUS_IDS["FILES"][f"ed_{core_panel_name}_readcount_normals"]}',
                 SWConfig.APP_INPUTS["ed_readcount"]["proj"],
