@@ -854,7 +854,7 @@ class BuildSampleDxCommands(SWConfig):
 
         if self.sample_dict["panel_settings"]["pipeline"] == "seglh_pipe":
             vcf_input = f'{self.sample_dict["sample_name"]}*.bedfiltered.vcf.gz'
-            bam_input = f'{self.sample_dict["sample_name"]}*.markdup.bam'
+            bam_input = f'{self.sample_dict["sample_name"]}*_markdup.bam'
 
         if (
             self.sample_dict["panel_settings"]["pipeline"] == "wes"
