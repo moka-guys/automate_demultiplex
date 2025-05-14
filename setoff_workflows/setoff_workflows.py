@@ -483,6 +483,10 @@ class ProcessRunfolder(SWConfig):
         if self.rf_samples_obj.pipeline != "tso500":
             # tso500 run is not demultiplexed locally so there are no fastqs
             # All other runfolders have fastqs in the BaseCalls directory
+            print("ASPECT1")
+            print(self)
+            print(self.rf_samples_obj)
+            print(self.rf_samples_obj.fastqs_str)
             upload_cmds["fastqs"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
@@ -626,6 +630,8 @@ class ProcessRunfolder(SWConfig):
             :return pipeline_obj (object):  Object with the workflow_cmds, dx_postprocessing_cmds,
                                             decision_support_upload_cmds and sql_queries as attributes
         """
+        print("PIPELINE")
+        print(self.rf_samples_obj.pipeline)
         if self.rf_samples_obj.pipeline == "tso500":
             pipeline_obj = TsoPipeline(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
@@ -761,8 +767,11 @@ class ProcessRunfolder(SWConfig):
         # Build upload_runfolder.py commands, ignoring some files
         if self.rf_samples_obj.pipeline in ["tso500", "dev"]:
             ignore = ""  # Upload BCL files for tso500 and dev runs
-        else:
+            # If illumina, ignore BCL files, if AVITI ignore Bases zip files
+        elif self.rf_samples_obj.sequencer_type != SWConfig.AVITI_SEQ:
             ignore = "/L00"
+        else:
+            ignore = "/BaseCalls"
 
         try:
             self.loggers["sw"].info(

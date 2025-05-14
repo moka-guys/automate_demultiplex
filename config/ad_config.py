@@ -34,6 +34,7 @@ MAIL_SETTINGS = {
     "port": 587,
     "binfx_email": "gst-tr.mokaguys@nhs.net",
     "alerts_email": "moka.alerts@gstt.nhs.uk",
+    "personal_email": "kieron.millard1@nhs.net",
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
@@ -72,7 +73,7 @@ else:  # Testing branch
         "binfx_recipient": MAIL_SETTINGS["personal_email"],
         # Oncology email address for email alerts
         "oncology_ops_email": MAIL_SETTINGS["personal_email"],
-        "wes_samplename_emaillist": MAIL_SETTINGS["binfx_email"],
+        "wes_samplename_emaillist": MAIL_SETTINGS["personal_email"],
     }
 
 CREDENTIALS = {
@@ -88,7 +89,7 @@ RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 FASTQ_DIRS = {
     "illumina_fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
     "tso_fastqs": "${PROJECT_ID}:/analysis_folder/Logs_Intermediates/CollapsedReads/",
-    "aviti_fastqs": "Fastq/Samples"
+    "aviti_fastqs": "Fastq/Samples/"
 }
 SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit path
 
