@@ -216,10 +216,12 @@ def get_runfolder_path(sequencer_type: str, runfolder_name: str) -> str:
 
 def get_samplesheet_name(sequencer_type: str, runfolder_name: str,aviti_runparameters_file: str) -> str:
     """
-    Return the name of the samplesheet based on sequencer type
-        :param sequencer_type           Sequencer type string
-        :param runfolder_name (str):    Runfolder name string
-        :return (str):                  Samplesheet.csv/RunManifest.csv string  
+    Return the name of the samplesheet based on sequencer type. If Illumina find runfolder_Samplesheet.csv
+    If AVITI, uses the RunParameters.json file to construct the samplesheet file name.
+        :param sequencer_type (str):            Sequencer type string
+        :param runfolder_name (str):            Runfolder name string
+        :param aviti_runparameters_file (str):  RunParameters.json file string  
+        :return (str):                          Samplesheet.csv string  
     """
     if sequencer_type == ToolboxConfig.AVITI_SEQ:
         with open(aviti_runparameters_file, 'r') as file:

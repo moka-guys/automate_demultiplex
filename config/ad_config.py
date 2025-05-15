@@ -34,6 +34,7 @@ MAIL_SETTINGS = {
     "port": 587,
     "binfx_email": "gst-tr.mokaguys@nhs.net",
     "alerts_email": "moka.alerts@gstt.nhs.uk",
+    "personal": "kieron.millard1@nhs.net"
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
@@ -64,15 +65,16 @@ else:  # Testing branch
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
     RUNFOLDERS = "/media/data3/share/testing/demultiplex_test"
+    TURING_SAMPLESHEET = "/media/data3/share/samplesheets"
     ILLUMINA_RUNFOLDER = "/media/data3/share/testing/demultiplex_test"
-    AVITI_RUNFOLDER = "/media/data1/share/AV241501/testing"
+    AVITI_RUNFOLDER = "/media/data1/share/AV241501/testing/"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
-        "binfx_recipient": MAIL_SETTINGS["binfx_email"],
+        "binfx_recipient": MAIL_SETTINGS["personal"],
         # Oncology email address for email alerts
-        "oncology_ops_email": MAIL_SETTINGS["binfx_email"],
-        "wes_samplename_emaillist": MAIL_SETTINGS["binfx_email"],
+        "oncology_ops_email": MAIL_SETTINGS["personal"],
+        "wes_samplename_emaillist": MAIL_SETTINGS["personal"],
     }
 
 CREDENTIALS = {
@@ -399,20 +401,18 @@ class DemultiplexConfig(PanelConfig):
     )
     BASES2FASTQ_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
-        "bases2fastq /input /output -p %s --group-fastq --no-projects"
+        "bases2fastq /input /output -p %s --group-fastq --no-projects -r /input/%s"
     )
-    #(
-    #    f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
-    #    "bases2fastq /input /output -p %s --group-fastq"
-    #)
     CD_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        "99999999_AV241501_NGS999Simdata",
+        "20250123_AV241501_NGS658FFV08Pool2AV",
+        "20250211_AV241501_NGS665FFV11Pool2AV",
     ]
     """
+        "999999_NB552085_0358_AHM2YNAFX7",
         "999999_NB552085_0358_AHM2YNAFX7",
         "99999999_AV241501_NGS999Simdata",
         "999999_NB552085_0496_DEMUXINTEG",
@@ -434,7 +434,7 @@ class DemultiplexConfig(PanelConfig):
         AVITI_ID: {"requires_ic": False}
     }
     SEQ_REQUIRE_IC = [k for k, v in SEQUENCER_IDS.items() if v["requires_ic"]]
-    BASES2FASTQ_CPU = 10
+    BASES2FASTQ_CPU = 5
 
 class SWConfig(PanelConfig):
     """
@@ -592,6 +592,7 @@ class ToolboxConfig(PanelConfig):
     ILLUMINA_SEQ = ILLUMINA_SEQ
     AVITI_SEQ = AVITI_SEQ
     TIMESTAMP = TIMESTAMP
+    TURING_SAMPLESHEET = TURING_SAMPLESHEET
     PSCON_IDS = [
         "NA12878",
         "136819",  # NA12878

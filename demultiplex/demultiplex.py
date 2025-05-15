@@ -89,7 +89,7 @@ class GetRunfolders(DemultiplexConfig):
             if DemultiplexConfig.TESTING: 
                 folders = DemultiplexConfig.DEMULTIPLEX_TEST_RUNFOLDERS
             else:
-                illumina_runfolders = os.listdir(DemultiplexConfig.ILLUMINA_RUNFOLDER)
+                illumina_runfolders = os.listdir(DemultiplexConfig.RUNFOLDERS)
                 aviti_runfolders = os.listdir(DemultiplexConfig.AVITI_RUNFOLDER)
                 folders = illumina_runfolders + aviti_runfolders
 
@@ -427,7 +427,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             DemultiplexConfig.DEV_PANEL,
             os.path.dirname(self.rf_obj.samplesheet_validator_logfile),
             self.sequenced_on_illumina(),
-            self.rf_obj.aviti_runparameters_runname,
+            self.rf_obj.runfolder_name,
         )
         sscheck_obj.ss_checks()
         shutdown_logs(sscheck_obj.logger)

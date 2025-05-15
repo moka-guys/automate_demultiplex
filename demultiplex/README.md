@@ -13,15 +13,15 @@ It contains 2 classes:
 
 1. The `GetRunfolders()` class collects runfolders in the config-specified runfolders directory
 2. `GetRunfolders.setoff_processing()` is called to:
--  Check if `bcl2fastq2` and `gatk` (used for cluster density calcs) are installed on the workstation
-- Initiate runfolder processing per identified runfolder, on runfolders that have an absent bcl2fastq2 logfile (`bcl2fastq2_output.log` - denotes that demultiplexing has been performed). bcl2fastq2 stdout and stderr streams are written to this file
+-  Check if `bcl2fastq2`, `bases2fastq` and `gatk` (used for cluster density calcs) are installed on the workstation
+- Initiate runfolder processing per identified runfolder, on runfolders that have an absent demultiplexing logfile (`bcl2fastq2_output.log` or `bases2fastq_output.log` - denotes that demultiplexing has been performed). bcl2fastq2/bases2fastq stdout and stderr streams are written to this file
 3. If criteria 2 is met, `DemultiplexRunfolder().setoff_workflow()` is called which performs a set of further checks on the runfolder to determine whether demultiplexing is required:
-- Sequencing is complete (presence of `RTAComplete.txt` file created by the sequencer when sequencing is complete)
+- Sequencing is complete (presence of `RTAComplete.txt` for Illumina or `RunUploaded.json`for AVITI file created by the sequencer when sequencing is complete)
 - SampleSheet does not contain any errors that would cause demultiplexing to fail - checks are carried out by the [samplesheet_validator.py](../samplesheet_validator/samplesheet_validator.py) module which makes use of the [seglh-naming](https://github.com/moka-guys/seglh-naming) library. The absence of error messages for specific tests is checked:
    * Sample sheet is present
    * SampleSheet name is valid (validates using the [seglh-naming](https://github.com/moka-guys/seglh-naming) library)
    * SampleSheet is not empty
-   * SampleSheet contains the minimum expected `[Data]` section headers: `Sample_ID, Sample_Name, index`
+   * SampleSheet contains the minimum expected criteria: Illumina - `[Data]` section headers: `Sample_ID, Sample_Name, index`. Not essential for AVITI. 
    * Sample name does not contain any illegal characters (in case this was not rectified after the early warning checks as this will cause bcl2fastq2 to fail)
 - If the sequencer does not require an integrity check, it skips straight to `run_demultiplexing()`
 - If the sequencer does require an integrity check the following requirements must be met for `run_demultiplexing()` to be called:
@@ -77,7 +77,7 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py).
 | Demultiplex output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplex_cron_stdout` |
 | demultiplex (script_logger) | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
 | demultiplex (demux_rf_logger) | Records runfolder-level logs for the demultiplex script | `RUNFOLDERNAME_demultiplex_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
- Bcl2fastq output | STDERR from bcl2fastq2 | `bcl2fastq2_output.log` | Within the runfolder |
+ Demultiplex output | STDERR from bcl2fastq2/bases2fastq | `bcl2fastq2_output.log`/`bases2fastq_output.log` | Within the runfolder |
 
 ## Testing
 
