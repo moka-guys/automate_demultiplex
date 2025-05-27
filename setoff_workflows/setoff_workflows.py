@@ -26,19 +26,21 @@ processing. See Readme and docstrings for further details. Contains the followin
     support upload commands, and SQL queries
 - WesPipeline
     Collate commands for WES workflow. This runtype has no postprocesing commands
-- CustomPanelsPipeline
+- CustomPanelsPipelines
     Collate commands for Custom Panels workflow. This runtype has no postprocesing commands
 """
 
 import sys
 import os
 import re
+import subprocess
 from itertools import chain
 from typing import Optional, Union
 from ad_logger.ad_logger import AdLogger, shutdown_logs
 from config.ad_config import SWConfig
 import logging
 from upload_runfolder.upload_runfolder import UploadRunfolder
+from config.ad_config import DemultiplexConfig
 from toolbox.toolbox import (
     return_scriptlog_config,
     test_upload_software,
@@ -309,7 +311,15 @@ class ProcessRunfolder(SWConfig):
         self.pipeline_obj = self.build_dx_commands()
         self.write_dx_run_cmds()
         self.pre_pipeline_upload()
-        self.run_dx_run_commands()
+        
+        # Skip run_dx_run_commands for MSK pipeline
+        if self.rf_samples_obj.pipeline != "msk":
+            self.run_dx_run_commands()
+        
+        if self.rf_samples_obj.pipeline == "archerdx":
+            self.run_decision_support_commands()
+        elif self.rf_samples_obj.pipeline == "msk":
+            self.run_msk_commands()
         self.pipeline_emails = PipelineEmails(
             self.rf_obj,
             self.rf_samples_obj,
@@ -632,6 +642,10 @@ class ProcessRunfolder(SWConfig):
             pipeline_obj = ArcherDxPipeline(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
             )
+        if self.rf_samples_obj.pipeline == "msk":
+            pipeline_obj = MskPipeline(
+                self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
+            )
         if self.rf_samples_obj.pipeline == "wes":
             pipeline_obj = WesPipeline(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
@@ -644,10 +658,14 @@ class ProcessRunfolder(SWConfig):
             pipeline_obj = SnpPipeline(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
             )
-        if self.rf_samples_obj.pipeline == "pipe":
-            pipeline_obj = CustomPanelsPipeline(
+        if self.rf_samples_obj.pipeline == "gatk_pipe":
+            pipeline_obj = CustomPanelsPipelines(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
             )
+        if self.rf_samples_obj.pipeline == "seglh_pipe":
+            pipeline_obj = CustomPanelsPipelines(
+                self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
+            )                       
         if self.rf_samples_obj.pipeline == "dev":
             pipeline_obj = DevPipeline(
                 self.rf_obj, self.rf_samples_obj, self.loggers["sw"]
@@ -778,6 +796,31 @@ class ProcessRunfolder(SWConfig):
             )
             sys.exit(1)
 
+    def run_decision_support_commands(self) -> None:
+        """
+        Execute the decision_support bash script
+            :return None:
+        """
+        decision_support_run_cmd = f"bash {self.rf_obj.decision_support_upload_script}"
+
+        self.loggers["sw"].info(
+            self.loggers["sw"].log_msgs["running_decision_cmds"],
+        )
+        out, err, returncode = execute_subprocess_command(
+            decision_support_run_cmd, self.loggers["sw"], "exit_on_fail"
+        )
+        if returncode != 0:
+            self.loggers["sw"].error(
+                self.loggers["sw"].log_msgs["decision_run_err"],
+                decision_support_run_cmd,
+                out,
+                err,
+            )
+        else:
+            self.loggers["sw"].info(
+                self.loggers["sw"].log_msgs["decision_run_success"],
+                self.rf_obj.runfolder_name,
+            )    
     def run_dx_run_commands(self) -> None:
         """
         Execute the dx run bash script
@@ -821,6 +864,60 @@ class ProcessRunfolder(SWConfig):
         for filetype in logfiles_upload_dict.keys():  # Upload logfiles for all runtypes
             self.upload_to_dnanexus(filetype, logfiles_upload_dict)
 
+    def run_msk_commands(self):
+        """Execute MSK pipeline commands directly without any DNAnexus interaction"""
+        self.loggers["sw"].info("Executing MSK pipeline commands")
+        
+        # Set environment variables
+        env = os.environ.copy()
+        env['run_folder_name'] = self.rf_obj.runfolder_name
+        
+        # Try to get job name from RunParameters.xml, but continue without it if not found
+        xml_path = os.path.join(self.rf_obj.runfolderpath, "RunParameters.xml")
+        if os.path.exists(xml_path):
+            try:
+                xml_cmd = f"cat {xml_path} | grep -oP '(?<=ExperimentName>).*?(?=</ExperimentName)'"
+                job_name = subprocess.check_output(xml_cmd, shell=True, text=True).strip()
+                env['job_name'] = job_name
+                self.loggers["sw"].info(f"Found job name: {job_name}")
+            except subprocess.CalledProcessError as e:
+                self.loggers["sw"].warning("Could not extract job name from RunParameters.xml, continuing without it")
+                env['job_name'] = self.rf_obj.runfolder_name
+        else:
+            self.loggers["sw"].warning(f"RunParameters.xml not found at {xml_path}, continuing without job name")
+            env['job_name'] = self.rf_obj.runfolder_name
+        
+        try:
+            # Format the command with the actual runfolder path instead of using env var
+            base_cmd = DemultiplexConfig.MSK_CMD
+            msk_cmd = base_cmd.replace("${run_folder_name}", self.rf_obj.runfolder_name)
+            
+            # Create nohup command and output file path using job_name
+            nohup_out = os.path.join(self.rf_obj.runfolderpath, f"{env['job_name']}_CLI.nohup.out")
+            nohup_cmd = f"cd {self.rf_obj.runfolderpath} && nohup {msk_cmd} > {nohup_out} 2>&1 &"
+            
+            # Execute the nohup command
+            result = subprocess.run(
+                nohup_cmd,
+                shell=True,
+                env=env,
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            
+            self.loggers["sw"].info(
+                "MSK command started in background. Output will be written to: %s",
+                nohup_out
+            )
+            
+        except subprocess.CalledProcessError as e:
+            self.loggers["sw"].error(
+                "Failed to start MSK command: %s\nError: %s",
+                nohup_cmd,
+                e.stderr
+            )
+            raise RuntimeError(f"MSK pipeline failed to start: {e.stderr}") from e
 
 class DevPipeline:
     """
@@ -885,6 +982,13 @@ class ArcherDxPipeline:
             self.sql_queries.append(
                 sample_cmds_obj.return_oncology_query()
             )  # Get SQL queries
+        # Return the decision support command 
+        ADX_runfolder = f"run_folder_name={self.rf_obj.runfolder_name}"
+        ADX_jobID = f"job_name=$(cat {self.rf_obj.runfolderpath}/RunParameters.xml | grep -oP '(?<=ExperimentName>).*?(?=</ExperimentName)')"
+        docker = DemultiplexConfig.ADX_CMD
+        docker_api_cmd = [ADX_runfolder, ADX_jobID, docker]
+        for api_cmd in docker_api_cmd:
+            self.decision_support_upload_cmds.append(api_cmd)
 
         # Return downstream app commands
         self.workflow_cmds.extend(
@@ -892,6 +996,40 @@ class ArcherDxPipeline:
         )
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
 
+class MskPipeline:
+    """
+    Collate DNAnexus commands for MSK runs. Minimal implementation that only runs
+    the MSK command and generates SQL queries for sample tracking.
+    """
+
+    def __init__(self, rf_obj: object, rf_samples: object, logger: logging.Logger):
+        self.rf_obj = rf_obj
+        self.rf_samples_obj = rf_samples
+        self.logger = logger
+        self.workflow_cmds = []
+        self.sql_queries = []
+        self.dx_postprocessing_cmds = False
+        self.decision_support_upload_cmds = []
+        self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
+
+        # Generate SQL queries for each sample
+        for sample_name in self.rf_samples_obj.samples_dict.keys():
+            sample_cmds_obj = BuildSampleDxCommands(
+                self.rf_obj.runfolder_name,
+                self.rf_samples_obj.samples_dict[sample_name],
+                self.logger,
+            )
+            self.sql_queries.append(
+                sample_cmds_obj.return_oncology_query()
+            )  # Get SQL queries
+
+        # MSK command setup
+        MSK_runfolder = f"run_folder_name={self.rf_obj.runfolder_name}"
+        MSK_jobID = f"job_name=$(cat {self.rf_obj.runfolderpath}/RunParameters.xml | grep -oP '(?<=ExperimentName>).*?(?=</ExperimentName)')"
+        docker = DemultiplexConfig.MSK_CMD
+        docker_api_cmd = [MSK_runfolder, MSK_jobID, docker]
+        for api_cmd in docker_api_cmd:
+            self.decision_support_upload_cmds.append(api_cmd)
 
 class SnpPipeline:  # TODO eventually remove this and associated pipeline-specific functions
     """
@@ -1104,7 +1242,7 @@ class WesPipeline:  # TODO eventually remove this and associated pipeline-specif
         self.sql_queries = self.rf_cmds_obj.return_wes_query(wes_dnanumbers)
 
 
-class CustomPanelsPipeline:
+class CustomPanelsPipelines:
     """
     Collate commands for Custom Panels workflow. This runtype has no postprocesing commands
 
@@ -1127,17 +1265,26 @@ class CustomPanelsPipeline:
                 self.rf_samples_obj.samples_dict[sample_name],
                 self.logger,
             )
-            # Add to gatk depends list because RPKM / ExomeDepth must depend only upon the
+            # Add to gatk and sentieon depends list because RPKM / ExomeDepth must depend only upon the
             # sample workflows completing successfully, whilst other downstream
             # apps depend on all prior jobs completing succesfully
+
+            pipeline_type = sample_cmds_obj.sample_dict["panel_settings"]["pipeline"]
+            if pipeline_type == "gatk_pipe":
+                cmd = sample_cmds_obj.create_gatk_pipe_cmd()
+            elif pipeline_type == "seglh_pipe":
+                cmd = sample_cmds_obj.create_seglh_pipe_cmd()
+            else:
+                raise ValueError(f"Unsupported pipeline type: {pipeline_type}")
+            
             self.workflow_cmds.extend(
                 [
-                    sample_cmds_obj.create_pipe_cmd(),
+                    cmd,
                     SWConfig.UPLOAD_ARGS["depends_list"],
-                    SWConfig.UPLOAD_ARGS["depends_list_gatk"],
+                    SWConfig.UPLOAD_ARGS["depends_list_pipeline"],
                 ]
             )
-
+            
             self.sql_queries.append(sample_cmds_obj.return_rd_query())
             self.decision_support_upload_cmds.append(
                 sample_cmds_obj.return_congenica_cmd()
@@ -1145,7 +1292,7 @@ class CustomPanelsPipeline:
 
         # CNV calling steps are a dependency of MultiQC
         cmd_list = []
-        for core_panel in ["vcp1", "vcp2", "vcp3"]:
+        for core_panel in ["vcp1", "CP2"]:
             if core_panel in (
                 [
                     self.rf_samples_obj.samples_dict[k]["panel_settings"]["panel_name"]
@@ -1162,9 +1309,11 @@ class CustomPanelsPipeline:
                 ]
                 # Make sure there are enough samples for RPKM and ExomeDepth
                 if len(core_panel_pannos) >= 3:
-                    self.workflow_cmds.extend(
+                    rpkm_cmd = self.rf_cmds_obj.create_rpkm_cmd(core_panel)
+                    if rpkm_cmd:
+                        self.workflow_cmds.extend(
                         [
-                            self.rf_cmds_obj.create_rpkm_cmd(core_panel),
+                            rpkm_cmd,
                             SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"],
                         ]
                     )
@@ -1192,7 +1341,7 @@ class CustomPanelsPipeline:
                         self.logger.log_msgs["insufficient_samples_for_cnv"],
                         core_panel,
                     )
-        self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_gatk_recombined"])
+        self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_pipeline_recombined"])
 
         self.workflow_cmds.extend(
             self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline)
