@@ -61,7 +61,7 @@ else:  # Testing branch
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
-    RUNFOLDERS = "/media/data3/share/testing" #/media/runfolder_share/test_runs_bclconvert"
+    RUNFOLDERS = "/media/data3/share/testing"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
@@ -375,7 +375,7 @@ class DemultiplexConfig(PanelConfig):
         "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s",
     }
     TESTING = TESTING
-    BCLCONVERT2_CMD = (
+    BCLCONVERT_CMD = (
         f"docker run --ulimit nofile=65535:65535 --rm --user %s:%s -v %s:/data/input -v %s:/data/output "
         f"-v %s:/var/log/bcl-convert "
         f"-v %s:/samplesheet_input {BCLCONVERT_DOCKER} "
@@ -572,7 +572,7 @@ class ToolboxConfig(PanelConfig):
     }
     FLAG_FILES = {
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
-        "bclconvertlog": "bclconvert2_output.log",  # Holds bclconvert2 logs
+        "bclconvertlog": "bclconvert_output.log",  # Holds bclconvert logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
         "seq_complete": "RTAComplete.txt",  # Sequencing complete file
@@ -590,7 +590,7 @@ class ToolboxConfig(PanelConfig):
             "executable": "docker",
             "test_cmd": f"docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
         },
-        "bclconvert2": {
+        "bclconvert": {
             "executable": "docker",
             "test_cmd": f"docker run --rm {BCLCONVERT_DOCKER} --version",
         },

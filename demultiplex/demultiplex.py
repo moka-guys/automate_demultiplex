@@ -5,7 +5,7 @@ Contains the following classes:
 - GetRunfolders
     Loop through and process NGS runfolders in a given directory
 - DemultiplexRunfolder
-    Call bclconvert2 on runfolders after asserting that runfolder has not been
+    Call bclconvert on runfolders after asserting that runfolder has not been
     demultiplexed and a valid SampleSheet is present
 
 """
@@ -138,7 +138,7 @@ class GetRunfolders(DemultiplexConfig):
 
 class DemultiplexRunfolder(DemultiplexConfig):
     """
-    Call bclconvert2 on runfolders after asserting that runfolder has not been
+    Call bclconvert on runfolders after asserting that runfolder has not been
     demultiplexed and a valid SampleSheet is present.
 
     Attributes
@@ -149,9 +149,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
         demux_rf_logger (object):           Demultiplex runfolder-level logger, extracted from
                                             the RunfolderObject containing runfolder-level
                                             loggers
-        bclconvert2_rf_logger (object):     Bclconvert2 runfolder-level logger, extracted from the
+        bclconvert_rf_logger (object):     Bclconvert runfolder-level logger, extracted from the
                                             RunfolderObject containing runfolder-level loggers
-        bclconvert2_cmd (str):              Shell command to run demultiplexing
+        bclconvert_cmd (str):              Shell command to run demultiplexing
         cluster_density_cmd (str):          Shell command to run cluster density calculation
         tso (bool):                         Denotes whether the run is a tso500 run
         run_processed (bool):               Denotes whether the run has been successfully
@@ -167,7 +167,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         upload_flagfile_absent()
             Check if runfolder has already been uploaded
         bclconvertlog_absent()
-            Check presence of demultiplex logfile (bclconvert2_output.log)
+            Check presence of demultiplex logfile (bclconvert_output.log)
         setoff_workflow()
             Setoff demultiplex workflow only on runs where demultiplexing is required
             (TSO runs don't require demultiplexing)
@@ -218,7 +218,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             Create file to prevent demultiplexing starting again
         add_bclconvertlog_msg(runtype)
             If runfolder is from tso run or development run with UMIs, add specific message to
-            bclconvert2_output.log file (these runs do not require demultiplexing)
+            bclconvert_output.log file (these runs do not require demultiplexing)
         run_demultiplexing()
             Run demultiplexing command. If unsuccessful, exit script
         copy_file()
@@ -237,7 +237,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             __package__
         )  # Get dictionary of loggers
         self.demux_rf_logger = self.loggers["demux"]
-        self.bclconvert2_rf_logger = self.loggers["bclconvert2"]
+        self.bclconvert_rf_logger = self.loggers["bclconvert"]
         #get current user to run docker images with this user instead of root
         #controls the ownership of the files to enable deleting later
         self.user = os.getuid()
@@ -248,7 +248,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 "Bcl_convert_logs",
             )
         os.makedirs(bclconvert_log_dir, exist_ok=True)
-        self.bclconvert2_cmd = DemultiplexConfig.BCLCONVERT2_CMD % (
+        self.bclconvert_cmd = DemultiplexConfig.BCLCONVERT_CMD % (
             self.user,
             self.user,
             self.rf_obj.runfolderpath,
@@ -278,7 +278,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         Setoff demultiplex workflow only for runs where demultiplexing is required (TSO
         runs don't require demultiplexing). First calls self.create_bclconvertlog() to
         create the log file which prevents a simultaneous demultiplex attempt on the
-        next run of the script (bclconvert2 is slow to create the logfile). Then calls
+        next run of the script (bclconvert is slow to create the logfile). Then calls
         calculate_cluster_density(). If a tso run, stops here. Else calls
         run_demultiplexing() to demultiplex the run.
             :return (Optional[bool]):  Return true if run successfully processed
@@ -349,7 +349,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
 
     def bclconvertlog_absent(self) -> Optional[bool]:
         """
-        Check presence of demultiplex logfile (bclconvert2_output.log)
+        Check presence of demultiplex logfile (bclconvert_output.log)
             :return (Optional[bool]):   Return true if demultiplex logfile exists
         """
         if os.path.isfile(self.rf_obj.bclconvertlog_file):
@@ -718,7 +718,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             any(pannum in line for line in samplesheet)
             for pannum in DemultiplexConfig.TSO_PANELS
         ):
-            self.create_bclconvertlog()  # Create bclconvert2 log to prevent scripts processing this run
+            self.create_bclconvertlog()  # Create bclconvert log to prevent scripts processing this run
             self.add_bclconvertlog_msg("TSO500")
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["tso_run"])
         else:
@@ -726,9 +726,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
 
     def create_bclconvertlog(self) -> Optional[bool]:
         """
-        Create file to prevent demultiplexing starting again. bclconvert2 v2.20 doesn't
+        Create file to prevent demultiplexing starting again. bclconvert v4.3.6 doesn't
         produce stdout for a while after starting so the file is created and the
-        bclconvert2 stdout is written to the file later. If unsuccessful, exit script
+        bclconvert stdout is written to the file later. If unsuccessful, exit script
             :return (Optional[bool]):  True if logfile is successfully created
         """
         try:
@@ -773,12 +773,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["bclconvert_start"],
-            self.bclconvert2_cmd,
+            self.bclconvert_cmd,
         )
-        # Runs bclconvert2 and checks if completed successfully
-        # Bclconvert2 returncode 0 upon success. Outputs info logs to stderr
+        # Runs bclconvert and checks if completed successfully
+        # Bclconvert returncode 0 upon success. Outputs info logs to stderr
         out, err, returncode = execute_subprocess_command(
-            self.bclconvert2_cmd,
+            self.bclconvert_cmd,
             self.demux_rf_logger,
         )
         if returncode == 0:
@@ -787,8 +787,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     self.demux_rf_logger.log_msgs["bclconvert_complete"],
                     self.rf_obj.runfolder_name,
                 )
-                self.bclconvert2_rf_logger.info(
-                    err  # Write stderr to bclconvert2 runfolder logfile
+                self.bclconvert_rf_logger.info(
+                    err  # Write stderr to bclconvert runfolder logfile
                 )
                 # wirte demultiplex success message in the bclconvert log file
                 write_lines(

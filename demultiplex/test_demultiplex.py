@@ -223,7 +223,7 @@ class TestGetRunfolders(object):
     #         runfolders_toproc,
     #     )
     #     gr_obj = get_gr_obj()
-    #     demultiplex.DemultiplexRunfolder.bclconvert2_cmd = (
+    #     demultiplex.DemultiplexRunfolder.bclconvert_cmd = (
     #         f"echo '{ad_config.DEMULTIPLEX_SUCCESS}"
     #     )
     #     gr_obj.setoff_processing()
@@ -284,11 +284,11 @@ class TestDemultiplexRunfolder(object):
         """
         return [
             (
-                os.path.join(conftest.temp_testfiles_dir, "bclconvert2_output_nomsg.log")
+                os.path.join(conftest.temp_testfiles_dir, "bclconvert_output_nomsg.log")
             ),  # No success message present in logfile
             ("nonexistent.log"),  # Logfile nonexistent
             (
-                os.path.join(conftest.temp_testfiles_dir, "bclconvert2_output_empty.log")
+                os.path.join(conftest.temp_testfiles_dir, "bclconvert_output_empty.log")
             ),  # Logfile empty
         ]
 
@@ -298,7 +298,7 @@ class TestDemultiplexRunfolder(object):
         Logfiles containing expected success message from ad_config
         """
         return os.path.join(
-            conftest.temp_testfiles_dir, "bclconvert2_output_success.log"
+            conftest.temp_testfiles_dir, "bclconvert_output_success.log"
         )
 
     @pytest.fixture(scope="function")
@@ -534,11 +534,11 @@ class TestDemultiplexRunfolder(object):
         """
         for runfolder in demultiplexing_required:
             dr_obj = get_dr_obj(runfolder)
-            # Command to run in place of bclconvert2 command that appends processing
-            # complete string to bclconvert2 logfile
+            # Command to run in place of bclconvert command that appends processing
+            # complete string to bclconvert logfile
             monkeypatch.setattr(
                 dr_obj,
-                "bclconvert2_cmd",
+                "bclconvert_cmd",
                 f"echo '{ad_config.DEMULTIPLEX_SUCCESS}' >> "
                 f"{dr_obj.rf_obj.bclconvertlog_file}",
             )
@@ -700,7 +700,7 @@ class TestDemultiplexRunfolder(object):
     # @pytest.mark.nodisableloggers
     def test_create_bclconvertlog_success(self):
         """
-        Test function can successfully create a bclconvert2 log file
+        Test function can successfully create a bclconvert log file
         """
         dr_obj = get_dr_obj("")
         assert dr_obj.create_bclconvertlog()
@@ -710,7 +710,7 @@ class TestDemultiplexRunfolder(object):
     # @pytest.mark.nodisableloggers
     def test_create_bclconvertlog_fail(self, monkeypatch):
         """
-        Test function fails when expected using dummy bclconvert2 log path with
+        Test function fails when expected using dummy bclconvert log path with
         nonexistent dirs
         """
         dr_obj = get_dr_obj("")
@@ -726,7 +726,7 @@ class TestDemultiplexRunfolder(object):
 
     def test_add_bclconvertlog_msg_pass(self, demultiplexing_required):
         """
-        Test function can correctly add tso message to the bclconvert2 logfile
+        Test function can correctly add tso message to the bclconvert logfile
         """
         for runfolder in demultiplexing_required:
             dr_obj = get_dr_obj(runfolder)
@@ -742,15 +742,15 @@ class TestDemultiplexRunfolder(object):
     # def test_run_demultiplexing_success(self, non_tso_runfolder):
     #     """
     #     Test demultiplexing is performed successfully. N.B. this does not test the
-    #     functioning of the bclconvert2 executable, which must be tested separately as
+    #     functioning of the bclconvert executable, which must be tested separately as
     #     part of the final manual testing
     #     """
     #     for runfolder in non_tso_runfolder:
     #         dr_obj = get_dr_obj(runfolder)
-    #         # Command to run in place of bclconvert2 command that appends processing
-    #         # complete string to bclconvert2 logfile
+    #         # Command to run in place of bclconvert command that appends processing
+    #         # complete string to bclconvert logfile
     #         # TODO swap below to a patch
-    #         dr_obj.bclconvert2_cmd = (
+    #         dr_obj.bclconvert_cmd = (
     #             f"echo '{ad_config.DEMULTIPLEX_SUCCESS}' >> "
     #             f"{dr_obj.rf_obj.bclconvertlog_file}"
     #         )
@@ -764,10 +764,10 @@ class TestDemultiplexRunfolder(object):
     #     """
     #     for runfolder in non_tso_runfolder:
     #         dr_obj = get_dr_obj(runfolder)
-    #         # Command to run in place of bclconvert2 command that appends processing
-    #         # complete string to bclconvert2 logfile
+    #         # Command to run in place of bclconvert command that appends processing
+    #         # complete string to bclconvert logfile
     #         # TODO swap below to a patch
-    #         dr_obj.bclconvert2_cmd = "/bin/false"
+    #         dr_obj.bclconvert_cmd = "/bin/false"
     #         with pytest.raises(SystemExit) as pytest_wrapped_e:
     #             dr_obj.run_demultiplexing()
     #             assert not dr_obj.run_processed

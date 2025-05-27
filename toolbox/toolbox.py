@@ -219,7 +219,7 @@ def test_processing_software(logger: logging.Logger) -> Optional[bool]:
         :return True|None:  Return true if the tests all pass
     """
     
-    if test_programs("gatk_collect_lane_metrics", logger) and test_programs("bclconvert2", logger):
+    if test_programs("gatk_collect_lane_metrics", logger) and test_programs("bclconvert", logger):
         return True
 
 
@@ -355,7 +355,7 @@ class RunfolderObject(ToolboxConfig):
         runfolder_samplesheet_path (str):       Runfolder SampleSheets path (within runfolder)
         checksumfile_path (str):                md5 checksum (integrity check) file path (within runfolder)
         sscheck_flagfile_path (str):            Samplesheet check flag file path (within runfolder)
-        bclconvertlog_file (str):                bclconvert2 logfile path (within runfolder)
+        bclconvertlog_file (str):                bclconvert logfile path (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
         upload_flagfile (str):                  Flag file denoting upload has begun (within runfolder)
         bclconvertstats_file (str):              Bclconvert stats file (within runfolder)
@@ -494,7 +494,7 @@ class RunfolderObject(ToolboxConfig):
             "sw": self.sw_runfolder_logfile,
             "demux": self.demultiplex_runfolder_logfile,
             "backup": self.upload_runfolder_logfile,
-            "bclconvert2": self.bclconvertlog_file,
+            "bclconvert": self.bclconvertlog_file,
             "ss_validator": self.samplesheet_validator_logfile,
         }
         # Log files that sit outside the runfolder that require uploading
