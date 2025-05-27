@@ -376,13 +376,13 @@ class DemultiplexConfig(PanelConfig):
     }
     TESTING = TESTING
     BCLCONVERT2_CMD = (
-        f"docker run --rm --user %s:%s -v %s:/data/input -v %s:/data/output "
+        f"docker run --ulimit nofile=65535:65535 --rm --user %s:%s -v %s:/data/input -v %s:/data/output "
         f"-v %s:/var/log/bcl-convert "
         f"-v %s:/samplesheet_input {BCLCONVERT_DOCKER} "
         f"--force --bcl-input-directory /data/input "
         f"--output-directory /data/output "
         f"--sample-sheet /samplesheet_input/%s "
-        f"--no-lane-splitting true"
+        f"--no-lane-splitting true --fastq-gzip-compression-level 4"
     )
     CD_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
