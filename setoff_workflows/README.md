@@ -19,12 +19,12 @@ The module uses various functions and classes from the [Toolbox module](../toolb
 ## Protocol
 
 1. Identify runfolders in the runfolders directory which have not been processed:
-    - Runfolder contains bcl2fastq2 log file with success string
+    - Runfolder contains bclconvert log file with success string
     - Runfolder does not contain upload started flag file (has not yet been uploaded to DNAnexus)
 2. Collect names and metadata for all samples in the runfolder, using the RunfolderSamples() class from the [Toolbox module](../toolbox/toolbox.py).
 3. Write and run the DNAnexus project creation script
 4. Split tso500 SampleSheet into parts with x samples per SampleSheet (no.defined in TSO_BATCH_SIZE) and write to runfolder
-5. Generate the pre-pipeline upload commands (cluster density files, bcl2fastq2 QC files, logfiles, fastqs if not a tso run, SampleSheets, MasterFile if an oncodeep run)
+5. Generate the pre-pipeline upload commands (cluster density files, bclconvert QC files, logfiles, fastqs if not a tso run, SampleSheets, MasterFile if an oncodeep run)
 6. Generate the SQL queries
 7. Set off the pre-pipeline file upload, and the rest of the runfolder upload in addition to this if the run is a TSO run
 8. Build dx run commands and write these to the DNAnexus commands bash scripts:

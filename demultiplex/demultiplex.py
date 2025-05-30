@@ -5,7 +5,7 @@ Contains the following classes:
 - GetRunfolders
     Loop through and process NGS runfolders in a given directory
 - DemultiplexRunfolder
-    Call bcl2fastq2 on runfolders after asserting that runfolder has not been
+    Call bclconvert on runfolders after asserting that runfolder has not been
     demultiplexed and a valid SampleSheet is present
 
 """
@@ -138,7 +138,7 @@ class GetRunfolders(DemultiplexConfig):
 
 class DemultiplexRunfolder(DemultiplexConfig):
     """
-    Call bcl2fastq2 on runfolders after asserting that runfolder has not been
+    Call bclconvert on runfolders after asserting that runfolder has not been
     demultiplexed and a valid SampleSheet is present.
 
     Attributes
@@ -149,9 +149,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
         demux_rf_logger (object):           Demultiplex runfolder-level logger, extracted from
                                             the RunfolderObject containing runfolder-level
                                             loggers
-        bcl2fastq2_rf_logger (object):      Bcl2fastq2 runfolder-level logger, extracted from the
+        bclconvert_rf_logger (object):     Bclconvert runfolder-level logger, extracted from the
                                             RunfolderObject containing runfolder-level loggers
-        bcl2fastq2_cmd (str):               Shell command to run demultiplexing
+        bclconvert_cmd (str):              Shell command to run demultiplexing
         cluster_density_cmd (str):          Shell command to run cluster density calculation
         tso (bool):                         Denotes whether the run is a tso500 run
         run_processed (bool):               Denotes whether the run has been successfully
@@ -166,8 +166,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
             demultiplexing is required
         upload_flagfile_absent()
             Check if runfolder has already been uploaded
-        bcl2fastqlog_absent()
-            Check presence of demultiplex logfile (bcl2fastq2_output.log)
+        bclconvertlog_absent()
+            Check presence of demultiplex logfile (bclconvert_output.log)
         setoff_workflow()
             Setoff demultiplex workflow only on runs where demultiplexing is required
             (TSO runs don't require demultiplexing)
@@ -214,11 +214,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
         runtype_requires_demultiplexing()
             Determine whether the run does, or does not (TSO500, dev runs with UMIs)
             require demultiplexing
-        create_bcl2fastqlog()
+        create_bclconvertlog()
             Create file to prevent demultiplexing starting again
-        add_bcl2fastqlog_msg(runtype)
+        add_bclconvertlog_msg(runtype)
             If runfolder is from tso run or development run with UMIs, add specific message to
-            bcl2fastq2_output.log file (these runs do not require demultiplexing)
+            bclconvert_output.log file (these runs do not require demultiplexing)
         run_demultiplexing()
             Run demultiplexing command. If unsuccessful, exit script
         copy_file()
@@ -237,19 +237,31 @@ class DemultiplexRunfolder(DemultiplexConfig):
             __package__
         )  # Get dictionary of loggers
         self.demux_rf_logger = self.loggers["demux"]
-        self.bcl2fastq2_rf_logger = self.loggers["bcl2fastq2"]
+        self.bclconvert_rf_logger = self.loggers["bclconvert"]
         #get current user to run docker images with this user instead of root
         #controls the ownership of the files to enable deleting later
         self.user = os.getuid()
         # N.B. --no-lane-splitting creates a single fastq for a sample,
         # not into one fastq per lane)
-        self.bcl2fastq2_cmd = DemultiplexConfig.BCL2FASTQ2_CMD % (
+        bclconvert_log_dir = os.path.join(
+                self.rf_obj.runfolderpath,
+                "Bcl_convert_logs",
+            )
+        os.makedirs(bclconvert_log_dir, exist_ok=True)
+        self.bclconvert_cmd = DemultiplexConfig.BCLCONVERT_CMD % (
             self.user,
             self.user,
             self.rf_obj.runfolderpath,
-            self.rf_obj.samplesheet_path,
-            self.rf_obj.samplesheet_name,
-            self.rf_obj.samplesheet_name,
+            os.path.join(
+                self.rf_obj.runfolderpath,
+                "Data/Intensities/BaseCalls/",
+            ),
+            bclconvert_log_dir,
+            os.path.join(
+                DemultiplexConfig.RUNFOLDERS,
+                "samplesheets"
+            ),
+            self.rf_obj.samplesheet_name
         )
         # Shell command to run cluster density calculation
         self.cluster_density_cmd = DemultiplexConfig.CD_CMD % (
@@ -264,9 +276,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def setoff_workflow(self) -> Optional[bool]:
         """
         Setoff demultiplex workflow only for runs where demultiplexing is required (TSO
-        runs don't require demultiplexing). First calls self.create_bcl2fastqlog() to
+        runs don't require demultiplexing). First calls self.create_bclconvertlog() to
         create the log file which prevents a simultaneous demultiplex attempt on the
-        next run of the script (bcl2fastq2 is slow to create the logfile). Then calls
+        next run of the script (bclconvert is slow to create the logfile). Then calls
         calculate_cluster_density(). If a tso run, stops here. Else calls
         run_demultiplexing() to demultiplex the run.
             :return (Optional[bool]):  Return true if run successfully processed
@@ -275,7 +287,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.demux_rf_logger.info(
                 self.demux_rf_logger.log_msgs["demultiplexing_required"]
             )
-            if self.create_bcl2fastqlog():
+            if self.create_bclconvertlog():
                 if self.run_demultiplexing():
                     self.run_processed = True
                     rf_samples_obj = RunfolderSamples(
@@ -301,7 +313,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         returns True as demultiplexing is required
             :return None:
         """
-        if self.upload_flagfile_absent() and self.bcl2fastqlog_absent():
+        if self.upload_flagfile_absent() and self.bclconvertlog_absent():
             if not self.previous_samplesheet_check_fail():
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["ad_version"],
@@ -336,20 +348,20 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 self.rf_obj.runfolder_name,
             )
 
-    def bcl2fastqlog_absent(self) -> Optional[bool]:
+    def bclconvertlog_absent(self) -> Optional[bool]:
         """
-        Check presence of demultiplex logfile (bcl2fastq2_output.log)
+        Check presence of demultiplex logfile (bclconvert_output.log)
             :return (Optional[bool]):   Return true if demultiplex logfile exists
         """
-        if os.path.isfile(self.rf_obj.bcl2fastqlog_file):
+        if os.path.isfile(self.rf_obj.bclconvertlog_file):
             script_logger.info(
                 script_logger.log_msgs["demux_already_complete"],
-                self.rf_obj.bcl2fastqlog_file,
+                self.rf_obj.bclconvertlog_file,
             )
         else:
             script_logger.info(
                 script_logger.log_msgs["demux_not_complete"],
-                self.rf_obj.bcl2fastqlog_file,
+                self.rf_obj.bclconvertlog_file,
             )
             return True
 
@@ -710,7 +722,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def runtype_requires_demultiplexing(self) -> Optional[bool]:
         """
         Determine whether the run does, or does not (TSO500, dev runs with UMIs) require demultiplexing.
-        If it does not require demultiplexing, creates the bcl2fastq log file. If it does require
+        If it does not require demultiplexing, creates the bclconvert log file. If it does require
         demultiplexing, returns True. Alert sent for dev runs with UMIs, as these require manual
         processing by the bioinformatics team
             :return (Optional[bool]):   True if requires automated processing, else None
@@ -721,8 +733,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
             for pannum in DemultiplexConfig.UMI_DEV_PANEL
         ):
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["dev_run_umis"])
-            self.create_bcl2fastqlog()
-            self.add_bcl2fastqlog_msg("DEV UMIs")
+            self.create_bclconvertlog()
+            self.add_bclconvertlog_msg("DEV UMIs")
             write_lines(  # Create upload started log file to prevent automated upload
                 self.rf_obj.upload_flagfile,
                 "a",
@@ -736,36 +748,36 @@ class DemultiplexRunfolder(DemultiplexConfig):
             any(pannum in line for line in samplesheet)
             for pannum in DemultiplexConfig.TSO_PANELS
         ):
-            self.create_bcl2fastqlog()  # Create bcl2fastq2 log to prevent scripts processing this run
-            self.add_bcl2fastqlog_msg("TSO500")
+            self.create_bclconvertlog()  # Create bclconvert log to prevent scripts processing this run
+            self.add_bclconvertlog_msg("TSO500")
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["tso_run"])
         else:
             return True
 
-    def create_bcl2fastqlog(self) -> Optional[bool]:
+    def create_bclconvertlog(self) -> Optional[bool]:
         """
-        Create file to prevent demultiplexing starting again. bcl2fastq2 v2.20 doesn't
+        Create file to prevent demultiplexing starting again. bclconvert v4.3.6 doesn't
         produce stdout for a while after starting so the file is created and the
-        bcl2fastq2 stdout is written to the file later. If unsuccessful, exit script
+        bclconvert stdout is written to the file later. If unsuccessful, exit script
             :return (Optional[bool]):  True if logfile is successfully created
         """
         try:
-            open(self.rf_obj.bcl2fastqlog_file, "w", encoding="utf-8").close()
+            open(self.rf_obj.bclconvertlog_file, "w", encoding="utf-8").close()
             self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["create_bcl2fastqlog_pass"],
-                self.rf_obj.bcl2fastqlog_file,
+                self.demux_rf_logger.log_msgs["create_bclconvertlog_pass"],
+                self.rf_obj.bclconvertlog_file,
             )
             return True
         except Exception as exception:
             self.demux_rf_logger.error(
-                self.demux_rf_logger.log_msgs["create_bcl2fastqlog_fail"],
+                self.demux_rf_logger.log_msgs["create_bclconvertlog_fail"],
                 exception,
             )
             sys.exit(1)
 
-    def add_bcl2fastqlog_msg(self, runtype_str: str) -> Optional[bool]:
+    def add_bclconvertlog_msg(self, runtype_str: str) -> Optional[bool]:
         """
-        Write message to bcl2fastqlog file that demultiplexing is not required
+        Write message to bclconvertlog file that demultiplexing is not required
             :return (Optional[bool]):  True if log file successfully created and written to
         """
         self.demux_rf_logger.info(
@@ -773,12 +785,12 @@ class DemultiplexRunfolder(DemultiplexConfig):
             DemultiplexConfig.STRINGS["demultiplex_not_required_msg"] % runtype_str,
         )
         write_lines(
-            self.rf_obj.bcl2fastqlog_file,
+            self.rf_obj.bclconvertlog_file,
             "w+",
             DemultiplexConfig.STRINGS["demultiplex_not_required_msg"] % runtype_str,
         )
         self.demux_rf_logger.info(
-            self.demux_rf_logger.log_msgs["write_msg_to_bcl2fastqlog"],
+            self.demux_rf_logger.log_msgs["write_msg_to_bclconvertlog"],
         )
         self.run_processed = True
         return True
@@ -790,35 +802,41 @@ class DemultiplexRunfolder(DemultiplexConfig):
                                         successfully written to the logfile
         """
         self.demux_rf_logger.info(
-            self.demux_rf_logger.log_msgs["bcl2fastq_start"],
-            self.bcl2fastq2_cmd,
+            self.demux_rf_logger.log_msgs["bclconvert_start"],
+            self.bclconvert_cmd,
         )
-        # Runs bcl2fastq2 and checks if completed successfully
-        # Bcl2fastq2 returncode 0 upon success. Outputs info logs to stderr
+        # Runs bclconvert and checks if completed successfully
+        # Bclconvert returncode 0 upon success. Outputs info logs to stderr
         out, err, returncode = execute_subprocess_command(
-            self.bcl2fastq2_cmd,
+            self.bclconvert_cmd,
             self.demux_rf_logger,
         )
         if returncode == 0:
             if validate_fastqs(self.rf_obj.fastq_dir_path, self.demux_rf_logger):
                 self.demux_rf_logger.info(
-                    self.demux_rf_logger.log_msgs["bcl2fastq_complete"],
+                    self.demux_rf_logger.log_msgs["bclconvert_complete"],
                     self.rf_obj.runfolder_name,
                 )
-                self.bcl2fastq2_rf_logger.info(
-                    err  # Write stderr to bcl2fastq2 runfolder logfile
+                self.bclconvert_rf_logger.info(
+                    err  # Write stderr to bclconvert runfolder logfile
+                )
+                # wirte demultiplex success message in the bclconvert log file
+                write_lines(
+                    self.rf_obj.bclconvertlog_file,
+                    "a",
+                    DemultiplexConfig.STRINGS["demultiplex_success"],
                 )
                 return True
             else:
                 os.remove(
-                    self.rf_obj.bcl2fastqlog_file
-                )  # Bcl2fastq log file removed to trigger re-demultiplex
+                    self.rf_obj.bclconvertlog_file
+                )  # Bclconvert log file removed to trigger re-demultiplex
                 self.demux_rf_logger.error(
                     self.demux_rf_logger.log_msgs["re_demultiplex"]
                 )
         else:
             self.demux_rf_logger.error(
-                self.demux_rf_logger.log_msgs["bcl2fastq_failed"],
+                self.demux_rf_logger.log_msgs["bclconvert_failed"],
                 out,
                 err,
             )

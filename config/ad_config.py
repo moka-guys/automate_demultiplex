@@ -89,7 +89,7 @@ SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit 
 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
-BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
+BCLCONVERT_DOCKER = "seglh/bcl-convert:4.3.6"
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
@@ -402,9 +402,14 @@ class DemultiplexConfig(PanelConfig):
         "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s",
     }
     TESTING = TESTING
-    BCL2FASTQ2_CMD = (
-        f"docker run --rm --user %s:%s -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
-        "--sample-sheet /mnt/run/%s --no-lane-splitting"
+    BCLCONVERT_CMD = (
+        f"docker run --ulimit nofile=65535:65535 --rm --user %s:%s -v %s:/data/input -v %s:/data/output "
+        f"-v %s:/var/log/bcl-convert "
+        f"-v %s:/samplesheet_input {BCLCONVERT_DOCKER} "
+        f"--force --bcl-input-directory /data/input "
+        f"--output-directory /data/output "
+        f"--sample-sheet /samplesheet_input/%s "
+        f"--no-lane-splitting true --fastq-gzip-compression-level 4"
     )
     CD_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
@@ -648,7 +653,7 @@ class ToolboxConfig(PanelConfig):
     }
     FLAG_FILES = {
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
-        "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
+        "bclconvertlog": "bclconvert_output.log",  # Holds bclconvert logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
         "initial_sscheck_flag": "initial_sscheck_flagfile.txt",  # Denotes initial SampleSheet has been checked
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
@@ -667,9 +672,9 @@ class ToolboxConfig(PanelConfig):
             "executable": "docker",
             "test_cmd": f"docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
         },
-        "bcl2fastq2": {
+        "bclconvert": {
             "executable": "docker",
-            "test_cmd": f"docker run --rm {BCL2FASTQ_DOCKER} --version",
+            "test_cmd": f"docker run --rm {BCLCONVERT_DOCKER} --version",
         },
     }
 
