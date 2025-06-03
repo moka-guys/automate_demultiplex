@@ -415,6 +415,7 @@ class DemultiplexConfig(PanelConfig):
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
+    ADX_LOG = f"{AD_LOGDIR}/archer_api_upload_logfiles/"
     ADX_CMD = (
         f"docker run "
         f"-v {RUNFOLDERS}/${{run_folder_name}}/Data/Intensities/BaseCalls:/data "
