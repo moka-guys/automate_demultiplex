@@ -98,7 +98,7 @@ The above image describes the possible associations in the Class Diagram. In the
 | Demultiplex output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout` |
 | demultiplex (script_logger) | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
 | demultiplex (demux_rf_logger) | Records runfolder-level logs for the demultiplex script | `RUNFOLDERNAME_demultiplex_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
- Bcl2fastq output | STDOUT and STDERR from bcl2fastq2 | `bcl2fastq2_output.log` | Within the runfolder |
+ Demultiplex output | STDOUT and STDERR from bclconvert or bases2fastq based on sequencer used | `bclconvert_output.log`/ `bases2fastq_output.log` | Within the runfolder |
 | ss_validator | Records runfolder-level logs for the samplesheet_validator script | `RUNFOLDERNAME_samplesheet_validator_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/samplesheet_validator_script_logfiles/` |
 | backup | Records the logs from the upload runfolder script | `RUNFOLDERNAME_upload_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/upload_runfolder_script_logfiles/` |
 | wscleaner | Records the logs from the wscleaner script | `TIMESTAMP_wscleaner.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/wscleaner/` |
