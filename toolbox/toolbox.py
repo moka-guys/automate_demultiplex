@@ -283,7 +283,7 @@ def get_demultiplexlog_file(sequencer_type: str, runfolderpath: str) -> str:
         )
     else:
         return os.path.join(
-            runfolderpath, ToolboxConfig.FLAG_FILES["bcl2fastqlog"]
+            runfolderpath, ToolboxConfig.FLAG_FILES["bclconvertlog"]
         )
 
 def get_fastq_dir_path(sequencer_type: str, runfolderpath: str) -> str:
@@ -511,7 +511,7 @@ class RunfolderObject(ToolboxConfig):
         demultiplexlog_file (str):              Demultiplex logfile path - bases2fastq/bcl2fastq (within runfolder)
         fastq_dir_path (str):                   Runfolder fastq directory path (within runfolder)
         upload_flagfile (str):                  Flag file denoting upload has begun (within runfolder)
-        bcl2fastqstats_file (str):              Bcl2fastq stats file (within runfolder)
+        bclconvertstats_file (str):             Bclconvert stats file (within runfolder)
         cluster_density_files (list):           List containing runfolder lane metrics
                                                 and phasing metrics file paths
         demultiplex_runfolder_logfile (str):    Runfolder demultiplex logfile (within logfiles dir)
