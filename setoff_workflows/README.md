@@ -19,7 +19,7 @@ The module uses various functions and classes from the [Toolbox module](../toolb
 ## Protocol
 
 1. Identify runfolders in the runfolders directory which have not been processed:
-    - Runfolder contains bcl2fastq2 log file with success string
+    - Runfolder contains bcl2fastq2 or bases2fastq log file with success string
     - Runfolder does not contain upload started flag file (has not yet been uploaded to DNAnexus)
 2. Collect names and metadata for all samples in the runfolder, using the RunfolderSamples() class from the [Toolbox module](../toolbox/toolbox.py).
 3. Write and run the DNAnexus project creation script
