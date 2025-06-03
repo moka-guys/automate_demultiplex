@@ -129,6 +129,7 @@ LOG_MSGS = {
         "admin_users": "Users identifed that require ADMINISTER project permissions: %s",
         "creating_proj": "Executing project creation script: %s",
         "proj_creation_fail": "Failed to create project in DNAnexus for %s. Stderr: %s. Script exited",
+        "proj_id_empty": "Project creation script completed successfully but returned empty project ID. Please ensure API key is valid",
         "uploading_files": "Uploading %s files",
         "upload_success": "%s files uploaded successfully",
         "upload_fail": "%s upload failed. See %s for detailed error log",

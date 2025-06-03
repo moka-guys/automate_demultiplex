@@ -426,11 +426,20 @@ class ProcessRunfolder(SWConfig):
             project_creation_cmd, self.loggers["sw"], "exit_on_fail"
         )
         if returncode == 0:
-            return project_id
+            # Strip whitespace and check if project_id is not empty (can happen if API key is invalid)
+            project_id = project_id.strip()
+            if project_id:
+                return project_id
+            else:
+                self.loggers["sw"].error(
+                    self.loggers["sw"].log_msgs["proj_id_empty"],
+                    self.rf_samples_obj.nexus_paths["proj_name"],
+                )
+                sys.exit(1)
         else:
             self.loggers["sw"].error(
                 self.loggers["sw"].log_msgs["proj_creation_fail"],
-                self.rf_samples_obj["proj_name"],
+                self.rf_samples_obj.nexus_paths["proj_name"],
                 err,
             )
             sys.exit(1)
