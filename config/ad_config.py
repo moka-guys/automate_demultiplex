@@ -34,7 +34,6 @@ MAIL_SETTINGS = {
     "port": 587,
     "binfx_email": "gst-tr.mokaguys@nhs.net",
     "alerts_email": "moka.alerts@gstt.nhs.uk",
-    "personal_email": "kieron.millard1@nhs.net"
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
@@ -70,10 +69,10 @@ else:  # Testing branch
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
-        "binfx_recipient": MAIL_SETTINGS["personal_email"],
+        "binfx_recipient": MAIL_SETTINGS["binfx_email"],
         # Oncology email address for email alerts
-        "oncology_ops_email": MAIL_SETTINGS["personal_email"],
-        "wes_samplename_emaillist": MAIL_SETTINGS["personal_email"],
+        "oncology_ops_email": MAIL_SETTINGS["binfx_email"],
+        "wes_samplename_emaillist": MAIL_SETTINGS["binfx_email"],
     }
 
 CREDENTIALS = {
