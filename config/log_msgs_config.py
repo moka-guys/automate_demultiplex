@@ -123,7 +123,7 @@ LOG_MSGS = {
         "demux_complete": "Run has been previously successfully processed by the demultiplexing script",
         "success_string_absent": "Run has previously been demultiplexed but no success string is present",
         "not_yet_demultiplexed": "Demultiplexing has not been performed",
-        "bcl2fastqlog_empty": "Bcl2fastq log file exists but is empty",
+        "demultiplexlog_empty": "Demultiplex log file exists but is empty",
         "nonexistent_files": "Not all files exist: %s",
         "view_users": "Users identifed that require VIEW project permissions: %s",
         "admin_users": "Users identifed that require ADMINISTER project permissions: %s",
