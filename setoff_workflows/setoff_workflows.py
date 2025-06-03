@@ -789,9 +789,9 @@ class ProcessRunfolder(SWConfig):
         runfolder log file. If unsuccessful, exit script
             :return None:
         """
-        # Build upload_runfolder.py commands, ignoring BCL files for Illumina runs and Bases zip files
-        # for AVITI runs
-        if self.rf_samples_obj.pipeline in ["tso500", "dev"]:
+        # Build upload_runfolder.py commands, ignoring BCL files for Illumina runs and Bases zip files, 
+        # Alignement, Filter and Location files for AVITI runs 
+        if self.rf_samples_obj.pipeline in ["tso500"]:
             ignore = ""  # Upload BCL files for tso500 and dev runs
         elif self.rf_samples_obj.sequencer_type == SWConfig.AVITI_ID:
             ignore = "/BaseCalls,/Alignment,/Filter,/Location"
