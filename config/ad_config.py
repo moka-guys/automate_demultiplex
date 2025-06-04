@@ -34,7 +34,6 @@ MAIL_SETTINGS = {
     "port": 587,
     "binfx_email": "gst-tr.mokaguys@nhs.net",
     "alerts_email": "moka.alerts@gstt.nhs.uk",
-    "personal_email": "kieron.millard1@nhs.net",
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
@@ -95,7 +94,7 @@ SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit 
 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
-BCL2FASTQ_DOCKER = "seglh/bcl2fastq2:v2.20.0.422_60dbb5a"
+BCLCONVERT_DOCKER = "seglh/bcl-convert:4.3.6"
 BASES2FASTQ_DOCKER = "elembio/bases2fastq"
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
@@ -412,9 +411,14 @@ class DemultiplexConfig(PanelConfig):
         "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s",
     }
     TESTING = TESTING
-    BCL2FASTQ2_CMD = (
-        f"docker run --rm --user %s:%s -v %s:/mnt/run -v %s:/mnt/run/%s {BCL2FASTQ_DOCKER} -R /mnt/run "
-        "--sample-sheet /mnt/run/%s --no-lane-splitting"
+    BCLCONVERT_CMD = (
+        f"docker run --ulimit nofile=65535:65535 --rm --user %s:%s -v %s:/data/input -v %s:/data/output "
+        f"-v %s:/var/log/bcl-convert "
+        f"-v %s:/samplesheet_input {BCLCONVERT_DOCKER} "
+        f"--force --bcl-input-directory /data/input "
+        f"--output-directory /data/output "
+        f"--sample-sheet /samplesheet_input/%s "
+        f"--no-lane-splitting true --fastq-gzip-compression-level 4"
     )
     BASES2FASTQ_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
@@ -437,7 +441,7 @@ class DemultiplexConfig(PanelConfig):
         f"{RUNFOLDERS}/${{run_folder_name}} --force"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        "20250527_AV241501_NGS665FFV11CP205B",
+        "20250207_AV241501_NGS664FFV10pool1AV",
         """
         "20250520_AV241501_NGS660FFV09CP205POOL1AV",
         "999999_NB552085_0496_DEMUXINTEG",
@@ -479,8 +483,6 @@ class SWConfig(PanelConfig):
     SDK_SOURCE = SDK_SOURCE
     UPLOAD_ARGS = UPLOAD_ARGS
     RUNFOLDERS = RUNFOLDERS
-    AVITI_RUNFOLDER = AVITI_RUNFOLDER
-    AVITI_ID = AVITI_ID
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
     if BRANCH == "main":  # Prod branch
 
@@ -672,7 +674,7 @@ class ToolboxConfig(PanelConfig):
     }
     FLAG_FILES = {
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
-        "bcl2fastqlog": "bcl2fastq2_output.log",  # Holds bcl2fastq2 logs
+        "bclconvertlog": "bclconvert_output.log", # Holds bclconvert logs
         "bases2fastqlog": "bases2fastq_output.log", # Holds bases2fastq logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
         "initial_sscheck_flag": "initial_sscheck_flagfile.txt",  # Denotes initial SampleSheet has been checked
@@ -693,9 +695,9 @@ class ToolboxConfig(PanelConfig):
             "executable": "docker",
             "test_cmd": f"docker run --rm {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics --version",
         },
-        "bcl2fastq2": {
+        "bclconvert": {
             "executable": "docker",
-            "test_cmd": f"docker run --rm {BCL2FASTQ_DOCKER} --version",
+            "test_cmd": f"docker run --rm {BCLCONVERT_DOCKER} --version",
         },
         "bases2fastq" : {
             "executable": "docker",
