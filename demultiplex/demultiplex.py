@@ -5,7 +5,7 @@ Contains the following classes:
 - GetRunfolders
     Loop through and process NGS runfolders in a given directory
 - DemultiplexRunfolder
-    Call either bcl2fastq2 or bases2fastq (depending on sequencer used) on runfolders 
+    Call either bclconvert or bases2fastq (depending on sequencer used) on runfolders 
     after asserting that runfolder has not been demultiplexed and a valid SampleSheet is present
 
 """
@@ -143,7 +143,7 @@ class GetRunfolders(DemultiplexConfig):
 
 class DemultiplexRunfolder(DemultiplexConfig):
     """
-    Call bcl2fastq2 on runfolders after asserting that runfolder has not been
+    Call bclconvert on runfolders after asserting that runfolder has not been
     demultiplexed and a valid SampleSheet is present.
 
     Attributes
@@ -154,9 +154,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
         demux_rf_logger (object):           Demultiplex runfolder-level logger, extracted from
                                             the RunfolderObject containing runfolder-level
                                             loggers
-        bcl2fastq2_rf_logger (object):      Bcl2fastq2 runfolder-level logger, extracted from the
+        demultiplex_rf_logger (object):     Demultiplexing runfolder-level logger, extracted from the
                                             RunfolderObject containing runfolder-level loggers
-        bcl2fastq2_cmd (str):               Shell command to run demultiplexing
+        demultiplex_cmd (str):              Shell command to run demultiplexing
         cluster_density_cmd (str):          Shell command to run cluster density calculation
         tso (bool):                         Denotes whether the run is a tso500 run
         run_processed (bool):               Denotes whether the run has been successfully
@@ -171,8 +171,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
             demultiplexing is required
         upload_flagfile_absent()
             Check if runfolder has already been uploaded
-        bcl2fastqlog_absent()
-            Check presence of demultiplex logfile (bcl2fastq2_output.log)
+        demultiplex_docker_log_absent()
+            Check presence of demultiplex logfile (bcl2fastq2_output.log/bases2fastq_output.log)
         setoff_workflow()
             Setoff demultiplex workflow only on runs where demultiplexing is required
             (TSO runs don't require demultiplexing)
@@ -219,9 +219,9 @@ class DemultiplexRunfolder(DemultiplexConfig):
         runtype_requires_demultiplexing()
             Determine whether the run does, or does not (TSO500, dev runs with UMIs)
             require demultiplexing
-        create_bcl2fastqlog()
+        create_demultiplex_log()
             Create file to prevent demultiplexing starting again
-        add_bcl2fastqlog_msg(runtype)
+        add_demultiplexlog_msg(runtype)
             If runfolder is from tso run or development run with UMIs, add specific message to
             bcl2fastq2_output.log file (these runs do not require demultiplexing)
         run_demultiplexing()
@@ -262,10 +262,10 @@ class DemultiplexRunfolder(DemultiplexConfig):
     def setoff_workflow(self) -> Optional[bool]:
         """
         Setoff demultiplex workflow only for runs where demultiplexing is required (TSO
-        runs don't require demultiplexing). First calls self.create_bcl2fastqlog() to
+        runs don't require demultiplexing). First calls self.create_demultiplex_log() to
         create the log file which prevents a simultaneous demultiplex attempt on the
-        next run of the script (bcl2fastq2 is slow to create the logfile). Then calls
-        calculate_cluster_density(). If a tso run, stops here. Else calls
+        next run of the script (bcl2fastq2 & bases2fastq is slow to create the logfile).
+        Then calls calculate_cluster_density(). If a tso run, stops here. Else calls
         run_demultiplexing() to demultiplex the run.
             :return (Optional[bool]):  Return true if run successfully processed
         """
@@ -293,7 +293,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         required. If required (i.e. these have not previously been carried out), carries out the early
         warning SampleSheet checks. Processes development runs that do not contain UMIs automatically,
         and sends out log message denoting manual processing is required for runs that do contain UMIs.
-        If sequencing is complete, (RTAComplete.txt present) the run does not contain UMIs, and the
+        If sequencing is complete, (RTAComplete.txt/RunUploaded.json present) the run does not contain UMIs, and the
         SampleSheet contains no disallowed errors, and either 1) the sequencer does not require an
         integrity check or 2) there has not previously been an integrity check and the checksums match,
         returns True as demultiplexing is required
@@ -875,12 +875,24 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.rf_obj.samplesheet_name
             )
         else:
-            demultiplex_cmd = DemultiplexConfig.BCL2FASTQ2_CMD % (
+            bclconvert_log_dir = os.path.join(
+                self.rf_obj.runfolderpath,
+                "Bcl_convert_logs",
+            )
+            os.makedirs(bclconvert_log_dir, exist_ok=True)
+            demultiplex_cmd = DemultiplexConfig.BCLCONVERT_CMD % (
             self.user,
             self.user,
             self.rf_obj.runfolderpath,
-            self.rf_obj.samplesheet_path,
-            self.rf_obj.samplesheet_name,
-            self.rf_obj.samplesheet_name,
+            os.path.join(
+                self.rf_obj.runfolderpath,
+                "Data/Intensities/BaseCalls/",
+            ),
+            bclconvert_log_dir,
+            os.path.join(
+                DemultiplexConfig.RUNFOLDERS,
+                "samplesheets"
+            ),
+            self.rf_obj.samplesheet_name
         )
         return demultiplex_cmd
