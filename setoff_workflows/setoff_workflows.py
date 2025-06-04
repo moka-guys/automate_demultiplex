@@ -817,7 +817,7 @@ class ProcessRunfolder(SWConfig):
                 out,
                 err,
             )
-        elif os.path.exists(adx_log):
+        else:
             with open(adx_log, "r") as file:
                 content = file.read()
             if '"success":false' in content:
@@ -827,11 +827,12 @@ class ProcessRunfolder(SWConfig):
                     out,
                     err,
                 )
-        else:
-            self.loggers["sw"].info(
-                self.loggers["sw"].log_msgs["decision_run_success"],
-                self.rf_obj.runfolder_name,
-            )    
+            else:
+                self.loggers["sw"].info(
+                    self.loggers["sw"].log_msgs["decision_run_success"],
+                    self.rf_obj.runfolder_name,
+                )
+
     def run_dx_run_commands(self) -> None:
         """
         Execute the dx run bash script
