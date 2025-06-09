@@ -41,6 +41,8 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
     RUNFOLDERS = "/media/data3/share"
+    AVITI_RUNFOLDER = "/media/data1/share/AV241501"
+    AVITI_SAMPLESHEET = "/media/data1/share/samplesheets"
     AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add prod mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
@@ -62,6 +64,8 @@ else:  # Testing branch
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
     RUNFOLDERS = "/media/data3/share/testing"
+    AVITI_RUNFOLDER = "/media/data1/share/AV241501/testing"
+    AVITI_SAMPLESHEET = "/media/data1/share/AV241501/testing/samplesheets"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
@@ -82,14 +86,16 @@ AVITI_ID = "AV241501" # Aviti sequencer ID
 # TO DO write if loop for fastq file locations based on sequencer
 RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 FASTQ_DIRS = {
-    "fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
+    "illumina_fastqs": "Data/Intensities/BaseCalls",  # Path to fastq files
     "tso_fastqs": "${PROJECT_ID}:/analysis_folder/Logs_Intermediates/CollapsedReads/",
+    "aviti_fastqs": "Fastq/Samples", # Path to AVITI fastq files
 }
 SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit path
 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCLCONVERT_DOCKER = "seglh/bcl-convert:4.3.6"
+BASES2FASTQ_DOCKER = "elembio/bases2fastq" #version 2.1.0.1522407762
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
@@ -389,6 +395,8 @@ class DemultiplexConfig(PanelConfig):
     AVITI_ID = AVITI_ID
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
+    AVITI_RUNFOLDER = AVITI_RUNFOLDER
+    BASES2FASTQ_CPU = 15
     STRINGS = {
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
@@ -411,6 +419,10 @@ class DemultiplexConfig(PanelConfig):
         f"--sample-sheet /samplesheet_input/%s "
         f"--no-lane-splitting true --fastq-gzip-compression-level 4"
     )
+    BASES2FASTQ_CMD = (
+        f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
+        "bases2fastq /input /output -p %s --group-fastq --no-projects -r /input/%s"
+    )
     CD_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
@@ -428,6 +440,7 @@ class DemultiplexConfig(PanelConfig):
         f"{RUNFOLDERS}/${{run_folder_name}} --force"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
+        "20250211_AV241501_NGS665FFV11Pool2AV",
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
         "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
@@ -640,6 +653,10 @@ class ToolboxConfig(PanelConfig):
     CREDENTIALS = CREDENTIALS
     FASTQ_DIRS = FASTQ_DIRS
     RUNFOLDERS = RUNFOLDERS
+    AVITI_RUNFOLDER = AVITI_RUNFOLDER
+    AVITI_ID = AVITI_ID
+    NOVASEQ_ID = NOVASEQ_ID
+    AVITI_SAMPLESHEET = AVITI_SAMPLESHEET
     TIMESTAMP = TIMESTAMP
     PSCON_IDS = [
         "NA12878",
@@ -654,10 +671,12 @@ class ToolboxConfig(PanelConfig):
     FLAG_FILES = {
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
         "bclconvertlog": "bclconvert_output.log",  # Holds bclconvert logs
+        "bases2fastqlog": "bases2fastq_output.log", # Holds bases2fastq logs
         "md5checksum": "md5checksum.txt",  # File holding checksum results
         "initial_sscheck_flag": "initial_sscheck_flagfile.txt",  # Denotes initial SampleSheet has been checked
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
-        "seq_complete": "RTAComplete.txt",  # Sequencing complete file
+        "illumina_seq_complete": "RTAComplete.txt",  # Illumina Sequencing complete file
+        "aviti_seq_complete": "RunUploaded.json", # AVITI Sequencing complete file
     }
     TEST_PROGRAMS_DICT = {
         "dx_toolkit": {
@@ -675,6 +694,10 @@ class ToolboxConfig(PanelConfig):
         "bclconvert": {
             "executable": "docker",
             "test_cmd": f"docker run --rm {BCLCONVERT_DOCKER} --version",
+        },
+        "bases2fastq" : {
+            "executable": "docker",
+            "test_cmd": f"docker run --rm {BASES2FASTQ_DOCKER} bases2fastq --version",
         },
     }
 
