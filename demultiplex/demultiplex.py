@@ -248,11 +248,6 @@ class DemultiplexRunfolder(DemultiplexConfig):
         self.user = os.getuid()
         # N.B. --no-lane-splitting creates a single fastq for a sample,
         # not into one fastq per lane)
-        bclconvert_log_dir = os.path.join(
-                self.rf_obj.runfolderpath,
-                "Bcl_convert_logs",
-            )
-        os.makedirs(bclconvert_log_dir, exist_ok=True)
         self.demultiplex_cmd = self.get_demultiplex_cmd()
         # Shell command to run cluster density calculation
         self.cluster_density_cmd = DemultiplexConfig.CD_CMD % (
