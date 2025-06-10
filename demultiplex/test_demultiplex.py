@@ -538,7 +538,7 @@ class TestDemultiplexRunfolder(object):
             # complete string to bclconvert logfile
             monkeypatch.setattr(
                 dr_obj,
-                "bclconvert_cmd",
+                "demultiplex_cmd",
                 f"echo '{ad_config.DEMULTIPLEX_SUCCESS}' >> "
                 f"{dr_obj.rf_obj.demultiplexlog_file}",
             )
@@ -698,7 +698,7 @@ class TestDemultiplexRunfolder(object):
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     # @pytest.mark.nodisableloggers
-    def test_create_bclconvertlog_success(self):
+    def test_create_demultiplexlog_success(self):
         """
         Test function can successfully create a bclconvert log file
         """
@@ -708,14 +708,14 @@ class TestDemultiplexRunfolder(object):
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     # @pytest.mark.nodisableloggers
-    def test_create_bclconvertlog_fail(self, monkeypatch):
+    def test_create_demultiplexlog_fail(self, monkeypatch):
         """
         Test function fails when expected using dummy bclconvert log path with
         nonexistent dirs
         """
         dr_obj = get_dr_obj("")
         monkeypatch.setattr(
-            dr_obj.rf_obj, "bclconvertlog_file", "/path/to/nonexistent/log.log"
+            dr_obj.rf_obj, "demultiplexlog_file", "/path/to/nonexistent/log.log"
         )
         with pytest.raises(SystemExit) as pytest_wrapped_e:
             dr_obj.create_demultiplex_log()
