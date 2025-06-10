@@ -95,7 +95,7 @@ SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCLCONVERT_DOCKER = "seglh/bcl-convert:4.3.6"
-BASES2FASTQ_DOCKER = "elembio/bases2fastq" #version 2.1.0.1522407762
+BASES2FASTQ_DOCKER = "elembio/bases2fastq:v2.1.0"
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
