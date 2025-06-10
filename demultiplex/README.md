@@ -13,15 +13,15 @@ It contains 2 classes:
 
 1. The `GetRunfolders()` class collects runfolders in the config-specified runfolders directory
 2. `GetRunfolders.setoff_processing()` is called to:
--  Check if `bclconvert` and `gatk` (used for cluster density calcs) are installed on the workstation
-- Initiate runfolder processing per identified runfolder, on runfolders that have an absent bclconvert logfile (`bclconvert_output.log` - denotes that demultiplexing has been performed). bclconvert stdout and stderr streams are written to this file
+-  Check if `bclconvert` and `gatk` (used for cluster density calcs) for Illumina runs and `bases2fastq` for AVITI runs are installed on the workstation
+- Initiate runfolder processing per identified runfolder, on runfolders that have an absent demultiplex logfile (`bclconvert_output.log`/`bases2fastq_output.log` - denotes that demultiplexing has been performed). demultiplex stdout and stderr streams are written to this file
 3. If criteria 2 is met, `DemultiplexRunfolder().setoff_workflow()` is called which performs a set of further checks on the runfolder to determine whether demultiplexing is required:
-- Sequencing is complete (presence of `RTAComplete.txt` file created by the sequencer when sequencing is complete)
+- Sequencing is complete thats confirmed with either the presence of `RTAComplete.txt` for Illumina runs or `RunUploaded.json` with a success outcome log inside created by the sequencer when sequencing is complete)
 - SampleSheet does not contain any errors that would cause demultiplexing to fail - checks are carried out by the [samplesheet_validator.py](../samplesheet_validator/samplesheet_validator.py) module which makes use of the [seglh-naming](https://github.com/moka-guys/seglh-naming) library. The absence of error messages for specific tests is checked:
    * Sample sheet is present
    * SampleSheet name is valid (validates using the [seglh-naming](https://github.com/moka-guys/seglh-naming) library)
    * SampleSheet is not empty
-   * SampleSheet contains the minimum expected `[Data]` section headers: `Sample_ID, Sample_Name, index`
+   * SampleSheet contains the minimum expected `[Data]` section headers: `Sample_ID, Sample_Name, index` or `SampleName` for AVITI samplesheets
    * Sample name does not contain any illegal characters (in case this was not rectified after the early warning checks as this will cause bclconvert to fail)
 - If the sequencer does not require an integrity check, it skips straight to `run_demultiplexing()`
 - If the sequencer does require an integrity check the following requirements must be met for `run_demultiplexing()` to be called:
@@ -30,7 +30,7 @@ It contains 2 classes:
 must be present
   2. The run has not failed a previous integrity check performed by this script
   3. The md5 checksums in the checksum file match. This verifies the integrity between the workstation and sequencer
-4. If criteria 3 are met, the demultiplexing log file is created to prevent simultaneous attempt on the next run of the script (bclconvert is slow to create the logfile), and the cluster density calculations are performed
+4. If criteria 3 are met, the demultiplexing log file is created to prevent simultaneous attempt on the next run of the script (bclconvert and bases2fastq are slow to create the logfile), and the cluster density calculations are performed
 5. If criteria 4 is met, and the run is not a tso run, `run_demultiplexing()` then executes the demultiplexing `bclconvert (v4.3.6)` command
 
 ## Usage
@@ -78,7 +78,7 @@ Logging is performed using [ad_logger](../ad_logger/ad_logger.py).
 | demultiplex (script_logger) | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
 
 | demultiplex (demux_rf_logger) | Records runfolder-level logs for the demultiplex script | `RUNFOLDERNAME_demultiplex_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
- Bclconvert output | STDERR from bclconvert | `bclconvert_output.log` | Within the runfolder |
+ Demultiplex docker output | STDERR from bclconvert/bases2fastq | `bclconvert_output.log`/`bases2fastq_output.log` | Within the runfolder |
 
 
 ## Testing

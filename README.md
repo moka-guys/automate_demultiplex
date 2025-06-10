@@ -1,12 +1,12 @@
 # Automate Demultiplex Scripts
 
-This repository contains the main scripts for routine analysis of clinical next generation sequencing (NGS) data at Viapath Genetics. Follow the links in the below table for specific documentation.
+This repository contains the main scripts for routine analysis of clinical next generation sequencing (NGS) data at SE GLH GSTT. This version of Automated Scripts can process runs from both Illumina and AVITI sequencers. Follow the links in the below table for specific documentation.
 
 | Script | Run mode | Details |
 | ------ | -------- | ------- |
-|[demultiplex.py](demultiplex.py) | Command line | Demultiplex (excluding TSO runs) and calculate cluster density for Illumina NGS data using `bclconvert` [(guide)](demultiplex/README.md) |
-| [setoff_workflows.py](setoff_workflows.py) | Command line | Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md) |
-| [upload_runfolder](upload_runfolder) | Command line or module import | Uploads an Illumina runfolder to DNAnexus [(guide)](upload_runfolder/README.md)|
+|[demultiplex.py](demultiplex.py) | Command line | Demultiplex (excluding TSO runs) both Illumina and AVITI runs using `bclconvert` or `bases2fastq`and calculate cluster density for Illumina [(guide)](demultiplex/README.md) |
+| [setoff_workflows.py](setoff_workflows.py) | Command line | Uploads both Illumina and AVITI NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md) |
+| [upload_runfolder](upload_runfolder) | Command line or module import | Uploads both Illumina and AVITI NGS runfolders to DNAnexus [(guide)](upload_runfolder/README.md)|
 | [wscleaner](wscleaner) | Command line | Automates the deletion of runfolders that have been uploaded to the DNAnexus cloud storage service [(guide)](wscleaner/README.md)|
 
 # Assumptions / Requirements
@@ -52,10 +52,10 @@ The below diagram is a UML class diagram showing the relationships between the c
 | [config](config) | lime green | Stores the configuration classes for use by other modules |
 | [ad_email](ad_email) | blue | Email sending module [(guide)](ad_email/README.md) |
 | [ad_logger](ad_logger) | sea green | This module contains classes that create logging objects that write messages to the syslog, stream and log files. Used by other modules [(guide)](ad_logger/README.md) |
-| [demultiplex](demultiplex) | orange | Demultiplex (excluding TSO runs) and calculate cluster density for Illumina NGS data using `bclconvert` [(guide)](demultiplex/README.md) |
-| [setoff_workflows](setoff_workflows) | pink | Upload NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md) |
+| [demultiplex](demultiplex) | orange | Demultiplex (excluding TSO runs) both Illumina and AVITI runs using `bclconvert` or `bases2fastq`and calculate cluster density for Illumina  [(guide)](demultiplex/README.md) |
+| [setoff_workflows](setoff_workflows) | pink | Upload Illumina and AVITI NGS data to DNAnexus and trigger in-house workflows [(guide)](setoff_workflows/README.md) |
 | [toolbox](toolbox) | grey | Contains classes and functions shared [(guide)](toolbox/README.md) |
-| [upload_runfolder](upload_runfolder) | sand | Uploads an Illumina runfolder to DNAnexus [(guide)](upload_runfolder/README.md) |
+| [upload_runfolder](upload_runfolder) | sand | Uploads Illumina and AVITI runfolders to DNAnexus [(guide)](upload_runfolder/README.md) |
 | [wscleaner](wscleaner) | purple | Automates the deletion of runfolders that have been uploaded
 to the DNAnexus cloud storage service | [(guide)](wscleaner/README.md) |
 
@@ -98,7 +98,7 @@ The above image describes the possible associations in the Class Diagram. In the
 | Demultiplex output | Catches any traceback from errors when running the cron job that are not caught by exception handling within the script | `TIMESTAMP.txt` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/Demultiplexing_stdout` |
 | demultiplex (script_logger) | Records script-level logs for the demultiplex script | `TIMESTAMP_demultiplex_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
 | demultiplex (demux_rf_logger) | Records runfolder-level logs for the demultiplex script | `RUNFOLDERNAME_demultiplex_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/demultiplexing_script_logfiles/` |
- Bclconvert output | STDOUT and STDERR from bclconvert | `bclconvert_output.log` | Within the runfolder |
+ Demultiplex docker output | STDOUT and STDERR from bclconvert or bases2fastq | `bclconvert_output.log`/`bases2fastq_output.log` | Within the runfolder |
 | ss_validator | Records runfolder-level logs for the samplesheet_validator script | `RUNFOLDERNAME_samplesheet_validator_script.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/samplesheet_validator_script_logfiles/` |
 | backup | Records the logs from the upload runfolder script | `RUNFOLDERNAME_upload_runfolder.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/upload_runfolder_script_logfiles/` |
 | wscleaner | Records the logs from the wscleaner script | `TIMESTAMP_wscleaner.log` | `/usr/local/src/mokaguys/automate_demultiplexing_logfiles/wscleaner/` |
