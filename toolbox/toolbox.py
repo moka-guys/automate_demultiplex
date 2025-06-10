@@ -286,19 +286,22 @@ def get_demultiplexlog_file(sequencer_type: str, runfolderpath: str) -> str:
             runfolderpath, ToolboxConfig.FLAG_FILES["bclconvertlog"]
         )
 
-def create_aviti_outputpath(runfolderpath: str) -> str:
+def create_aviti_outputpath(runfolderpath: str, sequencer_type : str) -> str:
     """
     Checks to see if bases2fastq output directory has been made, if
     not then creates output directory
         :param runfolderpath (str):     Runfolder path string
         :return (str):                  Fastq output folder string
-    """  
-    fastq_outputpath = os.path.join(runfolderpath, "Fastq")
-    if os.path.exists(fastq_outputpath):
-        return fastq_outputpath
+    """ 
+    if sequencer_type == ToolboxConfig.AVITI_ID: 
+        fastq_outputpath = os.path.join(runfolderpath, "Fastq")
+        if os.path.exists(fastq_outputpath):
+            return fastq_outputpath
+        else:
+            os.mkdir(fastq_outputpath)
+            return fastq_outputpath
     else:
-        os.mkdir(fastq_outputpath)
-        return fastq_outputpath
+        return None
 
 def get_fastq_dir_path(sequencer_type: str, runfolderpath: str) -> str:
     """
@@ -590,7 +593,7 @@ class RunfolderObject(ToolboxConfig):
             self.runfolderpath, "Fastq", "info", "Bases2Fastq.log"
         )
         self.fastq_dir_path = get_fastq_dir_path(self.sequencer_type, self.runfolderpath)
-        self.bases2fastq_outputpath = create_aviti_outputpath(self.runfolderpath)
+        self.bases2fastq_outputpath = create_aviti_outputpath(self.runfolderpath, self.sequencer_type)
         self.upload_flagfile = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["upload_started"]
         )
