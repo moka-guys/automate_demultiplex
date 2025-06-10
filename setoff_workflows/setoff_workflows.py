@@ -116,21 +116,32 @@ class SequencingRuns(SWConfig):
 
     def set_runfolders(self) -> list:
         """
-        Update self.runs_to_process list with NGS runfolders in the runfolders directory
-        that match the runfolder pattern, and require processing by the script
+        Update self.runs_to_process list with NGS runfolders in Illumina and AVITI
+        runfolders directory that match the runfolder pattern, and require processing 
+        by the script
             :return (list):     List of runfolder objects that require processing
         """
         runs_to_process = []
-        for folder in os.listdir(SWConfig.RUNFOLDERS):
-            if os.path.isdir(os.path.join(SWConfig.RUNFOLDERS, folder)) and re.compile(
-                SWConfig.RUNFOLDER_PATTERN
-            ).match(folder):
-                script_logger.info(
-                    script_logger.log_msgs["runfolder_identified"], folder
-                )
-                rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
-                if self.requires_processing(rf_obj):
-                    runs_to_process.append(rf_obj)
+        # Combine Illumina and AVITI runs in respecitve directories
+        # into one list
+        illumina_runfolders = os.listdir(SWConfig.RUNFOLDERS)
+        aviti_runfolders = os.listdir(SWConfig.AVITI_RUNFOLDER)
+        sequenced_folders = illumina_runfolders + aviti_runfolders
+        # Iterate through list and check directory follows runfolder pattern and also exists in 
+        # either the Illumina or AVITI directory. Specific Runfolder path is confirmed when 
+        # RunFolderObject is created in Toolbox.py
+        for folder in sequenced_folders:
+            if re.compile(SWConfig.RUNFOLDER_PATTERN).match(folder):
+                if os.path.isdir(
+                    os.path.join(SWConfig.RUNFOLDERS, folder)
+                    ) or os.path.isdir(
+                        os.path.join(SWConfig.AVITI_RUNFOLDER, folder)):
+                    script_logger.info(
+                        script_logger.log_msgs["runfolder_identified"], folder
+                    )
+                    rf_obj = RunfolderObject(folder, SWConfig.TIMESTAMP)
+                    if self.requires_processing(rf_obj):
+                        runs_to_process.append(rf_obj)
         return runs_to_process
 
     def requires_processing(self, rf_obj: object) -> Optional[bool]:
@@ -161,11 +172,12 @@ class SequencingRuns(SWConfig):
             :param rf_obj (obj):        RunfolderObject object (contains runfolder-specific attributes)
             :return (Optional[bool]):   Return True if runfolder already demultiplexed, else None
         """
-        if os.path.isfile(rf_obj.bclconvertlog_file):
-            logfile_list = read_lines(rf_obj.bclconvertlog_file)
+        if os.path.isfile(rf_obj.demultiplexlog_file):
+            logfile_list = read_lines(rf_obj.demultiplexlog_file)
             completed_strs = [
                 SWConfig.STRINGS["demultiplex_not_required_msg"].partition(" ")[-1],
-                SWConfig.STRINGS["demultiplex_success"],
+                SWConfig.STRINGS["illumina_demultiplex_success"],
+                SWConfig.STRINGS["aviti_demultiplex_success"],
             ]
             if logfile_list:
                 if any(
@@ -177,7 +189,7 @@ class SequencingRuns(SWConfig):
                 else:
                     script_logger.info(script_logger.log_msgs["success_string_absent"])
             else:
-                script_logger.info(script_logger.log_msgs["bclconvertlog_empty"])
+                script_logger.info(script_logger.log_msgs["demultiplexlog_empty"])
         else:
             script_logger.info(script_logger.log_msgs["not_yet_demultiplexed"])
 
@@ -500,7 +512,9 @@ class ProcessRunfolder(SWConfig):
             )
         if self.rf_samples_obj.pipeline != "tso500":
             # tso500 run is not demultiplexed locally so there are no fastqs
-            # All other runfolders have fastqs in the BaseCalls directory
+            # All other runfolders have fastqs in the BaseCalls directory.
+            # This section covers uploading AVITI fastqs as this is only thing
+            # Needed for DNANexus processing
             upload_cmds["fastqs"] = SWConfig.DX_CMDS["file_upload_cmd"] % (
                 self.rf_obj.dnanexus_auth,
                 self.nexus_identifiers["proj_id"],
@@ -599,12 +613,8 @@ class ProcessRunfolder(SWConfig):
             :return pre_pipeline_upload_dict (dict):    Dict of files to upload prior to
                                                         pipeline setoff, and commands
         """
-        pre_pipeline_upload_dict = {
-            "cluster density": {
-                "cmd": self.upload_cmds["cd"],
-                "files_list": self.rf_obj.cluster_density_files,
-            },
-        }
+        pre_pipeline_upload_dict = {}
+
         if self.rf_samples_obj.pipeline == "tso500":  # Add SampleSheet entry
             pre_pipeline_upload_dict["runfolder_samplesheet"] = {
                 "cmd": self.upload_cmds["runfolder_samplesheet"],
@@ -625,9 +635,14 @@ class ProcessRunfolder(SWConfig):
                     *self.rf_samples_obj.undetermined_fastqs_list,
                 ],
             }
-            pre_pipeline_upload_dict["bclconvert_qc"] = {
+            if self.rf_obj.sequencer_type != SWConfig.AVITI_ID:
+                pre_pipeline_upload_dict["bclconvert_qc"] = {
                 "cmd": self.upload_cmds["bclconvert_qc"],
                 "files_list": self.rf_obj.bclconvertstats_file,
+            }
+                pre_pipeline_upload_dict["cluster_density"] = {
+                "cmd": self.upload_cmds["cd"],
+                "files_list": self.rf_obj.cluster_density_files,
             }
             if self.rf_samples_obj.pipeline == "oncodeep":  # Add MasterFile entry
                 pre_pipeline_upload_dict["masterfile"] = {
@@ -776,19 +791,21 @@ class ProcessRunfolder(SWConfig):
 
     def upload_rest_of_runfolder(self) -> None:
         """
-        Backs up the rest of the runfolder. Specifies which files to ignore (excludes BCL files for all
-        runs except tso500 runs for which they are needed for demultiplexing on DNAnexus). Calls
-        upload_runfolder.upload_rest_of_runfolder(ignore), passing a run-dependent ignore string, and
-        the this handles the runfolder upload. upload_runfolder writes log messages to the upload
+        Backs up the rest of the runfolder. Specifies which files to ignore (excludes BCL files for all Illumina
+        runs except tso500 runs for which they are needed for demultiplexing on DNAnexus & all primary sequence output data
+        for AVITI Runs). Calls upload_runfolder.upload_rest_of_runfolder(ignore), passing a run-dependent ignore string, and
+        then this handles the runfolder upload. upload_runfolder writes log messages to the upload
         runfolder log file. If unsuccessful, exit script
             :return None:
         """
-        # Build upload_runfolder.py commands, ignoring some files
-        if self.rf_samples_obj.pipeline in ["tso500", "dev"]:
+        # Build upload_runfolder.py commands, ignoring BCL files for Illumina runs and Bases zip files, 
+        # Alignement, Filter and Location files for AVITI runs 
+        if self.rf_samples_obj.pipeline in ["tso500"]:
             ignore = ""  # Upload BCL files for tso500 and dev runs
+        elif self.rf_samples_obj.sequencer_type == SWConfig.AVITI_ID:
+            ignore = "/BaseCalls,/Alignment,/Filter,/Location"
         else:
             ignore = "/L00"
-
         try:
             self.loggers["sw"].info(
                 self.loggers["sw"].log_msgs["uploading_rf"],
