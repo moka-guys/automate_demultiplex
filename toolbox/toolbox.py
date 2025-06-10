@@ -1097,9 +1097,11 @@ class RunfolderSamples(ToolboxConfig):
             :return undetermined_fastqs_list (list): List of all undetermined fastqs in the run
         """
         undetermined_fastqs_list = []
-        r1 = os.path.join(self.fastq_dir_path, "Undetermined_S0_R1_001.fastq.gz")
-        r2 = os.path.join(self.fastq_dir_path, "Undetermined_S0_R2_001.fastq.gz")
-        for fastq in [r1, r2]:
+        illumina_r1 = os.path.join(self.fastq_dir_path, "Undetermined_S0_R1_001.fastq.gz")
+        illumina_r2 = os.path.join(self.fastq_dir_path, "Undetermined_S0_R2_001.fastq.gz")
+        aviti_r1 = os.path.join(self.fastq_dir_path, "Unassigned_R1.fastq.gz")
+        aviti_r2 = os.path.join(self.fastq_dir_path, "Unassigned_R2.fastq.gz")
+        for fastq in [illumina_r1, illumina_r2, aviti_r1, aviti_r2]:
             if os.path.exists(fastq):
                 undetermined_fastqs_list.append(fastq)
         return undetermined_fastqs_list

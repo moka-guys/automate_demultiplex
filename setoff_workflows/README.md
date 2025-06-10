@@ -1,6 +1,6 @@
 # Set Off Workflows
 
-The setoff_workflows module handles the DNAnexus workflow / app execution for demultiplexed NGS runs. The module contains
+The setoff_workflows module handles the DNAnexus workflow / app execution for demultiplexed NGS runs sequenced via Illumina and AVITI. The module contains
 multiple scripts:
 
 | Script | Class | Functionality|
@@ -19,7 +19,7 @@ The module uses various functions and classes from the [Toolbox module](../toolb
 ## Protocol
 
 1. Identify runfolders in the runfolders directory which have not been processed:
-    - Runfolder contains bclconvert log file with success string
+    - Runfolder contains demultiplex log file with success string (`bclconvert_output.log`/`bases2fastq_output.log`)
     - Runfolder does not contain upload started flag file (has not yet been uploaded to DNAnexus)
 2. Collect names and metadata for all samples in the runfolder, using the RunfolderSamples() class from the [Toolbox module](../toolbox/toolbox.py).
 3. Write and run the DNAnexus project creation script
