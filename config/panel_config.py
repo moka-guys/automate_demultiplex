@@ -576,7 +576,7 @@ class PanelConfig:
             **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R414",
-            "congenica_project": 4202,
+            "congenica_project": 19051,
             "ed_cnvcalling_bedfile": "Pan5243",
         },
         "Pan5186": {  # CP2 R414 (Synnovis) - APC associated Polyposis
