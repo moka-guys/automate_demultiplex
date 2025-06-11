@@ -539,7 +539,7 @@ class TestDemultiplexRunfolder(object):
             monkeypatch.setattr(
                 dr_obj,
                 "demultiplex_cmd",
-                f"echo '{ad_config.DEMULTIPLEX_SUCCESS}' >> "
+                f"echo '{ad_config.ILLUMINA_DEMULTIPLEX_SUCCESS}' >> "
                 f"{dr_obj.rf_obj.demultiplexlog_file}",
             )
             assert dr_obj.setoff_workflow() and dr_obj.run_processed
@@ -724,7 +724,7 @@ class TestDemultiplexRunfolder(object):
             assert pytest_wrapped_e.type == SystemExit
             assert pytest_wrapped_e.value.code == 1
 
-    def test_add_bclconvertlog_msg_pass(self, demultiplexing_required):
+    def test_add_demultiplexlog_msg_pass(self, demultiplexing_required):
         """
         Test function can correctly add tso message to the bclconvert logfile
         """
