@@ -105,7 +105,8 @@ ARCHER_DOCKER = (
 
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
 DEMUX_NOT_REQUIRED_MSG = "%s run. Does not need demultiplexing locally"
-DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
+ILLUMINA_DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
+AVITI_DEMULTIPLEX_SUCCESS = "Output stored in /output"
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
 
@@ -401,7 +402,8 @@ class DemultiplexConfig(PanelConfig):
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
-        "demultiplex_success": DEMULTIPLEX_SUCCESS,
+        "illumina_demultiplex_success": ILLUMINA_DEMULTIPLEX_SUCCESS,
+        "aviti_demultiplex_success": AVITI_DEMULTIPLEX_SUCCESS,
         "checksums_assessed": "Checksums assessed by AS: %s",  # Written to file by AS
         "checksums_match": "Checksums match",  # Success message written to md5checksum file by integrity check scripts
         "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
@@ -506,7 +508,8 @@ class SWConfig(PanelConfig):
     STRINGS = {
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
-        "demultiplex_success": DEMULTIPLEX_SUCCESS,
+        "illumina_demultiplex_success": ILLUMINA_DEMULTIPLEX_SUCCESS,
+        "aviti_demultiplex_success": AVITI_DEMULTIPLEX_SUCCESS,
     }
     PIPE_FH_GATK_TIMEOUT_ARGS = (  # This is specified for the GATK app in the Custom Panels pipeline for only FH samples
         # Set 6 hour timeout policy for gatk app and jobtimeoutexceeded
