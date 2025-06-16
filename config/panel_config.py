@@ -14,7 +14,7 @@ required criteria to be included in that list.
     are applied at the point of analysis, so R and M numbers (test_number) for these are not listed below. These
     pan numbers do not necessarily refer to bed files but rather project configuration (e.g. DNAnexus instances,
     project layout etc.)
-- Development runs have two options for pan numbers, one for runs that require standard processing with bcl2fastq
+- Development runs have two options for pan numbers, one for runs that require standard processing with bclconvert
     and one for runs that require manual processing as they have UMIs
 
 Dictionary keys and values are as follows. Values are None where they are not
@@ -576,7 +576,7 @@ class PanelConfig:
             **CAPTURE_PANEL_DICT["CP2"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R414",
-            "congenica_project": 4202,
+            "congenica_project": 19051,
             "ed_cnvcalling_bedfile": "Pan5243",
         },
         "Pan5186": {  # CP2 R414 (Synnovis) - APC associated Polyposis

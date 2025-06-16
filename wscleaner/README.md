@@ -16,8 +16,8 @@ Runfolders are identified for deletion if meeting the following criteria:
 * Runfolder's upload runfolder log file contains no errors
 
 TSO runfolders must meet the following additional criteria to be identified for deletion:
-* Presence of bcl2fastq2_output.log file
-* Presence of `TSO run.` in the bcl2fastq log file
+* Presence of bclconvert_output.log file
+* Presence of `TSO run.` in the bclconvert log file
 * Presence of `_TSO` in the human readable DNANexus project name
 
 ## Usage
