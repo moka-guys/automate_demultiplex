@@ -119,7 +119,9 @@ NEXUS_IDS = {
         "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01",  # hs37d5.fa.gz
         "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
         "ed_vcp1_readcount_normals": f"{TOOLS_PROJECT}:file-GgKKP4Q01jZ62QgF2bbPqz78",  # Pan5208_normals_v1.0.0.RData
-        "ed_CP2_readcount_normals": f"{TOOLS_PROJECT}:file-J098jB80fxG0fQP64PXXP447",  # Pan5279_normals_v1.1.0.RData
+        "ed_CP2_readcount_normals_NOVASEQ": f"{TOOLS_PROJECT}:file-J098jB80fxG0fQP64PXXP447",  # Pan5279_normals_v1.1.0.RData
+        "ed_CP2_readcount_normals_AVITI": f"{TOOLS_PROJECT}:file-J0Kzf3804zjJygFfFfJqXG6K", # Pan5279_AVITI_normals_v1.0.0.RData
+
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
     },
     "APPS": {
@@ -397,7 +399,7 @@ class DemultiplexConfig(PanelConfig):
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
     AVITI_RUNFOLDER = AVITI_RUNFOLDER
-    BASES2FASTQ_CPU = 15
+    BASES2FASTQ_CPU = 10
     STRINGS = {
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,

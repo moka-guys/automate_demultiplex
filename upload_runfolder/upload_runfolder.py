@@ -445,11 +445,12 @@ class UploadRunfolder(URConfig):
         """
         self.logger.info(self.logger.log_msgs["counting_files"])
         if ignore:
-            # Split ignore string on comma and loop through list
+            # Loops through ignore string and adds ignore command for each folder
+            # expected to be ignored
+            grep_ignore = ""
             for pattern in ignore.split(","):
-                # -v excludes any files matching the given terms (stated with -e)
-                # -i makes this search case insensitive
-                grep_ignore = f'| grep -v -i  -e "{pattern}" '
+                ignore_pattern = f"-not -path *{pattern}/* "
+                grep_ignore = grep_ignore + ignore_pattern
         else:
             grep_ignore = ""
 
