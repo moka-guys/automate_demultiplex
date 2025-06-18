@@ -270,17 +270,25 @@ class BuildRunfolderDxCommands(SWConfig):
             ]
         )
 
-    def create_ed_cnvcalling_cmd(self, panno: str) -> str:
+    def create_ed_cnvcalling_cmd(self, panno: str, sample_count: int = 1) -> str:
         """
         Build dx run command for exomedepth cnv calling app
-            :param panno (str):     Pannumber to filter CNV calls
-            :return (str):          Dx run command for ED cnv calling app
+            :param panno (str):         Pannumber to filter CNV calls
+            :param sample_count (int):  Number of samples sharing this pan number
+            :return (str):              Dx run command for ED cnv calling app
         """
         self.logger.info(
             self.logger.log_msgs["building_cmd"],
             "ED_cnvcalling",
             panno,
         )
+        
+        # Set instance type based on sample count
+        if sample_count >= 8:
+            cnv_instance = "mem1_ssd1_v2_x8" # Increase instance size to accomodate larger number of samples
+        else:
+            cnv_instance = "mem1_ssd1_v2_x4"  # Default DNAnexus instance
+        
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["ed_cnvcalling"]}ED_CNVcalling-{panno}',
@@ -295,9 +303,8 @@ class BuildRunfolderDxCommands(SWConfig):
                 f'{SWConfig.BEDFILE_FOLDER}{SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]}_CNV.bed',
                 SWConfig.APP_INPUTS["ed_cnvcalling"]["proj"],
                 f'{SWConfig.APP_INPUTS["ed_cnvcalling"]["pannos"]}{panno}',
-                SWConfig.UPLOAD_ARGS[
-                    "depends_pipeline"
-                ],  # Use list of gatk related jobs to delay start
+                f'--instance-type {cnv_instance}',  # Add instance type specification
+                SWConfig.UPLOAD_ARGS["depends_pipeline"],
                 SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"],
             ]
