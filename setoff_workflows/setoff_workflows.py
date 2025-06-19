@@ -1355,9 +1355,14 @@ class CustomPanelsPipelines:
                             SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"],
                         ]
                     )
+                    if self.rf_obj.sequencer_type == SWConfig.AVITI_ID:
+                        sequencer_panel = "_AVITI"
+                    else:
+                        sequencer_panel = "_NOVASEQ"
+
                     self.workflow_cmds.extend(
                         [
-                            self.rf_cmds_obj.create_ed_readcount_cmd(core_panel),
+                            self.rf_cmds_obj.create_ed_readcount_cmd(core_panel, sequencer_panel),
                             SWConfig.UPLOAD_ARGS["depends_list_edreadcount"],
                         ]
                     )

@@ -227,7 +227,7 @@ class BuildRunfolderDxCommands(SWConfig):
             ]
         )
     
-    def create_ed_readcount_cmd(self, core_panel_name: str) -> str:
+    def create_ed_readcount_cmd(self, core_panel_name: str, sequencer_panel: str) -> str:
         """
         Build dx run command for exomedepth readcount app. Exome depth is run in 2 stages,
         firstly readcounts are calculated for each capture panel. Job ID is saved to $ED_READCOUNT_JOB_ID
@@ -258,7 +258,7 @@ class BuildRunfolderDxCommands(SWConfig):
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["bam_str"]}'
                 f'{SWConfig.CAPTURE_PANEL_DICT[core_panel_name]["readcount_ed_bam_str"]}',
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["normals_rdata"]}'
-                f'{SWConfig.NEXUS_IDS["FILES"][f"ed_{core_panel_name}_readcount_normals"]}',
+                f'{SWConfig.NEXUS_IDS["FILES"][f"ed_{core_panel_name}_readcount_normals{sequencer_panel}"]}',
                 SWConfig.APP_INPUTS["ed_readcount"]["proj"],
                 f'{SWConfig.APP_INPUTS["ed_readcount"]["pannos"]}{",".join(SWConfig.ED_PANNOS[core_panel_name])}',
                 f'--instance-type {readcount_instance}',
