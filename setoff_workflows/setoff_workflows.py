@@ -1355,9 +1355,14 @@ class CustomPanelsPipelines:
                             SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"],
                         ]
                     )
+                    if self.rf_obj.sequencer_type == SWConfig.AVITI_ID:
+                        sequencer_panel = "_AVITI"
+                    else:
+                        sequencer_panel = "_NOVASEQ"
+
                     self.workflow_cmds.extend(
                         [
-                            self.rf_cmds_obj.create_ed_readcount_cmd(core_panel),
+                            self.rf_cmds_obj.create_ed_readcount_cmd(core_panel, sequencer_panel),
                             SWConfig.UPLOAD_ARGS["depends_list_edreadcount"],
                         ]
                     )
@@ -1368,9 +1373,12 @@ class CustomPanelsPipelines:
                             ]
                             and SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]
                         ):
+                            # Count how many samples share this pan number
+                            sample_count = core_panel_pannos.count(panno)
+                            
                             self.workflow_cmds.extend(
                                 [
-                                    self.rf_cmds_obj.create_ed_cnvcalling_cmd(panno),
+                                    self.rf_cmds_obj.create_ed_cnvcalling_cmd(panno, sample_count),
                                     SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"],
                                 ]
                             )
