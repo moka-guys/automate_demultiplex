@@ -846,7 +846,10 @@ class ProcessRunfolder(SWConfig):
         else:
             with open(adx_log, "r") as file:
                 content = file.read()
-            if '"success":false' in content:
+            error_words = ["'success': False", "failed to upload",
+                           "data not found in respJSON",
+                           "data key not found"]
+            if any(error_word in content for error_word in error_words):
                 self.loggers["sw"].error(
                     self.loggers["sw"].log_msgs["decision_run_err"],
                     decision_support_run_cmd,
