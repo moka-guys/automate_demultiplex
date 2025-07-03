@@ -807,7 +807,8 @@ class ProcessRunfolder(SWConfig):
         out, err, returncode = execute_subprocess_command(
             decision_support_run_cmd, self.loggers["sw"], "exit_on_fail"
         )
-        if returncode != 0:
+        adx_log = DemultiplexConfig.ADX_LOG + self.rf_obj.runfolder_name + "_archer_api_logfile.txt"
+        if returncode != 0 or not os.path.exists(adx_log):
             self.loggers["sw"].error(
                 self.loggers["sw"].log_msgs["decision_run_err"],
                 decision_support_run_cmd,
@@ -815,10 +816,24 @@ class ProcessRunfolder(SWConfig):
                 err,
             )
         else:
-            self.loggers["sw"].info(
-                self.loggers["sw"].log_msgs["decision_run_success"],
-                self.rf_obj.runfolder_name,
-            )    
+            with open(adx_log, "r") as file:
+                content = file.read()
+            error_words = ["'success': False", "failed to upload",
+                           "data not found in respJSON",
+                           "data key not found"]
+            if any(error_word in content for error_word in error_words):
+                self.loggers["sw"].error(
+                    self.loggers["sw"].log_msgs["decision_run_err"],
+                    decision_support_run_cmd,
+                    out,
+                    err,
+                )
+            else:
+                self.loggers["sw"].info(
+                    self.loggers["sw"].log_msgs["decision_run_success"],
+                    self.rf_obj.runfolder_name,
+                )
+  
     def run_dx_run_commands(self) -> None:
         """
         Execute the dx run bash script
