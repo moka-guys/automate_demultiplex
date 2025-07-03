@@ -94,7 +94,7 @@ GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
 ARCHER_DOCKER = (
-    "seglh/archer_api_upload:v1.0.0"
+    "seglh/archer_api_upload_py:6ff3ff0"
 )
 
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
@@ -410,13 +410,16 @@ class DemultiplexConfig(PanelConfig):
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
         "--RUN_DIRECTORY /input_run --OUTPUT_DIRECTORY /input_run --OUTPUT_PREFIX %s"
     )
+    ADX_LOG = f"{AD_LOGDIR}/archer_api_upload_logfiles/"
     ADX_CMD = (
         f"docker run "
-        f"-v {RUNFOLDERS}/${{run_folder_name}}/Data/Intensities/BaseCalls:/data "
+        f"-v {RUNFOLDERS}/${{run_folder_name}}/Data/Intensities/BaseCalls:/${{run_folder_name}} "
         f"-v {DOCUMENT_ROOT}:/auth_file "
-        f"{ARCHER_DOCKER} /data "
-        f"auth_file/{CREDENTIALS['adx_authtoken']} "
-        f"${{job_name}} 2 | tee -a {AD_LOGDIR}/archer_api_upload_logfiles/${{run_folder_name}}_archer_api_logfile.txt"
+        f"-v {ADX_LOG}:/log_dir "
+        f"{ARCHER_DOCKER} --runfolder /${{run_folder_name}} "
+        f"--cred_file /auth_file/{CREDENTIALS['adx_authtoken']} "
+        f"--log_dir /log_dir "
+        f"--job_name ${{job_name}}"
     )
     MSK_CMD = (
         f"python3 /usr/local/src/mokaguys/sophia_cli/sophia.py "
