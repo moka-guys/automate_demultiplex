@@ -36,7 +36,7 @@ MAIL_SETTINGS = {
     "alerts_email": "moka.alerts@gstt.nhs.uk",
 }
 
-if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
+if BRANCH in ("main", "ws_main_from_v45.4.0") and "pytest" not in sys.modules:  # Prod branch
     TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
@@ -465,7 +465,7 @@ class SWConfig(PanelConfig):
     UPLOAD_ARGS = UPLOAD_ARGS
     RUNFOLDERS = RUNFOLDERS
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
-    if BRANCH == "main":  # Prod branch
+    if BRANCH in ("main", "ws_main_from_v45.4.0"):  # Prod branch
 
         BSPS_ID = "BSPS_MD"
         DNANEXUS_USERS = {  # User access level
@@ -629,7 +629,7 @@ class ToolboxConfig(PanelConfig):
     Toolbox configuration
     """
 
-    if BRANCH == "main":
+    if BRANCH in ("main", "ws_main_from_v45.4.0"):
         DNANEXUS_PROJECT_PREFIX = "002_"  # Denotes production status of run
     else:
         DNANEXUS_PROJECT_PREFIX = "003_"  # Denotes development status of run
