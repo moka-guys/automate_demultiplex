@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - ws_main_from_v45.4.0
       - develop
       - 'feature/**'
       - 'hotfix/**'
