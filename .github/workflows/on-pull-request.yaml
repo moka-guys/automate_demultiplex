@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - develop
+      - ws_main_from_v45.4.1
+      - ws_dev_from_v45.4.1
       - 'feature/**'
       - 'hotfix/**'
 jobs:
