@@ -40,7 +40,7 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
     TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
-    RUNFOLDERS = "/media/data3/share"
+    RUNFOLDERS = "/media/data1/share"
     AVITI_RUNFOLDER = "/media/data1/share/AV241501"
     AVITI_SAMPLESHEET = "/media/data1/share/samplesheets"
     AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
@@ -63,7 +63,7 @@ else:  # Testing branch
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
-    RUNFOLDERS = "/media/data3/share/testing"
+    RUNFOLDERS = "/media/data1/share/testing"
     AVITI_RUNFOLDER = "/media/data1/share/AV241501/testing"
     AVITI_SAMPLESHEET = "/media/data1/share/AV241501/testing/samplesheets"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
@@ -105,7 +105,7 @@ ARCHER_DOCKER = (
 
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
 DEMUX_NOT_REQUIRED_MSG = "%s run. Does not need demultiplexing locally"
-ILLUMINA_DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
+ILLUMINA_DEMULTIPLEX_SUCCESS = "thread 1 Conversion Complete."
 AVITI_DEMULTIPLEX_SUCCESS = "Output stored in /output"
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
