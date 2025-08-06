@@ -179,9 +179,11 @@ class SequencingRuns(SWConfig):
                 SWConfig.STRINGS["illumina_demultiplex_success"],
                 SWConfig.STRINGS["aviti_demultiplex_success"],
             ]
+            # bclconvert success is on second to last line of output log, bases2fastq is on last line
             if logfile_list:
+                logfile_list_search = " ".join([logfile_list[-1], logfile_list[-2]])
                 if any(
-                    re.search(success_str, logfile_list[-1])
+                    re.search(success_str, logfile_list_search)
                     for success_str in completed_strs
                 ):
                     script_logger.info(script_logger.log_msgs["demux_complete"])

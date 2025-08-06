@@ -589,6 +589,9 @@ class RunfolderObject(ToolboxConfig):
             self.runfolderpath, ToolboxConfig.FLAG_FILES["sscheck_flag"]
         )
         self.demultiplexlog_file = get_demultiplexlog_file(self.sequencer_type, self.runfolderpath)
+        self.bclconvert_log_output_dir = os.path.join(
+            self.runfolderpath, "Bcl_convert_logs"
+        )
         self.bases2fastq_log_output = os.path.join(
             self.runfolderpath, "Fastq", "info", "Bases2Fastq.log"
         )
