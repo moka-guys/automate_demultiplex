@@ -40,7 +40,7 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
     TESTING = False  # Set testing mode
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
-    RUNFOLDERS = "/media/data3/share"
+    RUNFOLDERS = "/media/data1/share"
     AVITI_RUNFOLDER = "/media/data1/share/AV241501"
     AVITI_SAMPLESHEET = "/media/data1/share/samplesheets"
     AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
@@ -63,7 +63,7 @@ else:  # Testing branch
     # JOB_NAME_STR must be @-separated to be picked up by the gmail filter which
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
-    RUNFOLDERS = "/media/data3/share/testing"
+    RUNFOLDERS = "/media/data1/share/testing"
     AVITI_RUNFOLDER = "/media/data1/share/AV241501/testing"
     AVITI_SAMPLESHEET = "/media/data1/share/AV241501/testing/samplesheets"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
@@ -100,12 +100,12 @@ GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
 ARCHER_DOCKER = (
-    "seglh/archer_api_upload:v1.0.0"
+    "seglh/archer_api_upload_py:6ff3ff0"
 )
 
 LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
 DEMUX_NOT_REQUIRED_MSG = "%s run. Does not need demultiplexing locally"
-ILLUMINA_DEMULTIPLEX_SUCCESS = "Processing completed with 0 errors and 0 warnings."
+ILLUMINA_DEMULTIPLEX_SUCCESS = "thread 1 Conversion Complete."
 AVITI_DEMULTIPLEX_SUCCESS = "Output stored in /output"
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
@@ -432,11 +432,13 @@ class DemultiplexConfig(PanelConfig):
     ADX_LOG = f"{AD_LOGDIR}/archer_api_upload_logfiles/"
     ADX_CMD = (
         f"docker run "
-        f"-v {RUNFOLDERS}/${{run_folder_name}}/Data/Intensities/BaseCalls:/data "
+        f"-v {RUNFOLDERS}/${{run_folder_name}}/Data/Intensities/BaseCalls:/${{run_folder_name}} "
         f"-v {DOCUMENT_ROOT}:/auth_file "
-        f"{ARCHER_DOCKER} /data "
-        f"auth_file/{CREDENTIALS['adx_authtoken']} "
-        f"${{job_name}} 2 | tee -a {AD_LOGDIR}/archer_api_upload_logfiles/${{run_folder_name}}_archer_api_logfile.txt"
+        f"-v {ADX_LOG}:/log_dir "
+        f"{ARCHER_DOCKER} --runfolder /${{run_folder_name}} "
+        f"--cred_file /auth_file/{CREDENTIALS['adx_authtoken']} "
+        f"--log_dir /log_dir "
+        f"--job_name ${{job_name}}"
     )
     MSK_CMD = (
         f"python3 /usr/local/src/mokaguys/sophia_cli/sophia.py "
