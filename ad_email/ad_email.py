@@ -107,11 +107,9 @@ class AdEmail(AdEmailConfig):
         self.msg = MIMEMultipart()  # Create email message object and specify settings
         self.msg["X-Priority"] = str(email_priority)  # Set email priority. 1 is highest
         try:
-            recipients = ", ".join(recipients)
-
             self.msg["Subject"] = email_subject
             self.msg["From"] = self.sender
-            self.msg["To"] = recipients
+            self.msg["To"] = ", ".join(recipients)
             self.msg.attach(
                 MIMEText(email_message, "html", "utf-8")
             )  # Add msg to e-mail body
