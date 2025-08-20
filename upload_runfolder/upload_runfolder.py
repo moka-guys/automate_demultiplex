@@ -449,7 +449,7 @@ class UploadRunfolder(URConfig):
             # expected to be ignored
             grep_ignore = ""
             for pattern in ignore.split(","):
-                ignore_pattern = f"-not -path *{pattern}/* "
+                ignore_pattern = f"-not -path *{pattern}* "
                 grep_ignore = grep_ignore + ignore_pattern
         else:
             grep_ignore = ""
