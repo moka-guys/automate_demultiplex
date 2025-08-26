@@ -348,7 +348,7 @@ DX_CMDS = {
     ),
     "congenica_sftp": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y {JOB_NAME_STR}",
     "congenica_upload": (  # TODO move instance type into app itself
-        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
+        f"sleep 3; JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
         f"--instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
     # Sleep command ensures the number of concurrent jobs does not surpass the QCII limit of 10
