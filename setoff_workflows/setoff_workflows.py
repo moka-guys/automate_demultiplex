@@ -1073,6 +1073,8 @@ class MskPipeline:
         docker_api_cmd = [MSK_runfolder, MSK_jobID, docker]
         for api_cmd in docker_api_cmd:
             self.decision_support_upload_cmds.append(api_cmd)
+        # Record MSK commands in workflow list so a dx_run_commands script is generated
+        self.workflow_cmds.extend(self.decision_support_upload_cmds)
 
 class SnpPipeline:  # TODO eventually remove this and associated pipeline-specific functions
     """
