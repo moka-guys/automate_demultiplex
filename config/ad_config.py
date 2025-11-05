@@ -95,7 +95,7 @@ SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCLCONVERT_DOCKER = "seglh/bcl-convert:4.3.6"
-BASES2FASTQ_DOCKER = "elembio/bases2fastq:v2.1.0"
+BASES2FASTQ_DOCKER = "seglh/bases2fastq:2.3.0"
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
@@ -445,7 +445,8 @@ class DemultiplexConfig(PanelConfig):
         f"{RUNFOLDERS}/${{run_folder_name}} --force"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        "20250211_AV241501_NGS665FFV11Pool2AV",
+        "20251020_AV241501_NGS729A",
+        "20251020_AV241501_NGS729B",
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
         "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
