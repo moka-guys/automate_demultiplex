@@ -52,9 +52,9 @@ required for analysis of samples with that pan number
 
 # TODO in future do we want to swap physical paths for file IDs
 
-TOOLS_PROJECT = "project-ByfFPz00jy1fk6PjpZ95F27J"  # 001_ToolsReferenceData
+TOOLS_PROJECT = "project-J32193pK9yGfjP2GyZ94KZf4"  # 001_ToolsReferenceDataLondon
 MASKED_REFERENCE = (
-    f"{TOOLS_PROJECT}:file-GF84GF00QfBfzV35Gf8Qg53q"  # hs37d5_Pan4967.bwa-index.tar.gz
+    f"{TOOLS_PROJECT}:file-J341J12K9yGXVFbF1qpXFqxq"  # hs37d5_Pan4967.bwa-index.tar.gz
 )
 POLYEDGE_INPUTS = {  # Inputs for the polyedge DNAnexus app command
     "MSH2": {

@@ -117,78 +117,59 @@ AVITI_DEMULTIPLEX_SUCCESS = "Output stored in /output"
 NEXUS_IDS = {
     # Paths / IDs for data items in 001_Tools
     "FILES": {
-        "tso500_docker": f"{TOOLS_PROJECT}:file-Fz9Zyx00b5j8xKVkKv4fZ6JB",  # trusight-oncology-500-ruo-2.2.0.zip
-        "hs37d5_bwa_index": f"{TOOLS_PROJECT}:file-B6ZY4942J35xX095VZyQBk0v",  # hs37d5.bwa-index.tar.gz
-        "hs37d5_ref_with_index": f"{TOOLS_PROJECT}:file-ByYgX700b80gf4ZY1GxvF3Jv",  # hs37d5.fasta-index.tar.gz
-        "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-B6ZY7VG2J35Vfvpkj8y0KZ01",  # hs37d5.fa.gz
+        "hs37d5_bwa_index": f"{TOOLS_PROJECT}:file-J34V9gXKJqkj5P31fYkJvFG3",  # hs37d5.bwa-index.tar.gz
+        "hs37d5_ref_with_index": f"{TOOLS_PROJECT}:file-J341GzpK9yGY6B1XzGP8yKGV",  # hs37d5.fasta-index.tar.gz
+        "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-J341J2XK9yGXx01zgP9FYy8x",  # hs37d5.fa.gz
         "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
-        "ed_vcp1_readcount_normals_NOVASEQ": f"{TOOLS_PROJECT}:file-GgKKP4Q01jZ62QgF2bbPqz78",  # Pan5208_normals_v1.0.0.RData
-        "ed_CP2_readcount_normals_NOVASEQ": f"{TOOLS_PROJECT}:file-J098jB80fxG0fQP64PXXP447",  # Pan5279_normals_v1.1.0.RData
-        "ed_CP2_readcount_normals_AVITI": f"{TOOLS_PROJECT}:file-J0Kzf3804zjJygFfFfJqXG6K", # Pan5279_AVITI_normals_v1.0.0.RData
+        "ed_vcp1_readcount_normals_NOVASEQ": f"{TOOLS_PROJECT}:file-J340xFpK9yGzpJ0Yj8ZfGY54",  # Pan5208_normals_v1.0.0.RData
+        "ed_CP2_readcount_normals_NOVASEQ": f"{TOOLS_PROJECT}:file-J44y28pK9yGq9b9y2K42KjYz",  # Pan5279_normals_v1.1.0.RData
+        "ed_CP2_readcount_normals_AVITI": f"{TOOLS_PROJECT}:file-J340xG2K9yGyFjb25XpxBy3P", # Pan5279_AVITI_normals_v1.0.0.RData
 
-        "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-G7g9Pfj0jy1f87k1J1qqX83X",  # HD200_expectedsorted.vcf
+        "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-J34YbB2K9yGp9Z29gg26Z1pj",  # HD200_expectedsorted.vcf
     },
     "APPS": {
-        "tso500": f"{TOOLS_PROJECT}:applet-GZgv0Jj0jy1Yfbx3QvqyKjzp",  # TSO500_v1.6.0
-        "congenica_upload": f"{TOOLS_PROJECT}:applet-G8QGBK80jy1zJK6g9yVP7P8V",  # congenica_upload_v1.3.2
-        "congenica_sftp": f"{TOOLS_PROJECT}:applet-GFfJpj80jy1x1Bz1P1Bk3vQf",  # wes_congenica_sftp_upload_v1.0
-        "qiagen_upload": f"{TOOLS_PROJECT}:applet-Gb6G4k00v09KXfq8f6BP7f23",  # qiagen_upload_v1.0.0
-        "oncodeep_upload": f"{TOOLS_PROJECT}:applet-GkkGQ880jy1vXXFZBFG7232G",  # oncodeep_upload v1.0.0
-        "upload_multiqc": f"{TOOLS_PROJECT}:applet-G2XY8QQ0p7kzvPZBJGFygP6f",  # upload_multiqc_v1.4.0
-        "multiqc": f"{TOOLS_PROJECT}:applet-GXqBzg00jy1pXkQVkY027QqV",  # multiqc_v1.18.0
-        "sompy": f"{TOOLS_PROJECT}:applet-G9yPb780jy1p660k6yBvQg07",  # sompy_v1.2
-        "sambamba": f"{TOOLS_PROJECT}:applet-G6vyyf00jy1kPkX9PJ1YkxB1",  # chanjo_sambamba_coverage_v1.13
-        "fastqc": f"{TOOLS_PROJECT}:applet-GKXqZV80jy1QxF4yKYB4Y3Kz",  # fastqc_v1.4.0
-        "gatk": f"{TOOLS_PROJECT}:applet-FYZ097j0jy1ZZPx30GykP63J",  # gatk3_human_exome_pipeline_v1.5
+        "congenica_upload": f"{TOOLS_PROJECT}:applet-J3Px8vpK9yGVF55Fy3kvFb0f",  # congenica_upload_v1.3.3
+        "oncodeep_upload": f"{TOOLS_PROJECT}:applet-J3PxV8BK9yGzPK2vV9921Jpx",  # oncodeep_upload v1.0.1
+        "multiqc": f"{TOOLS_PROJECT}:applet-J3PxQJpK9yGQ2x8Fpf3304zV",  # multiqc_v1.18.1
+        "sambamba_vcp1": f"{TOOLS_PROJECT}:applet-J3XPXyBK9yGpfyjPb2KYg82g",  # chanjo_sambamba_coverage_v1.13.1
+        "sambamba_cp2": f"{TOOLS_PROJECT}:applet-J3XKp62K9yGpjP2yvP93Z68K",  # sambamba_coverage_v2.0.1
+        "fastqc": f"{TOOLS_PROJECT}:applet-J3PxBkXK9yGZ071FgGb11QKk",  # fastqc_v1.4.1
+        "gatk": f"{TOOLS_PROJECT}:applet-J3PxJx2K9yGZZ2j2BKV86Jgj",  # gatk3_human_exome_pipeline_v1.5.1
         "sentieon": f"{TOOLS_PROJECT}:app-Gy4j5z00PPyQ5qv5FBXy0ZZp",  # Sentieon germline FASTQ to VCF v5.1.0
-        "peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",  # peddy_v1.5
-        "ed_readcount": f"{TOOLS_PROJECT}:applet-GyQGKjQ0qG6x59F4f1qBFvgz",  # ED_readcount_analysis_v1.5.0
-        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-GybZV0006bZFBzgf54KP7BKj",  # ED_cnv_calling_v1.4.0
-        "rpkm": f"{TOOLS_PROJECT}:applet-FxJj0F00jy1ZVXp36PBz2p1j",  # RPKM_using_conifer_v1.6
-        "duty_csv": f"{TOOLS_PROJECT}:applet-Gp75GB00360KXPV4Jy7PPFfQ",  # duty_csv_v1.5.0
+        #"peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",  # peddy_v1.5
+        "ed_readcount": f"{TOOLS_PROJECT}:applet-J3Px9ZXK9yGjzJv34bqfXXbz",  # ED_readcount_analysis_v1.5.1
+        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J3XVQPBK9yGvV0xpxJVf14xp",  # ED_cnv_calling_v1.6.1
+        "rpkm": f"{TOOLS_PROJECT}:applet-J3PxXqpK9yGg671GY3288gbF",  # RPKM_using_conifer_v1.6.1
+        "duty_csv": f"{TOOLS_PROJECT}:applet-J3XVVFBK9yGzZz6qg883q1JZ",  # duty_csv_v1.5.1
     },
     "WORKFLOWS": {
-        "gatk_pipe": f"{TOOLS_PROJECT}:workflow-Gvy8YZ80jy1bb9zzb5JZBBX3",  # GATK3.5_v2.19
-        "seglh_pipe": f"{TOOLS_PROJECT}:workflow-Gzj03g80jy1XbKzZY4yz7JXZ",  # SEGLH_RD_v1.3
-        "wes": f"{TOOLS_PROJECT}:workflow-FjjbQ5Q0jy1ZgyjQ3g1zgx9k",  # MokaWES_v1.8
-        "snp": f"{TOOLS_PROJECT}:workflow-GB3kyJj0jy1j06704fxX9J7j",  # MokaSNP_v1.2.0
+        "gatk_pipe": f"{TOOLS_PROJECT}:workflow-J3XPgzXK9yGbgg33xp68kXGx",  # GATK3.5_v2.20
+        "seglh_pipe": f"{TOOLS_PROJECT}:workflow-J3Pyjk2K9yGzPqKz0XGzqq6Z",  # SEGLH_RD_v1.5
     
     },
     "STAGES": {
         "gatk_pipe": {
-            "filter_vcf": "stage-G5Kpgv80zB02Q64zFf94G05F",
-            "gatk": "stage-F28y4qQ0jy1fkqfy5v2b8byx",
-            "fastqc": "stage-Bz3YpP80jy1Y1pZKbZ35Bp0x",
-            "bwa": "stage-Byz9BJ80jy1k2VB9xVXBp0Fg",
-            "picard": "stage-F9GK4QQ0jy1qj14PPZxxq3VG",
-            "happy": "stage-G8V205j0fB6QGKXQ2gZ5pB1z",
-            "sambamba": "stage-F35zBKQ0jy1XpfzYPZY4bgX6",
-            "fhprs": "stage-G9BfkZQ0fB6jZY7v1PfJ81F6",
-            "polyedge": "stage-GK71VJ80VQgQkjvz0vyQ8YV1",
+            "filter_vcf": "stage-J3XPv9XK9yGfg29yQQ8kkg5P",
+            "gatk": "stage-J3XPpypK9yGX7Yq8f6z9v522",
+            "fastqc": "stage-J3XPjQ2K9yGYGVf6x2zjPgP6",
+            "bwa": "stage-J3XPjkBK9yGVQYBf32jkV12K",
+            "picard": "stage-J3XPp62K9yGX7Yq8f6z9v50y",
+            "happy": "stage-J3XPx1XK9yGp8BZf0v3fB26F",
+            "sambamba": "stage-J3XPy6BK9yGfB6J3BB5xpG1B",
+            "fhprs": "stage-J3XPvfpK9yGy87ZYP3kzFfqq",
+            "polyedge": "stage-J3XQ032K9yGQ2x8Fpf34002p",
         },
         "seglh_pipe": {
-            "filter_vcf": "stage-G77VfJ803JGy589J21p7Jkqj",
-            "sentieon": "stage-Ff0P73j0GYKX41VkF3j62F9j",
-            "fastqc": "stage-Ff0P5Jj0GYKY717pKX3vX8Z3",
-            "picard": "stage-Ff0P5pQ0GYKVBB0g1FG27BV8",
-            "happy": "stage-GK8G6p803JGx48f74jf16Kjx",
-            "sambamba": "stage-Ff0P82Q0GYKQ4j8b4gXzjqxX",
-            "fhprs": "stage-GK8G6k003JGx48f74jf16Kjv",
-            "bcftools_stats": "stage-GK8G4V003JGYP6VB4q8kj9Kx",
-            "verifybam": "stage-GK8G6qj03JGxB3f84jX9J601",
-            "polyedge": "stage-GK8G6kj03JGyVGvk2Q44KQG1",          
-        },
-        "wes": {
-            "fastqc1": "stage-Ff0P5Jj0GYKY717pKX3vX8Z3",
-            "fastqc2": "stage-Ff0P5V00GYKyJfpX5bqX69Yg",
-            "picard": "stage-Ff0P5pQ0GYKVBB0g1FG27BV8",
-            "sambamba": "stage-Ff0P82Q0GYKQ4j8b4gXzjqxX",
-            "sentieon": "stage-Ff0P73j0GYKX41VkF3j62F9j",
-        },
-        "snp": {
-            "fastqc1": "stage-FgPp4V00YkVJVjKF4kYkBF8v",
-            "fastqc2": "stage-FgPp4V00YkVJVjKF4kYkBF90",
-            "sentieon": "stage-FgPp4XQ0YkV48jZG4Py6F55k",
+            "filter_vcf": "stage-J3Pyp9pK9yGfzFQ7yvzfv933",
+            "sentieon": "stage-J3Pykz2K9yGjy5YGf70QYqyF",
+            "fastqc": "stage-J3Pyk6pK9yGQq4B1XFQJZY8v",
+            "picard": "stage-J3PypzBK9yGX7Yq8f6z8yg5f",
+            "happy": "stage-J3PyxGXK9yGYX5F20BGfkZPY",
+            "sambamba": "stage-J3ZQjvBK9yGbyyxKYfj0yX2j",
+            "fhprs": "stage-J3Pyv7pK9yGYQ354qBB6Z62G",
+            "bcftools_stats": "stage-J3PyqfpK9yGx93XxkB02j5g9",
+            "verifybam": "stage-J3Pyy4pK9yGYfyqJ19g3fXyf",
+            "polyedge": "stage-J3PyvyXK9yGQ5BjX7jbYPbkg",          
         },
     },
 }
@@ -198,7 +179,7 @@ NEXUS_IDS["WORKFLOWS"]["oncodeep"] = NEXUS_IDS["APPS"]["fastqc"]
 
 APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     "tso500": {
-        "docker": f"-iTSO500_ruo={NEXUS_IDS['FILES']['tso500_docker']}",
+        #"docker": f"-iTSO500_ruo={NEXUS_IDS['FILES']['tso500_docker']}",
         "samplesheet": "-isamplesheet=${PROJECT_ID}:/${RUNFOLDER_NAME}/",
         "analysis_options": "-ianalysis_options=",
         "project_name": "-iproject_name=${PROJECT_NAME}",
@@ -302,7 +283,7 @@ UPLOAD_ARGS = {
 }
 
 DX_CMDS = {
-    "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --brief --auth ${AUTH})"',
+    "create_proj": 'PROJECT_ID="$(dx new project --bill-to %s "%s" --region ${DNANEXUS_REGION} --brief --auth ${AUTH})"',
     "find_proj_name": (
         f"{SDK_SOURCE}; dx find projects --name *%s* "
         "--auth %s | awk '{print $3}'"
@@ -324,21 +305,21 @@ DX_CMDS = {
     ),
     "gatk_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['gatk_pipe']} --priority high -y {JOB_NAME_STR}",
     "seglh_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['seglh_pipe']} --priority high -y {JOB_NAME_STR}",
-    "wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
-    "snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} --priority high -y {JOB_NAME_STR}",
-    "tso500": (
-        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --instance-type mem1_ssd1_v2_x72 --priority high -y {JOB_NAME_STR}"
-    ),
+    #"wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
+    #"snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} --priority high -y {JOB_NAME_STR}",
+    #"tso500": (
+        #f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --instance-type mem1_ssd1_v2_x72 --priority high -y {JOB_NAME_STR}"
+    #),
     "fastqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
-    "peddy": (  # TODO move instance type into app itself
-        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high "
-        f"-y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
-    ),
+    #"peddy": (  # TODO move instance type into app itself
+        #f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high "
+        #f"-y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
+    #),
     "multiqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['multiqc']} --priority high -y {JOB_NAME_STR}",
-    "upload_multiqc": (  # TODO move instance type into app itself
-        f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} "
-        f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
-    ),
+    #"upload_multiqc": (  # TODO move instance type into app itself
+        #f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} "
+        #f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
+    #),
     "ed_readcount": (
         f"ED_READCOUNT_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
@@ -350,21 +331,21 @@ DX_CMDS = {
         f"CNVCALLING_JOB_ID=$(dx run {NEXUS_IDS['APPS']['rpkm']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
-    "congenica_sftp": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y {JOB_NAME_STR}",
+    #"congenica_sftp": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y {JOB_NAME_STR}",
     "congenica_upload": (  # TODO move instance type into app itself
         f"sleep 3; JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
         f"--instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
     # Sleep command ensures the number of concurrent jobs does not surpass the QCII limit of 10
-    "qiagen_upload": (
-        f"sleep 1.2m; JOB_ID=$(dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}"
-    ),
+    #"qiagen_upload": (
+        #f"sleep 1.2m; JOB_ID=$(dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}"
+    #),
     "oncodeep_upload": (
         f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['oncodeep_upload']} --priority high -y "
         f"{JOB_NAME_STR}"
     ),
-    "sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
-    "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba']} --priority high -y {JOB_NAME_STR}",
+    #"sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
+    "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba_cp2']} --priority high -y {JOB_NAME_STR}",
     "duty_csv": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y {JOB_NAME_STR}",
 }
 
@@ -494,6 +475,7 @@ class SWConfig(PanelConfig):
     AVITI02_RUNFOLDER = AVITI02_RUNFOLDER
     AVITI_IDS = AVITI_IDS
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
+    DNANEXUS_REGION = "aws:eu-west-2-g" # London AWS region code
     if BRANCH == "main":  # Prod branch
 
         BSPS_ID = "BSPS_MD"
@@ -605,6 +587,7 @@ class SWConfig(PanelConfig):
             "sentieon_reads2": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.reads2_fastqgzs=",
             "sentieon_sample": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.sample=",
             "sentieon_gvcf": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.output_gvcf=false",
+            "sentieon_algo": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.germline_algo=Haplotyper",
             "sentieon_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}=",
             "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['filter_vcf']}.bedfile=",
             "filter_vcf_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['filter_vcf']}=mem1_ssd1_v2_x2",
@@ -635,22 +618,7 @@ class SWConfig(PanelConfig):
             "polyedge_poly_end": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['polyedge']}.poly_end=",
             "polyedge_skip": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['polyedge']}.skip=false",
         },
-        "wes": {
-            "fastqc1_reads": f"-i{NEXUS_IDS['STAGES']['wes']['fastqc1']}.reads=",
-            "fastqc2_reads": f"-i{NEXUS_IDS['STAGES']['wes']['fastqc2']}.reads=",
-            "picard_bed": f"-i{NEXUS_IDS['STAGES']['wes']['picard']}.vendor_exome_bedfile=",
-            "sambamba_bed": f"-i{NEXUS_IDS['STAGES']['wes']['sambamba']}.sambamba_bed=",
-            # Prevents incorrect parsing from fastq filename
-            "sentieon_samplename": f"-i{NEXUS_IDS['STAGES']['wes']['sentieon']}.sample=",
-            "sentieon_bed": f"-i{NEXUS_IDS['STAGES']['wes']['sentieon']}.targets_bed=",
-        },
-        "snp": {
-            "fastqc1_reads": f"-i{NEXUS_IDS['STAGES']['snp']['fastqc1']}.reads=",
-            "fastqc2_reads": f"-i{NEXUS_IDS['STAGES']['snp']['fastqc2']}.reads=",
-            "sentieon_bed": f"-i{NEXUS_IDS['STAGES']['snp']['sentieon']}.targets_bed=",
-            # Prevents incorrect parsing from fastq filename
-            "sentieon_samplename": f"-i{NEXUS_IDS['STAGES']['snp']['sentieon']}.sample=",
-        },
+
     }
 
 

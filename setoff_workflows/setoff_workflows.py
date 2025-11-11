@@ -401,6 +401,7 @@ class ProcessRunfolder(SWConfig):
         lines_to_write = [
             SWConfig.SDK_SOURCE,
             f"AUTH={self.dnanexus_auth}",
+            f"DNANEXUS_REGION={SWConfig.DNANEXUS_REGION}",
             SWConfig.DX_CMDS["create_proj"]
             % (
                 SWConfig.PROD_ORGANISATION,
