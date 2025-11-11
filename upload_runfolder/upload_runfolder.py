@@ -346,7 +346,7 @@ class UploadRunfolder(URConfig):
         # the project name without the first four characters (002_)
         # Conditional added to alter subdirectory path for AVITI as folder name and run name
         # are different - keeps same folder structure within project as on workstation
-        if self.sequencer_type == URConfig.AVITI_ID:
+        if self.sequencer_type in URConfig.AVITI_IDS:
             split_subfolder = self.nexus_identifiers["proj_name"].split("_")
             amended_subfolder = "20" + ("_".join([split_subfolder[1],split_subfolder[2],split_subfolder[4]]))
             nexus_project_subdirectory = os.path.join(

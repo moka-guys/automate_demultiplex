@@ -125,17 +125,19 @@ class SequencingRuns(SWConfig):
         # Combine Illumina and AVITI runs in respecitve directories
         # into one list
         illumina_runfolders = os.listdir(SWConfig.RUNFOLDERS)
-        aviti_runfolders = os.listdir(SWConfig.AVITI_RUNFOLDER)
-        sequenced_folders = illumina_runfolders + aviti_runfolders
+        aviti01_runfolders = os.listdir(SWConfig.AVITI01_RUNFOLDER)
+        aviti02_runfolders = os.listdir(SWConfig.AVITI02_RUNFOLDER)
+        sequenced_folders = illumina_runfolders + aviti01_runfolders + aviti02_runfolders
         # Iterate through list and check directory follows runfolder pattern and also exists in 
         # either the Illumina or AVITI directory. Specific Runfolder path is confirmed when 
         # RunFolderObject is created in Toolbox.py
         for folder in sequenced_folders:
             if re.compile(SWConfig.RUNFOLDER_PATTERN).match(folder):
-                if os.path.isdir(
-                    os.path.join(SWConfig.RUNFOLDERS, folder)
-                    ) or os.path.isdir(
-                        os.path.join(SWConfig.AVITI_RUNFOLDER, folder)):
+                if os.path.isdir(os.path.join(SWConfig.RUNFOLDERS, folder)
+                ) or os.path.isdir(
+                    os.path.join(SWConfig.AVITI01_RUNFOLDER, folder)
+                    ) or os.path.isdir(os.path.join(SWConfig.AVITI02_RUNFOLDER, folder)
+                    ):
                     script_logger.info(
                         script_logger.log_msgs["runfolder_identified"], folder
                     )
@@ -637,7 +639,7 @@ class ProcessRunfolder(SWConfig):
                     *self.rf_samples_obj.undetermined_fastqs_list,
                 ],
             }
-            if self.rf_obj.sequencer_type != SWConfig.AVITI_ID:
+            if self.rf_obj.sequencer_type not in SWConfig.AVITI_IDS:
                 pre_pipeline_upload_dict["bclconvert_qc"] = {
                 "cmd": self.upload_cmds["bclconvert_qc"],
                 "files_list": self.rf_obj.bclconvertstats_file,
@@ -804,7 +806,7 @@ class ProcessRunfolder(SWConfig):
         # Alignement, Filter and Location files for AVITI runs 
         if self.rf_samples_obj.pipeline in ["tso500"]:
             ignore = ""  # Upload BCL files for tso500 and dev runs
-        elif self.rf_samples_obj.sequencer_type == SWConfig.AVITI_ID:
+        elif self.rf_samples_obj.sequencer_type in SWConfig.AVITI_IDS:
             ignore = "/BaseCalls,/Alignment,/Filter,/Location"
         else:
             ignore = "/L00"
@@ -1073,8 +1075,6 @@ class MskPipeline:
         docker_api_cmd = [MSK_runfolder, MSK_jobID, docker]
         for api_cmd in docker_api_cmd:
             self.decision_support_upload_cmds.append(api_cmd)
-        # Record MSK commands in workflow list so a dx_run_commands script is generated
-        self.workflow_cmds.extend(self.decision_support_upload_cmds)
 
 class SnpPipeline:  # TODO eventually remove this and associated pipeline-specific functions
     """
@@ -1362,7 +1362,7 @@ class CustomPanelsPipelines:
                             SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"],
                         ]
                     )
-                    if self.rf_obj.sequencer_type == SWConfig.AVITI_ID:
+                    if self.rf_obj.sequencer_type in SWConfig.AVITI_IDS:
                         sequencer_panel = "_AVITI"
                     else:
                         sequencer_panel = "_NOVASEQ"
