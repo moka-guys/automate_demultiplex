@@ -236,7 +236,6 @@ def get_runfolder_path(sequencer_type: str, runfolder_name: str) -> str:
     """
     if sequencer_type in ToolboxConfig.AVITI_IDS:
         return f"{ToolboxConfig.RUNFOLDERS}/{sequencer_type}/{runfolder_name}"
-        #return os.path.join(ToolboxConfig.AVITI01_RUNFOLDER, runfolder_name)
     else:
         return os.path.join(ToolboxConfig.RUNFOLDERS, runfolder_name)
 
@@ -255,23 +254,6 @@ def get_runcompletefile_path(sequencer_type: str, runfolderpath: str) -> str:
         return os.path.join(
             runfolderpath, ToolboxConfig.FLAG_FILES["illumina_seq_complete"]
         )
-
-#def get_samplesheet_path(sequencer_type: str,samplesheet_name: str) -> str:
-#    """
-#    Return tech team uploaded samplesheet filepath based on sequencer used - 
-#    filepath necessary for Illumina runs but not AVITI 
-#        :param sequencer_type           Sequencer type string
-#        :param samplesheet_name (str):  Samplesheet name string
-#        :return (str):                  Samplesheet file path
-#    """
-#    if sequencer_type in ToolboxConfig.AVITI_IDS:
-#        return os.path.join(
-#            ToolboxConfig.AVITI_SAMPLESHEET, samplesheet_name
-#        )
-#    else:
-#        return os.path.join(
-#            ToolboxConfig.RUNFOLDERS, "samplesheets", samplesheet_name
-#        )
 
 def get_demultiplexlog_file(sequencer_type: str, runfolderpath: str) -> str:
     """
@@ -1215,7 +1197,6 @@ class SampleObject(ToolboxConfig):
             :return pannum (Optional[str]): Panel number that matches a config-defined
                                             panel number, or None if pannum not valid
         """
-        # print(ToolboxConfig.PANEL_DICT[pannum]["panel_name"])
         try:
             pannum = str(re.search(r"Pan\d+", self.sample_name).group()).strip()
             if self.validate_pannum(pannum):
