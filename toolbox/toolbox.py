@@ -588,6 +588,9 @@ class RunfolderObject(ToolboxConfig):
         self.sscheck_flagfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["sscheck_flag"]
         )
+        self.fastq_validation_fail_flagfile = os.path.join(
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["fastq_validation_fail"]
+        )
         self.demultiplexlog_file = get_demultiplexlog_file(self.sequencer_type, self.runfolderpath)
         self.bclconvert_log_output_dir = os.path.join(
             self.runfolderpath, "Bcl_convert_logs"

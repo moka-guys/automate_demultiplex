@@ -410,6 +410,7 @@ class DemultiplexConfig(PanelConfig):
         "samplesheet_success": "Samplesheet check successful with no errors identified: %s",
         "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors: %s ",
         "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s",
+        "fastq_validation_fail_flag": "Fastq validation failed on %s. Remove this file after resolving the issue to re-trigger demultiplexing.",
     }
     TESTING = TESTING
     BCLCONVERT_CMD = (
@@ -686,6 +687,7 @@ class ToolboxConfig(PanelConfig):
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
         "illumina_seq_complete": "RTAComplete.txt",  # Illumina Sequencing complete file
         "aviti_seq_complete": "RunUploaded.json", # AVITI Sequencing complete file
+        "fastq_validation_fail": "fastq_validation_failed.txt",  # Prevent repeated demultiplex attempts after validation failure
     }
     TEST_PROGRAMS_DICT = {
         "dx_toolkit": {

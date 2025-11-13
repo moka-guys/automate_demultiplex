@@ -299,7 +299,11 @@ class DemultiplexRunfolder(DemultiplexConfig):
         returns True as demultiplexing is required
             :return None:
         """
-        if self.upload_flagfile_absent() and self.demultiplex_docker_log_absent():
+        if (
+            self.upload_flagfile_absent()
+            and self.demultiplex_docker_log_absent()
+            and self.fastq_validation_fail_flag_absent()
+        ):
             if not self.previous_samplesheet_check_fail():
                 self.demux_rf_logger.info(
                     self.demux_rf_logger.log_msgs["ad_version"],
@@ -350,6 +354,19 @@ class DemultiplexRunfolder(DemultiplexConfig):
                 script_logger.log_msgs["demux_not_complete"],
                 self.rf_obj.demultiplexlog_file,
             )
+            return True
+
+    def fastq_validation_fail_flag_absent(self) -> Optional[bool]:
+        """
+        Check if a previous fastq validation failure flag file is present
+            :return (Optional[bool]): Return True if no previous flag exists
+        """
+        if os.path.isfile(self.rf_obj.fastq_validation_fail_flagfile):
+            script_logger.info(
+                script_logger.log_msgs["fastq_validation_flagfile_present"],
+                self.rf_obj.fastq_validation_fail_flagfile,
+            )
+        else:
             return True
 
     def previous_samplesheet_check_fail(self) -> Optional[bool]:
@@ -854,6 +871,16 @@ class DemultiplexRunfolder(DemultiplexConfig):
                                 dest_file.write(line)
                 return True
             else:
+                write_lines(
+                    self.rf_obj.fastq_validation_fail_flagfile,
+                    "w",
+                    DemultiplexConfig.STRINGS["fastq_validation_fail_flag"]
+                    % datetime.datetime.now(),
+                )
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["fastq_validation_flagfile_created"],
+                    self.rf_obj.fastq_validation_fail_flagfile,
+                )
                 os.remove(
                     self.rf_obj.demultiplexlog_file
                 )  # Demultiplexing log file removed to trigger re-demultiplex
