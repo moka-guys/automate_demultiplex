@@ -41,7 +41,8 @@ if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
     SCRIPT_MODE = "PROD_MODE"
     JOB_NAME_STR = "--name "
     RUNFOLDERS = "/media/data1/share"
-    AVITI_RUNFOLDER = "/media/data1/share/AV241501"
+    AVITI01_RUNFOLDER = "/media/data1/share/AV241501"
+    AVITI02_RUNFOLDER = "/media/data1/share/AV250605"
     AVITI_SAMPLESHEET = "/media/data1/share/samplesheets"
     AD_LOGDIR = os.path.join(DOCUMENT_ROOT, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add prod mail recipients
@@ -64,7 +65,8 @@ else:  # Testing branch
     # determines which slack channel to send the alert to
     JOB_NAME_STR = "--name TEST_MODE@"
     RUNFOLDERS = "/media/data1/share/testing"
-    AVITI_RUNFOLDER = "/media/data1/share/AV241501/testing"
+    AVITI01_RUNFOLDER = "/media/data1/share/testing/AV241501"
+    AVITI02_RUNFOLDER = "/media/data1/share/testing/AV250605"
     AVITI_SAMPLESHEET = "/media/data1/share/AV241501/testing/samplesheets"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
@@ -82,7 +84,9 @@ CREDENTIALS = {
     "adx_authtoken": ".archer_authentication_mokaguys.txt"
 }
 NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
-AVITI_ID = "AV241501" # Aviti sequencer ID
+AVITI01_ID = "AV241501" # Aviti sequencer ID
+AVITI02_ID = "AV250605" # Second Aviti Sequencer ID
+AVITI_IDS = ["AV241501","AV250605"]
 # TO DO write if loop for fastq file locations based on sequencer
 RUNFOLDER_PATTERN = "^[0-9]{6}.*$"  # Runfolders start with 6 digits
 FASTQ_DIRS = {
@@ -395,10 +399,9 @@ class DemultiplexConfig(PanelConfig):
     """
 
     NOVASEQ_ID = NOVASEQ_ID
-    AVITI_ID = AVITI_ID
+    AVITI_IDS = AVITI_IDS
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
-    AVITI_RUNFOLDER = AVITI_RUNFOLDER
     BASES2FASTQ_CPU = 10
     STRINGS = {
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
@@ -445,8 +448,7 @@ class DemultiplexConfig(PanelConfig):
         f"{RUNFOLDERS}/${{run_folder_name}} --force"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        "20251020_AV241501_NGS729A",
-        "20251020_AV241501_NGS729B",
+        "20251104_AV250605_NGS729AV2413pM",
         "999999_NB552085_0496_DEMUXINTEG",
         "999999_M02353_0496_000000000-DEMUX",
         "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
@@ -462,7 +464,8 @@ class DemultiplexConfig(PanelConfig):
         "M02353": {"requires_ic": False},
         "M02631": {"requires_ic": False},
         NOVASEQ_ID: {"requires_ic": True},
-        AVITI_ID: {"requires_ic": False},
+        AVITI01_ID: {"requires_ic": False},
+        AVITI02_ID: {"requires_ic": False},
     }
     SEQ_REQUIRE_IC = [k for k, v in SEQUENCER_IDS.items() if v["requires_ic"]]
 
@@ -485,8 +488,9 @@ class SWConfig(PanelConfig):
     SDK_SOURCE = SDK_SOURCE
     UPLOAD_ARGS = UPLOAD_ARGS
     RUNFOLDERS = RUNFOLDERS
-    AVITI_RUNFOLDER = AVITI_RUNFOLDER
-    AVITI_ID = AVITI_ID
+    AVITI01_RUNFOLDER = AVITI01_RUNFOLDER
+    AVITI02_RUNFOLDER = AVITI02_RUNFOLDER
+    AVITI_IDS = AVITI_IDS
     PROD_ORGANISATION = "org-viapath_prod"  # Prod org for billing
     if BRANCH == "main":  # Prod branch
 
@@ -662,9 +666,11 @@ class ToolboxConfig(PanelConfig):
     CREDENTIALS = CREDENTIALS
     FASTQ_DIRS = FASTQ_DIRS
     RUNFOLDERS = RUNFOLDERS
-    AVITI_RUNFOLDER = AVITI_RUNFOLDER
-    AVITI_ID = AVITI_ID
+    AVITI01_ID = AVITI01_ID
+    AVITI02_ID = AVITI02_ID
+    AVITI_IDS = AVITI_IDS
     NOVASEQ_ID = NOVASEQ_ID
+    
     AVITI_SAMPLESHEET = AVITI_SAMPLESHEET
     TIMESTAMP = TIMESTAMP
     PSCON_IDS = [
@@ -719,7 +725,7 @@ class URConfig:
     CREDENTIALS = CREDENTIALS
     DX_CMDS = DX_CMDS
     TIMESTAMP = TIMESTAMP
-    AVITI_ID = AVITI_ID
+    AVITI_IDS = AVITI_IDS
     STRINGS = {
         "upload_started": "Upload started",  # Statement to write to DNAnexus upload started file
     }

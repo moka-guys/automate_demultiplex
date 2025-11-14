@@ -92,8 +92,9 @@ class GetRunfolders(DemultiplexConfig):
                 folders = DemultiplexConfig.DEMULTIPLEX_TEST_RUNFOLDERS
             else:
                 illumina_runfolders = os.listdir(DemultiplexConfig.RUNFOLDERS)
-                aviti_runfolders = os.listdir(DemultiplexConfig.AVITI_RUNFOLDER)
-                folders = illumina_runfolders + aviti_runfolders
+                aviti01_runfolders = os.listdir(DemultiplexConfig.AVITI01_RUNFOLDER)
+                aviti02_runfolders = os.listdir(DemultiplexConfig.AVITI02_RUNFOLDER)
+                folders = illumina_runfolders + aviti01_runfolders + aviti02_runfolders
 
             for folder_name in folders:
                 sequencer_type = get_sequencer_type(folder_name)
@@ -533,7 +534,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
             # Conditional added to deal with the multiple outputs that are saved in the 
             # RunUploaded.json file. If run fails the file is still made but does not
             # have the "OutcomeCompleted" value
-            if self.rf_obj.sequencer_type == DemultiplexConfig.AVITI_ID:
+            if self.rf_obj.sequencer_type in DemultiplexConfig.AVITI_IDS:
                 with open(self.rf_obj.runcompletefile_path, 'r') as file:
                     json_file = json.load(file)
                     if json_file["outcome"] == "OutcomeCompleted":
@@ -564,7 +565,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         Check whether run was processed on Illumina sequencer
             :return (Optional[bool]): True if sequenced on Illumina
         """
-        if self.rf_obj.sequencer_type != DemultiplexConfig.AVITI_ID:
+        if self.rf_obj.sequencer_type not in DemultiplexConfig.AVITI_IDS:
             return True
         else:
             return False
@@ -840,7 +841,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     err  # Write stderr to demultiplex runfolder logfile 
                 )
                 # Use sequencer type to copy over the correct output log to demultiplexlog_file
-                if self.rf_obj.sequencer_type == DemultiplexConfig.AVITI_ID:
+                if self.rf_obj.sequencer_type in DemultiplexConfig.AVITI_IDS:
                     self.copy_file(
                         self.rf_obj.bases2fastq_log_output, 
                         self.rf_obj.demultiplexlog_file
@@ -873,7 +874,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         Return either the bcl2fastq or bases2fastq demultiplex command based on sequencer used
             :returns (str):     Command string to be actioned for demultiplexing
         """
-        if self.rf_obj.sequencer_type == DemultiplexConfig.AVITI_ID:
+        if self.rf_obj.sequencer_type in DemultiplexConfig.AVITI_IDS:
             demultiplex_cmd = DemultiplexConfig.BASES2FASTQ_CMD % (
             self.user,
             self.user,
