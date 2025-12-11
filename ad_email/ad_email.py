@@ -108,7 +108,7 @@ class AdEmail(AdEmailConfig):
         self.msg["X-Priority"] = str(email_priority)  # Set email priority. 1 is highest
         try:
             self.msg["Subject"] = email_subject
-            self.msg["From"] = self.sender
+            self.msg["From"] = f"Automated Scripts<{self.sender}>"
             self.msg["To"] = ", ".join(recipients)
             self.msg.attach(
                 MIMEText(email_message, "html", "utf-8")
