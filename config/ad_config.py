@@ -30,10 +30,10 @@ PROJECT_DIR = str(Path(__file__).absolute().parent.parent)  # Project working di
 DOCUMENT_ROOT = "/".join(PROJECT_DIR.split("/")[:-2])
 BRANCH = Repository(PROJECT_DIR).head.shorthand
 MAIL_SETTINGS = {
-    "host": "email-smtp.eu-west-1.amazonaws.com",
+    "host": "email-smtp.eu-west-2.amazonaws.com",
     "port": 587,
-    "binfx_email": "gst-tr.mokaguys@nhs.net",
-    "alerts_email": "moka.alerts@gstt.nhs.uk",
+    "binfx_email": "gsttbioinformatics@synnovis.co.uk",
+    "alerts_email": "no_reply@kingspm.uk",
 }
 
 if BRANCH == "main" and "pytest" not in sys.modules:  # Prod branch
@@ -136,7 +136,7 @@ NEXUS_IDS = {
         "ed_readcount": f"{TOOLS_PROJECT}:applet-J3Px9ZXK9yGjzJv34bqfXXbz",  # ED_readcount_analysis_v1.5.1
         "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J3XVQPBK9yGvV0xpxJVf14xp",  # ED_cnv_calling_v1.6.1
         "rpkm": f"{TOOLS_PROJECT}:applet-J3PxXqpK9yGg671GY3288gbF",  # RPKM_using_conifer_v1.6.1
-        "duty_csv": f"{TOOLS_PROJECT}:applet-J3XVVFBK9yGzZz6qg883q1JZ",  # duty_csv_v1.5.1
+        "duty_csv": f"{TOOLS_PROJECT}:applet-J4vjgq2K9yGQBP86VjQvgp5g",  # duty_csv_v1.5.2
     },
     "WORKFLOWS": {
         "gatk_pipe": f"{TOOLS_PROJECT}:workflow-J3XPgzXK9yGbgg33xp68kXGx",  # GATK3.5_v2.20
