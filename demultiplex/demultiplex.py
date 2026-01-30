@@ -34,6 +34,7 @@ from toolbox.toolbox import (
     execute_subprocess_command,
     validate_fastqs,
     get_sequencer_type,
+    check_package_version
 )
 from toolbox.toolbox import script_start_logmsg, script_end_logmsg
 
@@ -420,6 +421,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
                                 is valid), and SampleSheetCheck object containing any
                                 errors identified
         """
+        script_logger.info(f"seglh_naming:{check_package_version('seglh_naming')} is used")
+        script_logger.info(f"ss_validator:{check_package_version('samplesheet_validator')} is used")
         if not os.path.isfile(self.rf_obj.initial_sscheck_flagfile_path):
             attempt = "initial attempt"
             initial_try = True

@@ -27,7 +27,7 @@ from config.ad_config import ToolboxConfig
 from ad_logger.ad_logger import RunfolderLoggers
 import gzip
 import zlib
-
+import importlib.metadata
 
 def get_credential(file: str) -> None:
     """
@@ -859,9 +859,9 @@ class RunfolderSamples(ToolboxConfig):
         """
         library_numbers = []
         for samplename in self.samplename_dict.keys():
-            if "_" in str(samplename):  # Check there are underscores present
+            if "-" in str(samplename):  # Check there are dash present
                 # Split on underscores to capture library number e.g. ONC100 or NGS100
-                library_numbers.append(samplename.split("_")[0])
+                library_numbers.append(samplename.split("-")[0])
         if library_numbers:  # Should always be library numbers found
             self.logger.debug(
                 self.logger.log_msgs["library_nos_identified"],
@@ -1250,11 +1250,11 @@ class SampleObject(ToolboxConfig):
         primary_identifier, secondary_identifier = False, False
         if self.pipeline in ("wes", "gatk_pipe", "seglh_pipe", "snp"):
             # Extract the dna number from sample name
-            primary_identifier = self.sample_name.split("_")[2]
+            primary_identifier = self.sample_name.split("-")[2]
             secondary_identifier = False  # Secondary identifiers are not input to Moka
         elif self.pipeline in ("tso500", "archerdx", "oncodeep", "msk"):
             # Collect 3rd and 4th elements (identifiers)
-            primary_identifier, secondary_identifier = self.sample_name.split("_")[2:4]
+            primary_identifier, secondary_identifier = self.sample_name.split("-")[2:4]
             # Negative and positive controls only have one ID so set id2 to null
             if any([self.neg_control, self.pos_control]):
                 secondary_identifier = "NULL"
@@ -1347,3 +1347,13 @@ class SampleObject(ToolboxConfig):
             "panel_settings": self.panel_settings,
             "fastqs": self.fastqs_dict,
         }
+
+def check_package_version(package_name):
+    try:
+        version = importlib.metadata.version(package_name)
+        print(f"{package_name} version: {version}")
+        return version
+    except importlib.metadata.PackageNotFoundError as e:
+        raise RuntimeError(
+            f"Package {package_name} is not installed in this environment"
+        ) 
