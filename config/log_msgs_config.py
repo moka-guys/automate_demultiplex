@@ -110,6 +110,10 @@ LOG_MSGS = {
         "file_copy_success": "File successfully copied from %s to %s",
         "file_copy_fail": "Could not copy file - file does not exist: %s",
         "re_demultiplex": "Invalid fastqs were identified. Demultiplex log has been removed to trigger re-demultiplex",
+        "fastq_validation_flagfile_created": "Created fastq validation failure flagfile: %s",
+        "fastq_validation_flagfile_present": (
+            "Fastq validation previously failed for this run. Remove %s after fixing the issue to allow reprocessing"
+        ),
     },
     "sw": {
         "runfolder_identified": "Identified runfolder: %s",
