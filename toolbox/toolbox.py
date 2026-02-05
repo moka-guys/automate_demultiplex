@@ -409,12 +409,15 @@ def get_samplename_dict(
         logger.error(logger.log_msgs["ss_missing"])
 
 
-def validate_fastq_gzip(file_path: str, logger: logging.Logger) -> Optional[bool]:
+def validate_fastq_gzip(file_path: str, logger: logging.Logger) -> tuple:
     """
     Fast gzip validation with basic FASTQ structure checks
         :param file_path (str): Path to the FASTQ file
         :param logger (logging.Logger): Logger
-        :return (bool, str): True if valid, False and error message if not
+        :return (str, str): Tuple of (status, message) where status is one of:
+            - True: valid fastq
+            - False: invalid fastq (error)
+            - "warning": empty fastq (warning, not an error)
     """
     try:
         # Check compressed file header (magic number check)
@@ -427,7 +430,8 @@ def validate_fastq_gzip(file_path: str, logger: logging.Logger) -> Optional[bool
             f.seek(-4, 2)
             isize = int.from_bytes(f.read(4), 'little')
             if isize == 0:
-                return False, "Invalid zero uncompressed size"
+                # Empty fastq is a warning, not an error
+                return "warning", "Empty fastq file detected (zero uncompressed size)"
 
         # Quick decompression check of first block
         with gzip.open(file_path, 'rb') as f:
@@ -436,7 +440,8 @@ def validate_fastq_gzip(file_path: str, logger: logging.Logger) -> Optional[bool
             for _ in range(4):
                 line = f.readline().strip()
                 if not line:  # Handle empty lines early
-                    return False, "Incomplete FASTQ record"
+                    # Empty content is a warning, not an error
+                    return "warning", "Empty fastq file detected (incomplete FASTQ record)"
                 lines.append(line)
             
             # Basic FASTQ structure validation
@@ -461,29 +466,39 @@ def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[boo
     """
     Validate the created fastqs in the BaseCalls directory and log success
     or failure error message accordingly. If any failure, remove demultiplex log
-    file to trigger re-demultiplex on next script run
+    file to trigger re-demultiplex on next script run. Empty fastqs are logged
+    as warnings but do not cause the run to fail.
         :param fastq_dir_path (str):    Runfolder fastq directory path (within runfolder)
         :param logger (logging.Logger): Logger
         :return Optional[bool]:         Return True if fastqs are all determined to be valid
+                                        (empty fastqs are treated as warnings, not failures)
     """
     fastqs = sorted([x for x in os.listdir(fastq_dir_path) if x.endswith("fastq.gz")])
     returncodes = []
 
     for fastq in fastqs:
         full_path = os.path.join(fastq_dir_path, fastq)
-        is_valid, error_msg = validate_fastq_gzip(full_path, logger)
+        status, message = validate_fastq_gzip(full_path, logger)
         
-        if is_valid:
+        if status is True:
             logger.info(
                 logger.log_msgs["fastq_valid"],
                 fastq,
             )
             returncodes.append(True)
+        elif status == "warning":
+            # Empty fastq is a warning, not a failure - log warning but continue
+            logger.warning(
+                logger.log_msgs["fastq_warning"],
+                fastq,
+                message,
+            )
+            returncodes.append(True)  # Treat warnings as success
         else:
             logger.error(
                 logger.log_msgs["fastq_invalid"],
                 fastq,
-                error_msg,
+                message,
             )
             returncodes.append(False)
 
