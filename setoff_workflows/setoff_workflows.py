@@ -53,6 +53,7 @@ from toolbox.toolbox import (
     write_lines,
     execute_subprocess_command,
     get_samplename_dict,
+    validate_fastq_gzip,
 )
 from setoff_workflows.pipeline_emails import PipelineEmails
 from setoff_workflows.build_dx_commands import (
@@ -1305,18 +1306,30 @@ class CustomPanelsPipelines:
         self.decision_support_upload_cmds = []
         self.sql_queries = []
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
+        self.samples_with_empty_fastqs = []  # Track samples skipped due to empty fastqs
 
         for sample_name in self.rf_samples_obj.samples_dict.keys():
+            sample_dict = self.rf_samples_obj.samples_dict[sample_name]
+            pipeline_type = sample_dict["panel_settings"]["pipeline"]
+            
+            # For seglh_pipe, skip samples with empty fastqs
+            if pipeline_type == "seglh_pipe" and self._has_empty_fastqs(sample_dict):
+                self.logger.warning(
+                    self.logger.log_msgs["sample_empty_fastqs_skipped"],
+                    sample_name,
+                )
+                self.samples_with_empty_fastqs.append(sample_name)
+                continue  # Skip this sample
+            
             sample_cmds_obj = BuildSampleDxCommands(
                 self.rf_obj.runfolder_name,
-                self.rf_samples_obj.samples_dict[sample_name],
+                sample_dict,
                 self.logger,
             )
             # Add to gatk and sentieon depends list because RPKM / ExomeDepth must depend only upon the
             # sample workflows completing successfully, whilst other downstream
             # apps depend on all prior jobs completing succesfully
 
-            pipeline_type = sample_cmds_obj.sample_dict["panel_settings"]["pipeline"]
             if pipeline_type == "gatk_pipe":
                 cmd = sample_cmds_obj.create_gatk_pipe_cmd()
             elif pipeline_type == "seglh_pipe":
@@ -1338,12 +1351,14 @@ class CustomPanelsPipelines:
             )
 
         # CNV calling steps are a dependency of MultiQC
+        # Filter out samples with empty fastqs from CNV calculations
         cmd_list = []
         for core_panel in ["vcp1", "CP2"]:
             if core_panel in (
                 [
                     self.rf_samples_obj.samples_dict[k]["panel_settings"]["panel_name"]
                     for k, v in self.rf_samples_obj.samples_dict.items()
+                    if k not in self.samples_with_empty_fastqs  # Exclude empty fastq samples
                 ]
             ):
                 core_panel_pannos = [
@@ -1353,6 +1368,7 @@ class CustomPanelsPipelines:
                         "panel_name"
                     ]
                     == core_panel
+                    and k not in self.samples_with_empty_fastqs  # Exclude empty fastq samples
                 ]
                 # Make sure there are enough samples for RPKM and ExomeDepth
                 if len(core_panel_pannos) >= 3:
@@ -1406,3 +1422,29 @@ class CustomPanelsPipelines:
         self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_cnv_recombined"])
 
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
+
+    def _has_empty_fastqs(self, sample_dict: dict) -> bool:
+        """
+        Check if any of the sample's fastqs are empty.
+        Uses validate_fastq_gzip to detect empty fastq files.
+            :param sample_dict (dict): Sample dictionary containing fastq paths
+            :return (bool): True if any fastq is empty, False otherwise
+        """
+        if not sample_dict.get("fastqs"):
+            return True  # No fastqs means we should skip
+        
+        for read in ["R1", "R2"]:
+            fastq_path = sample_dict["fastqs"].get(read, {}).get("path")
+            if fastq_path and os.path.exists(fastq_path):
+                status, message = validate_fastq_gzip(fastq_path, self.logger)
+                if status == "warning":
+                    # Empty fastq detected
+                    self.logger.debug(
+                        "Empty fastq detected for sample: %s, read: %s, message: %s",
+                        sample_dict.get("sample_name"),
+                        read,
+                        message,
+                    )
+                    return True
+        return False
+

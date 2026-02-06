@@ -165,6 +165,7 @@ LOG_MSGS = {
         "fastq_wrong_naming": "The fastq has the wrong naming format and is being excluded from processing: %s. Exception: %s",
         "add_missing_sample": "Adding missing sample to the samples dictionary: %s",
         "not_fastq": "File is not a zipped fastq: %s",
+        "sample_empty_fastqs_skipped": "Sample %s skipped from processing due to empty fastq files",
         "undetermined_identified": "Undetermined file identified to exclude from processing: %s",
     },
     "backup": {
