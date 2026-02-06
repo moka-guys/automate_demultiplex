@@ -178,13 +178,7 @@ NEXUS_IDS["WORKFLOWS"]["oncodeep"] = NEXUS_IDS["APPS"]["fastqc"]
 
 
 APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
-    "tso500": {
-        #"docker": f"-iTSO500_ruo={NEXUS_IDS['FILES']['tso500_docker']}",
-        "samplesheet": "-isamplesheet=${PROJECT_ID}:/${RUNFOLDER_NAME}/",
-        "analysis_options": "-ianalysis_options=",
-        "project_name": "-iproject_name=${PROJECT_NAME}",
-        "runfolder_name": "-irunfolder_name=${RUNFOLDER_NAME}",
-    },
+
     "sambamba": {  # Used for TSO samples only as standalone app
         "bam": "-ibamfile=${PROJECT_ID}:/analysis_folder/Logs_Intermediates/StitchedRealigned/",
         "bai": "-ibam_index=${PROJECT_ID}:/analysis_folder/Logs_Intermediates/StitchedRealigned/",
@@ -305,21 +299,12 @@ DX_CMDS = {
     ),
     "gatk_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['gatk_pipe']} --priority high -y {JOB_NAME_STR}",
     "seglh_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['seglh_pipe']} --priority high -y {JOB_NAME_STR}",
-    #"wes": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['wes']} --priority high -y {JOB_NAME_STR}",
-    #"snp": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['snp']} --priority high -y {JOB_NAME_STR}",
-    #"tso500": (
-        #f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['tso500']} --instance-type mem1_ssd1_v2_x72 --priority high -y {JOB_NAME_STR}"
-    #),
     "fastqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
     #"peddy": (  # TODO move instance type into app itself
         #f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high "
         #f"-y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     #),
     "multiqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['multiqc']} --priority high -y {JOB_NAME_STR}",
-    #"upload_multiqc": (  # TODO move instance type into app itself
-        #f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['upload_multiqc']} "
-        #f"--priority high -y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
-    #),
     "ed_readcount": (
         f"ED_READCOUNT_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
@@ -331,20 +316,14 @@ DX_CMDS = {
         f"CNVCALLING_JOB_ID=$(dx run {NEXUS_IDS['APPS']['rpkm']} "
         f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
     ),
-    #"congenica_sftp": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_sftp']} --priority high -y {JOB_NAME_STR}",
     "congenica_upload": (  # TODO move instance type into app itself
         f"sleep 3; JOB_ID=$(dx run {NEXUS_IDS['APPS']['congenica_upload']} --priority high -y "
         f"--instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
     ),
-    # Sleep command ensures the number of concurrent jobs does not surpass the QCII limit of 10
-    #"qiagen_upload": (
-        #f"sleep 1.2m; JOB_ID=$(dx run {NEXUS_IDS['APPS']['qiagen_upload']} --priority high -y {JOB_NAME_STR}"
-    #),
     "oncodeep_upload": (
         f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['oncodeep_upload']} --priority high -y "
         f"{JOB_NAME_STR}"
     ),
-    #"sompy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sompy']} --priority high -y {JOB_NAME_STR}",
     "sambamba": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['sambamba_cp2']} --priority high -y {JOB_NAME_STR}",
     "duty_csv": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['duty_csv']} --priority high -y {JOB_NAME_STR}",
 }
