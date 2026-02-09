@@ -109,7 +109,7 @@ LOG_MSGS = {
         "cd_fail": "Cluster density calculation failed. Error: %s. Script exited",
         "file_copy_success": "File successfully copied from %s to %s",
         "file_copy_fail": "Could not copy file - file does not exist: %s",
-        "re_demultiplex": "Invalid fastqs were identified. Demultiplex log has been removed to trigger re-demultiplex",
+        "invalid_fastqs_warning": "Invalid fastqs were identified during validation. Please review the fastq validation messages above",
     },
     "sw": {
         "runfolder_identified": "Identified runfolder: %s",
