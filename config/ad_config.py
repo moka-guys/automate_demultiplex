@@ -122,8 +122,8 @@ NEXUS_IDS = {
         "hs37d5_ref_no_index": f"{TOOLS_PROJECT}:file-J341J2XK9yGXx01zgP9FYy8x",  # hs37d5.fa.gz
         "masked_reference": MASKED_REFERENCE,  # hs37d5_Pan4967.bwa-index.tar.gz
         "ed_vcp1_readcount_normals_NOVASEQ": f"{TOOLS_PROJECT}:file-J340xFpK9yGzpJ0Yj8ZfGY54",  # Pan5208_normals_v1.0.0.RData
-        "ed_CP2_readcount_normals_NOVASEQ": f"{TOOLS_PROJECT}:file-J44y28pK9yGq9b9y2K42KjYz",  # Pan5279_normals_v1.1.0.RData
-        "ed_CP2_readcount_normals_AVITI": f"{TOOLS_PROJECT}:file-J340xG2K9yGyFjb25XpxBy3P", # Pan5279_AVITI_normals_v1.0.0.RData
+        #"ed_CP2_readcount_normals_NOVASEQ": f"{TOOLS_PROJECT}:file-J44y28pK9yGq9b9y2K42KjYz",  # Pan5279_normals_v1.1.0.RData #no cp205 PON for novaseq
+        "ed_CP2_readcount_normals_AVITI": f"{TOOLS_PROJECT}:file-J66y3xXK9yGx16j7pP7kfYZ7", # Pan5346_AVITI_normals_v1.0.0.RData
 
         "sompy_truth_vcf": f"{TOOLS_PROJECT}:file-J34YbB2K9yGp9Z29gg26Z1pj",  # HD200_expectedsorted.vcf
     },
