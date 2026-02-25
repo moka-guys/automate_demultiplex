@@ -110,6 +110,7 @@ LOG_MSGS = {
         "file_copy_success": "File successfully copied from %s to %s",
         "file_copy_fail": "Could not copy file - file does not exist: %s",
         "re_demultiplex": "Invalid fastqs were identified. Demultiplex log has been removed to trigger re-demultiplex",
+        "fastqs_failed_warning": "WARNING: The following fastqs failed validation and may indicate failed samples: %s",
     },
     "sw": {
         "runfolder_identified": "Identified runfolder: %s",
@@ -165,6 +166,7 @@ LOG_MSGS = {
         "add_missing_sample": "Adding missing sample to the samples dictionary: %s",
         "not_fastq": "File is not a zipped fastq: %s",
         "undetermined_identified": "Undetermined file identified to exclude from processing: %s",
+        "sample_excluded_failed_fastq": "Sample excluded from seglh_pipe commands due to failed fastq validation: %s",
     },
     "backup": {
         "checking_runfolder": "Checking the runfolder exists: %s",
