@@ -457,17 +457,16 @@ def validate_fastq_gzip(file_path: str, logger: logging.Logger) -> Optional[bool
         return False, f"Unexpected error: {str(e)}"
 
 
-def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[bool]:
+def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> list:
     """
     Validate the created fastqs in the BaseCalls directory and log success
-    or failure error message accordingly. If any failure, remove demultiplex log
-    file to trigger re-demultiplex on next script run
+    or failure error message accordingly.
         :param fastq_dir_path (str):    Runfolder fastq directory path (within runfolder)
         :param logger (logging.Logger): Logger
-        :return Optional[bool]:         Return True if fastqs are all determined to be valid
+        :return (list):                 List of failed fastq filenames (empty if all valid)
     """
     fastqs = sorted([x for x in os.listdir(fastq_dir_path) if x.endswith("fastq.gz")])
-    returncodes = []
+    failed_fastqs = []
 
     for fastq in fastqs:
         full_path = os.path.join(fastq_dir_path, fastq)
@@ -478,18 +477,17 @@ def validate_fastqs(fastq_dir_path: str, logger: logging.Logger) -> Optional[boo
                 logger.log_msgs["fastq_valid"],
                 fastq,
             )
-            returncodes.append(True)
         else:
             logger.error(
                 logger.log_msgs["fastq_invalid"],
                 fastq,
                 error_msg,
             )
-            returncodes.append(False)
+            failed_fastqs.append(fastq)
 
-    if all(returncodes):
+    if not failed_fastqs:
         logger.info(logger.log_msgs["demux_success"])
-        return True
+    return failed_fastqs
 
 class RunfolderObject(ToolboxConfig):
     """
@@ -570,9 +568,7 @@ class RunfolderObject(ToolboxConfig):
         self.sscheck_flagfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["sscheck_flag"]
         )
-        self.fastq_validation_fail_flagfile = os.path.join(
-            self.runfolderpath, ToolboxConfig.FLAG_FILES["fastq_validation_fail"]
-        )
+        self.failed_fastqs = []
         self.demultiplexlog_file = get_demultiplexlog_file(self.sequencer_type, self.runfolderpath)
         self.bclconvert_log_output_dir = os.path.join(
             self.runfolderpath, "Bcl_convert_logs"
