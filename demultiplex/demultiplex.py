@@ -297,8 +297,8 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     self.sscheck_success_msg_present(self.rf_obj.sscheck_flagfile_path) or self.valid_samplesheet()
                 ):  # Early warning ss checks
                     requires_no_ic = self.seq_requires_no_ic()
-                    if requires_no_ic or self.run_integrity_check():
-                        if self.sequencing_complete():
+                    if self.sequencing_complete():
+                        if requires_no_ic or self.run_integrity_check():
                             if requires_no_ic or self.pass_integrity_check():
                                 self.copy_file(
                                     self.rf_obj.samplesheet_path,
