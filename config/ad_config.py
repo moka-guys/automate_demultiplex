@@ -405,7 +405,7 @@ class DemultiplexConfig(PanelConfig):
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
     BASES2FASTQ_CPU = 10
-    IC_SCRIPT = "/usr/local/src/mokaguys/development_area/integrity_checking/integrity_check.py"
+    IC_SCRIPT = "/usr/local/src/mokaguys/integrity_checking/integrity_check.py"
     STRINGS = {
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
