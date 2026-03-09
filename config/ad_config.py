@@ -405,13 +405,13 @@ class DemultiplexConfig(PanelConfig):
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
     BASES2FASTQ_CPU = 10
+    IC_SCRIPT = "/usr/local/src/mokaguys/development_area/integrity_checking/integrity_check.py"
     STRINGS = {
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
         "cd_success": "picard.illumina.CollectIlluminaLaneMetrics done",
-        "checksums_assessed": "Checksums assessed by AS: %s",  # Written to file by AS
-        "checksums_match": "Checksums match",  # Success message written to md5checksum file by integrity check scripts
-        "checksums_do_not_match": "Checksums do not match",  # Failure message written to md5sum file by integrity check scripts
+        "ic_success": "SUCCESS",  # Success message written to filecheck.txt by integrity check script
+        "ic_assessed": "Integrity check assessed by AS: %s",  # Written to filecheck.txt by AS to prevent repeated error logging
         "samplesheet_success": "Samplesheet check successful with no errors identified: %s",
         "samplesheet_fail": "Processing halted. SampleSheet contains SampleSheet errors: %s ",
         "upload_flag_umis": "Runfolder contains UMIs. Runfolder will not be uploaded and requires manual upload: %s",
@@ -689,7 +689,7 @@ class ToolboxConfig(PanelConfig):
         "upload_started": "DNANexus_upload_started.txt",  # Holds upload agent output
         "bclconvertlog": "bclconvert_output.log",  # Holds bclconvert logs
         "bases2fastqlog": "bases2fastq_output.log", # Holds bases2fastq logs
-        "md5checksum": "md5checksum.txt",  # File holding checksum results
+        "filecheck": "filecheck.txt",  # File holding integrity check results
         "initial_sscheck_flag": "initial_sscheck_flagfile.txt",  # Denotes initial SampleSheet has been checked
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
         "illumina_seq_complete": "RTAComplete.txt",  # Illumina Sequencing complete file

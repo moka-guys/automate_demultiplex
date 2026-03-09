@@ -9,7 +9,6 @@ from demultiplex import demultiplex
 from config import ad_config
 from .. import conftest
 from ad_logger import ad_logger
-from pytest_cases import fixture_union
 from ..conftest import test_data_temp
 
 
@@ -425,14 +424,6 @@ class TestDemultiplexRunfolder(object):
         ]
 
     @pytest.fixture(scope="function")
-    def checksumfile_present_pass_checked(self):
-        """
-        Return runfolders containing checksumfile containing matching checksums, a pass
-        message, and a previous checksum check message
-        """
-        return ["999999_A01229_0000_0000TEST10"]
-
-    @pytest.fixture(scope="function")
     def checksumfile_present_fail_notchecked(self):
         """
         Return runfolders containing checksumfile containing non-matching checksums, a
@@ -450,29 +441,6 @@ class TestDemultiplexRunfolder(object):
             "999999_A01229_0000_00000TEST7",
             "999999_A01229_0000_00000TEST9",
             "999999_A01229_0000_0000TEST11",
-        ]
-
-    fixture_union(
-        "no_prior_ic_rfs",
-        [
-            "checksumfile_present_pass_notchecked",
-            "checksumfile_present_fail_notchecked",
-        ],
-    )
-
-    @pytest.fixture(scope="function")
-    def checksumfile_absent(self):
-        """
-        Return runfolders with no checksum file
-        """
-        return [
-            "999999_A01229_0000_00000TEST1",
-            "999999_A01229_0000_00000TEST2",
-            "999999_A01229_0000_00000TEST3",
-            "999999_M02631_0000_00000TEST4",
-            "999999_A01229_0000_00000TEST5",
-            "999999_A01229_0000_00000TEST8",
-            "999999_A01229_0000_00000TEST9",
         ]
 
     @pytest.fixture(scope="function")
@@ -493,21 +461,6 @@ class TestDemultiplexRunfolder(object):
         return [
             # "999999_A01229_0000_00000TEST9",  # Fix as per comments in runfolders_toproc
             # "999999_A01229_0000_00000TEST7",  # Fix as per comments in runfolders_toproc
-        ]
-
-    @pytest.fixture(scope="function")
-    def checksums_checked(self):
-        """ """
-        return [
-            "Checksums match after 1 hours",
-            "Checksums assessed by AS",
-        ]
-
-    @pytest.fixture(scope="function")
-    def checksums_not_checked(self):
-        """ """
-        return [
-            "Checksums match after 1 hours",
         ]
 
     def test_demultiplexlog_absent_false(self, rf_with_bclconvertlog):
@@ -653,48 +606,28 @@ class TestDemultiplexRunfolder(object):
         assert not dr_obj.seq_requires_no_ic()
         ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    def test_prior_ic_fail(self, checksums_not_checked):
+    def test_pass_integrity_check_pass(self, checksumfile_present_pass_notchecked):
         """
-        Test function correctly identifies there has been a prior integrity check
-        """
-        dr_obj = get_dr_obj("")
-        assert not dr_obj.prior_ic(checksums_not_checked)
-        ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
-
-    def test_prior_ic_pass(self, checksums_checked):
-        """
-        Test function correctly identifies checksums have been assessed by the script
-        previously
-        """
-        dr_obj = get_dr_obj("")
-        assert dr_obj.prior_ic(checksums_checked)
-        ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
-
-    def test_checksums_match_pass(self, checksumfile_present_pass_notchecked):
-        """
-        Test function correctly identifies presence of checksum match string in checksum
-        file. Also test function adds line to denote integrity check has been assessed
+        Test function correctly identifies presence of SUCCESS string in filecheck.txt
         """
         for runfolder in checksumfile_present_pass_notchecked:
             dr_obj = get_dr_obj(runfolder)
-            dr_obj.checksums_match()
-            with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
-                checksumfile_contents = checksumfile.read()
-                assert "Checksums match" in checksumfile_contents
+            assert dr_obj.pass_integrity_check()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
-    # TODO add new test case that tests this - md5checksum checksums do not match message and checksums checked string
-    def test_checksums_match_fail(self, checksumfile_present_fail_notchecked):
+    def test_pass_integrity_check_fail(self, checksumfile_present_fail_notchecked):
         """
-        Test function correctly identifies presence of checksums do not match string in
-        checksum file. Also test function adds line to denote integrity check has been assessed
+        Test function correctly identifies absence of SUCCESS string in filecheck.txt,
+        writes the assessed marker on first call, and does not re-log error on second call
         """
         for runfolder in checksumfile_present_fail_notchecked:
             dr_obj = get_dr_obj(runfolder)
-            dr_obj.checksums_match()
-            with open(dr_obj.rf_obj.checksumfile_path, "r") as checksumfile:
-                checksumfile_contents = checksumfile.read()
-                assert "Checksums do not match" in checksumfile_contents
+            # First call: should fail and write the assessed marker
+            assert not dr_obj.pass_integrity_check()
+            with open(dr_obj.rf_obj.checksumfile_path, "r") as f:
+                assert "Integrity check assessed by AS" in f.read()
+            # Second call: should still fail but not re-log as error (assessed marker present)
+            assert not dr_obj.pass_integrity_check()
             ad_logger.shutdown_logs(dr_obj.demux_rf_logger)
 
     # @pytest.mark.nodisableloggers

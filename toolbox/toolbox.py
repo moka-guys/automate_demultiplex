@@ -560,7 +560,7 @@ class RunfolderObject(ToolboxConfig):
             self.runfolderpath, self.masterfile_name
         )
         self.checksumfile_path = os.path.join(
-            self.runfolderpath, ToolboxConfig.FLAG_FILES["md5checksum"]
+            self.runfolderpath, ToolboxConfig.FLAG_FILES["filecheck"]
         )
         self.initial_sscheck_flagfile_path = os.path.join(
             self.runfolderpath, ToolboxConfig.FLAG_FILES["initial_sscheck_flag"]

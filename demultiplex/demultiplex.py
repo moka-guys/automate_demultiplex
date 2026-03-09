@@ -191,28 +191,14 @@ class DemultiplexRunfolder(DemultiplexConfig):
         seq_requires_no_ic()
             Determines whether the run requires integrity checking (not possible on all
             sequencers)
-        checksumfile_exists()
-            Check if md5checksum file exists (i.e. integrity check has been performed
-            by integrity check scripts)
+        run_integrity_check()
+            Run the integrity check script on the runfolder (if filecheck.txt not yet
+            present), then return True once filecheck.txt exists
         sequencing_complete()
             Check if sequencing has completed for the current runfolder (presence of
             RTAComplete.txt)
         pass_integrity_check()
-            Check whether the integrity checking was successful
-        prior_ic(checksums)
-            Determines whether an integrity check has been previously performed by this
-            script
-        checksum_match_message(checksums)
-            Determine whether the md5sum file contains the checksums match message
-        checksums_match()
-            Reads the md5checksum file and checks for the presence of the CHECKSUM_MATCH_MSG /
-            CHECKSUM_DO_NOT_MATCH_MSG denoting that the runfolder has not / has been corrupted
-            during transfer from the sequencer respectively
-        write_checksums_assessed()
-            Write DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED message to file to prevent script
-            performing checks on future runs of the script
-        checksums_do_not_match_message(checksums)
-            Determine whethe the md5sum file contains the checksums do not match message
+            Check whether filecheck.txt contains the SUCCESS message
         calculate_cluster_density()
             Run dockerised GATK to run Picard CollectIlluminaLaneMetrics - this calculates
             cluster density and saves files (runfolder.illumina_phasing_metrics and
@@ -311,7 +297,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
                     self.sscheck_success_msg_present(self.rf_obj.sscheck_flagfile_path) or self.valid_samplesheet()
                 ):  # Early warning ss checks
                     requires_no_ic = self.seq_requires_no_ic()
-                    if requires_no_ic or self.checksumfile_exists():
+                    if requires_no_ic or self.run_integrity_check():
                         if self.sequencing_complete():
                             if requires_no_ic or self.pass_integrity_check():
                                 self.copy_file(
@@ -506,23 +492,31 @@ class DemultiplexRunfolder(DemultiplexConfig):
             self.demux_rf_logger.info(self.demux_rf_logger.log_msgs["seq_without_ic"])
             return True
 
-    def checksumfile_exists(self) -> Optional[bool]:
+    def run_integrity_check(self) -> Optional[bool]:
         """
-        Check if md5checksum file exists (i.e. integrity check has been performed
-        by integrity check scripts and it has written the checksums and success / failure
-        message to this file)
-            :return (Optional[bool]): Return True if md5checksum file exists
+        Run the integrity check script on the runfolder if filecheck.txt is not yet
+        present. Returns True once filecheck.txt exists (whether it was just created or
+        was already there from a previous run).
+            :return (Optional[bool]): Return True if filecheck.txt is present after
+                                      running the script
         """
+        if not os.path.isfile(self.rf_obj.checksumfile_path):
+            ic_cmd = f"python3 {DemultiplexConfig.IC_SCRIPT} {self.rf_obj.runfolderpath}"
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["ic_script_start"],
+                ic_cmd,
+            )
+            execute_subprocess_command(ic_cmd, self.demux_rf_logger)
         if os.path.isfile(self.rf_obj.checksumfile_path):
             self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["checksumfile_present"],
+                self.demux_rf_logger.log_msgs["ic_script_complete"],
                 self.rf_obj.checksumfile_path,
             )
             return True
         else:
             self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["checksumfile_absent"],
-                self.rf_obj.checksumfile_path,
+                self.demux_rf_logger.log_msgs["ic_script_failed"],
+                self.rf_obj.runfolderpath,
             )
 
     def sequencing_complete(self) -> Optional[bool]:
@@ -573,112 +567,42 @@ class DemultiplexRunfolder(DemultiplexConfig):
 
     def pass_integrity_check(self) -> Optional[bool]:
         """
-        Check whether the integrity checking was successful
-            :return (Optional[bool]):       True if successful, None if unsuccessful
-        """
-        if self.checksumfile_exists():
-            checksums = read_lines(self.rf_obj.checksumfile_path)
-            if self.prior_ic(
-                checksums
-            ):  # If the checksums already checked message is there
-                if self.checksum_match_message(
-                    checksums
-                ):  # If the checksums match message is there
-                    return True  # Checksums match so integrity check passed
-                else:
-                    return False  # We don't want script to continue if there is no checksum success message
-            else:  # If the checksums already checked message is not present
-                return self.checksums_match()  # Check for the checksums match message
-
-    def prior_ic(self, checksums: list) -> Optional[bool]:
-        """
-        Determines whether an integrity check has been previously performed by this script
-        Checks for presence of the CHECKSUMS_ALREADY_ASSESSED message in the md5checksum file
-        (this message is added when self.checksums_match() is called to prevent the script from
-        checking this file again until the cause of an issue is addressed. If this string is removed
-        from the file then the script will check for the CHECKSUM_MATCH_MSG / CHECKSUM_DO_NOT_MATCH_MSG
-        messages again using self.checksums_match() )
-            :param checksums (list):    List of lines from the checksums file
-            :return (Optional[bool]):   Returns true if the checksum file has previously
-                                        been checked for the success message by the script
-        """
-        if (
-            DemultiplexConfig.STRINGS["checksums_assessed"].split(":")[0]
-            in checksums[-1]
-        ):
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["checksumfile_checked"]
-            )
-            return True
-        else:
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["checksumfile_notchecked"]
-            )
-
-    def checksum_match_message(self, checksums: list) -> Optional[bool]:
-        """
-        Determine whether the md5sum file contains the checksums match message
-            :param checksums (list):    List of lines from the checksums file
-        """
-        if DemultiplexConfig.STRINGS["checksums_match"] in checksums[0]:
-            self.demux_rf_logger.info(
-                self.demux_rf_logger.log_msgs["ic_pass"],
-                self.rf_obj.checksumfile_path,
-            )
-            return True
-
-    def checksums_match(self) -> Optional[bool]:
-        """
-        Reads the md5checksum file and checks for the presence of the CHECKSUM_MATCH_MSG (this
-        is added by the integrity check scripts if the checksums match, denoting that the runfolder
-        has not been corrupted during transfer from the sequencer). If the CHECKSUM_DO_NOT_MATCH_MSG
-        is present, this denotes that the runfolder has been corrupted during transfer from the
-        sequencer). If neither string is present the contents of the file are not as expected and a
-        warning message is sent
-            :return (Optional[bool]):   Returns True if checksum match string is present in
-                                        checksum file
+        Check whether filecheck.txt contains the SUCCESS message written by the
+        integrity check script. On the first failure, logs an error and appends an
+        'assessed' marker to the file to suppress repeated error logging on future
+        script invocations.
+            :return (Optional[bool]):   True if successful, False if unsuccessful
         """
         self.demux_rf_logger.info(
             self.demux_rf_logger.log_msgs["checksumfilecheck_start"]
         )
         checksums = read_lines(self.rf_obj.checksumfile_path)
-        self.write_checksums_assessed()
-
-        if self.checksum_match_message(checksums):
+        if any(DemultiplexConfig.STRINGS["ic_success"] in line for line in checksums):
+            self.demux_rf_logger.info(
+                self.demux_rf_logger.log_msgs["ic_pass"],
+                self.rf_obj.checksumfile_path,
+            )
             return True
-        elif self.checksums_do_not_match_message(checksums):
-            return False
         else:
-            self.demux_rf_logger.warning(
-                self.demux_rf_logger.log_msgs["unexpected_checksumfile_contents"],
-                self.rf_obj.checksumfile_path,
+            already_assessed = any(
+                DemultiplexConfig.STRINGS["ic_assessed"].split(":")[0] in line
+                for line in checksums
             )
-
-    def write_checksums_assessed(self) -> None:
-        """
-        Write DemultiplexConfig.CHECKSUMS_ALREADY_ASSESSED message to file to prevent script
-        performing checks on future runs of the script
-            :return None:
-        """
-        write_lines(
-            self.rf_obj.checksumfile_path,
-            "a",
-            DemultiplexConfig.STRINGS["checksums_assessed"] % datetime.datetime.now(),
-        )
-
-    def checksums_do_not_match_message(self, checksums: list) -> Optional[bool]:
-        """
-        Determine whethe the md5sum file contains the checksums do not match message
-            :param checksums (list):    List of lines from the checksums file
-            :return (Optional[bool]):   Returns True if checksums do not match string
-                                        is present in checksum file
-        """
-        if DemultiplexConfig.STRINGS["checksums_do_not_match"] in checksums[0]:
-            self.demux_rf_logger.error(
-                self.demux_rf_logger.log_msgs["ic_fail"],
-                self.rf_obj.checksumfile_path,
-            )
-            return True
+            if already_assessed:
+                self.demux_rf_logger.info(
+                    self.demux_rf_logger.log_msgs["ic_already_assessed"]
+                )
+            else:
+                self.demux_rf_logger.error(
+                    self.demux_rf_logger.log_msgs["ic_fail"],
+                    self.rf_obj.checksumfile_path,
+                )
+                write_lines(
+                    self.rf_obj.checksumfile_path,
+                    "a",
+                    DemultiplexConfig.STRINGS["ic_assessed"] % datetime.datetime.now(),
+                )
+            return False
 
     def copy_file(self, source_path: str, dest_path: str) -> None:
         """
