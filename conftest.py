@@ -106,24 +106,33 @@ def run_before_and_after_session():
     for destination in to_copy_interop_to:
         shutil.copytree(os.path.join(test_data_dir_unzipped, "InterOp"), destination)
 
-    test_data_unzipped = os.path.join(
+    test_data_unzipped_path = os.path.join(
         test_data_dir_unzipped, "demultiplex_test_files", "test_runfolders"
     )
 
     directories = [
-        os.path.join(test_data_unzipped, d)
-        for d in os.listdir(test_data_unzipped)
-        if os.path.isdir(os.path.join(test_data_unzipped, d))
+        os.path.join(test_data_unzipped_path, d)
+        for d in os.listdir(test_data_unzipped_path)
+        if os.path.isdir(os.path.join(test_data_unzipped_path, d))
     ]
     dummy_fastq = os.path.join(test_data_dir, "dummy_fastq.gz")
+
+    # Folders that should NOT have a completion file so fail tests can pass
+    incomplete_folders = ["00000TEST1", "00000TEST2"]
 
     for directory in directories:
         if re.match(".*999999_.*", directory):
             fastqs_dir = os.path.join(
-                test_data_unzipped, directory, "Data", "Intensities", "BaseCalls/"
+                directory, "Data", "Intensities", "BaseCalls/"
             )
             os.makedirs(fastqs_dir, exist_ok=True)
             copy(dummy_fastq, fastqs_dir)
+
+            # Add CopyComplete.txt if it's not one of the designated 'fail' folders
+            if not any(x in directory for x in incomplete_folders):
+                copy_complete_path = os.path.join(directory, "CopyComplete.txt")
+                open(copy_complete_path, "w").close()
+
     yield  # Where the testing happens
     for to_remove in [test_data_dir_unzipped, test_data_temp]:
         if os.path.isdir(to_remove):

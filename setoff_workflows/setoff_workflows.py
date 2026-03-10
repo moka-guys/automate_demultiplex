@@ -1307,6 +1307,14 @@ class CustomPanelsPipelines:
         self.rf_cmds_obj = BuildRunfolderDxCommands(self.rf_obj, self.logger)
 
         for sample_name in self.rf_samples_obj.samples_dict.keys():
+            # Skip samples with failed fastqs for seglh_pipe runs
+            if self._sample_has_failed_fastqs(sample_name):
+                self.logger.warning(
+                    self.logger.log_msgs["sample_excluded_failed_fastq"],
+                    sample_name,
+                )
+                continue
+
             sample_cmds_obj = BuildSampleDxCommands(
                 self.rf_obj.runfolder_name,
                 self.rf_samples_obj.samples_dict[sample_name],
@@ -1406,3 +1414,17 @@ class CustomPanelsPipelines:
         self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_cnv_recombined"])
 
         self.workflow_cmds.append(self.rf_cmds_obj.create_duty_csv_cmd())
+
+    def _sample_has_failed_fastqs(self, sample_name: str) -> bool:
+        """
+        Check if a sample has any failed fastqs by matching the sample name
+        against the failed fastq filenames stored on the rf_obj. Only applies
+        to seglh_pipe runs.
+            :param sample_name (str):   Sample name string
+            :return (bool):             True if sample has failed fastqs and pipeline is seglh_pipe
+        """
+        if self.rf_samples_obj.pipeline not in ["seglh_pipe", "gatk_pipe"]:
+            return False
+        if not hasattr(self.rf_obj, "failed_fastqs") or not self.rf_obj.failed_fastqs:
+            return False
+        return any(sample_name in fastq for fastq in self.rf_obj.failed_fastqs)
