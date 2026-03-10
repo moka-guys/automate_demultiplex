@@ -1423,7 +1423,7 @@ class CustomPanelsPipelines:
             :param sample_name (str):   Sample name string
             :return (bool):             True if sample has failed fastqs and pipeline is seglh_pipe
         """
-        if self.rf_samples_obj.pipeline != "seglh_pipe":
+        if self.rf_samples_obj.pipeline not in ["seglh_pipe", "gatk_pipe"]:
             return False
         if not hasattr(self.rf_obj, "failed_fastqs") or not self.rf_obj.failed_fastqs:
             return False
