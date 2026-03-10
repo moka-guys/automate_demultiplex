@@ -692,7 +692,7 @@ class ToolboxConfig(PanelConfig):
         "filecheck": "filecheck.txt",  # File holding integrity check results
         "initial_sscheck_flag": "initial_sscheck_flagfile.txt",  # Denotes initial SampleSheet has been checked
         "sscheck_flag": "sscheck_flagfile.txt",  # Denotes SampleSheet has been checked
-        "illumina_seq_complete": "RTAComplete.txt",  # Illumina Sequencing complete file
+        "illumina_seq_complete": "CopyComplete.txt",  # Illumina Sequencing complete file after network copy
         "aviti_seq_complete": "RunUploaded.json", # AVITI Sequencing complete file
     }
     TEST_PROGRAMS_DICT = {
