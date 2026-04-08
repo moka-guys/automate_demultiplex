@@ -144,7 +144,6 @@ class PanelConfig:
             "pipeline": "seglh_pipe",
             "sample_prefix": "NGS",
             "runtype": "CP2",
-            "capture_pan_num": "Pan5346", # probably don't need this as CP2 does not have RPKM?
             "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan5347_data.bed",
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5347_sambamba.bed",
             "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan5347_data.bed",
