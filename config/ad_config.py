@@ -137,8 +137,8 @@ NEXUS_IDS = {
         "gatk": f"{TOOLS_PROJECT}:applet-J3PxJx2K9yGZZ2j2BKV86Jgj",  # gatk3_human_exome_pipeline_v1.5.1
         "sentieon": f"{TOOLS_PROJECT}:app-Gy4j5z00PPyQ5qv5FBXy0ZZp",  # Sentieon germline FASTQ to VCF v5.1.0
         #"peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",  # peddy_v1.5
-        "ed_readcount": f"{TOOLS_PROJECT}:applet-J3Px9ZXK9yGjzJv34bqfXXbz",  # ED_readcount_analysis_v1.5.1
-        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J3XVQPBK9yGvV0xpxJVf14xp",  # ED_cnv_calling_v1.6.1
+        "ed_readcount": f"{TOOLS_PROJECT}:applet-J7BQy2XK9yGfZ4GYfYZJgfX5",  # ED_readcount_analysis_v1.6.1
+        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J7BQyvXK9yGfqpgq4BYpXvPx",  # ED_cnv_calling_v1.7.1
         "rpkm": f"{TOOLS_PROJECT}:applet-J3PxXqpK9yGg671GY3288gbF",  # RPKM_using_conifer_v1.6.1
         "duty_csv": f"{TOOLS_PROJECT}:applet-J4vjgq2K9yGQBP86VjQvgp5g",  # duty_csv_v1.5.2
     },
