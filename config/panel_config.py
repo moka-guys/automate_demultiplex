@@ -861,6 +861,5 @@ class PanelConfig:
     and v.get("congenica_credentials", "").strip() == "STG"
 ]
     CP_CAPTURE_PANNOS = [
-        CAPTURE_PANEL_DICT["vcp1"]["capture_pan_num"],
-        CAPTURE_PANEL_DICT["CP2"]["capture_pan_num"],
+        CAPTURE_PANEL_DICT["vcp1"]["capture_pan_num"]
     ]
