@@ -565,7 +565,7 @@ class SWConfig(PanelConfig):
             "sentieon_reads1": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.reads_fastqgzs=",
             "sentieon_reads2": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.reads2_fastqgzs=",
             "sentieon_sample": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.sample=",
-            "sentieon_gvcf": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.output_gvcf=true",
+            "sentieon_gvcf_false": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.output_gvcf=false",
             "sentieon_algo": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}.germline_algo=Haplotyper",
             "sentieon_instance": f"--instance-type {NEXUS_IDS['STAGES']['seglh_pipe']['sentieon']}=",
             "filter_vcf_bed": f"-i{NEXUS_IDS['STAGES']['seglh_pipe']['filter_vcf']}.bedfile=",

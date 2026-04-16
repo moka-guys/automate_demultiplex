@@ -523,7 +523,6 @@ class BuildSampleDxCommands(SWConfig):
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_reads1"]}{self.sample_dict["fastqs"]["R1"]["nexus_path"]}',
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_reads2"]}{self.sample_dict["fastqs"]["R2"]["nexus_path"]}',
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_sample"]}{self.sample_dict["sample_name"]}',
-                f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_gvcf"]}',
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_algo"]}',
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_bed"]}{self.sample_dict["panel_settings"]["sambamba_bedfile"]}',
                 f'{SWConfig.STAGE_INPUTS["seglh_pipe"]["sambamba_min_base_qual"]}'
@@ -583,9 +582,9 @@ class BuildSampleDxCommands(SWConfig):
 
     def get_gatk_fhprs_cmd_string(self) -> str:
         """
-        Get command string for input FH_PRS staget_vcfeval_cmd_stringge of PIPE workflow. If sample is specified as
+        Get command string for input FH_PRS stage of PIPE workflow. If sample is specified as
         requiring FH analysis in the config, set skip to False (the app default is skip=True),
-        and specify outptut as both VCF and GVCF
+        and specify output as both VCF and GVCF
             :return fh_prs_cmd_string: App input string
         """
         if self.sample_dict["panel_settings"]["FH"]:
@@ -601,21 +600,20 @@ class BuildSampleDxCommands(SWConfig):
 
     def get_seglh_fhprs_cmd_string(self) -> str:
         """
-        Get command string for input FH_PRS staget_vcfeval_cmd_stringge of PIPE workflow. If sample is specified as
+        Get command string for input FH_PRS stage of PIPE workflow. If sample is specified as
         requiring FH analysis in the config, set skip to False (the app default is skip=True),
-        and specify outptut as both VCF and GVCF
+        else, do not output GVCF from sentieon (the app default is output_gvcf=True)
             :return fh_prs_cmd_string: App input string
         """
         if self.sample_dict["panel_settings"]["FH"]:
             return " ".join(
                 [
                     SWConfig.STAGE_INPUTS["seglh_pipe"]["fhprs_skip"],
-                    SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_gvcf"],
                     SWConfig.PIPE_FH_GATK_TIMEOUT_ARGS,
                 ]
             )
         else:
-            return ""
+            return SWConfig.STAGE_INPUTS["seglh_pipe"]["sentieon_gvcf_false"]
 
     def get_gatk_polyedge_cmd_string(self) -> str:
         """
