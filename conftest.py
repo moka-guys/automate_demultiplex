@@ -76,6 +76,7 @@ def patch_toolbox(monkeypatch):
     """
     monkeypatch.setattr(toolbox.ToolboxConfig, "RUNFOLDERS", temp_runfolderdir)
     monkeypatch.setattr(toolbox.ToolboxConfig, "AD_LOGDIR", temp_log_dir)
+    monkeypatch.setattr(toolbox, "get_credential", lambda x: "mock_token")
 
 
 def create_logdirs():
