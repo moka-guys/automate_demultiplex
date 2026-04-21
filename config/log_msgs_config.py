@@ -164,6 +164,7 @@ LOG_MSGS = {
         "not_fastq": "File is not a zipped fastq: %s",
         "undetermined_identified": "Undetermined file identified to exclude from processing: %s",
         "sample_excluded_failed_fastq": "Sample excluded from seglh_pipe commands due to failed fastq validation: %s",
+        "fastq_excluded_oncodeep": "Fastq excluded from OncoDEEP upload command due to failed fastq validation: %s",
     },
     "backup": {
         "checking_runfolder": "Checking the runfolder exists: %s",

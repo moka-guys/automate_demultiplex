@@ -1145,6 +1145,16 @@ class OncoDeepPipeline:
 
             self.sql_queries.append(sample_cmds_obj.return_oncology_query())
             for read in ["R1", "R2"]:  # Generate sample oncodeep upload commands
+                fastq_name = self.rf_samples_obj.samples_dict[sample_name]["fastqs"][read]["name"]
+                if (
+                    hasattr(self.rf_obj, "failed_fastqs")
+                    and fastq_name in self.rf_obj.failed_fastqs
+                ):
+                    self.logger.warning(
+                        self.logger.log_msgs["fastq_excluded_oncodeep"],
+                        fastq_name,
+                    )
+                    continue
                 self.workflow_cmds.append(
                     sample_cmds_obj.build_oncodeep_upload_cmd(
                         f"{sample_name}-{read}",
