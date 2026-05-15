@@ -119,8 +119,8 @@ AVITI_DEMULTIPLEX_SUCCESS = "Output stored in /output"
 S3_PIPELINES = ["msk", "archerdx"]
 # S3 buckets
 S3_BUCKETS = {
-    "msk": "s3://msk-access-archive",
-    "archerdx": "s3://archer-ngs-archive",
+    "msk": "msk-access-archive",
+    "archerdx": "archer-ngs-archive",
 }
 # AWS CLI upload command for S3:
 #   %s = local file path, %s = s3 destination URI, %s = AWS CLI profile name
