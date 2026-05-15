@@ -826,7 +826,7 @@ class ProcessRunfolder(SWConfig):
 
     def upload_to_s3(self, filetype: str, s3_upload_dict: dict) -> None:
         """
-        Uploads files to the configured S3 bucket using the AWS CLI. The AWS profile
+        Uploads files to the configured S3 buckets using the AWS CLI. The AWS profile
         name is read from the credential file at SWConfig.CREDENTIALS["aws_s3_profile"].
         Files that do not exist locally are skipped with an error log
             :param filetype (str):          Name of the file upload type

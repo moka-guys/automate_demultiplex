@@ -82,8 +82,7 @@ CREDENTIALS = {
     "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
     "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
     "adx_authtoken": ".archer_authentication_mokaguys.txt",
-    # Path to file containing the AWS CLI profile name used for S3 uploads (msk/archerdx pipelines)
-    "aws_s3_profile": os.path.join(DOCUMENT_ROOT, ".aws_s3_profile"),
+    "aws_s3_profile": os.path.join(DOCUMENT_ROOT, ".aws_s3_profile"), # AWS CLI profile name for S3 uploads
 }
 NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
 AVITI01_ID = "AV241501" # Aviti sequencer ID
@@ -116,15 +115,14 @@ AVITI_DEMULTIPLEX_SUCCESS = "Output stored in /output"
 
 # -------------- S3-SPECIFIC ------------------------------------------------------------------
 
-# Pipelines whose data is uploaded to S3 instead of DNAnexus
+# For S3 uploads
 S3_PIPELINES = ["msk", "archerdx"]
-# Per-pipeline S3 bucket names
-# S3 bucket name for each pipeline
+# S3 buckets
 S3_BUCKETS = {
     "msk": "s3://msk-access-archive",
     "archerdx": "s3://archer-ngs-archive",
 }
-# AWS CLI command for uploading a single file to S3:
+# AWS CLI upload command for S3:
 #   %s = local file path, %s = s3 destination URI, %s = AWS CLI profile name
 S3_UPLOAD_CMD = "aws s3 cp %s %s --profile %s --storage-class DEEP_ARCHIVE"
 
