@@ -121,12 +121,12 @@ S3_PIPELINES = ["msk", "archerdx"]
 # Per-pipeline S3 bucket names
 # S3 bucket name for each pipeline
 S3_BUCKETS = {
-    "msk": "TODO_SET_MSK_S3_BUCKET_NAME",
-    "archerdx": "TODO_SET_ARCHERDX_S3_BUCKET_NAME",
+    "msk": "s3://msk-access-archive",
+    "archerdx": "s3://archer-ngs-archive",
 }
 # AWS CLI command for uploading a single file to S3:
 #   %s = local file path, %s = s3 destination URI, %s = AWS CLI profile name
-S3_UPLOAD_CMD = "aws s3 cp %s %s --profile %s"
+S3_UPLOAD_CMD = "aws s3 cp %s %s --profile %s --storage-class DEEP_ARCHIVE"
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
 
