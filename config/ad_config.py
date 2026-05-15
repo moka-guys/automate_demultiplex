@@ -118,9 +118,12 @@ AVITI_DEMULTIPLEX_SUCCESS = "Output stored in /output"
 
 # Pipelines whose data is uploaded to S3 instead of DNAnexus
 S3_PIPELINES = ["msk", "archerdx"]
-# S3 bucket name for msk/archerdx data upload
-# TODO: Set the target S3 bucket name here
-S3_BUCKET = "TODO_SET_S3_BUCKET_NAME"
+# Per-pipeline S3 bucket names
+# S3 bucket name for each pipeline
+S3_BUCKETS = {
+    "msk": "TODO_SET_MSK_S3_BUCKET_NAME",
+    "archerdx": "TODO_SET_ARCHERDX_S3_BUCKET_NAME",
+}
 # AWS CLI command for uploading a single file to S3:
 #   %s = local file path, %s = s3 destination URI, %s = AWS CLI profile name
 S3_UPLOAD_CMD = "aws s3 cp %s %s --profile %s"
@@ -485,7 +488,7 @@ class SWConfig(PanelConfig):
         }
         TSO_BATCH_SIZE = 2
     S3_PIPELINES = S3_PIPELINES
-    S3_BUCKET = S3_BUCKET
+    S3_BUCKETS = S3_BUCKETS
     S3_UPLOAD_CMD = S3_UPLOAD_CMD
     RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"

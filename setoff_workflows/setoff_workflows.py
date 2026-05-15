@@ -801,7 +801,7 @@ class ProcessRunfolder(SWConfig):
 
     def create_s3_file_upload_dict(self) -> dict:
         """
-        Create dictionary of files to upload to S3 for pipelines that use S3 instead of DNAnexus.
+        Create dictionary of files to upload to S3 for pipelines that use S3 storage instead of DNAnexus.
         Includes samplesheet, fastqs, and logfiles
             :return s3_upload_dict (dict):  Dict of files and S3 destination prefixes, keyed by
                                             file type
@@ -843,8 +843,9 @@ class ProcessRunfolder(SWConfig):
                     self.loggers["sw"].log_msgs["nonexistent_files"], filepath
                 )
                 continue
+            s3_bucket = SWConfig.S3_BUCKETS[self.rf_samples_obj.pipeline]
             s3_dest = (
-                f"s3://{SWConfig.S3_BUCKET}/"
+                f"s3://{s3_bucket}/"
                 f"{s3_upload_dict[filetype]['s3_prefix']}"
                 f"{os.path.basename(filepath)}"
             )
@@ -865,7 +866,7 @@ class ProcessRunfolder(SWConfig):
 
     def pre_pipeline_upload_s3(self) -> None:
         """
-        Uploads the samplesheet and fastqs to S3 for pipelines that use S3 instead of DNAnexus
+        Uploads the samplesheet and fastqs to S3 for pipelines that use S3 instead of DNAnexus as storage
             :return None:
         """
         for filetype in ("runfolder_samplesheet", "fastqs"):
