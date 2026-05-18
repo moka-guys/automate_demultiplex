@@ -130,7 +130,7 @@ NEXUS_IDS = {
     "APPS": {
         "congenica_upload": f"{TOOLS_PROJECT}:applet-J3Px8vpK9yGVF55Fy3kvFb0f",  # congenica_upload_v1.3.3
         "oncodeep_upload": f"{TOOLS_PROJECT}:applet-J3PxV8BK9yGzPK2vV9921Jpx",  # oncodeep_upload v1.0.1
-        "multiqc": f"{TOOLS_PROJECT}:applet-J3PxQJpK9yGQ2x8Fpf3304zV",  # multiqc_v1.18.1
+        "multiqc": f"{TOOLS_PROJECT}:applet-J84gV4XK9yGzqYfqQ0Yj7f05",  # multiqc_v1.18.2
         "sambamba_vcp1": f"{TOOLS_PROJECT}:applet-J3XPXyBK9yGpfyjPb2KYg82g",  # chanjo_sambamba_coverage_v1.13.1
         "sambamba_cp2": f"{TOOLS_PROJECT}:applet-J3XKp62K9yGpjP2yvP93Z68K",  # sambamba_coverage_v2.0.1
         "fastqc": f"{TOOLS_PROJECT}:applet-J3PxBkXK9yGZ071FgGb11QKk",  # fastqc_v1.4.1
@@ -139,8 +139,8 @@ NEXUS_IDS = {
         #"peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",  # peddy_v1.5
         "ed_readcount": f"{TOOLS_PROJECT}:applet-J7BQy2XK9yGfZ4GYfYZJgfX5",  # ED_readcount_analysis_v1.6.1
         "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J7BQyvXK9yGfqpgq4BYpXvPx",  # ED_cnv_calling_v1.7.1
-        "rpkm": f"{TOOLS_PROJECT}:applet-J3PxXqpK9yGg671GY3288gbF",  # RPKM_using_conifer_v1.6.1
-        "duty_csv": f"{TOOLS_PROJECT}:applet-J4vjgq2K9yGQBP86VjQvgp5g",  # duty_csv_v1.5.2
+        "rpkm": f"{TOOLS_PROJECT}:applet-J84zJ4BK9yGfPf1BVjg2bfVf",  # RPKM_using_conifer_v1.6.2
+        "duty_csv": f"{TOOLS_PROJECT}:applet-J84xJZXK9yGfXVZyyzZBYFBG",  # duty_csv_v1.5.3
     },
     "WORKFLOWS": {
         "gatk_pipe": f"{TOOLS_PROJECT}:workflow-J3XPgzXK9yGbgg33xp68kXGx",  # GATK3.5_v2.20
