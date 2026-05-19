@@ -379,13 +379,13 @@ class PanelConfig:
             "congenica_project": 9985,
             "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan4768data.bed",
         },
-        "Pan4119": {  # CP2 R134 (Synnovis) - FH small panel
-            **CAPTURE_PANEL_DICT["CP2"],
+        "Pan4119": {  # VCP1 R134 (Synnovis) - FH small panel
+            **CAPTURE_PANEL_DICT["vcp1"],
             **CONGENICA_CREDENTIALS["synnovis"],
             "test_number": "R134",
             "congenica_project": 4664,
             "FH": True,
-            "ed_cnvcalling_bedfile": "Pan5313",
+            "ed_cnvcalling_bedfile": "Pan5215",
         },
         "Pan4121": {  # VCP1 R184 (Synnovis) - Cystic Fibrosis
             **CAPTURE_PANEL_DICT["vcp1"],
@@ -491,13 +491,13 @@ class PanelConfig:
             "congenica_project": 4699,
             "ed_cnvcalling_bedfile": "Pan4994",
         },
-        "Pan4821": {  # CP2 R134 (STG) - FH
-            **CAPTURE_PANEL_DICT["CP2"],
+        "Pan4821": {  # VCP1 R134 (STG) - FH
+            **CAPTURE_PANEL_DICT["vcp1"],
             **CONGENICA_CREDENTIALS["stg"],
             "test_number": "R134",
             "congenica_project": 4203,
             "FH": True,
-            "ed_cnvcalling_bedfile": "Pan5313",
+            "ed_cnvcalling_bedfile": "Pan5215",
         },
         "Pan4822": {  # VCP1 R184 (STG) - CF
             **CAPTURE_PANEL_DICT["vcp1"],
