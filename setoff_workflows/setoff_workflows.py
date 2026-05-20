@@ -802,11 +802,11 @@ class ProcessRunfolder(SWConfig):
     def create_s3_file_upload_dict(self) -> dict:
         """
         Create dictionary of files to upload to S3 for pipelines that use S3 storage instead of DNAnexus.
-        Includes samplesheet, fastqs, and logfiles
+        Includes samplesheet, fastqs, logfiles, and QC files for non-AVITI sequencers
             :return s3_upload_dict (dict):  Dict of files and S3 destination prefixes, keyed by
                                             file type
         """
-        return {
+        s3_upload_dict = {
             "runfolder_samplesheet": {
                 "files_list": [self.rf_obj.runfolder_samplesheet_path],
                 "s3_prefix": f"{self.rf_obj.runfolder_name}/",
@@ -823,6 +823,16 @@ class ProcessRunfolder(SWConfig):
                 "s3_prefix": f"{self.rf_obj.runfolder_name}/logfiles/",
             },
         }
+        if self.rf_obj.sequencer_type not in SWConfig.AVITI_IDS:
+            s3_upload_dict["bclconvert_qc"] = {
+                "files_list": self.rf_obj.bclconvertstats_file,
+                "s3_prefix": f"{self.rf_obj.runfolder_name}/QC/bclconvert/",
+            }
+            s3_upload_dict["cluster_density"] = {
+                "files_list": self.rf_obj.cluster_density_files,
+                "s3_prefix": f"{self.rf_obj.runfolder_name}/QC/",
+            }
+        return s3_upload_dict
 
     def upload_to_s3(self, filetype: str, s3_upload_dict: dict) -> None:
         """
@@ -866,11 +876,13 @@ class ProcessRunfolder(SWConfig):
 
     def pre_pipeline_upload_s3(self) -> None:
         """
-        Uploads the samplesheet and fastqs to S3 for pipelines that use S3 instead of DNAnexus as storage
+        Uploads all pre-pipeline files (samplesheet, fastqs, and QC files where applicable) to S3
+        for pipelines that use S3 instead of DNAnexus as storage
             :return None:
         """
-        for filetype in ("runfolder_samplesheet", "fastqs"):
-            self.upload_to_s3(filetype, self.s3_upload_dict)
+        for filetype in self.s3_upload_dict:
+            if filetype != "logfiles":
+                self.upload_to_s3(filetype, self.s3_upload_dict)
 
     def upload_rest_of_runfolder(self) -> None:
         """
