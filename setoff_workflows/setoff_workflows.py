@@ -332,10 +332,9 @@ class ProcessRunfolder(SWConfig):
             self.pre_pipeline_upload()
             self.run_dx_run_commands()
         else:
-            # S3 path: upload files to S3, skip all DNAnexus project/upload steps
+            # S3 path: skip all DNAnexus project/upload steps; full runfolder
+            # is archived to S3 in post_pipeline_upload
             self.pipeline_obj = self.build_dx_commands()
-            self.s3_upload_dict = self.create_s3_file_upload_dict()
-            self.pre_pipeline_upload_s3()
 
         if self.rf_samples_obj.pipeline == "archerdx":
             self.run_decision_support_commands()
@@ -799,41 +798,6 @@ class ProcessRunfolder(SWConfig):
                 self.loggers["sw"].log_msgs["nonexistent_files"], result
             )
 
-    def create_s3_file_upload_dict(self) -> dict:
-        """
-        Create dictionary of files to upload to S3 for pipelines that use S3 storage instead of DNAnexus.
-        Includes samplesheet, fastqs, logfiles, and QC files for non-AVITI sequencers
-            :return s3_upload_dict (dict):  Dict of files and S3 destination prefixes, keyed by
-                                            file type
-        """
-        s3_upload_dict = {
-            "runfolder_samplesheet": {
-                "files_list": [self.rf_obj.runfolder_samplesheet_path],
-                "s3_prefix": f"{self.rf_obj.runfolder_name}/",
-            },
-            "fastqs": {
-                "files_list": [
-                    *self.rf_samples_obj.fastqs_list,
-                    *self.rf_samples_obj.undetermined_fastqs_list,
-                ],
-                "s3_prefix": f"{self.rf_obj.runfolder_name}/fastqs/",
-            },
-            "logfiles": {
-                "files_list": self.rf_obj.logfiles_to_upload,
-                "s3_prefix": f"{self.rf_obj.runfolder_name}/logfiles/",
-            },
-        }
-        if self.rf_obj.sequencer_type not in SWConfig.AVITI_IDS:
-            s3_upload_dict["bclconvert_qc"] = {
-                "files_list": self.rf_obj.bclconvertstats_file,
-                "s3_prefix": f"{self.rf_obj.runfolder_name}/QC/bclconvert/",
-            }
-            s3_upload_dict["cluster_density"] = {
-                "files_list": self.rf_obj.cluster_density_files,
-                "s3_prefix": f"{self.rf_obj.runfolder_name}/QC/",
-            }
-        return s3_upload_dict
-
     def upload_to_s3(self, filetype: str, s3_upload_dict: dict) -> None:
         """
         Uploads files to the configured S3 buckets using the AWS CLI. The AWS profile
@@ -873,16 +837,6 @@ class ProcessRunfolder(SWConfig):
                     filetype,
                     err,
                 )
-
-    def pre_pipeline_upload_s3(self) -> None:
-        """
-        Uploads all pre-pipeline files (samplesheet, fastqs, and QC files where applicable) to S3
-        for pipelines that use S3 instead of DNAnexus as storage
-            :return None:
-        """
-        for filetype in self.s3_upload_dict:
-            if filetype != "logfiles":
-                self.upload_to_s3(filetype, self.s3_upload_dict)
 
     def upload_rest_of_runfolder(self) -> None:
         """
@@ -1020,7 +974,13 @@ class ProcessRunfolder(SWConfig):
         """
         if self.rf_samples_obj.pipeline in SWConfig.S3_PIPELINES:
             self.upload_rest_of_runfolder_s3()
-            self.upload_to_s3("logfiles", self.s3_upload_dict)
+            logfiles_s3_dict = {
+                "logfiles": {
+                    "files_list": self.rf_obj.logfiles_to_upload,
+                    "s3_prefix": f"{self.rf_obj.runfolder_name}/logfiles/",
+                }
+            }
+            self.upload_to_s3("logfiles", logfiles_s3_dict)
         else:
             if self.rf_samples_obj.pipeline != "tso500":
                 self.upload_rest_of_runfolder()
