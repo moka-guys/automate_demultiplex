@@ -823,7 +823,7 @@ class ProcessRunfolder(SWConfig):
                 f"{s3_upload_dict[filetype]['s3_prefix']}"
                 f"{os.path.basename(filepath)}"
             )
-            cmd = SWConfig.S3_UPLOAD_CMD % (filepath, s3_dest, aws_profile)
+            cmd = SWConfig.S3_CP_CMD % (filepath, s3_dest, aws_profile)
             _, err, returncode = execute_subprocess_command(
                 cmd, self.loggers["sw"], "exit_on_fail"
             )
@@ -873,32 +873,33 @@ class ProcessRunfolder(SWConfig):
 
     def upload_rest_of_runfolder_s3(self) -> None:
         """
-        Uploads all remaining runfolder files to S3 (excluding BCL directories),
-        preserving the relative directory structure under the runfolder name
+        Uploads the runfolder directory to S3 using aws s3 sync, excluding BCL
+        directories (L00*). Preserves the directory structure under the runfolder name
             :return None:
         """
         aws_profile = get_credential(SWConfig.CREDENTIALS["aws_s3_profile"])
         s3_bucket = SWConfig.S3_BUCKETS[self.rf_samples_obj.pipeline]
-        for dirpath, dirnames, filenames in os.walk(self.rf_obj.runfolderpath):
-            dirnames[:] = [d for d in dirnames if not d.startswith("L00")]  # Exclude BCL dirs
-            for filename in filenames:
-                filepath = os.path.join(dirpath, filename)
-                rel_path = os.path.relpath(filepath, self.rf_obj.runfolderpath)
-                s3_dest = f"s3://{s3_bucket}/{self.rf_obj.runfolder_name}/{rel_path}"
-                cmd = SWConfig.S3_UPLOAD_CMD % (filepath, s3_dest, aws_profile)
-                _, err, returncode = execute_subprocess_command(
-                    cmd, self.loggers["sw"], "exit_on_fail"
-                )
-                if returncode == 0:
-                    self.loggers["sw"].info(
-                        self.loggers["sw"].log_msgs["upload_success"], filename
-                    )
-                else:
-                    self.loggers["sw"].error(
-                        self.loggers["sw"].log_msgs["s3_upload_fail"],
-                        filename,
-                        err,
-                    )
+        s3_dest = f"s3://{s3_bucket}/{self.rf_obj.runfolder_name}"
+        cmd = (
+            SWConfig.S3_SYNC_CMD % (self.rf_obj.runfolderpath, s3_dest, aws_profile)
+            + " --exclude 'L00*'"
+        )
+        self.loggers["sw"].info(
+            self.loggers["sw"].log_msgs["uploading_files"], "runfolder"
+        )
+        _, err, returncode = execute_subprocess_command(
+            cmd, self.loggers["sw"], "exit_on_fail"
+        )
+        if returncode == 0:
+            self.loggers["sw"].info(
+                self.loggers["sw"].log_msgs["upload_success"], "runfolder"
+            )
+        else:
+            self.loggers["sw"].error(
+                self.loggers["sw"].log_msgs["s3_upload_fail"],
+                self.rf_obj.runfolder_name,
+                err,
+            )
 
     def run_decision_support_commands(self) -> None:
         """

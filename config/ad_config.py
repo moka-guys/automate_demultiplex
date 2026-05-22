@@ -122,9 +122,12 @@ S3_BUCKETS = {
     "msk": "msk-access-archive",
     "archerdx": "archer-ngs-archive",
 }
-# AWS CLI upload command for S3:
-#   %s = local file path, %s = s3 destination URI, %s = AWS CLI profile name
-S3_UPLOAD_CMD = "aws s3 cp %s %s --profile %s --storage-class DEEP_ARCHIVE"
+# AWS CLI upload commands for S3:
+#   %s = local path, %s = s3 destination URI, %s = AWS CLI profile name
+# Per-file copy (used for individual files e.g. logfiles)
+S3_CP_CMD = "aws s3 cp %s %s --profile %s --storage-class DEEP_ARCHIVE"
+# Directory sync (used for whole-runfolder uploads)
+S3_SYNC_CMD = "aws s3 sync %s %s --profile %s --storage-class DEEP_ARCHIVE"
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
 
@@ -487,7 +490,8 @@ class SWConfig(PanelConfig):
         TSO_BATCH_SIZE = 2
     S3_PIPELINES = S3_PIPELINES
     S3_BUCKETS = S3_BUCKETS
-    S3_UPLOAD_CMD = S3_UPLOAD_CMD
+    S3_CP_CMD = S3_CP_CMD
+    S3_SYNC_CMD = S3_SYNC_CMD
     RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
     EMPTY_CP_DEPENDS = [
