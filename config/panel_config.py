@@ -813,6 +813,14 @@ class PanelConfig:
             "congenica_project": 17995,
             "ed_cnvcalling_bedfile": "Pan5345",
         },
+          "Pan5357": {  # CP2 R134 (Synnovis) - FH small panel FOR TESTING ONLY
+            **CAPTURE_PANEL_DICT["CP2"],
+            **CONGENICA_CREDENTIALS["synnovis"],
+            "test_number": "R134",
+            "congenica_project": 4664,
+            "FH": True,
+            "ed_cnvcalling_bedfile": "Pan5313",
+        },
     }
     # ================ PAN NUMBER LISTS ===================================================
     PANELS = list(PANEL_DICT.keys())  # All panel pan numbers
