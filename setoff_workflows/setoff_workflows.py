@@ -335,11 +335,20 @@ class ProcessRunfolder(SWConfig):
             # S3 path: skip all DNAnexus project/upload steps; full runfolder
             # is archived to S3 in post_pipeline_upload
             self.pipeline_obj = self.build_dx_commands()
+            if self.rf_samples_obj.pipeline == "archerdx":
+                # Write decision support script without DNAnexus base vars (not
+                # available in the S3 path), as the archerdx commands don't need them
+                if self.pipeline_obj.decision_support_upload_cmds:
+                    write_lines(
+                        self.rf_obj.decision_support_upload_script,
+                        "w",
+                        list(filter(None, self.pipeline_obj.decision_support_upload_cmds)),
+                    )
 
-        if self.rf_samples_obj.pipeline == "archerdx":
-            self.run_decision_support_commands()
-        elif self.rf_samples_obj.pipeline == "msk":
-            self.run_msk_commands()
+        #if self.rf_samples_obj.pipeline == "archerdx":
+        #    self.run_decision_support_commands()
+        #elif self.rf_samples_obj.pipeline == "msk":
+        #    self.run_msk_commands()
         self.pipeline_emails = PipelineEmails(
             self.rf_obj,
             self.rf_samples_obj,
