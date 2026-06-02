@@ -984,9 +984,14 @@ class ProcessRunfolder(SWConfig):
         """
         if self.rf_samples_obj.pipeline in SWConfig.S3_PIPELINES:
             self.upload_rest_of_runfolder_s3()
+            # Filter out upload_runfolder_logfile as it's not created for S3 pipelines
+            logfiles_to_upload = [
+                f for f in self.rf_obj.logfiles_to_upload 
+                if f != self.rf_obj.upload_runfolder_logfile
+            ]
             logfiles_s3_dict = {
                 "logfiles": {
-                    "files_list": self.rf_obj.logfiles_to_upload,
+                    "files_list": logfiles_to_upload,
                     "s3_prefix": f"{self.rf_obj.runfolder_name}/logfiles/",
                 }
             }
