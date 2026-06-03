@@ -891,7 +891,7 @@ class ProcessRunfolder(SWConfig):
         s3_dest = f"s3://{s3_bucket}/{self.rf_obj.runfolder_name}"
         cmd = (
             SWConfig.S3_SYNC_CMD % (self.rf_obj.runfolderpath, s3_dest, aws_profile)
-            + " --exclude 'L00*'"
+            + " --exclude '*/L00*/*'"
         )
         self.loggers["sw"].info(
             self.loggers["sw"].log_msgs["uploading_files"], "runfolder"
