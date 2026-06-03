@@ -345,10 +345,10 @@ class ProcessRunfolder(SWConfig):
                         list(filter(None, self.pipeline_obj.decision_support_upload_cmds)),
                     )
 
-        #if self.rf_samples_obj.pipeline == "archerdx":
-        #    self.run_decision_support_commands()
-        #elif self.rf_samples_obj.pipeline == "msk":
-        #    self.run_msk_commands()
+        if self.rf_samples_obj.pipeline == "archerdx":
+            self.run_decision_support_commands()
+        elif self.rf_samples_obj.pipeline == "msk":
+            self.run_msk_commands()
         self.pipeline_emails = PipelineEmails(
             self.rf_obj,
             self.rf_samples_obj,
