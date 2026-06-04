@@ -81,7 +81,8 @@ CREDENTIALS = {
     "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
     "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
     "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
-    "adx_authtoken": ".archer_authentication_mokaguys.txt"
+    "adx_authtoken": ".archer_authentication_mokaguys.txt",
+    "aws_s3_profile": os.path.join(DOCUMENT_ROOT, ".aws_s3_profile"), # AWS CLI profile name for S3 uploads
 }
 NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
 AVITI01_ID = "AV241501" # Aviti sequencer ID
@@ -111,6 +112,22 @@ LANE_METRICS_SUFFIX = ".illumina_lane_metrics"
 DEMUX_NOT_REQUIRED_MSG = "%s run. Does not need demultiplexing locally"
 ILLUMINA_DEMULTIPLEX_SUCCESS = "thread 1 Conversion Complete."
 AVITI_DEMULTIPLEX_SUCCESS = "Output stored in /output"
+
+# -------------- S3-SPECIFIC ------------------------------------------------------------------
+
+# For S3 uploads
+S3_PIPELINES = ["msk", "archerdx"]
+# S3 buckets
+S3_BUCKETS = {
+    "msk": "msk-access-archive",
+    "archerdx": "archer-ngs-archive",
+}
+# AWS CLI upload commands for S3:
+#   %s = local path, %s = s3 destination URI, %s = AWS CLI profile name
+# Per-file copy (used for individual files e.g. logfiles)
+S3_CP_CMD = "aws s3 cp %s %s --profile %s --storage-class DEEP_ARCHIVE"
+# Directory sync (used for whole-runfolder uploads)
+S3_SYNC_CMD = "aws s3 sync %s %s --profile %s --storage-class DEEP_ARCHIVE"
 
 # -------------- DNANEXUS-SPECIFIC --------------------------------------------------------------
 
@@ -471,6 +488,10 @@ class SWConfig(PanelConfig):
             "admins": [PROD_ORGANISATION],
         }
         TSO_BATCH_SIZE = 2
+    S3_PIPELINES = S3_PIPELINES
+    S3_BUCKETS = S3_BUCKETS
+    S3_CP_CMD = S3_CP_CMD
+    S3_SYNC_CMD = S3_SYNC_CMD
     RUNFOLDER_NAME = "${RUNFOLDER_NAME}"
     EMPTY_DEPENDS = "DEPENDS_LIST=''"
     EMPTY_CP_DEPENDS = [

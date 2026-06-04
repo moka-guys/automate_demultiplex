@@ -304,34 +304,47 @@ class ProcessRunfolder(SWConfig):
         """
         self.rf_obj = rf_obj
         self.loggers = loggers
-        self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
         open(
             self.rf_obj.upload_flagfile, "w"
         ).close()  # Create upload flag file (prevents processing by other script runs)
         self.rf_samples_obj = RunfolderSamples(self.rf_obj, self.loggers["sw"])
-        self.users_dict = self.get_users_dict()
-        self.write_project_creation_script()
-        self.nexus_identifiers = {
-            "proj_name": self.rf_samples_obj.nexus_paths["proj_name"],
-            "proj_id": self.run_project_creation_script(),
-        }
-        self.upload_runfolder = UploadRunfolder(
-            self.loggers["backup"],
-            self.rf_obj.runfolder_name,
-            self.rf_obj.runfolderpath,
-            self.rf_obj.upload_flagfile,
-            self.nexus_identifiers,
-        )
-        self.upload_cmds = self.get_upload_cmds()
-        self.pre_pipeline_upload_dict = self.create_file_upload_dict()
-        self.pipeline_obj = self.build_dx_commands()
-        self.write_dx_run_cmds()
-        self.pre_pipeline_upload()
-        
-        # Skip run_dx_run_commands for MSK pipeline
-        if self.rf_samples_obj.pipeline != "msk":
+
+        if self.rf_samples_obj.pipeline not in SWConfig.S3_PIPELINES:
+            # DNAnexus path: create project, upload files to DNAnexus, run dx commands
+            self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
+            self.users_dict = self.get_users_dict()
+            self.write_project_creation_script()
+            self.nexus_identifiers = {
+                "proj_name": self.rf_samples_obj.nexus_paths["proj_name"],
+                "proj_id": self.run_project_creation_script(),
+            }
+            self.upload_runfolder = UploadRunfolder(
+                self.loggers["backup"],
+                self.rf_obj.runfolder_name,
+                self.rf_obj.runfolderpath,
+                self.rf_obj.upload_flagfile,
+                self.nexus_identifiers,
+            )
+            self.upload_cmds = self.get_upload_cmds()
+            self.pre_pipeline_upload_dict = self.create_file_upload_dict()
+            self.pipeline_obj = self.build_dx_commands()
+            self.write_dx_run_cmds()
+            self.pre_pipeline_upload()
             self.run_dx_run_commands()
-        
+        else:
+            # S3 path: skip all DNAnexus project/upload steps; full runfolder
+            # is archived to S3 in post_pipeline_upload
+            self.pipeline_obj = self.build_dx_commands()
+            if self.rf_samples_obj.pipeline == "archerdx":
+                # Write decision support script without DNAnexus base vars (not
+                # available in the S3 path), as the archerdx commands don't need them
+                if self.pipeline_obj.decision_support_upload_cmds:
+                    write_lines(
+                        self.rf_obj.decision_support_upload_script,
+                        "w",
+                        list(filter(None, self.pipeline_obj.decision_support_upload_cmds)),
+                    )
+
         if self.rf_samples_obj.pipeline == "archerdx":
             self.run_decision_support_commands()
         elif self.rf_samples_obj.pipeline == "msk":
@@ -794,6 +807,46 @@ class ProcessRunfolder(SWConfig):
                 self.loggers["sw"].log_msgs["nonexistent_files"], result
             )
 
+    def upload_to_s3(self, filetype: str, s3_upload_dict: dict) -> None:
+        """
+        Uploads files to the configured S3 buckets using the AWS CLI. The AWS profile
+        name is read from the credential file at SWConfig.CREDENTIALS["aws_s3_profile"].
+        Files that do not exist locally are skipped with an error log
+            :param filetype (str):          Name of the file upload type
+            :param s3_upload_dict (dict):   Dictionary of files and S3 prefixes for upload
+            :return None:
+        """
+        self.loggers["sw"].info(
+            self.loggers["sw"].log_msgs["uploading_files"], filetype
+        )
+        aws_profile = get_credential(SWConfig.CREDENTIALS["aws_s3_profile"])
+        for filepath in s3_upload_dict[filetype]["files_list"]:
+            if not os.path.exists(filepath):
+                self.loggers["sw"].error(
+                    self.loggers["sw"].log_msgs["nonexistent_files"], filepath
+                )
+                continue
+            s3_bucket = SWConfig.S3_BUCKETS[self.rf_samples_obj.pipeline]
+            s3_dest = (
+                f"s3://{s3_bucket}/"
+                f"{s3_upload_dict[filetype]['s3_prefix']}"
+                f"{os.path.basename(filepath)}"
+            )
+            cmd = SWConfig.S3_CP_CMD % (filepath, s3_dest, aws_profile)
+            _, err, returncode = execute_subprocess_command(
+                cmd, self.loggers["sw"], "exit_on_fail"
+            )
+            if returncode == 0:
+                self.loggers["sw"].info(
+                    self.loggers["sw"].log_msgs["upload_success"], filetype
+                )
+            else:
+                self.loggers["sw"].error(
+                    self.loggers["sw"].log_msgs["s3_upload_fail"],
+                    filetype,
+                    err,
+                )
+
     def upload_rest_of_runfolder(self) -> None:
         """
         Backs up the rest of the runfolder. Specifies which files to ignore (excludes BCL files for all Illumina
@@ -826,6 +879,36 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.upload_runfolder_logfile,
             )
             sys.exit(1)
+
+    def upload_rest_of_runfolder_s3(self) -> None:
+        """
+        Uploads the runfolder directory to S3 using aws s3 sync, excluding BCL
+        directories (L00*). Preserves the directory structure under the runfolder name
+            :return None:
+        """
+        aws_profile = get_credential(SWConfig.CREDENTIALS["aws_s3_profile"])
+        s3_bucket = SWConfig.S3_BUCKETS[self.rf_samples_obj.pipeline]
+        s3_dest = f"s3://{s3_bucket}/{self.rf_obj.runfolder_name}"
+        cmd = (
+            SWConfig.S3_SYNC_CMD % (self.rf_obj.runfolderpath, s3_dest, aws_profile)
+            + " --exclude '*/L00*/*'"
+        )
+        self.loggers["sw"].info(
+            self.loggers["sw"].log_msgs["uploading_files"], "runfolder"
+        )
+        _, err, returncode = execute_subprocess_command(
+            cmd, self.loggers["sw"], "exit_on_fail"
+        )
+        if returncode == 0:
+            self.loggers["sw"].info(
+                self.loggers["sw"].log_msgs["upload_success"], "runfolder"
+            )
+        else:
+            self.loggers["sw"].error(
+                self.loggers["sw"].log_msgs["s3_upload_fail"],
+                self.rf_obj.runfolder_name,
+                err,
+            )
 
     def run_decision_support_commands(self) -> None:
         """
@@ -895,20 +978,36 @@ class ProcessRunfolder(SWConfig):
 
     def post_pipeline_upload(self) -> None:
         """
-        Uploads the rest of the runfolder if not a tso run
+        Uploads the rest of the runfolder if not a tso run. For S3 pipelines, uploads
+        logfiles to S3 instead of DNAnexus
             :return None:
         """
-        if self.rf_samples_obj.pipeline != "tso500":
-            self.upload_rest_of_runfolder()
+        if self.rf_samples_obj.pipeline in SWConfig.S3_PIPELINES:
+            self.upload_rest_of_runfolder_s3()
+            # Filter out upload_runfolder_logfile as it's not created for S3 pipelines
+            logfiles_to_upload = [
+                f for f in self.rf_obj.logfiles_to_upload 
+                if f != self.rf_obj.upload_runfolder_logfile
+            ]
+            logfiles_s3_dict = {
+                "logfiles": {
+                    "files_list": logfiles_to_upload,
+                    "s3_prefix": f"{self.rf_obj.runfolder_name}/logfiles/",
+                }
+            }
+            self.upload_to_s3("logfiles", logfiles_s3_dict)
+        else:
+            if self.rf_samples_obj.pipeline != "tso500":
+                self.upload_rest_of_runfolder()
 
-        logfiles_upload_dict = {
-            "logfiles": {
-                "cmd": self.upload_cmds["logfiles"],
-                "files_list": self.rf_obj.logfiles_to_upload,
-            },
-        }
-        for filetype in logfiles_upload_dict.keys():  # Upload logfiles for all runtypes
-            self.upload_to_dnanexus(filetype, logfiles_upload_dict)
+            logfiles_upload_dict = {
+                "logfiles": {
+                    "cmd": self.upload_cmds["logfiles"],
+                    "files_list": self.rf_obj.logfiles_to_upload,
+                },
+            }
+            for filetype in logfiles_upload_dict.keys():  # Upload logfiles for all runtypes
+                self.upload_to_dnanexus(filetype, logfiles_upload_dict)
 
     def run_msk_commands(self):
         """Execute MSK pipeline commands directly without any DNAnexus interaction"""
