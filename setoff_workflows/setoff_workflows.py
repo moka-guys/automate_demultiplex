@@ -1423,7 +1423,7 @@ class CustomPanelsPipelines:
         self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_pipeline_recombined"])
 
         # Peddy for CP2 only
-        if pipeline_type == "gatk_pipe":
+        if pipeline_type == "seglh_pipe":
             self.workflow_cmds.extend(
                 [self.rf_cmds_obj.create_peddy_cmd(), SWConfig.UPLOAD_ARGS["depends_list"]]
             ) 

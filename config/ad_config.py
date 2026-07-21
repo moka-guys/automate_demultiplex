@@ -67,7 +67,7 @@ else:  # Testing branch
     RUNFOLDERS = "/media/data1/share/bcl_convert_testing"
     AVITI01_RUNFOLDER = "/media/data1/share/bcl_convert_testing/AV241501"
     AVITI02_RUNFOLDER = "/media/data1/share/bcl_convert_testing/AV250605"
-    AVITI_SAMPLESHEET = "/media/data1/share/AV241501/testing/samplesheets"
+    AVITI_SAMPLESHEET = "/media/data1/share/bcl_convert_testing/samplesheets"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
