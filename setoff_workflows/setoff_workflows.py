@@ -309,44 +309,29 @@ class ProcessRunfolder(SWConfig):
             self.rf_obj.upload_flagfile, "w"
         ).close()  # Create upload flag file (prevents processing by other script runs)
         self.rf_samples_obj = RunfolderSamples(self.rf_obj, self.loggers["sw"])
-
-        if self.rf_samples_obj.pipeline not in SWConfig.S3_PIPELINES:
-            # DNAnexus path: create project, upload files to DNAnexus, run dx commands
-            self.dnanexus_auth = get_credential(SWConfig.CREDENTIALS["dnanexus_authtoken"])
-            self.users_dict = self.get_users_dict()
-            self.write_project_creation_script()
-            self.nexus_identifiers = {
-                "proj_name": self.rf_samples_obj.nexus_paths["proj_name"],
-                "proj_id": self.run_project_creation_script(),
-            }
-            self.upload_runfolder = UploadRunfolder(
-                self.loggers["backup"],
-                self.rf_obj.runfolder_name,
-                self.rf_obj.runfolderpath,
-                self.rf_obj.upload_flagfile,
-                self.nexus_identifiers,
-            )
-            self.upload_cmds = self.get_upload_cmds()
-            self.pre_pipeline_upload_dict = self.create_file_upload_dict()
-            self.pipeline_obj = self.build_dx_commands()
-            self.write_dx_run_cmds()
-            
-            self.pre_pipeline_upload()
+        self.users_dict = self.get_users_dict()
+        self.write_project_creation_script()
+        self.nexus_identifiers = {
+            "proj_name": self.rf_samples_obj.nexus_paths["proj_name"],
+            "proj_id": self.run_project_creation_script(),
+        }
+        self.upload_runfolder = UploadRunfolder(
+            self.loggers["backup"],
+            self.rf_obj.runfolder_name,
+            self.rf_obj.runfolderpath,
+            self.rf_obj.upload_flagfile,
+            self.nexus_identifiers,
+        )
+        self.upload_cmds = self.get_upload_cmds()
+        self.pre_pipeline_upload_dict = self.create_file_upload_dict()
+        self.pipeline_obj = self.build_dx_commands()
+        self.write_dx_run_cmds()
+        self.pre_pipeline_upload()
+        
+        # Skip run_dx_run_commands for MSK pipeline
+        if self.rf_samples_obj.pipeline != "msk":
             self.run_dx_run_commands()
-        else:
-            # S3 path: skip all DNAnexus project/upload steps; full runfolder
-            # is archived to S3 in post_pipeline_upload
-            self.pipeline_obj = self.build_dx_commands()
-            if self.rf_samples_obj.pipeline == "archerdx":
-                # Write decision support script without DNAnexus base vars (not
-                # available in the S3 path), as the archerdx commands don't need them
-                if self.pipeline_obj.decision_support_upload_cmds:
-                    write_lines(
-                        self.rf_obj.decision_support_upload_script,
-                        "w",
-                        list(filter(None, self.pipeline_obj.decision_support_upload_cmds)),
-                    )
-
+        
         if self.rf_samples_obj.pipeline == "archerdx":
             self.run_decision_support_commands()
         elif self.rf_samples_obj.pipeline == "msk":
