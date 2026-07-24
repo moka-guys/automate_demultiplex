@@ -98,9 +98,10 @@ class GetRunfolders(DemultiplexConfig):
 
             for folder_name in folders:
                 sequencer_type = get_sequencer_type(folder_name)
-                if get_runfolder_path(sequencer_type, folder_name) and re.compile(
-                    DemultiplexConfig.RUNFOLDER_PATTERN
-                ).match(folder_name):
+                runfolder_path = get_runfolder_path(sequencer_type, folder_name)
+                if re.compile(DemultiplexConfig.RUNFOLDER_PATTERN).match(
+                    folder_name
+                ) and os.path.isdir(runfolder_path):
                     runfolder_names.append(folder_name)
             script_logger.info(
                 script_logger.log_msgs["runfolder_names"],
