@@ -811,7 +811,8 @@ class ProcessRunfolder(SWConfig):
         """
         Uploads files to the configured S3 buckets using the AWS CLI. The AWS profile
         name is read from the credential file at SWConfig.CREDENTIALS["aws_s3_profile"].
-        Files that do not exist locally are skipped with an error log
+        Files that do not exist locally, or that fail to upload, are skipped with an
+        error log so that a single bad file does not abort the rest of the upload
             :param filetype (str):          Name of the file upload type
             :param s3_upload_dict (dict):   Dictionary of files and S3 prefixes for upload
             :return None:
@@ -833,14 +834,14 @@ class ProcessRunfolder(SWConfig):
                 f"{os.path.basename(filepath)}"
             )
             cmd = SWConfig.S3_CP_CMD % (filepath, s3_dest, aws_profile)
-            _, err, returncode = execute_subprocess_command(
-                cmd, self.loggers["sw"], "exit_on_fail"
-            )
+            _, err, returncode = execute_subprocess_command(cmd, self.loggers["sw"])
             if returncode == 0:
                 self.loggers["sw"].info(
                     self.loggers["sw"].log_msgs["upload_success"], filetype
                 )
             else:
+                # Log and move on to the next file rather than aborting the whole
+                # upload over a single failed file
                 self.loggers["sw"].error(
                     self.loggers["sw"].log_msgs["s3_upload_fail"],
                     filetype,
@@ -883,7 +884,8 @@ class ProcessRunfolder(SWConfig):
     def upload_rest_of_runfolder_s3(self) -> None:
         """
         Uploads the runfolder directory to S3 using aws s3 sync, excluding BCL
-        directories (L00*). Preserves the directory structure under the runfolder name
+        directories (L00*). Preserves the directory structure under the runfolder
+        name. If unsuccessful, exit script
             :return None:
         """
         aws_profile = get_credential(SWConfig.CREDENTIALS["aws_s3_profile"])
@@ -896,9 +898,7 @@ class ProcessRunfolder(SWConfig):
         self.loggers["sw"].info(
             self.loggers["sw"].log_msgs["uploading_files"], "runfolder"
         )
-        _, err, returncode = execute_subprocess_command(
-            cmd, self.loggers["sw"], "exit_on_fail"
-        )
+        _, err, returncode = execute_subprocess_command(cmd, self.loggers["sw"])
         if returncode == 0:
             self.loggers["sw"].info(
                 self.loggers["sw"].log_msgs["upload_success"], "runfolder"
@@ -909,6 +909,7 @@ class ProcessRunfolder(SWConfig):
                 self.rf_obj.runfolder_name,
                 err,
             )
+            sys.exit(1)
 
     def run_decision_support_commands(self) -> None:
         """
