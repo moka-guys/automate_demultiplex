@@ -364,6 +364,7 @@ class DemultiplexConfig(PanelConfig):
     AVITI02_RUNFOLDER = AVITI02_RUNFOLDER
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
+    PROCESS_LOCK_FILE = os.path.join(AD_LOGDIR, ".demultiplex.lock")
     BASES2FASTQ_CPU = 10
     IC_SCRIPT = "/usr/local/src/mokaguys/integrity_checking/integrity_check.py"
     STRINGS = {
