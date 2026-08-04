@@ -1345,7 +1345,7 @@ class CustomPanelsPipelines:
             self.decision_support_upload_cmds.append(
                 sample_cmds_obj.return_congenica_cmd()
             )
-            
+        
         # CNV calling steps are a dependency of MultiQC
         cmd_list = []
         for core_panel in ["vcp1", "CP2"]:
