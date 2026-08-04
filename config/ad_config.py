@@ -67,7 +67,7 @@ else:  # Testing branch
     RUNFOLDERS = "/media/data1/share/testing"
     AVITI01_RUNFOLDER = "/media/data1/share/testing/AV241501"
     AVITI02_RUNFOLDER = "/media/data1/share/testing/AV250605"
-    AVITI_SAMPLESHEET = "/media/data1/share/testing/samplesheets"
+    AVITI_SAMPLESHEET = "/media/data1/share/testing/AV241501/samplesheets"
     AD_LOGDIR = os.path.join(RUNFOLDERS, "automate_demultiplexing_logfiles")
     MAIL_SETTINGS = MAIL_SETTINGS | {  # Add test mail recipients
         "pipeline_started_subj": f"{SCRIPT_MODE}. ALERT: Started pipeline for %s",
@@ -407,14 +407,14 @@ class DemultiplexConfig(PanelConfig):
         f"{RUNFOLDERS}/${{run_folder_name}} --force"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
-        # "20251104_AV250605_NGS729AV2413pM",
-        # "999999_NB552085_0496_DEMUXINTEG",
-        # "999999_M02353_0496_000000000-DEMUX",
-        # "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
-        # "999999_M02631_0285_000000000-DEVOO",
-        # "999999_NB551068_0285_OODEVINTEG",
-        # "999999_M02631_0285_000000000-DVUMI",
-        # "999999_NB552085_0320_ONCODEEP00",  # Included as behaviour is slightly different to include copying the MasterFile
+        "20251104_AV250605_NGS729AV2413pM",
+        "999999_NB552085_0496_DEMUXINTEG",
+        "999999_M02353_0496_000000000-DEMUX",
+        "999999_A01229_0182_AHM2TSO500",  # Used for testing demultiplex and sw scripts
+        "999999_M02631_0285_000000000-DEVOO",
+        "999999_NB551068_0285_OODEVINTEG",
+        "999999_M02631_0285_000000000-DVUMI",
+        "999999_NB552085_0320_ONCODEEP00",  # Included as behaviour is slightly different to include copying the MasterFile
         "20260717_AV250605_NGS804A"
     ]
     SEQUENCER_IDS = {
