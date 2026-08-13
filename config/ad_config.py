@@ -307,7 +307,7 @@ DX_CMDS = {
     "multiqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['multiqc']} --priority high -y {JOB_NAME_STR}",
     "ed_readcount": (
         f"ED_READCOUNT_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
-        f"--priority high -y --instance-type mem1_ssd1_v2_x8 {JOB_NAME_STR}"
+        f"--priority high -y {JOB_NAME_STR}"
     ),
     "ed_cnvcalling": (
         f"CNVCALLING_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_cnvcalling']} --priority high -y {JOB_NAME_STR}"
