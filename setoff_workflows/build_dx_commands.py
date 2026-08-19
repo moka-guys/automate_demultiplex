@@ -39,7 +39,7 @@ class BuildRunfolderDxCommands(SWConfig):
             the html_report output of the multiqc app in the format jobid:output_name
         create_peddy_cmd()
             Build dx run command to run peddy for the project. Run once at the end of a
-            WES run and downloads required files from the project
+            CP2 run and downloads required files from the project
         create_rpkm_cmd(core_panel_name)
             Build dx run command to run RPKM for a core panel
         create_ed_readcount_cmd(core_panel_name)
@@ -171,7 +171,7 @@ class BuildRunfolderDxCommands(SWConfig):
     def create_peddy_cmd(self) -> str:
         """
         Build dx run command to run peddy for the project. Run once at the
-        end of a WES run and downloads required files from the project
+        end of a CP2 run and downloads required files from the project
             :return (str):  Dx run command for peddy app
         """
         self.logger.info(
@@ -182,7 +182,7 @@ class BuildRunfolderDxCommands(SWConfig):
         return " ".join(
             [
                 f'{SWConfig.DX_CMDS["peddy"]}Peddy',
-                SWConfig.APP_INPUTS["peddy"]["project_name"],
+                SWConfig.APP_INPUTS["peddy"]["project_ID"],
                 SWConfig.UPLOAD_ARGS["depends"],
                 SWConfig.UPLOAD_ARGS["dest"],
                 SWConfig.UPLOAD_ARGS["token"],

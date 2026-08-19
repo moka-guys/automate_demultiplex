@@ -1345,7 +1345,7 @@ class CustomPanelsPipelines:
             self.decision_support_upload_cmds.append(
                 sample_cmds_obj.return_congenica_cmd()
             )
-
+        
         # CNV calling steps are a dependency of MultiQC
         cmd_list = []
         for core_panel in ["vcp1", "CP2"]:
@@ -1406,6 +1406,12 @@ class CustomPanelsPipelines:
                         core_panel,
                     )
         self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_pipeline_recombined"])
+
+        # Peddy for CP2 only
+        if pipeline_type == "seglh_pipe":
+            self.workflow_cmds.extend(
+                [self.rf_cmds_obj.create_peddy_cmd(), SWConfig.UPLOAD_ARGS["depends_list"]]
+            ) 
 
         self.workflow_cmds.extend(
             self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline)
