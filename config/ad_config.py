@@ -136,7 +136,7 @@ NEXUS_IDS = {
         "fastqc": f"{TOOLS_PROJECT}:applet-J3PxBkXK9yGZ071FgGb11QKk",  # fastqc_v1.4.1
         "gatk": f"{TOOLS_PROJECT}:applet-J3PxJx2K9yGZZ2j2BKV86Jgj",  # gatk3_human_exome_pipeline_v1.5.1
         "sentieon": f"{TOOLS_PROJECT}:app-Gy4j5z00PPyQ5qv5FBXy0ZZp",  # Sentieon germline FASTQ to VCF v5.1.0
-        #"peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",  # peddy_v1.5
+        "peddy": f"{TOOLS_PROJECT}:applet-J8kx1zpK5xQpXb677Q8qzgvb",  # peddy_v2.3
         "ed_readcount": f"{TOOLS_PROJECT}:applet-J7BQy2XK9yGfZ4GYfYZJgfX5",  # ED_readcount_analysis_v1.6.1
         "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J7BQyvXK9yGfqpgq4BYpXvPx",  # ED_cnv_calling_v1.7.1
         "rpkm": f"{TOOLS_PROJECT}:applet-J84zJ4BK9yGfPf1BVjg2bfVf",  # RPKM_using_conifer_v1.6.2
@@ -192,7 +192,7 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     "fastqc": {
         "reads": "-ireads=",
     },
-    "peddy": {"project_name": "-iproject_for_peddy=${PROJECT_NAME}"},
+    "peddy": {"project_ID": "-iproject_ID_for_peddy=${PROJECT_ID}"},
     "sompy": {
         "truth_vcf": f"-itruthVCF={NEXUS_IDS['FILES']['sompy_truth_vcf']}",
         "query_vcf": "-iqueryVCF=${PROJECT_ID}:/analysis_folder/Results/",
@@ -300,10 +300,7 @@ DX_CMDS = {
     "gatk_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['gatk_pipe']} --priority high -y {JOB_NAME_STR}",
     "seglh_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['seglh_pipe']} --priority high -y {JOB_NAME_STR}",
     "fastqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
-    #"peddy": (  # TODO move instance type into app itself
-        #f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high "
-        #f"-y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
-    #),
+    "peddy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high -y {JOB_NAME_STR}",
     "multiqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['multiqc']} --priority high -y {JOB_NAME_STR}",
     "ed_readcount": (
         f"ED_READCOUNT_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
