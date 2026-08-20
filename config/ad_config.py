@@ -144,7 +144,7 @@ NEXUS_IDS = {
     },
     "WORKFLOWS": {
         "gatk_pipe": f"{TOOLS_PROJECT}:workflow-J3XPgzXK9yGbgg33xp68kXGx",  # GATK3.5_v2.20
-        "seglh_pipe": f"{TOOLS_PROJECT}:workflow-J3Pyjk2K9yGzPqKz0XGzqq6Z",  # SEGLH_RD_v1.5
+        "seglh_pipe": f"{TOOLS_PROJECT}:workflow-JB3J1PXK9yGY0bKzQ2B388VG",  # SEGLH_RD_v1.5.2
     
     },
     "STAGES": {
@@ -168,7 +168,7 @@ NEXUS_IDS = {
             "sambamba": "stage-J3ZQjvBK9yGbyyxKYfj0yX2j",
             "fhprs": "stage-J3Pyv7pK9yGYQ354qBB6Z62G",
             "bcftools_stats": "stage-J3PyqfpK9yGx93XxkB02j5g9",
-            "verifybam": "stage-J3Pyy4pK9yGYfyqJ19g3fXyf",
+            "verifybamid": "stage-J9fG2g2K5353F5vZ1z7X9Pvp",
             "polyedge": "stage-J3PyvyXK9yGQ5BjX7jbYPbkg",          
         },
     },
