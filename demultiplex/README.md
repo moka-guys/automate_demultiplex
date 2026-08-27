@@ -47,6 +47,13 @@ The script should be run with no inputs provided when assessing production runs 
 python3 -m demultiplex
 ```
 
+Only one scheduled invocation can demultiplex at a time. If another scheduled
+invocation starts while processing is active, it logs that it is waiting and
+continues automatically when the active invocation finishes. The process lock
+is stored at `.demultiplex.lock` in the configured automate demultiplex log
+directory and is released automatically when the process exits. Targeted
+manual runs using `--runfolder_name` do not use this lock.
+
 #### Single runfolder
 
 The run can be run manually for an individual runfolder as follows:

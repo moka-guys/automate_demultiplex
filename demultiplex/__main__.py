@@ -5,10 +5,13 @@ Demultiplexes NGS Run Folders. See README and docstrings for further details
 """
 
 import argparse
-from demultiplex.demultiplex import GetRunfolders
-from ad_logger.ad_logger import set_root_logger
+from contextlib import nullcontext
 
-set_root_logger()
+from ad_logger.ad_logger import set_root_logger
+from config.ad_config import DemultiplexConfig
+from demultiplex.process_lock import demultiplex_process_lock
+
+root_logger = set_root_logger()
 
 
 def get_arguments():
@@ -41,12 +44,35 @@ def get_arguments():
     return parser.parse_args()
 
 
-parsed_args = get_arguments()
+def get_process_lock(runfolder_name):
+    """
+    Return a lock for scheduled scans and no-op for targeted manual runs.
+    """
+    if runfolder_name:
+        return nullcontext()
+    return demultiplex_process_lock(
+        DemultiplexConfig.PROCESS_LOCK_FILE, root_logger
+    )
 
-if parsed_args.runfolder_name:  # If run with runfolder name provided as input
-    gr_obj = GetRunfolders(parsed_args.runfolder_name)
 
-else:
-    gr_obj = GetRunfolders()
+def main() -> None:
+    """
+    Serialize scheduled scans while allowing targeted manual runs.
+    """
+    parsed_args = get_arguments()
 
-gr_obj.setoff_processing()
+    with get_process_lock(parsed_args.runfolder_name):
+        # Importing creates the per-invocation file logger, so do it only after
+        # scheduled processing owns the lock.
+        from demultiplex.demultiplex import GetRunfolders
+
+        if parsed_args.runfolder_name:
+            gr_obj = GetRunfolders(parsed_args.runfolder_name)
+        else:
+            gr_obj = GetRunfolders()
+
+        gr_obj.setoff_processing()
+
+
+if __name__ == "__main__":
+    main()
