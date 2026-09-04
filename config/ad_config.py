@@ -83,6 +83,7 @@ CREDENTIALS = {
     "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
     "adx_authtoken": ".archer_authentication_mokaguys.txt"
 }
+NEXTSEQ_ID = "NB552085"  # NextSeq sequencer ID
 NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
 AVITI01_ID = "AV241501" # Aviti sequencer ID
 AVITI02_ID = "AV250605" # Second Aviti Sequencer ID
@@ -440,6 +441,7 @@ class SWConfig(PanelConfig):
     FASTQ_DIRS = FASTQ_DIRS
     MAIL_SETTINGS = MAIL_SETTINGS
     NEXUS_IDS = NEXUS_IDS
+    NEXTSEQ_ID = NEXTSEQ_ID
     NOVASEQ_ID = NOVASEQ_ID
     TIMESTAMP = TIMESTAMP
     PROJECT_DIR = PROJECT_DIR
@@ -616,6 +618,7 @@ class ToolboxConfig(PanelConfig):
     AVITI02_ID = AVITI02_ID
     AVITI_IDS = AVITI_IDS
     NOVASEQ_ID = NOVASEQ_ID
+    NEXTSEQ_ID = NEXTSEQ_ID
     
     AVITI_SAMPLESHEET = AVITI_SAMPLESHEET
     TIMESTAMP = TIMESTAMP
