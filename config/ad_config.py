@@ -81,7 +81,7 @@ CREDENTIALS = {
     "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
     "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
     "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
-    "adx_authtoken": ".archer_authentication_mokaguys.txt"
+    "adx_authtoken": ".archer_authentication_synnovis.txt"
 }
 NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
 AVITI01_ID = "AV241501" # Aviti sequencer ID
