@@ -100,7 +100,7 @@ SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCLCONVERT_DOCKER = "seglh/bcl-convert:4.3.6"
-BASES2FASTQ_DOCKER = "seglh/bases2fastq:2.3.0"
+BASES2FASTQ_DOCKER = "seglh/bases2fastq:2.4"
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
@@ -131,7 +131,7 @@ NEXUS_IDS = {
     "APPS": {
         "congenica_upload": f"{TOOLS_PROJECT}:applet-J3Px8vpK9yGVF55Fy3kvFb0f",  # congenica_upload_v1.3.3
         "oncodeep_upload": f"{TOOLS_PROJECT}:applet-J3PxV8BK9yGzPK2vV9921Jpx",  # oncodeep_upload v1.0.1
-        "multiqc": f"{TOOLS_PROJECT}:applet-J84gV4XK9yGzqYfqQ0Yj7f05",  # multiqc_v1.18.2
+        "multiqc": f"{TOOLS_PROJECT}:applet-J96JYFBK9yGpX6Z7fGv8gZ1P",  # multiqc_v1.18.3
         "sambamba_vcp1": f"{TOOLS_PROJECT}:applet-J3XPXyBK9yGpfyjPb2KYg82g",  # chanjo_sambamba_coverage_v1.13.1
         "sambamba_cp2": f"{TOOLS_PROJECT}:applet-J3XKp62K9yGpjP2yvP93Z68K",  # sambamba_coverage_v2.0.1
         "fastqc": f"{TOOLS_PROJECT}:applet-J3PxBkXK9yGZ071FgGb11QKk",  # fastqc_v1.4.1
@@ -139,8 +139,8 @@ NEXUS_IDS = {
         "sentieon": f"{TOOLS_PROJECT}:app-Gy4j5z00PPyQ5qv5FBXy0ZZp",  # Sentieon germline FASTQ to VCF v5.1.0
         "peddy": f"{TOOLS_PROJECT}:applet-J8kx1zpK5xQpXb677Q8qzgvb",  # peddy_v2.3
         "ed_readcount": f"{TOOLS_PROJECT}:applet-J7BQy2XK9yGfZ4GYfYZJgfX5",  # ED_readcount_analysis_v1.6.1
-        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J7BQyvXK9yGfqpgq4BYpXvPx",  # ED_cnv_calling_v1.7.1
-        "rpkm": f"{TOOLS_PROJECT}:applet-J84zJ4BK9yGfPf1BVjg2bfVf",  # RPKM_using_conifer_v1.6.2
+        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J98KYjpK9yGxX4B59JJ343ZX",  # ED_cnv_calling_v1.7.2
+        "rpkm": f"{TOOLS_PROJECT}:applet-J96JX8BK9yGgbJ74fqzPb9kV",  # RPKM_using_conifer_v1.6.3
         "duty_csv": f"{TOOLS_PROJECT}:applet-J84xJZXK9yGfXVZyyzZBYFBG",  # duty_csv_v1.5.3
     },
     "WORKFLOWS": {
@@ -386,7 +386,7 @@ class DemultiplexConfig(PanelConfig):
     )
     BASES2FASTQ_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
-        "bases2fastq /input /output -p %s --group-fastq --no-projects -r /input/%s"
+        "bases2fastq /input /output -p %s --group-fastq --no-projects -r /input/%s --force-detect-index-orientation"
     )
     CD_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
