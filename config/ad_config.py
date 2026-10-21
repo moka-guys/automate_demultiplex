@@ -84,7 +84,9 @@ CREDENTIALS = {
     "adx_authtoken": ".archer_authentication_synnovis.txt"
 }
 NEXTSEQ_ID = "NB552085"  # NextSeq sequencer ID
-NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
+NOVASEQ01_ID = "A01229"  # Novaseq sequencer ID
+NOVASEQ02_ID = "A02146" # Second Novaseq sequencer ID
+NOVASEQ_IDS = [NOVASEQ01_ID, NOVASEQ02_ID]
 AVITI01_ID = "AV241501" # Aviti sequencer ID
 AVITI02_ID = "AV250605" # Second Aviti Sequencer ID
 AVITI_IDS = ["AV241501","AV250605"]
@@ -356,7 +358,7 @@ class DemultiplexConfig(PanelConfig):
     Demultiplex configuration
     """
 
-    NOVASEQ_ID = NOVASEQ_ID
+    NOVASEQ_IDS = NOVASEQ_IDS
     AVITI_IDS = AVITI_IDS
     AVITI01_RUNFOLDER = AVITI01_RUNFOLDER
     AVITI02_RUNFOLDER = AVITI02_RUNFOLDER
@@ -423,7 +425,8 @@ class DemultiplexConfig(PanelConfig):
         "NB552085": {"requires_ic": True},
         "M02353": {"requires_ic": False},
         "M02631": {"requires_ic": False},
-        NOVASEQ_ID: {"requires_ic": True},
+        NOVASEQ01_ID: {"requires_ic": True},
+        NOVASEQ02_ID: {"requires_ic": True},
         AVITI01_ID: {"requires_ic": False},
         AVITI02_ID: {"requires_ic": False},
     }
@@ -442,7 +445,7 @@ class SWConfig(PanelConfig):
     MAIL_SETTINGS = MAIL_SETTINGS
     NEXUS_IDS = NEXUS_IDS
     NEXTSEQ_ID = NEXTSEQ_ID
-    NOVASEQ_ID = NOVASEQ_ID
+    NOVASEQ_IDS = NOVASEQ_IDS
     TIMESTAMP = TIMESTAMP
     PROJECT_DIR = PROJECT_DIR
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
@@ -617,7 +620,8 @@ class ToolboxConfig(PanelConfig):
     AVITI01_ID = AVITI01_ID
     AVITI02_ID = AVITI02_ID
     AVITI_IDS = AVITI_IDS
-    NOVASEQ_ID = NOVASEQ_ID
+    NOVASEQ01_ID = NOVASEQ01_ID
+    NOVASEQ02_ID = NOVASEQ02_ID
     NEXTSEQ_ID = NEXTSEQ_ID
     
     AVITI_SAMPLESHEET = AVITI_SAMPLESHEET
