@@ -634,7 +634,7 @@ class DemultiplexRunfolder(DemultiplexConfig):
         script. If run was sequenced on novaseq, an extra argument is provided
             :return (Optional[bool]):  True if success statement seen
         """
-        if DemultiplexConfig.NOVASEQ_ID in self.rf_obj.runfolder_name:
+        if any(id in self.rf_obj.runfolder_name for id in DemultiplexConfig.NOVASEQ_IDS):
             novaseq_flag = " --IS_NOVASEQ"
         else:
             novaseq_flag = ""

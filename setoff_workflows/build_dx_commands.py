@@ -92,7 +92,7 @@ class BuildRunfolderDxCommands(SWConfig):
         relevant tso500 app input string
             :return (str):  Analysis options for the tso500 app
         """
-        if SWConfig.NOVASEQ_ID in self.rf_obj.runfolder_name:
+        if any(id in self.rf_obj.runfolder_name for id in SWConfig.NOVASEQ_IDS):
             tso500_analysis_options = "--isNovaSeq "
         else:
             tso500_analysis_options = ""
