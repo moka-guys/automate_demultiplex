@@ -147,7 +147,7 @@ class PanelConfig:
             "hsmetrics_bedfile": f"{BEDFILE_FOLDER}Pan5356_data.bed",
             "sambamba_bedfile": f"{BEDFILE_FOLDER}Pan5347_sambamba.bed",
             "variant_calling_bedfile": f"{BEDFILE_FOLDER}Pan5356_data.bed",
-            "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5356_exomeDepth.bed",
+            "ed_readcount_bedfile": f"{BEDFILE_FOLDER}Pan5358_exomeDepth.bed",
             "happy_bedfile": f"{BEDFILE_FOLDER}Pan5356_data.bed",
             "readcount_ed_bam_str": "*markdup.ba*",
             "ed_bam_str": "markdup",
