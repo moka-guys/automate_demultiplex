@@ -100,7 +100,7 @@ FASTQ_DIRS = {
 SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit path
 
 # DNAnexus upload agent path
-UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
+UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.33-linux/ua"
 BCLCONVERT_DOCKER = "seglh/bcl-convert:4.3.6"
 BASES2FASTQ_DOCKER = "seglh/bases2fastq:2.4"
 GATK_DOCKER = (
