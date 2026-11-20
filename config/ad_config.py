@@ -365,7 +365,7 @@ class DemultiplexConfig(PanelConfig):
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
     RUNFOLDERS = RUNFOLDERS
     BASES2FASTQ_CPU = 10
-    IC_SCRIPT = "/usr/local/src/mokaguys/integrity_checking/integrity_check.py"
+    IC_SCRIPT = f"{DOCUMENT_ROOT}/apps/integrity_checking/integrity_check.py"
     STRINGS = {
         "demultiplex_not_required_msg": DEMUX_NOT_REQUIRED_MSG,
         "lane_metrics_suffix": LANE_METRICS_SUFFIX,
@@ -406,7 +406,7 @@ class DemultiplexConfig(PanelConfig):
         f"--job_name ${{job_name}}"
     )
     MSK_CMD = (
-        f"python3 /usr/local/src/mokaguys/sophia_cli/sophia.py "
+        f"python3 {DOCUMENT_ROOT}/apps/sophia_cli/sophia.py "
         f"{RUNFOLDERS}/${{run_folder_name}} --force"
     )
     DEMULTIPLEX_TEST_RUNFOLDERS = [
