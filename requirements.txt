@@ -10,7 +10,7 @@ click==8.1.7
 cryptography==36.0.2
 decopatch==1.4.10
 dill==0.3.8
-dxpy==0.378.1
+dxpy==0.378.0
 exceptiongroup==1.2.1
 flake8==6.1.0
 graphviz==0.20.3
