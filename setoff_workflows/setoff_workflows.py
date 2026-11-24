@@ -985,10 +985,15 @@ class ProcessRunfolder(SWConfig):
         """
         if self.rf_samples_obj.pipeline in SWConfig.S3_PIPELINES:
             self.upload_rest_of_runfolder_s3()
-            # Filter out upload_runfolder_logfile as it's not created for S3 pipelines
+            # Files exclusive to the DNAnexus path
+            not_created_for_s3 = [
+                self.rf_obj.upload_runfolder_logfile,
+                self.rf_obj.proj_creation_script,
+                self.rf_obj.runfolder_dx_run_script,
+            ]
             logfiles_to_upload = [
-                f for f in self.rf_obj.logfiles_to_upload 
-                if f != self.rf_obj.upload_runfolder_logfile
+                f for f in self.rf_obj.logfiles_to_upload
+                if f not in not_created_for_s3
             ]
             logfiles_s3_dict = {
                 "logfiles": {
