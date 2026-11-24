@@ -1445,7 +1445,7 @@ class CustomPanelsPipelines:
             self.decision_support_upload_cmds.append(
                 sample_cmds_obj.return_congenica_cmd()
             )
-
+        
         # CNV calling steps are a dependency of MultiQC
         cmd_list = []
         for core_panel in ["vcp1", "CP2"]:
@@ -1473,39 +1473,52 @@ class CustomPanelsPipelines:
                             SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"],
                         ]
                     )
-                    if self.rf_obj.sequencer_type in SWConfig.AVITI_IDS:
-                        sequencer_panel = "_AVITI"
-                    else:
-                        sequencer_panel = "_NOVASEQ"
+                    # Do not generate ExomeDepth commands for NextSeq runs
+                    if self.rf_obj.sequencer_type != SWConfig.NEXTSEQ_ID:
+                        # Determine sequencer for panel of normals use for ExomeDepth
+                        if self.rf_obj.sequencer_type in SWConfig.AVITI_IDS:
+                            sequencer_panel = "_AVITI"
+                        else:
+                            sequencer_panel = "_NOVASEQ"
 
-                    self.workflow_cmds.extend(
-                        [
-                            self.rf_cmds_obj.create_ed_readcount_cmd(core_panel, sequencer_panel),
-                            SWConfig.UPLOAD_ARGS["depends_list_edreadcount"],
-                        ]
-                    )
-                    for panno in set(core_panel_pannos):
-                        if (
-                            SWConfig.CAPTURE_PANEL_DICT[core_panel][
-                                "ed_readcount_bedfile"
+                        self.workflow_cmds.extend(
+                            [
+                                self.rf_cmds_obj.create_ed_readcount_cmd(core_panel, sequencer_panel),
+                                SWConfig.UPLOAD_ARGS["depends_list_edreadcount"],
                             ]
-                            and SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]
-                        ):
-                            # Count how many samples share this pan number
-                            sample_count = core_panel_pannos.count(panno)
-                            
-                            self.workflow_cmds.extend(
-                                [
-                                    self.rf_cmds_obj.create_ed_cnvcalling_cmd(panno, sample_count),
-                                    SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"],
+                        )
+                        for panno in set(core_panel_pannos):
+                            if (
+                                SWConfig.CAPTURE_PANEL_DICT[core_panel][
+                                    "ed_readcount_bedfile"
                                 ]
-                            )
+                                and SWConfig.PANEL_DICT[panno]["ed_cnvcalling_bedfile"]
+                            ):
+                                # Count how many samples share this pan number
+                                sample_count = core_panel_pannos.count(panno)
+
+                                self.workflow_cmds.extend(
+                                    [
+                                        self.rf_cmds_obj.create_ed_cnvcalling_cmd(panno, sample_count),
+                                        SWConfig.UPLOAD_ARGS["depends_list_cnvcalling"],
+                                    ]
+                                )
+                    else:
+                        self.logger.info(
+                            "ExomeDepth commands skipped for NextSeq runs."
+                        )
                 else:
                     self.logger.info(
                         self.logger.log_msgs["insufficient_samples_for_cnv"],
                         core_panel,
                     )
         self.workflow_cmds.append(SWConfig.UPLOAD_ARGS["depends_list_pipeline_recombined"])
+
+        # Peddy for CP2 only
+        if pipeline_type == "seglh_pipe":
+            self.workflow_cmds.extend(
+                [self.rf_cmds_obj.create_peddy_cmd(), SWConfig.UPLOAD_ARGS["depends_list"]]
+            ) 
 
         self.workflow_cmds.extend(
             self.rf_cmds_obj.return_multiqc_cmds(self.rf_samples_obj.pipeline)

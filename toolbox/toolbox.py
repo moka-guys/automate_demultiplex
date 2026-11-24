@@ -203,8 +203,12 @@ def get_sequencer_type(runfolder_name: str) -> str:
         return ToolboxConfig.AVITI01_ID
     elif ToolboxConfig.AVITI02_ID in runfolder_name:
         return ToolboxConfig.AVITI02_ID
+    elif ToolboxConfig.NOVASEQ01_ID in runfolder_name:
+        return ToolboxConfig.NOVASEQ01_ID
+    elif ToolboxConfig.NOVASEQ02_ID in runfolder_name:
+        return ToolboxConfig.NOVASEQ02_ID
     else:
-        return ToolboxConfig.NOVASEQ_ID
+        return ToolboxConfig.NEXTSEQ_ID
     
 def get_samplesheet_name(sequencer_type: str, runfolder_name: str,aviti_runparameters_file: str) -> str:
     """

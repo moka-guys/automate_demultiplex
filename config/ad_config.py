@@ -81,10 +81,13 @@ CREDENTIALS = {
     "email_user": os.path.join(DOCUMENT_ROOT, ".amazon_email_username"),
     "email_pw": os.path.join(DOCUMENT_ROOT, ".amazon_email_pw"),
     "dnanexus_authtoken": os.path.join(DOCUMENT_ROOT, ".dnanexus_auth_token"),
-    "adx_authtoken": ".archer_authentication_mokaguys.txt",
-    "aws_s3_profile": os.path.join(DOCUMENT_ROOT, ".aws_s3_profile"), # AWS CLI profile name for S3 uploads
+    "adx_authtoken": ".archer_authentication_synnovis.txt",
+    "aws_s3_profile": os.path.join(DOCUMENT_ROOT, ".aws_s3_profile"),  # AWS CLI profile name for S3 uploads
 }
-NOVASEQ_ID = "A01229"  # Novaseq sequencer ID
+NEXTSEQ_ID = "NB552085"  # NextSeq sequencer ID
+NOVASEQ01_ID = "A01229"  # Novaseq sequencer ID
+NOVASEQ02_ID = "A02146" # Second Novaseq sequencer ID
+NOVASEQ_IDS = [NOVASEQ01_ID, NOVASEQ02_ID]
 AVITI01_ID = "AV241501" # Aviti sequencer ID
 AVITI02_ID = "AV250605" # Second Aviti Sequencer ID
 AVITI_IDS = ["AV241501","AV250605"]
@@ -100,7 +103,7 @@ SDK_SOURCE = f"source {DOCUMENT_ROOT}/apps/dx-toolkit/environment"  # dxtoolkit 
 # DNAnexus upload agent path
 UPLOAD_AGENT_EXE = f"{DOCUMENT_ROOT}/apps/dnanexus-upload-agent-1.5.17-linux/ua"
 BCLCONVERT_DOCKER = "seglh/bcl-convert:4.3.6"
-BASES2FASTQ_DOCKER = "seglh/bases2fastq:2.3.0"
+BASES2FASTQ_DOCKER = "seglh/bases2fastq:2.4"
 GATK_DOCKER = (
     "broadinstitute/gatk:4.1.8.1"  # TODO this image should have a hash added in future
 )
@@ -147,21 +150,21 @@ NEXUS_IDS = {
     "APPS": {
         "congenica_upload": f"{TOOLS_PROJECT}:applet-J3Px8vpK9yGVF55Fy3kvFb0f",  # congenica_upload_v1.3.3
         "oncodeep_upload": f"{TOOLS_PROJECT}:applet-J3PxV8BK9yGzPK2vV9921Jpx",  # oncodeep_upload v1.0.1
-        "multiqc": f"{TOOLS_PROJECT}:applet-J84gV4XK9yGzqYfqQ0Yj7f05",  # multiqc_v1.18.2
+        "multiqc": f"{TOOLS_PROJECT}:applet-J96JYFBK9yGpX6Z7fGv8gZ1P",  # multiqc_v1.18.3
         "sambamba_vcp1": f"{TOOLS_PROJECT}:applet-J3XPXyBK9yGpfyjPb2KYg82g",  # chanjo_sambamba_coverage_v1.13.1
         "sambamba_cp2": f"{TOOLS_PROJECT}:applet-J3XKp62K9yGpjP2yvP93Z68K",  # sambamba_coverage_v2.0.1
         "fastqc": f"{TOOLS_PROJECT}:applet-J3PxBkXK9yGZ071FgGb11QKk",  # fastqc_v1.4.1
         "gatk": f"{TOOLS_PROJECT}:applet-J3PxJx2K9yGZZ2j2BKV86Jgj",  # gatk3_human_exome_pipeline_v1.5.1
         "sentieon": f"{TOOLS_PROJECT}:app-Gy4j5z00PPyQ5qv5FBXy0ZZp",  # Sentieon germline FASTQ to VCF v5.1.0
-        #"peddy": f"{TOOLS_PROJECT}:applet-Fjvfk280jy1fVg8Q3b1bF6Y1",  # peddy_v1.5
+        "peddy": f"{TOOLS_PROJECT}:applet-J8kx1zpK5xQpXb677Q8qzgvb",  # peddy_v2.3
         "ed_readcount": f"{TOOLS_PROJECT}:applet-J7BQy2XK9yGfZ4GYfYZJgfX5",  # ED_readcount_analysis_v1.6.1
-        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J7BQyvXK9yGfqpgq4BYpXvPx",  # ED_cnv_calling_v1.7.1
-        "rpkm": f"{TOOLS_PROJECT}:applet-J84zJ4BK9yGfPf1BVjg2bfVf",  # RPKM_using_conifer_v1.6.2
+        "ed_cnvcalling": f"{TOOLS_PROJECT}:applet-J98KYjpK9yGxX4B59JJ343ZX",  # ED_cnv_calling_v1.7.2
+        "rpkm": f"{TOOLS_PROJECT}:applet-J96JX8BK9yGgbJ74fqzPb9kV",  # RPKM_using_conifer_v1.6.3
         "duty_csv": f"{TOOLS_PROJECT}:applet-J84xJZXK9yGfXVZyyzZBYFBG",  # duty_csv_v1.5.3
     },
     "WORKFLOWS": {
         "gatk_pipe": f"{TOOLS_PROJECT}:workflow-J3XPgzXK9yGbgg33xp68kXGx",  # GATK3.5_v2.20
-        "seglh_pipe": f"{TOOLS_PROJECT}:workflow-J3Pyjk2K9yGzPqKz0XGzqq6Z",  # SEGLH_RD_v1.5
+        "seglh_pipe": f"{TOOLS_PROJECT}:workflow-JB3J1PXK9yGY0bKzQ2B388VG",  # SEGLH_RD_v1.5.2
     
     },
     "STAGES": {
@@ -185,7 +188,7 @@ NEXUS_IDS = {
             "sambamba": "stage-J3ZQjvBK9yGbyyxKYfj0yX2j",
             "fhprs": "stage-J3Pyv7pK9yGYQ354qBB6Z62G",
             "bcftools_stats": "stage-J3PyqfpK9yGx93XxkB02j5g9",
-            "verifybam": "stage-J3Pyy4pK9yGYfyqJ19g3fXyf",
+            "verifybamid": "stage-J9fG2g2K5353F5vZ1z7X9Pvp",
             "polyedge": "stage-J3PyvyXK9yGQ5BjX7jbYPbkg",          
         },
     },
@@ -209,7 +212,7 @@ APP_INPUTS = {  # Inputs for apps run outside of DNAnexus workflows
     "fastqc": {
         "reads": "-ireads=",
     },
-    "peddy": {"project_name": "-iproject_for_peddy=${PROJECT_NAME}"},
+    "peddy": {"project_ID": "-iproject_ID_for_peddy=${PROJECT_ID}"},
     "sompy": {
         "truth_vcf": f"-itruthVCF={NEXUS_IDS['FILES']['sompy_truth_vcf']}",
         "query_vcf": "-iqueryVCF=${PROJECT_ID}:/analysis_folder/Results/",
@@ -317,10 +320,7 @@ DX_CMDS = {
     "gatk_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['gatk_pipe']} --priority high -y {JOB_NAME_STR}",
     "seglh_pipe": f"JOB_ID=$(dx run {NEXUS_IDS['WORKFLOWS']['seglh_pipe']} --priority high -y {JOB_NAME_STR}",
     "fastqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['fastqc']} --priority high -y {JOB_NAME_STR}",
-    #"peddy": (  # TODO move instance type into app itself
-        #f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high "
-        #f"-y --instance-type mem1_ssd1_v2_x2 {JOB_NAME_STR}"
-    #),
+    "peddy": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['peddy']} --priority high -y {JOB_NAME_STR}",
     "multiqc": f"JOB_ID=$(dx run {NEXUS_IDS['APPS']['multiqc']} --priority high -y {JOB_NAME_STR}",
     "ed_readcount": (
         f"ED_READCOUNT_JOB_ID=$(dx run {NEXUS_IDS['APPS']['ed_readcount']} "
@@ -375,7 +375,7 @@ class DemultiplexConfig(PanelConfig):
     Demultiplex configuration
     """
 
-    NOVASEQ_ID = NOVASEQ_ID
+    NOVASEQ_IDS = NOVASEQ_IDS
     AVITI_IDS = AVITI_IDS
     AVITI01_RUNFOLDER = AVITI01_RUNFOLDER
     AVITI02_RUNFOLDER = AVITI02_RUNFOLDER
@@ -405,7 +405,7 @@ class DemultiplexConfig(PanelConfig):
     )
     BASES2FASTQ_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input -v %s:/output {BASES2FASTQ_DOCKER} "
-        "bases2fastq /input /output -p %s --group-fastq --no-projects -r /input/%s"
+        "bases2fastq /input /output -p %s --group-fastq --no-projects -r /input/%s --force-detect-index-orientation"
     )
     CD_CMD = (
         f"docker run --rm --user %s:%s -v %s:/input_run {GATK_DOCKER} ./gatk CollectIlluminaLaneMetrics "
@@ -442,7 +442,8 @@ class DemultiplexConfig(PanelConfig):
         "NB552085": {"requires_ic": True},
         "M02353": {"requires_ic": False},
         "M02631": {"requires_ic": False},
-        NOVASEQ_ID: {"requires_ic": True},
+        NOVASEQ01_ID: {"requires_ic": True},
+        NOVASEQ02_ID: {"requires_ic": True},
         AVITI01_ID: {"requires_ic": False},
         AVITI02_ID: {"requires_ic": False},
     }
@@ -460,7 +461,8 @@ class SWConfig(PanelConfig):
     FASTQ_DIRS = FASTQ_DIRS
     MAIL_SETTINGS = MAIL_SETTINGS
     NEXUS_IDS = NEXUS_IDS
-    NOVASEQ_ID = NOVASEQ_ID
+    NEXTSEQ_ID = NEXTSEQ_ID
+    NOVASEQ_IDS = NOVASEQ_IDS
     TIMESTAMP = TIMESTAMP
     PROJECT_DIR = PROJECT_DIR
     RUNFOLDER_PATTERN = RUNFOLDER_PATTERN
@@ -639,7 +641,9 @@ class ToolboxConfig(PanelConfig):
     AVITI01_ID = AVITI01_ID
     AVITI02_ID = AVITI02_ID
     AVITI_IDS = AVITI_IDS
-    NOVASEQ_ID = NOVASEQ_ID
+    NOVASEQ01_ID = NOVASEQ01_ID
+    NOVASEQ02_ID = NOVASEQ02_ID
+    NEXTSEQ_ID = NEXTSEQ_ID
     
     AVITI_SAMPLESHEET = AVITI_SAMPLESHEET
     TIMESTAMP = TIMESTAMP
