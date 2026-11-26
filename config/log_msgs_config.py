@@ -132,6 +132,7 @@ LOG_MSGS = {
         "uploading_files": "Uploading %s files",
         "upload_success": "%s files uploaded successfully",
         "upload_fail": "%s upload failed. See %s for detailed error log",
+        "s3_upload_fail": "S3 upload failed for %s. Stderr: %s",
         "building_cmds": "Building dx run commands",
         "splitting_tso_samplesheet": "Splitting SampleSheet for TSO run into batches containing %s samples each: %s",
         "tso_batches_count": "Creating %s SampleSheets",
